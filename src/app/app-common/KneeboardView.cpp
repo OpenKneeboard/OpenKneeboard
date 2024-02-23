@@ -253,20 +253,14 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     });
 
   const auto idealSize = metrics.mPreferredSize.mPixelSize;
-  const Geometry2D::Rect<float> contentArea {
-    {metrics.mContentArea.left, metrics.mContentArea.top},
-    {
-      metrics.mContentArea.right - metrics.mContentArea.left,
-      metrics.mContentArea.bottom - metrics.mContentArea.top,
-    },
-  };
+  const auto unscaledContentArea = metrics.mContentArea;
   if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
     if (
       idealSize.mWidth <= MaxViewRenderSize.mWidth
       && idealSize.mHeight <= MaxViewRenderSize.mHeight) {
       return {
         idealSize,
-        contentArea.Rounded<uint32_t>(),
+        unscaledContentArea,
       };
     }
     const auto scaleX = MaxViewRenderSize.Width<float>() / idealSize.mWidth;
@@ -277,7 +271,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     const auto divisor = static_cast<uint32_t>(std::ceil(1 / scale));
     return {
       idealSize / divisor,
-      (contentArea / divisor).Rounded<uint32_t>(),
+      (unscaledContentArea / divisor),
     };
   }
 
@@ -288,7 +282,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
 
     return {
       size,
-      (contentArea * ratio).Rounded<uint32_t>(),
+      (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
     };
   }
   const auto now = SHM::ActiveConsumers::Clock::now();
@@ -300,7 +294,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
     return {
       size,
-      (contentArea * ratio).Rounded<uint32_t>(),
+      (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
     };
   }
 
@@ -317,7 +311,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
       const auto pos = view->mNonVR.Resolve(
         metrics.mPreferredSize,
         PixelRect {{0, 0}, metrics.mPreferredSize.mPixelSize},
-        contentArea.Rounded<uint32_t>(),
+        unscaledContentArea,
         views);
       if (pos) {
         const auto rect = pos->mPosition.Layout(consumerSize, idealSize);
@@ -325,7 +319,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
           = static_cast<float>(rect.mSize.mWidth) / idealSize.mWidth;
         return {
           rect.mSize,
-          (contentArea * ratio).Rounded<uint32_t>(),
+          (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
         };
       }
     } else {
@@ -339,7 +333,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
   return {
     size,
-    (contentArea * ratio).Rounded<uint32_t>(),
+    (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
   };
 }
 
@@ -378,7 +372,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
 
 void KneeboardView::RenderWithChrome(
   RenderTarget* rt,
-  const D2D1_RECT_F& rect,
+  const PixelRect& rect,
   bool isActiveForInput) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("KneeboardView::RenderWithChrome()");
   if (!mCurrentTabView) {
@@ -402,16 +396,13 @@ void KneeboardView::RenderWithChrome(
       rect);
   }
   if (mCursorCanvasPoint) {
-    const D2D1_SIZE_F size {
-      rect.right - rect.left,
-      rect.bottom - rect.top,
-    };
+    const auto& size = rect.mSize;
     auto d2d = rt->d2d();
     mCursorRenderer->Render(
       d2d,
       {
-        (mCursorCanvasPoint->x * size.width) + rect.left,
-        (mCursorCanvasPoint->y * size.height) + rect.top,
+        (mCursorCanvasPoint->x * size.mWidth) + rect.Left(),
+        (mCursorCanvasPoint->y * size.mHeight) + rect.Top(),
       },
       size);
   }
@@ -477,17 +468,15 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
     });
 
   const auto& contentArea = mapping.mContentArea;
-  const D2D1_SIZE_F contentSize {
-    contentArea.right - contentArea.left,
-    contentArea.bottom - contentArea.top,
-  };
-  const auto& canvasSize = mapping.mPreferredSize.mPixelSize;
+  const auto contentSize = contentArea.mSize;
+  const auto& canvasSize
+    = mapping.mPreferredSize.mPixelSize.StaticCast<float>();
 
   D2D1_POINT_2F point {contentPoint};
-  point.x *= contentSize.width;
-  point.y *= contentSize.height;
-  point.x += contentArea.left;
-  point.y += contentArea.top;
+  point.x *= contentSize.Width();
+  point.y *= contentSize.Height();
+  point.x += contentArea.Left();
+  point.y += contentArea.Top();
 
   return {
     point.x / canvasSize.mWidth,

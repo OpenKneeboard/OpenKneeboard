@@ -41,7 +41,14 @@ struct Size {
     return {mWidth / divisor, mHeight / divisor};
   }
 
-  constexpr Size<T> operator*(const T operand) const noexcept {
+  constexpr Size<T> operator*(const std::integral auto operand) const noexcept {
+    return {mWidth * operand, mHeight * operand};
+  }
+
+  constexpr Size<T> operator*(
+    const std::floating_point auto operand) const noexcept
+    requires std::floating_point<T>
+  {
     return {mWidth * operand, mHeight * operand};
   }
 
@@ -131,6 +138,19 @@ struct Point {
     return {mX * operand, mY * operand};
   }
 
+  constexpr Point<T>& operator+=(const Point<T>& operand) noexcept {
+    mX += operand.mX;
+    mY += operand.mY;
+    return *this;
+  }
+
+  friend constexpr Point<T> operator+(
+    Point<T> lhs,
+    const Point<T>& rhs) noexcept {
+    lhs += rhs;
+    return lhs;
+  }
+
   constexpr auto operator<=>(const Point<T>&) const noexcept = default;
 
   template <class TValue, class TPoint = Point<TValue>>
@@ -141,13 +161,23 @@ struct Point {
     };
   }
 
-  template <std::integral TValue, class TPoint = Point<TValue>>
+  template <class TValue, class TPoint = Point<TValue>>
     requires std::floating_point<T>
   constexpr TPoint Rounded() const noexcept {
     return {
       static_cast<TValue>(std::lround(mX)),
       static_cast<TValue>(std::lround(mY)),
     };
+  }
+
+  constexpr operator D2D1_POINT_2F() const noexcept {
+    return StaticCast<FLOAT, D2D1_POINT_2F>();
+  }
+
+  constexpr operator D2D1_POINT_2U() const noexcept
+    requires std::integral<T>
+  {
+    return StaticCast<UINT32, D2D1_POINT_2U>();
   }
 };
 
@@ -218,6 +248,16 @@ struct Rect {
     return {Right(), Bottom()};
   }
 
+  template <class TV = T>
+  constexpr auto Width() const noexcept {
+    return mSize.Width<TV>();
+  }
+
+  template <class TV = T>
+  constexpr auto Height() const noexcept {
+    return mSize.Height<TV>();
+  }
+
   constexpr Rect<T> WithOrigin(Origin origin, const Size<T>& container) const {
     if (origin == mOrigin) {
       return *this;
@@ -255,17 +295,21 @@ struct Rect {
     };
   }
 
-  template <std::integral TValue>
+  template <class TValue>
     requires std::floating_point<T>
   constexpr Rect<TValue> Rounded() const noexcept {
     return {mOffset.Rounded<TValue>(), mSize.Rounded<TValue>()};
   }
 
-  constexpr operator D3D11_RECT() const {
+  constexpr operator D3D11_RECT() const
+    requires std::integral<T>
+  {
     return StaticCastWithBottomRight<LONG, D3D11_RECT>();
   }
 
-  constexpr operator D2D_RECT_U() const {
+  constexpr operator D2D_RECT_U() const
+    requires std::integral<T>
+  {
     return StaticCastWithBottomRight<UINT32, D2D_RECT_U>();
   }
 

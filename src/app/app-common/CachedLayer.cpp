@@ -88,10 +88,7 @@ void CachedLayer::Render(
       static_cast<uint32_t>(std::lround(where.left)),
       static_cast<uint32_t>(std::lround(where.top)),
     },
-    {
-      static_cast<uint32_t>(std::lround(where.right - where.left)),
-      static_cast<uint32_t>(std::lround(where.bottom - where.top)),
-    },
+    cacheDimensions,
   };
 
   auto sb = mDXR->mSpriteBatch.get();

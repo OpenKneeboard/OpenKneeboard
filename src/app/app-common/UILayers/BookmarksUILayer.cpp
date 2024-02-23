@@ -87,7 +87,7 @@ void BookmarksUILayer::PostCursorEvent(
 
   auto buttonsEvent = cursorEvent;
   buttonsEvent.mX *= metrics.mPreferredSize.mPixelSize.mWidth;
-  buttonsEvent.mX /= metrics.mNextArea.left;
+  buttonsEvent.mX /= metrics.mNextArea.Left();
 
   buttons->PostCursorEvent(eventContext, buttonsEvent);
 }
@@ -102,31 +102,27 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
   if (!this->IsEnabled()) {
     auto ret = nextMetrics;
     ret.mNextArea = {
-      0,
-      0,
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
+      {},
+      nextMetrics.mPreferredSize.mPixelSize,
     };
     return ret;
   }
 
-  const auto width
-    = (nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top)
-    * (BookmarksBarPercent / 100.0f);
+  const auto width = static_cast<uint32_t>(std::lround(
+    nextMetrics.mContentArea.mSize.mHeight * (BookmarksBarPercent / 100.0f)));
 
   return Metrics {
     nextMetrics.mPreferredSize.Extended({static_cast<uint32_t>(width), 0}),
     {
-      width,
-      0,
-      nextMetrics.mPreferredSize.mPixelSize.mWidth + width,
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
+      {width, 0},
+      nextMetrics.mPreferredSize.mPixelSize,
     },
     {
-      width + nextMetrics.mContentArea.left,
-      nextMetrics.mContentArea.top,
-      width + nextMetrics.mContentArea.right,
-      nextMetrics.mContentArea.bottom,
+      {
+        width + nextMetrics.mContentArea.Left(),
+        nextMetrics.mContentArea.Top(),
+      },
+      nextMetrics.mContentArea.mSize,
     },
   };
 }
@@ -135,7 +131,7 @@ void BookmarksUILayer::Render(
   RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("BookmarksUILayer::Render()");
   auto [first, rest] = Split(next);
 
@@ -146,22 +142,23 @@ void BookmarksUILayer::Render(
 
   const auto metrics = this->GetMetrics(next, context);
   const auto scale
-    = (rect.right - rect.left) / metrics.mPreferredSize.mPixelSize.mWidth;
+    = rect.Width<float>() / metrics.mPreferredSize.mPixelSize.mWidth;
 
   auto d2d = rt->d2d();
   d2d->FillRectangle(
-    {
-      0,
-      0,
-      metrics.mNextArea.left * scale,
-      metrics.mPreferredSize.mPixelSize.mHeight * scale,
+    PixelRect {
+      rect.mOffset,
+      {
+        static_cast<uint32_t>(std::lround(metrics.mNextArea.Left() * scale)),
+        rect.Height(),
+      },
     },
     mBackgroundBrush.get());
 
   auto [hoverButton, buttons] = this->LayoutButtons()->GetState();
 
   const auto height = metrics.mPreferredSize.mPixelSize.mHeight;
-  const auto width = metrics.mNextArea.left;
+  const auto width = metrics.mNextArea.Left();
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
@@ -184,10 +181,10 @@ void BookmarksUILayer::Render(
   size_t buttonNumber = 0;
   for (const auto& button: buttons) {
     const D2D1_RECT_F buttonRect {
-      rect.left,
-      rect.top + (button.mRect.top * height * scale),
-      rect.left + (width * scale),
-      rect.top + (button.mRect.bottom * height * scale),
+      rect.Left<float>(),
+      rect.Top() + (button.mRect.top * height * scale),
+      rect.Left() + (width * scale),
+      rect.Top() + (button.mRect.bottom * height * scale),
     };
     buttonNumber++;
     const auto text = winrt::to_hstring(
@@ -200,29 +197,23 @@ void BookmarksUILayer::Render(
       text.data(), text.size(), textFormat.get(), buttonRect, textBrush.get());
     if (buttonNumber != 1) {
       d2d->DrawLine(
-        {0, buttonRect.top},
-        {buttonRect.right, buttonRect.top},
+        {rect.Left<FLOAT>(), buttonRect.top},
+        {rect.Left<FLOAT>() + buttonRect.right, buttonRect.top},
         mTextBrush.get(),
         2.0f);
     }
   }
 
   d2d.Release();
-  first->Render(
-    rt,
-    rest,
-    context,
-    {
-      metrics.mNextArea.left * scale,
-      metrics.mNextArea.top * scale,
-      metrics.mNextArea.right * scale,
-      metrics.mNextArea.bottom * scale,
-    });
+  auto nextArea
+    = (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
+  nextArea.mOffset += rect.mOffset;
+  first->Render(rt, rest, context, nextArea);
   d2d.Reacquire();
 
   d2d->DrawLine(
-    {width * scale, rect.top},
-    {width * scale, rect.bottom},
+    {rect.Left() + (width * scale), rect.Top<float>()},
+    {rect.Left() + (width * scale), rect.Bottom<float>()},
     mTextBrush.get(),
     2.0f);
 }

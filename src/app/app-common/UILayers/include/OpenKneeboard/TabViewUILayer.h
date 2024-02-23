@@ -46,13 +46,13 @@ class TabViewUILayer final : public IUILayer {
     RenderTarget*,
     const NextList&,
     const Context&,
-    const D2D1_RECT_F&) override;
+    const PixelRect&) override;
 
  private:
   void RenderError(
     ID2D1DeviceContext*,
     std::string_view text,
-    const D2D1_RECT_F& rect);
+    const PixelRect& rect);
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   std::optional<D2D1_POINT_2F> mCursorPoint;

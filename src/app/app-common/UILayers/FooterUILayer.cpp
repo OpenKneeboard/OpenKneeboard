@@ -100,18 +100,13 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
   const Context& context) const {
   const auto nextMetrics = next.front()->GetMetrics(next.subspan(1), context);
 
-  const auto contentHeight
-    = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
-  const auto footerHeight = contentHeight * (FooterPercent / 100.0f);
+  const auto contentHeight = nextMetrics.mContentArea.mSize.mHeight;
+  const auto footerHeight = static_cast<uint32_t>(
+    std::lround(contentHeight * (FooterPercent / 100.0f)));
   return Metrics {
     nextMetrics.mPreferredSize.Extended(
       {0, static_cast<uint32_t>(footerHeight)}),
-    {
-      0.0f,
-      0.0f,
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
-    },
+    {{}, nextMetrics.mPreferredSize.mPixelSize},
     nextMetrics.mContentArea,
   };
 }
@@ -120,37 +115,34 @@ void FooterUILayer::Render(
   RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("FooterUILayer::Render()");
-  mLastRenderSize = {
-    rect.right - rect.left,
-    rect.bottom - rect.top,
-  };
+  mLastRenderSize = rect.mSize;
 
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);
   const auto preferredSize = metrics.mPreferredSize.mPixelSize;
 
-  const auto totalHeight = rect.bottom - rect.top;
-  const auto scale = totalHeight / preferredSize.mHeight;
+  const auto scale = rect.Height<float>() / preferredSize.mHeight;
 
-  const auto contentHeight
-    = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);
-  const auto footerHeight = contentHeight * (FooterPercent / 100.0f);
+  const auto contentHeight = scale * metrics.mContentArea.Height();
+  const auto footerHeight = static_cast<uint32_t>(
+    std::lround(contentHeight * (FooterPercent / 100.0f)));
 
-  const D2D1_RECT_F footerRect {
-    rect.left,
-    rect.bottom - footerHeight,
-    rect.right,
-    rect.bottom,
+  const PixelRect footerRect {
+    {rect.Left(), rect.Bottom() - footerHeight},
+    {rect.Width(), footerHeight},
   };
 
   next.front()->Render(
     rt,
     next.subspan(1),
     context,
-    {rect.left, rect.top, rect.right, rect.bottom - footerHeight});
+    {
+      rect.mOffset,
+      (metrics.mNextArea.mSize.StaticCast<float>() * scale).Rounded<uint32_t>(),
+    });
 
   auto d2d = rt->d2d();
   d2d->FillRectangle(footerRect, mBackgroundBrush.get());
@@ -189,7 +181,7 @@ void FooterUILayer::Render(
         clockLayout->SetTextAlignment(alignment);
         clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
         d2d->DrawTextLayout(
-          {margin + rect.left, rect.bottom - footerHeight},
+          {margin + rect.Left<float>(), rect.Bottom<float>() - footerHeight},
           clockLayout.get(),
           mForegroundBrush.get());
       };

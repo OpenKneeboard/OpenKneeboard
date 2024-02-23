@@ -57,7 +57,7 @@ class HeaderUILayer final : public UILayerBase,
     RenderTarget*,
     const NextList&,
     const Context&,
-    const D2D1_RECT_F&) override;
+    const PixelRect&) override;
 
   HeaderUILayer() = delete;
 
@@ -70,20 +70,18 @@ class HeaderUILayer final : public UILayerBase,
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,
     ID2D1DeviceContext*,
-    const D2D1_RECT_F& rect) const;
+    const PixelRect& rect) const;
   void DrawToolbar(
     const Context&,
     ID2D1DeviceContext*,
-    const D2D1_RECT_F& fullRect,
-    const D2D1_RECT_F& headerRect,
-    const D2D1_SIZE_F& size,
-    D2D1_RECT_F* headerTextRect);
+    const PixelRect& fullRect,
+    const PixelRect& headerRect,
+    PixelRect* headerTextRect);
   void LayoutToolbar(
     const Context&,
-    const D2D1_RECT_F& fullRect,
-    const D2D1_RECT_F& headerRect,
-    const D2D1_SIZE_F& headerSize,
-    D2D1_RECT_F* headerTextRect);
+    const PixelRect& fullRect,
+    const PixelRect& headerRect,
+    PixelRect* headerTextRect);
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboardState {nullptr};
@@ -108,7 +106,7 @@ class HeaderUILayer final : public UILayerBase,
     D2D1_RECT_F mTextRect {};
     std::shared_ptr<CursorClickableRegions<Button>> mButtons;
   };
-  std::optional<D2D1_SIZE_F> mLastRenderSize;
+  std::optional<PixelSize> mLastRenderSize;
   std::shared_ptr<Toolbar> mToolbar;
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
   std::vector<EventHandlerToken> mTabEvents;

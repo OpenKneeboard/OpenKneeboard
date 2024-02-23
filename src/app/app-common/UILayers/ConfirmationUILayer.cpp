@@ -89,7 +89,7 @@ void ConfirmationUILayer::Render(
   RenderTarget* rt,
   const NextList& next,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("ConfirmationUILayer::Render()");
   next.front()->Render(rt, next.subspan(1), context, rect);
 
@@ -146,16 +146,13 @@ void ConfirmationUILayer::Render(
   }
 }
 
-void ConfirmationUILayer::UpdateLayout(const D2D1_RECT_F& canvasRect) {
-  const D2D1_SIZE_F canvasSize {
-    canvasRect.right - canvasRect.left,
-    canvasRect.bottom - canvasRect.top,
-  };
+void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
+  const auto canvasSize = canvasRect.mSize;
 
-  const auto titleFontSize
-    = canvasSize.height * (HeaderPercent / 100.0f) * 0.5f;
-  const auto maxTextWidth
-    = std::min(titleFontSize * 40, canvasSize.width * 0.8f);
+  const auto titleFontSize = static_cast<uint32_t>(
+    std::lround(canvasSize.mHeight * (HeaderPercent / 100.0f) * 0.5f));
+  const auto maxTextWidth = static_cast<std::uint32_t>(
+    std::floor(std::min<float>(titleFontSize * 40, canvasSize.mWidth * 0.8f)));
 
   auto dwf = mDXResources->mDWriteFactory;
 
@@ -245,8 +242,8 @@ void ConfirmationUILayer::UpdateLayout(const D2D1_RECT_F& canvasRect) {
   };
 
   const D2D1_POINT_2F dialogOrigin {
-    canvasRect.left + ((canvasSize.width - dialogSize.width) / 2),
-    canvasRect.top + ((canvasSize.height - dialogSize.height) / 2),
+    canvasRect.Left() + ((canvasSize.mWidth - dialogSize.width) / 2),
+    canvasRect.Top() + ((canvasSize.mHeight - dialogSize.height) / 2),
   };
 
   const D2D1_RECT_F dialogRect {

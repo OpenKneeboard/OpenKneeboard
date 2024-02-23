@@ -20,8 +20,8 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/RenderTarget.h>
 
 #include <memory>
@@ -54,19 +54,19 @@ class IUILayer {
     = 0;
 
   virtual void
-  Render(RenderTarget*, const NextList&, const Context&, const D2D1_RECT_F&)
+  Render(RenderTarget*, const NextList&, const Context&, const PixelRect&)
     = 0;
 
   struct Metrics {
     PreferredSize mPreferredSize {};
-    D2D1_RECT_F mNextArea {};
-    D2D1_RECT_F mContentArea {};
+    PixelRect mNextArea {};
+    PixelRect mContentArea {};
 
     Metrics() = delete;
     constexpr Metrics(
       PreferredSize preferredSize,
-      D2D1_RECT_F nextArea,
-      D2D1_RECT_F contentArea)
+      PixelRect nextArea,
+      PixelRect contentArea)
       : mPreferredSize(preferredSize),
         mNextArea(nextArea),
         mContentArea(contentArea) {

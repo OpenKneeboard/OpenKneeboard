@@ -43,11 +43,11 @@ void UILayerBase::PostNextCursorEvent(
   nextEvent.mX *= metrics.mPreferredSize.mPixelSize.mWidth;
   nextEvent.mY *= metrics.mPreferredSize.mPixelSize.mHeight;
 
-  nextEvent.mX -= metrics.mNextArea.left;
-  nextEvent.mY -= metrics.mNextArea.top;
+  nextEvent.mX -= metrics.mNextArea.Left();
+  nextEvent.mY -= metrics.mNextArea.Top();
 
-  nextEvent.mX /= metrics.mNextArea.right - metrics.mNextArea.left;
-  nextEvent.mY /= metrics.mNextArea.bottom - metrics.mNextArea.top;
+  nextEvent.mX /= metrics.mNextArea.Width();
+  nextEvent.mY /= metrics.mNextArea.Height();
 
   if (
     nextEvent.mX < 0 || nextEvent.mX > 1 || nextEvent.mY < 0

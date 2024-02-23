@@ -57,8 +57,8 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   const Context& context) const {
   const constexpr Metrics errorMapping {
     {ErrorRenderSize, ScalingKind::Vector},
-    {0, 0, ErrorRenderSize.mWidth, ErrorRenderSize.mHeight},
-    {0, 0, ErrorRenderSize.mWidth, ErrorRenderSize.mHeight},
+    {{}, ErrorRenderSize},
+    {{}, ErrorRenderSize},
   };
   auto tabView = context.mTabView;
   if (!tabView) {
@@ -73,8 +73,8 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
 
   return {
     nextSize,
-    {0, 0, static_cast<FLOAT>(ps.mWidth), static_cast<FLOAT>(ps.mHeight)},
-    {0, 0, static_cast<FLOAT>(ps.mWidth), static_cast<FLOAT>(ps.mHeight)},
+    {{}, ps},
+    {{}, ps},
   };
 }
 
@@ -82,7 +82,7 @@ void TabViewUILayer::Render(
   RenderTarget* rt,
   const IUILayer::NextList&,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("TabViewUILayer::Render()");
   const auto tabView = context.mTabView;
 
@@ -110,7 +110,7 @@ void TabViewUILayer::Render(
 void TabViewUILayer::RenderError(
   ID2D1DeviceContext* d2d,
   std::string_view text,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
   mErrorRenderer->Render(d2d, text, rect);
 }

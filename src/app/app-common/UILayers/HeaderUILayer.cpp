@@ -20,10 +20,10 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/HeaderUILayer.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
@@ -128,8 +128,8 @@ void HeaderUILayer::PostCursorEvent(
   if (toolbar && toolbar->mButtons) {
     scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
     CursorEvent toolbarEvent {cursorEvent};
-    toolbarEvent.mX *= renderSize.width;
-    toolbarEvent.mY *= renderSize.height;
+    toolbarEvent.mX *= renderSize.mWidth;
+    toolbarEvent.mY *= renderSize.mHeight;
     toolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
   }
 
@@ -142,23 +142,18 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
   OPENKNEEBOARD_TraceLoggingScope("HeaderUILayer::GetMetrics()");
   const auto nextMetrics = next.front()->GetMetrics(next.subspan(1), context);
 
-  const auto contentHeight
-    = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
-  const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
+  const auto contentHeight = nextMetrics.mContentArea.Height();
+  const auto headerHeight = static_cast<uint32_t>(
+    std::lround(contentHeight * (HeaderPercent / 100.0f)));
   return Metrics {
-    nextMetrics.mPreferredSize.Extended(
-      {0, static_cast<uint32_t>(headerHeight)}),
+    nextMetrics.mPreferredSize.Extended({0, headerHeight}),
     {
-      0.0f,
-      headerHeight,
-      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
-      nextMetrics.mPreferredSize.mPixelSize.mHeight + headerHeight,
+      {0, headerHeight},
+      nextMetrics.mPreferredSize.mPixelSize,
     },
     {
-      nextMetrics.mContentArea.left,
-      nextMetrics.mContentArea.top + headerHeight,
-      nextMetrics.mContentArea.right,
-      nextMetrics.mContentArea.bottom + headerHeight,
+      nextMetrics.mContentArea.mOffset + PixelPoint {0, headerHeight},
+      nextMetrics.mContentArea.mSize,
     },
   };
 }
@@ -167,43 +162,33 @@ void HeaderUILayer::Render(
   RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("HeaderUILayer::Render()");
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);
   const auto preferredSize = metrics.mPreferredSize;
 
-  const auto totalHeight = rect.bottom - rect.top;
-  const auto scale = totalHeight / preferredSize.mPixelSize.mHeight;
+  const auto scale = rect.Height<float>() / preferredSize.mPixelSize.mHeight;
 
   const auto contentHeight
-    = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);
-  const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
+    = static_cast<uint32_t>(std::lround(scale * metrics.mContentArea.Height()));
+  const auto headerHeight = static_cast<uint32_t>(
+    std::lround(contentHeight * (HeaderPercent / 100.0f)));
 
-  const D2D1_SIZE_F headerSize {
-    rect.right - rect.left,
-    headerHeight,
-  };
-  const D2D1_RECT_F headerRect {
-    rect.left,
-    rect.top,
-    rect.right,
-    rect.top + headerSize.height,
+  const PixelRect headerRect {
+    rect.mOffset,
+    {rect.Width(), headerHeight},
   };
 
-  mLastRenderSize = {
-    rect.right - rect.left,
-    rect.bottom - rect.top,
-  };
+  mLastRenderSize = rect.mSize;
 
   {
     auto d2d = rt->d2d();
     d2d->SetTransform(D2D1::Matrix3x2F::Identity());
     d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
     auto headerTextRect = headerRect;
-    this->DrawToolbar(
-      context, d2d, rect, headerRect, headerSize, &headerTextRect);
+    this->DrawToolbar(context, d2d, rect, headerRect, &headerTextRect);
     this->DrawHeaderText(tabView, d2d, headerTextRect);
   }
 
@@ -211,7 +196,10 @@ void HeaderUILayer::Render(
     rt,
     next.subspan(1),
     context,
-    {rect.left, rect.top + headerSize.height, rect.right, rect.bottom});
+    {
+      {rect.Left(), rect.Top() + headerHeight},
+      {rect.Width(), rect.Height() - headerHeight},
+    });
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
@@ -222,16 +210,14 @@ void HeaderUILayer::Render(
 void HeaderUILayer::DrawToolbar(
   const Context& context,
   ID2D1DeviceContext* d2d,
-  const D2D1_RECT_F& fullRect,
-  const D2D1_RECT_F& headerRect,
-  const D2D1_SIZE_F& headerSize,
-  D2D1_RECT_F* headerTextRect) {
+  const PixelRect& fullRect,
+  const PixelRect& headerRect,
+  PixelRect* headerTextRect) {
   if (!context.mIsActiveForInput) {
     return;
   }
 
-  this->LayoutToolbar(
-    context, fullRect, headerRect, headerSize, headerTextRect);
+  this->LayoutToolbar(context, fullRect, headerRect, headerTextRect);
 
   auto toolbarInfo = mToolbar;
   if (!toolbarInfo) {
@@ -279,10 +265,10 @@ void HeaderUILayer::DrawToolbar(
     }
 
     auto buttonRect = button.mRect;
-    buttonRect.left += headerRect.left;
-    buttonRect.top += headerRect.top;
-    buttonRect.right += headerRect.left;
-    buttonRect.bottom += headerRect.top;
+    buttonRect.left += headerRect.Left();
+    buttonRect.top += headerRect.Top();
+    buttonRect.right += headerRect.Left();
+    buttonRect.bottom += headerRect.Top();
 
     d2d->DrawRoundedRectangle(
       D2D1::RoundedRect(buttonRect, buttonHeight / 4, buttonHeight / 4),
@@ -300,10 +286,9 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
 
 void HeaderUILayer::LayoutToolbar(
   const Context& context,
-  const D2D1_RECT_F& fullRect,
-  const D2D1_RECT_F& headerRect,
-  const D2D1_SIZE_F& headerSize,
-  D2D1_RECT_F* headerTextRect) {
+  const PixelRect& fullRect,
+  const PixelRect& headerRect,
+  PixelRect* headerTextRect) {
   const auto& tabView = context.mTabView;
 
   if (mTabEvents.empty()) {
@@ -319,7 +304,10 @@ void HeaderUILayer::LayoutToolbar(
   if (
     toolbar && tabView && tabView == toolbar->mTabView.lock()
     && toolbar->mRect == fullRect) {
-    *headerTextRect = toolbar->mTextRect;
+    const auto& r = toolbar->mTextRect;
+    *headerTextRect = Geometry2D::Rect<float>(
+                        {r.left, r.top}, {r.right - r.left, r.bottom - r.top})
+                        .Rounded<uint32_t>();
     return;
   }
 
@@ -333,8 +321,9 @@ void HeaderUILayer::LayoutToolbar(
     = InGameActions::Create(mKneeboardState, kneeboardView, tabView);
   std::vector<Button> buttons;
 
-  const auto buttonHeight = headerSize.height * 0.75f;
-  const auto margin = (headerSize.height - buttonHeight) / 2.0f;
+  const auto buttonHeight
+    = static_cast<uint32_t>(std::lround(headerRect.Height() * 0.75f));
+  const auto margin = (headerRect.Height() - buttonHeight) / 2;
 
   auto primaryLeft = 2 * margin;
 
@@ -356,8 +345,8 @@ void HeaderUILayer::LayoutToolbar(
     }
 
     D2D1_RECT_F button {
-      .top = margin,
-      .bottom = margin + buttonHeight,
+      .top = static_cast<float>(margin),
+      .bottom = static_cast<float>(margin + buttonHeight),
     };
     button.left = primaryLeft;
     button.right = primaryLeft + buttonHeight,
@@ -366,7 +355,7 @@ void HeaderUILayer::LayoutToolbar(
     buttons.push_back({button, selectable});
   }
 
-  auto secondaryRight = (headerRect.right - headerRect.left) - (2 * margin);
+  auto secondaryRight = headerRect.Width() - (2 * margin);
   for (const auto& item: actions.mRight) {
     const auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
@@ -383,11 +372,11 @@ void HeaderUILayer::LayoutToolbar(
     }
 
     D2D1_RECT_F button {
-      .top = margin,
-      .bottom = margin + buttonHeight,
+      .top = static_cast<float>(margin),
+      .bottom = static_cast<float>(margin + buttonHeight),
     };
-    button.right = secondaryRight;
-    button.left = secondaryRight - buttonHeight;
+    button.right = static_cast<float>(secondaryRight);
+    button.left = static_cast<float>(secondaryRight - buttonHeight);
     secondaryRight = button.left - margin;
 
     buttons.push_back({button, selectable});
@@ -402,14 +391,18 @@ void HeaderUILayer::LayoutToolbar(
       }
     });
 
+  const auto buttonSpace
+    = std::max<uint32_t>(primaryLeft, headerRect.Width() - secondaryRight);
+
   *headerTextRect = {
-    primaryLeft + headerRect.left,
-    headerRect.top,
-    secondaryRight + headerRect.left,
-    headerRect.bottom,
+    headerRect.mOffset + PixelPoint {primaryLeft, 0},
+    {
+      headerRect.Width() - (2 * buttonSpace),
+      headerRect.Height(),
+    },
   };
 
-  if (headerTextRect->left > headerTextRect->right) {
+  if (headerTextRect->Left() > headerTextRect->Right()) {
     *headerTextRect = {};
   }
 
@@ -424,13 +417,10 @@ void HeaderUILayer::LayoutToolbar(
 void HeaderUILayer::DrawHeaderText(
   const std::shared_ptr<ITabView>& tabView,
   ID2D1DeviceContext* ctx,
-  const D2D1_RECT_F& textRect) const {
-  const D2D1_SIZE_F textSize {
-    textRect.right - textRect.left,
-    textRect.bottom - textRect.top,
-  };
+  const PixelRect& textRect) const {
+  const auto& textSize = textRect.mSize;
 
-  if (textSize.width <= 0.01 || textSize.height <= 0.01) {
+  if (textSize == PixelSize {}) {
     return;
   }
 
@@ -447,7 +437,7 @@ void HeaderUILayer::DrawHeaderText(
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    (textSize.height * 96) / (2 * dpiy),
+    (textSize.mHeight * 96) / (2 * dpiy),
     L"",
     headerFormat.put()));
   winrt::com_ptr<IDWriteInlineObject> ellipsis;
@@ -462,14 +452,14 @@ void HeaderUILayer::DrawHeaderText(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
-    textSize.width,
-    textSize.height,
+    textSize.Width<float>(),
+    textSize.Height<float>(),
     headerLayout.put()));
   headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
   ctx->DrawTextLayout(
-    {textRect.left, textRect.top}, headerLayout.get(), mHeaderTextBrush.get());
+    textRect.TopLeft(), headerLayout.get(), mHeaderTextBrush.get());
 }
 
 bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {

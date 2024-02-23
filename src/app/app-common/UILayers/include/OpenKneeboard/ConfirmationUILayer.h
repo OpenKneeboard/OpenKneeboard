@@ -51,7 +51,7 @@ class ConfirmationUILayer final
     RenderTarget*,
     const NextList&,
     const Context&,
-    const D2D1_RECT_F&) override;
+    const PixelRect&) override;
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
 
@@ -66,7 +66,8 @@ class ConfirmationUILayer final
 
   audited_ptr<DXResources> mDXResources;
   std::shared_ptr<IToolbarItemWithConfirmation> mItem;
-  std::optional<D2D1_RECT_F> mCanvasRect;
+  // TODO: key by RTID
+  std::optional<PixelRect> mCanvasRect;
 
   winrt::com_ptr<ID2D1SolidColorBrush> mOverpaintBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mDialogBGBrush;
@@ -74,7 +75,7 @@ class ConfirmationUILayer final
   winrt::com_ptr<ID2D1SolidColorBrush> mButtonBorderBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHoverButtonFillBrush;
 
-  void UpdateLayout(const D2D1_RECT_F&);
+  void UpdateLayout(const PixelRect&);
 
   struct TextRenderInfo {
     winrt::hstring mWinString;
@@ -101,7 +102,7 @@ class ConfirmationUILayer final
   };
 
   struct Dialog {
-    FLOAT mMargin {};
+    uint32_t mMargin {};
 
     D2D1_RECT_F mBoundingBox {};
 

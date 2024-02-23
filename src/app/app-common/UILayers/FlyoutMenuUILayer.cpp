@@ -122,7 +122,7 @@ void FlyoutMenuUILayer::Render(
   RenderTarget* rt,
   const NextList& next,
   const Context& context,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("FlyoutMenuUILayer::Render()");
   auto previous = mPrevious;
   if (previous && !mRecursiveCall) {

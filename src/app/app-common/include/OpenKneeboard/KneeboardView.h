@@ -80,7 +80,7 @@ class KneeboardView final : private EventReceiver,
 
   void RenderWithChrome(
     RenderTarget*,
-    const D2D1_RECT_F& rect,
+    const PixelRect& rect,
     bool isActiveForInput) noexcept;
   std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const;
   std::optional<D2D1_POINT_2F> GetCursorContentPoint() const;

@@ -51,7 +51,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
     RenderTarget*,
     const NextList&,
     const Context&,
-    const D2D1_RECT_F&) override;
+    const PixelRect&) override;
 
  private:
   void Tick();
