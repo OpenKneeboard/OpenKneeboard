@@ -101,8 +101,12 @@ bool GameInjector::Run(std::stop_token stopToken) {
             WTS_CURRENT_SESSION,
             reinterpret_cast<LPWSTR*>(&processes),
             &processCount)) {
+        const auto code = GetLastError();
+        if (code == ERROR_BAD_LENGTH) {
+          continue;// ?! We're not providing a length...
+        }
         OPENKNEEBOARD_LOG_AND_FATAL(
-          "WTSEnumerateProcessExW() failed with {}", GetLastError());
+          "WTSEnumerateProcessesExW() failed with {}", code);
       }
     }
 
