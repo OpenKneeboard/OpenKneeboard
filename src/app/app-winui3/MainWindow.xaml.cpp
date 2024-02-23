@@ -944,7 +944,7 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
     co_return;
   }
   if (path == L"Settings/Tabs") {
-    Frame().Navigate(xaml_typename<TabSettingsPage>());
+    Frame().Navigate(xaml_typename<TabsSettingsPage>());
     co_return;
   }
 

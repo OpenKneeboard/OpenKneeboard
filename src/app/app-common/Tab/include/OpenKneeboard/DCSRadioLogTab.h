@@ -40,7 +40,7 @@ class DCSRadioLogTab final : public TabBase,
                              public PageSourceWithDelegates,
                              public ITabWithSettings {
  public:
-  // Indices must match TabSettingsPage.xaml
+  // Indices must match TabsSettingsPage.xaml
   enum class MissionStartBehavior : uint8_t {
     DrawHorizontalLine = 0,
     ClearHistory = 1,

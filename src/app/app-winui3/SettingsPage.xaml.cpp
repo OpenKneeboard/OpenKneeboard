@@ -40,7 +40,7 @@ void SettingsPage::OnItemClick(
   const auto subpage = item.as<OpenKneeboardApp::SettingsSubpageData>().ID();
   switch (subpage) {
     case SettingsSubpageID::Tabs:
-      Frame().Navigate(xaml_typename<TabSettingsPage>());
+      Frame().Navigate(xaml_typename<TabsSettingsPage>());
       return;
     case SettingsSubpageID::Games:
       Frame().Navigate(xaml_typename<GameSettingsPage>());

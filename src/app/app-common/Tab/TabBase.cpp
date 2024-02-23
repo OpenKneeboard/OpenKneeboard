@@ -56,6 +56,9 @@ std::string TabBase::GetTitle() const {
 }
 
 void TabBase::SetTitle(const std::string& title) {
+  if (title == mTitle) {
+    return;
+  }
   mTitle = title;
   evSettingsChangedEvent.Emit();
 }

@@ -37,7 +37,7 @@ ok_add_executable(
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
   SponsorButton.idl SponsorButton.xaml SponsorButton.xaml.cpp SponsorButton.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
-  TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
+  TabsSettingsPage.idl TabsSettingsPage.xaml TabsSettingsPage.xaml.cpp TabsSettingsPage.xaml.h
   UIDataItem.idl UIDataItem.cpp UIDataItem.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
   VRViewUIKinds.idl

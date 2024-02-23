@@ -19,8 +19,8 @@
  */
 // clang-format off
 #include "pch.h"
-#include "TabSettingsPage.xaml.h"
-#include "TabSettingsPage.g.cpp"
+#include "TabsSettingsPage.xaml.h"
+#include "TabsSettingsPage.g.cpp"
 
 #include "TabUIData.g.cpp"
 #include "BrowserTabUIData.g.cpp"
@@ -65,7 +65,7 @@ using WindowSpec = WindowCaptureTab::WindowSpecification;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
+OpenKneeboardApp::TabUIData TabsSettingsPage::CreateTabUIData(
   const std::shared_ptr<ITab>& tab) {
   OpenKneeboardApp::TabUIData tabData {nullptr};
   if (std::dynamic_pointer_cast<BrowserTab>(tab)) {
@@ -81,7 +81,7 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
   return tabData;
 }
 
-TabSettingsPage::TabSettingsPage() {
+TabsSettingsPage::TabsSettingsPage() {
   InitializeComponent();
   mDXR.copy_from(gDXResources);
   mKneeboard = gKneeboard.lock();
@@ -101,22 +101,22 @@ TabSettingsPage::TabSettingsPage() {
   CreateAddTabMenu(AddTabBottomButton(), FlyoutPlacementMode::Top);
 }
 
-IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
+IVector<IInspectable> TabsSettingsPage::Tabs() noexcept {
   const std::shared_lock kbLock(*mKneeboard);
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
   for (const auto& tab: mKneeboard->GetTabsList()->GetTabs()) {
     tabs.Append(CreateTabUIData(tab));
   }
-  tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
+  tabs.VectorChanged({this, &TabsSettingsPage::OnTabsChanged});
   return tabs;
 }
 
-TabSettingsPage::~TabSettingsPage() {
+TabsSettingsPage::~TabsSettingsPage() {
   this->RemoveAllEventListeners();
 }
 
-void TabSettingsPage::CreateAddTabMenu(
+void TabsSettingsPage::CreateAddTabMenu(
   const Button& button,
   FlyoutPlacementMode placement) {
   MenuFlyout flyout;
@@ -126,7 +126,7 @@ void TabSettingsPage::CreateAddTabMenu(
     MenuFlyoutItem item; \
     item.Text(to_hstring(label)); \
     item.Tag(box_value<uint64_t>(TABTYPE_IDX_##name)); \
-    item.Click({this, &TabSettingsPage::CreateTab}); \
+    item.Click({this, &TabsSettingsPage::CreateTab}); \
     auto glyph = name##Tab::GetStaticGlyph(); \
     if (!glyph.empty()) { \
       FontIcon fontIcon; \
@@ -141,7 +141,7 @@ void TabSettingsPage::CreateAddTabMenu(
   button.Flyout(flyout);
 }
 
-fire_and_forget TabSettingsPage::RestoreDefaults(
+fire_and_forget TabsSettingsPage::RestoreDefaults(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
@@ -175,7 +175,7 @@ static std::shared_ptr<ITab> find_tab(const IInspectable& sender) {
   return *it;
 }
 
-fire_and_forget TabSettingsPage::ShowDebugInfo(
+fire_and_forget TabsSettingsPage::ShowDebugInfo(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const std::shared_lock lock(*mKneeboard);
@@ -201,7 +201,7 @@ fire_and_forget TabSettingsPage::ShowDebugInfo(
   co_await DebugInfoDialog().ShowAsync();
 }
 
-fire_and_forget TabSettingsPage::RenameTab(
+fire_and_forget TabsSettingsPage::ShowTabSettings(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const std::shared_lock lock(*mKneeboard);
@@ -210,23 +210,34 @@ fire_and_forget TabSettingsPage::RenameTab(
     co_return;
   }
 
-  OpenKneeboardApp::RenameTabDialog dialog;
-  dialog.XamlRoot(this->XamlRoot());
-  dialog.TabTitle(to_hstring(tab->GetTitle()));
+  std::string title;
 
-  auto result = co_await dialog.ShowAsync();
-  if (result != ContentDialogResult::Primary) {
-    co_return;
+#define IT(label, kind) \
+  if (std::dynamic_pointer_cast<kind##Tab>(tab)) { \
+    title = label; \
   }
-
-  const auto newName = to_string(dialog.TabTitle());
-  if (newName.empty()) {
-    co_return;
+  OPENKNEEBOARD_TAB_TYPES
+#undef IT
+  if (title.empty()) {
+    OPENKNEEBOARD_BREAK;
+    title = _("Tab Settings");
+  } else {
+    auto idx = title.find(" (");
+    if (idx != std::string::npos) {
+      title.erase(idx, std::string::npos);
+    }
+    title = std::format(_("{} Tab Settings"), title);
   }
-  tab->SetTitle(newName);
-}
+  TabSettingsDialog().Title(box_value(to_hstring(title)));
 
-fire_and_forget TabSettingsPage::RemoveTab(
+  auto uiData = CreateTabUIData(tab);
+  TabSettingsDialogContent().Content(uiData);
+  TabSettingsDialogContent().ContentTemplateSelector(
+    TabSettingsTemplateSelector());
+  co_await TabSettingsDialog().ShowAsync();
+}// namespace winrt::OpenKneeboardApp::implementation
+
+fire_and_forget TabsSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const std::shared_lock lock(*mKneeboard);
@@ -266,7 +277,7 @@ fire_and_forget TabSettingsPage::RemoveTab(
     .RemoveAt(idx);
 }
 
-void TabSettingsPage::CreateTab(
+void TabsSettingsPage::CreateTab(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
   auto tabType = static_cast<TabType>(
@@ -307,7 +318,7 @@ void TabSettingsPage::CreateTab(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
-winrt::fire_and_forget TabSettingsPage::PromptToInstallWebView2() {
+winrt::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
   if (
     co_await InstallWebView2Dialog().ShowAsync()
     != ContentDialogResult::Primary) {
@@ -318,7 +329,7 @@ winrt::fire_and_forget TabSettingsPage::PromptToInstallWebView2() {
   co_await LaunchURI("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
 }
 
-winrt::fire_and_forget TabSettingsPage::CreateBrowserTab() {
+winrt::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
   if (!WebView2PageSource::IsAvailable()) {
     this->PromptToInstallWebView2();
     co_return;
@@ -341,7 +352,7 @@ winrt::fire_and_forget TabSettingsPage::CreateBrowserTab() {
     mDXR, mKneeboard.get(), random_guid(), _("Web Dashboard"), settings)});
 }
 
-void TabSettingsPage::OnAddBrowserAddressTextChanged(
+void TabsSettingsPage::OnAddBrowserAddressTextChanged(
   const IInspectable&,
   const IInspectable&) noexcept {
   auto str = to_string(AddBrowserAddress().Text());
@@ -387,7 +398,7 @@ void TabSettingsPage::OnAddBrowserAddressTextChanged(
   AddBrowserDialog().IsPrimaryButtonEnabled(valid);
 }
 
-winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
+winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   OpenKneeboardApp::WindowPickerDialog picker;
   picker.XamlRoot(this->XamlRoot());
 
@@ -418,7 +429,7 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
 }
 
 template <class T>
-void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
+void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
   constexpr winrt::guid thisCall {
     0x207fb217,
     0x12fc,
@@ -458,7 +469,7 @@ void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
   this->AddTabs(newTabs);
 }
 
-void TabSettingsPage::CreateFolderTab() {
+void TabsSettingsPage::CreateFolderTab() {
   constexpr winrt::guid thisCall {
     0xae9b7e43,
     0x5109,
@@ -476,7 +487,7 @@ void TabSettingsPage::CreateFolderTab() {
   this->AddTabs({std::make_shared<FolderTab>(mDXR, mKneeboard.get(), *folder)});
 }
 
-void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+void TabsSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   const std::shared_lock lock(*mKneeboard);
 
   mUIIsChangingTabs = true;
@@ -505,7 +516,7 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   }
 }
 
-void TabSettingsPage::OnTabsChanged(
+void TabsSettingsPage::OnTabsChanged(
   const IInspectable&,
   const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept {
   const std::shared_lock lock(*mKneeboard);
@@ -549,6 +560,14 @@ hstring TabUIData::Title() const {
     return {};
   }
   return to_hstring(tab->GetTitle());
+}
+
+void TabUIData::Title(hstring title) {
+  auto tab = mTab.lock();
+  if (!tab) {
+    return;
+  }
+  tab->SetTitle(to_string(title));
 }
 
 bool TabUIData::HasDebugInformation() const {

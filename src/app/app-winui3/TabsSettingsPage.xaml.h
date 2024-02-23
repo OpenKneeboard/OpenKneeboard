@@ -21,7 +21,7 @@
 
 // clang-format off
 #include "pch.h"
-#include "TabSettingsPage.g.h"
+#include "TabsSettingsPage.g.h"
 
 #include "TabUIData.g.h"
 #include "BrowserTabUIData.g.h"
@@ -56,11 +56,11 @@ using namespace winrt::Microsoft::UI::Xaml::Controls::Primitives;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
-                         OpenKneeboard::EventReceiver,
-                         OpenKneeboard::WithPropertyChangedEvent {
-  TabSettingsPage();
-  ~TabSettingsPage() noexcept;
+struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
+                          OpenKneeboard::EventReceiver,
+                          OpenKneeboard::WithPropertyChangedEvent {
+  TabsSettingsPage();
+  ~TabsSettingsPage() noexcept;
 
   IVector<IInspectable> Tabs() noexcept;
 
@@ -70,7 +70,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
 
   void CreateTab(const IInspectable&, const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
-  fire_and_forget RenameTab(const IInspectable&, const RoutedEventArgs&);
+  fire_and_forget ShowTabSettings(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);
 
   void OnTabsChanged(
@@ -106,10 +106,11 @@ struct TabUIData : TabUIDataT<TabUIData>,
   TabUIData() = default;
   ~TabUIData();
 
-  hstring Title() const;
-
   uint64_t InstanceID() const;
   void InstanceID(uint64_t);
+
+  hstring Title() const;
+  void Title(hstring);
 
   bool HasDebugInformation() const;
   hstring DebugInformation() const;
@@ -200,8 +201,8 @@ struct TabUIDataTemplateSelector
 
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct TabSettingsPage
-  : TabSettingsPageT<TabSettingsPage, implementation::TabSettingsPage> {};
+struct TabsSettingsPage
+  : TabsSettingsPageT<TabsSettingsPage, implementation::TabsSettingsPage> {};
 
 struct TabUIData : TabUIDataT<TabUIData, implementation::TabUIData> {};
 struct BrowserTabUIData

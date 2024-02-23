@@ -1,8 +1,8 @@
 namespace OpenKneeboardApp {
-[default_interface] runtimeclass TabSettingsPage
+[default_interface] runtimeclass TabsSettingsPage
   : Microsoft.UI.Xaml.Controls.Page,
   Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
-  TabSettingsPage();
+  TabsSettingsPage();
   Windows.Foundation.Collections.IVector<IInspectable> Tabs { get; };
 }
 
@@ -10,7 +10,7 @@ namespace OpenKneeboardApp {
   : Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
   TabUIData();
   UInt64 InstanceID;
-  String Title { get; };
+  String Title;
   Boolean HasDebugInformation { get; };
   String DebugInformation { get; };
 }
