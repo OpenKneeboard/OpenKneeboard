@@ -67,20 +67,20 @@ void ConfirmationUILayer::PostCursorEvent(
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  D2D1_RECT_F rect;
-  Dialog dialog;
-  try {
-    rect = mCanvasRect.value();
-    dialog = mDialog.value();
-  } catch (const std::bad_optional_access&) {
+  if (!(mCanvasRect && mDialog)) {
     next.front()->PostCursorEvent(
       next.subspan(1), context, eventContext, cursorEvent);
     return;
   }
 
+  const auto rect = mCanvasRect.value();
+  const auto dialog = mDialog.value();
+
   CursorEvent canvasEvent {cursorEvent};
-  canvasEvent.mX *= (rect.right - rect.left);
-  canvasEvent.mY *= (rect.bottom - rect.top);
+  canvasEvent.mX *= rect.Width();
+  canvasEvent.mY *= rect.Height();
+  canvasEvent.mX += rect.Left();
+  canvasEvent.mY += rect.Top();
 
   dialog.mButtons->PostCursorEvent(eventContext, canvasEvent);
 }
