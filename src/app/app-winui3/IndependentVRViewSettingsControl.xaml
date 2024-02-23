@@ -63,6 +63,14 @@
         settings; it can be helpful to bind the same combo for recentering
         in both the game and in OpenKneeboard.
       </TextBlock>
+      <TextBlock
+        Style="{ThemeResource BodyTextBlockStyle}"
+        Foreground="{ThemeResource TextFillColorPrimary}"
+        TextWrapping="Wrap">
+        You should recenter while wearing the headset and seated in the
+        same position you will be while playing - otherwise the kneeboard
+        will be in a different position every time.
+      </TextBlock>
       <Grid ColumnDefinitions="Auto,Auto">
         <Button
           Grid.Column="0"
