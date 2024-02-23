@@ -281,6 +281,7 @@ void GameInjector::CheckProcess(
       }
       process.mHandle = winrt::handle {processHandle};
       process.mInjectionAccessState = InjectionAccessState::HaveInjectionAccess;
+      dprint("Reopened with VM and thread privileges");
     }
 
     const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
@@ -289,6 +290,7 @@ void GameInjector::CheckProcess(
       }
       if (IsInjected(processHandle, dllPath)) {
         currentDlls |= dllID;
+        dprintf("{} is already injected", dllPath.filename().string());
         return;
       }
       InjectDll(processHandle, dllPath);
@@ -314,6 +316,11 @@ bool GameInjector::IsInjected(
   DWORD requestedBytes = neededBytes;
   if (!EnumProcessModules(
         process, modules.data(), requestedBytes, &neededBytes)) {
+    const auto code = GetLastError();
+    dprintf(
+      "EnumProcessModules() failed: {:#x} ({})",
+      std::bit_cast<uint32_t>(code),
+      std::system_category().default_error_condition(code).message());
     // Maybe a lie, but if we can't list modules, we definitely can't inject
     // one
     return true;
