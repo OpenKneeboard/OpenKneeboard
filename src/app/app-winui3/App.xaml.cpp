@@ -25,6 +25,7 @@
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
+#include <OpenKneeboard/DebugPrivileges.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GetMainHWND.h>
@@ -466,6 +467,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();
+
+  DebugPrivileges privileges;
 
   dprint("Starting Xaml application");
   dprint("----------");

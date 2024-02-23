@@ -27,7 +27,6 @@
 #include <WtsApi32.h>
 // clang-format on
 
-#include <OpenKneeboard/DebugPrivileges.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/GameInstance.h>
@@ -260,7 +259,6 @@ void GameInjector::CheckProcess(
     dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
     if (process.mInjectionAccessState == InjectionAccessState::NotTried) {
       dprintf("Reopening PID {} with VM and thread privileges", processID);
-      DebugPrivileges privileges;
       processHandle = OpenProcess(
         PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ
           | PROCESS_VM_WRITE | PROCESS_CREATE_THREAD,
@@ -284,7 +282,6 @@ void GameInjector::CheckProcess(
       process.mHandle = winrt::handle {processHandle};
       process.mInjectionAccessState = InjectionAccessState::HaveInjectionAccess;
     }
-    DebugPrivileges privileges;
 
     const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
       if (!static_cast<bool>(missingDlls & dllID)) {
