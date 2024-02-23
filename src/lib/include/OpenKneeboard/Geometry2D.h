@@ -88,7 +88,7 @@ struct Size {
     };
   }
 
-  template <std::integral TValue, class TSize = Size<TValue>>
+  template <class TValue, class TSize = Size<TValue>>
     requires std::floating_point<T>
   constexpr TSize Rounded() const noexcept {
     return {
@@ -97,8 +97,14 @@ struct Size {
     };
   }
 
-  constexpr operator D2D1_SIZE_U() const {
+  constexpr operator D2D1_SIZE_U() const
+    requires std::integral<T>
+  {
     return StaticCast<UINT32, D2D1_SIZE_U>();
+  }
+
+  constexpr operator D2D1_SIZE_F() const {
+    return StaticCast<FLOAT, D2D1_SIZE_F>();
   }
 };
 

@@ -293,11 +293,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   }
   const auto now = SHM::ActiveConsumers::Clock::now();
 
-  const bool haveNonVR
-    = (now - consumers.NotVROrViewer()) < std::chrono::milliseconds(500);
   const bool haveVR = (now - consumers.AnyVR()) < std::chrono::seconds(1);
-  const bool haveViewer
-    = (now - consumers.mViewer) < std::chrono::milliseconds(500);
 
   if (haveVR) {
     const auto size = idealSize.ScaledToFit(MaxViewRenderSize);
@@ -309,6 +305,11 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   }
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
+  const auto haveConsumerSize = consumerSize != PixelSize {};
+  const bool haveNonVR = haveConsumerSize
+    && (now - consumers.NotVROrViewer()) < std::chrono::milliseconds(500);
+  const bool haveViewer = haveConsumerSize
+    && (now - consumers.mViewer) < std::chrono::milliseconds(500);
   if (haveNonVR) {
     const auto views = mKneeboard->GetViewsSettings().mViews;
     const auto view = std::ranges::find(views, mGUID, &ViewConfig::mGuid);

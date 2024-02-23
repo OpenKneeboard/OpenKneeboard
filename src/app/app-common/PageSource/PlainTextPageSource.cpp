@@ -159,8 +159,10 @@ void PlainTextPageSource::RenderPage(
   const auto scaleX = canvasSize.width / virtualSize.mWidth;
   const auto scaleY = canvasSize.height / virtualSize.mHeight;
   const auto scale = std::min(scaleX, scaleY);
-  const D2D1_SIZE_F renderSize {
-    scale * virtualSize.mWidth, scale * virtualSize.mHeight};
+  const D2D1_SIZE_F renderSize
+    = Geometry2D::Size<float>(
+        scale * virtualSize.mWidth, scale * virtualSize.mHeight)
+        .Rounded<float>();
 
   auto ctx = rt->d2d();
   ctx->SetTransform(
