@@ -103,6 +103,9 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
     return;
   }
   const auto size = this->GetPreferredSize().mPixelSize;
+  if (size == PixelSize {}) {
+    return;
+  }
   CursorEvent tabEvent {ev};
   tabEvent.mX *= size.mWidth;
   tabEvent.mY *= size.mHeight;
