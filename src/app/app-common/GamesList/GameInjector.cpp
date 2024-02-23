@@ -316,21 +316,32 @@ bool GameInjector::IsInjected(
   const std::filesystem::path& dll) {
   DWORD neededBytes = 0;
   EnumProcessModules(process, nullptr, 0, &neededBytes);
-  std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
-  DWORD requestedBytes = neededBytes;
-  if (!EnumProcessModules(
-        process, modules.data(), requestedBytes, &neededBytes)) {
+  std::vector<HMODULE> modules;
+  constexpr int maxTries = 5;
+  for (int i = 0; i < maxTries; ++i) {
+    modules.resize(neededBytes / sizeof(HMODULE));
+    DWORD requestedBytes = neededBytes;
+    if (EnumProcessModules(
+          process, modules.data(), requestedBytes, &neededBytes)) {
+      if (neededBytes < requestedBytes) {
+        modules.resize(neededBytes / sizeof(HMODULE));
+      }
+      break;
+    }
     const auto code = GetLastError();
     dprintf(
       "EnumProcessModules() failed: {:#x} ({})",
       std::bit_cast<uint32_t>(code),
       std::system_category().default_error_condition(code).message());
-    // Maybe a lie, but if we can't list modules, we definitely can't inject
-    // one
-    return true;
-  }
-  if (neededBytes < requestedBytes) {
-    modules.resize(neededBytes / sizeof(HMODULE));
+    if (code != ERROR_PARTIAL_COPY) {
+      // A lie, but if we can't enum, we definitely can't inject
+      return true;
+    }
+    if (i == maxTries - 1) {
+      dprintf("Failed to EnumProcessModules {} times, giving up", maxTries);
+      OPENKNEEBOARD_BREAK;
+      return true;
+    }
   }
 
   wchar_t buf[MAX_PATH];
