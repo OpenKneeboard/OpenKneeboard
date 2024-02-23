@@ -71,6 +71,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   void CreateTab(const IInspectable&, const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget RenameTab(const IInspectable&, const RoutedEventArgs&);
+  fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);
+
   void OnTabsChanged(
     const IInspectable&,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;

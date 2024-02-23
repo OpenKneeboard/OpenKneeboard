@@ -8,11 +8,19 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
     <DataTemplate x:Key="TabHeader" x:DataType="local:TabUIData">
-      <Grid ColumnDefinitions="Auto,*,Auto">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
         <Button
           Grid.Column="0"
+          Tag="{x:Bind InstanceID}"
+          ToolTipService.ToolTip="Information"
+          IsEnabled="{x:Bind HasDebugInformation}"
+          Margin="0,0,8,0"
+          Click="ShowDebugInfo">
+          <FontIcon Glyph="&#xE946;" />
+        </Button>
+        <Button
+          Grid.Column="1"
           Tag="{x:Bind InstanceID}"
           ToolTipService.ToolTip="Rename tab"
           Margin="0,0,8,0"
@@ -20,12 +28,12 @@
           <SymbolIcon Symbol="Edit" />
         </Button>
         <TextBlock
-          Grid.Column="1"
+          Grid.Column="2"
           Style="{StaticResource BodyStrongTextBlockStyle}"
           Text="{x:Bind Title,Mode=OneWay}"
           VerticalAlignment="Center"
         />
-        <Button Grid.Column="2" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+        <Button Grid.Column="3" Tag="{x:Bind InstanceID}" Click="RemoveTab">
           <SymbolIcon Symbol="Delete" />
         </Button>
       </Grid>
@@ -42,12 +50,6 @@
         <ContentPresenter 
           Content="{x:Bind}"
           ContentTemplate="{StaticResource TabHeader}"
-        />
-        <TextBlock
-          IsTextSelectionEnabled="true"
-          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}"
-          Style="{ThemeResource BodyTextBlockStyle}"
-          Text="{x:Bind DebugInformation, Mode=OneWay}"
         />
       </StackPanel>
     </DataTemplate>
@@ -336,6 +338,16 @@
             TextChanged="OnAddBrowserAddressTextChanged"
           />
         </StackPanel>
+      </ContentDialog>
+      <ContentDialog
+        x:Name="DebugInfoDialog"
+        Title="Details"
+        CloseButtonText="Close">
+        <TextBlock
+          x:Name="DebugInfoText"
+          IsTextSelectionEnabled="true"
+          Style="{ThemeResource BodyTextBlockStyle}"
+        />
       </ContentDialog>
     </StackPanel>
   </ScrollViewer>

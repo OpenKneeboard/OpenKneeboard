@@ -161,20 +161,54 @@ fire_and_forget TabSettingsPage::RestoreDefaults(
   mKneeboard->ResetTabsSettings();
 }
 
+static std::shared_ptr<ITab> find_tab(const IInspectable& sender) {
+  auto kneeboard = gKneeboard.lock();
+
+  const auto tabID = ITab::RuntimeID::FromTemporaryValue(
+    unbox_value<uint64_t>(sender.as<Button>().Tag()));
+  auto tabsList = kneeboard->GetTabsList();
+  const auto tabs = tabsList->GetTabs();
+  auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
+  if (it == tabs.end()) {
+    return {nullptr};
+  }
+  return *it;
+}
+
+fire_and_forget TabSettingsPage::ShowDebugInfo(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  const std::shared_lock lock(*mKneeboard);
+  const auto tab = find_tab(sender);
+  if (!tab) {
+    co_return;
+  }
+
+  const auto debug = std::dynamic_pointer_cast<IHasDebugInformation>(tab);
+  if (!debug) {
+    co_return;
+  }
+
+  const auto info = debug->GetDebugInformation();
+  if (info.empty()) {
+    co_return;
+  }
+
+  DebugInfoText().Text(to_hstring(info));
+
+  DebugInfoDialog().Title(winrt::box_value(
+    to_hstring(std::format("'{}' Tab Information", tab->GetTitle()))));
+  co_await DebugInfoDialog().ShowAsync();
+}
+
 fire_and_forget TabSettingsPage::RenameTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const std::shared_lock lock(*mKneeboard);
-
-  const auto tabID = ITab::RuntimeID::FromTemporaryValue(
-    unbox_value<uint64_t>(sender.as<Button>().Tag()));
-  auto tabsList = mKneeboard->GetTabsList();
-  const auto tabs = tabsList->GetTabs();
-  auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
-  if (it == tabs.end()) {
+  const auto tab = find_tab(sender);
+  if (!tab) {
     co_return;
   }
-  const auto& tab = *it;
 
   OpenKneeboardApp::RenameTabDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
@@ -197,15 +231,10 @@ fire_and_forget TabSettingsPage::RemoveTab(
   const RoutedEventArgs&) {
   const std::shared_lock lock(*mKneeboard);
 
-  const auto tabID = ITab::RuntimeID::FromTemporaryValue(
-    unbox_value<uint64_t>(sender.as<Button>().Tag()));
-  auto tabsList = mKneeboard->GetTabsList();
-  const auto tabs = tabsList->GetTabs();
-  auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
-  if (it == tabs.end()) {
+  const auto tab = find_tab(sender);
+  if (!tab) {
     co_return;
   }
-  const auto& tab = *it;
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
@@ -226,6 +255,9 @@ fire_and_forget TabSettingsPage::RemoveTab(
   mUIIsChangingTabs = true;
   const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
+  auto tabsList = mKneeboard->GetTabsList();
+  const auto tabs = tabsList->GetTabs();
+  auto it = std::ranges::find(tabs, tab);
   auto idx = static_cast<OpenKneeboard::TabIndex>(it - tabs.begin());
   tabsList->RemoveTab(idx);
   List()
