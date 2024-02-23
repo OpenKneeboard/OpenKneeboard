@@ -76,6 +76,16 @@ void TabletInputAdapter::Init() {
   this->StartOTDIPC();
 }
 
+bool TabletInputAdapter::HaveAnyTablet() const {
+  if (!mOTDDevices.empty()) {
+    return true;
+  }
+  if (mWintabDevice) {
+    return true;
+  }
+  return false;
+}
+
 bool TabletInputAdapter::IsOTDIPCEnabled() const {
   return mSettings.mOTDIPC;
 }

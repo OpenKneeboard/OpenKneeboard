@@ -57,6 +57,8 @@ class TabletInputAdapter final
   WintabMode GetWintabMode() const;
   winrt::Windows::Foundation::IAsyncAction SetWintabMode(WintabMode);
 
+  bool HaveAnyTablet() const;
+
   bool IsOTDIPCEnabled() const;
   void SetIsOTDIPCEnabled(bool);
 

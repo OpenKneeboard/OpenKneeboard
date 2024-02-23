@@ -23,7 +23,9 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
@@ -219,6 +221,11 @@ void HeaderUILayer::DrawToolbar(
 
   this->LayoutToolbar(context, fullRect, headerRect, headerTextRect);
 
+  if (*headerTextRect == headerRect) {
+    // No buttons, e.g. no tablet
+    return;
+  }
+
   auto toolbarInfo = mToolbar;
   if (!toolbarInfo) {
     return;
@@ -290,6 +297,13 @@ void HeaderUILayer::LayoutToolbar(
   const PixelRect& headerRect,
   PixelRect* headerTextRect) {
   const auto& tabView = context.mTabView;
+
+  auto tablets = mKneeboardState->GetTabletInputAdapter();
+  if (!(tablets && tablets->HaveAnyTablet())) {
+    *headerTextRect = headerRect;
+    mToolbar = nullptr;
+    return;
+  }
 
   if (mTabEvents.empty()) {
     mTabEvents = {
