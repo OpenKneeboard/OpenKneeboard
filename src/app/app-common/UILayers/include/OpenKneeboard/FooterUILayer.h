@@ -72,9 +72,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
   // Used for frame counter only
   SHM::Reader mSHM;
 
-  // Using steady_clock because it's much more efficient; only use
-  // system_clock for display.
-  using Clock = std::chrono::steady_clock;
+  using Clock = std::chrono::system_clock;
   using Duration = std::chrono::seconds;
   using TimePoint = std::chrono::time_point<Clock, Duration>;
 

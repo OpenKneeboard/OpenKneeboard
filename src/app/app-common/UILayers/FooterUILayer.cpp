@@ -237,8 +237,8 @@ void FooterUILayer::OnGameEvent(const GameEvent& ev) {
     if ((!mMissionTime) || mMissionTime != currentTime) {
       mMissionTime = currentTime;
       mUTCOffset = std::chrono::hours(times->utcOffset);
-      evNeedsRepaintEvent.Emit();
       mRenderState = RenderState::Stale;
+      evNeedsRepaintEvent.Emit();
     }
     return;
   }
