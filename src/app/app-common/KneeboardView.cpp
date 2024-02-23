@@ -412,10 +412,11 @@ void KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
       this->PreviousTab();
+      dprintf("Previous tab to '{}'", this->GetCurrentTab()->GetTitle());
       return;
     case UserAction::NEXT_TAB:
       this->NextTab();
-      return;
+      dprintf("Next tab to '{}'", this->GetCurrentTab()->GetTitle());
       return;
     case UserAction::PREVIOUS_BOOKMARK:
       this->GoToPreviousBookmark();
