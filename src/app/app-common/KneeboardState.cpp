@@ -132,9 +132,6 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     const auto contentSize = view->GetPreferredSize();
 
     const auto layout = view->GetIPCRenderLayout();
-    if (layout.mSize == PixelSize {}) {
-      const auto layout2 = view->GetIPCRenderLayout();
-    }
     const auto layoutSize
       = (layout.mSize == PixelSize {}) ? ErrorRenderSize : layout.mSize;
     const auto contentLocation = (layout.mSize == PixelSize {})
