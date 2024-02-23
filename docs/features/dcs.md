@@ -40,6 +40,10 @@ This will show any *image files* for the current aircraft, from:
 
 For example, I put my A-10C kneeboard images in `C:\Users\fred\Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
 
+You can see the full paths that OpenKneeboard is looking for files in
+Settings -> Tabs, with a tick or cross next to them showing whether or
+not the folder exists.
+
 ## The 'DCS Briefing' Tab
 
 This will show objectives, briefing images, briefing text, and weather from the current `.miz` file - the same content you see before starting the mission. It will also show the coordinates and magnetic variation at the bullseye, along with the A-10C CDU wind calculations at the bullseye (not your initial starting point) if you're flying an A-10C.
