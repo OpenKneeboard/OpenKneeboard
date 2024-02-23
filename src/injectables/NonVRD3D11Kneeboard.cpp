@@ -72,9 +72,6 @@ void NonVRD3D11Kneeboard::InitializeResources(IDXGISwapChain* swapchain) {
   D3D11_TEXTURE2D_DESC textureDesc;
   destinationTexture->GetDesc(&textureDesc);
 
-  SHM::ActiveConsumers::SetNonVRPixelSize(
-    {textureDesc.Width, textureDesc.Height});
-
   if (mResources) {
     mSHM.InitializeCache(device.get(), 0);
   }
@@ -143,6 +140,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   const auto& sr = mResources->mSwapchainResources;
+
+  SHM::ActiveConsumers::SetNonVRPixelSize(sr.mDimensions);
 
   const auto flatConfig = layerConfig->mNonVR;
   const auto& imageSize = layerConfig->mNonVR.mLocationOnTexture.mSize;
