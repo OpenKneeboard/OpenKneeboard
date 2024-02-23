@@ -129,7 +129,7 @@ winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
       co_return;
     }
-    if (lastWriteTime <= mLastWriteTime) {
+    if (lastWriteTime == mLastWriteTime) {
       co_return;
     }
 

@@ -61,6 +61,7 @@ class FilesystemWatcher final
 
   winrt::apartment_context mOwnerThread;
   std::filesystem::path mPath;
+
   std::filesystem::file_time_type mLastWriteTime;
   bool mSettling = false;
 
