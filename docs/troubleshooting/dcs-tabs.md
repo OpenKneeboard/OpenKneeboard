@@ -14,10 +14,7 @@ parent: Troubleshooting
 
 DCS World does not include kneeboard images for other maps; OpenKneeboard does not currently generate charts.
 
-## Built-in aircraft kneeboard pages are not loaded
-
-Currently, the aircraft tab only loads kneeboard from the DCS Saved Games 'KNEEBOARD\` folder, not from the DCS installation; you can
-copy the built-in images there from the `KNEEBOARD` folders inside `Mods\Aircraft`. Combining both will likely be supported in a future release.
+## Some built-in aircraft kneeboard pages are not loaded
 
 Dynamic (Lua) kneeboard pages are not supported at all, and are unlikely to be supported in the future. This
 includes most of the kneeboard pages for the F14, F16, and F18.
