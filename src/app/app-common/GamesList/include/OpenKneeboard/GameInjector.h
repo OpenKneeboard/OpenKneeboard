@@ -33,6 +33,7 @@
 #include <stop_token>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -67,13 +68,14 @@ class GameInjector final : public EventReceiver,
     evGameChangedEvent;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  static bool IsInjected(HANDLE process, const std::filesystem::path& dll);
   static bool InjectDll(HANDLE process, const std::filesystem::path& dll);
 
   GameInjector() = delete;
 
  private:
   GameInjector(KneeboardState* kneeboardState);
+  static std::unordered_set<std::filesystem::path> GetProcessCurrentDLLs(
+    HANDLE process);
   void CheckProcess(DWORD processID, std::wstring_view exeBaseName);
   KneeboardState* mKneeboardState {nullptr};
   std::vector<std::shared_ptr<GameInstance>> mGames;
@@ -95,6 +97,7 @@ class GameInjector final : public EventReceiver,
     std::filesystem::path mPath;
     InjectionAccessState mInjectionAccessState {InjectionAccessState::NotTried};
     InjectedDlls mInjectedDlls {InjectedDlls::None};
+    bool mHaveLoggedDLLs {false};
   };
   std::unordered_map<DWORD, ProcessCacheEntry> mProcessCache;
 

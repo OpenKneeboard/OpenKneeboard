@@ -256,11 +256,10 @@ void GameInjector::CheckProcess(
 
     auto& currentDlls = process.mInjectedDlls;
     const auto missingDlls = wantedDlls & ~currentDlls;
-    if (missingDlls == InjectedDlls::None) {
+    if (missingDlls == InjectedDlls::None && process.mHaveLoggedDLLs) {
       continue;
     }
 
-    dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
     if (process.mInjectionAccessState == InjectionAccessState::NotTried) {
       dprintf("Reopening PID {} with VM and thread privileges", processID);
       processHandle = OpenProcess(
@@ -288,11 +287,35 @@ void GameInjector::CheckProcess(
       dprint("Reopened with VM and thread privileges");
     }
 
+    const auto dlls = GetProcessCurrentDLLs(processHandle);
+    if (!process.mHaveLoggedDLLs) {
+      process.mHaveLoggedDLLs = true;
+      if (dlls.empty()) {
+        dprint("Failed to get DLL list");
+        continue;
+      }
+      std::vector<std::filesystem::path> sortedDLLs {dlls.begin(), dlls.end()};
+      std::ranges::sort(sortedDLLs);
+      for (const auto& dll: sortedDLLs) {
+        dprintf(
+          L"{} (PID {}) module: {}", exeBaseName, processID, dll.wstring());
+      }
+    }
+
+    if (dlls.empty()) {
+      continue;
+    }
+
+    if (missingDlls == InjectedDlls::None) {
+      continue;
+    }
+    dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
+
     const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
       if (!static_cast<bool>(missingDlls & dllID)) {
         return;
       }
-      if (IsInjected(processHandle, dllPath)) {
+      if (dlls.contains(dllPath)) {
         currentDlls |= dllID;
         dprintf("{} is already injected", dllPath.filename().string());
         return;
@@ -309,11 +332,9 @@ void GameInjector::CheckProcess(
   }
 }
 
-// This function assumes that the dll was injected with the path
-// in the same form as is being checked
-bool GameInjector::IsInjected(
-  HANDLE process,
-  const std::filesystem::path& dll) {
+std::unordered_set<std::filesystem::path> GameInjector::GetProcessCurrentDLLs(
+  HANDLE process) {
+  std::filesystem::path executablePath;
   DWORD neededBytes = 0;
   EnumProcessModules(process, nullptr, 0, &neededBytes);
   std::vector<HMODULE> modules;
@@ -334,33 +355,54 @@ bool GameInjector::IsInjected(
       std::bit_cast<uint32_t>(code),
       std::system_category().default_error_condition(code).message());
     if (code != ERROR_PARTIAL_COPY) {
-      // A lie, but if we can't enum, we definitely can't inject
-      return true;
+      break;
     }
     if (i == maxTries - 1) {
       dprintf("Failed to EnumProcessModules {} times, giving up", maxTries);
       OPENKNEEBOARD_BREAK;
-      return true;
+      return {};
     }
   }
 
+  std::unordered_set<std::filesystem::path> ret;
   wchar_t buf[MAX_PATH];
-  for (auto module: modules) {
+  for (const auto module: modules) {
     const auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
-    const std::wstring_view bufView {buf, length};
-    if (bufView == dll) {
-      return true;
+    if (length == 0) {
+      continue;
+    }
+    std::filesystem::path path {std::wstring_view {buf, length}};
+    if (path.is_absolute()) {
+      try {
+        ret.emplace(std::filesystem::weakly_canonical(path));
+      } catch (const std::filesystem::filesystem_error&) {
+      }
+      continue;
+    }
+    if (executablePath.empty()) {
+      const auto length = GetProcessImageFileNameW(process, buf, MAX_PATH);
+      if (length == 0) {
+        continue;
+      }
+      try {
+        executablePath
+          = std::filesystem::weakly_canonical(std::wstring_view {buf, length});
+      } catch (const std::filesystem::filesystem_error&) {
+        continue;
+      }
+    }
+    path = executablePath.parent_path() / path;
+    if (std::filesystem::exists(path)) {
+      try {
+        ret.emplace(std::filesystem::weakly_canonical(path));
+      } catch (const std::filesystem::filesystem_error&) {
+      }
     }
   }
-
-  return false;
+  return ret;
 }
 
 bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
-  if (IsInjected(process, dll)) {
-    return false;
-  }
-
   auto dllStr = dll.wstring();
 
   const auto dllStrByteLen = (dllStr.size() + 1) * sizeof(wchar_t);
@@ -398,9 +440,9 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   }
 
   WaitForSingleObject(thread.get(), INFINITE);
-  // We EnumProcessModules again as thread exit code is a DWORD, and
+  // We fetch the full list again as thread exit code is a DWORD, and
   // sizeof(DWORD) < sizeof(HMODULE)
-  if (!IsInjected(process, dll)) {
+  if (!GetProcessCurrentDLLs(process).contains(dll)) {
     dprintf("Injecting {} failed :'(", dll.string());
     return false;
   }

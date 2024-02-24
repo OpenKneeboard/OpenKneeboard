@@ -26,16 +26,17 @@
 #include <d3d12.h>
 // clang-format on
 
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/dprint.h>
-
-#include <thread>
-
 #include "IDXGISwapChainPresentHook.h"
 #include "IVRCompositorWaitGetPosesHook.h"
 #include "InjectedDLLMain.h"
 #include "OculusEndFrameHook.h"
 #include "detours-ext.h"
+
+#include <OpenKneeboard/RuntimeFiles.h>
+
+#include <OpenKneeboard/dprint.h>
+
+#include <thread>
 
 using namespace OpenKneeboard;
 
@@ -197,7 +198,6 @@ class InjectionBootstrapper final {
  private:
   void Next() {
     dprint("Going Next()");
-    this->LogDLLs();
     this->CheckForOpenXRAPILayer();
     mPassthroughAll = true;
 
@@ -268,12 +268,6 @@ class InjectionBootstrapper final {
       }
     }
     return ret;
-  }
-
-  void LogDLLs() {
-    for (auto [module, path]: GetInProcessDLLs()) {
-      dprintf("DLL: {}", path);
-    }
   }
 
   void CheckForOpenXRAPILayer() {
