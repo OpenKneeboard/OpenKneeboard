@@ -52,12 +52,14 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const MatchSpecification& spec) {
-  return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
+  auto ret = std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
     dxr,
     kbs,
     {},
     to_utf8(spec.mExecutableLastSeenPath.stem()),
     {.mSpec = spec}));
+  ret->TryToStartCapture();
+  return ret;
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
