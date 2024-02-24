@@ -405,8 +405,10 @@ void TabPage::OnCanvasSizeChanged(
   }
 
   const auto canvas = Canvas();
-  mCompositionScaleX = canvas.CompositionScaleX();
-  mCompositionScaleY = canvas.CompositionScaleY();
+  // We don't use the WinUI composition scale as
+  // we render on a pixel/percentage basis, not a DPI basis
+  mCompositionScaleX = 1.0f;
+  mCompositionScaleY = 1.0f;
   mCanvasSize = {
     static_cast<FLOAT>(size.Width) * mCompositionScaleX,
     static_cast<FLOAT>(size.Height) * mCompositionScaleY,
