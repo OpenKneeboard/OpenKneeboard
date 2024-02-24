@@ -242,9 +242,12 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  for (uint8_t layerIndex = 0; layerIndex < snapshot.GetLayerCount();
-       ++layerIndex) {
+  const auto layerCount = snapshot.GetLayerCount();
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    if (!layer.mVREnabled) {
+      continue;
+    }
     auto& layerState = mLayers.at(layerIndex);
 
     const auto renderParams
@@ -281,28 +284,30 @@ void SteamVRKneeboard::Tick() {
     // OpenVR call
 
     // non-atomic paint to buffer...
-    const PixelRect fullRect {
-      {0, 0},
-      MaxViewRenderSize,
-    };
-    mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize),
-      mSpriteBatch->Draw(
-        srv,
-        fullRect,
-        fullRect,
-        D3D11::Opacity {renderParams.mKneeboardOpacity});
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    mD3D->GetImmediateContext(ctx.put());
+    ctx->ClearRenderTargetView(
+      mRenderTargetView.get(), DirectX::Colors::Transparent);
+
+    const auto& imageSize = layer.mVR.mLocationOnTexture.mSize;
+    mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize);
+    mSpriteBatch->Draw(
+      srv,
+      layer.mVR.mLocationOnTexture,
+      {
+        {0, 0},
+        layer.mVR.mLocationOnTexture.mSize,
+      },
+      D3D11::Opacity {renderParams.mKneeboardOpacity});
     mSpriteBatch->End();
 
     // ... then atomic copy to OpenVR texture
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    mD3D->GetImmediateContext(ctx.put());
-    const D2D_RECT_U sourceRect = layer.mVR.mLocationOnTexture;
     const D3D11_BOX sourceBox {
-      sourceRect.left,
-      sourceRect.top,
       0,
-      sourceRect.right,
-      sourceRect.bottom,
+      0,
+      0,
+      imageSize.mWidth,
+      imageSize.mHeight,
       1,
     };
     ctx->CopySubresourceRegion(
@@ -316,7 +321,6 @@ void SteamVRKneeboard::Tick() {
       &sourceBox);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
-    const auto& imageSize = layer.mVR.mLocationOnTexture.mSize;
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,
@@ -326,17 +330,29 @@ void SteamVRKneeboard::Tick() {
 
     CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);
 
-    if (!layerState.mVisible) {
-      CHECK(ShowOverlay, layerState.mOverlay);
-      layerState.mVisible = true;
-    }
-
     layerState.mCacheKey = renderParams.mCacheKey;
   }
-  for (uint8_t i = snapshot.GetLayerCount(); i < MaxViewCount; ++i) {
-    if (mLayers.at(i).mVisible) {
+  for (uint8_t i = 0; i < MaxViewCount; ++i) {
+    auto& visible = mLayers.at(i).mVisible;
+    if (i >= layerCount) {
+      if (visible) {
+        CHECK(HideOverlay, mLayers.at(i).mOverlay);
+        visible = false;
+      }
+      continue;
+    }
+
+    const auto enabled = snapshot.GetLayerConfig(i)->mVREnabled;
+    if (visible && !enabled) {
       CHECK(HideOverlay, mLayers.at(i).mOverlay);
-      mLayers.at(i).mVisible = false;
+      visible = false;
+      continue;
+    }
+
+    if (enabled && !visible) {
+      CHECK(ShowOverlay, mLayers.at(i).mOverlay);
+      visible = true;
+      continue;
     }
   }
 
