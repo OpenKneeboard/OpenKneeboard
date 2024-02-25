@@ -45,7 +45,7 @@ class DirectInputListener {
    * finished - so wait for the signal.
    */
   static winrt::Windows::Foundation::IAsyncAction Run(
-    const std::stop_token&,
+    std::stop_token,
     winrt::com_ptr<IDirectInput8> di,
     std::shared_ptr<DirectInputDevice> device,
     HANDLE completionHandle);

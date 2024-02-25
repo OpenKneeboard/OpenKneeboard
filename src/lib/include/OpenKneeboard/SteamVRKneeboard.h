@@ -51,7 +51,6 @@ class SteamVRKneeboard final : private VRKneeboard {
   std::optional<Pose> GetHMDPose(float);
 
  private:
-  OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard");
   using Matrix = DirectX::SimpleMath::Matrix;
   float GetDisplayTime();
   bool InitializeOpenVR();
