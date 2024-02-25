@@ -317,7 +317,9 @@ class TestViewerWindow final : private D3D11Resources {
 
   PixelSize GetClientSize() const {
     RECT clientRect;
-    GetClientRect(mHwnd, &clientRect);
+    if (!GetClientRect(mHwnd, &clientRect)) {
+      return {};
+    }
     return {
       static_cast<uint32_t>(clientRect.right - clientRect.left),
       static_cast<uint32_t>(clientRect.bottom - clientRect.top),
@@ -439,6 +441,9 @@ class TestViewerWindow final : private D3D11Resources {
 
   void InitSwapChain() {
     const auto clientSize = this->GetClientSize();
+    if (clientSize.mHeight == 0 || clientSize.mWidth == 0) {
+      return;
+    }
 
     if (clientSize == mSwapChainSize) {
       return;
@@ -640,6 +645,11 @@ class TestViewerWindow final : private D3D11Resources {
     if (!mHwnd) {
       return;
     }
+    const auto clientSize = GetClientSize();
+    if (clientSize.mWidth == 0 || clientSize.mHeight == 0) {
+      return;
+    }
+
     OPENKNEEBOARD_TraceLoggingScope("Viewer::PaintNow()");
     this->InitSwapChain();
 
