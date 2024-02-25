@@ -199,6 +199,9 @@ void D2DResources::PushD2DDraw(std::source_location loc) {
 HRESULT D2DResources::PopD2DDraw() {
   {
     std::unique_lock lock(mLocks->mCurrentDrawMutex);
+    if (!mLocks->mCurrentDraw) {
+      OPENKNEEBOARD_BREAK;
+    }
     mLocks->mCurrentDraw = {};
   }
   return mD2DDeviceContext->EndDraw();
