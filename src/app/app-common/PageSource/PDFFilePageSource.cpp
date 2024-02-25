@@ -543,8 +543,22 @@ void PDFFilePageSource::RenderPage(
   if (!p->mCache.contains(rtid)) {
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
+  const auto cacheDimensions
+    = this->GetPreferredSize(pageID)
+        .mPixelSize
+        .IntegerScaledToFit({
+          2 * static_cast<uint32_t>(std::lround(rect.right - rect.left)),
+          2 * static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
+        })
+        .IntegerScaledToFit(
+          {D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+           D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION},
+          Geometry2D::ScaleToFitMode::ShrinkOnly);
   p->mCache[rtid]->Render(
-    rect, pageID.GetTemporaryValue(), rt, [=](auto rt, const auto& size) {
+    rect,
+    pageID.GetTemporaryValue(),
+    rt,
+    [=](auto rt, const auto& size) {
       this->RenderPageContent(
         rt,
         pageID,
@@ -554,7 +568,8 @@ void PDFFilePageSource::RenderPage(
           static_cast<FLOAT>(size.width),
           static_cast<FLOAT>(size.height),
         });
-    });
+    },
+    cacheDimensions);
 
   const auto d2d = rt->d2d();
   p->mDoodles->Render(d2d, pageID, rect);

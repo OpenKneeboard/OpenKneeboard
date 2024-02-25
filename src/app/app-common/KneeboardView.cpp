@@ -263,6 +263,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
         unscaledContentArea,
       };
     }
+
     const auto scaleX = MaxViewRenderSize.Width<float>() / idealSize.mWidth;
     const auto scaleY = MaxViewRenderSize.Height<float>() / idealSize.mHeight;
     const auto scale = std::min(scaleX, scaleY);

@@ -32,6 +32,12 @@
 
 namespace OpenKneeboard::Geometry2D {
 
+enum class ScaleToFitMode {
+  ShrinkOrGrow,
+  GrowOnly,
+  ShrinkOnly,
+};
+
 template <class T>
 struct Size {
   T mWidth {};
@@ -84,6 +90,35 @@ struct Size {
     } else {
       return scaled;
     }
+  }
+
+  constexpr Size<T> IntegerScaledToFit(
+    const Size<T>& container,
+    ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {
+    const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
+    const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
+    const auto scale = std::min(scaleX, scaleY);
+
+    if (scale > 1) {
+      if (mode == ScaleToFitMode::ShrinkOnly) {
+        return *this;
+      }
+      const auto mult = static_cast<uint32_t>(std::floor(scale));
+      return {
+        mWidth * mult,
+        mHeight * mult,
+      };
+    }
+
+    if (mode == ScaleToFitMode::GrowOnly) {
+      return *this;
+    }
+
+    const auto divisor = static_cast<uint32_t>(std::ceil(1 / scale));
+    return {
+      mWidth / divisor,
+      mHeight / divisor,
+    };
   }
 
   template <class TValue, class TSize = Size<TValue>>

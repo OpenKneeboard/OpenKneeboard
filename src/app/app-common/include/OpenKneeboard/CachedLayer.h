@@ -47,7 +47,8 @@ class CachedLayer final {
     const D2D1_RECT_F& where,
     Key cacheKey,
     RenderTarget*,
-    std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl);
+    std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl,
+    const std::optional<PixelSize>& cacheDimensions = {});
   void Reset();
 
  private:
