@@ -544,16 +544,8 @@ void PDFFilePageSource::RenderPage(
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
   const auto cacheDimensions
-    = this->GetPreferredSize(pageID)
-        .mPixelSize
-        .IntegerScaledToFit({
-          2 * static_cast<uint32_t>(std::lround(rect.right - rect.left)),
-          2 * static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
-        })
-        .IntegerScaledToFit(
-          {D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
-           D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION},
-          Geometry2D::ScaleToFitMode::ShrinkOnly);
+    = this->GetPreferredSize(pageID).mPixelSize.IntegerScaledToFit(
+      MaxViewRenderSize);
   p->mCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),
