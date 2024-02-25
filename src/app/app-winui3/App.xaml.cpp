@@ -168,6 +168,7 @@ App::App() {
 }
 
 winrt::fire_and_forget App::final_release(std::unique_ptr<App> self) {
+  dprint("Starting app shutdown");
   // co_await self->window.as<MainWindow>()->Cleanup();
   self->window = {nullptr};
 
