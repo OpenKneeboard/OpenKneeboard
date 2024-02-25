@@ -489,7 +489,7 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
 
   if (value.mEnableSteamVR != mSettings.mVR.mEnableSteamVR) {
     if (!value.mEnableSteamVR) {
-      mOpenVRThread.request_stop();
+      mOpenVRThread = {};
     } else {
       this->StartOpenVRThread();
     }
@@ -618,10 +618,10 @@ void KneeboardState::SetTextSettings(const TextSettings& value) {
 }
 
 void KneeboardState::StartOpenVRThread() {
-  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
-    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
-    SteamVRKneeboard().Run(stopToken);
-  });
+  mOpenVRThread = {
+    "OpenVR Thread",
+    [](std::stop_token stopToken) { return SteamVRKneeboard().Run(stopToken); },
+  };
 }
 
 void KneeboardState::StartTabletInput() {

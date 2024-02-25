@@ -45,7 +45,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   SteamVRKneeboard();
   ~SteamVRKneeboard();
 
-  bool Run(std::stop_token);
+  winrt::Windows::Foundation::IAsyncAction Run(std::stop_token);
 
  protected:
   std::optional<Pose> GetHMDPose(float);

@@ -430,19 +430,20 @@ static bool IsSteamVRRunning() {
   return false;
 }
 
-bool SteamVRKneeboard::Run(std::stop_token stopToken) {
+winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
+  std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Stopping OpenVR support, no runtime installed.");
-    return true;
+    co_return;
   }
 
   if (!mD3D) {
     dprint("Stopping OpenVR support, failed to get D3D11 device");
-    return false;
+    co_return;
   }
 
   const auto inactiveSleep = std::chrono::seconds(1);
-  const auto frameSleep = std::chrono::milliseconds(1000 / 90);
+  const auto frameSleep = std::chrono::milliseconds(1000 / FramesPerSecond);
 
   dprint("Initializing OpenVR support");
 
@@ -453,19 +454,17 @@ bool SteamVRKneeboard::Run(std::stop_token stopToken) {
       if (this->mIVROverlay) {
         this->mIVROverlay->WaitFrameSync(frameSleep.count());
       } else {
-        std::this_thread::sleep_for(frameSleep);
+        co_await resume_after(stopToken, frameSleep);
       }
       continue;
     }
 
-    std::this_thread::sleep_for(inactiveSleep);
+    co_await resume_after(stopToken, inactiveSleep);
   }
   dprint("Shutting down OpenVR support - stop requested");
 
   // Free resources in the same thread we allocated them
   this->Reset();
-
-  return true;
 }
 
 }// namespace OpenKneeboard

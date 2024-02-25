@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ProfileSettings.h>
+#include <OpenKneeboard/RunnerThread.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
@@ -166,7 +167,7 @@ class KneeboardState final
   std::shared_ptr<TabletInputAdapter> mTabletInput;
 
   std::shared_ptr<GameEventServer> mGameEventServer;
-  std::jthread mOpenVRThread;
+  RunnerThread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
 
   bool mSaveSettingsEnabled = true;
