@@ -576,8 +576,8 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   const auto scale = unscaled ? 1.0f : std::min(scaleX, scaleY);
 
   const D2D1_SIZE_F contentRenderSize {
-    contentNativeSize.mWidth * scale,
-    contentNativeSize.mHeight * scale,
+    static_cast<FLOAT>(std::lround(contentNativeSize.mWidth * scale)),
+    static_cast<FLOAT>(std::lround(contentNativeSize.mHeight * scale)),
   };
 
   // Use floor() to pixel-align raster sources

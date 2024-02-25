@@ -406,8 +406,8 @@ void PDFFilePageSource::RenderPageContent(
   ctx->FillRectangle(rect, p->mBackgroundBrush.get());
 
   PDF_RENDER_PARAMS params {
-    .DestinationWidth = static_cast<UINT>(rect.right - rect.left) + 1,
-    .DestinationHeight = static_cast<UINT>(rect.bottom - rect.top) + 1,
+    .DestinationWidth = static_cast<UINT>(std::lround(rect.right - rect.left)),
+    .DestinationHeight = static_cast<UINT>(std::lround(rect.bottom - rect.top)),
   };
 
   ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
