@@ -117,7 +117,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   std::stop_callback callback(
     mStopToken, [event = mEventHandle.get()]() { SetEvent(event); });
   while (!mStopToken.stop_requested()) {
-    co_await resume_on_signal(mStopToken, mEventHandle.get());
+    co_await winrt::resume_on_signal(mEventHandle.get());
     if (mStopToken.stop_requested()) {
       co_return;
     }
