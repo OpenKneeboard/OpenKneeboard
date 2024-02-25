@@ -665,6 +665,7 @@ void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
 
 winrt::Windows::Foundation::IAsyncAction
 KneeboardState::ReleaseExclusiveResources() {
+  OPENKNEEBOARD_TraceLoggingScope("ReleaseExclusiveResources");
   mOpenVRThread = {};
   mInterprocessRenderer = {};
   mTabletInput = {};

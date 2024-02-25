@@ -41,6 +41,7 @@ class GameEventServer final
   Event<GameEvent> evGameEvent;
 
  private:
+  OPENKNEEBOARD_TraceLoggingScope("GameEventServer");
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
   std::stop_source mStop;

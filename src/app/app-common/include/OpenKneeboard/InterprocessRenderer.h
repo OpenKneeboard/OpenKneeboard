@@ -63,6 +63,8 @@ class InterprocessRenderer final
   void PostUserAction(UserAction);
 
  private:
+  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer");
+
   InterprocessRenderer() = delete;
   InterprocessRenderer(const audited_ptr<DXResources>&);
   // Split out from the constructor so that `shared_from_this()` is valid

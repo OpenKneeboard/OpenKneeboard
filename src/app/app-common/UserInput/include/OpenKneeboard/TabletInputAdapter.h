@@ -70,6 +70,8 @@ class TabletInputAdapter final
   TabletInputAdapter() = delete;
 
  private:
+  OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter");
+
   TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
   void Init();
   void StartWintab();
