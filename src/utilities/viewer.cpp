@@ -452,6 +452,10 @@ class TestViewerWindow final : private D3D11Resources {
 
     this->OnResize(clientSize);
 
+    mD3D11ImmediateContext->OMSetRenderTargets(0, nullptr, nullptr);
+    if (HaveDirect2D()) {
+      mD2D->mD2DDeviceContext->SetTarget(nullptr);
+    }
     mWindowTexture = nullptr;
     mWindowRenderTargetView = nullptr;
     mWindowBitmap = nullptr;
@@ -536,14 +540,11 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void OnResize(const D2D1_SIZE_U& size) {
-    dprintf("Resizing to {}x{}", size.width, size.height);
     using OpenKneeboard::SHM::ActiveConsumers;
     const auto now = ActiveConsumers::Clock::now();
     if ((now - ActiveConsumers::Get().mNonVRD3D11) > std::chrono::seconds(1)) {
       ActiveConsumers::SetNonVRPixelSize({size.width, size.height});
     }
-
-    dprintf("Resized to {}x{}", size.width, size.height);
   }
 
   void CaptureScreenshot() {
