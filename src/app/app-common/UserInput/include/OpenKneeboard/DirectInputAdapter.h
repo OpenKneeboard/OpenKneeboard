@@ -64,6 +64,7 @@ class DirectInputAdapter final
   Event<> evAttachedControllersChangedEvent;
 
  private:
+  OPENKNEEBOARD_TraceLoggingScope("DirectInputAdapter");
   ProcessShutdownBlock mShutdownBlock;
 
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
