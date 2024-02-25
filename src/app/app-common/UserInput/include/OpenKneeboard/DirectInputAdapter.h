@@ -71,6 +71,8 @@ class DirectInputAdapter final
   winrt::fire_and_forget Reload();
   winrt::fire_and_forget UpdateDevices();
 
+  bool mShuttingDown = false;
+
   HWND mWindow;
   UINT_PTR mID;
   static UINT_PTR gNextID;

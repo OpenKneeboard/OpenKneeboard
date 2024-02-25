@@ -87,14 +87,17 @@ void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
 
 winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
+  dprint("DirectInputAdapter::ReleaseDevices()");
 
   std::unique_lock lock(mDevicesMutex);
   auto devices = std::move(mDevices);
   lock.unlock();
 
+  dprint("Requesting directinput listener stops");
   for (auto& [id, device]: devices) {
     device.mStop.request_stop();
   }
+  dprint("Waiting for listeners to stop");
   for (auto& [id, device]: devices) {
     co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
   }
@@ -112,6 +115,11 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   // Make sure the lock is released first
   EventDelay delay;
   std::unique_lock lock(mDevicesMutex);
+
+  if (mShuttingDown) {
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
 
   auto instances
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
@@ -190,6 +198,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
 
 winrt::fire_and_forget DirectInputAdapter::final_release(
   std::unique_ptr<DirectInputAdapter> self) {
+  self->mShuttingDown = true;
   co_await self->ReleaseDevices();
 }
 
