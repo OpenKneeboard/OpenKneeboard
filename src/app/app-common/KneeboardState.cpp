@@ -620,7 +620,10 @@ void KneeboardState::SetTextSettings(const TextSettings& value) {
 void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = {
     "OpenVR Thread",
-    [](std::stop_token stopToken) { return SteamVRKneeboard().Run(stopToken); },
+    [](std::stop_token stopToken) -> winrt::Windows::Foundation::IAsyncAction {
+      SteamVRKneeboard steamVR;
+      co_await steamVR.Run(stopToken);
+    },
   };
 }
 
