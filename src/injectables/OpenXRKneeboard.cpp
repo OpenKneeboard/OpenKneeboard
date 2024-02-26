@@ -292,7 +292,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     layerSprites.push_back(SHM::LayerSprite {
       .mSourceRect = layer->mVR.mLocationOnTexture,
       .mDestRect
-      = {destOffset, layer->mVR.mLocationOnTexture.mSize.IntegerScaledToFit(Config::MaxViewRenderSize)},
+      = {destOffset, layer->mVR.mLocationOnTexture.mSize.ScaledToFit(Config::MaxViewRenderSize)},
       .mOpacity = params.mKneeboardOpacity,
     });
 
@@ -320,7 +320,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
         .imageRect = {
           destOffset.StaticCast<int, XrOffset2Di>(),
           layer->mVR.mLocationOnTexture.mSize.
-          IntegerScaledToFit(Config::MaxViewRenderSize).
+          ScaledToFit(Config::MaxViewRenderSize).
           StaticCast<int, XrExtent2Di>(),
         },
         .imageArrayIndex = 0,
