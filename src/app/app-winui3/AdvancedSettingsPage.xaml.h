@@ -105,6 +105,9 @@ struct AdvancedSettingsPage
   bool Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept;
   void Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept;
 
+  uint8_t Quirk_OpenXR_Upscaling() const noexcept;
+  void Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
+
   bool CanChangeElevation() const noexcept;
 
   int32_t DesiredElevation() const noexcept;

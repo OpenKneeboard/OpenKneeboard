@@ -329,12 +329,39 @@
           OnContent="Enabled - swapchains are updated on every game frame"
           IsOn="{x:Bind Quirk_OpenXR_AlwaysUpdateSwapchain}"
         />
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          This reduces performance, but can workaround flickering issues
+          caused by bugs in other OpenXR components.
+        </TextBlock>
         <ToggleSwitch
 					Header="Oculus SDK: Discard depth information"
           OffContent="Disabled - incompatible with DCS"
           OnContent="Enabled - compatible with DCS"
           IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"
         />
+        <ComboBox
+          Header="OpenXR: Upscale images"
+          SelectedIndex="{x:Bind Quirk_OpenXR_Upscaling, Mode=TwoWay}">
+          <x:String>Automatic (Varjo only)</x:String>
+          <x:String>Leave for OpenXR runtime</x:String>
+          <x:String>Always</x:String>
+        </ComboBox>
+        <!--
+          This will be untrue and should be re-worded once/if
+          XR_META_recommended_layer_resolution is adopted.
+
+          https://github.com/OpenKneeboard/OpenKneeboard/issues/503
+        -->
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          Increases the resolution of content before passing to the OpenXR
+          runtime; runtimes are theoretically able to produce better results
+          than OpenKneeboard can, but in practice OpenKneeboard produces better
+          results than some vendors.
+        </TextBlock>
 			</StackPanel>
     </StackPanel>
   </ScrollViewer>

@@ -90,6 +90,8 @@ class OpenXRKneeboard : public VRKneeboard {
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
 
+  bool mIsVarjoRuntime {false};
+
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
 

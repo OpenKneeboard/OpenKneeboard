@@ -36,6 +36,7 @@ namespace OpenKneeboardApp
 
         Boolean Quirk_OculusSDK_DiscardDepthInformation;
         Boolean Quirk_OpenXR_AlwaysUpdateSwapchain;
+        UInt8 Quirk_OpenXR_Upscaling;
 
         Boolean CanChangeElevation { get; };
         Int32 DesiredElevation;

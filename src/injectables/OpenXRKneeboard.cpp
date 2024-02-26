@@ -164,6 +164,11 @@ OpenXRKneeboard::OpenXRKneeboard(
   referenceSpace.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
   check_xrresult(
     oxr->xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace));
+
+  mIsVarjoRuntime = std::string_view(runtimeID.mName).starts_with("Varjo");
+  if (mIsVarjoRuntime) {
+    dprint("Varjo runtime detected");
+  }
 }
 
 OpenXRKneeboard::~OpenXRKneeboard() {
@@ -281,18 +286,28 @@ XrResult OpenXRKneeboard::xrEndFrame(
     auto layer = snapshot.GetLayerConfig(shmLayerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-    const auto destOffset = Spriting::GetOffset(renderLayerIndex, MaxViewCount);
-    // FIXME: only scale to fit on Aero, or on opt-in
-    //
-    // Higher quality is obtainable by the runtimes doing the scaling themselves
-    // as appropriate for the headset.
-    //
-    // This may change in the future if XR_META_recommended_layer_resolution is
-    // adopted.
+    PixelRect destRect {
+      Spriting::GetOffset(renderLayerIndex, MaxViewCount),
+      layer->mVR.mLocationOnTexture.mSize,
+    };
+    using Upscaling = VRConfig::Quirks::Upscaling;
+    switch (config.mVR.mQuirks.mOpenXR_Upscaling) {
+      case Upscaling::Automatic:
+        if (!mIsVarjoRuntime) {
+          break;
+        }
+        [[fallthrough]];
+      case Upscaling::AlwaysOn:
+        destRect.mSize = destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
+        break;
+      case Upscaling::AlwaysOff:
+        // nothing to do
+        break;
+    }
+
     layerSprites.push_back(SHM::LayerSprite {
       .mSourceRect = layer->mVR.mLocationOnTexture,
-      .mDestRect
-      = {destOffset, layer->mVR.mLocationOnTexture.mSize.ScaledToFit(Config::MaxViewRenderSize)},
+      .mDestRect = destRect,
       .mOpacity = params.mKneeboardOpacity,
     });
 
@@ -317,12 +332,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
       .subImage = XrSwapchainSubImage {
         .swapchain = mSwapchain,
-        .imageRect = {
-          destOffset.StaticCast<int, XrOffset2Di>(),
-          layer->mVR.mLocationOnTexture.mSize.
-          ScaledToFit(Config::MaxViewRenderSize).
-          StaticCast<int, XrExtent2Di>(),
-        },
+        .imageRect = destRect.StaticCast<int, XrRect2Di>(),
         .imageArrayIndex = 0,
       },
       .pose = this->GetXrPosef(params.mKneeboardPose),

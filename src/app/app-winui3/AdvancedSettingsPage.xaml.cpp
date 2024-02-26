@@ -301,6 +301,22 @@ void AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(
   mKneeboard->SetVRSettings(vrc);
 }
 
+uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {
+  return static_cast<uint8_t>(
+    mKneeboard->GetVRSettings().mQuirks.mOpenXR_Upscaling);
+}
+
+void AdvancedSettingsPage::Quirk_OpenXR_Upscaling(uint8_t rawValue) noexcept {
+  const auto value = static_cast<VRConfig::Quirks::Upscaling>(rawValue);
+  auto vrs = mKneeboard->GetVRSettings();
+  auto& vrsValue = vrs.mQuirks.mOpenXR_Upscaling;
+  if (vrsValue == value) {
+    return;
+  }
+  vrsValue = value;
+  mKneeboard->SetVRSettings(vrs);
+}
+
 bool AdvancedSettingsPage::CanChangeElevation() const noexcept {
   return !IsShellElevated();
 }

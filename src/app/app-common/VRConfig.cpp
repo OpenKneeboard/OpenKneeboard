@@ -35,10 +35,19 @@ VRPose VRPose::GetHorizontalMirror() const {
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRPose, mX, mEyeY, mZ, mRX, mRY, mRZ)
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  VRRenderConfig::Quirks::Upscaling,
+  {
+    {VRRenderConfig::Quirks::Upscaling::Automatic, "Automatic"},
+    {VRRenderConfig::Quirks::Upscaling::AlwaysOff, "AlwaysOff"},
+    {VRRenderConfig::Quirks::Upscaling::AlwaysOn, "AlwaysOn"},
+  });
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,
   mOculusSDK_DiscardDepthInformation,
-  mOpenXR_AlwaysUpdateSwapchain)
+  mOpenXR_AlwaysUpdateSwapchain,
+  mOpenXR_Upscaling)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);
 
