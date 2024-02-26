@@ -267,7 +267,9 @@ winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
 
   const auto message = std::format(
     _(L"'{}' (process {}) is running elevated; this WILL cause problems.\n\nIt "
-      L"is STRONGLY recommended that you do not run games elevated."),
+      L"is STRONGLY recommended that you do not run games elevated.\n\n"
+      L"Running games as administrator is unsupported;\n"
+      L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS."),
     path.filename().wstring(),
     pid);
 
@@ -362,7 +364,8 @@ MainWindow::ShowSelfElevationWarning() {
     _(L"OpenKneeboard is running elevated; this is very likely to cause "
       L"problems.\n\nIt is STRONGLY recommended to run both OpenKneeboard and "
       L"the games with normal permissions.\n\nRunning OpenKneeboard as "
-      L"administrator is unsupported;\nDO NOT REPORT ANY BUGS."))));
+      L"administrator is unsupported;\n"
+      L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS."))));
   dialog.PrimaryButtonText(to_hstring(_(L"OK")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
