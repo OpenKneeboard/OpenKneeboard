@@ -46,6 +46,7 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 SteamVRKneeboard::SteamVRKneeboard() {
+  OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::SteamVRKneeboard()");
   {
     // Use DXResources to share the GPU selection logic
     D3D11Resources d3d;
@@ -92,10 +93,12 @@ SteamVRKneeboard::SteamVRKneeboard() {
 }
 
 SteamVRKneeboard::~SteamVRKneeboard() {
+  OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::~SteamVRKneeboard()");
   this->Reset();
 }
 
 void SteamVRKneeboard::Reset() {
+  OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::Reset()");
   if (!mIVRSystem) {
     return;
   }
@@ -465,6 +468,7 @@ winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
 
   // Free resources in the same thread we allocated them
   this->Reset();
+  dprint("Exiting OpenVR thread");
 }
 
 }// namespace OpenKneeboard

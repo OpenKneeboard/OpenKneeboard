@@ -25,7 +25,6 @@
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/ProcessShutdownBlock.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 
@@ -45,8 +44,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   MainWindow();
   ~MainWindow();
 
-  static winrt::fire_and_forget final_release(std::unique_ptr<MainWindow>);
-
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args) noexcept;
@@ -63,7 +60,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   NavigationItems() noexcept;
 
  private:
-  ProcessShutdownBlock mShutdownBlock;
   struct NavigationTag {
     ITab::RuntimeID mTabID;
     std::optional<PageID> mPageID;
@@ -111,6 +107,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
+  winrt::fire_and_forget Shutdown();
 
   void CheckForElevatedConsumer();
   winrt::fire_and_forget ShowWarningIfElevated(DWORD pid);
@@ -119,23 +116,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
 
   void SaveWindowPosition();
-
-  /** Clean up all state then exit the application.
-   *
-   * WinUI3 and the Windows App SDK assume we can just exit and the
-   * OS will take care of things; it will also exit immediately after
-   * `Window::Close()` is called.
-   *
-   * This leads to leak errors when using the DirectX debug layers, and
-   * crashes on exit if a mutex is held.
-   *
-   * So, use `SetWindowSubclass()` via `MainWindow::SubclassProc()` to
-   * hide the original `WM_CLOSE` from WinUI3, then:
-   * 1. hide the window via `ShowWindow()`
-   * 2. clean up all our non-XAML resources
-   * 3. call `Window::Close()`
-   */
-  winrt::fire_and_forget CleanupAndClose();
 
   static std::filesystem::path GetInstanceDataPath();
   winrt::Windows::Foundation::IAsyncAction WriteInstanceData();

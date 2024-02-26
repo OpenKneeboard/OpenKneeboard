@@ -74,7 +74,7 @@ DirectInputListener::~DirectInputListener() {
 }
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
-  const std::stop_token& stopToken,
+  std::stop_token stopToken,
   winrt::com_ptr<IDirectInput8> di,
   std::shared_ptr<DirectInputDevice> device,
   HANDLE completionHandle) {

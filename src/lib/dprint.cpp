@@ -295,6 +295,7 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
     // Unset canary
     memset(mSHM, 0xcf, sizeof(DPrintMessage));
 
+    ResetEvent(mDataReadyEvent.get());
     SetEvent(mBufferReadyEvent.get());
 
     const auto result = WaitForMultipleObjects(

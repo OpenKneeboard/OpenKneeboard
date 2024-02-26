@@ -46,6 +46,7 @@ winrt::fire_and_forget GameEventServer::final_release(
 }
 
 GameEventServer::GameEventServer() {
+  OPENKNEEBOARD_TraceLoggingScope("GameEventServer::GameEventServer()");
   dprintf("{}", __FUNCTION__);
 }
 
@@ -55,6 +56,7 @@ void GameEventServer::Start() {
 }
 
 GameEventServer::~GameEventServer() {
+  OPENKNEEBOARD_TraceLoggingScope("GameEventServer::~GameEventServer()");
   dprintf("{}", __FUNCTION__);
 }
 

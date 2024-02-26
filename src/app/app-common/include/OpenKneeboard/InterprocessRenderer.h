@@ -21,8 +21,8 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -63,8 +63,6 @@ class InterprocessRenderer final
   void PostUserAction(UserAction);
 
  private:
-  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer");
-
   InterprocessRenderer() = delete;
   InterprocessRenderer(const audited_ptr<DXResources>&);
   // Split out from the constructor so that `shared_from_this()` is valid

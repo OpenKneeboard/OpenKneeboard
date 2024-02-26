@@ -54,6 +54,8 @@ class RunnerThread final {
  private:
   ThreadGuard mThreadGuard;
   std::stop_source mStopSource;
+  std::string mName;
+  winrt::handle mCompletionEvent;
   winrt::Microsoft::UI::Dispatching::DispatcherQueueController mDQC {nullptr};
 
   void Stop();

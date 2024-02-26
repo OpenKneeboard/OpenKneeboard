@@ -68,6 +68,7 @@ TabletInputAdapter::TabletInputAdapter(
   KneeboardState* kneeboard,
   const TabletSettings& settings)
   : mWindow(window), mKneeboard(kneeboard) {
+  OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::TabletInputAdapter()");
   LoadSettings(settings);
 }
 
@@ -264,7 +265,7 @@ void TabletInputAdapter::LoadSettings(
 }
 
 TabletInputAdapter::~TabletInputAdapter() {
-  dprint("TabletInputAdapter::~TabletInputAdapter()");
+  OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::~TabletInputAdapter()");
   StopWintab();
   StopOTDIPC();
   this->RemoveAllEventListeners();

@@ -52,6 +52,13 @@ std::shared_ptr<KneeboardState> KneeboardState::Create(
   return shared_with_final_release(new KneeboardState(hwnd, dxr));
 }
 
+winrt::Windows::Foundation::IAsyncAction
+KneeboardState::ReleaseHwndResources() {
+  mTabletInput = {};
+  mDirectInput = {};
+  co_return;
+}
+
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
@@ -109,9 +116,14 @@ KneeboardState::~KneeboardState() noexcept {
 
 winrt::fire_and_forget KneeboardState::final_release(
   std::unique_ptr<KneeboardState> self) {
-  OPENKNEEBOARD_TraceLoggingScope("KneeboardState::final_release()");
-  self->RemoveAllEventListeners();
-  co_await self->ReleaseExclusiveResources();
+  {
+    OPENKNEEBOARD_TraceLoggingScope("KneeboardState::final_release()");
+    self->RemoveAllEventListeners();
+    co_await self->ReleaseExclusiveResources();
+
+    // Implied, but let's get some perf tracing on the member's destructors
+    self = {};
+  }
 }
 
 std::vector<std::shared_ptr<KneeboardView>>
@@ -621,8 +633,12 @@ void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = {
     "OpenVR Thread",
     [](std::stop_token stopToken) -> winrt::Windows::Foundation::IAsyncAction {
-      SteamVRKneeboard steamVR;
-      co_await steamVR.Run(stopToken);
+      TraceLoggingWrite(gTraceProvider, "OpenVRThread/Start");
+      {
+        SteamVRKneeboard steamVR;
+        co_await steamVR.Run(stopToken);
+      }
+      TraceLoggingWrite(gTraceProvider, "OpenVRThread/Stop");
     },
   };
 }

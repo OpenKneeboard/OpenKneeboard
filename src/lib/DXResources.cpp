@@ -204,7 +204,11 @@ HRESULT D2DResources::PopD2DDraw() {
     }
     mLocks->mCurrentDraw = {};
   }
-  return mD2DDeviceContext->EndDraw();
+  const auto result = mD2DDeviceContext->EndDraw();
+  if (result != S_OK) [[unlikely]] {
+    OPENKNEEBOARD_BREAK;
+  }
+  return result;
 }
 
 void D3D11Resources::lock() {

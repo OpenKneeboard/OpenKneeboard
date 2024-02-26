@@ -109,6 +109,7 @@ class KneeboardState final
   TabsList* GetTabsList() const;
 
   winrt::Windows::Foundation::IAsyncAction ReleaseExclusiveResources();
+  winrt::Windows::Foundation::IAsyncAction ReleaseHwndResources();
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \

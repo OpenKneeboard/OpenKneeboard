@@ -25,6 +25,7 @@
 #endif
 // clang-format on
 
+#include "App.xaml.h"
 #include "CheckDCSHooks.h"
 #include "CheckForUpdates.h"
 #include "Globals.h"
@@ -607,13 +608,21 @@ void MainWindow::SaveWindowPosition() {
   mKneeboard->SetAppSettings(settings);
 }
 
-winrt::fire_and_forget MainWindow::final_release(
-  std::unique_ptr<MainWindow> self) {
+winrt::fire_and_forget MainWindow::Shutdown() {
+  TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
+  auto self = get_strong();
+  self->Close();
   self->RemoveAllEventListeners();
   // TODO: a lot of this should be moved to the Application class.
   dprint("Removing instance data...");
   std::filesystem::remove(MainWindow::GetInstanceDataPath());
   gShuttingDown = true;
+
+  dprint("Releasing kneeboard resources tied to hwnd");
+  mKneeboard->ReleaseHwndResources();
+
+  dprint("Removing window subclass");
+  RemoveWindowSubclass(self->mHwnd, &MainWindow::SubclassProc, 0);
 
   dprint("Stopping frame loop...");
   self->mFrameLoopStopSource.request_stop();
@@ -661,6 +670,11 @@ winrt::fire_and_forget MainWindow::final_release(
     __debugbreak();
   }
   self->mDXR = nullptr;
+
+  DispatcherQueue().TryEnqueue([]() {
+    auto app = winrt::Microsoft::UI::Xaml::Application::Current().as<App>();
+    app.as<App>()->CleanupAndExitAsync();
+  });
 }
 
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
@@ -1014,6 +1028,14 @@ LRESULT MainWindow::SubclassProc(
   DWORD_PTR dwRefData) {
   if (uMsg == WM_SIZE || uMsg == WM_MOVE) {
     reinterpret_cast<MainWindow*>(dwRefData)->SaveWindowPosition();
+  }
+  if (uMsg == WM_CLOSE) {
+    reinterpret_cast<MainWindow*>(dwRefData)->Shutdown();
+    return 0;
+  }
+  if (uMsg == WM_DESTROY) {
+    // TODO: use DispatcherShutdownMode when WinUI 1.5 is out
+    return 0;
   }
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }

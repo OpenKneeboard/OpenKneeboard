@@ -44,7 +44,12 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
   return ret;
 }
 
+std::atomic_flag sOnlyOnce;
+
 OTDIPCClient::OTDIPCClient() {
+  if (sOnlyOnce.test_and_set()) {
+    OPENKNEEBOARD_BREAK;
+  }
   dprintf("{}", __FUNCTION__);
   mDQC = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
     CreateOnDedicatedThread();

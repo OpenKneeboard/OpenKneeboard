@@ -28,9 +28,9 @@ struct App : AppT<App> {
   void OnLaunched(
     Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
 
-  static winrt::fire_and_forget final_release(std::unique_ptr<App>);
+  winrt::fire_and_forget CleanupAndExitAsync();
 
  private:
-  winrt::Microsoft::UI::Xaml::Window window {nullptr};
+  winrt::Microsoft::UI::Xaml::Window mWindow {nullptr};
 };
 }// namespace winrt::OpenKneeboardApp::implementation

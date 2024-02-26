@@ -167,22 +167,34 @@ App::App() {
 #endif
 }
 
-winrt::fire_and_forget App::final_release(std::unique_ptr<App> self) {
+winrt::fire_and_forget App::CleanupAndExitAsync() {
+  auto keepAlive = get_strong();
+  winrt::apartment_context uiThread;
   dprint("Starting app shutdown");
-  // co_await self->window.as<MainWindow>()->Cleanup();
-  self->window = {nullptr};
-
   winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
   ProcessShutdownBlock::SetEventOnCompletion(event.get());
+
+  mWindow = {nullptr};
+
+  dprint("Waiting for cleanup");
+
   if (!co_await winrt::resume_on_signal(event.get(), std::chrono::seconds(1))) {
     dprint("Failed to cleanup after 1 second, quitting anyway.");
     ProcessShutdownBlock::DumpActiveBlocks();
-    OPENKNEEBOARD_BREAK;
   }
+
+  dprint("Exiting app");
+
+  co_await uiThread;
+
+  /* TODO (Windows App SDK v1.5?): This should be implied by Exit(),
+   but probalby broken by the WM_DESTROY hook; this should be replaced by
+   DispatcherShutdownMode when available */
+  ::PostQuitMessage(0);
 }
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
-  window = make<MainWindow>();
+  mWindow = make<MainWindow>();
 }
 
 static void LogSystemInformation() {

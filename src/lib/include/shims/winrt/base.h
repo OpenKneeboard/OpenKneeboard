@@ -25,6 +25,10 @@
 #include <Unknwn.h>
 // clang-format on
 
+#include <OpenKneeboard/tracing.h>
+
+#include <shims/source_location>
+
 #include <pplawait.h>
 #include <ppltasks.h>
 
@@ -47,22 +51,33 @@ inline auto random_guid() {
   return ret;
 }
 
-inline winrt::Windows::Foundation::IAsyncAction make_stoppable(
-  const std::stop_token& token,
-  auto action) {
+inline winrt::Windows::Foundation::IAsyncAction
+make_stoppable(std::stop_token token, auto action, std::source_location loc) {
+  const auto src = std::format("{}", loc);
   if (token.stop_requested()) {
     co_return;
   }
 
   try {
-    auto op = ([&action]() -> winrt::Windows::Foundation::IAsyncAction {
-      auto winrtToken = co_await winrt::get_cancellation_token();
-      winrtToken.enable_propagation();
+    auto op = ([](auto action) -> winrt::Windows::Foundation::IAsyncAction {
+      auto tok = co_await winrt::get_cancellation_token();
+      tok.enable_propagation();
       co_await action();
-    })();
-    const std::stop_callback callback(token, [&op]() { op.Cancel(); });
+    })(action);
+    const std::stop_callback callback(token, [&op, &src]() {
+      TraceLoggingWrite(
+        gTraceProvider,
+        "make_stoppable()/cancel",
+        TraceLoggingString(src.c_str(), "Source"));
+      op.Cancel();
+    });
     co_await op;
+    co_return;
   } catch (const winrt::hresult_canceled&) {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "make_stoppable()/cancelled",
+      TraceLoggingString(src.c_str(), "Source"));
   } catch (const winrt::hresult_error& e) {
     auto x = to_string(e.message());
     __debugbreak();
@@ -75,22 +90,36 @@ inline winrt::Windows::Foundation::IAsyncAction make_stoppable(
 }
 
 inline winrt::Windows::Foundation::IAsyncAction resume_on_signal(
-  const std::stop_token& token,
+  std::stop_token token,
   void* handle,
-  winrt::Windows::Foundation::TimeSpan timeout = {}) {
+  winrt::Windows::Foundation::TimeSpan timeout = {},
+  std::source_location loc = std::source_location::current()) {
   co_await make_stoppable(
-    token, [handle, timeout]() -> winrt::Windows::Foundation::IAsyncAction {
+    token,
+    [handle_ = handle,
+     timeout_ = timeout,
+     loc_ = loc]() -> winrt::Windows::Foundation::IAsyncAction {
+      auto handle = handle_;
+      auto timeout = timeout_;
+      auto loc = loc_;
       co_await winrt::resume_on_signal(handle, timeout);
-    });
+    },
+    loc);
 }
 
 inline winrt::Windows::Foundation::IAsyncAction resume_after(
-  const std::stop_token& token,
-  winrt::Windows::Foundation::TimeSpan timeout) {
+  std::stop_token token,
+  winrt::Windows::Foundation::TimeSpan timeout,
+  std::source_location loc = std::source_location::current()) {
   co_await make_stoppable(
-    token, [timeout]() -> winrt::Windows::Foundation::IAsyncAction {
+    token,
+    [timeout_ = timeout,
+     loc_ = loc]() -> winrt::Windows::Foundation::IAsyncAction {
+      auto timeout = timeout_;
+      auto loc = loc_;
       co_await winrt::resume_after(timeout);
-    });
+    },
+    loc);
 }
 
 }// namespace OpenKneeboard
