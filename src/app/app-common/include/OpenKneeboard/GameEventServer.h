@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <shims/winrt/base.h>
@@ -41,6 +42,7 @@ class GameEventServer final
   Event<GameEvent> evGameEvent;
 
  private:
+  ProcessShutdownBlock mShutdownBlock;
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
   std::stop_source mStop;

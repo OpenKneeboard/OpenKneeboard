@@ -41,8 +41,11 @@ std::shared_ptr<GameEventServer> GameEventServer::Create() {
 
 winrt::fire_and_forget GameEventServer::final_release(
   std::unique_ptr<GameEventServer> self) {
+  TraceLoggingWrite(gTraceProvider, "GameEventServer::final_release()");
   self->mStop.request_stop();
   co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  self = {};
+  TraceLoggingWrite(gTraceProvider, "GameEventServer::~final_release()");
 }
 
 GameEventServer::GameEventServer() {

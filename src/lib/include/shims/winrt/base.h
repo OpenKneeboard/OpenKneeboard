@@ -91,19 +91,12 @@ make_stoppable(std::stop_token token, auto action, std::source_location loc) {
 
 inline winrt::Windows::Foundation::IAsyncAction resume_on_signal(
   std::stop_token token,
-  void* handle,
+  HANDLE handle,
   winrt::Windows::Foundation::TimeSpan timeout = {},
   std::source_location loc = std::source_location::current()) {
-  co_await make_stoppable(
+  return make_stoppable(
     token,
-    [handle_ = handle,
-     timeout_ = timeout,
-     loc_ = loc]() -> winrt::Windows::Foundation::IAsyncAction {
-      auto handle = handle_;
-      auto timeout = timeout_;
-      auto loc = loc_;
-      co_await winrt::resume_on_signal(handle, timeout);
-    },
+    [handle, timeout]() { return winrt::resume_on_signal(handle, timeout); },
     loc);
 }
 
@@ -111,15 +104,8 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
   std::stop_token token,
   winrt::Windows::Foundation::TimeSpan timeout,
   std::source_location loc = std::source_location::current()) {
-  co_await make_stoppable(
-    token,
-    [timeout_ = timeout,
-     loc_ = loc]() -> winrt::Windows::Foundation::IAsyncAction {
-      auto timeout = timeout_;
-      auto loc = loc_;
-      co_await winrt::resume_after(timeout);
-    },
-    loc);
+  return make_stoppable(
+    token, [timeout]() { return winrt::resume_after(timeout); }, loc);
 }
 
 }// namespace OpenKneeboard

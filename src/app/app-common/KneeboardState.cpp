@@ -116,14 +116,13 @@ KneeboardState::~KneeboardState() noexcept {
 
 winrt::fire_and_forget KneeboardState::final_release(
   std::unique_ptr<KneeboardState> self) {
-  {
-    OPENKNEEBOARD_TraceLoggingScope("KneeboardState::final_release()");
-    self->RemoveAllEventListeners();
-    co_await self->ReleaseExclusiveResources();
+  TraceLoggingWrite(gTraceProvider, "KneeboardState::final_release()");
+  self->RemoveAllEventListeners();
+  co_await self->ReleaseExclusiveResources();
 
-    // Implied, but let's get some perf tracing on the member's destructors
-    self = {};
-  }
+  // Implied, but let's get some perf tracing on the member's destructors
+  self = {};
+  TraceLoggingWrite(gTraceProvider, "KneeboardState::~final_release()");
 }
 
 std::vector<std::shared_ptr<KneeboardView>>
