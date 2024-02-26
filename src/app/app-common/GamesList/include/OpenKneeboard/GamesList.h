@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/RunnerThread.h>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -37,7 +38,7 @@ class GamesList final : private EventReceiver {
   std::vector<std::shared_ptr<Game>> mGames;
   std::vector<std::shared_ptr<GameInstance>> mInstances;
   std::shared_ptr<GameInjector> mInjector;
-  std::jthread mInjectorThread;
+  RunnerThread mInjectorThread;
 
   void LoadDefaultSettings();
 

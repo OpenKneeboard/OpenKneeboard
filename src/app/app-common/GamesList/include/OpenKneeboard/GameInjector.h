@@ -59,7 +59,7 @@ class GameInjector final : public EventReceiver,
  public:
   static std::shared_ptr<GameInjector> Create(KneeboardState* kneeboardState);
   ~GameInjector();
-  bool Run(std::stop_token);
+  winrt::Windows::Foundation::IAsyncAction Run(std::stop_token);
 
   Event<
     DWORD,

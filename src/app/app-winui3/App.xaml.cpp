@@ -191,6 +191,7 @@ winrt::fire_and_forget App::CleanupAndExitAsync() {
    but probalby broken by the WM_DESTROY hook; this should be replaced by
    DispatcherShutdownMode when available */
   ::PostQuitMessage(0);
+  TraceLoggingWrite(gTraceProvider, "PostQuitMessage()");
 }
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
@@ -489,6 +490,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
+
+  TraceLoggingWrite(gTraceProvider, "ApplicationExit");
 
   if (gDXResources.use_count() != 1) {
     OPENKNEEBOARD_BREAK;

@@ -72,7 +72,8 @@ void GameInjector::SetGameInstances(
   mGames = games;
 }
 
-bool GameInjector::Run(std::stop_token stopToken) {
+winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
+  std::stop_token stopToken) {
   this->RemoveEventListener(mTabletSettingsChangeToken);
   auto tablet = mKneeboardState->GetTabletInputAdapter();
   if (tablet) {
@@ -88,7 +89,10 @@ bool GameInjector::Run(std::stop_token stopToken) {
 
   dprint("Watching for game processes");
   do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    co_await resume_after(stopToken, std::chrono::milliseconds(200));
+    if (stopToken.stop_requested()) {
+      co_return;
+    }
     OPENKNEEBOARD_TraceLoggingScope("GameInjector::Run()/EnumerateProcesses");
     WTS_PROCESS_INFO_EXW* processes {nullptr};
     DWORD processCount {0};
@@ -131,7 +135,6 @@ bool GameInjector::Run(std::stop_token stopToken) {
       it = mProcessCache.erase(it);
     }
   } while (!stopToken.stop_requested());
-  return true;
 }
 
 void GameInjector::CheckProcess(
