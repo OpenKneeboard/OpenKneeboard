@@ -282,9 +282,17 @@ XrResult OpenXRKneeboard::xrEndFrame(
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
     const auto destOffset = Spriting::GetOffset(renderLayerIndex, MaxViewCount);
+    // FIXME: only scale to fit on Aero, or on opt-in
+    //
+    // Higher quality is obtainable by the runtimes doing the scaling themselves
+    // as appropriate for the headset.
+    //
+    // This may change in the future if XR_META_recommended_layer_resolution is
+    // adopted.
     layerSprites.push_back(SHM::LayerSprite {
       .mSourceRect = layer->mVR.mLocationOnTexture,
-      .mDestRect = {destOffset, layer->mVR.mLocationOnTexture.mSize},
+      .mDestRect
+      = {destOffset, layer->mVR.mLocationOnTexture.mSize.IntegerScaledToFit(Config::MaxViewRenderSize)},
       .mOpacity = params.mKneeboardOpacity,
     });
 
@@ -311,7 +319,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
         .swapchain = mSwapchain,
         .imageRect = {
           destOffset.StaticCast<int, XrOffset2Di>(),
-          layer->mVR.mLocationOnTexture.mSize.StaticCast<int, XrExtent2Di>(),
+          layer->mVR.mLocationOnTexture.mSize.
+          IntegerScaledToFit(Config::MaxViewRenderSize).
+          StaticCast<int, XrExtent2Di>(),
         },
         .imageArrayIndex = 0,
       },
