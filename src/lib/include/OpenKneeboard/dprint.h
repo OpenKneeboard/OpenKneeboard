@@ -91,25 +91,31 @@ struct DPrintSettings {
   static void Set(const DPrintSettings&);
 };
 
-#pragma pack(push)
+// If you change this structure, you *MUST* also change the version
+// in `GetDPrintResourceName()`
 struct DPrintMessageHeader {
   DWORD mProcessID = 0;
   wchar_t mExecutable[MAX_PATH];
   wchar_t mPrefix[MAX_PATH];
 };
 static_assert(sizeof(DPrintMessageHeader) % sizeof(wchar_t) == 0);
+static_assert(std::is_standard_layout_v<DPrintMessageHeader>);
 
-struct DPrintMessage : public DPrintMessageHeader {
- private:
-  static constexpr auto HeaderSize = sizeof(DPrintMessageHeader);
-  static constexpr auto MaxMessageSize = 4096 - HeaderSize;
-
+// If you change this structure, you *MUST* also change the version
+// in `GetDPrintResourceName()`
+struct DPrintMessage {
  public:
-  static constexpr auto MaxMessageLength = MaxMessageSize / sizeof(wchar_t);
+  static constexpr size_t StructSize = 4096;
+  static constexpr auto MaxMessageLength
+    = (StructSize - (sizeof(DPrintMessageHeader) + sizeof(size_t)))
+    / sizeof(wchar_t);
+
+  DPrintMessageHeader mHeader {};
   wchar_t mMessage[MaxMessageLength];
   size_t mMessageLength {};
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<DPrintMessage>);
+static_assert(sizeof(DPrintMessage) == DPrintMessage::StructSize);
 
 class DPrintReceiver {
  public:

@@ -34,7 +34,7 @@
 namespace OpenKneeboard {
 
 static std::wstring GetDPrintResourceName(std::wstring_view key) {
-  return std::format(L"{}.dprint.v1.{}", OpenKneeboard::ProjectNameW, key);
+  return std::format(L"{}.dprint.v2.{}", OpenKneeboard::ProjectNameW, key);
 }
 
 #define IPC_RESOURCE_NAME_FUNC(resource) \
@@ -107,10 +107,12 @@ static void WriteIPCMessage(std::wstring_view message) {
   memset(shm, 0, sizeof(DPrintMessage));
 
   auto messageSHM = reinterpret_cast<DPrintMessage*>(shm);
-  memcpy(messageSHM, &gIPCMessageHeader, sizeof(gIPCMessageHeader));
+  messageSHM->mHeader = gIPCMessageHeader;
   memcpy(
     messageSHM->mMessage, message.data(), message.size() * sizeof(message[0]));
   messageSHM->mMessageLength = message.size();
+  auto wtf = std::format("Message size: {}", messageSHM->mMessageLength);
+  OutputDebugStringA(wtf.c_str());
 
   FlushViewOfFile(shm, sizeof(DPrintMessage));
   UnmapViewOfFile(shm);

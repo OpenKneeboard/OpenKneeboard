@@ -203,9 +203,9 @@ void TroubleshootingStore::DPrintReceiver::OnMessage(
   const DPrintMessage& message) {
   const DPrintEntry entry {
     .mWhen = std::chrono::system_clock::now(),
-    .mProcessID = message.mProcessID,
-    .mExecutable = message.mExecutable,
-    .mPrefix = message.mPrefix,
+    .mProcessID = message.mHeader.mProcessID,
+    .mExecutable = message.mHeader.mExecutable,
+    .mPrefix = message.mHeader.mPrefix,
     .mMessage = std::wstring {message.mMessage, message.mMessageLength},
   };
   {
