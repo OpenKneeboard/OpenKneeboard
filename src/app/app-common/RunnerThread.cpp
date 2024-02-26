@@ -46,7 +46,7 @@ RunnerThread::RunnerThread(
      stop = mStopSource.get_token(),
      loc = loc,
      event = mCompletionEvent.get()]() -> winrt::fire_and_forget {
-      const scope_guard setEventOnExit([event, &name]() {
+      const scope_guard setEventOnExit([event, name]() {
         TraceLoggingWrite(
           gTraceProvider,
           "RunnerThread/SetEvent",
