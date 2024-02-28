@@ -282,6 +282,20 @@ void TabsSettingsPage::CreateTab(
   const RoutedEventArgs&) noexcept {
   auto tabType = static_cast<TabType>(
     unbox_value<uint64_t>(sender.as<MenuFlyoutItem>().Tag()));
+
+  switch (tabType) {
+#define IT(_label, prefix) \
+  case TabType::##prefix: \
+    dprint("Adding "## #prefix##" tab"); \
+    break;
+    OPENKNEEBOARD_TAB_TYPES
+#undef IT
+    default:
+      dprintf(
+        "Adding tab with kind {}",
+        static_cast<std::underlying_type_t<TabType>>(tabType));
+  }
+
   switch (tabType) {
     case TabType::Folder:
       CreateFolderTab();
