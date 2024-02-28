@@ -9,16 +9,19 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
     <local:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
-    <DataTemplate x:Key="TabListEntry" x:DataType="local:TabUIData">
+    <DataTemplate
+      x:Key="TabListEntry"
+      x:DataType="local:TabUIData">
       <Grid
         ColumnDefinitions="Auto,*,Auto,Auto"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         CornerRadius="8"
         Margin="4"
-        Padding="8">
+        Padding="8"
+        x:DefaultBindMode="TwoWay">
         <Button
           Grid.Column="0"
-          Tag="{x:Bind InstanceID}"
+          Tag="{x:Bind InstanceID,Mode=OneTime}"
           ToolTipService.ToolTip="Tab settings"
           Margin="0,0,8,0"
           Click="ShowTabSettings">
@@ -32,59 +35,67 @@
         />
         <Button
           Grid.Column="2"
-          Tag="{x:Bind InstanceID}"
+          Tag="{x:Bind InstanceID,Mode=OneTime}"
           ToolTipService.ToolTip="Show troubleshooting information"
           Margin="0,0,8,0"
-          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}"
+          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility},Mode=OneWay}"
           Click="ShowDebugInfo">
           <FontIcon Glyph="&#xEbE8;" />
         </Button>
-        <Button Grid.Column="3" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+        <Button Grid.Column="3" Tag="{x:Bind InstanceID,Mode=OneTime}" Click="RemoveTab">
           <SymbolIcon Symbol="Delete" />
         </Button>
       </Grid>
     </DataTemplate>
     <!--- Common for all tabs -->
-    <DataTemplate x:Key="TabSettingsCommon" x:DataType="local:TabUIData">
+    <DataTemplate
+      x:Key="TabSettingsCommon"
+      x:DataType="local:TabUIData">
       <TextBox
         Text="{x:Bind Title,Mode=TwoWay}"
         Header="Tab name"
       />
     </DataTemplate>
     <!-- Any Tab -->
-    <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
+    <DataTemplate
+      x:Key="GenericTabTemplate"
+      x:DataType="local:TabUIData">
       <StackPanel
         Orientation="Vertical"
-        Spacing="8">
+        Spacing="8"
+        x:DefaultBindMode="TwoWay">
         <ContentPresenter 
-          Content="{x:Bind}"
+          Content="{x:Bind Mode=OneTime}"
           ContentTemplate="{StaticResource TabSettingsCommon}"
         />
       </StackPanel>
     </DataTemplate>
     <!-- Browser Tab -->
-    <DataTemplate x:Key="BrowserTabTemplate" x:DataType="local:BrowserTabUIData">
+    <DataTemplate
+      x:Key="BrowserTabTemplate"
+      x:DataType="local:BrowserTabUIData">
       <StackPanel
         Orientation="Vertical"
-        Spacing="8">
+        Spacing="8"
+        x:DefaultBindMode="TwoWay">
         <ContentPresenter 
-          Content="{x:Bind}"
+          Content="{x:Bind Mode=OneTime}"
           ContentTemplate="{StaticResource TabSettingsCommon}"
         />
         <ToggleSwitch
-          IsOn="{x:Bind IsBackgroundTransparent, Mode=TwoWay}"
+          IsOn="{x:Bind IsBackgroundTransparent}"
           Header="Transparent background"
           OffContent="Background is solid"
           OnContent="Background is transparent"
         />
         <ToggleSwitch
-          IsOn="{x:Bind IsSimHubIntegrationEnabled, Mode=TwoWay}"
+          IsOn="{x:Bind IsSimHubIntegrationEnabled}"
           Header="SimHub integration"
           OffContent="Disabled"
           OnContent="Automatically resize to fit SimHub dashboards"
         />
         <ToggleSwitch
-          IsOn="{x:Bind IsDeveloperToolsWindowEnabled, Mode=TwoWay}"
+          IsOn="{x:Bind IsDeveloperToolsWindowEnabled}"
           Header="Developer tools window"
           OffContent="Disabled"
           OnContent="Enabled"
@@ -92,23 +103,26 @@
       </StackPanel>
     </DataTemplate>
     <!-- DCS Radio Tab -->
-    <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">
+    <DataTemplate
+      x:Key="DCSRadioLogTabTemplate"
+      x:DataType="local:DCSRadioLogTabUIData">
       <StackPanel
         Orientation="Vertical"
-        Spacing="8">
+        Spacing="8"
+        x:DefaultBindMode="TwoWay">
         <ContentPresenter 
-          Content="{x:Bind}"
+          Content="{x:Bind Mode=OneTime}"
           ContentTemplate="{StaticResource TabSettingsCommon}"
         />
         <RadioButtons
-          SelectedIndex="{x:Bind MissionStartBehavior, Mode=TwoWay}"
+          SelectedIndex="{x:Bind MissionStartBehavior}"
           MaxColumns="2"
           Header="On mission start">
           <x:String>Draw a separator</x:String>
           <x:String>Clear history</x:String>
         </RadioButtons>
         <ToggleSwitch
-          IsOn="{x:Bind TimestampsEnabled, Mode=TwoWay}"
+          IsOn="{x:Bind TimestampsEnabled}"
           Header="Timestamps"
           OffContent="No Timestamps"
           OnContent="Show Timestamps"
@@ -116,12 +130,15 @@
       </StackPanel>
     </DataTemplate>
     <!-- Window Capture Tab -->
-    <DataTemplate x:Key="WindowCaptureTabTemplate" x:DataType="local:WindowCaptureTabUIData">
+    <DataTemplate
+    x:Key="WindowCaptureTabTemplate"
+    x:DataType="local:WindowCaptureTabUIData">
       <StackPanel
         Orientation="Vertical"
-        Spacing="8">
+        Spacing="8"
+        x:DefaultBindMode="TwoWay">
         <ContentPresenter 
-          Content="{x:Bind Mode=OneWay}"
+          Content="{x:Bind Mode=OneTime}"
           ContentTemplate="{StaticResource TabSettingsCommon}"
         />
         <TextBox
