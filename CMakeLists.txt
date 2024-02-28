@@ -99,6 +99,13 @@ project(com.fredemmott.openkneeboard VERSION 1.7.0.${VERSION_BUILD} LANGUAGES CX
 
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
+message(STATUS "CMake Generator: ${CMAKE_GENERATOR}")
+
+STRING(REGEX MATCH "^Visual Studio" GENERATOR_IS_VS "${CMAKE_GENERATOR}")
+if (NOT GENERATOR_IS_VS)
+  message(FATAL_ERROR "The CMake generator '${CMAKE_GENERATOR}' is not supported; use the Visual Studio generator instead.")
+endif()
+
 # Handy for CI
 file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${CMAKE_PROJECT_VERSION}")
 
