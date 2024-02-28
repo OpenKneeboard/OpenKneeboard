@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/143460739",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/143460739/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/143460739/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7-beta1",
-    "id": 143460739,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/144081933",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/144081933/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/144081933/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7-beta2",
+    "id": 144081933,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84IjQmD",
-    "tag_name": "v1.7-beta1",
+    "node_id": "RE_kwDOGk0DR84IloQN",
+    "tag_name": "v1.7-beta2",
     "target_commitish": "master",
-    "name": "v1.7-beta1: rough edges and bugfixes",
+    "name": "v1.7-beta2",
     "draft": false,
     "prerelease": true,
-    "created_at": "2024-02-24T01:44:32Z",
-    "published_at": "2024-02-24T02:09:53Z",
+    "created_at": "2024-02-28T21:21:51Z",
+    "published_at": "2024-02-28T22:13:24Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/153281701",
-        "id": 153281701,
-        "node_id": "RA_kwDOGk0DR84JIuSl",
-        "name": "OpenKneeboard-v1.7-beta1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/154079842",
+        "id": 154079842,
+        "node_id": "RA_kwDOGk0DR84JLxJi",
+        "name": "OpenKneeboard-v1.7-beta2-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 174378547,
+        "size": 174043441,
         "download_count": 0,
-        "created_at": "2024-02-24T02:08:15Z",
-        "updated_at": "2024-02-24T02:08:20Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta1/OpenKneeboard-v1.7-beta1-DebugSymbols.zip"
+        "created_at": "2024-02-28T21:46:01Z",
+        "updated_at": "2024-02-28T21:46:05Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta2/OpenKneeboard-v1.7-beta2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/153281700",
-        "id": 153281700,
-        "node_id": "RA_kwDOGk0DR84JIuSk",
-        "name": "OpenKneeboard-v1.7-beta1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/154079843",
+        "id": 154079843,
+        "node_id": "RA_kwDOGk0DR84JLxJj",
+        "name": "OpenKneeboard-v1.7-beta2.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 40173568,
+        "size": 40194048,
         "download_count": 0,
-        "created_at": "2024-02-24T02:08:15Z",
-        "updated_at": "2024-02-24T02:08:16Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta1/OpenKneeboard-v1.7-beta1.msi"
+        "created_at": "2024-02-28T21:46:01Z",
+        "updated_at": "2024-02-28T21:46:02Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta2/OpenKneeboard-v1.7-beta2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7-beta1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7-beta1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7-beta1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta1/OpenKneeboard-v1.7-beta1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Features\r\n\r\n- Added CYCLE_ACTIVE_VIEW remote control; this replaces SWITCH_KNEEBOARDS, in combination with SWAP_FIRST_TWO_VIEWS\r\n- Window Capture Tab settings now includes the executable path, and wildcards are supported; for programs that install to a directory containing their version number, it can be useful to replace the version number with a `*`\r\n- Web Dashboard Tab settings now include an option to disable transparency, simhub integration, or to enable a developer tools window\r\n- Detect and warn about Oculus and non-VR games running as administrator; this matches the existing warning for OpenXR games\r\n\r\n# Bugfixes\r\n\r\n- Fixed the SET_CURRENT_TAB remote control\r\n- Fixed crash when loading tabs if the tab size is temporarily 0x0\r\n- Fixed crash if a PDF is replaced while it's open by Windows 11 Print-to-PDF\r\n- Fixed files not being reloaded if replaced with an older file\r\n- Fixed in-game tablet UI for second kneeboard\r\n- Fixed some crashes on exit\r\n- Fixed misaligned images/text when showing tab navigation\r\n- Fixed OpenTabletDriver dropouts when under heavy load, e.g. when loading PDF navigation\r\n- Fixed content being off-center in the app if running on a high-DPI display\r\n- Fixed support for multiple views under legacy SteamVR mode\r\n- Fixed 'jumpy' clock\r\n\r\n# Other Improvements\r\n\r\n- The in-game tablet UI is no longer shown if no tablet is detected, as the buttons can otherwise be confusing\r\n- Moved all tab settings to popups as the Window Capture Tab settings were getting unwieldly, and variable-sized list entries were causing issues in WinUI3\r\n- Moved basic tab debugging information (e.g. DCS tab file paths) to a new popup; click the bug button near the right hand side of the entry in tab settings to view.\r\n- Capped Window Capture/Browser framerate to OpenKneeboard's own framerate\r\n- Reduced CPU overhead of enumerating processes while looking for games\r\n- Banned binding the left mouse button and the escape key; these are frequently accidentally bound when trying to click the 'Cancel' button in the binding popup, and do not seem genuinely useful to support\r\n- Added more explanation text to the Window Capture Tab settings\r\n- Added more explanation text to the recentering requirement\r\n- Improved non-VR visual quality\r\n- Improved non-VR and Oculus compatibility under slightly-restricted Windows user accounts\r\n- Improved non-VR and Oculus reliability\r\n- More detailed logging for non-VR and Oculus issues"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7-beta2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7-beta2",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7-beta2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-beta2/OpenKneeboard-v1.7-beta2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nChanges since v1.7-beta1:\r\n\r\n- Fixed bug introduced in beta1 where many tab settings were no longer changeable\r\n- Added option to upscale under OpenXR; this is on by default for Varjo, and off-by-default for other headsets. Runtimes are theoretically able to upscale more optimally than OpenKneeboard can. This option should be left off or on automatic unless it is shows a significant improvement on your headset.\r\n- Fixed newly added window capture tabs not starting until reloaded or OpenKneeboard is restarted\r\n- Reduced CPU overhead of DLL injection\r\n- PDFs are now upscaled by default; this improves some fonts that were extremely degraded, but slightly lowers maximum quality\r\n- Fix several crashes on exit\r\n- OpenKneeboard now exits faster\r\n- Fix OpenKneeboard-Viewer crashes when resizing"
   }
 ]
