@@ -63,23 +63,18 @@ HeaderUILayer::HeaderUILayer(
     {0.7f, 0.7f, 0.7f, 0.8f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderBGBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
+  mHeaderTextBrush = dxr->mBlackBrush;
   ctx->CreateSolidColorBrush(
     {0.4f, 0.4f, 0.4f, 0.5f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mDisabledButtonBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mButtonBrush.put()));
+  mButtonBrush = dxr->mBlackBrush;
   ctx->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHoverButtonBrush.put()));
   mActiveButtonBrush = mHoverButtonBrush;
+  mActiveViewSeparatorBrush = mDXResources->mBlackBrush;
 }
 
 HeaderUILayer::~HeaderUILayer() {
@@ -216,6 +211,18 @@ void HeaderUILayer::DrawToolbar(
   const PixelRect& headerRect,
   PixelRect* headerTextRect) {
   if (!context.mIsActiveForInput) {
+    return;
+  }
+
+  auto tablets = mKneeboardState->GetTabletInputAdapter();
+  if (!(tablets && tablets->HaveAnyTablet())) {
+    // If the tablet is present, the buttons indicate the active view
+    d2d->DrawLine(
+      {headerRect.Left<FLOAT>(), headerRect.Bottom()},
+      {headerRect.Right<FLOAT>(), headerRect.Bottom()},
+      mActiveViewSeparatorBrush.get(),
+      1.0f,
+      nullptr);
     return;
   }
 
