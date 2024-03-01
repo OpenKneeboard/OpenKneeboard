@@ -112,20 +112,20 @@ D3D11Resources::D3D11Resources() {
 D3D11Resources::~D3D11Resources() = default;
 
 D2DResources::D2DResources(D3D11Resources* d3d) {
-  check_hresult(
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, mD2DFactory.put()));
-
   D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
 #ifdef DEBUG
   d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
-  check_hresult(D2D1CreateDevice(
-    d3d->mDXGIDevice.get(),
-    D2D1::CreationProperties(
-      D2D1_THREADING_MODE_MULTI_THREADED,
-      d2dDebug,
-      D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
-    mD2DDevice.put()));
+  D2D1_FACTORY_OPTIONS factoryOptions {.debugLevel = d2dDebug};
+
+  check_hresult(D2D1CreateFactory(
+    D2D1_FACTORY_TYPE_MULTI_THREADED,
+    __uuidof(mD2DFactory),
+    &factoryOptions,
+    mD2DFactory.put_void()));
+
+  check_hresult(
+    mD2DFactory->CreateDevice(d3d->mDXGIDevice.get(), mD2DDevice.put()));
 
   winrt::com_ptr<ID2D1DeviceContext> ctx;
   check_hresult(mD2DDevice->CreateDeviceContext(

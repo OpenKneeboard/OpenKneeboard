@@ -82,7 +82,7 @@ struct D2DResources {
   D2DResources(const D2DResources&) = delete;
   D2DResources& operator=(const D2DResources&) = delete;
 
-  winrt::com_ptr<ID2D1Factory> mD2DFactory;
+  winrt::com_ptr<ID2D1Factory1> mD2DFactory;
 
   winrt::com_ptr<ID2D1Device> mD2DDevice;
   winrt::com_ptr<ID2D1DeviceContext5> mD2DDeviceContext;
