@@ -80,7 +80,13 @@ class InjectionBootstrapper final {
     const auto pathLen = GetModuleFileNameW(NULL, pathBuf, 1024);
     const auto executableDir = std::filesystem::canonical(
       std::filesystem::path({pathBuf, pathLen}).parent_path());
-    for (const auto [module, path]: this->GetInProcessDLLs()) {
+    const auto dlls = this->GetInProcessDLLs();
+    const auto haveSteamOverlay
+      = std::ranges::any_of(dlls, [](const auto& pair) {
+          const auto path = std::get<1>(pair);
+          return path.filename() == "GameOverlayRenderer64.dll";
+        });
+    for (const auto [module, path]: dlls) {
       if (path.parent_path() != executableDir) {
         continue;
       }
@@ -88,8 +94,14 @@ class InjectionBootstrapper final {
       const auto filename = path.filename().wstring();
       for (const auto hookDll: {L"d3d11.dll", L"dxgi.dll"}) {
         if (_wcsicmp(filename.c_str(), hookDll) == 0) {
-          dprintf("Refusing to hook because found third-party dll: {}", path);
-          return;
+          if (haveSteamOverlay) {
+            dprintf("Found third-party dll: {}", path);
+            dprint(
+              "Ignoring because Steam overlay is present - can piggy-back");
+          } else {
+            dprintf("Refusing to hook because found third-party dll: {}", path);
+            return;
+          }
         }
       }
     }
