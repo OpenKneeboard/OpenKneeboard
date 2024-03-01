@@ -46,10 +46,18 @@ BookmarksUILayer::BookmarksUILayer(
   auto d2d = dxr->mD2DDeviceContext;
   d2d->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f}, D2D1::BrushProperties(), mBackgroundBrush.put());
-  d2d->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
+  mTextBrush = dxr->mBlackBrush;
   d2d->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mHoverBrush.put());
+  mCurrentPageStrokeBrush = dxr->mWhiteBrush;
+
+  winrt::check_hresult(mDXResources->mD2DFactory->CreateStrokeStyle(
+    D2D1_STROKE_STYLE_PROPERTIES {
+      .dashStyle = D2D1_DASH_STYLE_DASH,
+    },
+    nullptr,
+    0,
+    mCurrentPageStrokeStyle.put()));
 }
 
 void BookmarksUILayer::Init() {
@@ -179,6 +187,9 @@ void BookmarksUILayer::Render(
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
   size_t buttonNumber = 0;
+  const auto currentTab = mKneeboardView->GetCurrentTabView();
+  const auto currentTabID = currentTab->GetTab()->GetRuntimeID();
+  const auto currentPageID = currentTab->GetPageID();
   for (const auto& button: buttons) {
     const D2D1_RECT_F buttonRect {
       rect.Left<float>(),
@@ -195,6 +206,16 @@ void BookmarksUILayer::Render(
 
     d2d->DrawTextW(
       text.data(), text.size(), textFormat.get(), buttonRect, textBrush.get());
+    if (
+      button.mBookmark.mTabID == currentTabID
+      && button.mBookmark.mPageID == currentPageID) {
+      d2d->DrawLine(
+        {buttonRect.right - 5, buttonRect.top + 1},
+        {buttonRect.right - 5, buttonRect.bottom},
+        mCurrentPageStrokeBrush.get(),
+        4.0f,
+        mCurrentPageStrokeStyle.get());
+    }
     if (buttonNumber != 1) {
       d2d->DrawLine(
         {rect.Left<FLOAT>(), buttonRect.top},

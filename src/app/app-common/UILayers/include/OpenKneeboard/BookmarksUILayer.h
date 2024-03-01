@@ -73,6 +73,9 @@ class BookmarksUILayer final
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHoverBrush;
 
+  winrt::com_ptr<ID2D1SolidColorBrush> mCurrentPageStrokeBrush;
+  winrt::com_ptr<ID2D1StrokeStyle> mCurrentPageStrokeStyle;
+
   struct Button {
     D2D1_RECT_F mRect {};
     Bookmark mBookmark {};
