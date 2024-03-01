@@ -111,8 +111,6 @@ static void WriteIPCMessage(std::wstring_view message) {
   memcpy(
     messageSHM->mMessage, message.data(), message.size() * sizeof(message[0]));
   messageSHM->mMessageLength = message.size();
-  auto wtf = std::format("Message size: {}", messageSHM->mMessageLength);
-  OutputDebugStringA(wtf.c_str());
 
   FlushViewOfFile(shm, sizeof(DPrintMessage));
   UnmapViewOfFile(shm);
