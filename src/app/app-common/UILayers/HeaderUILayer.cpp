@@ -218,8 +218,8 @@ void HeaderUILayer::DrawToolbar(
   if (!(tablets && tablets->HaveAnyTablet())) {
     // If the tablet is present, the buttons indicate the active view
     d2d->DrawLine(
-      {headerRect.Left<FLOAT>(), headerRect.Bottom()},
-      {headerRect.Right<FLOAT>(), headerRect.Bottom()},
+      {headerRect.Left<FLOAT>(), headerRect.Bottom<FLOAT>()},
+      {headerRect.Right<FLOAT>(), headerRect.Bottom<FLOAT>()},
       mActiveViewSeparatorBrush.get(),
       1.0f,
       nullptr);
