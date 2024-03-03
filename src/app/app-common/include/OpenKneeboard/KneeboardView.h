@@ -27,6 +27,8 @@
 #include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/inttypes.h>
 
+#include <shims/source_location>
+
 #include <memory>
 #include <vector>
 
@@ -63,8 +65,12 @@ class KneeboardView final : private EventReceiver,
   std::shared_ptr<ITab> GetCurrentTab() const;
   TabIndex GetTabIndex() const;
   std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const;
-  void SetCurrentTabByIndex(TabIndex);
-  void SetCurrentTabByRuntimeID(ITab::RuntimeID);
+  void SetCurrentTabByIndex(
+    TabIndex,
+    const std::source_location& loc = std::source_location::current());
+  void SetCurrentTabByRuntimeID(
+    ITab::RuntimeID,
+    const std::source_location& loc = std::source_location::current());
 
   void PreviousTab();
   void NextTab();

@@ -791,10 +791,24 @@ void KneeboardState::InitializeViews() {
 
     view->SetTabs(tabs);
 
-    auto tabIt
-      = std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
-    if (tabIt != tabs.end()) {
-      view->SetCurrentTabByRuntimeID((*tabIt)->GetRuntimeID());
+    if (config.mDefaultTabID != winrt::guid {}) {
+      auto tabIt
+        = std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
+      if (tabIt != tabs.end()) {
+        dprintf(
+          "Setting view '{}' ({}) to default tab '{}' ({})",
+          config.mName,
+          config.mGuid,
+          (*tabIt)->GetTitle(),
+          config.mDefaultTabID);
+        view->SetCurrentTabByRuntimeID((*tabIt)->GetRuntimeID());
+      } else {
+        dprintf(
+          "Couldn't find default tab {} for view '{}' ({})",
+          config.mDefaultTabID,
+          config.mName,
+          config.mGuid);
+      }
     }
 
     AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);

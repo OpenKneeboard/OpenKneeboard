@@ -70,7 +70,7 @@ KneeboardView::KneeboardView(
     std::bind_front(&KneeboardView::UpdateUILayers, this));
 
   const auto id = this->GetRuntimeID().GetTemporaryValue();
-  dprintf("Created kneeboard view ID {:#016x} ({})", id, id);
+  dprintf("Created kneeboard view ID {:#018x} ({})", id, id);
 }
 
 std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
@@ -147,7 +147,9 @@ TabIndex KneeboardView::GetTabIndex() const {
   return static_cast<TabIndex>(it - mTabViews.begin());
 }
 
-void KneeboardView::SetCurrentTabByIndex(TabIndex index) {
+void KneeboardView::SetCurrentTabByIndex(
+  TabIndex index,
+  const std::source_location& loc) {
   if (index >= mTabViews.size()) {
     return;
   }
@@ -158,10 +160,19 @@ void KneeboardView::SetCurrentTabByIndex(TabIndex index) {
     mCurrentTabView->PostCursorEvent({});
   }
   mCurrentTabView = mTabViews.at(index);
+
+  dprintf(
+    "Current tab for kneeboard view {:#018x} changed to '{}' ({}) @ {}",
+    this->GetRuntimeID().GetTemporaryValue(),
+    mCurrentTabView->GetRootTab()->GetTitle(),
+    mCurrentTabView->GetRootTab()->GetPersistentID(),
+    loc);
   evCurrentTabChangedEvent.Emit(index);
 }
 
-void KneeboardView::SetCurrentTabByRuntimeID(ITab::RuntimeID id) {
+void KneeboardView::SetCurrentTabByRuntimeID(
+  ITab::RuntimeID id,
+  const std::source_location& loc) {
   const auto it = std::ranges::find(mTabViews, id, [](const auto& view) {
     return view->GetRootTab()->GetRuntimeID();
   });
@@ -173,7 +184,7 @@ void KneeboardView::SetCurrentTabByRuntimeID(ITab::RuntimeID id) {
     return;
   }
 
-  SetCurrentTabByIndex(it - mTabViews.begin());
+  SetCurrentTabByIndex(it - mTabViews.begin(), loc);
 }
 
 void KneeboardView::PreviousTab() {

@@ -108,4 +108,20 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
     token, [timeout]() { return winrt::resume_after(timeout); }, loc);
 }
 
+template <class CharT>
+struct std::formatter<winrt::guid, CharT>
+  : std::formatter<std::basic_string_view<CharT>, CharT> {
+  template <class FormatContext>
+  auto format(const winrt::guid& guid, FormatContext& fc) const {
+    auto ret = winrt::to_hstring(guid);
+    if constexpr (std::same_as<CharT, wchar_t>) {
+      return std::formatter<std::basic_string_view<CharT>, CharT>::format(
+        std::basic_string_view<CharT> {ret.data(), ret.size()}, fc);
+    } else {
+      return std::formatter<std::basic_string_view<CharT>, CharT>::format(
+        std::basic_string_view<CharT> {winrt::to_string(ret)}, fc);
+    }
+  }
+};
+
 }// namespace OpenKneeboard
