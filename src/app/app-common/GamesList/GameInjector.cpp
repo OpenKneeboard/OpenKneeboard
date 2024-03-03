@@ -446,7 +446,7 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   // We fetch the full list again as thread exit code is a DWORD, and
   // sizeof(DWORD) < sizeof(HMODULE)
   if (!GetProcessCurrentDLLs(process).contains(dll)) {
-    dprintf("Injecting {} failed :'(", dll.string());
+    dprintf("DLL {} not found in list after injection :'(", dll.string());
     return false;
   }
 
