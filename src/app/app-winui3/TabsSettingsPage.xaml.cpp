@@ -438,6 +438,13 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
     matchSpec.mMatchTitle
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
+  // These are all `Chrome_WidgetWin_1` window classes - but matching title
+  // isn't correct for *all* electron apps, e.g. title should not be matched
+  // for Discord
+  if (windowSpec->mExecutableLastSeenPath.filename() == "RacelabApps.exe") {
+    matchSpec.mMatchTitle
+      = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
+  }
 
   this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
 }
