@@ -54,6 +54,7 @@
 #include <microsoft.ui.xaml.window.h>
 
 #include <ranges>
+#include <regex>
 
 #include <icu.h>
 #include <shobjidl.h>
@@ -444,6 +445,16 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   if (windowSpec->mExecutableLastSeenPath.filename() == "RacelabApps.exe") {
     matchSpec.mMatchTitle
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
+  }
+  // Electron apps tend to have versioned installation directories; detect,
+  // and use a wildcard for the version
+  if (windowSpec->mWindowClass == "Chrome_WidgetWin_1") {
+    // \\\\sigh.
+    matchSpec.mExecutablePathPattern = std::regex_replace(
+      matchSpec.mExecutablePathPattern,
+      std::regex {"\\\\app-\\d+\\.\\d+\\.\\d+\\\\([^/]+\\.exe)$"},
+      "\\\\app-*\\\\\\1",
+      std::regex_constants::format_sed);
   }
 
   this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
