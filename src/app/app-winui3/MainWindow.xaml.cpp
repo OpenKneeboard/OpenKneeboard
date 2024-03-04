@@ -148,7 +148,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     }
   }
 
-  auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectNameW);
+  auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectReverseDomainW);
   // Initially leak for the duration of the app
   mHwndFile = Win32::CreateFileMappingW(
     INVALID_HANDLE_VALUE,

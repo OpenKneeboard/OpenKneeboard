@@ -136,7 +136,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
   HttpClient http;
   auto headers = http.DefaultRequestHeaders();
   headers.UserAgent().Append(
-    {ProjectNameW,
+    {ProjectReverseDomainW,
      std::format(
        L"{}.{}.{}.{}-{}",
        Version::Major,

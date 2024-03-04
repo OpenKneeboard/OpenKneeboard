@@ -43,8 +43,9 @@ constexpr unsigned int HeaderPercent = 5;
 constexpr unsigned int FooterPercent = HeaderPercent;
 constexpr unsigned int BookmarksBarPercent = HeaderPercent;
 
-constexpr const char ProjectNameA[] {"@CMAKE_PROJECT_NAME@"};
-constexpr const wchar_t ProjectNameW[] {L"@CMAKE_PROJECT_NAME@"};
+constexpr const char ProjectReverseDomainA[] {"@PROJECT_REVERSE_DOMAIN@"};
+constexpr const wchar_t ProjectReverseDomainW[] {L"@PROJECT_REVERSE_DOMAIN@"};
+constexpr const char OpenXRApiLayerName[] {"@PROJECT_OPENXR_API_LAYER_NAME@"};
 
 constexpr const wchar_t RegistrySubKey[] {
   L"SOFTWARE\\Fred Emmott\\OpenKneeboard"};

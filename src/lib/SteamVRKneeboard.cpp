@@ -158,7 +158,7 @@ bool SteamVRKneeboard::InitializeOpenVR() {
 
   for (uint8_t layerIndex = 0; layerIndex < MaxViewCount; ++layerIndex) {
     auto& layerState = mLayers.at(layerIndex);
-    auto key = std::format("{}.{}", ProjectNameA, layerIndex);
+    auto key = std::format("{}.{}", ProjectReverseDomainA, layerIndex);
     auto name = std::format("OpenKneeboard {}", layerIndex + 1);
 
     CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerState.mOverlay);

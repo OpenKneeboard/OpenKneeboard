@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.23)
 
+set(PROJECT_REVERSE_DOMAIN "com.openkneeboard" CACHE STRING "Project reverse domain, e.g. com.example; used for IPC")
+set(PROJECT_OPENXR_API_LAYER_NAME "XR_APILAYER_FREDEMMOTT_OpenKneeboard" CACHE STRING "OpenXR API layer name")
+set(PROJECT_OPENXR_API_LAYER_DESCRIPTION "OpenKneeboard - https://github.com/OpenKneeboard/OpenKneeboard" CACHE STRING "Project description for API layer JSON")
+
 # Required for ID3D11On12Device2
 # set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
 # Required for GraphicsCaptureItem.TryCreateFromWindowId
@@ -95,7 +99,7 @@ else()
   set(VERSION_BUILD 0)
 endif()
 
-project(com.fredemmott.openkneeboard VERSION 1.7.0.${VERSION_BUILD} LANGUAGES CXX C)
+project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.7.0.${VERSION_BUILD} LANGUAGES CXX C)
 
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 

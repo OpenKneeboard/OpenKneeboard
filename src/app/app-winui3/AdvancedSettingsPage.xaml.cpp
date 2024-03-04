@@ -396,7 +396,8 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   // Failed to spawn, e.g. UAC deny
   gTroubleshootingStore = TroubleshootingStore::Get();
   dprint("Relaunch failed, coming back up!");
-  gMutex = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW);
+  gMutex
+    = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
   mKneeboard->AcquireExclusiveResources();
 }
 

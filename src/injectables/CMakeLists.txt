@@ -143,11 +143,16 @@ target_link_libraries(
   OpenKneeboard-version
 )
 
+configure_file(
+  OpenKneeboard-OpenXR.in.json
+  OpenKneeboard-OpenXR.intermediate.json
+  NEWLINE_STYLE UNIX
+)
 foreach(PREFIX IN ITEMS "" "$<TARGET_FILE_DIR:OpenKneeboard-OpenXR>/")
   file(
     GENERATE
     OUTPUT "${PREFIX}OpenKneeboard-OpenXR.json"
-    INPUT "OpenKneeboard-OpenXR.json.in"
+    INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
     NEWLINE_STYLE UNIX
   )
 endforeach()

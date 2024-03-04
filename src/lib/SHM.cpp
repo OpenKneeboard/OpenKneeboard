@@ -141,7 +141,7 @@ static auto SHMPath() {
   }
   sCache = std::format(
     L"{}/{}.{}.{}.{}-s{:x}",
-    ProjectNameW,
+    ProjectReverseDomainW,
     Version::Major,
     Version::Minor,
     Version::Patch,

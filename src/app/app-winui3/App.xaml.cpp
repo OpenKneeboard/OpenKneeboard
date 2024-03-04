@@ -199,7 +199,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 }
 
 static void LogSystemInformation() {
-  dprintf("{} {}", ProjectNameA, Version::ReleaseName);
+  dprintf("{} {}", ProjectReverseDomainA, Version::ReleaseName);
   dprint("----------");
   dprintf("  Elevated: {}", IsElevated());
   dprintf("  Shell Elevated: {}", IsShellElevated());
@@ -436,7 +436,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 0;
   }
 
-  gMutex = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW);
+  gMutex
+    = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     const auto hwnd = GetMainHWND();
     if (!hwnd) {

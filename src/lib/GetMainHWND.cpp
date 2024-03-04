@@ -18,9 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/GetMainHWND.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+
 #include <shims/winrt/base.h>
 
 #include <format>
@@ -41,7 +43,8 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   gCache.mInfo = {};
   const scope_guard updateCacheTime([&]() { gCache.mCacheTime = now; });
 
-  auto name = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
+  auto name
+    = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectReverseDomainW);
   winrt::handle hwndFile {OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
   if (!hwndFile) {
     return {};

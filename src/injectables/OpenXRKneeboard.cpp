@@ -71,8 +71,7 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-constexpr std::string_view OpenXRLayerName {
-  "XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
+constexpr std::string_view OpenXRLayerName {Config::OpenXRApiLayerName};
 static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
 
 // Don't use a unique_ptr as on process exit, windows doesn't clean these up

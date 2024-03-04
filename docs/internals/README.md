@@ -39,6 +39,16 @@ The 'developer command prompt' is included with Visual Studio, and makes cmake a
 
 After building, the executable will be in `build/src/app/app-winui3/Debug`; the various utilities (including the test viewer) will be in `build/src/utilities/Debug`.
 
+If you are distributing OpenKneeboard or a derivative work, please change the following CMake variables to avoid interoperability issues:
+
+- `PROJECT_REVERSE_DOMAIN`: e.g. `com.yourdomain.yourprojectname` or `io.github.yourusername.yourprojectname`; used for IPC paths/keys
+- `PROJECT_OPENXR_API_LAYER_NAME`: e.g. `XR_APILAYER_FREDEMMOTT_OpenKneeboard`; replace both the project name and vendor ID. You can register your own OpenXR vendor ID, or `NOVENDOR` is a common alternative.
+- `PROJECT_OPENXR_API_LAYER_DESCRIPTION`: a short, human-readable description of your project.
+
+To avoid user confusion, you should avoid using the word 'OpenKneeboard' in the name or description of your project.
+
+Despite these options, OpenKneeboard is not an SDK, and no support is available for building other projects using it.
+
 ## IPC
 
 ### OpenKneeboard app -> renderers

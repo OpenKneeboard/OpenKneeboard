@@ -78,7 +78,7 @@ class ActiveConsumers::Impl {
     }
     sCache = std::format(
       L"{}/{}.{}.{}.{}/ActiveConsumers-s{:x}",
-      ProjectNameW,
+      ProjectReverseDomainW,
       Version::Major,
       Version::Minor,
       Version::Patch,

@@ -169,7 +169,7 @@ const wchar_t* GameEvent::GetMailslotPath() {
   static std::wstring sPath;
   if (sPath.empty()) {
     sPath = std::format(
-      L"\\\\.\\mailslot\\{}.events.v1.3", OpenKneeboard::ProjectNameW);
+      L"\\\\.\\mailslot\\{}.events.v1.3", OpenKneeboard::ProjectReverseDomainW);
   }
   return sPath.c_str();
 }

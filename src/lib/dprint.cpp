@@ -34,7 +34,8 @@
 namespace OpenKneeboard {
 
 static std::wstring GetDPrintResourceName(std::wstring_view key) {
-  return std::format(L"{}.dprint.v2.{}", OpenKneeboard::ProjectNameW, key);
+  return std::format(
+    L"{}.dprint.v2.{}", OpenKneeboard::ProjectReverseDomainW, key);
 }
 
 #define IPC_RESOURCE_NAME_FUNC(resource) \
