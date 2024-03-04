@@ -307,15 +307,6 @@ std::string HelpPage::GetGameEventsAsString() noexcept {
   for (const auto& event: events) {
     ret += "\n\n";
 
-    std::string_view name(event.mName);
-    const char prefix[] = "com.fredemmott.openkneeboard";
-    if (name.starts_with(prefix)) {
-      name.remove_prefix(sizeof(prefix));
-    }
-    if (name.starts_with('.')) {
-      name.remove_prefix('.');
-    }
-
     ret += std::format(
       "{}:\n"
       "  Latest value:  '{}'\n"
@@ -323,7 +314,7 @@ std::string HelpPage::GetGameEventsAsString() noexcept {
       "  Last seen:     {}\n"
       "  Receive count: {}\n"
       "  Change count:  {}",
-      name,
+      event.mName,
       event.mValue,
       ReadableTime(event.mFirstSeen),
       ReadableTime(event.mLastSeen),
