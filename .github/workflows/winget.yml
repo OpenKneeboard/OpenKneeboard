@@ -36,11 +36,7 @@ jobs:
         id: should-publish
 
       - if: ${{ steps.should-publish.outputs.publish == 'true' }}
-        with:
-          identifier: FredEmmott.OpenKneeboard
-          release-tag: ${{ steps.should-publish.outputs.version }}
-          fork-user: openkneeboard-bot
-          token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
+        name: Run Komac
         run: |-
           Invoke-WebRequest -OutFile komac.exe https://github.com/russellbanks/Komac/releases/download/v2.1.0/KomacPortable-x64.exe
           .\komac.exe update `
