@@ -45,4 +45,5 @@ jobs:
             -i FredEmmott.OpenKneeboard `
             --version ${{ steps.should-publish.outputs.version }} `
             --urls ${{ steps.should-publish.outputs.download_uri }} `
+            --token ${{secrets.OPENKNEEBOARD_BOT_PAT }} `
             --submit
