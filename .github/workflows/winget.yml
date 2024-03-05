@@ -24,7 +24,7 @@ jobs:
             exit 1
           }
           $uri = ($data.assets | where-object { $_.name -like '*.msi' }).browser_download_url
-          if (!uritag) {
+          if (!$uri) {
             Write-Error "Cannot determine installer URI to publish"
             exit 1
           }
