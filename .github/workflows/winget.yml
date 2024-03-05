@@ -23,14 +23,16 @@ jobs:
             Write-Error "Cannot determine tag to publish"
             exit 1
           }
+          $version = $tag -replace '^v',''
+
           $uri = ($data.assets | where-object { $_.name -like '*.msi' }).browser_download_url
           if (!$uri) {
             Write-Error "Cannot determine installer URI to publish"
             exit 1
           }
-          Write-Host "Setting version to '$tag' from '$uri'"
+          Write-Host "Setting version to '$version' from '$uri'"
           Add-Content $Env:GITHUB_OUTPUT "publish=true"
-          Add-Content $Env:GITHUB_OUTPUT "version=$tag"
+          Add-Content $Env:GITHUB_OUTPUT "version=$version"
           Add-Content $Env:GITHUB_OUTPUT "download_uri=$uri"
         shell: pwsh
         id: should-publish
@@ -41,5 +43,6 @@ jobs:
           Invoke-WebRequest -OutFile komac.exe https://github.com/russellbanks/Komac/releases/download/v2.1.0/KomacPortable-x64.exe
           .\komac.exe update `
             -i FredEmmott.OpenKneeboard `
+            --version ${{ steps.should-publish.outputs.version }} `
             --urls ${{ steps.should-publish.outputs.download_uri }} `
             --submit
