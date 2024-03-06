@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/json_fwd.h>
 
+#include <shims/winrt/base.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -33,6 +35,8 @@ struct ProfileSettings final {
     // folder name, e.g 'F/A-18C', so we need to store the actual name
     std::string mName;
 
+    winrt::guid mGuid = random_guid();
+
     constexpr auto operator<=>(const Profile&) const noexcept = default;
   };
 
@@ -44,6 +48,7 @@ struct ProfileSettings final {
   bool mLoopProfiles {false};
 
   std::vector<Profile> GetSortedProfiles() const;
+  Profile GetActiveProfile() const;
   std::string MakeID(const std::string& name) const;
 
   static ProfileSettings Load();

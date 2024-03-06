@@ -89,6 +89,7 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
   winrt::fire_and_forget CreateWindowCaptureTab();
   fire_and_forget CreateBrowserTab();
   winrt::fire_and_forget PromptToInstallWebView2();
+  winrt::guid GetFilePickerPersistenceGuid();
 
   void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   static OpenKneeboardApp::TabUIData CreateTabUIData(

@@ -30,6 +30,10 @@
 
 namespace OpenKneeboard {
 
+ProfileSettings::Profile ProfileSettings::GetActiveProfile() const {
+  return mProfiles.at(mActiveProfile);
+}
+
 std::vector<ProfileSettings::Profile> ProfileSettings::GetSortedProfiles()
   const {
   std::vector<ProfileSettings::Profile> ret;
@@ -74,6 +78,7 @@ std::string ProfileSettings::MakeID(const std::string& name) const {
 }
 
 ProfileSettings ProfileSettings::Load() {
+  bool migrated = false;
   ProfileSettings ret;
 
   const auto path = Filesystem::GetSettingsDirectory() / "Profiles.json";
@@ -82,6 +87,13 @@ ProfileSettings ProfileSettings::Load() {
     nlohmann::json json;
     f >> json;
     ret = json;
+
+    for (const auto& profile: json.at("Profiles")) {
+      if (!profile.contains("Guid")) {
+        migrated = true;
+        break;
+      }
+    }
   }
 
   if (!ret.mProfiles.contains("default")) {
@@ -89,9 +101,14 @@ ProfileSettings ProfileSettings::Load() {
       .mID = "default",
       .mName = _("Default"),
     };
+    migrated = true;
   }
   if (!ret.mProfiles.contains(ret.mActiveProfile)) {
     ret.mActiveProfile = "default";
+  }
+
+  if (migrated) {
+    ret.Save();
   }
 
   return ret;
@@ -108,7 +125,7 @@ void ProfileSettings::Save() {
   f << std::setw(2) << j << std::endl;
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mID, mName)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mID, mName, mGuid)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   ProfileSettings,
   mActiveProfile,

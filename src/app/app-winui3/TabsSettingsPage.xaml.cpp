@@ -460,16 +460,14 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
 }
 
-static constexpr winrt::guid FilePickerPersistenceGuid {
-  0x207fb217,
-  0x12fc,
-  0x473c,
-  {0xad, 0x36, 0x6d, 0x2c, 0xdb, 0xed, 0xa9, 0xc0}};
+winrt::guid TabsSettingsPage::GetFilePickerPersistenceGuid() {
+  return mKneeboard->GetProfileSettings().GetActiveProfile().mGuid;
+}
 
 template <class T>
 void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
   FilePicker picker(gMainWindow);
-  picker.SettingsIdentifier(FilePickerPersistenceGuid);
+  picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
   picker.SuggestedStartLocation(FOLDERID_Documents);
   std::vector<std::wstring> extensions;
   for (const auto& utf8: FilePageSource::GetSupportedExtensions(mDXR)) {
@@ -503,7 +501,7 @@ void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
 
 void TabsSettingsPage::CreateFolderTab() {
   FilePicker picker(gMainWindow);
-  picker.SettingsIdentifier(FilePickerPersistenceGuid);
+  picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
   picker.SuggestedStartLocation(FOLDERID_Documents);
 
   auto folder = picker.PickSingleFolder();
