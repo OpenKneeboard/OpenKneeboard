@@ -460,16 +460,16 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
 }
 
+static constexpr winrt::guid FilePickerPersistenceGuid {
+  0x207fb217,
+  0x12fc,
+  0x473c,
+  {0xad, 0x36, 0x6d, 0x2c, 0xdb, 0xed, 0xa9, 0xc0}};
+
 template <class T>
 void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
-  constexpr winrt::guid thisCall {
-    0x207fb217,
-    0x12fc,
-    0x473c,
-    {0xad, 0x36, 0x6d, 0x2c, 0xdb, 0xed, 0xa9, 0xc0}};
-
   FilePicker picker(gMainWindow);
-  picker.SettingsIdentifier(thisCall);
+  picker.SettingsIdentifier(FilePickerPersistenceGuid);
   picker.SuggestedStartLocation(FOLDERID_Documents);
   std::vector<std::wstring> extensions;
   for (const auto& utf8: FilePageSource::GetSupportedExtensions(mDXR)) {
@@ -502,13 +502,8 @@ void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
 }
 
 void TabsSettingsPage::CreateFolderTab() {
-  constexpr winrt::guid thisCall {
-    0xae9b7e43,
-    0x5109,
-    0x4b16,
-    {0x8d, 0xfa, 0xef, 0xf6, 0xe6, 0xaf, 0x06, 0x28}};
   FilePicker picker(gMainWindow);
-  picker.SettingsIdentifier(thisCall);
+  picker.SettingsIdentifier(FilePickerPersistenceGuid);
   picker.SuggestedStartLocation(FOLDERID_Documents);
 
   auto folder = picker.PickSingleFolder();
