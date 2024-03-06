@@ -72,11 +72,7 @@ std::optional<std::filesystem::path> FilePicker::PickSingleFile() const {
 void FilePicker::ApplySettings(
   const winrt::com_ptr<IFileDialog>& picker) const {
   const auto initialFolder = this->GetInitialPath();
-  picker->SetFolder(initialFolder.get());
-
-  if (mSettingsIdentifier) {
-    picker->SetClientGuid(*mSettingsIdentifier);
-  }
+  picker->SetDefaultFolder(initialFolder.get());
 
   if (!mSuggestedFileName.empty()) {
     picker->SetFileName(mSuggestedFileName.c_str());
@@ -100,6 +96,12 @@ std::optional<std::filesystem::path> FilePicker::PickSingle(
   FILEOPENDIALOGOPTIONS options) const {
   auto picker
     = winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
+
+  // Not part of ApplySettings() as it Should be the first thing called
+  if (mSettingsIdentifier) {
+    picker->SetClientGuid(*mSettingsIdentifier);
+  }
+
   FILEOPENDIALOGOPTIONS allOpts;
   picker->GetOptions(&allOpts);
   allOpts |= options | FOS_FORCEFILESYSTEM;
@@ -118,6 +120,12 @@ std::optional<std::filesystem::path> FilePicker::PickSingle(
 std::optional<std::filesystem::path> FilePicker::PickSaveFile() const {
   auto picker
     = winrt::create_instance<IFileSaveDialog>(CLSID_FileSaveDialog, CLSCTX_ALL);
+
+  // Not part of ApplySettings() as it Should be the first thing called
+  if (mSettingsIdentifier) {
+    picker->SetClientGuid(*mSettingsIdentifier);
+  }
+
   FILEOPENDIALOGOPTIONS allOpts;
   picker->GetOptions(&allOpts);
   allOpts |= FOS_FORCEFILESYSTEM;
@@ -152,6 +160,12 @@ void FilePicker::SetTitle(const std::wstring& title) {
 std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {
   auto picker
     = winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
+
+  // Not part of ApplySettings() as it Should be the first thing called
+  if (mSettingsIdentifier) {
+    picker->SetClientGuid(*mSettingsIdentifier);
+  }
+
   picker->SetOptions(
     FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM
     | FOS_ALLOWMULTISELECT);
