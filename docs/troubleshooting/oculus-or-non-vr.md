@@ -7,7 +7,7 @@ parent: Troubleshooting
 
 ## Kneeboard Is Not Visible
 
-Restart DCS after each step to see if it's fixed.
+Restart the game after each step to see if it's fixed.
 
 1. Do not run the game or any launchers (e.g. SkateZilla) as administrator/elevated.
 2. Do not run OpenKneeboard as administrator/elevated.
@@ -17,7 +17,7 @@ Restart DCS after each step to see if it's fixed.
 
 ## Game Crashes
 
-Restart DCS after each step to see if it's fixed.
+Restart the game after each step to see if it's fixed.
 
 1. Try setting the Rendering API explicitly instead of 'Auto-detect' in OpenKneeboard's game settings
 2. Remove any `dxgi.dll` or `d3d11.dll` from the same folder as the game executable, e.g. DCS's `bin` or `bin-mt` folders. **Do not remove these from any other location**. These are often used for shader or performance modifications.
