@@ -23,6 +23,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <memory>
@@ -108,12 +109,12 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   float mCompositionScaleX {1.0f};
   float mCompositionScaleY {1.0f};
-  D2D1_SIZE_F mCanvasSize {};
+  PixelSize mCanvasSize {};
 
   struct PageMetrics {
-    D2D1_SIZE_U mNativeSize;
-    D2D1_RECT_F mRenderRect;
-    D2D1_SIZE_F mRenderSize;
+    PixelSize mNativeSize;
+    PixelRect mRenderRect;
+    PixelSize mRenderSize;
   };
   PageMetrics GetPageMetrics();
 

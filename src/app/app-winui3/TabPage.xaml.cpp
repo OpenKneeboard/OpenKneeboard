@@ -406,12 +406,10 @@ void TabPage::OnCanvasSizeChanged(
 
   const auto canvas = Canvas();
   // We don't use the WinUI composition scale as
-  // we render on a pixel/percentage basis, not a DPI basis
-  mCompositionScaleX = 1.0f;
-  mCompositionScaleY = 1.0f;
+  // we render on a real pixel/percentage basis, not a DIP basis
   mCanvasSize = {
-    static_cast<FLOAT>(size.Width) * mCompositionScaleX,
-    static_cast<FLOAT>(size.Height) * mCompositionScaleY,
+    static_cast<uint32_t>(std::lround(size.Width)),
+    static_cast<uint32_t>(std::lround(size.Height)),
   };
   const std::unique_lock lock(*mDXR);
   if (mSwapChain) {
@@ -430,8 +428,8 @@ void TabPage::ResizeSwapChain() {
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount,
-    static_cast<UINT>(mCanvasSize.width),
-    static_cast<UINT>(mCanvasSize.height),
+    mCanvasSize.mWidth,
+    mCanvasSize.mHeight,
     desc.BufferDesc.Format,
     desc.Flags));
 
@@ -444,8 +442,8 @@ void TabPage::InitializeSwapChain() {
     return;
   }
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-    .Width = static_cast<UINT>(mCanvasSize.width),
-    .Height = static_cast<UINT>(mCanvasSize.height),
+    .Width = mCanvasSize.mWidth,
+    .Height = mCanvasSize.mHeight,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
@@ -538,10 +536,10 @@ void TabPage::PaintNow() noexcept {
     return;
   }
   auto point = *maybePoint;
-  point.x *= metrics.mRenderSize.width;
-  point.y *= metrics.mRenderSize.height;
-  point.x += metrics.mRenderRect.left;
-  point.y += metrics.mRenderRect.top;
+  point.x *= metrics.mRenderSize.Width();
+  point.y *= metrics.mRenderSize.Height();
+  point.x += metrics.mRenderRect.Left();
+  point.y += metrics.mRenderRect.Top();
   {
     auto d2d = mRenderTarget->d2d();
     mCursorRenderer->Render(d2d, point, metrics.mRenderSize);
@@ -557,41 +555,27 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   if (!mTabView) {
     throw std::logic_error("Attempt to fetch Page Metrics without a tab");
   }
-  const auto preferredSize = mTabView->GetPageIDs().size() == 0 ?
-    PreferredSize {PixelSize {
-      static_cast<uint32_t>(mCanvasSize.width),
-      static_cast<uint32_t>(mCanvasSize.height),
-    },
-    }
-  : mTabView->GetPreferredSize();
+  const auto preferredSize = mTabView->GetPageIDs().size() == 0
+    ? PreferredSize {mCanvasSize}
+    : mTabView->GetPreferredSize();
 
   const auto& contentNativeSize = preferredSize.mPixelSize;
 
   const bool unscaled = preferredSize.mScalingKind == ScalingKind::Bitmap
-    && contentNativeSize.mWidth <= mCanvasSize.width
-    && contentNativeSize.mHeight <= mCanvasSize.height;
+    && contentNativeSize.mWidth <= mCanvasSize.mWidth
+    && contentNativeSize.mHeight <= mCanvasSize.mHeight;
 
-  const auto scaleX = mCanvasSize.width / contentNativeSize.mWidth;
-  const auto scaleY = mCanvasSize.height / contentNativeSize.mHeight;
-  const auto scale = unscaled ? 1.0f : std::min(scaleX, scaleY);
-
-  const D2D1_SIZE_F contentRenderSize {
-    static_cast<FLOAT>(std::lround(contentNativeSize.mWidth * scale)),
-    static_cast<FLOAT>(std::lround(contentNativeSize.mHeight * scale)),
-  };
+  const auto contentRenderSize = contentNativeSize.StaticCast<float>()
+                                   .ScaledToFit(mCanvasSize.StaticCast<float>())
+                                   .Rounded<uint32_t>();
 
   // Use floor() to pixel-align raster sources
-  const auto padX
-    = std::floor((mCanvasSize.width - contentRenderSize.width) / 2);
-  const auto padY
-    = std::floor((mCanvasSize.height - contentRenderSize.height) / 2);
+  const auto padX = static_cast<uint32_t>(
+    std::floor((mCanvasSize.mWidth - contentRenderSize.mWidth) / 2.0));
+  const auto padY = static_cast<uint32_t>(
+    std::floor((mCanvasSize.mHeight - contentRenderSize.mHeight) / 2.0));
 
-  const D2D1_RECT_F contentRenderRect {
-    .left = padX,
-    .top = padY,
-    .right = padX + contentRenderSize.width,
-    .bottom = padY + contentRenderSize.height,
-  };
+  const PixelRect contentRenderRect {{padX, padY}, contentRenderSize};
 
   return {contentNativeSize, contentRenderRect, contentRenderSize};
 }
@@ -630,10 +614,10 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
   x *= mCompositionScaleX;
   y *= mCompositionScaleY;
 
-  x -= metrics.mRenderRect.left;
-  y -= metrics.mRenderRect.top;
-  x /= metrics.mRenderSize.width;
-  y /= metrics.mRenderSize.height;
+  x -= metrics.mRenderRect.Left();
+  y -= metrics.mRenderRect.Top();
+  x /= metrics.mRenderSize.Width();
+  y /= metrics.mRenderSize.Height();
 
   auto ppp = pp.Properties();
 

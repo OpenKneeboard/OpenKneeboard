@@ -130,6 +130,14 @@ struct Size {
     };
   }
 
+  template <std::integral TValue, class TSize = Size<TValue>>
+  constexpr TSize Floor() const noexcept {
+    return TSize {
+      static_cast<TValue>(std::floor(mWidth)),
+      static_cast<TValue>(std::floor(mHeight)),
+    };
+  }
+
   template <class TValue, class TSize = Size<TValue>>
     requires std::floating_point<T>
   constexpr TSize Rounded() const noexcept {
