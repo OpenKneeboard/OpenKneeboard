@@ -2,10 +2,10 @@
 # ##### REMEMBER TO UPDATE CPPWINRT_VERSION IN `cppwinrt.cmake` #####
 # ###################################################################
 
-# This is 'v1.4.5'
-set(WINDOWS_APP_SDK_VERSION "1.4.240211001" CACHE INTERNAL "")
+# This is 'v1.5.1'
+set(WINDOWS_APP_SDK_VERSION "1.5.240211001" CACHE INTERNAL "")
 set(WINDOWS_SDK_BUILDTOOLS_VERSION "10.0.22621.756" CACHE INTERNAL "")
-set(WINDOWS_IMPLEMENTATION_LIBRARY_VERSION "1.0.230629.1" CACHE INTERNAL "")
+set(WINDOWS_IMPLEMENTATION_LIBRARY_VERSION "1.0.240122.1" CACHE INTERNAL "")
 
 function(target_link_nuget_packages TARGET)
   set_property(
