@@ -1,0 +1,49 @@
+name: Publish to WinGet
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - autoupdate/stable-msi.json
+  workflow_dispatch:
+    # No arguments, always use stable-msi.json
+jobs:
+  publish:
+    if: github.repository == 'OpenKneeboard/OpenKneeboard'
+    # Action can only be run on windows
+    runs-on: windows-latest
+    steps:
+      - name: Should publish to WinGet?
+        run: |-
+          # Get the tag from the autoupdate/stable-msi.json
+          $githubRawUrl = "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/autoupdate/stable-msi.json"
+          $data = (Invoke-RestMethod -Uri $githubRawUrl)
+          $tag = $data.tag_name
+          if (!$tag) {
+            Write-Error "Cannot determine tag to publish"
+            exit 1
+          }
+          $version = $tag -replace '^v',''
+
+          $uri = ($data.assets | where-object { $_.name -like '*.msi' }).browser_download_url
+          if (!$uri) {
+            Write-Error "Cannot determine installer URI to publish"
+            exit 1
+          }
+          Write-Host "Setting version to '$version' from '$uri'"
+          Add-Content $Env:GITHUB_OUTPUT "publish=true"
+          Add-Content $Env:GITHUB_OUTPUT "version=$version"
+          Add-Content $Env:GITHUB_OUTPUT "download_uri=$uri"
+        shell: pwsh
+        id: should-publish
+
+      - if: ${{ steps.should-publish.outputs.publish == 'true' }}
+        name: Run Komac
+        run: |-
+          Invoke-WebRequest -OutFile komac.exe https://github.com/russellbanks/Komac/releases/download/v2.1.0/KomacPortable-x64.exe
+          .\komac.exe update `
+            -i FredEmmott.OpenKneeboard `
+            --version ${{ steps.should-publish.outputs.version }} `
+            --urls ${{ steps.should-publish.outputs.download_uri }} `
+            --token ${{secrets.OPENKNEEBOARD_BOT_PAT }} `
+            --submit
