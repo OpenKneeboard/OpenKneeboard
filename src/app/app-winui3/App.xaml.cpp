@@ -195,6 +195,9 @@ winrt::fire_and_forget App::CleanupAndExitAsync() {
 }
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
+  DispatcherShutdownMode(
+    winrt::Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown);
+
   mWindow = make<MainWindow>();
 }
 
