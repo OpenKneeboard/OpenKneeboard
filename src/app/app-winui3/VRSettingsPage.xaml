@@ -43,7 +43,7 @@
         BorderThickness="1"
         Padding="8">
         <ToggleSwitch
-          Header="SteamVR support"
+          Header="Legacy SteamVR support (OpenVR)"
           OnContent="Enabled"
           OffContent="Disabled"
           IsOn="{x:Bind SteamVREnabled}"
