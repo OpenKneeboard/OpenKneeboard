@@ -33,10 +33,10 @@ CursorRenderer::~CursorRenderer() = default;
 
 void CursorRenderer::Render(
   ID2D1RenderTarget* ctx,
-  const D2D1_POINT_2F& point,
-  const D2D1_SIZE_F& scaleTo) {
-  const auto cursorRadius = scaleTo.height / CursorRadiusDivisor;
-  const auto cursorStroke = scaleTo.height / CursorStrokeDivisor;
+  const PixelPoint& point,
+  const PixelSize& scaleTo) {
+  const auto cursorRadius = scaleTo.Height<float>() / CursorRadiusDivisor;
+  const auto cursorStroke = scaleTo.Height<float>() / CursorStrokeDivisor;
 
   auto elipse = D2D1::Ellipse(point, cursorRadius, cursorRadius);
   ctx->DrawEllipse(elipse, mOuterBrush.get(), cursorStroke * 2);

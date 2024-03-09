@@ -535,14 +535,15 @@ void TabPage::PaintNow() noexcept {
       TraceLoggingValue(tab->GetPageCount(), "PageCount"));
     return;
   }
-  auto point = *maybePoint;
-  point.x *= metrics.mRenderSize.Width();
-  point.y *= metrics.mRenderSize.Height();
-  point.x += metrics.mRenderRect.Left();
-  point.y += metrics.mRenderRect.Top();
+  Geometry2D::Point<float> point {maybePoint->x, maybePoint->y};
+  point.mX *= metrics.mRenderSize.Width();
+  point.mY *= metrics.mRenderSize.Height();
+  point.mX += metrics.mRenderRect.Left();
+  point.mY += metrics.mRenderRect.Top();
   {
     auto d2d = mRenderTarget->d2d();
-    mCursorRenderer->Render(d2d, point, metrics.mRenderSize);
+    mCursorRenderer->Render(
+      d2d, point.Rounded<uint32_t>(), metrics.mRenderSize);
   }
   TraceLoggingWriteStop(
     activity,

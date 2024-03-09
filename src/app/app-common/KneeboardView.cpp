@@ -412,10 +412,10 @@ void KneeboardView::RenderWithChrome(
     auto d2d = rt->d2d();
     mCursorRenderer->Render(
       d2d,
-      {
+      Geometry2D::Point<float>(
         (mCursorCanvasPoint->x * size.mWidth) + rect.Left(),
-        (mCursorCanvasPoint->y * size.mHeight) + rect.Top(),
-      },
+        (mCursorCanvasPoint->y * size.mHeight) + rect.Top())
+        .Rounded<uint32_t>(),
       size);
   }
 }

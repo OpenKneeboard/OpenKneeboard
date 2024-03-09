@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Pixels.h>
+
 #include <OpenKneeboard/audited_ptr.h>
 
 #include <shims/winrt/base.h>
@@ -36,8 +38,8 @@ class CursorRenderer final {
 
   void Render(
     ID2D1RenderTarget* ctx,
-    const D2D1_POINT_2F& point,
-    const D2D1_SIZE_F& scaleTo);
+    const PixelPoint& point,
+    const PixelSize& scaleTo);
 
  private:
   winrt::com_ptr<ID2D1SolidColorBrush> mInnerBrush;
