@@ -60,6 +60,7 @@ class SteamVRKneeboard final : private VRKneeboard {
 
   winrt::com_ptr<ID3D11Device1> mD3D;
   winrt::com_ptr<IDXGIFactory4> mDXGIFactory;
+  uint64_t mAdapterLuid {};
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;

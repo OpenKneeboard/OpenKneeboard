@@ -60,6 +60,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
       d3d.mAdapterLUID);
 
     mDXGIFactory = d3d.mDXGIFactory;
+    mAdapterLuid = d3d.mAdapterLUID;
   }
 
   D3D11_TEXTURE2D_DESC desc {
@@ -159,6 +160,12 @@ bool SteamVRKneeboard::InitializeOpenVR() {
 
     dprintf(
       L"OpenVR requested adapter '{}' (LUID {:#x})", desc.Description, luid);
+    if (luid != mAdapterLuid) {
+      dprintf(
+        "WARNING: SteamVR adapter {:#x} != OKB adapter {:#x}",
+        luid,
+        mAdapterLuid);
+    }
   }
 
   if (!mIVROverlay) {

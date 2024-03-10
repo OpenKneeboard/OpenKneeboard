@@ -120,6 +120,15 @@ void HWNDPageSource::LogAdapter(HMONITOR monitor) {
           std::wstring_view {outputDesc.DeviceName},
           std::wstring_view {adapterDesc.Description},
           std::bit_cast<uint64_t>(adapterDesc.AdapterLuid));
+
+        if (
+          std::bit_cast<uint64_t>(adapterDesc.AdapterLuid)
+          != mDXR->mAdapterLUID) {
+          dprintf(
+            "WARNING: Capture adapter LUID {:#x} != OKB adapter LUID {:#x}",
+            std::bit_cast<uint64_t>(adapterDesc.AdapterLuid),
+            mDXR->mAdapterLUID);
+        }
         return;
       }
       output = nullptr;
