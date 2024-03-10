@@ -36,6 +36,8 @@
 
 #include <memory>
 
+#include <SetupAPI.h>
+
 namespace OpenKneeboard {
 
 class KneeboardState;
@@ -100,6 +102,9 @@ class HWNDPageSource final : public WGCPageSource,
     const Options&);
   winrt::fire_and_forget Init() noexcept;
   winrt::fire_and_forget InitializeInputHook() noexcept;
+
+  void LogAdapter(HMONITOR);
+  void LogAdapter(HWND);
 
   const audited_ptr<DXResources> mDXR;
 
