@@ -161,7 +161,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     mVKInstance.get(), &debugCreateInfo, nullptr);
 #endif
 
-  dprintf("Looking for GPU with LUID {:#018x}", luid);
+  dprintf("Looking for GPU with LUID {:#x}", luid);
   uint32_t physicalDeviceCount = 0;
   check_vkresult(mVK->EnumeratePhysicalDevices(
     mVKInstance.get(), &physicalDeviceCount, nullptr));
