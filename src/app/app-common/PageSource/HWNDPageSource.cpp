@@ -101,6 +101,38 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
   co_return;
 }
 
+void HWNDPageSource::LogAdapter(HMONITOR monitor) {
+  int adapterIndex = 0;
+  winrt::com_ptr<IDXGIAdapter> adapter;
+  while (mDXR->mDXGIFactory->EnumAdapters(adapterIndex++, adapter.put())
+         == S_OK) {
+    int outputIndex = 0;
+    winrt::com_ptr<IDXGIOutput> output;
+    while (adapter->EnumOutputs(outputIndex++, output.put()) == S_OK) {
+      DXGI_OUTPUT_DESC outputDesc;
+      output->GetDesc(&outputDesc);
+      if (monitor == outputDesc.Monitor) {
+        DXGI_ADAPTER_DESC adapterDesc;
+        adapter->GetDesc(&adapterDesc);
+
+        dprintf(
+          L"Capturing on monitor '{}' connected to adapter '{}' (LUID {:#x})",
+          std::wstring_view {outputDesc.DeviceName},
+          std::wstring_view {adapterDesc.Description},
+          std::bit_cast<uint64_t>(adapterDesc.AdapterLuid));
+        return;
+      }
+      output = nullptr;
+    }
+    adapter = nullptr;
+  }
+}
+
+void HWNDPageSource::LogAdapter(HWND window) {
+  auto monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
+  LogAdapter(monitor);
+}
+
 winrt::Windows::Graphics::Capture::GraphicsCaptureItem
 HWNDPageSource::CreateWGCaptureItem() {
   WGC::GraphicsCaptureItem item {nullptr};
@@ -111,6 +143,7 @@ HWNDPageSource::CreateWGCaptureItem() {
       mWindow,
       winrt::guid_of<WGC::GraphicsCaptureItem>(),
       winrt::put_abi(item)));
+    LogAdapter(mWindow);
   } catch (const winrt::hresult_error& e) {
     dprintf(
       "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
@@ -141,6 +174,7 @@ HWNDPageSource::CreateWGCaptureItem() {
         monitor,
         winrt::guid_of<WGC::GraphicsCaptureItem>(),
         winrt::put_abi(item)));
+      LogAdapter(monitor);
     } catch (const winrt::hresult_error& e) {
       dprintf(
         "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
