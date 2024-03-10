@@ -55,9 +55,11 @@ SteamVRKneeboard::SteamVRKneeboard() {
     DXGI_ADAPTER_DESC desc;
     d3d.mDXGIAdapter->GetDesc(&desc);
     dprintf(
-      L"SteamVR running on adapter '{}' (LUID {:#x})",
+      L"SteamVR client running on adapter '{}' (LUID {:#x})",
       desc.Description,
       d3d.mAdapterLUID);
+
+    mDXGIFactory = d3d.mDXGIFactory;
   }
 
   D3D11_TEXTURE2D_DESC desc {
@@ -144,7 +146,19 @@ bool SteamVRKneeboard::InitializeOpenVR() {
       dprintf("Failed to get an OpenVR IVRSystem: {}", static_cast<int>(err));
       return false;
     }
+
     dprint("Initialized OpenVR");
+
+    uint64_t luid {};
+    mIVRSystem->GetOutputDevice(&luid, vr::ETextureType::TextureType_DirectX);
+    winrt::com_ptr<IDXGIAdapter> adapter;
+    winrt::check_hresult(mDXGIFactory->EnumAdapterByLuid(
+      std::bit_cast<LUID>(luid), IID_PPV_ARGS(adapter.put())));
+    DXGI_ADAPTER_DESC desc;
+    winrt::check_hresult(adapter->GetDesc(&desc));
+
+    dprintf(
+      L"OpenVR requested adapter '{}' (LUID {:#x})", desc.Description, luid);
   }
 
   if (!mIVROverlay) {
