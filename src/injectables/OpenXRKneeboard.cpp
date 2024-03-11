@@ -87,6 +87,20 @@ static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 static const VkAllocationCallbacks* gVKAllocator {nullptr};
 static unique_hmodule gLibVulkan {LoadLibraryW(L"vulkan-1.dll")};
 
+static inline std::string_view xrresult_to_string(XrResult code) {
+  // xrResultAsString exists, but isn't reliably giving useful results, e.g.
+  // it fails on the Meta XR Simulator.
+  switch (code) {
+#define XR_RESULT_CASE(enum_name, value) \
+  case enum_name: \
+    return {#enum_name}; \
+    XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
+#undef XR_RESULT_CASE
+    default:
+      return {};
+  }
+}
+
 static inline XrResult check_xrresult(
   XrResult code,
   const std::source_location& loc = std::source_location::current()) {
@@ -96,15 +110,7 @@ static inline XrResult check_xrresult(
 
   // xrResultAsString exists, but isn't reliably giving useful results, e.g.
   // it fails on the Meta XR Simulator.
-  std::string_view codeAsString;
-  switch (code) {
-#define XR_RESULT_CASE(enum_name, value) \
-  case enum_name: \
-    codeAsString = {#enum_name}; \
-    break;
-    XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
-#undef XR_RESULT_CASE
-  }
+  const auto codeAsString = xrresult_to_string(code);
 
   if (codeAsString.empty()) {
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
@@ -383,11 +389,22 @@ XrResult OpenXRKneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  XrResult nextResult;
+  XrResult nextResult {};
   {
     OPENKNEEBOARD_TraceLoggingScope("next_xrEndFrame");
-    nextResult
-      = check_xrresult(mOpenXR->xrEndFrame(session, &nextFrameEndInfo));
+    nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+  }
+  if (!XR_SUCCEEDED(nextResult)) {
+    const auto codeAsString = xrresult_to_string(nextResult);
+
+    if (codeAsString.empty()) {
+      dprintf("next_xrEndFrame() failed: {}", static_cast<int>(nextResult));
+    } else {
+      dprintf(
+        "next_xrEndFrame() failed: {} ({})",
+        codeAsString,
+        static_cast<int>(nextResult));
+    }
   }
   return nextResult;
 }
@@ -510,13 +527,15 @@ XrResult xrCreateSession(
         return ret;
       case VulkanXRState::VKEnable2Instance:
         dprint(
-          "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, but "
+          "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, "
+          "but "
           "not "
           "device; unsupported");
         return ret;
       case VulkanXRState::VKEnable2InstanceAndDevice:
         dprint(
-          "GOOD: XR_KHR_vulkan_enable2 used for instance and device creation");
+          "GOOD: XR_KHR_vulkan_enable2 used for instance and device "
+          "creation");
         break;
       default:
         dprintf(
