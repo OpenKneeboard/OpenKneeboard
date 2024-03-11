@@ -394,7 +394,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     OPENKNEEBOARD_TraceLoggingScope("next_xrEndFrame");
     nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
   }
-  if (!XR_SUCCEEDED(nextResult)) {
+  if (!XR_SUCCEEDED(nextResult)) [[unlikely]] {
     const auto codeAsString = xrresult_to_string(nextResult);
 
     if (codeAsString.empty()) {
