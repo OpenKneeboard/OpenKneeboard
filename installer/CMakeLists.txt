@@ -6,13 +6,6 @@ install(
   COMPONENT Installer
 )
 
-add_signed_script(
-  RemoveMSIXOnInstall
-  "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.ps1"
-  DESTINATION "installer"
-  COMPONENT Installer
-)
-
 # #### CPack (MSI) Config #####
 set(CPACK_GENERATOR "WIX")
 set(CPACK_PACKAGE_NAME "OpenKneeboard")
@@ -42,7 +35,6 @@ list(
   CPACK_WIX_EXTRA_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/LaunchAfterInstall.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/OpenXRAPILayerRegistration.wxs"
-  "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/RepairOnNextRun.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
 )

@@ -3,10 +3,4 @@
     <ComponentRef Id="OpenXRAPILayerRegistration" />
     <ComponentRef Id="RepairOnNextRun" />
   </CPackWiXFragment>
-  <CPackWiXFragment Id="#PRODUCT">
-    <InstallExecuteSequence>
-      <Custom Action="RemoveMSIXElevated" After="InstallFiles">NOT Installed AND NOT PATCH</Custom>
-      <Custom Action="RemoveMSIXImpersonated" After="InstallFiles">NOT Installed AND NOT PATCH</Custom>
-    </InstallExecuteSequence>
-  </CPackWiXFragment>
 </CPackWiXPatch>
