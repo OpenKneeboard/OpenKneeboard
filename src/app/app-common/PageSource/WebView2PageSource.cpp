@@ -167,7 +167,14 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     parsed.at("data").at("width"),
     parsed.at("data").at("height"),
   };
-  if (size == mSize) {
+  if (
+    size.mWidth < 1 || size.mHeight < 1
+    || size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+    || size.mHeight > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
+    dprintf(
+      "WebView2 requested size {}x{} is outside of D3D11 limits",
+      size.mWidth,
+      size.mHeight);
     co_return;
   }
   mSize = size;
