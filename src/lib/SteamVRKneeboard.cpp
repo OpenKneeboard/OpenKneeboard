@@ -29,6 +29,7 @@
 #include <OpenKneeboard/hresult.h>
 
 #include <shims/filesystem>
+#include <shims/source_location>
 #include <shims/winrt/base.h>
 
 #include <DirectXTK/SimpleMath.h>
@@ -117,28 +118,32 @@ void SteamVRKneeboard::Reset() {
   }
 }
 
-static bool overlay_check(vr::EVROverlayError err, const char* method) {
+static bool overlay_check(
+  vr::EVROverlayError err,
+  const char* method,
+  const std::source_location& caller = std::source_location::current()) {
   if (err == vr::VROverlayError_None) {
     return true;
   }
   dprintf(
-    "OpenVR error in IVROverlay::{}: {}",
+    "OpenVR error in IVROverlay::{}: {} @ {}",
     method,
-    vr::VROverlay()->GetOverlayErrorNameFromEnum(err));
+    vr::VROverlay()->GetOverlayErrorNameFromEnum(err),
+    caller);
   return false;
 }
+
+#define OVERLAY_CHECK(method, ...) \
+  if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
+    this->Reset(); \
+    return; \
+  }
 
 bool SteamVRKneeboard::InitializeOpenVR() {
   if (mIVRSystem && mIVROverlay) {
     return true;
   }
   dprint(__FUNCTION__);
-
-#define CHECK(method, ...) \
-  if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
-    this->Reset(); \
-    return false; \
-  }
 
   vr::EVRInitError err;
   if (!mIVRSystem) {
@@ -177,29 +182,6 @@ bool SteamVRKneeboard::InitializeOpenVR() {
     dprint("Initialized OpenVR overlay system");
   }
 
-  for (uint8_t layerIndex = 0; layerIndex < MaxViewCount; ++layerIndex) {
-    auto& layerState = mLayers.at(layerIndex);
-    auto key = std::format("{}.{}", ProjectReverseDomainA, layerIndex);
-    auto name = std::format("OpenKneeboard {}", layerIndex + 1);
-
-    CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerState.mOverlay);
-
-    dprintf("Created OpenVR overlay {}", layerIndex);
-
-    vr::Texture_t vrt {
-      .handle = layerState.mSharedHandle,
-      .eType = vr::TextureType_DXGISharedHandle,
-      .eColorSpace = vr::ColorSpace_Auto,
-    };
-
-    CHECK(SetOverlayTexture, layerState.mOverlay, &vrt);
-    CHECK(
-      SetOverlayFlag,
-      layerState.mOverlay,
-      vr::VROverlayFlags_IsPremultiplied,
-      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
-  }
-#undef CHECK
   return true;
 }
 
@@ -215,12 +197,6 @@ static bool IsOtherVRActive() {
 }
 
 void SteamVRKneeboard::Tick() {
-#define CHECK(method, ...) \
-  if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
-    this->Reset(); \
-    return; \
-  }
-
   vr::VREvent_t event;
   for (const auto& layerState: mLayers) {
     while (mIVROverlay->PollNextOverlayEvent(
@@ -268,6 +244,7 @@ void SteamVRKneeboard::Tick() {
 
   const auto layerCount = snapshot.GetLayerCount();
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    this->InitializeLayer(layerIndex);
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
     if (!layer.mVREnabled) {
       continue;
@@ -280,7 +257,7 @@ void SteamVRKneeboard::Tick() {
     if (renderParams.mCacheKey == layerState.mCacheKey) {
       continue;
     }
-    CHECK(
+    OVERLAY_CHECK(
       SetOverlayWidthInMeters,
       layerState.mOverlay,
       renderParams.mKneeboardSize.x);
@@ -293,7 +270,7 @@ void SteamVRKneeboard::Tick() {
     ).Transpose();
     // clang-format on
 
-    CHECK(
+    OVERLAY_CHECK(
       SetOverlayTransformAbsolute,
       layerState.mOverlay,
       vr::TrackingUniverseStanding,
@@ -352,15 +329,18 @@ void SteamVRKneeboard::Tick() {
       static_cast<float>(imageSize.mHeight) / MaxViewRenderSize.mHeight,
     };
 
-    CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);
+    OVERLAY_CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);
 
     layerState.mCacheKey = renderParams.mCacheKey;
   }
   for (uint8_t i = 0; i < MaxViewCount; ++i) {
+    if (!mLayers.at(i).mOverlay) {
+      continue;
+    }
     auto& visible = mLayers.at(i).mVisible;
     if (i >= layerCount) {
       if (visible) {
-        CHECK(HideOverlay, mLayers.at(i).mOverlay);
+        OVERLAY_CHECK(HideOverlay, mLayers.at(i).mOverlay);
         visible = false;
       }
       continue;
@@ -368,19 +348,17 @@ void SteamVRKneeboard::Tick() {
 
     const auto enabled = snapshot.GetLayerConfig(i)->mVREnabled;
     if (visible && !enabled) {
-      CHECK(HideOverlay, mLayers.at(i).mOverlay);
+      OVERLAY_CHECK(HideOverlay, mLayers.at(i).mOverlay);
       visible = false;
       continue;
     }
 
     if (enabled && !visible) {
-      CHECK(ShowOverlay, mLayers.at(i).mOverlay);
+      OVERLAY_CHECK(ShowOverlay, mLayers.at(i).mOverlay);
       visible = true;
       continue;
     }
   }
-
-#undef CHECK
 }
 
 void SteamVRKneeboard::HideAllOverlays() {
@@ -490,6 +468,33 @@ winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
   // Free resources in the same thread we allocated them
   this->Reset();
   dprint("Exiting OpenVR thread");
+}
+
+void SteamVRKneeboard::InitializeLayer(size_t layerIndex) {
+  if (mLayers.at(layerIndex).mOverlay) {
+    return;
+  }
+
+  auto& layerState = mLayers.at(layerIndex);
+  auto key = std::format("{}.{}", ProjectReverseDomainA, layerIndex);
+  auto name = std::format("OpenKneeboard {}", layerIndex + 1);
+
+  OVERLAY_CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerState.mOverlay);
+
+  dprintf("Created OpenVR overlay {}", layerIndex);
+
+  vr::Texture_t vrt {
+    .handle = layerState.mSharedHandle,
+    .eType = vr::TextureType_DXGISharedHandle,
+    .eColorSpace = vr::ColorSpace_Auto,
+  };
+
+  OVERLAY_CHECK(SetOverlayTexture, layerState.mOverlay, &vrt);
+  OVERLAY_CHECK(
+    SetOverlayFlag,
+    layerState.mOverlay,
+    vr::VROverlayFlags_IsPremultiplied,
+    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
 }
 
 }// namespace OpenKneeboard

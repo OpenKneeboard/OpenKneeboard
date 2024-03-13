@@ -83,6 +83,8 @@ class SteamVRKneeboard final : private VRKneeboard {
     HANDLE mSharedHandle {};
   };
   std::array<LayerState, MaxViewCount> mLayers;
+
+  void InitializeLayer(size_t index);
 };
 
 }// namespace OpenKneeboard
