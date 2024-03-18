@@ -52,6 +52,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     // Use DXResources to share the GPU selection logic
     D3D11Resources d3d;
     mD3D = d3d.mD3D11Device;
+    mD3DImmediateContext = d3d.mD3D11ImmediateContext;
     mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
     DXGI_ADAPTER_DESC desc;
     d3d.mDXGIAdapter->GetDesc(&desc);
@@ -285,8 +286,7 @@ void SteamVRKneeboard::Tick() {
     // OpenVR call
 
     // non-atomic paint to buffer...
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    mD3D->GetImmediateContext(ctx.put());
+    auto ctx = mD3DImmediateContext.get();
     ctx->ClearRenderTargetView(
       mRenderTargetView.get(), DirectX::Colors::Transparent);
 
@@ -321,6 +321,26 @@ void SteamVRKneeboard::Tick() {
       0,
       &sourceBox);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
+
+    // SteamVR has no synchronization support, so an explicit flush is needed.
+    //
+    // If you remove this, test that SteamVR updates when changing tabs/pages
+    // when there are not regular page dirty events. For example:
+    // - disable/hide the clock/footer
+    // - remove any window capture or webview2 tabs
+    ctx->Flush1(D3D11_CONTEXT_TYPE_3D, mGPUFlushEvent.get());
+    {
+      const auto result = WaitForSingleObject(mGPUFlushEvent.get(), INFINITE);
+      if (result != WAIT_OBJECT_0) {
+        const auto error = GetLastError();
+        TraceLoggingWrite(
+          gTraceProvider,
+          "SteamVRKneeboard/Flush1()",
+          TraceLoggingValue(result, "Result"),
+          TraceLoggingValue(error, "Error"));
+        OPENKNEEBOARD_BREAK;
+      }
+    }
 
     vr::VRTextureBounds_t textureBounds {
       0.0f,
@@ -448,6 +468,9 @@ winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
   const auto frameSleep = std::chrono::milliseconds(1000 / FramesPerSecond);
 
   dprint("Initializing OpenVR support");
+
+  mGPUFlushEvent.close();
+  mGPUFlushEvent = winrt::handle {CreateEventW(nullptr, false, false, nullptr)};
 
   while (!stopToken.stop_requested()) {
     if (

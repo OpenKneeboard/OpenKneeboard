@@ -60,6 +60,7 @@ class SteamVRKneeboard final : private VRKneeboard {
 
   winrt::com_ptr<ID3D11Device1> mD3D;
   winrt::com_ptr<IDXGIFactory4> mDXGIFactory;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3DImmediateContext;
   uint64_t mAdapterLuid {};
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
@@ -72,6 +73,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   // then atomically copy to OpenVR texture
   winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+  winrt::handle mGPUFlushEvent;
 
   struct LayerState {
     bool mVisible = false;
