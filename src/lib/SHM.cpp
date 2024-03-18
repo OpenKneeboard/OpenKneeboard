@@ -754,10 +754,11 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   TraceLoggingWriteTagged(activity, "LockingSHM");
   std::unique_lock lock(*p);
   TraceLoggingWriteTagged(activity, "LockedSHM");
-  TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
-  TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    maybeGetActivity, "MaybeGetUncached");
 
   if (p->mHeader->mLayerCount == 0) {
+    maybeGetActivity.StopWithResult("NoLayers");
     return Snapshot {p->mHeader};
   }
 
@@ -767,10 +768,7 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   auto snapshot
     = this->MaybeGetUncached(mGPULUID, mTextureCopier, dest, mConsumerKind);
   const auto state = snapshot.GetState();
-  TraceLoggingWriteStop(
-    maybeGetActivity,
-    "MaybeGetUncached",
-    TraceLoggingValue(static_cast<unsigned int>(state), "State"));
+  maybeGetActivity.StopWithResult(static_cast<int>(state));
 
   if (state == Snapshot::State::Empty) {
     const auto& cache = mCache.front();

@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/macros.h>
 
+#include <exception>
 #include <source_location>
 
 #include <TraceLoggingActivity.h>
@@ -79,8 +80,64 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
       startImpl(*this); \
     } \
     OPENKNEEBOARD_CONCAT2(~_Impl, OKBTL_ACTIVITY)() { \
-      TraceLoggingWriteStop(*this, OKBTL_NAME); \
+      if (mAutoStop) { \
+        this->Stop(); \
+      } \
     } \
+    void Stop() { \
+      if (mStopped) [[unlikely]] { \
+        OPENKNEEBOARD_BREAK; \
+        return; \
+      } \
+      mStopped = true; \
+      const auto exceptionCount = std::uncaught_exceptions(); \
+      if (exceptionCount) [[unlikely]] { \
+        TraceLoggingWriteStop( \
+          *this, \
+          OKBTL_NAME, \
+          TraceLoggingValue(exceptionCount, "UncaughtExceptions")); \
+      } else { \
+        TraceLoggingWriteStop(*this, OKBTL_NAME); \
+      } \
+    } \
+    void CancelAutoStop() { \
+      mAutoStop = false; \
+    } \
+    /* Repetitive as Templates aren't permitted in local classes */ \
+    void StopWithResult(int result) { \
+      if (mStopped) [[unlikely]] { \
+        OPENKNEEBOARD_BREAK; \
+        return; \
+      } \
+      this->CancelAutoStop(); \
+      mStopped = true; \
+      TraceLoggingWriteStop( \
+        *this, OKBTL_NAME, TraceLoggingValue(result, "Result")); \
+    } \
+    void StopWithResult(const char* result) { \
+      if (mStopped) [[unlikely]] { \
+        OPENKNEEBOARD_BREAK; \
+        return; \
+      } \
+      this->CancelAutoStop(); \
+      mStopped = true; \
+      TraceLoggingWriteStop( \
+        *this, OKBTL_NAME, TraceLoggingValue(result, "Result")); \
+    } \
+    void StopWithResult(const std::string& result) { \
+      if (mStopped) [[unlikely]] { \
+        OPENKNEEBOARD_BREAK; \
+        return; \
+      } \
+      this->CancelAutoStop(); \
+      mStopped = true; \
+      TraceLoggingWriteStop( \
+        *this, OKBTL_NAME, TraceLoggingValue(result.c_str(), "Result")); \
+    } \
+\
+   private: \
+    bool mStopped {false}; \
+    bool mAutoStop {true}; \
   }; \
   OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
   OKBTL_ACTIVITY {OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY)};
