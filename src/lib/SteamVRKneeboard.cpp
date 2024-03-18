@@ -363,7 +363,7 @@ void SteamVRKneeboard::Tick() {
 
 void SteamVRKneeboard::HideAllOverlays() {
   for (auto& layerState: mLayers) {
-    if (layerState.mVisible) {
+    if (layerState.mOverlay && layerState.mVisible) {
       layerState.mVisible = false;
       mIVROverlay->HideOverlay(layerState.mOverlay);
     }
