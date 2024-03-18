@@ -528,9 +528,7 @@ XrResult xrCreateSession(
       case VulkanXRState::VKEnable2Instance:
         dprint(
           "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, "
-          "but "
-          "not "
-          "device; unsupported");
+          "but not device; unsupported");
         return ret;
       case VulkanXRState::VKEnable2InstanceAndDevice:
         dprint(
