@@ -9,10 +9,16 @@ of the kneeboard for streaming.
 
 ## Keyboard Shortcuts
 
-* `B`: borderless mode - no window border or title bar
-* `I`: show information, such as frame counter and layer (kneeboard)
-* `1`-`9`: show the nth layer (kneeboard). Only layers 1 and 2 are used by OpenKneeboard, for the primary and secondary kneeboard respectively
+* `B`: **B**orderless mode - no window border or title bar
+* `I`: show **i**nformation, such as frame counter and layer (view)
+* `1`-`9`: show the nth layer (view).
 * `S`: Streamer Mode
+* `F`: Switch background **F**ill: magenta, checkerboard, Windows default.
+* `V`: Toggle between mirroring **V**R and non-VR content
+
+## Graphics API
+
+`OpenKneeboard-Viewer` can be launched with `-G D3D11`, `-G D3D12`, or `-G Vulkan`; this is a developer tool for debugging.
 
 ## Streamer Mode
 
