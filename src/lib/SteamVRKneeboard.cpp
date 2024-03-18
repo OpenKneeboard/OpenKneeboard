@@ -153,7 +153,7 @@ bool SteamVRKneeboard::InitializeOpenVR() {
       return false;
     }
 
-    dprint("Initialized OpenVR");
+    dprintf("Initialized OpenVR, runtime v{}", mIVRSystem->GetRuntimeVersion());
 
     uint64_t luid {};
     mIVRSystem->GetOutputDevice(&luid, vr::ETextureType::TextureType_DirectX);
