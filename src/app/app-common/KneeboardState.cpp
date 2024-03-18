@@ -176,7 +176,11 @@ void KneeboardState::PostUserAction(UserAction action) {
   if (winrt::apartment_context() != mUIThread) {
     dprint("User action in wrong thread!");
     OPENKNEEBOARD_BREAK;
+    return;
   }
+  OPENKNEEBOARD_TraceLoggingScope(
+    "KneeboardState::PostUserAction()",
+    TraceLoggingValue(to_string(action).c_str(), "Action"));
 
   evUserActionEvent.Emit(action);
 

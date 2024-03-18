@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/json.h>
 
+#include <format>
+
 namespace OpenKneeboard {
 
 #define OPENKNEEBOARD_USER_ACTIONS \
@@ -57,5 +59,19 @@ enum class UserAction {
 #define IT(ACTION) {UserAction::ACTION, #ACTION},
 NLOHMANN_JSON_SERIALIZE_ENUM(UserAction, {OPENKNEEBOARD_USER_ACTIONS})
 #undef IT
+
+inline constexpr std::string to_string(UserAction action) {
+  switch (action) {
+#define IT(ACTION) \
+  case UserAction::ACTION: \
+    return #ACTION;
+    OPENKNEEBOARD_USER_ACTIONS
+#undef IT
+    default:
+      return std::format(
+        "Unknown UserAction: {}",
+        static_cast<std::underlying_type_t<UserAction>>(action));
+  }
+}
 
 }// namespace OpenKneeboard
