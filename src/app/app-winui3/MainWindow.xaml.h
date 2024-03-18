@@ -116,6 +116,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
 
   void SaveWindowPosition();
+  std::optional<RECT> mWindowPosition;
 
   static std::filesystem::path GetInstanceDataPath();
   winrt::Windows::Foundation::IAsyncAction WriteInstanceData();

@@ -607,9 +607,7 @@ void MainWindow::SaveWindowPosition() {
     return;
   }
 
-  auto settings = mKneeboard->GetAppSettings();
-  settings.mWindowRect = windowRect;
-  mKneeboard->SetAppSettings(settings);
+  mWindowPosition = windowRect;
 }
 
 winrt::fire_and_forget MainWindow::Shutdown() {
@@ -620,6 +618,13 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   dprint("Removing instance data...");
   std::filesystem::remove(MainWindow::GetInstanceDataPath());
   gShuttingDown = true;
+
+  if (mWindowPosition) {
+    dprint("Saving window position");
+    auto settings = mKneeboard->GetAppSettings();
+    settings.mWindowRect = *mWindowPosition;
+    mKneeboard->SetAppSettings(settings);
+  }
 
   dprint("Releasing kneeboard resources tied to hwnd");
   self->mKneeboard->ReleaseHwndResources();
