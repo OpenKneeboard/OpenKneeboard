@@ -98,19 +98,19 @@ D3D11Resources::D3D11Resources() {
 
     switch (caps.HwSchSupportState) {
       case DXGK_FEATURE_SUPPORT_ALWAYS_OFF:
-        dprint("HAGS: not supported");
+        dprint("    HAGS: not supported");
         break;
       case DXGK_FEATURE_SUPPORT_ALWAYS_ON:
-        dprint("HAGS: always on");
+        dprint("    HAGS: always on");
         break;
       case DXGK_FEATURE_SUPPORT_EXPERIMENTAL:
         dprintf(
-          "HAGS: {} (experimental)",
+          "    HAGS: {} (experimental)",
           caps.HwSchEnabled ? "enabled" : "disabled");
         break;
       case DXGK_FEATURE_SUPPORT_STABLE:
         dprintf(
-          "HAGS: {} (stable)", caps.HwSchEnabled ? "enabled" : "disabled");
+          "    HAGS: {} (stable)", caps.HwSchEnabled ? "enabled" : "disabled");
         break;
     }
   }
