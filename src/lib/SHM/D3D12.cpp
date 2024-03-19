@@ -134,18 +134,18 @@ void Texture::CopyFrom(
   const auto list = mCommandLists.at(sourceTexture).get();
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("FenceIn");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/FenceIn");
     check_hresult(queue->Wait(sourceFence, fenceValueIn));
   }
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("ExecuteCommandLists");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/ExecuteCommandLists");
     ID3D12CommandList* lists[] {list};
     queue->ExecuteCommandLists(std::size(lists), lists);
   }
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("FenceOut");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/FenceOut");
     check_hresult(queue->Signal(sourceFence, fenceValueOut));
   }
 }
