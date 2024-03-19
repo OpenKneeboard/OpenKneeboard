@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 #include <OpenKneeboard/VRKneeboard.h>
@@ -58,10 +59,9 @@ class SteamVRKneeboard final : private VRKneeboard {
   void Reset();
   void HideAllOverlays();
 
-  winrt::com_ptr<ID3D11Device1> mD3D;
-  winrt::com_ptr<IDXGIFactory4> mDXGIFactory;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3DImmediateContext;
-  uint64_t mAdapterLuid {};
+  // Superclass of DXResources, but naming it like this for
+  // consistency/familiarity in the code
+  D3D11Resources mDXR;
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;

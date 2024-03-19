@@ -48,25 +48,19 @@ namespace OpenKneeboard {
 
 SteamVRKneeboard::SteamVRKneeboard() {
   OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::SteamVRKneeboard()");
+  auto d3d = mDXR.mD3D11Device.get();
   {
-    // Use DXResources to share the GPU selection logic
-    D3D11Resources d3d;
-    mD3D = d3d.mD3D11Device;
-    mD3DImmediateContext = d3d.mD3D11ImmediateContext;
-    mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
+    mSHM.InitializeCache(d3d, /* swapchainLength = */ 2);
     DXGI_ADAPTER_DESC desc;
-    d3d.mDXGIAdapter->GetDesc(&desc);
+    mDXR.mDXGIAdapter->GetDesc(&desc);
     dprintf(
       L"SteamVR client running on adapter '{}' (LUID {:#x})",
       desc.Description,
-      d3d.mAdapterLUID);
-
-    mDXGIFactory = d3d.mDXGIFactory;
-    mAdapterLuid = d3d.mAdapterLUID;
-
-    winrt::check_hresult(d3d.mD3D11Device->CreateFence(
-      0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+      mDXR.mAdapterLUID);
   }
+
+  winrt::check_hresult(
+    d3d->CreateFence(0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 
   D3D11_TEXTURE2D_DESC desc {
     .Width = MaxViewRenderSize.mWidth,
@@ -77,14 +71,14 @@ SteamVRKneeboard::SteamVRKneeboard() {
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
   };
-  check_hresult(mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+  check_hresult(d3d->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
 
   desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
   desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
   for (uint8_t i = 0; i < MaxViewCount; ++i) {
     auto& layer = mLayers.at(i);
     check_hresult(
-      mD3D->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
+      d3d->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
     check_hresult(layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
       &layer.mSharedHandle));
   }
@@ -94,10 +88,10 @@ SteamVRKneeboard::SteamVRKneeboard() {
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
-  check_hresult(mD3D->CreateRenderTargetView(
+  check_hresult(d3d->CreateRenderTargetView(
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 
-  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mD3D.get());
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(d3d);
 }
 
 SteamVRKneeboard::~SteamVRKneeboard() {
@@ -162,18 +156,18 @@ bool SteamVRKneeboard::InitializeOpenVR() {
     uint64_t luid {};
     mIVRSystem->GetOutputDevice(&luid, vr::ETextureType::TextureType_DirectX);
     winrt::com_ptr<IDXGIAdapter> adapter;
-    winrt::check_hresult(mDXGIFactory->EnumAdapterByLuid(
+    winrt::check_hresult(mDXR.mDXGIFactory->EnumAdapterByLuid(
       std::bit_cast<LUID>(luid), IID_PPV_ARGS(adapter.put())));
     DXGI_ADAPTER_DESC desc;
     winrt::check_hresult(adapter->GetDesc(&desc));
 
     dprintf(
       L"OpenVR requested adapter '{}' (LUID {:#x})", desc.Description, luid);
-    if (luid != mAdapterLuid) {
+    if (luid != mDXR.mAdapterLUID) {
       dprintf(
         "WARNING: SteamVR adapter {:#x} != OKB adapter {:#x}",
         luid,
-        mAdapterLuid);
+        mDXR.mAdapterLUID);
     }
   }
 
@@ -246,7 +240,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  auto ctx = mD3DImmediateContext.get();
+  auto ctx = mDXR.mD3D11ImmediateContext.get();
   std::unordered_map<uint8_t, RenderParameters> layerRenderParams;
   std::vector<uint8_t> activeLayers;
 
@@ -476,11 +470,6 @@ winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
   std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Stopping OpenVR support, no runtime installed.");
-    co_return;
-  }
-
-  if (!mD3D) {
-    dprint("Stopping OpenVR support, failed to get D3D11 device");
     co_return;
   }
 
