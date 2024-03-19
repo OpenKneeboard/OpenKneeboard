@@ -121,11 +121,18 @@ void InterprocessRenderer::SubmitFrame(
     if (destResources->mNewFence) {
       destResources->mNewFence = false;
     } else {
+      OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas/FenceIn");
       check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
     }
-    ctx->CopySubresourceRegion(
-      destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
-    check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+    {
+      OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas/CopySubresourceRegion");
+      ctx->CopySubresourceRegion(
+        destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
+    }
+    {
+      OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas/FenceOut");
+      check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+    }
   }
 
   SHM::Config config {
