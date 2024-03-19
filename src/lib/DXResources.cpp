@@ -85,6 +85,10 @@ D3D11Resources::D3D11Resources() {
 
     D3DKMT_OPENADAPTERFROMLUID kmtAdapter {.AdapterLuid = desc.AdapterLuid};
     winrt::check_nt(D3DKMTOpenAdapterFromLuid(&kmtAdapter));
+    const scope_guard closeKMT([&kmtAdapter]() noexcept {
+      D3DKMT_CLOSEADAPTER closeAdapter {kmtAdapter.hAdapter};
+      winrt::check_nt(D3DKMTCloseAdapter(&closeAdapter));
+    });
     D3DKMT_WDDM_2_9_CAPS caps {};
     D3DKMT_QUERYADAPTERINFO capsQuery {
       .hAdapter = kmtAdapter.hAdapter,
@@ -92,9 +96,10 @@ D3D11Resources::D3D11Resources() {
       .pPrivateDriverData = &caps,
       .PrivateDriverDataSize = sizeof(caps),
     };
-    winrt::check_nt(D3DKMTQueryAdapterInfo(&capsQuery));
-    D3DKMT_CLOSEADAPTER closeAdapter {kmtAdapter.hAdapter};
-    winrt::check_nt(D3DKMTCloseAdapter(&closeAdapter));
+    if (D3DKMTQueryAdapterInfo(&capsQuery) != 0 /* STATUS_SUCCESS */) {
+      dprint("    HAGS: driver does not support WDDM 2.9 capabilities query");
+      continue;
+    }
 
     switch (caps.HwSchSupportState) {
       case DXGK_FEATURE_SUPPORT_ALWAYS_OFF:
