@@ -195,6 +195,7 @@ static bool IsOtherVRActive() {
 }
 
 void SteamVRKneeboard::Tick() {
+  OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::Tick()");
   vr::VREvent_t event;
   for (const auto& layerState: mLayers) {
     while (mIVROverlay->PollNextOverlayEvent(
