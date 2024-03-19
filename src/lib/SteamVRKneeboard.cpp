@@ -198,6 +198,9 @@ void SteamVRKneeboard::Tick() {
   OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::Tick()");
   vr::VREvent_t event;
   for (const auto& layerState: mLayers) {
+    if (!layerState.mOverlay) {
+      continue;
+    }
     while (mIVROverlay->PollNextOverlayEvent(
       layerState.mOverlay, &event, sizeof(event))) {
       if (event.eventType == vr::VREvent_Quit) {
