@@ -24,6 +24,12 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 
+// clang-format off
+#include <Windows.h>
+#include <winternl.h>
+// clang-format on
+
+#include <d3dkmthk.h>
 #include <dxgi1_6.h>
 
 namespace OpenKneeboard {
@@ -75,6 +81,37 @@ D3D11Resources::D3D11Resources() {
       mDXGIAdapter = adapterIt;
       static_assert(sizeof(uint64_t) == sizeof(desc.AdapterLuid));
       mAdapterLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
+    }
+
+    D3DKMT_OPENADAPTERFROMLUID kmtAdapter {.AdapterLuid = desc.AdapterLuid};
+    winrt::check_nt(D3DKMTOpenAdapterFromLuid(&kmtAdapter));
+    D3DKMT_WDDM_2_9_CAPS caps {};
+    D3DKMT_QUERYADAPTERINFO capsQuery {
+      .hAdapter = kmtAdapter.hAdapter,
+      .Type = KMTQAITYPE_WDDM_2_9_CAPS,
+      .pPrivateDriverData = &caps,
+      .PrivateDriverDataSize = sizeof(caps),
+    };
+    winrt::check_nt(D3DKMTQueryAdapterInfo(&capsQuery));
+    D3DKMT_CLOSEADAPTER closeAdapter {kmtAdapter.hAdapter};
+    winrt::check_nt(D3DKMTCloseAdapter(&closeAdapter));
+
+    switch (caps.HwSchSupportState) {
+      case DXGK_FEATURE_SUPPORT_ALWAYS_OFF:
+        dprint("HAGS: not supported");
+        break;
+      case DXGK_FEATURE_SUPPORT_ALWAYS_ON:
+        dprint("HAGS: always on");
+        break;
+      case DXGK_FEATURE_SUPPORT_EXPERIMENTAL:
+        dprintf(
+          "HAGS: {} (experimental)",
+          caps.HwSchEnabled ? "enabled" : "disabled");
+        break;
+      case DXGK_FEATURE_SUPPORT_STABLE:
+        dprintf(
+          "HAGS: {} (stable)", caps.HwSchEnabled ? "enabled" : "disabled");
+        break;
     }
   }
   dprint("----------");

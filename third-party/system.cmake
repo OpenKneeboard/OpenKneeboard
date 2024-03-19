@@ -10,6 +10,7 @@ set(
   Dwrite
   Dxgi
   Dxguid
+  Gdi32
   Msi
   Rpcrt4
   Shell32

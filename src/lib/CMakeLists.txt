@@ -174,6 +174,7 @@ target_link_libraries(
   OpenKneeboard-D3D11
   PRIVATE
   OpenKneeboard-dprint
+  System::Gdi32
 )
 
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
