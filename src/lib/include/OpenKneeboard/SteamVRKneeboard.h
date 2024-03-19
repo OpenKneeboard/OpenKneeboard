@@ -73,6 +73,8 @@ class SteamVRKneeboard final : private VRKneeboard {
   // then atomically copy to OpenVR texture
   winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+  winrt::com_ptr<ID3D11Fence> mFence;
+  uint64_t mFenceValue {};
   winrt::handle mGPUFlushEvent;
 
   struct LayerState {
@@ -80,7 +82,7 @@ class SteamVRKneeboard final : private VRKneeboard {
     winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
     vr::VROverlayHandle_t mOverlay {};
     uint64_t mCacheKey = ~(0ui64);
-    uint64_t mTextureCacheKey {};
+    uint64_t mFenceValue {};
     // *NOT* an NT handle. Do not use CloseHandle() or winrt::Handle
     HANDLE mSharedHandle {};
   };
