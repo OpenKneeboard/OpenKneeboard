@@ -500,13 +500,14 @@ class TestViewerWindow final : private D3D11Resources {
       return;
     }
 
+    // Triple-buffer to decouple framerates
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
       .Width = clientSize.mWidth,
       .Height = clientSize.mHeight,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
       .SampleDesc = {1, 0},
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-      .BufferCount = 2,
+      .BufferCount = 3,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
       .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
     };
