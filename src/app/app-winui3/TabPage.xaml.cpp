@@ -441,13 +441,24 @@ void TabPage::InitializeSwapChain() {
   if (mShuttingDown) {
     return;
   }
+  // BufferCount = 3: triple-buffer to avoid stalls
+  //
+  // If the previous frame is still being Present()ed and we
+  // only have two frames in the buffer, Present()ing the new
+  // frame will stall until that has completed.
+  //
+  // We could avoid this by using frame pacing, but we want to decouple the
+  // frame rates - if you're on a 30hz or 60hz monitor, OpenKneeboard should
+  // still be able to push VR frames at 90hz
+  //
+  // So, triple-buffer
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
     .Width = mCanvasSize.mWidth,
     .Height = mCanvasSize.mHeight,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-    .BufferCount = 2,
+    .BufferCount = 3,
     .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
     .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
   };
