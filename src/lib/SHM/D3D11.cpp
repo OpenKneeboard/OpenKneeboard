@@ -56,7 +56,7 @@ void Texture::CopyFrom(
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::Texture::CopyFrom");
 
   if (!mCacheTexture) {
-    OPENKNEEBOARD_TraceLoggingScope("CreateCacheTexture");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D11/CreateCacheTexture");
     D3D11_TEXTURE2D_DESC desc;
     sourceTexture->GetDesc(&desc);
     check_hresult(
@@ -64,18 +64,18 @@ void Texture::CopyFrom(
   }
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("FenceIn");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D11/FenceIn");
     check_hresult(mContext->Wait(sourceFence, fenceValueIn));
   }
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("CopySubresourceRegion");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D11/CopySubresourceRegion");
     mContext->CopySubresourceRegion(
       mCacheTexture.get(), 0, 0, 0, 0, sourceTexture, 0, nullptr);
   }
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("FenceOut");
+    OPENKNEEBOARD_TraceLoggingScope("SHM/D3D11/FenceOut");
     check_hresult(mContext->Signal(sourceFence, fenceValueOut));
   }
 }
