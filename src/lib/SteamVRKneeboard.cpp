@@ -330,14 +330,17 @@ void SteamVRKneeboard::Tick() {
     winrt::check_hresult(mFence->SetEventOnCompletion(
       layerState.mFenceValue, mGPUFlushEvent.get()));
     {
+      OPENKNEEBOARD_TraceLoggingScopedActivity(
+        waitActivity, "SteamVRKneeboard::Tick()/WaitForSingleObject");
       const auto result = WaitForSingleObject(mGPUFlushEvent.get(), INFINITE);
       if (result != WAIT_OBJECT_0) {
         const auto error = GetLastError();
-        TraceLoggingWrite(
-          gTraceProvider,
-          "SteamVRKneeboard/WaitForFence",
+        TraceLoggingWriteStop(
+          waitActivity,
+          "SteamVRKneeboard::Tick()/WaitForSingleObject",
           TraceLoggingValue(result, "Result"),
           TraceLoggingValue(error, "Error"));
+        waitActivity.CancelAutoStop();
         OPENKNEEBOARD_BREAK;
       }
     }
