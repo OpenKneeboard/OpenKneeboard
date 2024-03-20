@@ -79,8 +79,8 @@ void DoodleRenderer::PostCursorEvent(
   EventContext,
   const CursorEvent& event,
   PageID pageID,
-  const D2D1_SIZE_U& nativePageSize) {
-  if (nativePageSize.width == 0 || nativePageSize.height == 0) {
+  const PixelSize& nativePageSize) {
+  if (!nativePageSize) {
     OPENKNEEBOARD_BREAK;
     return;
   }
@@ -164,22 +164,17 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
   }
 
   const auto& contentPixels = page.mNativeSize;
-  if (contentPixels.height == 0 || contentPixels.width == 0) {
+  if (!contentPixels) {
     OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
-  const auto scaleX = MaxViewRenderSize.Width<float>() / contentPixels.width;
-  const auto scaleY = MaxViewRenderSize.Height<float>() / contentPixels.height;
-  page.mScale = std::min(scaleX, scaleY);
-  D2D1_SIZE_U surfaceSize {
-    static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),
-    static_cast<UINT32>(std::lround(contentPixels.height * page.mScale)),
-  };
+  const auto surfaceSize = contentPixels.ScaledToFit(MaxViewRenderSize);
+  page.mScale = surfaceSize.Height<float>() / contentPixels.Height();
 
   D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = surfaceSize.width,
-    .Height = surfaceSize.height,
+    .Width = surfaceSize.mWidth,
+    .Height = surfaceSize.mHeight,
     .MipLevels = 1,
     .ArraySize = 1,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -205,7 +200,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
 void DoodleRenderer::Render(
   ID2D1DeviceContext* ctx,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   FlushCursorEvents();
 
   auto it = mDrawings.find(pageID);

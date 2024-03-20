@@ -43,6 +43,10 @@ struct Size {
   T mWidth {};
   T mHeight {};
 
+  constexpr operator bool() const noexcept {
+    return mWidth >= 1 && mHeight >= 1;
+  }
+
   constexpr Size<T> operator/(const T divisor) const noexcept {
     return {mWidth / divisor, mHeight / divisor};
   }
@@ -235,6 +239,10 @@ struct Rect {
   Size<T> mSize {};
 
   Origin mOrigin {Origin::TopLeft};
+
+  constexpr operator bool() const noexcept {
+    return mSize;
+  }
 
   constexpr Rect<T> operator/(const T divisor) const noexcept {
     return {

@@ -38,12 +38,12 @@ class DoodleRenderer final {
   DoodleRenderer(const audited_ptr<DXResources>&, KneeboardState*);
   ~DoodleRenderer();
 
-  void Render(ID2D1DeviceContext*, PageID, const D2D1_RECT_F& targetRect);
+  void Render(ID2D1DeviceContext*, PageID, const PixelRect& destRect);
   void PostCursorEvent(
     EventContext,
     const CursorEvent&,
     PageID,
-    const D2D1_SIZE_U& nativePageSize);
+    const PixelSize& nativePageSize);
 
   bool HaveDoodles() const;
   bool HaveDoodles(PageID) const;
@@ -67,8 +67,8 @@ class DoodleRenderer final {
     float mScale {-1.0f};
     std::vector<CursorEvent> mBufferedEvents;
     bool mHaveCursor {false};
-    D2D1_POINT_2F mCursorPoint;
-    D2D1_SIZE_U mNativeSize {0, 0};
+    Geometry2D::Point<float> mCursorPoint;
+    PixelSize mNativeSize {0, 0};
   };
   winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
   std::mutex mBufferedEventsMutex;
