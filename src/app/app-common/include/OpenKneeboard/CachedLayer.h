@@ -44,7 +44,7 @@ class CachedLayer final {
   ~CachedLayer();
 
   void Render(
-    const D2D1_RECT_F& where,
+    const PixelRect& where,
     Key cacheKey,
     RenderTarget*,
     std::function<void(RenderTarget*, const PixelSize&)> impl,

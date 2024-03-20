@@ -35,20 +35,15 @@ CachedLayer::~CachedLayer() {
 }
 
 void CachedLayer::Render(
-  const D2D1_RECT_F& where,
+  const PixelRect& destRect,
   Key cacheKey,
   RenderTarget* rt,
   std::function<void(RenderTarget*, const PixelSize&)> impl,
   const std::optional<PixelSize>& providedCacheDimensions) {
   std::scoped_lock lock(mCacheMutex);
 
-  const PixelSize renderDimensions {
-    static_cast<uint32_t>(std::lround(where.right - where.left)),
-    static_cast<uint32_t>(std::lround(where.bottom - where.top)),
-  };
-
   const PixelSize cacheDimensions
-    = providedCacheDimensions ? *providedCacheDimensions : renderDimensions;
+    = providedCacheDimensions ? *providedCacheDimensions : destRect.mSize;
 
   if (mCacheDimensions != cacheDimensions || !mCache) {
     mKey = ~Key {0};
@@ -86,13 +81,6 @@ void CachedLayer::Render(
   const PixelRect sourceRect {
     {0, 0},
     mCacheDimensions,
-  };
-  const PixelRect destRect {
-    {
-      static_cast<uint32_t>(std::lround(where.left)),
-      static_cast<uint32_t>(std::lround(where.top)),
-    },
-    renderDimensions,
   };
 
   auto sb = mDXR->mSpriteBatch.get();
