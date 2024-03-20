@@ -195,8 +195,7 @@ Snapshot::Snapshot(
 
   const auto textureIndex = metadata->mFrameNumber % SHMSwapchainLength;
   auto fenceValue = &metadata->mFrameReadyFenceValues.at(textureIndex);
-  const auto fenceOut = InterlockedIncrement64(fenceValue);
-  const auto fenceIn = fenceOut - 1;
+  const auto fenceIn = *fenceValue;
 
   mHeader = std::make_shared<FrameMetadata>(*metadata);
 
@@ -206,8 +205,7 @@ Snapshot::Snapshot(
       source->mTextureHandle.get(),
       dest.get(),
       source->mFenceHandle.get(),
-      fenceIn,
-      fenceOut);
+      fenceIn);
   }
 
   if (mHeader && mHeader->HaveFeeder()) {
