@@ -253,8 +253,6 @@ class TestViewerWindow final : private D3D11Resources {
         (1024 / 2) * dpi / USER_DEFAULT_SCREEN_DPI,
         SWP_NOZORDER | SWP_NOMOVE);
     }
-
-    mSettings.Save();
   }
 
   bool HaveDirect2D() const {
@@ -609,7 +607,6 @@ class TestViewerWindow final : private D3D11Resources {
           (static_cast<std::underlying_type_t<FillMode>>(mSettings.mFillMode)
            + 1)
           % FillModeCount);
-        mSettings.Save();
         this->PaintNow();
         return;
       // Streamer
@@ -621,7 +618,6 @@ class TestViewerWindow final : private D3D11Resources {
         } else if (mSettings.mFillMode == FillMode::ColorKey) {
           mSettings.mFillMode = mStreamerModePreviousFillMode;
         }
-        mSettings.Save();
         this->PaintNow();
         return;
       // VR
@@ -993,6 +989,10 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
       gInstance->OnKeyUp(wParam);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
     case WM_CLOSE:
+
+      // TODO: update window size and position in gInstance->mSettings
+
+      gInstance->mSettings.Save();
       PostQuitMessage(0);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
   }
