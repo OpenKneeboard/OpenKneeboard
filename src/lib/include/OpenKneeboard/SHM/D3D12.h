@@ -49,9 +49,10 @@ class Texture final : public SHM::IPCClientTexture {
     ID3D12CommandQueue*,
     ID3D12CommandAllocator*,
     ID3D12Resource* texture,
-    ID3D12Fence* fence,
-    uint64_t fenceValueIn,
-    uint64_t fenceValueOut) noexcept;
+    ID3D12Fence* fenceIn,
+    uint64_t fenceInValue,
+    ID3D12Fence* fenceOut,
+    uint64_t fenceOutValue) noexcept;
 
  private:
   winrt::com_ptr<ID3D12Device> mDevice;
@@ -92,9 +93,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   virtual void Copy(
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
-    HANDLE fence,
-    uint64_t fenceValueIn,
-    uint64_t fenceValueOut) noexcept override;
+    HANDLE fenceIn,
+    uint64_t fenceInValue) noexcept override;
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
     const PixelSize&,
@@ -118,12 +118,18 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   struct FenceAndValue {
     winrt::com_ptr<ID3D12Fence> mFence;
     uint64_t mValue {};
+
+    inline operator bool() const noexcept {
+      return mFence && mValue;
+    }
   };
   std::unordered_map<HANDLE, FenceAndValue> mIPCFences;
   std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Resource>> mIPCTextures;
+  FenceAndValue mCopyFence;
 
   FenceAndValue* GetIPCFence(HANDLE) noexcept;
   ID3D12Resource* GetIPCTexture(HANDLE) noexcept;
+  void WaitForPendingCopies();
 };
 
 }// namespace OpenKneeboard::SHM::D3D12
