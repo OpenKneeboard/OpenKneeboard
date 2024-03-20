@@ -116,14 +116,7 @@ void InterprocessRenderer::SubmitFrame(
     OPENKNEEBOARD_TraceLoggingScope(
       "CopyFromCanvas",
       TraceLoggingValue(ipcTextureInfo.mTextureIndex, "TextureIndex"),
-      TraceLoggingValue(ipcTextureInfo.mFenceIn, "FenceIn"),
       TraceLoggingValue(ipcTextureInfo.mFenceOut, "FenceOut"));
-    if (destResources->mNewFence) {
-      destResources->mNewFence = false;
-    } else {
-      OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas/FenceIn");
-      check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
-    }
     {
       OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas/CopySubresourceRegion");
       ctx->CopySubresourceRegion(

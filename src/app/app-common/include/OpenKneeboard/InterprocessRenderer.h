@@ -94,7 +94,6 @@ class InterprocessRenderer final
 
     winrt::com_ptr<ID3D11Fence> mFence;
     winrt::handle mFenceHandle;
-    bool mNewFence {true};
 
     D3D11_VIEWPORT mViewport {};
   };

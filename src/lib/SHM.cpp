@@ -87,8 +87,8 @@ struct Detail::FrameMetadata final {
   HANDLE mTexture {};
   HANDLE mFence {};
 
-  alignas(
-    2 * sizeof(LONG64)) std::array<LONG64, SHMSwapchainLength> mFenceValues {0};
+  alignas(2 * sizeof(LONG64))
+    std::array<LONG64, SHMSwapchainLength> mFrameReadyFenceValues {0};
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
@@ -194,7 +194,7 @@ Snapshot::Snapshot(
     activity, "SHM::Snapshot::Snapshot(metadataAndTextures)");
 
   const auto textureIndex = metadata->mFrameNumber % SHMSwapchainLength;
-  auto fenceValue = &metadata->mFenceValues.at(textureIndex);
+  auto fenceValue = &metadata->mFrameReadyFenceValues.at(textureIndex);
   const auto fenceOut = InterlockedIncrement64(fenceValue);
   const auto fenceIn = fenceOut - 1;
 
@@ -467,13 +467,11 @@ Writer::NextFrameInfo Writer::BeginFrame() noexcept {
 
   const auto textureIndex
     = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % SHMSwapchainLength);
-  auto fenceValue = &p->mHeader->mFenceValues[textureIndex];
+  auto fenceValue = &p->mHeader->mFrameReadyFenceValues[textureIndex];
   const auto fenceOut = InterlockedIncrement64(fenceValue);
-  const auto fenceIn = fenceOut - 1;
 
   return NextFrameInfo {
     .mTextureIndex = textureIndex,
-    .mFenceIn = fenceIn,
     .mFenceOut = fenceOut,
   };
 }

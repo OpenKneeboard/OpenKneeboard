@@ -163,7 +163,6 @@ class Writer final {
  public:
   struct NextFrameInfo {
     uint8_t mTextureIndex {};
-    LONG64 mFenceIn {};
     LONG64 mFenceOut {};
   };
 
