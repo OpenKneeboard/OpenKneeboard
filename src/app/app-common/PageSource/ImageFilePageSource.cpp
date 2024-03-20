@@ -145,29 +145,25 @@ PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
 void ImageFilePageSource::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     return;
   }
   const auto pageSize = bitmap->GetPixelSize();
 
-  const auto targetWidth = rect.right - rect.left;
-  const auto targetHeight = rect.bottom - rect.top;
-  const auto scaleX = float(targetWidth) / pageSize.width;
-  const auto scaleY = float(targetHeight) / pageSize.height;
-  const auto scale = std::min(scaleX, scaleY);
+  const auto renderSize
+    = PixelSize(pageSize.width, pageSize.height).ScaledToFit(rect.mSize);
 
-  const auto renderWidth = pageSize.width * scale;
-  const auto renderHeight = pageSize.height * scale;
-
-  const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
-  const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
+  const auto renderLeft
+    = rect.Left() + ((rect.Width() - renderSize.Width()) / 2);
+  const auto renderTop
+    = rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
 
   auto ctx = rt->d2d();
   ctx->DrawBitmap(
     bitmap.get(),
-    {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},
+    PixelRect {{renderLeft, renderTop}, renderSize},
     1.0f,
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }

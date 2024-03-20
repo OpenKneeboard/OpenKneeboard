@@ -73,7 +73,7 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
     override;
 
  private:
@@ -89,7 +89,7 @@ class PDFFilePageSource final
   void RenderPageContent(
     RenderTarget* rt,
     PageID pageIndex,
-    const D2D1_RECT_F& rect) noexcept;
+    const PixelRect& rect) noexcept;
   void
   RenderOverDoodles(ID2D1DeviceContext*, PageID pageIndex, const D2D1_RECT_F&);
 

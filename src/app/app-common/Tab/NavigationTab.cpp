@@ -204,18 +204,18 @@ void NavigationTab::ClearUserInput() {
 void NavigationTab::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& canvasRect) {
+  const PixelRect& canvasRect) {
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPage()");
   auto ctx = rt->d2d();
-  const auto scale
-    = (canvasRect.bottom - canvasRect.top) / mPreferredSize.mHeight;
+
+  const auto scale = canvasRect.Height<float>() / mPreferredSize.mHeight;
 
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
 
   this->CalculatePreviewMetrics(pageID);
 
-  const D2D1_POINT_2F origin {canvasRect.left, canvasRect.top};
-  const auto pageTransform = D2D1::Matrix3x2F::Translation(origin.x, origin.y)
+  const auto origin = canvasRect.TopLeft();
+  const auto pageTransform = D2D1::Matrix3x2F::Translation(origin.mX, origin.mY)
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
   ctx->SetTransform(pageTransform);
 
@@ -343,19 +343,19 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
 void NavigationTab::RenderPreviewLayer(
   PageID pageID,
   RenderTarget* rt,
-  const D2D1_SIZE_U& size) {
+  const PixelSize& size) {
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPreviewLayer()");
   const auto& m = mPreviewMetrics.at(pageID);
   const auto buttons = mButtonTrackers.at(pageID)->GetButtons();
 
-  const auto scale = static_cast<float>(size.height)
-    / this->GetPreferredSize(pageID).mPixelSize.mHeight;
+  const auto scale
+    = size.Height<float>() / this->GetPreferredSize(pageID).mPixelSize.mHeight;
 
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
     const auto& rect = m.mRects.at(i);
     const auto scaled = rect.StaticCast<float>() * scale;
-    mRootTab->RenderPage(rt, button.mPageID, scaled);
+    mRootTab->RenderPage(rt, button.mPageID, scaled.Rounded<uint32_t>());
   }
 }
 

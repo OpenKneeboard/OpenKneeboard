@@ -38,7 +38,7 @@ void CachedLayer::Render(
   const D2D1_RECT_F& where,
   Key cacheKey,
   RenderTarget* rt,
-  std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl,
+  std::function<void(RenderTarget*, const PixelSize&)> impl,
   const std::optional<PixelSize>& providedCacheDimensions) {
   std::scoped_lock lock(mCacheMutex);
 

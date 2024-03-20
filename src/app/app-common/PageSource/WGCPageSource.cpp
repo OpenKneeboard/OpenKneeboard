@@ -212,7 +212,7 @@ PreferredSize WGCPageSource::GetPreferredSize(PageID) {
 void WGCPageSource::RenderPage(
   RenderTarget* rt,
   PageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   if (!(mTexture && mCaptureItem)) {
     return;
   }
@@ -228,19 +228,8 @@ void WGCPageSource::RenderPage(
 
   auto sb = mDXR->mSpriteBatch.get();
   sb->Begin(d3d.rtv(), rt->GetDimensions());
-
   const auto sourceRect = this->GetContentRect(mCaptureSize);
-  const PixelRect destRect {
-    {
-      static_cast<uint32_t>(std::lround(rect.left)),
-      static_cast<uint32_t>(std::lround(rect.top)),
-    },
-    {
-      static_cast<uint32_t>(std::lround(rect.right - rect.left)),
-      static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
-    }};
-  sb->Draw(mShaderResourceView.get(), sourceRect, destRect, color);
-
+  sb->Draw(mShaderResourceView.get(), sourceRect, rect, color);
   sb->End();
 
   mNeedsRepaint = false;

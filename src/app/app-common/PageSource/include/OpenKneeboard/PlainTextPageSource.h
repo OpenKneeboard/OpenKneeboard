@@ -58,7 +58,7 @@ class PlainTextPageSource final : public IPageSource,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
     override;
 
  private:

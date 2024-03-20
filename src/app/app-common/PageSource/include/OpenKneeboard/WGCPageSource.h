@@ -55,7 +55,7 @@ class WGCPageSource : public virtual IPageSource,
   virtual std::vector<PageID> GetPageIDs() const final override;
   virtual PreferredSize GetPreferredSize(PageID) final override;
 
-  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
     final override;
 
   struct Options {

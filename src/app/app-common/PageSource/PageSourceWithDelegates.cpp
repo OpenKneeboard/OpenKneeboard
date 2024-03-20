@@ -141,7 +141,7 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
 void PageSourceWithDelegates::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
     OPENKNEEBOARD_BREAK;
@@ -168,7 +168,7 @@ void PageSourceWithDelegates::RenderPageWithCache(
   IPageSource* delegate,
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   const auto rtid = rt->GetID();
   if (!mContentLayerCache.contains(rtid)) {
     mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
@@ -178,16 +178,8 @@ void PageSourceWithDelegates::RenderPageWithCache(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [delegate, pageID](RenderTarget* rt, const D2D1_SIZE_U& size) {
-      delegate->RenderPage(
-        rt,
-        pageID,
-        {
-          0.0f,
-          0.0f,
-          static_cast<FLOAT>(size.width),
-          static_cast<FLOAT>(size.height),
-        });
+    [delegate, pageID](RenderTarget* rt, const PixelSize& size) {
+      delegate->RenderPage(rt, pageID, {{0, 0}, size});
     });
 }
 

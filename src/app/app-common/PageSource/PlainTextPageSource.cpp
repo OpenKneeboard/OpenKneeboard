@@ -150,26 +150,23 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
 void PlainTextPageSource::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   std::unique_lock lock(mMutex);
 
   const auto virtualSize = this->GetPreferredSize(pageID).mPixelSize;
-  const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
+  const auto renderSize = virtualSize.ScaledToFit(rect.mSize);
 
-  const auto scaleX = canvasSize.width / virtualSize.mWidth;
-  const auto scaleY = canvasSize.height / virtualSize.mHeight;
-  const auto scale = std::min(scaleX, scaleY);
-  const D2D1_SIZE_F renderSize
-    = Geometry2D::Size<float>(
-        scale * virtualSize.mWidth, scale * virtualSize.mHeight)
-        .Rounded<float>();
+  const float renderLeft
+    = rect.Left() + ((rect.Width() - renderSize.Width()) / 2);
+  const float renderTop
+    = rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
+
+  const auto scale = renderSize.Height<float>() / virtualSize.Height();
 
   auto ctx = rt->d2d();
   ctx->SetTransform(
     D2D1::Matrix3x2F::Scale(scale, scale)
-    * D2D1::Matrix3x2F::Translation(
-      rect.left + ((canvasSize.width - renderSize.width) / 2),
-      rect.top + ((canvasSize.height - renderSize.height) / 2)));
+    * D2D1::Matrix3x2F::Translation(renderLeft, renderTop));
 
   winrt::com_ptr<ID2D1SolidColorBrush> background;
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
@@ -179,10 +176,12 @@ void PlainTextPageSource::RenderPage(
   ctx->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
 
   ctx->FillRectangle(
-    {0.0f,
-     0.0f,
-     static_cast<float>(virtualSize.mWidth),
-     static_cast<float>(virtualSize.mHeight)},
+    {
+      0.0f,
+      0.0f,
+      virtualSize.Width<float>(),
+      virtualSize.Height<float>(),
+    },
     background.get());
 
   auto textFormat = mTextFormat.get();
@@ -231,10 +230,12 @@ void PlainTextPageSource::RenderPage(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {mPadding,
-       point.y,
-       FLOAT(virtualSize.mWidth),
-       FLOAT(virtualSize.mHeight)},
+      {
+        mPadding,
+        point.y,
+        virtualSize.Width<FLOAT>(),
+        virtualSize.Height<FLOAT>(),
+      },
       footerBrush.get());
   }
 

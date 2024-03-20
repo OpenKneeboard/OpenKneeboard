@@ -166,7 +166,7 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
 void EndlessNotebookTab::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   if (!mSource) {
     return;
   }

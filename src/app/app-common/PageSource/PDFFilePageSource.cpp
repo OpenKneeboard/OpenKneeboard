@@ -384,7 +384,7 @@ PreferredSize PDFFilePageSource::GetPreferredSize(PageID id) {
 void PDFFilePageSource::RenderPageContent(
   RenderTarget* rt,
   PageID id,
-  const D2D1_RECT_F& rect) noexcept {
+  const PixelRect& rect) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPageContent()");
   // Keep alive
   auto p = this->p;
@@ -406,11 +406,12 @@ void PDFFilePageSource::RenderPageContent(
   ctx->FillRectangle(rect, p->mBackgroundBrush.get());
 
   PDF_RENDER_PARAMS params {
-    .DestinationWidth = static_cast<UINT>(std::lround(rect.right - rect.left)),
-    .DestinationHeight = static_cast<UINT>(std::lround(rect.bottom - rect.top)),
+    .DestinationWidth = rect.Width(),
+    .DestinationHeight = rect.Height(),
   };
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
+  ctx->SetTransform(D2D1::Matrix3x2F::Translation(
+    rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
 
   {
     const std::unique_lock d2dlock(*(p->mDXR));
@@ -537,7 +538,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 void PDFFilePageSource::RenderPage(
   RenderTarget* rt,
   PageID pageID,
-  const D2D1_RECT_F& rect) {
+  const PixelRect& rect) {
   const auto rtid = rt->GetID();
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");
   if (!p->mCache.contains(rtid)) {
@@ -551,15 +552,7 @@ void PDFFilePageSource::RenderPage(
     pageID.GetTemporaryValue(),
     rt,
     [=](auto rt, const auto& size) {
-      this->RenderPageContent(
-        rt,
-        pageID,
-        {
-          0.0f,
-          0.0f,
-          static_cast<FLOAT>(size.width),
-          static_cast<FLOAT>(size.height),
-        });
+      this->RenderPageContent(rt, pageID, {{0, 0}, size});
     },
     cacheDimensions);
 
