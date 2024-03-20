@@ -233,5 +233,13 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mNonVR,
   mDefaultTabID);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews);
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  AppWindowViewMode,
+  {
+    {AppWindowViewMode::NoDecision, "NoDecision"},
+    {AppWindowViewMode::Independent, "Independent"},
+    {AppWindowViewMode::ActiveView, "ActiveView"},
+  });
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews, mAppWindowMode);
 };// namespace OpenKneeboard

@@ -90,6 +90,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     for (auto& view: mViews) {
       view->SetTabs(tabs);
     }
+    mAppWindowView->SetTabs(tabs);
   });
 
   mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
@@ -169,7 +170,23 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
+  if (
+    mAppWindowIsForeground
+    && mSettings.mViews.mAppWindowMode == AppWindowViewMode::Independent) {
+    return mAppWindowView;
+  }
   return mViews.at(mInputViewIndex);
+}
+
+std::shared_ptr<KneeboardView> KneeboardState::GetAppWindowView() const {
+  return mAppWindowView;
+}
+
+void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "KneeboardState::NotifyAppWindowIsForeground()",
+    TraceLoggingValue(isForeground, "isForeground"));
+  mAppWindowIsForeground = isForeground;
 }
 
 void KneeboardState::PostUserAction(UserAction action) {
@@ -818,11 +835,32 @@ void KneeboardState::InitializeViews() {
     AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
 
+  bool viewChanged = false;
   if (mInputViewIndex >= count) {
     mInputViewIndex = (count - 1);
-    evActiveViewChangedEvent.Emit();
+    viewChanged = true;
   }
 
+  switch (mSettings.mViews.mAppWindowMode) {
+    case AppWindowViewMode::NoDecision:
+    case AppWindowViewMode::ActiveView:
+      mAppWindowView = GetActiveViewForGlobalInput();
+      break;
+    case AppWindowViewMode::Independent:
+      if (
+        (!mAppWindowView)
+        || mAppWindowView->GetPersistentGUID() != winrt::guid {}) {
+        viewChanged = true;
+        mAppWindowView = KneeboardView::Create(mDXResources, this, {});
+        mAppWindowView->SetTabs(this->GetTabsList()->GetTabs());
+        AddEventListener(
+          mAppWindowView->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+      }
+  }
+
+  if (viewChanged) {
+    evActiveViewChangedEvent.Emit();
+  }
   evNeedsRepaintEvent.Emit();
 }
 

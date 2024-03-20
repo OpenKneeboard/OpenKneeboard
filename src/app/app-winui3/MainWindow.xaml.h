@@ -24,6 +24,7 @@
 
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Handles.h>
 #include <OpenKneeboard/KneeboardView.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -77,6 +78,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   HWND mHwnd;
   winrt::handle mHwndFile;
   std::shared_ptr<KneeboardView> mKneeboardView;
+  unique_hwineventhook mWinEventHook;
 
   FrameworkElement mProfileSwitcher {nullptr};
 
@@ -105,6 +107,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget OnLoaded();
   winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
+  winrt::Windows::Foundation::IAsyncAction PromptForViewMode();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
   winrt::fire_and_forget Shutdown();
@@ -128,6 +131,15 @@ struct MainWindow : MainWindowT<MainWindow>,
     LPARAM lParam,
     UINT_PTR uIdSubclass,
     DWORD_PTR dwRefData);
+
+  static void WinEventProc(
+    HWINEVENTHOOK,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD idEventThread,
+    DWORD dwmsEventTime);
 
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<KneeboardState> mKneeboard;

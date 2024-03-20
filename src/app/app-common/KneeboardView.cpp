@@ -117,7 +117,7 @@ KneeboardViewID KneeboardView::GetRuntimeID() const {
 }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
-  if (std::ranges::equal(tabs, mTabViews, {}, {}, &ITabView::GetTab)) {
+  if (std::ranges::equal(tabs, mTabViews, {}, {}, &ITabView::GetRootTab)) {
     return;
   }
 

@@ -187,7 +187,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     std::bind_front(&MainWindow::UpdateProfileSwitcherVisibility, this));
   AddEventListener(
     mKneeboard->evSettingsChangedEvent,
-    std::bind_front(&MainWindow::OnTabsChanged, this));
+    std::bind_front(&MainWindow::ResetKneeboardView, this));
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
@@ -334,6 +334,16 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   SetWindowSubclass(
     mHwnd, &MainWindow::SubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
 
+  mWinEventHook.reset(SetWinEventHook(
+    EVENT_SYSTEM_FOREGROUND,
+    EVENT_SYSTEM_FOREGROUND,
+    NULL,
+    &MainWindow::WinEventProc,
+    0,
+    0,
+    WINEVENT_OUTOFCONTEXT));
+  mKneeboard->NotifyAppWindowIsForeground(GetForegroundWindow() == mHwnd);
+
   co_await this->WriteInstanceData();
 
   auto xamlRoot = this->Content().XamlRoot();
@@ -349,6 +359,39 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   co_await mUIThread;
   co_await ShowSelfElevationWarning();
   co_await CheckAllDCSHooks(xamlRoot);
+  co_await PromptForViewMode();
+}
+
+void MainWindow::WinEventProc(
+  HWINEVENTHOOK,
+  DWORD event,
+  HWND hwnd,
+  LONG idObject,
+  LONG idChild,
+  DWORD idEventThread,
+  DWORD dwmsEventTime) {
+  if (event != EVENT_SYSTEM_FOREGROUND) {
+    return;
+  }
+
+  auto kneeboard = gKneeboard.lock();
+  if (!kneeboard) {
+    return;
+  }
+  kneeboard->NotifyAppWindowIsForeground(hwnd == gMainWindow);
+}
+
+winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
+  auto viewSettings = mKneeboard->GetViewsSettings();
+  if (viewSettings.mAppWindowMode != AppWindowViewMode::NoDecision) {
+    co_return;
+  }
+  if (viewSettings.mViews.size() < 2) {
+    co_return;
+  }
+
+  // FIXME
+  co_return;
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -543,7 +586,8 @@ void MainWindow::ResetKneeboardView() {
   for (const auto& event: mKneeboardViewEvents) {
     this->RemoveEventListener(event);
   }
-  mKneeboardView = mKneeboard->GetActiveViewForGlobalInput();
+
+  mKneeboardView = mKneeboard->GetAppWindowView();
 
   mKneeboardViewEvents = {
     AddEventListener(
@@ -614,6 +658,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
   auto self = get_strong();
   self->RemoveAllEventListeners();
+  mWinEventHook.reset();
   // TODO: a lot of this should be moved to the Application class.
   dprint("Removing instance data...");
   std::filesystem::remove(MainWindow::GetInstanceDataPath());
@@ -743,7 +788,6 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
 
 winrt::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
-
   // In theory, we could directly mutate Navigation().MenuItems();
   // unfortunately, NavigationView contains a race condition, so
   // `MenuItems().Clear()` is unsafe.

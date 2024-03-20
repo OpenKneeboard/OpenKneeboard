@@ -80,6 +80,7 @@ class KneeboardState final
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
+  std::shared_ptr<KneeboardView> GetAppWindowView() const;
   std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
@@ -105,6 +106,8 @@ class KneeboardState final
 
   ProfileSettings GetProfileSettings() const;
   void SetProfileSettings(const ProfileSettings&);
+
+  void NotifyAppWindowIsForeground(bool isForeground);
 
   TabsList* GetTabsList() const;
 
@@ -156,6 +159,9 @@ class KneeboardState final
 
   uint8_t mInputViewIndex = 0;
   std::vector<std::shared_ptr<KneeboardView>> mViews;
+
+  std::shared_ptr<KneeboardView> mAppWindowView;
+  bool mAppWindowIsForeground {false};
 
   PixelSize mLastNonVRPixelSize {};
 

@@ -159,8 +159,30 @@ struct ViewConfig {
   constexpr bool operator==(const ViewConfig&) const noexcept = default;
 };
 
+enum class AppWindowViewMode {
+  /** The user hasn't been asked yet; they should be prompted
+   * when they add a second view, or on next startup if they already
+   * have two.
+   */
+  NoDecision,
+  /** The main window shows the active KneeboardView.
+   *
+   * Changing tabs/pages affects the in-game view.
+   */
+  ActiveView,
+
+  /**
+   * The main window has its' own KneeboardView.
+   *
+   * Changing tabs/pages does not affect the in-game view.
+   */
+  Independent,
+};
+
 struct ViewsConfig {
   std::vector<ViewConfig> mViews;
+
+  AppWindowViewMode mAppWindowMode {AppWindowViewMode::NoDecision};
 
   constexpr bool operator==(const ViewsConfig&) const noexcept = default;
 };
