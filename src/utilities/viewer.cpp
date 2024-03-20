@@ -119,6 +119,8 @@ class TestViewerWindow final : private D3D11Resources {
   bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
+  ViewerSettings mSettings {ViewerSettings::Load()};
+
   struct ShaderDrawInfo {
     union {
       std::array<float, 2> mDimensions;
@@ -160,11 +162,6 @@ class TestViewerWindow final : private D3D11Resources {
     /* colorStride = */ 20,
   };
 
-  enum class FillMode {
-    Default,
-    Checkerboard,
-    ColorKey,
-  };
   static constexpr auto LastFillMode = FillMode::ColorKey;
   static constexpr auto FillModeCount
     = static_cast<std::underlying_type_t<FillMode>>(LastFillMode) + 1;
@@ -174,7 +171,7 @@ class TestViewerWindow final : private D3D11Resources {
   bool mShowVR {false};
 
   bool mStreamerMode {false};
-  FillMode mStreamerModePreviousFillMode;
+  FillMode mStreamerModePreviousFillMode {FillMode::Default};
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -222,10 +219,10 @@ class TestViewerWindow final : private D3D11Resources {
       CLASS_NAME,
       L"OpenKneeboard Viewer",
       WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT,
-      CW_USEDEFAULT,
-      768 / 2,
-      1024 / 2,
+      mSettings.mWindowX,
+      mSettings.mWindowY,
+      mSettings.mWindowWidth,
+      mSettings.mWindowHeight,
       NULL,
       NULL,
       instance,
@@ -256,6 +253,8 @@ class TestViewerWindow final : private D3D11Resources {
         (1024 / 2) * dpi / USER_DEFAULT_SCREEN_DPI,
         SWP_NOZORDER | SWP_NOMOVE);
     }
+
+    mSettings.Save();
   }
 
   bool HaveDirect2D() const {
@@ -606,20 +605,23 @@ class TestViewerWindow final : private D3D11Resources {
       }
       // Fill
       case 'F':
-        mFillMode = static_cast<FillMode>(
-          (static_cast<std::underlying_type_t<FillMode>>(mFillMode) + 1)
+        mSettings.mFillMode = static_cast<FillMode>(
+          (static_cast<std::underlying_type_t<FillMode>>(mSettings.mFillMode)
+           + 1)
           % FillModeCount);
+        mSettings.Save();
         this->PaintNow();
         return;
       // Streamer
       case 'S':
-        mStreamerMode = !mStreamerMode;
-        if (mStreamerMode) {
-          mStreamerModePreviousFillMode = mFillMode;
-          mFillMode = FillMode::ColorKey;
-        } else if (mFillMode == FillMode::ColorKey) {
-          mFillMode = mStreamerModePreviousFillMode;
+        mSettings.mStreamerMode = !mSettings.mStreamerMode;
+        if (mSettings.mStreamerMode) {
+          mStreamerModePreviousFillMode = mSettings.mFillMode;
+          mSettings.mFillMode = FillMode::ColorKey;
+        } else if (mSettings.mFillMode == FillMode::ColorKey) {
+          mSettings.mFillMode = mStreamerModePreviousFillMode;
         }
+        mSettings.Save();
         this->PaintNow();
         return;
       // VR
@@ -683,7 +685,7 @@ class TestViewerWindow final : private D3D11Resources {
 
   void PaintBackground() {
     ShaderFillInfo fill;
-    switch (mFillMode) {
+    switch (mSettings.mFillMode) {
       case FillMode::Default:
         fill = mDefaultFill;
         break;
@@ -793,7 +795,7 @@ class TestViewerWindow final : private D3D11Resources {
 
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.HasTexture()) {
-      if (!mStreamerMode) {
+      if (!mSettings.mStreamerMode) {
         RenderError("No Feeder");
       }
       mFirstDetached = false;

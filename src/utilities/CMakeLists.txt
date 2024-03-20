@@ -52,6 +52,7 @@ add_utility_executable(
   OpenKneeboard-Viewer
   WIN32
   viewer.cpp
+  viewer-settings.cpp
   viewer-d3d11.cpp
   viewer-d3d12.cpp
   viewer-vulkan.cpp
