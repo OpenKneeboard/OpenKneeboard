@@ -991,6 +991,19 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
     case WM_CLOSE:
 
       // TODO: update window size and position in gInstance->mSettings
+      if (!IsIconic(hWnd)) {
+        // write window rect
+        RECT windowRect {};
+        if (GetWindowRect(hWnd, &windowRect)) {
+          gInstance->mSettings.mWindowX = windowRect.left;
+          gInstance->mSettings.mWindowY = windowRect.top;
+
+          gInstance->mSettings.mWindowWidth
+            = windowRect.right - windowRect.left;
+          gInstance->mSettings.mWindowHeight
+            = windowRect.bottom - windowRect.top;
+        }
+      }
 
       gInstance->mSettings.Save();
       PostQuitMessage(0);
