@@ -215,6 +215,20 @@ class TestViewerWindow final : private D3D11Resources {
       .lpszClassName = CLASS_NAME,
     };
     RegisterClass(&wc);
+
+    POINT TOP_LEFT = POINT(mSettings.mWindowX, mSettings.mWindowY);
+    POINT BOTTOM_RIGHT = POINT(
+      TOP_LEFT.x + mSettings.mWindowWidth,
+      TOP_LEFT.y + mSettings.mWindowHeight);
+
+    HMONITOR MONA = MonitorFromPoint(TOP_LEFT, MONITOR_DEFAULTTONULL);
+    HMONITOR MONB = MonitorFromPoint(BOTTOM_RIGHT, MONITOR_DEFAULTTONULL);
+
+    if (MONA == NULL || MONA != MONB) {
+      mSettings.mWindowX = CW_USEDEFAULT;
+      mSettings.mWindowY = CW_USEDEFAULT;
+    }
+
     mHwnd = CreateWindowExW(
       0,
       CLASS_NAME,
