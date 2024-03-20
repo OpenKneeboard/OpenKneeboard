@@ -108,8 +108,7 @@ class IPCTextureCopier {
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,
-    uint64_t fenceValueIn,
-    uint64_t fenceValueOut) noexcept
+    uint64_t fenceValueIn) noexcept
     = 0;
 };
 
