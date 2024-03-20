@@ -14,6 +14,8 @@ namespace OpenKneeboardApp
 
         Boolean EnableMouseButtonBindings;
 
+        UInt8 AppWindowViewMode;
+
         Boolean LoopPages;
         Boolean LoopTabs;
         Boolean LoopProfiles;

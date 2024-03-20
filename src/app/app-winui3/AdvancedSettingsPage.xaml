@@ -40,6 +40,38 @@
           primary kneeboard - bind a button to switch kneeboards to control
           the second kneeboard.
         </TextBlock>
+        <ComboBox
+          Header="App window view" 
+          SelectedIndex="{x:Bind AppWindowViewMode}">
+          <x:String>Ask later</x:String>
+          <x:String>In-game active view (flight sims)</x:String>
+          <x:String>Independent view (overlays, racing)</x:String>
+        </ComboBox>
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          The app window can show and control the active in-game view
+          (for VR, this is whichever you looked at most recently), or it can
+          be independent. This changes the behavior of tab/page changes,
+          including button bindings if the OpenKneeboard window is the
+          foreground window.
+        </TextBlock>
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          If you use tabs with multiple pages, or more tabs than views
+          (common with flight simulators), you probably want
+          'In-game active view'. Changing tabs or pages in the app window
+          will also change the current tab or page in-game.
+        </TextBlock>
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          If you want each view to always show the same tab, and each
+          tab only has one page (e.g. sim racing overlays), you probably
+          want 'Independent view'. Changing tabs or pages in the app window
+          will only affect the app.
+        </TextBlock>
       </StackPanel>
       <TextBlock
         Text="Mouse button bindings"

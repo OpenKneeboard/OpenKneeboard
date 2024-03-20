@@ -34,6 +34,7 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/VRConfig.h>
+#include <OpenKneeboard/ViewsConfig.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
@@ -78,6 +79,20 @@ void AdvancedSettingsPage::Bookmarks(bool value) noexcept {
   mPropertyChangedEvent(
     *this,
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Bookmarks"));
+}
+
+uint8_t AdvancedSettingsPage::AppWindowViewMode() const noexcept {
+  return static_cast<uint8_t>(mKneeboard->GetViewsSettings().mAppWindowMode);
+}
+
+void AdvancedSettingsPage::AppWindowViewMode(uint8_t rawValue) noexcept {
+  const auto value = static_cast<OpenKneeboard::AppWindowViewMode>(rawValue);
+  auto views = mKneeboard->GetViewsSettings();
+  if (views.mAppWindowMode == value) {
+    return;
+  }
+  views.mAppWindowMode = value;
+  mKneeboard->SetViewsSettings(views);
 }
 
 bool AdvancedSettingsPage::EnableMouseButtonBindings() const noexcept {

@@ -165,6 +165,7 @@ enum class AppWindowViewMode {
    * have two.
    */
   NoDecision,
+
   /** The main window shows the active KneeboardView.
    *
    * Changing tabs/pages affects the in-game view.

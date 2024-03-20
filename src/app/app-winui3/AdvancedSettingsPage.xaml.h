@@ -48,6 +48,9 @@ struct AdvancedSettingsPage
   bool Bookmarks() const noexcept;
   void Bookmarks(bool value) noexcept;
 
+  uint8_t AppWindowViewMode() const noexcept;
+  void AppWindowViewMode(uint8_t value) noexcept;
+
   bool EnableMouseButtonBindings() const noexcept;
   void EnableMouseButtonBindings(bool value) noexcept;
 
