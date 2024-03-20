@@ -119,6 +119,7 @@ class TestViewerWindow final : private D3D11Resources {
   bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
+  RECT mWindowRect {};
   ViewerSettings mSettings {ViewerSettings::Load()};
 
   struct ShaderDrawInfo {
@@ -988,22 +989,26 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
     case WM_KEYUP:
       gInstance->OnKeyUp(wParam);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
-    case WM_CLOSE:
-
-      // TODO: update window size and position in gInstance->mSettings
+    case WM_SIZE:
+      [[fallthrough]];
+    case WM_MOVE: {
       if (!IsIconic(hWnd)) {
-        // write window rect
-        RECT windowRect {};
+        RECT windowRect;
         if (GetWindowRect(hWnd, &windowRect)) {
-          gInstance->mSettings.mWindowX = windowRect.left;
-          gInstance->mSettings.mWindowY = windowRect.top;
-
-          gInstance->mSettings.mWindowWidth
-            = windowRect.right - windowRect.left;
-          gInstance->mSettings.mWindowHeight
-            = windowRect.bottom - windowRect.top;
+          gInstance->mWindowRect = windowRect;
         }
       }
+      return 0;
+    }
+    case WM_CLOSE:
+
+      gInstance->mSettings.mWindowX = gInstance->mWindowRect.left;
+      gInstance->mSettings.mWindowY = gInstance->mWindowRect.top;
+
+      gInstance->mSettings.mWindowWidth
+        = gInstance->mWindowRect.right - gInstance->mWindowRect.left;
+      gInstance->mSettings.mWindowHeight
+        = gInstance->mWindowRect.bottom - gInstance->mWindowRect.top;
 
       gInstance->mSettings.Save();
       PostQuitMessage(0);
