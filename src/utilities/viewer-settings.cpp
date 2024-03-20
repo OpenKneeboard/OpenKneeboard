@@ -37,14 +37,7 @@ ViewerSettings ViewerSettings::Load() {
     std::ifstream f(path.c_str());
     nlohmann::json json;
     f >> json;
-    // ret = json; // this doesnt actually update ret
-
-    ret.mWindowWidth = json["mWindowWidth"];
-    ret.mWindowHeight = json["mWindowHeight"];
-    ret.mWindowX = json["mWindowX"];
-    ret.mWindowY = json["mWindowY"];
-    ret.mStreamerMode = json["mStreamerMode"];
-    ret.mFillMode = json["mFillMode"];
+    ret = json;
   }
 
   return ret;
@@ -55,28 +48,27 @@ void ViewerSettings::Save() {
   if (!std::filesystem::exists(dir)) {
     std::filesystem::create_directories(dir);
   }
-  nlohmann::json j;// = *this; // this results in null
-
-  j["mWindowWidth"] = mWindowWidth;
-  j["mWindowHeight"] = mWindowHeight;
-  j["mWindowX"] = mWindowX;
-  j["mWindowY"] = mWindowY;
-  j["mStreamerMode"] = mStreamerMode;
-  j["mFillMode"] = mFillMode;
+  nlohmann::json j = *this;
 
   std::ofstream f(dir / "Viewer.json");
   f << std::setw(2) << j << std::endl;
 }
 
-// I'm guessing this is supposed to make the conversion from json to object work
-// but for some reason it's not working, so meh
-// OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-//   ViewerSettings,
-//   mWindowWidth,
-//   mWindowHeight,
-//   mWindowX,
-//   mWindowY,
-//   mStreamerMode,
-//   mFillMode)
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  FillMode,
+  {
+    {FillMode::Default, "Default"},
+    {FillMode::Checkerboard, "Checkerboard"},
+    {FillMode::ColorKey, "ColorKey"},
+  })
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  ViewerSettings,
+  mWindowWidth,
+  mWindowHeight,
+  mWindowX,
+  mWindowY,
+  mStreamerMode,
+  mFillMode)
 
 }// namespace OpenKneeboard
