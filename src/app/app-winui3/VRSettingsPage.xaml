@@ -93,6 +93,7 @@
           </ComboBox>
         </StackPanel>
       </ContentDialog>
+      <local:AppWindowViewModeDialog x:Name="AppWindowViewModeDialog" />
     </StackPanel>
   </ScrollViewer>
 </Page>

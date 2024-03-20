@@ -92,5 +92,6 @@
         x:Name="Frame"
       />
     </NavigationView>
+    <local:AppWindowViewModeDialog x:Name="AppWindowViewModeDialog" />
   </Grid>
 </Window>

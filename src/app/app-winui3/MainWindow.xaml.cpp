@@ -382,6 +382,8 @@ void MainWindow::WinEventProc(
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
+  auto weakThis = get_weak();
+
   auto viewSettings = mKneeboard->GetViewsSettings();
   if (viewSettings.mAppWindowMode != AppWindowViewMode::NoDecision) {
     co_return;
@@ -390,8 +392,21 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
     co_return;
   }
 
-  // FIXME
-  co_return;
+  const auto result = co_await AppWindowViewModeDialog().ShowAsync();
+  const auto mode = static_cast<AppWindowViewMode>(
+    AppWindowViewModeDialog().SelectedMode(result));
+
+  if (mode == viewSettings.mAppWindowMode) {
+    co_return;
+  }
+
+  const auto self = weakThis.get();
+  if (!self) {
+    co_return;
+  }
+
+  viewSettings.mAppWindowMode = mode;
+  self->mKneeboard->SetViewsSettings(viewSettings);
 }
 
 winrt::Windows::Foundation::IAsyncAction

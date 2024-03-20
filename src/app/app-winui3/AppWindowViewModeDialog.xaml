@@ -1,0 +1,41 @@
+﻿<ContentDialog
+  x:Class="OpenKneeboardApp.AppWindowViewModeDialog"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:OpenKneeboardApp"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  PrimaryButtonText="Kneeboard mode"
+  SecondaryButtonText="Overlay mode"
+  Title="Multiple Views">
+  <ContentDialog.Resources>
+    <Style TargetType="local:AppWindowViewModeDialog" BasedOn="{StaticResource DefaultContentDialogStyle}" />
+  </ContentDialog.Resources>
+  <RichTextBlock>
+    <Paragraph>
+      What do you want to happen when you change tab or page in the
+      OpenKneeboard app window?
+    </Paragraph>
+    <Paragraph Margin="0,8">
+      <Run FontWeight="Bold">Kneeboard mode:</Run>
+      Changing tabs or pages in the app window will also change the current
+      tab or page in the in-game view you looked at most recently. 
+    </Paragraph>
+    <Paragraph Margin="0,8">
+      You probably want this if you have tabs with multiple pages, or have
+      more tabs than views. If you're unsure, pick this if you're using
+      OpenKneeboard with flight simulators.
+    </Paragraph>
+    <Paragraph Margin="0,8">
+      <Run FontWeight="Bold">Overlay mode:</Run>
+      Changing tabs or pages in the app window will not change which tab
+      or page is shown in-game.
+    </Paragraph>
+    <Paragraph Margin="0,8">
+      You probably want to use this if you have the same number of tabs as
+      views, and each tab has one page; this is usually what you want if
+      you're using OpenKneeboard for overlays rather than as a kneeboard,
+      such as when sim racing.
+    </Paragraph>
+  </RichTextBlock>
+</ContentDialog>

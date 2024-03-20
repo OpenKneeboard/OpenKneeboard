@@ -12,6 +12,7 @@ ok_add_executable(
   HelpPage.idl HelpPage.xaml HelpPage.xaml.cpp HelpPage.xaml.h
   AdvancedSettingsPage.idl AdvancedSettingsPage.xaml AdvancedSettingsPage.xaml.cpp AdvancedSettingsPage.xaml.h
   App.idl App.xaml App.xaml.cpp App.xaml.h
+  AppWindowViewModeDialog.idl AppWindowViewModeDialog.xaml AppWindowViewModeDialog.xaml.cpp AppWindowViewModeDialog.xaml.h
   BooleanToVisibilityConverter.cpp BooleanToVisibilityConverter.h BooleanToVisibilityConverter.idl
   CheckDCSHooks.cpp CheckDCSHooks.h
   CheckForUpdates.cpp CheckForUpdates.h

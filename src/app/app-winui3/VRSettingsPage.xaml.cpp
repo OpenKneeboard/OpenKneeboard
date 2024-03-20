@@ -189,6 +189,19 @@ fire_and_forget VRSettingsPage::AddView(
       break;
     }
   }
+
+  if (
+    settings.mViews.size() < 2
+    && settings.mAppWindowMode == AppWindowViewMode::NoDecision) {
+    const auto result = co_await AppWindowViewModeDialog().ShowAsync();
+    settings.mAppWindowMode = static_cast<AppWindowViewMode>(
+      AppWindowViewModeDialog().SelectedMode(result));
+    if (settings.mAppWindowMode == AppWindowViewMode::NoDecision) {
+      // User clicked cancel or pressed escape
+      co_return;
+    }
+  }
+
   settings.mViews.push_back({.mName = name, .mVR = vr});
   mKneeboard->SetViewsSettings(settings);
   AppendViewTab(settings.mViews.back());
