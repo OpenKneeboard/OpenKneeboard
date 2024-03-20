@@ -52,8 +52,7 @@ class Texture final : public SHM::IPCClientTexture {
     VkCommandBuffer,
     VkImage image,
     VkSemaphore semaphore,
-    uint64_t semaphoreValueIn,
-    uint64_t sempahoreValueOut) noexcept;
+    uint64_t sempahoreValueIn) noexcept;
 
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
@@ -135,8 +134,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,
-    uint64_t fenceValueIn,
-    uint64_t fenceValueOut) noexcept override;
+    uint64_t fenceValueIn) noexcept override;
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
     const PixelSize&,

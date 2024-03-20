@@ -91,8 +91,7 @@ void Texture::CopyFrom(
   VkCommandBuffer commandBuffer,
   VkImage source,
   VkSemaphore semaphore,
-  uint64_t semaphoreValueIn,
-  uint64_t semaphoreValueOut) noexcept {
+  uint64_t semaphoreValueIn) noexcept {
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -197,11 +196,9 @@ void Texture::CopyFrom(
   uint64_t waitSemaphoreValues[] = {semaphoreValueIn};
 
   VkSemaphore signalSemaphores[] = {
-    semaphore,
     mReadySemaphore.get(),
   };
   const uint64_t signalSemaphoreValues[] = {
-    semaphoreValueOut,
     ++mReadySemaphoreValue,
   };
 
@@ -452,8 +449,7 @@ void CachedReader::Copy(
   HANDLE sourceHandle,
   IPCClientTexture* destinationTexture,
   HANDLE semaphoreHandle,
-  uint64_t semaphoreValueIn,
-  uint64_t semaphoreValueOut) noexcept {
+  uint64_t semaphoreValueIn) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::Copy()");
 
   const auto swapchainIndex = destinationTexture->GetSwapchainIndex();
@@ -473,8 +469,7 @@ void CachedReader::Copy(
       mCommandBuffers.at(swapchainIndex),
       source,
       semaphore,
-      semaphoreValueIn,
-      semaphoreValueOut);
+      semaphoreValueIn);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
