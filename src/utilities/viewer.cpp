@@ -173,7 +173,7 @@ class TestViewerWindow final : private D3D11Resources {
 
   bool mShowVR {false};
 
-  ViewerFillMode mStreamerModePreviousFillMode {ViewerFillMode::Default};
+  bool mForceTransparentFill {false};
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -625,12 +625,18 @@ class TestViewerWindow final : private D3D11Resources {
         return;
       // Borderless
       case 'B': {
+        if (mSettings.mStreamerMode) {
+          return;
+        }
         mSettings.mBorderless = !mSettings.mBorderless;
         this->SetBorderless(mSettings.mBorderless);
         return;
       }
       // Fill
       case 'F':
+        if (mSettings.mStreamerMode) {
+          return;
+        }
         mSettings.mFillMode = static_cast<ViewerFillMode>(
           (static_cast<std::underlying_type_t<ViewerFillMode>>(
              mSettings.mFillMode)
@@ -643,13 +649,8 @@ class TestViewerWindow final : private D3D11Resources {
         mSettings.mStreamerMode = !mSettings.mStreamerMode;
         if (mSettings.mStreamerMode) {
           SetBorderless(true);
-          mStreamerModePreviousFillMode = mSettings.mFillMode;
-          mSettings.mFillMode = ViewerFillMode::Transparent;
         } else {
           SetBorderless(mSettings.mBorderless);
-          if (mSettings.mFillMode == ViewerFillMode::Transparent) {
-            mSettings.mFillMode = mStreamerModePreviousFillMode;
-          }
         }
         this->PaintNow();
         return;
@@ -718,7 +719,10 @@ class TestViewerWindow final : private D3D11Resources {
 
     const PixelRect rect {{0, 0}, this->GetClientSize()};
 
-    switch (mSettings.mFillMode) {
+    const auto fillMode = mSettings.mStreamerMode ? ViewerFillMode::Transparent
+                                                  : mSettings.mFillMode;
+
+    switch (fillMode) {
       case ViewerFillMode::Default:
         this->DrawRectangle(rect, mDefaultFill);
         break;
