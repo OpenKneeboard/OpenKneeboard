@@ -62,19 +62,9 @@ void ViewerSettings::Save() {
   f << std::setw(2) << j << std::endl;
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  ViewerAlignment,
-  {
-    {ViewerAlignment::TopLeft, "TopLeft"},
-    {ViewerAlignment::Top, "Top"},
-    {ViewerAlignment::TopRight, "TopRight"},
-    {ViewerAlignment::Left, "Left"},
-    {ViewerAlignment::Center, "Center"},
-    {ViewerAlignment::Right, "Right"},
-    {ViewerAlignment::BottomLeft, "BottomLeft"},
-    {ViewerAlignment::Bottom, "Bottom"},
-    {ViewerAlignment::BottomRight, "BottomRight"},
-  })
+#define IT(x) {ViewerAlignment::x, #x},
+
+NLOHMANN_JSON_SERIALIZE_ENUM(ViewerAlignment, {OPENKNEEBOARD_VIEWER_ALIGNMENTS})
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewerFillMode,

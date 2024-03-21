@@ -658,38 +658,16 @@ class TestViewerWindow final : private D3D11Resources {
         this->PaintNow();
         return;
       // Alignment
-      case 'A':
-        switch (mSettings.mAlignment) {
-          case ViewerAlignment::TopLeft:
-            mSettings.mAlignment = ViewerAlignment::Top;
-            break;
-          case ViewerAlignment::Top:
-            mSettings.mAlignment = ViewerAlignment::TopRight;
-            break;
-          case ViewerAlignment::TopRight:
-            mSettings.mAlignment = ViewerAlignment::Left;
-            break;
-          case ViewerAlignment::Left:
-            mSettings.mAlignment = ViewerAlignment::Center;
-            break;
-          case ViewerAlignment::Center:
-            mSettings.mAlignment = ViewerAlignment::Right;
-            break;
-          case ViewerAlignment::Right:
-            mSettings.mAlignment = ViewerAlignment::BottomLeft;
-            break;
-          case ViewerAlignment::BottomLeft:
-            mSettings.mAlignment = ViewerAlignment::Bottom;
-            break;
-          case ViewerAlignment::Bottom:
-            mSettings.mAlignment = ViewerAlignment::BottomRight;
-            break;
-          case ViewerAlignment::BottomRight:
-            mSettings.mAlignment = ViewerAlignment::TopLeft;
-            break;
-        }
+      case 'A': {
+        auto& align = mSettings.mAlignment;
+
+        align = static_cast<ViewerAlignment>(
+          (static_cast<std::underlying_type_t<ViewerAlignment>>(align) + 1)
+          % (int)ViewerAlignmentsCount());
+
         this->PaintNow();
         return;
+      }
     }
 
     if (vkk >= '1' && vkk <= '9') {
@@ -826,35 +804,12 @@ class TestViewerWindow final : private D3D11Resources {
       text += L"\nNo snapshot.";
     }
 
-    switch (mSettings.mAlignment) {
-      case ViewerAlignment::TopLeft:
-        text += L"\nTopLeft";
-        break;
-      case ViewerAlignment::Top:
-        text += L"\nTop";
-        break;
-      case ViewerAlignment::TopRight:
-        text += L"\nTopRight";
-        break;
-      case ViewerAlignment::Left:
-        text += L"\nLeft";
-        break;
-      case ViewerAlignment::Center:
-        text += L"\nCenter";
-        break;
-      case ViewerAlignment::Right:
-        text += L"\nRight";
-        break;
-      case ViewerAlignment::BottomLeft:
-        text += L"\nBottomLeft";
-        break;
-      case ViewerAlignment::Bottom:
-        text += L"\nBottom";
-        break;
-      case ViewerAlignment::BottomRight:
-        text += L"\nBottomRight";
-        break;
-    }
+#define IT(x) \
+  case ViewerAlignment::x: \
+    text += L"\n" #x; \
+    break;
+    switch (mSettings.mAlignment) { OPENKNEEBOARD_VIEWER_ALIGNMENTS }
+#undef IT
 
     if (mShowVR) {
       text += L"\nVR";

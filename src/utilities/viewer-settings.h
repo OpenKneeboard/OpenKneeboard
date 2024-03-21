@@ -31,16 +31,29 @@ enum class ViewerFillMode {
   Transparent,
 };
 
+#define OPENKNEEBOARD_VIEWER_ALIGNMENTS \
+  IT(TopLeft) \
+  IT(Top) \
+  IT(TopRight) \
+  IT(Left) \
+  IT(Center) \
+  IT(Right) \
+  IT(BottomLeft) \
+  IT(Bottom) \
+  IT(BottomRight)
+
+consteval size_t ViewerAlignmentsCount() {
+  size_t count = 0;
+#define IT(x) ++count;
+  OPENKNEEBOARD_VIEWER_ALIGNMENTS;
+#undef IT
+  return count;
+}
+
 enum class ViewerAlignment {
-  TopLeft,
-  Top,
-  TopRight,
-  Left,
-  Center,
-  Right,
-  BottomLeft,
-  Bottom,
-  BottomRight,
+#define IT(x) x,
+  OPENKNEEBOARD_VIEWER_ALIGNMENTS
+#undef IT
 };
 
 struct ViewerSettings final {
