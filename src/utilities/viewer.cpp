@@ -645,10 +645,14 @@ class TestViewerWindow final : private D3D11Resources {
       case 'S':
         mSettings.mStreamerMode = !mSettings.mStreamerMode;
         if (mSettings.mStreamerMode) {
+          SetBorderless(true);
           mStreamerModePreviousFillMode = mSettings.mFillMode;
           mSettings.mFillMode = ViewerFillMode::Transparent;
-        } else if (mSettings.mFillMode == ViewerFillMode::Transparent) {
-          mSettings.mFillMode = mStreamerModePreviousFillMode;
+        } else {
+          SetBorderless(mSettings.mBorderless);
+          if (mSettings.mFillMode == ViewerFillMode::Transparent) {
+            mSettings.mFillMode = mStreamerModePreviousFillMode;
+          }
         }
         this->PaintNow();
         return;
