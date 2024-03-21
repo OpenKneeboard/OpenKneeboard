@@ -105,7 +105,12 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       WGCPageSource::SwapchainLength,
       item.Size());
     mFramePool.FrameArrived(
-      [this](const auto&, const auto&) { this->OnFrame(); });
+      [weak = weak_from_this()](const auto&, const auto&) {
+        auto self = weak.lock();
+        if (self) {
+          self->OnFrame();
+        }
+      });
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
