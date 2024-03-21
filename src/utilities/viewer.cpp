@@ -921,16 +921,6 @@ class TestViewerWindow final : private D3D11Resources {
     const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
 
-    /*
-    const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
-    const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
-
-    const auto renderLeft = 0;// (clientSize.mWidth - renderWidth) / 2;
-    const auto renderTop = 0;// (clientSize.mHeight - renderHeight) / 2;
-    const PixelRect destRect {
-      {renderLeft, renderTop}, {renderWidth, renderHeight}};
-    */
-
     const PixelRect destRect = GetDestRect(imageSize, scale);
 
     auto ctx = mD3D11ImmediateContext.get();
