@@ -977,8 +977,8 @@ class TestViewerWindow final : private D3D11Resources {
     const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
     const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
 
-    unsigned int renderLeft = 0;// (clientSize.mWidth - renderWidth) / 2;
-    unsigned int renderTop = 0;// (clientSize.mHeight - renderHeight) / 2;
+    unsigned int renderLeft = 0;
+    unsigned int renderTop = 0;
 
     switch (mSettings.mAlignment) {
       case ViewerAlignment::TopLeft:
