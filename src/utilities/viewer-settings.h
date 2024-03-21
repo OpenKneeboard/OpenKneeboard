@@ -37,8 +37,10 @@ struct ViewerSettings final {
   int mWindowX {CW_USEDEFAULT};
   int mWindowY {CW_USEDEFAULT};
 
-  bool mStreamerMode {false};
   ViewerFillMode mFillMode {ViewerFillMode::Default};
+  bool mBorderless {false};
+
+  bool mStreamerMode {false};
 
   static ViewerSettings Load();
   void Save();

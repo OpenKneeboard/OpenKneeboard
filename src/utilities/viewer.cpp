@@ -209,6 +209,18 @@ class TestViewerWindow final : private D3D11Resources {
     }
   }
 
+  void SetBorderless(bool borderless) {
+    auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
+    if (borderless) {
+      style &= ~WS_OVERLAPPEDWINDOW;
+      style |= WS_POPUP;
+    } else {
+      style &= ~WS_POPUP;
+      style |= WS_OVERLAPPEDWINDOW;
+    }
+    SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
+  }
+
  public:
   TestViewerWindow(HINSTANCE instance) {
     gInstance = this;
@@ -238,7 +250,7 @@ class TestViewerWindow final : private D3D11Resources {
       WS_EX_NOREDIRECTIONBITMAP,
       CLASS_NAME,
       L"OpenKneeboard Viewer",
-      WS_OVERLAPPEDWINDOW,
+      mSettings.mBorderless ? WS_POPUP : WS_OVERLAPPEDWINDOW,
       mSettings.mWindowX,
       mSettings.mWindowY,
       mSettings.mWindowWidth,
@@ -616,15 +628,8 @@ class TestViewerWindow final : private D3D11Resources {
         return;
       // Borderless
       case 'B': {
-        auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
-        if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-          style &= ~WS_OVERLAPPEDWINDOW;
-          style |= WS_POPUP;
-        } else {
-          style &= ~WS_POPUP;
-          style |= WS_OVERLAPPEDWINDOW;
-        }
-        SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
+        mSettings.mBorderless = !mSettings.mBorderless;
+        this->SetBorderless(mSettings.mBorderless);
         return;
       }
       // Fill
