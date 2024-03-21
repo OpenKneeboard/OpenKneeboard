@@ -67,7 +67,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   {
     {ViewerFillMode::Default, "Default"},
     {ViewerFillMode::Checkerboard, "Checkerboard"},
-    {ViewerFillMode::ColorKey, "ColorKey"},
+    {ViewerFillMode::Transparent, "Transparent"},
   })
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(

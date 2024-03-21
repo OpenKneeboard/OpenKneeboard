@@ -79,6 +79,7 @@ target_link_libraries(
   OpenKneeboard-scope_guard
   System::D2d1
   System::D3d11
+  System::Dcomp
   System::Dxgi
   ThirdParty::DirectXTex
   ThirdParty::DirectXTK

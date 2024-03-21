@@ -52,6 +52,7 @@
 #include <ShlObj_core.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
+#include <dcomp.h>
 #include <dwrite.h>
 #include <dxgi1_6.h>
 #include <shellapi.h>
@@ -81,6 +82,10 @@ struct Pixel {
 class TestViewerWindow final : private D3D11Resources {
  private:
   std::optional<D2DResources> mD2D;
+
+  winrt::com_ptr<IDCompositionDevice> mDComp;
+  winrt::com_ptr<IDCompositionTarget> mDCompTarget;
+  winrt::com_ptr<IDCompositionVisual> mDCompVisual;
 
   winrt::com_ptr<ID3D11VertexShader> mVertexShader;
   winrt::com_ptr<ID3D11PixelShader> mPixelShader;
@@ -156,14 +161,13 @@ class TestViewerWindow final : private D3D11Resources {
   };
 
   ShaderFillInfo mDefaultFill;
-  inline static const ShaderFillInfo mColorKeyFill {{1, 0, 1, 1}};
   inline static const ShaderFillInfo mCheckerboardFill {
     {1, 1, 1, 1},
     {0.9, 0.9, 0.9, 1},
     /* colorStride = */ 20,
   };
 
-  static constexpr auto LastFillMode = ViewerFillMode::ColorKey;
+  static constexpr auto LastFillMode = ViewerFillMode::Transparent;
   static constexpr auto FillModeCount
     = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
 
@@ -231,7 +235,7 @@ class TestViewerWindow final : private D3D11Resources {
     }
 
     mHwnd = CreateWindowExW(
-      0,
+      WS_EX_NOREDIRECTIONBITMAP,
       CLASS_NAME,
       L"OpenKneeboard Viewer",
       WS_OVERLAPPEDWINDOW,
@@ -247,6 +251,11 @@ class TestViewerWindow final : private D3D11Resources {
 
     this->InitializeShaders();
     this->InitializeDirect2D();
+
+    check_hresult(
+      DCompositionCreateDevice(mDXGIDevice.get(), IID_PPV_ARGS(mDComp.put())));
+    check_hresult(mDComp->CreateTargetForHwnd(mHwnd, true, mDCompTarget.put()));
+    check_hresult(mDComp->CreateVisual(mDCompVisual.put()));
 
     check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
@@ -522,15 +531,16 @@ class TestViewerWindow final : private D3D11Resources {
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 3,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
+      .AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED,
     };
-    mDXGIFactory->CreateSwapChainForHwnd(
-      mD3D11Device.get(),
-      mHwnd,
-      &swapChainDesc,
-      nullptr,
-      nullptr,
-      mSwapChain.put());
+    // We need DirectComposition in order to support
+    // DXGI_ALPHA_MODE_PREMULTIPLIED
+    check_hresult(mDXGIFactory->CreateSwapChainForComposition(
+      mD3D11Device.get(), &swapChainDesc, nullptr, mSwapChain.put()));
+    check_hresult(mDCompVisual->SetContent(mSwapChain.get()));
+    check_hresult(mDCompTarget->SetRoot(mDCompVisual.get()));
+    check_hresult(mDComp->Commit());
+
     mSwapChainSize = clientSize;
     mRenderer->Initialize(swapChainDesc.BufferCount);
   }
@@ -631,8 +641,8 @@ class TestViewerWindow final : private D3D11Resources {
         mSettings.mStreamerMode = !mSettings.mStreamerMode;
         if (mSettings.mStreamerMode) {
           mStreamerModePreviousFillMode = mSettings.mFillMode;
-          mSettings.mFillMode = ViewerFillMode::ColorKey;
-        } else if (mSettings.mFillMode == ViewerFillMode::ColorKey) {
+          mSettings.mFillMode = ViewerFillMode::Transparent;
+        } else if (mSettings.mFillMode == ViewerFillMode::Transparent) {
           mSettings.mFillMode = mStreamerModePreviousFillMode;
         }
         this->PaintNow();
@@ -693,23 +703,25 @@ class TestViewerWindow final : private D3D11Resources {
       this->PaintInformationOverlay();
     }
 
-    mSwapChain->Present(0, 0);
+    check_hresult(mSwapChain->Present(0, 0));
   }
 
   void PaintBackground() {
-    ShaderFillInfo fill;
+    mD3D11ImmediateContext->ClearRenderTargetView(
+      mWindowRenderTargetView.get(), DirectX::Colors::Transparent);
+
+    const PixelRect rect {{0, 0}, this->GetClientSize()};
+
     switch (mSettings.mFillMode) {
       case ViewerFillMode::Default:
-        fill = mDefaultFill;
+        this->DrawRectangle(rect, mDefaultFill);
         break;
       case ViewerFillMode::Checkerboard:
-        fill = mCheckerboardFill;
+        this->DrawRectangle(rect, mCheckerboardFill);
         break;
-      case ViewerFillMode::ColorKey:
-        fill = mColorKeyFill;
+      case ViewerFillMode::Transparent:
         break;
     }
-    DrawRectangle({{0, 0}, this->GetClientSize()}, fill);
   }
 
   void DrawRectangle(const PixelRect& rect, const ShaderFillInfo& fill) {

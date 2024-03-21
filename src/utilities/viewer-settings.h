@@ -28,7 +28,7 @@ namespace OpenKneeboard {
 enum class ViewerFillMode {
   Default,
   Checkerboard,
-  ColorKey,
+  Transparent,
 };
 
 struct ViewerSettings final {

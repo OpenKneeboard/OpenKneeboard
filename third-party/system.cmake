@@ -4,6 +4,7 @@ set(
   D2d1
   D3d11
   D3d12
+  Dcomp
   Dbghelp
   Dinput8
   Dwmapi
