@@ -62,6 +62,10 @@ void ViewerSettings::Save() {
   f << std::setw(2) << j << std::endl;
 }
 
+#define IT(x) {ViewerAlignment::x, #x},
+NLOHMANN_JSON_SERIALIZE_ENUM(ViewerAlignment, {OPENKNEEBOARD_VIEWER_ALIGNMENTS})
+#undef IT
+
 NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewerFillMode,
   {
@@ -78,6 +82,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mWindowY,
   mFillMode,
   mBorderless,
-  mStreamerMode)
+  mStreamerMode,
+  mAlignment)
 
 }// namespace OpenKneeboard

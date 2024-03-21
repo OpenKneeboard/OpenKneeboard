@@ -657,6 +657,17 @@ class TestViewerWindow final : private D3D11Resources {
         mShowVR = !mShowVR;
         this->PaintNow();
         return;
+      // Alignment
+      case 'A': {
+        auto& align = mSettings.mAlignment;
+
+        align = static_cast<ViewerAlignment>(
+          (static_cast<std::underlying_type_t<ViewerAlignment>>(align) + 1)
+          % (int)ViewerAlignmentsCount());
+
+        this->PaintNow();
+        return;
+      }
     }
 
     if (vkk >= '1' && vkk <= '9') {
@@ -793,6 +804,13 @@ class TestViewerWindow final : private D3D11Resources {
       text += L"\nNo snapshot.";
     }
 
+#define IT(x) \
+  case ViewerAlignment::x: \
+    text += L"\n" #x; \
+    break;
+    switch (mSettings.mAlignment) { OPENKNEEBOARD_VIEWER_ALIGNMENTS }
+#undef IT
+
     if (mShowVR) {
       text += L"\nVR";
     } else {
@@ -865,13 +883,8 @@ class TestViewerWindow final : private D3D11Resources {
     const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
     const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
-    const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
-    const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
 
-    const auto renderLeft = (clientSize.mWidth - renderWidth) / 2;
-    const auto renderTop = (clientSize.mHeight - renderHeight) / 2;
-    const PixelRect destRect {
-      {renderLeft, renderTop}, {renderWidth, renderHeight}};
+    const PixelRect destRect = GetDestRect(imageSize, scale);
 
     auto ctx = mD3D11ImmediateContext.get();
 
@@ -907,6 +920,54 @@ class TestViewerWindow final : private D3D11Resources {
       mWindowTexture.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
+  }
+
+  PixelRect GetDestRect(
+    const OpenKneeboard::Geometry2D::Size<uint32_t> imageSize,
+    const float scale) {
+    const auto clientSize = GetClientSize();
+
+    const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
+    const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
+
+    unsigned int renderLeft = 0;
+    unsigned int renderTop = 0;
+
+    switch (mSettings.mAlignment) {
+      case ViewerAlignment::TopLeft:
+        // Topleft is default
+        break;
+      case ViewerAlignment::Top:
+        renderLeft = (clientSize.mWidth - renderWidth) / 2;
+        break;
+      case ViewerAlignment::TopRight:
+        renderLeft = (clientSize.mWidth - renderWidth);
+        break;
+      case ViewerAlignment::Left:
+        renderTop = (clientSize.mHeight - renderHeight) / 2;
+        break;
+      case ViewerAlignment::Center:
+        renderTop = (clientSize.mHeight - renderHeight) / 2;
+        renderLeft = (clientSize.mWidth - renderWidth) / 2;
+        break;
+      case ViewerAlignment::Right:
+        renderTop = (clientSize.mHeight - renderHeight) / 2;
+        renderLeft = (clientSize.mWidth - renderWidth);
+        break;
+      case ViewerAlignment::BottomLeft:
+        renderTop = (clientSize.mHeight - renderHeight);
+        break;
+      case ViewerAlignment::Bottom:
+        renderTop = (clientSize.mHeight - renderHeight);
+        renderLeft = (clientSize.mWidth - renderWidth) / 2;
+        break;
+      case ViewerAlignment::BottomRight:
+        renderTop = (clientSize.mHeight - renderHeight);
+        renderLeft = (clientSize.mWidth - renderWidth);
+        break;
+    }
+
+    return {{renderLeft, renderTop}, {renderWidth, renderHeight}};
   }
 
   void CreateRenderer() {
