@@ -163,16 +163,16 @@ class TestViewerWindow final : private D3D11Resources {
     /* colorStride = */ 20,
   };
 
-  static constexpr auto LastFillMode = FillMode::ColorKey;
+  static constexpr auto LastFillMode = ViewerFillMode::ColorKey;
   static constexpr auto FillModeCount
-    = static_cast<std::underlying_type_t<FillMode>>(LastFillMode) + 1;
+    = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
 
-  FillMode mFillMode {FillMode::Default};
+  ViewerFillMode mFillMode {ViewerFillMode::Default};
 
   bool mShowVR {false};
 
   bool mStreamerMode {false};
-  FillMode mStreamerModePreviousFillMode {FillMode::Default};
+  ViewerFillMode mStreamerModePreviousFillMode {ViewerFillMode::Default};
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -618,8 +618,9 @@ class TestViewerWindow final : private D3D11Resources {
       }
       // Fill
       case 'F':
-        mSettings.mFillMode = static_cast<FillMode>(
-          (static_cast<std::underlying_type_t<FillMode>>(mSettings.mFillMode)
+        mSettings.mFillMode = static_cast<ViewerFillMode>(
+          (static_cast<std::underlying_type_t<ViewerFillMode>>(
+             mSettings.mFillMode)
            + 1)
           % FillModeCount);
         this->PaintNow();
@@ -629,8 +630,8 @@ class TestViewerWindow final : private D3D11Resources {
         mSettings.mStreamerMode = !mSettings.mStreamerMode;
         if (mSettings.mStreamerMode) {
           mStreamerModePreviousFillMode = mSettings.mFillMode;
-          mSettings.mFillMode = FillMode::ColorKey;
-        } else if (mSettings.mFillMode == FillMode::ColorKey) {
+          mSettings.mFillMode = ViewerFillMode::ColorKey;
+        } else if (mSettings.mFillMode == ViewerFillMode::ColorKey) {
           mSettings.mFillMode = mStreamerModePreviousFillMode;
         }
         this->PaintNow();
@@ -697,13 +698,13 @@ class TestViewerWindow final : private D3D11Resources {
   void PaintBackground() {
     ShaderFillInfo fill;
     switch (mSettings.mFillMode) {
-      case FillMode::Default:
+      case ViewerFillMode::Default:
         fill = mDefaultFill;
         break;
-      case FillMode::Checkerboard:
+      case ViewerFillMode::Checkerboard:
         fill = mCheckerboardFill;
         break;
-      case FillMode::ColorKey:
+      case ViewerFillMode::ColorKey:
         fill = mColorKeyFill;
         break;
     }

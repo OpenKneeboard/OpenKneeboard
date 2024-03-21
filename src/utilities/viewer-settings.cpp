@@ -55,11 +55,11 @@ void ViewerSettings::Save() {
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  FillMode,
+  ViewerFillMode,
   {
-    {FillMode::Default, "Default"},
-    {FillMode::Checkerboard, "Checkerboard"},
-    {FillMode::ColorKey, "ColorKey"},
+    {ViewerFillMode::Default, "Default"},
+    {ViewerFillMode::Checkerboard, "Checkerboard"},
+    {ViewerFillMode::ColorKey, "ColorKey"},
   })
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(

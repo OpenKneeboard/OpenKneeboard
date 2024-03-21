@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard {
 
-enum class FillMode {
+enum class ViewerFillMode {
   Default,
   Checkerboard,
   ColorKey,
@@ -38,7 +38,7 @@ struct ViewerSettings final {
   int mWindowY {CW_USEDEFAULT};
 
   bool mStreamerMode {false};
-  FillMode mFillMode {FillMode::Default};
+  ViewerFillMode mFillMode {ViewerFillMode::Default};
 
   static ViewerSettings Load();
   void Save();
