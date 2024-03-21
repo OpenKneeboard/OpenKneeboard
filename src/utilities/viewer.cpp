@@ -171,11 +171,8 @@ class TestViewerWindow final : private D3D11Resources {
   static constexpr auto FillModeCount
     = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
 
-  ViewerFillMode mFillMode {ViewerFillMode::Default};
-
   bool mShowVR {false};
 
-  bool mStreamerMode {false};
   ViewerFillMode mStreamerModePreviousFillMode {ViewerFillMode::Default};
 
   PixelSize mSwapChainSize;
