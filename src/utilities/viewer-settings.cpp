@@ -66,14 +66,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewerAlignment,
   {
     {ViewerAlignment::TopLeft, "TopLeft"},
-    {ViewerAlignment::TopLeft, "Top"},
-    {ViewerAlignment::TopLeft, "TopRight"},
-    {ViewerAlignment::TopLeft, "Left"},
-    {ViewerAlignment::TopLeft, "Center"},
-    {ViewerAlignment::TopLeft, "Right"},
-    {ViewerAlignment::TopLeft, "BottomLeft"},
-    {ViewerAlignment::TopLeft, "Bottom"},
-    {ViewerAlignment::TopLeft, "BottomRight"},
+    {ViewerAlignment::Top, "Top"},
+    {ViewerAlignment::TopRight, "TopRight"},
+    {ViewerAlignment::Left, "Left"},
+    {ViewerAlignment::Center, "Center"},
+    {ViewerAlignment::Right, "Right"},
+    {ViewerAlignment::BottomLeft, "BottomLeft"},
+    {ViewerAlignment::Bottom, "Bottom"},
+    {ViewerAlignment::BottomRight, "BottomRight"},
   })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
