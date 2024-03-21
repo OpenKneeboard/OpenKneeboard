@@ -63,8 +63,8 @@ void ViewerSettings::Save() {
 }
 
 #define IT(x) {ViewerAlignment::x, #x},
-
 NLOHMANN_JSON_SERIALIZE_ENUM(ViewerAlignment, {OPENKNEEBOARD_VIEWER_ALIGNMENTS})
+#undef IT
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewerFillMode,
