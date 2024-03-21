@@ -49,7 +49,9 @@ struct ViewerSettings final {
   int mWindowX {CW_USEDEFAULT};
   int mWindowY {CW_USEDEFAULT};
 
+  bool mBorderless {false};
   bool mStreamerMode {false};
+
   ViewerFillMode mFillMode {ViewerFillMode::Default};
   ViewerAlignment mAlignment {ViewerAlignment::Center};
 

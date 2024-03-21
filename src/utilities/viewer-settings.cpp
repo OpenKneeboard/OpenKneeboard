@@ -90,8 +90,9 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mWindowHeight,
   mWindowX,
   mWindowY,
-  mStreamerMode,
   mFillMode,
+  mBorderless,
+  mStreamerMode,
   mAlignment)
 
 }// namespace OpenKneeboard

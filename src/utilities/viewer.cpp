@@ -171,12 +171,7 @@ class TestViewerWindow final : private D3D11Resources {
   static constexpr auto FillModeCount
     = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
 
-  ViewerFillMode mFillMode {ViewerFillMode::Default};
-
   bool mShowVR {false};
-
-  bool mStreamerMode {false};
-  ViewerFillMode mStreamerModePreviousFillMode {ViewerFillMode::Default};
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -209,6 +204,18 @@ class TestViewerWindow final : private D3D11Resources {
     }
   }
 
+  void SetBorderless(bool borderless) {
+    auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
+    if (borderless) {
+      style &= ~WS_OVERLAPPEDWINDOW;
+      style |= WS_POPUP;
+    } else {
+      style &= ~WS_POPUP;
+      style |= WS_OVERLAPPEDWINDOW;
+    }
+    SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
+  }
+
  public:
   TestViewerWindow(HINSTANCE instance) {
     gInstance = this;
@@ -238,7 +245,7 @@ class TestViewerWindow final : private D3D11Resources {
       WS_EX_NOREDIRECTIONBITMAP,
       CLASS_NAME,
       L"OpenKneeboard Viewer",
-      WS_OVERLAPPEDWINDOW,
+      mSettings.mBorderless ? WS_POPUP : WS_OVERLAPPEDWINDOW,
       mSettings.mWindowX,
       mSettings.mWindowY,
       mSettings.mWindowWidth,
@@ -616,19 +623,18 @@ class TestViewerWindow final : private D3D11Resources {
         return;
       // Borderless
       case 'B': {
-        auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
-        if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-          style &= ~WS_OVERLAPPEDWINDOW;
-          style |= WS_POPUP;
-        } else {
-          style &= ~WS_POPUP;
-          style |= WS_OVERLAPPEDWINDOW;
+        if (mSettings.mStreamerMode) {
+          return;
         }
-        SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
+        mSettings.mBorderless = !mSettings.mBorderless;
+        this->SetBorderless(mSettings.mBorderless);
         return;
       }
       // Fill
       case 'F':
+        if (mSettings.mStreamerMode) {
+          return;
+        }
         mSettings.mFillMode = static_cast<ViewerFillMode>(
           (static_cast<std::underlying_type_t<ViewerFillMode>>(
              mSettings.mFillMode)
@@ -640,10 +646,9 @@ class TestViewerWindow final : private D3D11Resources {
       case 'S':
         mSettings.mStreamerMode = !mSettings.mStreamerMode;
         if (mSettings.mStreamerMode) {
-          mStreamerModePreviousFillMode = mSettings.mFillMode;
-          mSettings.mFillMode = ViewerFillMode::Transparent;
-        } else if (mSettings.mFillMode == ViewerFillMode::Transparent) {
-          mSettings.mFillMode = mStreamerModePreviousFillMode;
+          SetBorderless(true);
+        } else {
+          SetBorderless(mSettings.mBorderless);
         }
         this->PaintNow();
         return;
@@ -745,7 +750,10 @@ class TestViewerWindow final : private D3D11Resources {
 
     const PixelRect rect {{0, 0}, this->GetClientSize()};
 
-    switch (mSettings.mFillMode) {
+    const auto fillMode = mSettings.mStreamerMode ? ViewerFillMode::Transparent
+                                                  : mSettings.mFillMode;
+
+    switch (fillMode) {
       case ViewerFillMode::Default:
         this->DrawRectangle(rect, mDefaultFill);
         break;
