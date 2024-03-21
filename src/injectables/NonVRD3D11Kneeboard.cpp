@@ -36,9 +36,11 @@
 namespace OpenKneeboard {
 
 NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() {
-  mDXGIHook.InstallHook({
+  mPresentHook.InstallHook({
     .onPresent
     = std::bind_front(&NonVRD3D11Kneeboard::OnIDXGISwapChain_Present, this),
+    .onResizeBuffers = std::bind_front(
+      &NonVRD3D11Kneeboard::OnIDXGISwapChain_ResizeBuffers, this),
   });
 }
 
@@ -47,7 +49,7 @@ NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
 }
 
 void NonVRD3D11Kneeboard::UninstallHook() {
-  mDXGIHook.UninstallHook();
+  mPresentHook.UninstallHook();
 }
 
 void NonVRD3D11Kneeboard::InitializeResources(IDXGISwapChain* swapchain) {
@@ -161,6 +163,34 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       sr, 0, snapshot, {&layer, 1}, RenderMode::Overlay);
   }
 
+  return passthrough();
+}
+
+HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_ResizeBuffers(
+  IDXGISwapChain* swapchain,
+  UINT bufferCount,
+  UINT width,
+  UINT height,
+  DXGI_FORMAT newFormat,
+  UINT swapChainFlags,
+  const decltype(&IDXGISwapChain::ResizeBuffers)& next) {
+  const auto passthrough = std::bind_front(
+    next, swapchain, bufferCount, width, height, newFormat, swapChainFlags);
+  if (!mSHM) {
+    return passthrough();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope(
+    "NonVRD3D11Kneeboard::OnIDXGISwapChain_ResizeBuffers");
+  if (!mResources) {
+    return passthrough();
+  }
+
+  if (mResources->mDevice) {
+    mSHM.InitializeCache(mResources->mDevice, 0);
+  }
+
+  mResources = {};
   return passthrough();
 }
 

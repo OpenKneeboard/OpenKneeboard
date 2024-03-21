@@ -26,7 +26,7 @@
 #include <d3d12.h>
 // clang-format on
 
-#include "IDXGISwapChainPresentHook.h"
+#include "IDXGISwapChainHook.h"
 #include "IVRCompositorWaitGetPosesHook.h"
 #include "InjectedDLLMain.h"
 #include "OculusEndFrameHook.h"
@@ -70,7 +70,7 @@ class InjectionBootstrapper final {
 
   OculusEndFrameHook mOculusHook;
   IVRCompositorWaitGetPosesHook mOpenVRHook;
-  IDXGISwapChainPresentHook mDXGIHook;
+  IDXGISwapChainHook mDXGIHook;
 
  public:
   InjectionBootstrapper() = delete;

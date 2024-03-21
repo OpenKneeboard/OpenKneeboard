@@ -16,7 +16,7 @@ target_link_libraries(
 
 ok_add_library(OpenKneeboard-FindMainWindow STATIC FindMainWindow.cpp)
 
-ok_add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
+ok_add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainHook.cpp)
 target_link_libraries(
   dxgi-hooks
   PRIVATE

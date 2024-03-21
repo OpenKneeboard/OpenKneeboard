@@ -2,6 +2,11 @@
 
 #include <dxgi.h>
 
-void* VTable_Lookup_IDXGISwapChain_Present(struct IDXGISwapChain* factory) {
-  return factory->lpVtbl->Present;
+void* VTable_Lookup_IDXGISwapChain_Present(struct IDXGISwapChain* swapchain) {
+  return swapchain->lpVtbl->Present;
+}
+
+void* VTable_Lookup_IDXGISwapChain_ResizeBuffers(
+  struct IDXGISwapChain* swapchain) {
+  return swapchain->lpVtbl->ResizeBuffers;
 }
