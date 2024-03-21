@@ -119,7 +119,7 @@ class TestViewerWindow final : private D3D11Resources {
   bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
-  RECT mWindowRect {};
+  std::optional<RECT> mWindowRect {};
   ViewerSettings mSettings {ViewerSettings::Load()};
 
   struct ShaderDrawInfo {
@@ -1016,13 +1016,14 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
     }
     case WM_CLOSE:
 
-      gInstance->mSettings.mWindowX = gInstance->mWindowRect.left;
-      gInstance->mSettings.mWindowY = gInstance->mWindowRect.top;
-
-      gInstance->mSettings.mWindowWidth
-        = gInstance->mWindowRect.right - gInstance->mWindowRect.left;
-      gInstance->mSettings.mWindowHeight
-        = gInstance->mWindowRect.bottom - gInstance->mWindowRect.top;
+      if (gInstance->mWindowRect.has_value()) {
+        gInstance->mSettings.mWindowX = gInstance->mWindowRect->left;
+        gInstance->mSettings.mWindowY = gInstance->mWindowRect->top;
+        gInstance->mSettings.mWindowWidth
+          = gInstance->mWindowRect->right - gInstance->mWindowRect->left;
+        gInstance->mSettings.mWindowHeight
+          = gInstance->mWindowRect->bottom - gInstance->mWindowRect->top;
+      }
 
       gInstance->mSettings.Save();
       PostQuitMessage(0);
