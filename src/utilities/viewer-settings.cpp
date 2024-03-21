@@ -48,7 +48,15 @@ void ViewerSettings::Save() {
   if (!std::filesystem::exists(dir)) {
     std::filesystem::create_directories(dir);
   }
-  nlohmann::json j = *this;
+
+  nlohmann::json j;
+  const auto path = Filesystem::GetSettingsDirectory() / "Viewer.json";
+  if (std::filesystem::exists(path)) {
+    std::ifstream f(path.c_str());
+    f >> j;
+  }
+
+  to_json_with_default(j, ViewerSettings {}, *this);
 
   std::ofstream f(dir / "Viewer.json");
   f << std::setw(2) << j << std::endl;
