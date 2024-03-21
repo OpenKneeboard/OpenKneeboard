@@ -216,15 +216,16 @@ class TestViewerWindow final : private D3D11Resources {
     };
     RegisterClass(&wc);
 
-    POINT TOP_LEFT = POINT(mSettings.mWindowX, mSettings.mWindowY);
-    POINT BOTTOM_RIGHT = POINT(
-      TOP_LEFT.x + mSettings.mWindowWidth,
-      TOP_LEFT.y + mSettings.mWindowHeight);
+    const POINT topLeft = POINT(mSettings.mWindowX, mSettings.mWindowY);
+    const POINT bottomRight = POINT(
+      topLeft.x + mSettings.mWindowWidth, topLeft.y + mSettings.mWindowHeight);
 
-    HMONITOR MONA = MonitorFromPoint(TOP_LEFT, MONITOR_DEFAULTTONULL);
-    HMONITOR MONB = MonitorFromPoint(BOTTOM_RIGHT, MONITOR_DEFAULTTONULL);
+    const HMONITOR topLeftMonitor
+      = MonitorFromPoint(topLeft, MONITOR_DEFAULTTONULL);
+    const HMONITOR bottomRightMonitor
+      = MonitorFromPoint(bottomRight, MONITOR_DEFAULTTONULL);
 
-    if (MONA == NULL || MONA != MONB) {
+    if (topLeftMonitor == NULL || topLeftMonitor != bottomRightMonitor) {
       mSettings.mWindowX = CW_USEDEFAULT;
       mSettings.mWindowY = CW_USEDEFAULT;
     }
