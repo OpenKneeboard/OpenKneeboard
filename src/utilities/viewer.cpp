@@ -173,8 +173,6 @@ class TestViewerWindow final : private D3D11Resources {
 
   bool mShowVR {false};
 
-  bool mForceTransparentFill {false};
-
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   winrt::com_ptr<ID3D11Texture2D> mWindowTexture;
