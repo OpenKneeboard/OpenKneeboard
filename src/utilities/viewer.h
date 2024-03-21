@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include "viewer-settings.h"
+
 #include <OpenKneeboard/SHM.h>
 
 #include <filesystem>

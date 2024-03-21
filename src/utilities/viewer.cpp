@@ -119,6 +119,9 @@ class TestViewerWindow final : private D3D11Resources {
   bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
+  std::optional<RECT> mWindowRect {};
+  ViewerSettings mSettings {ViewerSettings::Load()};
+
   struct ShaderDrawInfo {
     union {
       std::array<float, 2> mDimensions;
@@ -160,21 +163,16 @@ class TestViewerWindow final : private D3D11Resources {
     /* colorStride = */ 20,
   };
 
-  enum class FillMode {
-    Default,
-    Checkerboard,
-    ColorKey,
-  };
-  static constexpr auto LastFillMode = FillMode::ColorKey;
+  static constexpr auto LastFillMode = ViewerFillMode::ColorKey;
   static constexpr auto FillModeCount
-    = static_cast<std::underlying_type_t<FillMode>>(LastFillMode) + 1;
+    = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
 
-  FillMode mFillMode {FillMode::Default};
+  ViewerFillMode mFillMode {ViewerFillMode::Default};
 
   bool mShowVR {false};
 
   bool mStreamerMode {false};
-  FillMode mStreamerModePreviousFillMode;
+  ViewerFillMode mStreamerModePreviousFillMode {ViewerFillMode::Default};
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -217,15 +215,30 @@ class TestViewerWindow final : private D3D11Resources {
       .lpszClassName = CLASS_NAME,
     };
     RegisterClass(&wc);
+
+    const POINT topLeft = POINT(mSettings.mWindowX, mSettings.mWindowY);
+    const POINT bottomRight = POINT(
+      topLeft.x + mSettings.mWindowWidth, topLeft.y + mSettings.mWindowHeight);
+
+    const HMONITOR topLeftMonitor
+      = MonitorFromPoint(topLeft, MONITOR_DEFAULTTONULL);
+    const HMONITOR bottomRightMonitor
+      = MonitorFromPoint(bottomRight, MONITOR_DEFAULTTONULL);
+
+    if (topLeftMonitor == NULL || topLeftMonitor != bottomRightMonitor) {
+      mSettings.mWindowX = CW_USEDEFAULT;
+      mSettings.mWindowY = CW_USEDEFAULT;
+    }
+
     mHwnd = CreateWindowExW(
       0,
       CLASS_NAME,
       L"OpenKneeboard Viewer",
       WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT,
-      CW_USEDEFAULT,
-      768 / 2,
-      1024 / 2,
+      mSettings.mWindowX,
+      mSettings.mWindowY,
+      mSettings.mWindowWidth,
+      mSettings.mWindowHeight,
       NULL,
       NULL,
       instance,
@@ -606,19 +619,21 @@ class TestViewerWindow final : private D3D11Resources {
       }
       // Fill
       case 'F':
-        mFillMode = static_cast<FillMode>(
-          (static_cast<std::underlying_type_t<FillMode>>(mFillMode) + 1)
+        mSettings.mFillMode = static_cast<ViewerFillMode>(
+          (static_cast<std::underlying_type_t<ViewerFillMode>>(
+             mSettings.mFillMode)
+           + 1)
           % FillModeCount);
         this->PaintNow();
         return;
       // Streamer
       case 'S':
-        mStreamerMode = !mStreamerMode;
-        if (mStreamerMode) {
-          mStreamerModePreviousFillMode = mFillMode;
-          mFillMode = FillMode::ColorKey;
-        } else if (mFillMode == FillMode::ColorKey) {
-          mFillMode = mStreamerModePreviousFillMode;
+        mSettings.mStreamerMode = !mSettings.mStreamerMode;
+        if (mSettings.mStreamerMode) {
+          mStreamerModePreviousFillMode = mSettings.mFillMode;
+          mSettings.mFillMode = ViewerFillMode::ColorKey;
+        } else if (mSettings.mFillMode == ViewerFillMode::ColorKey) {
+          mSettings.mFillMode = mStreamerModePreviousFillMode;
         }
         this->PaintNow();
         return;
@@ -683,14 +698,14 @@ class TestViewerWindow final : private D3D11Resources {
 
   void PaintBackground() {
     ShaderFillInfo fill;
-    switch (mFillMode) {
-      case FillMode::Default:
+    switch (mSettings.mFillMode) {
+      case ViewerFillMode::Default:
         fill = mDefaultFill;
         break;
-      case FillMode::Checkerboard:
+      case ViewerFillMode::Checkerboard:
         fill = mCheckerboardFill;
         break;
-      case FillMode::ColorKey:
+      case ViewerFillMode::ColorKey:
         fill = mColorKeyFill;
         break;
     }
@@ -793,7 +808,7 @@ class TestViewerWindow final : private D3D11Resources {
 
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.HasTexture()) {
-      if (!mStreamerMode) {
+      if (!mSettings.mStreamerMode) {
         RenderError("No Feeder");
       }
       mFirstDetached = false;
@@ -990,7 +1005,29 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
     case WM_KEYUP:
       gInstance->OnKeyUp(wParam);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    case WM_SIZE:
+      [[fallthrough]];
+    case WM_MOVE: {
+      if (!IsIconic(hWnd)) {
+        RECT windowRect;
+        if (GetWindowRect(hWnd, &windowRect)) {
+          gInstance->mWindowRect = windowRect;
+        }
+      }
+      return 0;
+    }
     case WM_CLOSE:
+
+      if (gInstance->mWindowRect.has_value()) {
+        gInstance->mSettings.mWindowX = gInstance->mWindowRect->left;
+        gInstance->mSettings.mWindowY = gInstance->mWindowRect->top;
+        gInstance->mSettings.mWindowWidth
+          = gInstance->mWindowRect->right - gInstance->mWindowRect->left;
+        gInstance->mSettings.mWindowHeight
+          = gInstance->mWindowRect->bottom - gInstance->mWindowRect->top;
+      }
+
+      gInstance->mSettings.Save();
       PostQuitMessage(0);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
   }
