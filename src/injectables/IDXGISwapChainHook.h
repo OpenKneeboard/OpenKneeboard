@@ -19,10 +19,10 @@
  */
 #pragma once
 
-#include <dxgi.h>
-
 #include <functional>
 #include <memory>
+
+#include <dxgi.h>
 
 namespace OpenKneeboard {
 
@@ -32,10 +32,10 @@ namespace OpenKneeboard {
  * used, check the type of `swapChain->GetDevice()` - it should be either an
  * `ID3D11Device` or `ID3D12Device`.
  */
-class IDXGISwapChainPresentHook final {
+class IDXGISwapChainHook final {
  public:
-  IDXGISwapChainPresentHook();
-  ~IDXGISwapChainPresentHook();
+  IDXGISwapChainHook();
+  ~IDXGISwapChainHook();
 
   struct Callbacks {
     std::function<void()> onHookInstalled;
@@ -45,6 +45,15 @@ class IDXGISwapChainPresentHook final {
       UINT flags,
       const decltype(&IDXGISwapChain::Present)& next)>
       onPresent;
+    std::function<HRESULT(
+      IDXGISwapChain* this_,
+      UINT bufferCount,
+      UINT width,
+      UINT height,
+      DXGI_FORMAT newFormat,
+      UINT swapChainFlags,
+      const decltype(&IDXGISwapChain::ResizeBuffers)& next)>
+      onResizeBuffers;
   };
 
   void InstallHook(const Callbacks& callbacks);

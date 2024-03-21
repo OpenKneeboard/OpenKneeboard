@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 void* VTable_Lookup_IDXGISwapChain_Present(struct IDXGISwapChain* p);
+void* VTable_Lookup_IDXGISwapChain_ResizeBuffers(struct IDXGISwapChain* p);
 
 #ifdef __cplusplus
 }

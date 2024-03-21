@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "IDXGISwapChainPresentHook.h"
+#include "IDXGISwapChainHook.h"
 #include "OculusKneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
@@ -69,7 +69,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OculusD3D11};
 
   OculusKneeboard mOculusKneeboard;
-  IDXGISwapChainPresentHook mDXGIHook;
+  IDXGISwapChainHook mDXGIHook;
 
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,

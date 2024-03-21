@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "IDXGISwapChainPresentHook.h"
+#include "IDXGISwapChainHook.h"
 
 #include <OpenKneeboard/D3D11/Renderer.h>
 #include <OpenKneeboard/SHM.h>
@@ -42,7 +42,7 @@ class NonVRD3D11Kneeboard final {
 
  private:
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::NonVRD3D11};
-  IDXGISwapChainPresentHook mDXGIHook;
+  IDXGISwapChainHook mPresentHook;
 
   using SwapchainResources = D3D11::SwapchainResources;
   using SwapchainBufferResources = D3D11::SwapchainBufferResources;
@@ -63,6 +63,15 @@ class NonVRD3D11Kneeboard final {
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next);
+
+  HRESULT OnIDXGISwapChain_ResizeBuffers(
+    IDXGISwapChain* this_,
+    UINT bufferCount,
+    UINT width,
+    UINT height,
+    DXGI_FORMAT newFormat,
+    UINT swapChainFlags,
+    const decltype(&IDXGISwapChain::ResizeBuffers)& next);
 };
 
 }// namespace OpenKneeboard
