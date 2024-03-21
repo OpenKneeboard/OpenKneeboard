@@ -784,7 +784,9 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
     activity,
     "CachedReader::MaybeGet()",
     TraceLoggingValue("Updated cache", "Result"),
-    TraceLoggingValue(static_cast<unsigned int>(state), "State"));
+    TraceLoggingValue(static_cast<unsigned int>(state), "State"),
+    TraceLoggingValue(
+      snapshot.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
   return snapshot;
 }
 
