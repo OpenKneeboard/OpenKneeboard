@@ -63,6 +63,20 @@ void ViewerSettings::Save() {
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
+  ViewerAlignment,
+  {
+    {ViewerAlignment::TopLeft, "TopLeft"},
+    {ViewerAlignment::TopLeft, "Top"},
+    {ViewerAlignment::TopLeft, "TopRight"},
+    {ViewerAlignment::TopLeft, "Left"},
+    {ViewerAlignment::TopLeft, "Center"},
+    {ViewerAlignment::TopLeft, "Right"},
+    {ViewerAlignment::TopLeft, "BottomLeft"},
+    {ViewerAlignment::TopLeft, "Bottom"},
+    {ViewerAlignment::TopLeft, "BottomRight"},
+  })
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewerFillMode,
   {
     {ViewerFillMode::Default, "Default"},
@@ -77,6 +91,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mWindowX,
   mWindowY,
   mStreamerMode,
-  mFillMode)
+  mFillMode,
+  mAlignment)
 
 }// namespace OpenKneeboard

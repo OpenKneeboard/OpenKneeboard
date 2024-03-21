@@ -652,6 +652,39 @@ class TestViewerWindow final : private D3D11Resources {
         mShowVR = !mShowVR;
         this->PaintNow();
         return;
+      // Alignment
+      case 'A':
+        switch (mSettings.mAlignment) {
+          case ViewerAlignment::TopLeft:
+            mSettings.mAlignment = ViewerAlignment::Top;
+            break;
+          case ViewerAlignment::Top:
+            mSettings.mAlignment = ViewerAlignment::TopRight;
+            break;
+          case ViewerAlignment::TopRight:
+            mSettings.mAlignment = ViewerAlignment::Left;
+            break;
+          case ViewerAlignment::Left:
+            mSettings.mAlignment = ViewerAlignment::Center;
+            break;
+          case ViewerAlignment::Center:
+            mSettings.mAlignment = ViewerAlignment::Right;
+            break;
+          case ViewerAlignment::Right:
+            mSettings.mAlignment = ViewerAlignment::BottomLeft;
+            break;
+          case ViewerAlignment::BottomLeft:
+            mSettings.mAlignment = ViewerAlignment::Bottom;
+            break;
+          case ViewerAlignment::Bottom:
+            mSettings.mAlignment = ViewerAlignment::BottomRight;
+            break;
+          case ViewerAlignment::BottomRight:
+            mSettings.mAlignment = ViewerAlignment::TopLeft;
+            break;
+        }
+        this->PaintNow();
+        return;
     }
 
     if (vkk >= '1' && vkk <= '9') {

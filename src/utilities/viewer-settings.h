@@ -31,6 +31,18 @@ enum class ViewerFillMode {
   Transparent,
 };
 
+enum class ViewerAlignment {
+  TopLeft,
+  Top,
+  TopRight,
+  Left,
+  Center,
+  Right,
+  BottomLeft,
+  Bottom,
+  BottomRight,
+};
+
 struct ViewerSettings final {
   int mWindowWidth {768 / 2};
   int mWindowHeight {1024 / 2};
@@ -39,6 +51,7 @@ struct ViewerSettings final {
 
   bool mStreamerMode {false};
   ViewerFillMode mFillMode {ViewerFillMode::Default};
+  ViewerAlignment mAlignment {ViewerAlignment::Center};
 
   static ViewerSettings Load();
   void Save();
