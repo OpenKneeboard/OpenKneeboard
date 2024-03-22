@@ -161,7 +161,16 @@ winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
   co_await mUIThread;
 
   if (waitForFence) {
-    OPENKNEEBOARD_TraceLoggingScope("WGCPageSource/ReleaseNextFrame/Wait");
+    TraceLoggingActivity<gTraceProvider> waitActivity;
+    TraceLoggingWriteStart(
+      waitActivity, "WGC/PageSource/ReleaseNextFrame/Wait");
+    scope_guard stopActivity([&waitActivity]() {
+      TraceLoggingWriteStop(
+        waitActivity,
+        "WGC/PageSource/ReleaseNextFrame/Wait",
+        TraceLoggingValue(std::uncaught_exceptions(), "ExceptionCount"));
+    });
+
     winrt::handle event {CreateEventW(0, false, false, nullptr)};
     winrt::check_hresult(
       mFence->SetEventOnCompletion(next.mFenceValue, event.get()));
