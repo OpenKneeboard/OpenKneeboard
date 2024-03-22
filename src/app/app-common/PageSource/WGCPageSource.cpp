@@ -154,7 +154,11 @@ winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
     co_return;
   }
 
-  auto next = std::move(mNextFrame);
+  FrameResources next;
+  {
+    std::unique_lock lock(mNextFrameMutex);
+    next = std::move(mNextFrame);
+  }
   const bool waitForFence = next.mFenceValue <= mLastSubmittedFenceValue;
   mNextFrame = {nullptr};
 
@@ -286,6 +290,8 @@ void WGCPageSource::PreOKBFrame() {
   {
     std::unique_lock lock(mNextFrameMutex);
     mRenderFrame = mNextFrame;
+    // Must be freed in WGC thread
+    mRenderFrame.mCaptureFrame = {};
   }
   if (!mRenderFrame.mSourceTexture) {
     return;
