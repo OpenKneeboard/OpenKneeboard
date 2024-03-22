@@ -108,7 +108,7 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       [weak = weak_from_this()](const auto&, const auto&) {
         auto self = weak.lock();
         if (self) {
-          self->OnFrame();
+          self->OnWGCFrame();
         }
       });
 
@@ -137,20 +137,39 @@ WGCPageSource::WGCPageSource(
     return;
   }
 
+  winrt::com_ptr<ID3D11DeviceContext3> deferredContext3;
+  winrt::check_hresult(
+    dxr->mD3D11Device->CreateDeferredContext3(0, deferredContext3.put()));
+  mD3D11DeferredContext = deferredContext3.as<ID3D11DeviceContext4>();
+  winrt::check_hresult(dxr->mD3D11Device->CreateFence(
+    0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
 
   AddEventListener(
     kneeboard->evFrameTimerPostEvent, [this]() { this->ReleaseNextFrame(); });
+  AddEventListener(
+    kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
 }
 
 winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
-  if (!(mDQC && mNextFrame)) {
+  if (!(mDQC && mNextFrame.mCaptureFrame)) {
     co_return;
   }
 
   auto next = std::move(mNextFrame);
   mNextFrame = {nullptr};
+
+  co_await mUIThread;
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("WGCPageSource/ReleaseNextFrame/Wait");
+    winrt::handle event {CreateEventW(0, false, false, nullptr)};
+    winrt::check_hresult(
+      mFence->SetEventOnCompletion(next.mFenceValue, event.get()));
+    co_await winrt::resume_on_signal(event.get());
+  }
 
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
 
@@ -231,6 +250,12 @@ void WGCPageSource::RenderPage(
     color = {dimming, dimming, dimming, 1};
   }
 
+  if (mRenderFrame.mCommandList) {
+    winrt::check_hresult(mDXR->mD3D11ImmediateContext->Wait(
+      mFence.get(), mRenderFrame.mFenceValue));
+    mRenderFrame = {};
+  }
+
   auto sb = mDXR->mSpriteBatch.get();
   sb->Begin(d3d.rtv(), rt->GetDimensions());
   const auto sourceRect = this->GetContentRect(mCaptureSize);
@@ -240,15 +265,27 @@ void WGCPageSource::RenderPage(
   mNeedsRepaint = false;
 }
 
-void WGCPageSource::OnFrame() {
+void WGCPageSource::PreOKBFrame() {
+  {
+    std::unique_lock lock(mNextFrameMutex);
+    mRenderFrame = mNextFrame;
+  }
+  if (!mRenderFrame.mCommandList) {
+    return;
+  }
+  mDXR->mD3D11ImmediateContext->ExecuteCommandList(
+    mRenderFrame.mCommandList.get(), false);
+}
+
+void WGCPageSource::OnWGCFrame() {
   EventDelay delay;
   TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "WGCPageSource::OnFrame");
+  TraceLoggingWriteStart(activity, "WGCPageSource::OnWGCFrame");
   scope_guard traceOnException([&activity]() {
     if (std::uncaught_exceptions() > 0) {
       TraceLoggingWriteStop(
         activity,
-        "WGCPageSource::OnFrame",
+        "WGCPageSource::OnWGCFrame",
         TraceLoggingValue("UncaughtExceptions", "Result"));
     }
   });
@@ -280,17 +317,12 @@ void WGCPageSource::OnFrame() {
       static_cast<uint32_t>(captureSize.Height),
     });
 
-  TraceLoggingWriteTagged(activity, "WaitingForLock");
-  const std::unique_lock d2dlock(*mDXR);
-  TraceLoggingWriteTagged(activity, "Locked");
-
-  auto ctx = mDXR->mD3D11ImmediateContext.get();
-
   if (swapchainDimensions != mSwapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope(
       "RecreatePool",
       TraceLoggingValue(swapchainDimensions.mWidth, "Width"),
       TraceLoggingValue(swapchainDimensions.mHeight, "Height"));
+    std::unique_lock lock(*mDXR);
     mSwapchainDimensions = swapchainDimensions;
     mFramePool.Recreate(
       mWinRTD3DDevice,
@@ -312,6 +344,7 @@ void WGCPageSource::OnFrame() {
 
   if (!mTexture) {
     OPENKNEEBOARD_TraceLoggingScope("CreateTexture");
+    std::unique_lock lock(*mDXR);
     auto desc = surfaceDesc;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     desc.MiscFlags = 0;
@@ -348,16 +381,29 @@ void WGCPageSource::OnFrame() {
     .back = 1,
   };
 
+  auto ctx = mD3D11DeferredContext.get();
+
   TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
   ctx->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   TraceLoggingWriteTagged(activity, "evNeedsRepaint");
   this->evNeedsRepaintEvent.Emit();
   TraceLoggingWriteStop(
-    activity, "WGCPageSource::OnFrame", TraceLoggingValue("Success", "Result"));
-
-  // Keep alive to limit DWM/WGC framerate
-  mNextFrame = frame;
+    activity,
+    "WGCPageSource::OnWGCFrame",
+    TraceLoggingValue("Success", "Result"));
+  winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
+  {
+    std::unique_lock lock(mNextFrameMutex);
+    // We keep the WGC frame alive to limit the WGC framerate
+    mNextFrame = {
+      .mCaptureFrame = frame,
+      .mCommandList = {},
+      .mFenceValue = mFenceValue,
+    };
+    winrt::check_hresult(
+      ctx->FinishCommandList(false, mNextFrame.mCommandList.put()));
+  }
   {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
     this->PostFrame();

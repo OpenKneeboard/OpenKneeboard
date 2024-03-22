@@ -89,7 +89,10 @@ class WGCPageSource : public virtual IPageSource,
  private:
   static constexpr int32_t SwapchainLength = 1;
   WGCPageSource() = delete;
-  void OnFrame();
+
+  void PreOKBFrame();
+
+  void OnWGCFrame();
 
   winrt::fire_and_forget ReleaseNextFrame();
 
@@ -97,6 +100,17 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11DeferredContext;
+  struct FrameResources {
+    winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mCaptureFrame {
+      nullptr};
+    winrt::com_ptr<ID3D11CommandList> mCommandList;
+    uint64_t mFenceValue {};
+  };
+  std::mutex mNextFrameMutex;
+  FrameResources mNextFrame;
+  FrameResources mRenderFrame;
+
   PageID mPageID {};
 
   PixelSize mSwapchainDimensions;
@@ -111,13 +125,13 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
 
-  winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mNextFrame {
-    nullptr};
-
   PixelSize mCaptureSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   bool mNeedsRepaint {true};
+
+  winrt::com_ptr<ID3D11Fence> mFence;
+  uint64_t mFenceValue {};
 };
 
 }// namespace OpenKneeboard
