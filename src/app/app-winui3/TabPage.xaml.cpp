@@ -419,7 +419,7 @@ void TabPage::OnCanvasSizeChanged(
   } else {
     InitializeSwapChain();
   }
-  PaintNow();
+  this->PaintLater();
 }
 
 void TabPage::ResizeSwapChain() {
