@@ -145,8 +145,6 @@ WGCPageSource::WGCPageSource(
 
   AddEventListener(
     kneeboard->evFrameTimerPostEvent, [this]() { this->ReleaseNextFrame(); });
-  AddEventListener(
-    kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
 }
 
 winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
@@ -251,7 +249,35 @@ void WGCPageSource::RenderPage(
   if (!(mTexture && mCaptureItem)) {
     return;
   }
+
+  FrameResources captureFrame;
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "WGCPageSource::RenderPage()/CopyNextFrame");
+    std::unique_lock lock(mNextFrameMutex);
+    captureFrame = mNextFrame;
+    // Must be freed from WGC thread, so keep
+    // the ref count in mNextFrame, but remove it here.
+    captureFrame.mCaptureFrame = {nullptr};
+  }
+
   auto d3d = rt->d3d();
+  if (captureFrame.mSourceTexture) {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "WGCPageSource::RenderPage()/CopyFromWGCTexture");
+    auto ctx = mDXR->mD3D11ImmediateContext.get();
+    ctx->CopySubresourceRegion(
+      mTexture.get(),
+      0,
+      0,
+      0,
+      0,
+      captureFrame.mSourceTexture.get(),
+      0,
+      &captureFrame.mSourceBox);
+    winrt::check_hresult(ctx->Signal(mFence.get(), captureFrame.mFenceValue));
+    mLastSubmittedFenceValue = captureFrame.mFenceValue;
+  }
 
   auto color = DirectX::Colors::White;
 
@@ -259,11 +285,6 @@ void WGCPageSource::RenderPage(
   if (whiteLevel) {
     const auto dimming = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL / (*whiteLevel);
     color = {dimming, dimming, dimming, 1};
-  }
-
-  if (mRenderFrame.mFenceValue) {
-    winrt::check_hresult(mDXR->mD3D11ImmediateContext->Wait(
-      mFence.get(), mRenderFrame.mFenceValue));
   }
 
   auto sb = mDXR->mSpriteBatch.get();
@@ -284,30 +305,6 @@ void WGCPageSource::RenderPage(
   sb->End();
 
   mNeedsRepaint = false;
-}
-
-void WGCPageSource::PreOKBFrame() {
-  {
-    std::unique_lock lock(mNextFrameMutex);
-    mRenderFrame = mNextFrame;
-    // Must be freed in WGC thread
-    mRenderFrame.mCaptureFrame = {nullptr};
-  }
-  if (!mRenderFrame.mSourceTexture) {
-    return;
-  }
-  auto ctx = mDXR->mD3D11ImmediateContext.get();
-  ctx->CopySubresourceRegion(
-    mTexture.get(),
-    0,
-    0,
-    0,
-    0,
-    mRenderFrame.mSourceTexture.get(),
-    0,
-    &mRenderFrame.mSourceBox);
-  winrt::check_hresult(ctx->Signal(mFence.get(), mRenderFrame.mFenceValue));
-  mLastSubmittedFenceValue = mRenderFrame.mFenceValue;
 }
 
 void WGCPageSource::OnWGCFrame() {
