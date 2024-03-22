@@ -137,8 +137,6 @@ WGCPageSource::WGCPageSource(
     return;
   }
 
-  winrt::check_hresult(
-    dxr->mD3D11Device->CreateDeferredContext3(0, mD3D11DeferredContext.put()));
   winrt::check_hresult(dxr->mD3D11Device->CreateFence(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 
@@ -250,10 +248,9 @@ void WGCPageSource::RenderPage(
     color = {dimming, dimming, dimming, 1};
   }
 
-  if (mRenderFrame.mCommandList) {
+  if (mRenderFrame.mFenceValue) {
     winrt::check_hresult(mDXR->mD3D11ImmediateContext->Wait(
       mFence.get(), mRenderFrame.mFenceValue));
-    mRenderFrame = {};
   }
 
   auto sb = mDXR->mSpriteBatch.get();
@@ -281,13 +278,20 @@ void WGCPageSource::PreOKBFrame() {
     std::unique_lock lock(mNextFrameMutex);
     mRenderFrame = mNextFrame;
   }
-  if (!mRenderFrame.mCommandList) {
+  if (!mRenderFrame.mSourceTexture) {
     return;
   }
-  mDXR->mD3D11ImmediateContext->ExecuteCommandList(
-    mRenderFrame.mCommandList.get(), false);
-  winrt::check_hresult(mDXR->mD3D11ImmediateContext->Signal(
-    mFence.get(), mRenderFrame.mFenceValue));
+  auto ctx = mDXR->mD3D11ImmediateContext.get();
+  ctx->CopySubresourceRegion(
+    mTexture.get(),
+    0,
+    0,
+    0,
+    0,
+    mRenderFrame.mSourceTexture.get(),
+    0,
+    &mRenderFrame.mSourceBox);
+  winrt::check_hresult(ctx->Signal(mFence.get(), mRenderFrame.mFenceValue));
   mLastSubmittedFenceValue = mRenderFrame.mFenceValue;
 }
 
@@ -394,26 +398,19 @@ void WGCPageSource::OnWGCFrame() {
       std::min(contentRect.Bottom(), mSwapchainDimensions.Height())),
     .back = 1,
   };
-
-  auto ctx = mD3D11DeferredContext.get();
-
-  TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
-  ctx->CopySubresourceRegion(
-    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
-  TraceLoggingWriteTagged(activity, "evNeedsRepaint");
-  this->evNeedsRepaintEvent.Emit();
   {
     std::unique_lock lock(mNextFrameMutex);
     // We keep the WGC frame alive to limit the WGC framerate
     mNextFrame = {
-      .mCommandList = {},
+      .mSourceTexture = d3dSurface,
+      .mSourceBox = box,
       .mFenceValue = ++mFenceValue,
       .mCaptureFrame = frame,
       .mTexture = mTexture,
     };
-    winrt::check_hresult(
-      ctx->FinishCommandList(false, mNextFrame.mCommandList.put()));
   }
+  TraceLoggingWriteTagged(activity, "evNeedsRepaint");
+  this->evNeedsRepaintEvent.Emit();
   TraceLoggingWriteStop(
     activity,
     "WGCPageSource::OnWGCFrame",
