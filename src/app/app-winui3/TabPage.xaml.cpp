@@ -400,9 +400,13 @@ void TabPage::AttachVisibility(
 void TabPage::OnCanvasSizeChanged(
   const IInspectable&,
   const SizeChangedEventArgs& args) noexcept {
-  OPENKNEEBOARD_TraceLoggingScope("TabPage::OnCanvasSizeChanged()");
   auto size = args.NewSize();
+  OPENKNEEBOARD_TraceLoggingScope(
+    "TabPage::OnCanvasSizeChanged()",
+    TraceLoggingValue(size.Width, "Width"),
+    TraceLoggingValue(size.Height, "Height"));
   if (size.Width < 1 || size.Height < 1) {
+    mCanvasSize = {};
     mSwapChain = nullptr;
     return;
   }
@@ -410,10 +414,12 @@ void TabPage::OnCanvasSizeChanged(
   const auto canvas = Canvas();
   // We don't use the WinUI composition scale as
   // we render on a real pixel/percentage basis, not a DIP basis
-  mCanvasSize = {
-    static_cast<uint32_t>(std::lround(size.Width)),
-    static_cast<uint32_t>(std::lround(size.Height)),
-  };
+  const auto canvasSize = Geometry2D::Size<double>(size.Width, size.Height)
+                            .Rounded<uint32_t, PixelSize>();
+  if (canvasSize == mCanvasSize) {
+    return;
+  }
+  mCanvasSize = canvasSize;
   const std::unique_lock lock(*mDXR);
   if (mSwapChain) {
     ResizeSwapChain();
@@ -424,6 +430,7 @@ void TabPage::OnCanvasSizeChanged(
 }
 
 void TabPage::ResizeSwapChain() {
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::ResizeSwapChain()");
   mCanvas = nullptr;
   mRenderTarget = {};
 
@@ -441,6 +448,7 @@ void TabPage::ResizeSwapChain() {
 }
 
 void TabPage::InitializeSwapChain() {
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::InitializeSwapChain()");
   if (mShuttingDown) {
     return;
   }
