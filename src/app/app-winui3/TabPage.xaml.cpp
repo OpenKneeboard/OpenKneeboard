@@ -479,10 +479,17 @@ void TabPage::PaintLater() {
 }
 
 void TabPage::PaintNow(const std::source_location& loc) noexcept {
+  if (!mTabView) {
+    TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
+    return;
+  }
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity,
     "TabPage::PaintNow()",
+    TraceLoggingValue(mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
+    TraceLoggingValue(
+      to_hstring(mTabView->GetRootTab()->GetPersistentID()).c_str(), "TabGUID"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
   if (!mSwapChain) {
     TraceLoggingWriteStop(

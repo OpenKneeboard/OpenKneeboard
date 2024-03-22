@@ -86,10 +86,12 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     } \
     void Stop() { \
       if (mStopped) [[unlikely]] { \
+        OutputDebugStringW(L"Double-stopped in Stop()"); \
         OPENKNEEBOARD_BREAK; \
         return; \
       } \
       mStopped = true; \
+      mAutoStop = false; \
       const auto exceptionCount = std::uncaught_exceptions(); \
       if (exceptionCount) [[unlikely]] { \
         TraceLoggingWriteStop( \
@@ -103,37 +105,8 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     void CancelAutoStop() { \
       mAutoStop = false; \
     } \
-    /* Repetitive as Templates aren't permitted in local classes */ \
-    void StopWithResult(int result) { \
-      if (mStopped) [[unlikely]] { \
-        OPENKNEEBOARD_BREAK; \
-        return; \
-      } \
-      this->CancelAutoStop(); \
-      mStopped = true; \
-      TraceLoggingWriteStop( \
-        *this, OKBTL_NAME, TraceLoggingValue(result, "Result")); \
-    } \
-    void StopWithResult(const char* result) { \
-      if (mStopped) [[unlikely]] { \
-        OPENKNEEBOARD_BREAK; \
-        return; \
-      } \
-      this->CancelAutoStop(); \
-      mStopped = true; \
-      TraceLoggingWriteStop( \
-        *this, OKBTL_NAME, TraceLoggingValue(result, "Result")); \
-    } \
-    void StopWithResult(const std::string& result) { \
-      if (mStopped) [[unlikely]] { \
-        OPENKNEEBOARD_BREAK; \
-        return; \
-      } \
-      this->CancelAutoStop(); \
-      mStopped = true; \
-      TraceLoggingWriteStop( \
-        *this, OKBTL_NAME, TraceLoggingValue(result.c_str(), "Result")); \
-    } \
+    _OPENKNEEBOARD_TRACELOGGING_IMPL_StopWithResult(OKBTL_NAME, int); \
+    _OPENKNEEBOARD_TRACELOGGING_IMPL_StopWithResult(OKBTL_NAME, const char*); \
 \
    private: \
     bool mStopped {false}; \
@@ -141,6 +114,21 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
   }; \
   OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
   OKBTL_ACTIVITY {OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY)};
+
+// Not using templates as they're not permitted in local classes
+#define _OPENKNEEBOARD_TRACELOGGING_IMPL_StopWithResult( \
+  OKBTL_NAME, OKBTL_RESULT_TYPE) \
+  void StopWithResult(OKBTL_RESULT_TYPE result) { \
+    if (mStopped) [[unlikely]] { \
+      OutputDebugStringW(L"Double-stopped in StopWithResult()"); \
+      OPENKNEEBOARD_BREAK; \
+      return; \
+    } \
+    this->CancelAutoStop(); \
+    mStopped = true; \
+    TraceLoggingWriteStop( \
+      *this, OKBTL_NAME, TraceLoggingValue(result, "Result")); \
+  }
 
 /** Create and automatically start and stop a named activity.
  *
