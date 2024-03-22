@@ -90,8 +90,6 @@ class WGCPageSource : public virtual IPageSource,
   static constexpr int32_t SwapchainLength = 1;
   WGCPageSource() = delete;
 
-  void PreOKBFrame();
-
   void OnWGCFrame();
 
   winrt::fire_and_forget ReleaseNextFrame();
@@ -113,7 +111,6 @@ class WGCPageSource : public virtual IPageSource,
   };
   std::mutex mNextFrameMutex;
   FrameResources mNextFrame;
-  FrameResources mRenderFrame;
 
   PageID mPageID {};
 
