@@ -291,7 +291,7 @@ void WGCPageSource::PreOKBFrame() {
     std::unique_lock lock(mNextFrameMutex);
     mRenderFrame = mNextFrame;
     // Must be freed in WGC thread
-    mRenderFrame.mCaptureFrame = {};
+    mRenderFrame.mCaptureFrame = {nullptr};
   }
   if (!mRenderFrame.mSourceTexture) {
     return;
