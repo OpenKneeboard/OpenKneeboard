@@ -100,12 +100,16 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11DeferredContext;
+  winrt::com_ptr<ID3D11DeviceContext3> mD3D11DeferredContext;
   struct FrameResources {
-    winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mCaptureFrame {
-      nullptr};
+    // Directly useful
     winrt::com_ptr<ID3D11CommandList> mCommandList;
     uint64_t mFenceValue {};
+
+    // Keepalives
+    winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mCaptureFrame {
+      nullptr};
+    winrt::com_ptr<ID3D11Texture2D> mTexture;
   };
   std::mutex mNextFrameMutex;
   FrameResources mNextFrame;
@@ -132,6 +136,7 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::com_ptr<ID3D11Fence> mFence;
   uint64_t mFenceValue {};
+  uint64_t mLastSubmittedFenceValue {};
 };
 
 }// namespace OpenKneeboard
