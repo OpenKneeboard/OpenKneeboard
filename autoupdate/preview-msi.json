@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147476321",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147476321/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147476321/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7.3-rc1",
-    "id": 147476321,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147953036",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147953036/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/147953036/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7.3-rc2",
+    "id": 147953036,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Iyk9h",
-    "tag_name": "v1.7.3-rc1",
+    "node_id": "RE_kwDOGk0DR84I0ZWM",
+    "tag_name": "v1.7.3-rc2",
     "target_commitish": "master",
-    "name": "v1.7.3-rc1: performance and reliability",
+    "name": "v1.7.3-rc2: performance and reliability improvements",
     "draft": false,
     "prerelease": true,
-    "created_at": "2024-03-20T13:49:57Z",
-    "published_at": "2024-03-20T14:23:18Z",
+    "created_at": "2024-03-22T16:46:20Z",
+    "published_at": "2024-03-22T17:14:05Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/157674587",
-        "id": 157674587,
-        "node_id": "RA_kwDOGk0DR84JZexb",
-        "name": "OpenKneeboard-v1.7.3-rc1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/158118787",
+        "id": 158118787,
+        "node_id": "RA_kwDOGk0DR84JbLOD",
+        "name": "OpenKneeboard-v1.7.3-rc2-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 174040484,
+        "size": 174167316,
         "download_count": 0,
-        "created_at": "2024-03-20T14:15:57Z",
-        "updated_at": "2024-03-20T14:16:01Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc1/OpenKneeboard-v1.7.3-rc1-DebugSymbols.zip"
+        "created_at": "2024-03-22T17:09:28Z",
+        "updated_at": "2024-03-22T17:09:33Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc2/OpenKneeboard-v1.7.3-rc2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/157674586",
-        "id": 157674586,
-        "node_id": "RA_kwDOGk0DR84JZexa",
-        "name": "OpenKneeboard-v1.7.3-rc1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/158118786",
+        "id": 158118786,
+        "node_id": "RA_kwDOGk0DR84JbLOC",
+        "name": "OpenKneeboard-v1.7.3-rc2.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 40292352,
+        "size": 40296448,
         "download_count": 0,
-        "created_at": "2024-03-20T14:15:57Z",
-        "updated_at": "2024-03-20T14:15:58Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc1/OpenKneeboard-v1.7.3-rc1.msi"
+        "created_at": "2024-03-22T17:09:28Z",
+        "updated_at": "2024-03-22T17:09:30Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc2/OpenKneeboard-v1.7.3-rc2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7.3-rc1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7.3-rc1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7.3-rc1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc1/OpenKneeboard-v1.7.3-rc1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- Frame rate and timing for OpenKneeboard, the app window, the game, and any other viewers are now independent. This should fix stutters when not running OpenKneeboard on high-refresh-rate VRR monitors, or when the game frame loop pauses\r\n- If games or viewers stall, crash, or otherwise exit improperly, this should no longer freeze or crash OpenKneeboard\r\n- SteamVR overlays will no longer lag by 1 OpenKneeboard frame; this would previously appear as showing as multiple tabs being visible overlapped, or, just not updating at all, especially when the footer clock is disabled\r\n- Improved performance and removed stutters when resizing or moving the app window"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7.3-rc2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7.3-rc2",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7.3-rc2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7.3-rc2/OpenKneeboard-v1.7.3-rc2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes in this release (v1.7.3-rc2)\r\n\r\n- Improve performance and fix stutters/stalls when using many window captures or web dashboards, especially under high CPU load, e.g. when switching mode or servers in iRacing\r\n- Fix crash if non-VR support is enabled and the game changes resolution\r\n- Fix crash if switching profile or OpenKneeboard is closed while a window capture or web dashboard frame is in progress\r\n\r\n# Changes in v1.7.3-rc1\r\n\r\n- Frame rate and timing for OpenKneeboard, the app window, the game, and any other viewers are now independent. This should fix stutters when not running OpenKneeboard on high-refresh-rate VRR monitors, or when the game frame loop pauses\r\n- If games or viewers stall, crash, or otherwise exit improperly, this should no longer freeze or crash OpenKneeboard\r\n- SteamVR overlays will no longer lag by 1 OpenKneeboard frame; this would previously appear as showing as multiple tabs being visible overlapped, or, just not updating at all, especially when the footer clock is disabled\r\n- Improved performance and removed stutters when resizing or moving the app window"
   }
 ]
