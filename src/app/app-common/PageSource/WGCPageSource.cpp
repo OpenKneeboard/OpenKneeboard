@@ -137,10 +137,8 @@ WGCPageSource::WGCPageSource(
     return;
   }
 
-  winrt::com_ptr<ID3D11DeviceContext3> deferredContext3;
   winrt::check_hresult(
-    dxr->mD3D11Device->CreateDeferredContext3(0, deferredContext3.put()));
-  mD3D11DeferredContext = deferredContext3.as<ID3D11DeviceContext4>();
+    dxr->mD3D11Device->CreateDeferredContext3(0, mD3D11DeferredContext.put()));
   winrt::check_hresult(dxr->mD3D11Device->CreateFence(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 
@@ -159,16 +157,18 @@ winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
   }
 
   auto next = std::move(mNextFrame);
+  const bool waitForFence = next.mFenceValue <= mLastSubmittedFenceValue;
   mNextFrame = {nullptr};
 
   co_await mUIThread;
 
-  {
+  if (waitForFence) {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource/ReleaseNextFrame/Wait");
     winrt::handle event {CreateEventW(0, false, false, nullptr)};
     winrt::check_hresult(
       mFence->SetEventOnCompletion(next.mFenceValue, event.get()));
     co_await winrt::resume_on_signal(event.get());
+    co_await mUIThread;
   }
 
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
@@ -286,6 +286,9 @@ void WGCPageSource::PreOKBFrame() {
   }
   mDXR->mD3D11ImmediateContext->ExecuteCommandList(
     mRenderFrame.mCommandList.get(), false);
+  winrt::check_hresult(mDXR->mD3D11ImmediateContext->Signal(
+    mFence.get(), mRenderFrame.mFenceValue));
+  mLastSubmittedFenceValue = mRenderFrame.mFenceValue;
 }
 
 void WGCPageSource::OnWGCFrame() {
@@ -399,22 +402,22 @@ void WGCPageSource::OnWGCFrame() {
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   TraceLoggingWriteTagged(activity, "evNeedsRepaint");
   this->evNeedsRepaintEvent.Emit();
-  TraceLoggingWriteStop(
-    activity,
-    "WGCPageSource::OnWGCFrame",
-    TraceLoggingValue("Success", "Result"));
-  winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
   {
     std::unique_lock lock(mNextFrameMutex);
     // We keep the WGC frame alive to limit the WGC framerate
     mNextFrame = {
-      .mCaptureFrame = frame,
       .mCommandList = {},
-      .mFenceValue = mFenceValue,
+      .mFenceValue = ++mFenceValue,
+      .mCaptureFrame = frame,
+      .mTexture = mTexture,
     };
     winrt::check_hresult(
       ctx->FinishCommandList(false, mNextFrame.mCommandList.put()));
   }
+  TraceLoggingWriteStop(
+    activity,
+    "WGCPageSource::OnWGCFrame",
+    TraceLoggingValue("Success", "Result"));
   {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
     this->PostFrame();
