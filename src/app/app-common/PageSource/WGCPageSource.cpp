@@ -295,20 +295,12 @@ void WGCPageSource::PreOKBFrame() {
 
 void WGCPageSource::OnWGCFrame() {
   EventDelay delay;
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "WGCPageSource::OnWGCFrame");
-  scope_guard traceOnException([&activity]() {
-    if (std::uncaught_exceptions() > 0) {
-      TraceLoggingWriteStop(
-        activity,
-        "WGCPageSource::OnWGCFrame",
-        TraceLoggingValue("UncaughtExceptions", "Result"));
-    }
-  });
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "WGCPageSource::OnWGCFrame()");
+
   auto frame = mFramePool.TryGetNextFrame();
   if (!frame) {
-    TraceLoggingWriteStop(
-      activity, __FUNCTION__, TraceLoggingValue("NoFrame", "Result"));
+    activity.StopWithResult("No Frame");
     return;
   }
   TraceLoggingWriteTagged(activity, "HaveFrame");
@@ -409,10 +401,7 @@ void WGCPageSource::OnWGCFrame() {
   }
   TraceLoggingWriteTagged(activity, "evNeedsRepaint");
   this->evNeedsRepaintEvent.Emit();
-  TraceLoggingWriteStop(
-    activity,
-    "WGCPageSource::OnWGCFrame",
-    TraceLoggingValue("Success", "Result"));
+  activity.Stop();
   {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
     this->PostFrame();
