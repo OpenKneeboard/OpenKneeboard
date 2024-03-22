@@ -103,7 +103,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   bool mNeedsFrame = true;
   void PaintLater();
-  void PaintNow() noexcept;
+  void PaintNow(
+    const std::source_location& loc = std::source_location::current()) noexcept;
 
   winrt::fire_and_forget OnToolbarActionClick(std::shared_ptr<ToolbarAction>);
 

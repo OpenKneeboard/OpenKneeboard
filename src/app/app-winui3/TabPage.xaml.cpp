@@ -45,6 +45,8 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
 
+#include <shims/source_location>
+
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
@@ -398,6 +400,7 @@ void TabPage::AttachVisibility(
 void TabPage::OnCanvasSizeChanged(
   const IInspectable&,
   const SizeChangedEventArgs& args) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::OnCanvasSizeChanged()");
   auto size = args.NewSize();
   if (size.Width < 1 || size.Height < 1) {
     mSwapChain = nullptr;
@@ -475,9 +478,12 @@ void TabPage::PaintLater() {
   mNeedsFrame = true;
 }
 
-void TabPage::PaintNow() noexcept {
+void TabPage::PaintNow(const std::source_location& loc) noexcept {
   TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "TabPage::PaintNow()");
+  TraceLoggingWriteStart(
+    activity,
+    "TabPage::PaintNow()",
+    OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
   if (!mSwapChain) {
     TraceLoggingWriteStop(
       activity,
