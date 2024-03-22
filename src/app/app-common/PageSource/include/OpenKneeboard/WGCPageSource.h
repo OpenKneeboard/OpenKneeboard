@@ -100,10 +100,10 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
-  winrt::com_ptr<ID3D11DeviceContext3> mD3D11DeferredContext;
   struct FrameResources {
     // Directly useful
-    winrt::com_ptr<ID3D11CommandList> mCommandList;
+    winrt::com_ptr<ID3D11Texture2D> mSourceTexture;
+    D3D11_BOX mSourceBox;
     uint64_t mFenceValue {};
 
     // Keepalives
