@@ -84,7 +84,7 @@ class WebView2PageSource final : public WGCPageSource,
   virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
   virtual PixelSize GetSwapchainDimensions(
     const PixelSize& captureSize) override;
-  virtual winrt::Windows::Foundation::IAsyncAction InitializeInCaptureThread()
+  virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
     override;
 
   virtual void PostFrame() override;
@@ -96,7 +96,6 @@ class WebView2PageSource final : public WGCPageSource,
     const Settings&);
 
   winrt::apartment_context mUIThread;
-  // WebView2 and Windows.Graphics.Capture thread
   winrt::apartment_context mWorkerThread {nullptr};
 
   Settings mSettings;
@@ -105,7 +104,7 @@ class WebView2PageSource final : public WGCPageSource,
   static void RegisterWindowClass();
   /** Not just 'CreateWindow()' because Windows.h's macros interfere */
   void CreateBrowserWindow();
-  void InitializeComposition();
+  void InitializeComposition() noexcept;
 
   unique_hwnd mBrowserWindow;
 
@@ -119,11 +118,13 @@ class WebView2PageSource final : public WGCPageSource,
     mController {nullptr};
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2 mWebView {nullptr};
 
+  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
+
   std::mutex mCursorEventsMutex;
   std::queue<CursorEvent> mCursorEvents;
   uint32_t mMouseButtons {};
 
-  void FlushCursorEvents();
+  winrt::fire_and_forget FlushCursorEvents();
 
   winrt::fire_and_forget OnWebMessageReceived(
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,

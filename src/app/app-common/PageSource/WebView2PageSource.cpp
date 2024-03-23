@@ -57,19 +57,26 @@ WebView2PageSource::WebView2PageSource(
   if (!IsAvailable()) {
     return;
   }
+  mDQC = winrt::Windows::System::DispatcherQueueController::
+    CreateOnDedicatedThread();
 }
 
 winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::InitializeInCaptureThread() {
+WebView2PageSource::InitializeContentToCapture() {
   OPENKNEEBOARD_TraceLoggingScope(
-    "WebView2PageSource::InitializeInCaptureThread");
+    "WebView2PageSource::InitializeContentToCapture");
   if (!IsAvailable()) {
     co_return;
   }
 
+  co_await winrt::resume_foreground(mDQC.DispatcherQueue());
+
   mWorkerThread = {};
 
   this->CreateBrowserWindow();
+
+  auto dq = winrt::Windows::System::DispatcherQueue::GetForCurrentThread();
+
   this->InitializeComposition();
 
   using namespace winrt::Microsoft::Web::WebView2::Core;
@@ -193,7 +200,7 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   evNeedsRepaintEvent.Emit();
 }
 
-void WebView2PageSource::InitializeComposition() {
+void WebView2PageSource::InitializeComposition() noexcept {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::InitializeComposition");
   if (mCompositor) {
     OPENKNEEBOARD_BREAK;
@@ -291,7 +298,11 @@ winrt::fire_and_forget WebView2PageSource::final_release(
     self->mBrowserWindow.reset();
 
     self->mWorkerThread = {nullptr};
+
+    co_await self->mUIThread;
   }
+  co_await self->mDQC.ShutdownQueueAsync();
+  co_await self->mUIThread;
   WGCPageSource::final_release(std::move(self));
   co_return;
 }
@@ -336,7 +347,20 @@ void WebView2PageSource::PostCursorEvent(
   mCursorEvents.push(event);
 }
 
-void WebView2PageSource::FlushCursorEvents() {
+winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
+  if (!mWorkerThread) {
+    co_return;
+  }
+  if (mCursorEvents.empty()) {
+    co_return;
+  }
+  auto weakThis = weak_from_this();
+  co_await mWorkerThread;
+  auto self = weakThis.lock();
+  if (!self) {
+    co_return;
+  }
+
   std::queue<CursorEvent> events;
   {
     std::unique_lock lock(mCursorEventsMutex);

@@ -90,7 +90,7 @@ class HWNDPageSource final : public WGCPageSource,
   virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
   virtual PixelSize GetSwapchainDimensions(
     const PixelSize& captureSize) override;
-  virtual winrt::Windows::Foundation::IAsyncAction InitializeInCaptureThread()
+  virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
     override;
 
  private:

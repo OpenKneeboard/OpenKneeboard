@@ -289,7 +289,7 @@ PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) {
 }
 
 winrt::Windows::Foundation::IAsyncAction
-HWNDPageSource::InitializeInCaptureThread() {
+HWNDPageSource::InitializeContentToCapture() {
   co_return;
 }
 
