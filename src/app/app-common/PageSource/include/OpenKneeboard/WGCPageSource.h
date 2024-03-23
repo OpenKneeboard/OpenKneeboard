@@ -90,6 +90,7 @@ class WGCPageSource : public virtual IPageSource,
   static constexpr int32_t SwapchainLength = 1;
   WGCPageSource() = delete;
 
+  void PreOKBFrame();
   void OnWGCFrame();
 
   winrt::fire_and_forget ReleaseNextFrame();
