@@ -93,25 +93,10 @@ class WGCPageSource : public virtual IPageSource,
   void PreOKBFrame();
   void OnWGCFrame();
 
-  winrt::fire_and_forget ReleaseNextFrame();
-
   Options mOptions;
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
-  struct FrameResources {
-    // Directly useful
-    winrt::com_ptr<ID3D11Texture2D> mSourceTexture;
-    D3D11_BOX mSourceBox;
-    uint64_t mFenceValue {};
-
-    // Keepalives
-    winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mCaptureFrame {
-      nullptr};
-    winrt::com_ptr<ID3D11Texture2D> mTexture;
-  };
-  std::mutex mNextFrameMutex;
-  FrameResources mNextFrame;
 
   PageID mPageID {};
 
@@ -124,17 +109,13 @@ class WGCPageSource : public virtual IPageSource,
   winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
     nullptr};
   winrt::Windows::Graphics::Capture::GraphicsCaptureItem mCaptureItem {nullptr};
-
-  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
+  winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mNextFrame {
+    nullptr};
 
   PixelSize mCaptureSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   bool mNeedsRepaint {true};
-
-  winrt::com_ptr<ID3D11Fence> mFence;
-  uint64_t mFenceValue {};
-  uint64_t mLastSubmittedFenceValue {};
 };
 
 }// namespace OpenKneeboard

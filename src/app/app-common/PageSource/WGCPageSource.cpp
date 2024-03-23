@@ -77,7 +77,8 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
     supportsBorderRemoval = false;
   }
 
-  co_await wil::resume_foreground(mDQC.DispatcherQueue());
+  // Would switch threads here, but now we're using the UI thread for everything
+  // :)
   {
     co_await this->InitializeInCaptureThread();
     const std::unique_lock d2dlock(*mDXR);
@@ -104,13 +105,6 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       this->GetPixelFormat(),
       WGCPageSource::SwapchainLength,
       item.Size());
-    mFramePool.FrameArrived(
-      [weak = weak_from_this()](const auto&, const auto&) {
-        auto self = weak.lock();
-        if (self) {
-          self->OnWGCFrame();
-        }
-      });
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
@@ -137,56 +131,8 @@ WGCPageSource::WGCPageSource(
     return;
   }
 
-  winrt::check_hresult(dxr->mD3D11Device->CreateFence(
-    0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
-
-  mDQC = winrt::Windows::System::DispatcherQueueController::
-    CreateOnDedicatedThread();
-
   AddEventListener(
     kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
-  AddEventListener(
-    kneeboard->evFrameTimerPostEvent, [this]() { this->ReleaseNextFrame(); });
-}
-
-winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
-  if (!(mDQC && mNextFrame.mCaptureFrame)) {
-    co_return;
-  }
-
-  FrameResources next;
-  {
-    std::unique_lock lock(mNextFrameMutex);
-    next = std::move(mNextFrame);
-  }
-  const bool waitForFence = next.mFenceValue <= mLastSubmittedFenceValue;
-  mNextFrame = {nullptr};
-
-  co_await mUIThread;
-
-  if (waitForFence) {
-    TraceLoggingActivity<gTraceProvider> waitActivity;
-    TraceLoggingWriteStart(
-      waitActivity, "WGC/PageSource/ReleaseNextFrame/Wait");
-    scope_guard stopActivity([&waitActivity]() {
-      TraceLoggingWriteStop(
-        waitActivity,
-        "WGC/PageSource/ReleaseNextFrame/Wait",
-        TraceLoggingValue(std::uncaught_exceptions(), "ExceptionCount"));
-    });
-
-    winrt::handle event {CreateEventW(0, false, false, nullptr)};
-    winrt::check_hresult(
-      mFence->SetEventOnCompletion(next.mFenceValue, event.get()));
-    co_await winrt::resume_on_signal(event.get());
-    co_await mUIThread;
-  }
-
-  co_await wil::resume_foreground(mDQC.DispatcherQueue());
-
-  // Not using the scoped one as it needs to be disposed in the same thread
-  TraceLoggingWrite(gTraceProvider, "WGCPageSource::ReleaseNextFrame()");
-  next = {nullptr};
 }
 
 // Destruction is handled in final_release instead
@@ -195,14 +141,7 @@ WGCPageSource::~WGCPageSource() = default;
 winrt::fire_and_forget WGCPageSource::final_release(
   std::unique_ptr<WGCPageSource> p) {
   p->RemoveAllEventListeners();
-  if (!p->mDQC) {
-    co_await p->mUIThread;
-    co_return;
-  }
 
-  // Switch to DQ thread to clean up the Windows.Graphics.Capture objects that
-  // were created in that thread
-  co_await winrt::resume_foreground(p->mDQC.DispatcherQueue());
   if (p->mFramePool) {
     p->mCaptureSession.Close();
     p->mFramePool.Close();
@@ -213,9 +152,6 @@ winrt::fire_and_forget WGCPageSource::final_release(
   }
 
   co_await p->mUIThread;
-  co_await p->mDQC.ShutdownQueueAsync();
-  p->mDQC = {nullptr};
-  const std::unique_lock d2dlock(*(p->mDXR));
   p->mTexture = nullptr;
 }
 
@@ -248,37 +184,16 @@ void WGCPageSource::RenderPage(
   RenderTarget* rt,
   PageID,
   const PixelRect& rect) {
-  if (!(mTexture && mCaptureItem)) {
+  if (!mCaptureItem) {
     return;
   }
 
-  FrameResources captureFrame;
-  {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "WGCPageSource::RenderPage()/CopyNextFrame");
-    std::unique_lock lock(mNextFrameMutex);
-    captureFrame = mNextFrame;
-    // Must be freed from WGC thread, so keep
-    // the ref count in mNextFrame, but remove it here.
-    captureFrame.mCaptureFrame = {nullptr};
-  }
-
   auto d3d = rt->d3d();
-  if (captureFrame.mSourceTexture) {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "WGCPageSource::RenderPage()/CopyFromWGCTexture");
-    auto ctx = mDXR->mD3D11ImmediateContext.get();
-    ctx->CopySubresourceRegion(
-      mTexture.get(),
-      0,
-      0,
-      0,
-      0,
-      captureFrame.mSourceTexture.get(),
-      0,
-      &captureFrame.mSourceBox);
-    winrt::check_hresult(ctx->Signal(mFence.get(), captureFrame.mFenceValue));
-    mLastSubmittedFenceValue = captureFrame.mFenceValue;
+  if (mNextFrame) {
+    this->OnWGCFrame();
+  }
+  if (!mTexture) {
+    return;
   }
 
   auto color = DirectX::Colors::White;
@@ -302,7 +217,8 @@ void WGCPageSource::OnWGCFrame() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "WGCPageSource::OnWGCFrame()");
 
-  auto frame = mFramePool.TryGetNextFrame();
+  auto frame = mNextFrame;
+  mNextFrame = {nullptr};
   if (!frame) {
     activity.StopWithResult("No Frame");
     return;
@@ -393,17 +309,8 @@ void WGCPageSource::OnWGCFrame() {
       std::min(contentRect.Bottom(), mSwapchainDimensions.Height())),
     .back = 1,
   };
-  {
-    std::unique_lock lock(mNextFrameMutex);
-    // We keep the WGC frame alive to limit the WGC framerate
-    mNextFrame = {
-      .mSourceTexture = d3dSurface,
-      .mSourceBox = box,
-      .mFenceValue = ++mFenceValue,
-      .mCaptureFrame = frame,
-      .mTexture = mTexture,
-    };
-  }
+  mDXR->mD3D11ImmediateContext->CopySubresourceRegion(
+    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   activity.Stop();
   {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
@@ -412,7 +319,11 @@ void WGCPageSource::OnWGCFrame() {
 }
 
 void WGCPageSource::PreOKBFrame() {
-  if (mNextFrame.mFenceValue) {
+  if (!mFramePool) {
+    return;
+  }
+  mNextFrame = mFramePool.TryGetNextFrame();
+  if (mNextFrame) {
     evNeedsRepaintEvent.Emit();
   }
 }
