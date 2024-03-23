@@ -224,7 +224,7 @@ void WGCPageSource::OnWGCFrame() {
     activity.StopWithResult("No Frame");
     return;
   }
-  TraceLoggingWriteTagged(activity, "HaveFrame");
+  TraceLoggingWriteTagged(activity, "WGCPageSource::OnWGCFrame()/HaveFrame");
 
   auto wgdxSurface = frame.Surface();
   auto interopSurface = wgdxSurface.as<
@@ -248,7 +248,7 @@ void WGCPageSource::OnWGCFrame() {
 
   if (swapchainDimensions != mSwapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope(
-      "RecreatePool",
+      "WGCPageSource::OnWGCFrame()/RecreatePool",
       TraceLoggingValue(swapchainDimensions.mWidth, "Width"),
       TraceLoggingValue(swapchainDimensions.mHeight, "Height"));
     std::unique_lock lock(*mDXR);
@@ -272,13 +272,15 @@ void WGCPageSource::OnWGCFrame() {
     D3D11_TEXTURE2D_DESC desc {};
     mTexture->GetDesc(&desc);
     if (surfaceDesc.Width != desc.Width || surfaceDesc.Height != desc.Height) {
-      TraceLoggingWriteTagged(activity, "ResettingTexture");
+      TraceLoggingWriteTagged(
+        activity, "WGCPageSource::OnWGCFrame()/ResettingTexture");
       mTexture = nullptr;
     }
   }
 
   if (!mTexture) {
-    OPENKNEEBOARD_TraceLoggingScope("CreateTexture");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "WGCPageSource::OnWGCFrame()/CreateTexture");
     std::unique_lock lock(*mDXR);
     auto desc = surfaceDesc;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -298,7 +300,7 @@ void WGCPageSource::OnWGCFrame() {
 
   TraceLoggingWriteTagged(
     activity,
-    "CaptureSize",
+    "WGCPageSource::OnFrame()/CaptureSize",
     TraceLoggingValue(captureSize.Width, "Width"),
     TraceLoggingValue(captureSize.Height, "Height"));
 
@@ -320,7 +322,8 @@ void WGCPageSource::OnWGCFrame() {
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   activity.Stop();
   {
-    OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "WGCPageSource::OnWGCFrame()/CallingPostFrame");
     this->PostFrame();
   }
 }
@@ -339,6 +342,10 @@ void WGCPageSource::PostFrame() {
 }
 
 winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "WGCPageSource::ForceResize()",
+    TraceLoggingValue(size.mWidth, "Width"),
+    TraceLoggingValue(size.mHeight, "Height"));
   mFramePool.Recreate(
     mWinRTD3DDevice,
     this->GetPixelFormat(),
