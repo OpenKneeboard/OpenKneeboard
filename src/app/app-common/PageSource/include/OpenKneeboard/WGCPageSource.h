@@ -87,7 +87,7 @@ class WGCPageSource : public virtual IPageSource,
   winrt::fire_and_forget ForceResize(const PixelSize&);
 
  private:
-  static constexpr int32_t SwapchainLength = 1;
+  static constexpr int32_t SwapchainLength = 3;
   WGCPageSource() = delete;
 
   void PreOKBFrame();
