@@ -144,6 +144,8 @@ WGCPageSource::WGCPageSource(
     CreateOnDedicatedThread();
 
   AddEventListener(
+    kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
+  AddEventListener(
     kneeboard->evFrameTimerPostEvent, [this]() { this->ReleaseNextFrame(); });
 }
 
@@ -297,7 +299,6 @@ void WGCPageSource::RenderPage(
 }
 
 void WGCPageSource::OnWGCFrame() {
-  EventDelay delay;
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "WGCPageSource::OnWGCFrame()");
 
@@ -371,6 +372,7 @@ void WGCPageSource::OnWGCFrame() {
     static_cast<uint32_t>(captureSize.Width),
     static_cast<uint32_t>(captureSize.Height),
   };
+
   TraceLoggingWriteTagged(
     activity,
     "CaptureSize",
@@ -402,12 +404,16 @@ void WGCPageSource::OnWGCFrame() {
       .mTexture = mTexture,
     };
   }
-  TraceLoggingWriteTagged(activity, "evNeedsRepaint");
-  this->evNeedsRepaintEvent.Emit();
   activity.Stop();
   {
     OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
     this->PostFrame();
+  }
+}
+
+void WGCPageSource::PreOKBFrame() {
+  if (mNextFrame.mFenceValue) {
+    evNeedsRepaintEvent.Emit();
   }
 }
 
