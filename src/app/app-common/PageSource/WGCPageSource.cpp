@@ -261,6 +261,12 @@ void WGCPageSource::OnWGCFrame() {
     return;
   }
 
+  if (
+    surfaceDesc.Width < captureSize.Width
+    || surfaceDesc.Height < captureSize.Height) {
+    return;
+  }
+
   if (mTexture) {
     D3D11_TEXTURE2D_DESC desc {};
     mTexture->GetDesc(&desc);
