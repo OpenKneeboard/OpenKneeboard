@@ -80,7 +80,8 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
   // Would switch threads here, but now we're using the UI thread for everything
   // :)
   {
-    co_await this->InitializeInCaptureThread();
+    co_await this->InitializeContentToCapture();
+    co_await mUIThread;
     const std::unique_lock d2dlock(*mDXR);
 
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem item {nullptr};
