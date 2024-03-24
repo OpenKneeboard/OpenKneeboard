@@ -125,6 +125,8 @@ void TabPage::InitializePointerSource() {
     if (!self) {
       return;
     }
+    SetThreadDescription(
+      GetCurrentThread(), L"OKB TabPage IndependentInputSource");
 
     auto& ips = self->mInputPointerSource;
     ips = self->Canvas().CreateCoreIndependentInputSource(
