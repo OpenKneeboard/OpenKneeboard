@@ -25,8 +25,8 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
@@ -156,11 +156,16 @@ bool VRViewSettingsControl::IsEnabledInVR() {
 void VRViewSettingsControl::IsEnabledInVR(bool value) {
   auto settings = mKneeboard->GetViewsSettings();
   auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
+  if (it->mVR.mEnabled == value) {
+    return;
+  }
   it->mVR.mEnabled = value;
   mKneeboard->SetViewsSettings(settings);
   if (mSubControl) {
     mSubControl.IsEnabled(value);
   }
+
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"IsEnabledInVR"));
 }
 
 void VRViewSettingsControl::ViewID(const winrt::guid& guid) {
@@ -227,8 +232,8 @@ void VRViewSettingsControl::SelectedDefaultTab(const IInspectable& item) {
   }
 
   const auto viewStates = mKneeboard->GetAllViewsInFixedOrder();
-  const auto stateIt = std::ranges::find(
-    viewStates, mViewID, &KneeboardView::GetPersistentGUID);
+  const auto stateIt
+    = std::ranges::find(viewStates, mViewID, &KneeboardView::GetPersistentGUID);
   if (stateIt == viewStates.end()) {
     return;
   }
