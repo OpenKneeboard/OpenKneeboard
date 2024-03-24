@@ -63,9 +63,14 @@ WebView2PageSource::WebView2PageSource(
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2PageSource::InitializeContentToCapture() {
-  OPENKNEEBOARD_TraceLoggingScope(
-    "WebView2PageSource::InitializeContentToCapture");
+  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "WebView2PageSource::InitializeContentToCapture");
   if (!IsAvailable()) {
+    TraceLoggingWriteStop(
+      activity,
+      "WebView2PageSource::InitializeContentToCapture",
+      TraceLoggingValue("WebView2 is not available", "Result"));
     co_return;
   }
 
@@ -151,6 +156,11 @@ WebView2PageSource::InitializeContentToCapture() {
   }
 
   mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+
+  TraceLoggingWriteStop(
+    activity,
+    "WebView2PageSource::InitializeContentToCapture",
+    TraceLoggingValue("Finished", "Result"));
 }
 
 winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
