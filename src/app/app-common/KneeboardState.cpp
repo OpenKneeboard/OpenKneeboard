@@ -651,7 +651,7 @@ void KneeboardState::SetTextSettings(const TextSettings& value) {
 
 void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = {
-    "OpenVR Thread",
+    "OKB OpenVR Client",
     [](std::stop_token stopToken) -> winrt::Windows::Foundation::IAsyncAction {
       TraceLoggingWrite(gTraceProvider, "OpenVRThread/Start");
       {
