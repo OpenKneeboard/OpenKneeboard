@@ -7,7 +7,8 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}"
-  Foreground="{ThemeResource TextFillColorPrimary}">
+  Foreground="{ThemeResource TextFillColorPrimary}"
+  NavigationCacheMode="Disabled">
   <Grid RowDefinitions="Auto,*">
     <CommandBar
       x:Name="CommandBar"
