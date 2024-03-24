@@ -77,6 +77,7 @@ WebView2PageSource::InitializeContentToCapture() {
   co_await winrt::resume_foreground(mDQC.DispatcherQueue());
 
   mWorkerThread = {};
+  SetThreadDescription(GetCurrentThread(), L"OKB WebView2 Worker");
 
   this->CreateBrowserWindow();
 
