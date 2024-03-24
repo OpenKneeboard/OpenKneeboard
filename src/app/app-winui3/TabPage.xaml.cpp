@@ -64,6 +64,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 TabPage::TabPage() {
   InitializeComponent();
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::TabPage()");
   mDXR.copy_from(gDXResources);
   mKneeboard = gKneeboard.lock();
 
@@ -110,7 +111,9 @@ TabPage::TabPage() {
   gTabs.push_back(winrt::make_weak(projected));
 }
 
-TabPage::~TabPage() = default;
+TabPage::~TabPage() {
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::~TabPage()");
+}
 
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
