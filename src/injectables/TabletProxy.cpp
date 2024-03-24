@@ -141,6 +141,7 @@ void TabletProxy::Initialize() {
 }
 
 void TabletProxy::WatchForEnvironmentChanges(std::stop_token stop) {
+  SetThreadDescription(GetCurrentThread(), L"OpenKneeboard TabletProxy");
   while (!(mInitialized || stop.stop_requested())) {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     Initialize();
