@@ -102,7 +102,13 @@ TabPage::TabPage() {
       TraceLoggingWrite(
         gTraceProvider,
         "TabPageTickHandler",
-        TraceLoggingValue(self->mNeedsFrame, "NeedsFrame"));
+        TraceLoggingValue(self->mNeedsFrame, "NeedsFrame"),
+        TraceLoggingPointer(self.get(), "this"),
+        TraceLoggingValue(
+          self->mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
+        TraceLoggingValue(
+          to_hstring(self->mTabView->GetRootTab()->GetPersistentID()).c_str(),
+          "TabGUID"));
       if (self->mNeedsFrame) {
         self->PaintNow();
       }
@@ -500,6 +506,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   TraceLoggingWriteStart(
     activity,
     "TabPage::PaintNow()",
+    TraceLoggingPointer(this, "this"),
     TraceLoggingValue(mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
     TraceLoggingValue(
       to_hstring(mTabView->GetRootTab()->GetPersistentID()).c_str(), "TabGUID"),
