@@ -140,6 +140,9 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   }
   for (size_t i = 0; i < count; ++i) {
     const auto& viewConfig = mSettings.mViews.mViews.at(i);
+    if (!(viewConfig.mNonVR.mEnabled || viewConfig.mVR.mEnabled)) {
+      continue;
+    }
     const auto view = mViews.at(i);
     const auto contentSize = view->GetPreferredSize();
 
