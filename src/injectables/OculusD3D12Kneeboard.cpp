@@ -57,7 +57,8 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   const PixelSize& size) {
   OPENKNEEBOARD_TraceLoggingScope("OculusD3D12Kneeboard::CreateSwapChain()");
   if (!mDevice) {
-    traceprint("No device.");
+    TraceLoggingWrite(
+      gTraceProvider, "OculusD3D12Kneeboard::CreateSwapChain()/NoD3D12Device");
     return nullptr;
   }
 

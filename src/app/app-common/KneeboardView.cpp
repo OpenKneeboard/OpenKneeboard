@@ -335,7 +335,10 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
         };
       }
     } else {
-      traceprint("View with invalid GUID");
+      TraceLoggingWrite(
+        gTraceProvider,
+        "KneeboardView::GetIPCRenderLayout()/ViewNotFound",
+        TraceLoggingValue(to_string(to_hstring(mGUID)).c_str(), "GUID"));
       OPENKNEEBOARD_BREAK;
     }
   }

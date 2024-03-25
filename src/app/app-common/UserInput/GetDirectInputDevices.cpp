@@ -71,13 +71,13 @@ BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID untypedCtx) {
     || (devType == DI8DEVTYPE_MOUSE && ctx->mIncludeMice)) {
     ctx->mDeviceInstances.push_back(*inst);
   } else {
-    traceprint(
-      "Skipping DirectInput device '{}' with filtered device type {:#010x} "
-      "{:#010x} {:#010x}",
-      to_utf8(inst->tszInstanceName),
-      inst->dwDevType,
-      inst->wUsagePage,
-      inst->wUsage);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "SkipDIDevice",
+      TraceLoggingValue(to_utf8(inst->tszInstanceName).c_str(), "Name"),
+      TraceLoggingValue(inst->dwDevType, "DeviceType"),
+      TraceLoggingValue(inst->wUsagePage, "UsagePage"),
+      TraceLoggingValue(inst->wUsage, "Usage"));
   }
   return DIENUM_CONTINUE;
 }

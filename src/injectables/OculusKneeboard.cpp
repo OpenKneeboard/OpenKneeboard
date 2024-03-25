@@ -110,7 +110,9 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     mSwapchain = mRenderer->CreateSwapChain(session, swapchainDimensions);
     mSwapchainDimensions = swapchainDimensions;
     if (!mSwapchain) {
-      traceprint("Failed to make an OVR swapchain");
+      TraceLoggingWrite(
+        gTraceProvider,
+        "OculusKneeboard::OnOVREndFrame()/FailedToCreateSwapChain");
       return passthrough();
     }
   }

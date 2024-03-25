@@ -136,7 +136,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     co_return true;
   }
 
-  traceprint("Waiting for GameEvent");
+  TraceLoggingWrite(gTraceProvider, "GameEventServer::RunSingle()/Wait");
   co_await resume_on_signal(stop, notifyEvent.get());
   if (stop.stop_requested()) {
     co_return false;
@@ -164,7 +164,6 @@ winrt::fire_and_forget GameEventServer::DispatchEvent(std::string_view ref) {
   const auto stayingAlive = shared_from_this();
   co_await winrt::resume_background();
 
-  traceprint("Handling event");
   auto event = GameEvent::Unserialize(buffer);
   TraceLoggingActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(

@@ -57,7 +57,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   const PixelSize& size) {
   if (!mD3D11Device) {
-    traceprint("No D3D device yet");
+    TraceLoggingWrite(
+      gTraceProvider, "OculusD3D11Kneeboard::CreateSwapChain()/NoD3D11Device");
     return nullptr;
   }
 

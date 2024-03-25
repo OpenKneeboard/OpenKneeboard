@@ -578,18 +578,23 @@ Snapshot Reader::MaybeGetUncached(
   IPCTextureCopier* copier,
   const std::shared_ptr<IPCClientTexture>& dest,
   ConsumerKind kind) const {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::MaybeGetUncached()");
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::Reader::MaybeGetUncached()");
   const auto transitions = make_scoped_state_transitions<
     State::Locked,
     State::CreatingSnapshot,
     State::Locked>(p);
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
-    traceprint(
-      "Kind mismatch, not returning new snapshot; reader kind is {:#08x}, "
-      "target kind is {:#08x}",
-      static_cast<std::underlying_type_t<ConsumerKind>>(kind),
-      p->mHeader->mConfig.mTarget.GetRawMaskForDebugging());
+    TraceLoggingWriteTagged(
+      activity,
+      "SHM::Reader::MaybeGetUncached/incorrect_kind",
+      TraceLoggingValue(
+        static_cast<std::underlying_type_t<ConsumerKind>>(kind),
+        "Consumer kind"),
+      TraceLoggingValue(
+        p->mHeader->mConfig.mTarget.GetRawMaskForDebugging(), "Target kind"));
+    activity.StopWithResult("incorrect_kind");
     return {Snapshot::incorrect_kind};
   }
 
@@ -600,10 +605,12 @@ Snapshot Reader::MaybeGetUncached(
   }
 
   if (p->mHeader->mGPULUID != gpuLUID) {
-    traceprint(
-      "GPU LUID mismatch: feeder has {:#018x}, reader has {:#018x}",
-      p->mHeader->mGPULUID,
-      gpuLUID);
+    TraceLoggingWriteTagged(
+      activity,
+      "SHM::Reader::MaybeGetUncached/incorrect_gpu",
+      TraceLoggingValue(p->mHeader->mGPULUID, "FeederLUID"),
+      TraceLoggingValue(gpuLUID, "ReaderLUID"));
+    activity.StopWithResult("incorrect_gpu");
     return {Snapshot::incorrect_gpu};
   }
 

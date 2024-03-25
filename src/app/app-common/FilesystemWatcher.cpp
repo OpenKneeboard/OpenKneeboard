@@ -145,7 +145,9 @@ winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       if (!handle) {
         const auto error = GetLastError();
         if (error == ERROR_SHARING_VIOLATION) {
-          traceprint("File opened exclusively by another process, waiting");
+          TraceLoggingWrite(
+            gTraceProvider,
+            "FilesystemWatcher::OnContentsChanged/ExclusiveToOtherProcess");
           co_await winrt::resume_after(std::chrono::milliseconds(100));
           continue;
         } else {

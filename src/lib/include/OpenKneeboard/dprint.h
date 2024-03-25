@@ -61,24 +61,6 @@ void dprintf(detail::wformat_string<Args...> fmt, Args&&... args) {
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
-template <typename... Args>
-void traceprint(detail::format_string<Args...> fmt, Args&&... args) {
-  TraceLoggingWrite(
-    gTraceProvider,
-    "traceprint",
-    TraceLoggingValue(
-      std::format(fmt, std::forward<Args>(args)...).c_str(), "Message"));
-}
-
-template <typename... Args>
-void traceprint(detail::wformat_string<Args...> fmt, Args&&... args) {
-  TraceLoggingWrite(
-    gTraceProvider,
-    "traceprint",
-    TraceLoggingValue(
-      std::format(fmt, std::forward<Args>(args)...).c_str(), "Message"));
-}
-
 struct DPrintSettings {
   enum class ConsoleOutputMode {
     NEVER,
