@@ -412,13 +412,16 @@ void TabPage::OnCanvasSizeChanged(
   const IInspectable&,
   const SizeChangedEventArgs& args) noexcept {
   auto size = args.NewSize();
-  OPENKNEEBOARD_TraceLoggingScope(
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity,
     "TabPage::OnCanvasSizeChanged()",
+    TraceLoggingPointer(this, "this"),
     TraceLoggingValue(size.Width, "Width"),
     TraceLoggingValue(size.Height, "Height"));
   if (size.Width < 1 || size.Height < 1) {
     mCanvasSize = {};
     mSwapChain = nullptr;
+    activity.StopWithResult("EmptySwapChain");
     return;
   }
 
@@ -428,6 +431,7 @@ void TabPage::OnCanvasSizeChanged(
   const auto canvasSize = Geometry2D::Size<double>(size.Width, size.Height)
                             .Rounded<uint32_t, PixelSize>();
   if (canvasSize == mCanvasSize) {
+    activity.StopWithResult("SameSize");
     return;
   }
   mCanvasSize = canvasSize;
@@ -459,7 +463,11 @@ void TabPage::ResizeSwapChain() {
 }
 
 void TabPage::InitializeSwapChain() {
-  OPENKNEEBOARD_TraceLoggingScope("TabPage::InitializeSwapChain()");
+  OPENKNEEBOARD_TraceLoggingScope(
+    "TabPage::InitializeSwapChain()",
+    TraceLoggingPointer(this, "this"),
+    TraceLoggingValue(mCanvasSize.mWidth, "Width"),
+    TraceLoggingValue(mCanvasSize.mHeight, "Height"));
   if (mShuttingDown) {
     return;
   }
