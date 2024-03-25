@@ -292,7 +292,9 @@ winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
 
 void MainWindow::FrameTick() {
   TraceLoggingActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "FrameTick");
+  // Including the build number just to make sure it's in every trace
+  TraceLoggingWriteStart(
+    activity, "FrameTick", TraceLoggingValue(Version::Build, "BuildNumber"));
   this->CheckForElevatedConsumer();
   {
     std::shared_lock kbLock(*mKneeboard);
