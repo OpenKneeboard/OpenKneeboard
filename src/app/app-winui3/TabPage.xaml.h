@@ -110,7 +110,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   float mCompositionScaleX {1.0f};
   float mCompositionScaleY {1.0f};
-  PixelSize mCanvasSize {};
+  PixelSize mPanelDimensions {};
+  PixelSize mSwapChainDimensions {};
 
   struct PageMetrics {
     PixelSize mNativeSize;

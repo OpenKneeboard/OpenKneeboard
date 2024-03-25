@@ -418,29 +418,16 @@ void TabPage::OnCanvasSizeChanged(
     TraceLoggingPointer(this, "this"),
     TraceLoggingValue(size.Width, "Width"),
     TraceLoggingValue(size.Height, "Height"));
-  if (size.Width < 1 || size.Height < 1) {
-    mCanvasSize = {};
-    mSwapChain = nullptr;
-    activity.StopWithResult("EmptySwapChain");
-    return;
-  }
 
-  const auto canvas = Canvas();
   // We don't use the WinUI composition scale as
   // we render on a real pixel/percentage basis, not a DIP basis
-  const auto canvasSize = Geometry2D::Size<double>(size.Width, size.Height)
-                            .Rounded<uint32_t, PixelSize>();
-  if (canvasSize == mCanvasSize) {
+  const auto panelDimensions = Geometry2D::Size<double>(size.Width, size.Height)
+                                 .Rounded<uint32_t, PixelSize>();
+  if (panelDimensions == mPanelDimensions) {
     activity.StopWithResult("SameSize");
     return;
   }
-  mCanvasSize = canvasSize;
-  const std::unique_lock lock(*mDXR);
-  if (mSwapChain) {
-    ResizeSwapChain();
-  } else {
-    InitializeSwapChain();
-  }
+  mPanelDimensions = panelDimensions;
   this->PaintLater();
 }
 
@@ -453,22 +440,26 @@ void TabPage::ResizeSwapChain() {
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount,
-    mCanvasSize.mWidth,
-    mCanvasSize.mHeight,
+    mPanelDimensions.mWidth,
+    mPanelDimensions.mHeight,
     desc.BufferDesc.Format,
     desc.Flags));
 
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
   mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
+  mSwapChainDimensions = mPanelDimensions;
 }
 
 void TabPage::InitializeSwapChain() {
   OPENKNEEBOARD_TraceLoggingScope(
     "TabPage::InitializeSwapChain()",
     TraceLoggingPointer(this, "this"),
-    TraceLoggingValue(mCanvasSize.mWidth, "Width"),
-    TraceLoggingValue(mCanvasSize.mHeight, "Height"));
+    TraceLoggingValue(mPanelDimensions.mWidth, "Width"),
+    TraceLoggingValue(mPanelDimensions.mHeight, "Height"));
   if (mShuttingDown) {
+    return;
+  }
+  if (mPanelDimensions == mSwapChainDimensions) {
     return;
   }
   // BufferCount = 3: triple-buffer to avoid stalls
@@ -483,8 +474,8 @@ void TabPage::InitializeSwapChain() {
   //
   // So, triple-buffer
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-    .Width = mCanvasSize.mWidth,
-    .Height = mCanvasSize.mHeight,
+    .Width = mPanelDimensions.mWidth,
+    .Height = mPanelDimensions.mHeight,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
@@ -498,6 +489,7 @@ void TabPage::InitializeSwapChain() {
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
   mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
   Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
+  mSwapChainDimensions = mPanelDimensions;
 }
 
 void TabPage::PaintLater() {
@@ -510,8 +502,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
     return;
   }
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity,
     "TabPage::PaintNow()",
     TraceLoggingPointer(this, "this"),
@@ -519,13 +510,21 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     TraceLoggingValue(
       to_hstring(mTabView->GetRootTab()->GetPersistentID()).c_str(), "TabGUID"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
-  if (!mSwapChain) {
-    TraceLoggingWriteStop(
-      activity,
-      "TabPage::PaintNow()",
-      TraceLoggingValue("No swapchain", "Result"));
+  if (!mPanelDimensions) {
+    activity.StopWithResult("Invalid panel dimensions");
     return;
   }
+  if (!mSwapChain) {
+    this->InitializeSwapChain();
+    if (!mSwapChain) {
+      activity.StopWithResult("No swap chain");
+      return;
+    }
+  }
+  if (mPanelDimensions != mSwapChainDimensions) {
+    this->ResizeSwapChain();
+  }
+
   const std::unique_lock lock(*mDXR);
   const auto cleanup = scope_guard([this]() {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/Present()");
@@ -549,10 +548,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
           static_cast<FLOAT>(desc.Width),
           static_cast<FLOAT>(desc.Height),
         });
-      TraceLoggingWriteStop(
-        activity,
-        "TabPage::PaintNow()",
-        TraceLoggingValue("No tabview", "Result"));
+      activity.StopWithResult("No TabView");
       return;
     }
   }
@@ -570,21 +566,13 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   }
 
   if (!mDrawCursor) {
-    TraceLoggingWriteStop(
-      activity,
-      "TabPage::PaintNow()",
-      TraceLoggingValue("RenderedNoCursor", "Result"),
-      TraceLoggingValue(tab->GetPageCount(), "PageCount"));
+    activity.StopWithResult("RenderedWithoutCursor");
     return;
   }
 
   auto maybePoint = mKneeboardView->GetCursorContentPoint();
   if (!maybePoint) {
-    TraceLoggingWriteStop(
-      activity,
-      "TabPage::PaintNow()",
-      TraceLoggingValue("RenderedNoCursorPoint", "Result"),
-      TraceLoggingValue(tab->GetPageCount(), "PageCount"));
+    activity.StopWithResult("RenderedWithoutCursorPoint");
     return;
   }
   Geometry2D::Point<float> point {maybePoint->x, maybePoint->y};
@@ -597,11 +585,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     mCursorRenderer->Render(
       d2d, point.Rounded<uint32_t>(), metrics.mRenderSize);
   }
-  TraceLoggingWriteStop(
-    activity,
-    "TabPage::PaintNow()",
-    TraceLoggingValue("RenderedWithCursor", "Result"),
-    TraceLoggingValue(tab->GetPageCount(), "PageCount"));
+  activity.StopWithResult("RenderedWithCursor");
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
@@ -609,24 +593,25 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
     throw std::logic_error("Attempt to fetch Page Metrics without a tab");
   }
   const auto preferredSize = mTabView->GetPageIDs().size() == 0
-    ? PreferredSize {mCanvasSize}
+    ? PreferredSize {mPanelDimensions}
     : mTabView->GetPreferredSize();
 
   const auto& contentNativeSize = preferredSize.mPixelSize;
 
   const bool unscaled = preferredSize.mScalingKind == ScalingKind::Bitmap
-    && contentNativeSize.mWidth <= mCanvasSize.mWidth
-    && contentNativeSize.mHeight <= mCanvasSize.mHeight;
+    && contentNativeSize.mWidth <= mPanelDimensions.mWidth
+    && contentNativeSize.mHeight <= mPanelDimensions.mHeight;
 
-  const auto contentRenderSize = contentNativeSize.StaticCast<float>()
-                                   .ScaledToFit(mCanvasSize.StaticCast<float>())
-                                   .Rounded<uint32_t>();
+  const auto contentRenderSize
+    = contentNativeSize.StaticCast<float>()
+        .ScaledToFit(mPanelDimensions.StaticCast<float>())
+        .Rounded<uint32_t>();
 
   // Use floor() to pixel-align raster sources
   const auto padX = static_cast<uint32_t>(
-    std::floor((mCanvasSize.mWidth - contentRenderSize.mWidth) / 2.0));
+    std::floor((mPanelDimensions.mWidth - contentRenderSize.mWidth) / 2.0));
   const auto padY = static_cast<uint32_t>(
-    std::floor((mCanvasSize.mHeight - contentRenderSize.mHeight) / 2.0));
+    std::floor((mPanelDimensions.mHeight - contentRenderSize.mHeight) / 2.0));
 
   const PixelRect contentRenderRect {{padX, padY}, contentRenderSize};
 
