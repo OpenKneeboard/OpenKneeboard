@@ -97,7 +97,25 @@ D3D11Resources::D3D11Resources() {
       .PrivateDriverDataSize = sizeof(caps),
     };
     if (D3DKMTQueryAdapterInfo(&capsQuery) != 0 /* STATUS_SUCCESS */) {
-      dprint("    HAGS: driver does not support WDDM 2.9 capabilities query");
+      D3DKMT_WDDM_2_7_CAPS caps {};
+      capsQuery.Type = KMTQAITYPE_WDDM_2_7_CAPS;
+      capsQuery.pPrivateDriverData = &caps;
+      capsQuery.PrivateDriverDataSize = sizeof(caps);
+      if (D3DKMTQueryAdapterInfo(&capsQuery) == 0) {
+        if (caps.HwSchEnabled) {
+          dprint("    HAGS: enabled");
+        } else if (caps.HwSchEnabledByDefault) {
+          dprint("    HAGS: manually disabled");
+        } else if (caps.HwSchSupported) {
+          dprint("    HAGS: disabled (supported but off-by-default)");
+        } else {
+          dprint("   HAGS: unsupported");
+        }
+      } else {
+        dprint(
+          "    HAGS: driver does not support WDDM 2.9 or 2.7 capabilities "
+          "queries");
+      }
       continue;
     }
 
