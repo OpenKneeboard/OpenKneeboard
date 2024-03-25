@@ -137,6 +137,24 @@ D3D11Resources::D3D11Resources() {
         break;
     }
   }
+  DISPLAY_DEVICEW displayDevice {.cb = sizeof(DISPLAY_DEVICEW)};
+  for (DWORD i = 0; EnumDisplayDevicesW(nullptr, i, &displayDevice, 0); ++i) {
+    if (
+      (displayDevice.StateFlags & DISPLAY_DEVICE_ACTIVE)
+      != DISPLAY_DEVICE_ACTIVE) {
+      continue;
+    }
+    DEVMODEW deviceMode {.dmSize = sizeof(DEVMODEW)};
+    EnumDisplaySettingsW(
+      displayDevice.DeviceName, ENUM_CURRENT_SETTINGS, &deviceMode);
+    dprintf(
+      L"  Monitor {} ('{}'): {}x{} @ {}hz",
+      i,
+      displayDevice.DeviceName,
+      deviceMode.dmPelsWidth,
+      deviceMode.dmPelsHeight,
+      deviceMode.dmDisplayFrequency);
+  }
   dprint("----------");
 
   winrt::com_ptr<ID3D11Device> d3d;
