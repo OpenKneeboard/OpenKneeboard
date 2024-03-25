@@ -158,27 +158,6 @@ target_link_libraries(
   OpenKneeboard-dprint
 )
 
-# Calling this the 'installation helper' instead of the
-# 'repair helper' to give a more relatable UAC prompt.
-#
-# This exists to work around Microsoft not following their own
-# versioning advice, and downgrading DLL versions in Windows
-# App SDK updates.
-add_helper_executable(
-  OpenKneeboard-Installation-Helper
-  WIN32
-  repair-helper.cpp
-  icon.rc
-)
-target_link_libraries(
-  OpenKneeboard-Installation-Helper
-  PRIVATE
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  System::Msi
-)
-
 add_helper_executable(
   OpenKneeboard-Set-Desired-Elevation-Helper
   WIN32

@@ -4,7 +4,6 @@ add_subdirectory(app-winui3)
 set(
   RUNTIME_FILES
   "$<TARGET_FILE:OpenKneeboard-OpenXR-Helper>"
-  "$<TARGET_FILE:OpenKneeboard-Installation-Helper>"
   "$<TARGET_FILE:OpenKneeboard-Set-Desired-Elevation-Helper>"
   "$<TARGET_FILE:ThirdParty::Lua>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"

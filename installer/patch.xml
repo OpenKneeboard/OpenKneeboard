@@ -1,6 +1,5 @@
 <CPackWiXPatch>
   <CPackWiXFragment Id="CM_C_Default">
     <ComponentRef Id="OpenXRAPILayerRegistration" />
-    <ComponentRef Id="RepairOnNextRun" />
   </CPackWiXFragment>
 </CPackWiXPatch>

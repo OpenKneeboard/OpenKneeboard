@@ -347,63 +347,7 @@ static void LogInstallationInformation() {
   dprint("----------");
 }
 
-/** Microsoft have published updates to the Windows App SDK which lower the
- * version number.
- *
- * This makes MSI very very unhappy, so fix it up.
- */
-static bool RepairInstallation() {
-  DWORD repair {};
-  DWORD dataSize = sizeof(repair);
-  const auto ret = RegGetValueW(
-    HKEY_LOCAL_MACHINE,
-    RegistrySubKey,
-    L"RepairOnNextRun",
-    RRF_RT_REG_DWORD,
-    nullptr,
-    &repair,
-    &dataSize);
-  if (ret != ERROR_SUCCESS) {
-    OutputDebugStringA(
-      std::format(
-        "Failed to read registry value to tell if we need repair: {}",
-        static_cast<int64_t>(ret))
-        .c_str());
-    return false;
-  }
-
-  if (!repair) {
-    OutputDebugStringA("Repair not needed");
-    return false;
-  }
-
-  OutputDebugStringA("Repair needed, spawning repair subprocess");
-  const auto path = std::format(
-    L"{}\\{}",
-    Filesystem::GetRuntimeDirectory(),
-    RuntimeFiles::REPAIR_INSTALLATION_HELPER);
-  SHELLEXECUTEINFOW sei {
-    .cbSize = sizeof(SHELLEXECUTEINFOW),
-    .fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS,
-    .lpVerb = L"runas",
-    .lpFile = path.c_str(),
-    .lpParameters = path.c_str(),
-  };
-  if (!ShellExecuteExW(&sei)) {
-    OutputDebugStringA(
-      std::format("Repair ShellExecuteEx failed: {}", GetLastError()).c_str());
-    return false;
-  }
-  OutputDebugStringA("Waiting for repair process...");
-  WaitForSingleObject(sei.hProcess, INFINITE);
-  CloseHandle(sei.hProcess);
-  OutputDebugStringA("Repair complete.");
-  return true;
-}
-
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
-  RepairInstallation();
-
   TraceLoggingRegister(gTraceProvider);
   const scope_guard unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
