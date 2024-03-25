@@ -203,6 +203,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
         newBackStack.push_back(entry);
       }
       backStack.ReplaceAll(newBackStack);
+      this->PromptForViewMode();
     });
 }
 
