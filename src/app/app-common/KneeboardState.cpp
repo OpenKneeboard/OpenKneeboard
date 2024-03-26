@@ -173,10 +173,8 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
-  if (
-    mAppWindowIsForeground
-    && mSettings.mViews.mAppWindowMode == AppWindowViewMode::Independent) {
-    return mAppWindowView;
+  if (mAppWindowIsForeground) {
+    return GetAppWindowView();
   }
   return GetActiveInGameView();
 }
@@ -186,7 +184,10 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
 }
 
 std::shared_ptr<KneeboardView> KneeboardState::GetAppWindowView() const {
-  return mAppWindowView;
+  if (mSettings.mViews.mAppWindowMode == AppWindowViewMode::Independent) {
+    return mAppWindowView;
+  }
+  return GetActiveInGameView();
 }
 
 void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
