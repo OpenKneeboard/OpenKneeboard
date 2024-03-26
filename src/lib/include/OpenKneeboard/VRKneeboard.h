@@ -46,13 +46,20 @@ class VRKneeboard {
     bool mIsLookingAtKneeboard;
   };
 
+  struct Layer {
+    const SHM::LayerConfig* mLayerConfig {nullptr};
+    RenderParameters mRenderParameters;
+  };
+
  protected:
+  std::vector<Layer> GetLayers(const SHM::Snapshot&, const Pose& hmdPose);
+
+ private:
   RenderParameters GetRenderParameters(
     const SHM::Snapshot&,
     const SHM::LayerConfig&,
     const Pose& hmdPose);
 
- private:
   struct Sizes {
     Vector2 mNormalSize;
     Vector2 mZoomedSize;

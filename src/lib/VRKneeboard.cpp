@@ -101,13 +101,52 @@ void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
   mRecenterCount = vr.mRecenterCount;
 }
 
-VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
+std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
   const SHM::Snapshot& snapshot,
-  const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
   if (!mEyeHeight) {
     mEyeHeight = {hmdPose.mPosition.y};
   }
+
+  const auto totalLayers = snapshot.GetLayerCount();
+
+  std::vector<Layer> ret;
+  ret.reserve(totalLayers);
+  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
+    const auto layerConfig = snapshot.GetLayerConfig(layerIndex);
+    if (!layerConfig->mVREnabled) {
+      continue;
+    }
+
+    ret.push_back(Layer {
+      layerConfig, GetRenderParameters(snapshot, *layerConfig, hmdPose)});
+  }
+
+  const auto config = snapshot.GetConfig();
+  if (config.mVR.mEnableGazeInputFocus) {
+    const auto activeLayerID = config.mGlobalInputLayerID;
+
+    for (const auto& layer: std::ranges::reverse_view(ret)) {
+      if (
+        layer.mRenderParameters.mIsLookingAtKneeboard
+        && layer.mLayerConfig->mLayerID != activeLayerID) {
+        GameEvent {
+          GameEvent::EVT_SET_INPUT_FOCUS,
+          std::to_string(layer.mLayerConfig->mLayerID),
+        }
+          .Send();
+        break;
+      }
+    }
+  }
+
+  return ret;
+}
+
+VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
+  const SHM::Snapshot& snapshot,
+  const SHM::LayerConfig& layer,
+  const Pose& hmdPose) {
   auto config = snapshot.GetConfig();
   const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
   const auto isLookingAtKneeboard
@@ -157,16 +196,6 @@ bool VRKneeboard::IsLookingAtKneeboard(
     kneeboardPose.mPosition,
     kneeboardPose.mOrientation,
     currentSize);
-
-  if (
-    isLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
-    && config.mVR.mEnableGazeInputFocus) {
-    GameEvent {
-      GameEvent::EVT_SET_INPUT_FOCUS,
-      std::to_string(layer.mLayerID),
-    }
-      .Send();
-  }
 
   return isLookingAtKneeboard;
 }

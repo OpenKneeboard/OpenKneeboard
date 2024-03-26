@@ -94,7 +94,5 @@ class OpenXRKneeboard : public VRKneeboard {
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
-
-  std::vector<uint8_t> GetActiveLayers(const SHM::Snapshot& snapshot) const;
 };
 }// namespace OpenKneeboard

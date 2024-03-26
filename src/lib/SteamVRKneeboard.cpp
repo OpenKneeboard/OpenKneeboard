@@ -234,6 +234,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
   const auto hmdPose = *maybeHMDPose;
+  const auto vrLayers = this->GetLayers(snapshot, hmdPose);
 
   const auto config = snapshot.GetConfig();
 
@@ -245,25 +246,16 @@ void SteamVRKneeboard::Tick() {
   }
 
   auto ctx = mDXR.mD3D11ImmediateContext.get();
-  std::unordered_map<uint8_t, RenderParameters> layerRenderParams;
-  std::vector<uint8_t> activeLayers;
+  std::vector<size_t> activeLayers;
 
-  const auto layerCount = snapshot.GetLayerCount();
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+  for (size_t layerIndex = 0; layerIndex < vrLayers.size(); ++layerIndex) {
     this->InitializeLayer(layerIndex);
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-    if (!layer.mVREnabled) {
-      continue;
-    }
+    const auto [layer, renderParams] = vrLayers.at(layerIndex);
     auto& layerState = mLayers.at(layerIndex);
-
-    const auto renderParams
-      = this->GetRenderParameters(snapshot, layer, hmdPose);
 
     if (renderParams.mCacheKey == layerState.mCacheKey) {
       continue;
     }
-    layerRenderParams.emplace(layerIndex, renderParams);
     activeLayers.push_back(layerIndex);
 
     // Copy the texture as for interoperability with other systems
@@ -278,14 +270,14 @@ void SteamVRKneeboard::Tick() {
     ctx->ClearRenderTargetView(
       mRenderTargetView.get(), DirectX::Colors::Transparent);
 
-    const auto& imageSize = layer.mVR.mLocationOnTexture.mSize;
+    const auto& imageSize = layer->mVR.mLocationOnTexture.mSize;
     mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize);
     mSpriteBatch->Draw(
       srv,
-      layer.mVR.mLocationOnTexture,
+      layer->mVR.mLocationOnTexture,
       {
         {0, 0},
-        layer.mVR.mLocationOnTexture.mSize,
+        layer->mVR.mLocationOnTexture.mSize,
       },
       D3D11::Opacity {renderParams.mKneeboardOpacity});
     mSpriteBatch->End();
@@ -314,9 +306,8 @@ void SteamVRKneeboard::Tick() {
   }
 
   for (const auto& layerIndex: activeLayers) {
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    const auto& [layer, renderParams] = vrLayers.at(layerIndex);
     auto& layerState = mLayers.at(layerIndex);
-    const auto& renderParams = layerRenderParams.at(layerIndex);
 
     // SteamVR has no synchronization support, so an explicit CPU/GPU sync is
     // needed.
@@ -362,7 +353,7 @@ void SteamVRKneeboard::Tick() {
       vr::TrackingUniverseStanding,
       reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
 
-    const auto& imageSize = layer.mVR.mLocationOnTexture.mSize;
+    const auto& imageSize = layer->mVR.mLocationOnTexture.mSize;
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,
@@ -379,7 +370,7 @@ void SteamVRKneeboard::Tick() {
       continue;
     }
     auto& visible = mLayers.at(i).mVisible;
-    if (i >= layerCount) {
+    if (i >= vrLayers.size()) {
       if (visible) {
         OVERLAY_CHECK(HideOverlay, mLayers.at(i).mOverlay);
         visible = false;

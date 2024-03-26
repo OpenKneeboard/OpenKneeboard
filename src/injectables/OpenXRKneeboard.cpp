@@ -218,16 +218,17 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto availableLayers = this->GetActiveLayers(snapshot);
+  const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
+  auto vrLayers = this->GetLayers(snapshot, hmdPose);
   const auto layerCount
-    = (availableLayers.size() + frameEndInfo->layerCount) < mMaxLayerCount
-    ? availableLayers.size()
+    = (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
+    ? vrLayers.size()
     : (mMaxLayerCount - frameEndInfo->layerCount);
   if (layerCount == 0) {
     TraceLoggingWriteTagged(activity, "No active layers");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
-  availableLayers.resize(layerCount);
+  vrLayers.resize(layerCount);
   const auto swapchainDimensions = Spriting::GetBufferSize(layerCount);
 
   if (mSwapchain) {
@@ -275,8 +276,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
-
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   std::vector<SHM::LayerSprite> layerSprites;
   std::vector<uint64_t> cacheKeys;
@@ -285,14 +284,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
   cacheKeys.reserve(layerCount);
   addedXRLayers.reserve(layerCount);
 
-  for (const auto shmLayerIndex: availableLayers) {
-    const auto renderLayerIndex = layerSprites.size();
+  for (size_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    const auto [layer, params] = vrLayers.at(layerIndex);
 
-    auto layer = snapshot.GetLayerConfig(shmLayerIndex);
-    auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
     PixelRect destRect {
-      Spriting::GetOffset(renderLayerIndex, MaxViewCount),
+      Spriting::GetOffset(layerIndex, layerCount),
       layer->mVR.mLocationOnTexture.mSize,
     };
     using Upscaling = VRConfig::Quirks::Upscaling;
@@ -316,12 +313,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .mOpacity = params.mKneeboardOpacity,
     });
 
-    if (params.mCacheKey != mRenderCacheKeys.at(shmLayerIndex)) {
+    if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
     }
 
     if (params.mIsLookingAtKneeboard) {
-      topMost = renderLayerIndex;
+      topMost = layerIndex;
     }
 
     static_assert(
@@ -407,23 +404,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
     }
   }
   return nextResult;
-}
-
-std::vector<uint8_t> OpenXRKneeboard::GetActiveLayers(
-  const SHM::Snapshot& snapshot) const {
-  const auto totalLayers = snapshot.GetLayerCount();
-
-  std::vector<uint8_t> ret;
-  ret.reserve(totalLayers);
-
-  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
-    auto config = snapshot.GetLayerConfig(layerIndex);
-    if (config->mVREnabled) {
-      ret.push_back(layerIndex);
-    }
-  }
-
-  return ret;
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {

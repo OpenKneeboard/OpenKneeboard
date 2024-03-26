@@ -156,19 +156,13 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
-  const auto availableLayerCount = snapshot.GetLayerCount();
-  std::vector<uint8_t> availableVRLayers;
-  for (uint8_t i = 0; i < availableLayerCount; ++i) {
-    auto config = snapshot.GetLayerConfig(i);
-    if (config->mVREnabled) {
-      availableVRLayers.push_back(i);
-    }
-  }
+  const auto hmdPose = this->GetHMDPose(predictedTime);
+  auto vrLayers = this->GetLayers(snapshot, hmdPose);
   const auto addedLayerCount
-    = ((availableVRLayers.size() + origLayerCount) < ovrMaxLayerCount)
-    ? availableVRLayers.size()
+    = ((vrLayers.size() + origLayerCount) <= ovrMaxLayerCount)
+    ? vrLayers.size()
     : (ovrMaxLayerCount - origLayerCount);
-  availableVRLayers.resize(addedLayerCount);
+  vrLayers.resize(addedLayerCount);
 
   if (addedLayerCount == 0) {
     return passthrough();
@@ -184,19 +178,17 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   uint16_t topMost = 0;
   bool needRender = false;
-  for (const auto layerIndex: availableVRLayers) {
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-    auto params = this->GetRenderParameters(
-      snapshot, layer, this->GetHMDPose(predictedTime));
+  for (size_t layerIndex = 0; layerIndex < addedLayerCount; ++layerIndex) {
+    const auto [layer, params] = vrLayers.at(layerIndex);
     cacheKeys.push_back(params.mCacheKey);
 
     const PixelRect destRect {
-      Spriting::GetOffset(layerIndex, MaxViewCount),
-      layer.mVR.mLocationOnTexture.mSize,
+      Spriting::GetOffset(layerIndex, metadata.GetLayerCount()),
+      layer->mVR.mLocationOnTexture.mSize,
     };
 
     LayerSprite.push_back(SHM::LayerSprite {
-      .mSourceRect = layer.mVR.mLocationOnTexture,
+      .mSourceRect = layer->mVR.mLocationOnTexture,
       .mDestRect = destRect,
       .mOpacity = params.mKneeboardOpacity,
     });
