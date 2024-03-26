@@ -123,22 +123,23 @@ WebView2PageSource::InitializeContentToCapture() {
     Version::Build);
   settings.UserAgent(userAgent);
 
+  settings.IsWebMessageEnabled(true);
+  mWebView.WebMessageReceived(
+    std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
+
+  co_await this->ImportJavascriptFile(
+    Filesystem::GetImmutableDataDirectory() / "WebView2.js");
+
   if (mSettings.mIntegrateWithSimHub) {
-    settings.IsWebMessageEnabled(true);
-    mWebView.WebMessageReceived(
-      std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
-
-    const auto path
-      = Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js";
-
-    std::ifstream f(path);
-    std::stringstream ss;
-    ss << f.rdbuf();
-    const auto js = ss.str();
-
+    co_await this->ImportJavascriptFile(
+      Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
     co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      winrt::to_hstring(js));
+      L"window.OpenKneeboard = new OpenKneeboard_SimHub();");
+  } else {
+    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
+      L"window.OpenKneeboard = new OpenKneeboard();");
   }
+
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
   mController.RasterizationScale(1.0);
   mController.ShouldDetectMonitorScaleChanges(false);
@@ -177,7 +178,9 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
 
   const std::string message = parsed.at("message");
 
-  if (message != "OpenKneeboard/SimHub/DashboardLoaded") {
+  if (
+    message != "OpenKneeboard/SimHub/DashboardLoaded"
+    && message != "OpenKneeboard/SetPreferredPixelSize") {
     co_return;
   }
 
@@ -451,6 +454,17 @@ void WebView2PageSource::ClearUserInput(PageID) {
 }
 
 void WebView2PageSource::ClearUserInput() {
+}
+
+winrt::Windows::Foundation::IAsyncAction
+WebView2PageSource::ImportJavascriptFile(const std::filesystem::path& path) {
+  std::ifstream f(path);
+  std::stringstream ss;
+  ss << f.rdbuf();
+  const auto js = ss.str();
+
+  co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
+    winrt::to_hstring(js));
 }
 
 LRESULT CALLBACK WebView2PageSource::WindowProc(

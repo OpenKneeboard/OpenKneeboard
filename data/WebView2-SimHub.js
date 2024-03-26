@@ -1,13 +1,8 @@
-console.log("OpenKneeboard integration attached");
-
-class OpenKneeboard {
+class OpenKneeboard_SimHub extends OpenKneeboard {
   constructor() {
-    this.hookWindowSimhub();
+    console.log("OpenKneeboard_SimHub::Constructor()");
+    super();
     document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
-  }
-
-  OnDOMContentLoaded() {
-    document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
   }
 
   hookWindowSimhub() {
@@ -72,5 +67,3 @@ class OpenKneeboard {
     });
   }
 }
-
-window.OpenKneeboard = new OpenKneeboard();

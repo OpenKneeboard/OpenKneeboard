@@ -131,6 +131,8 @@ class WebView2PageSource final : public WGCPageSource,
     const winrt::Microsoft::Web::WebView2::Core::
       CoreWebView2WebMessageReceivedEventArgs&);
 
+  winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(const std::filesystem::path& path);
+
   static LRESULT CALLBACK WindowProc(
     HWND const window,
     UINT const message,
