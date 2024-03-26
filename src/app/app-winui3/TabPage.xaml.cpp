@@ -121,6 +121,7 @@ TabPage::~TabPage() {
 
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
+  OPENKNEEBOARD_TraceLoggingScope("TabPage::final_release()");
   instance->RemoveAllEventListeners();
   co_await instance->mUIThread;
 }
