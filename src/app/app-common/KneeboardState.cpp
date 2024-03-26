@@ -324,7 +324,10 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
         return;
       }
       mViews.at(mInputViewIndex)->PostCursorEvent({});
-      dprintf("Giving input focus to view {:#016x} at index {}", viewID, i);
+      dprintf(
+        "Giving input focus to view {} at index {}",
+        mViews.at(i)->GetPersistentGUID(),
+        i);
       mInputViewIndex = i;
       evNeedsRepaintEvent.Emit();
       evActiveViewChangedEvent.Emit();
