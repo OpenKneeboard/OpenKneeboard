@@ -210,6 +210,9 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     }
     dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
+  if (mSize == size) {
+    co_return;
+  }
   mSize = size;
 
   const auto wfSize
