@@ -178,6 +178,10 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
     && mSettings.mViews.mAppWindowMode == AppWindowViewMode::Independent) {
     return mAppWindowView;
   }
+  return GetActiveInGameView();
+}
+
+std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
   return mViews.at(mInputViewIndex);
 }
 

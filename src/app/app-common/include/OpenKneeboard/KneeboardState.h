@@ -80,6 +80,7 @@ class KneeboardState final
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
+  std::shared_ptr<KneeboardView> GetActiveInGameView() const;
   std::shared_ptr<KneeboardView> GetAppWindowView() const;
   std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
