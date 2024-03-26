@@ -113,9 +113,12 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   OnTabsChanged();
   OnViewOrderChanged();
 
-  AddEventListener(
-    mKneeboard->evActiveViewChangedEvent,
-    std::bind_front(&MainWindow::OnViewOrderChanged, this));
+  AddEventListener(mKneeboard->evActiveViewChangedEvent, [this]() {
+    if (mKneeboard->GetAppWindowView() == mKneeboardView) {
+      return;
+    }
+    this->OnViewOrderChanged();
+  });
   if (!IsElevated()) {
     AddEventListener(mKneeboard->evGameChangedEvent, [this](DWORD pid, auto) {
       if (pid) {
