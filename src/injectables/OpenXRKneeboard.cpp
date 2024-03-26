@@ -218,18 +218,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
-  auto vrLayers = this->GetLayers(snapshot, hmdPose);
-  const auto layerCount
-    = (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
-    ? vrLayers.size()
-    : (mMaxLayerCount - frameEndInfo->layerCount);
-  if (layerCount == 0) {
-    TraceLoggingWriteTagged(activity, "No active layers");
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-  vrLayers.resize(layerCount);
-  const auto swapchainDimensions = Spriting::GetBufferSize(layerCount);
+  const auto swapchainDimensions
+    = Spriting::GetBufferSize(snapshot.GetLayerCount());
 
   if (mSwapchain) {
     if (
@@ -243,7 +233,10 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
 
   if (!mSwapchain) {
-    OPENKNEEBOARD_TraceLoggingScope("CreateSwapchain");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "CreateSwapchain",
+      TraceLoggingValue(swapchainDimensions.mWidth, "width"),
+      TraceLoggingValue(swapchainDimensions.mHeight, "height"));
     mSwapchain = this->CreateSwapchain(session, swapchainDimensions);
     if (!mSwapchain) [[unlikely]] {
       OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
@@ -258,12 +251,24 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   if (!snapshot.HasTexture()) {
     snapshot = this->GetSHM()->MaybeGet();
+
+    if (!snapshot.HasTexture()) {
+      TraceLoggingWriteTagged(activity, "NoTexture");
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
   }
 
-  if (!snapshot.HasTexture()) {
-    TraceLoggingWriteTagged(activity, "NoTexture");
+  const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
+  auto vrLayers = this->GetLayers(snapshot, hmdPose);
+  const auto layerCount
+    = (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
+    ? vrLayers.size()
+    : (mMaxLayerCount - frameEndInfo->layerCount);
+  if (layerCount == 0) {
+    TraceLoggingWriteTagged(activity, "No active layers");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
+  vrLayers.resize(layerCount);
 
   auto config = snapshot.GetConfig();
 
@@ -289,7 +294,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     cacheKeys.push_back(params.mCacheKey);
     PixelRect destRect {
-      Spriting::GetOffset(layerIndex, layerCount),
+      Spriting::GetOffset(layerIndex, snapshot.GetLayerCount()),
       layer->mVR.mLocationOnTexture.mSize,
     };
     using Upscaling = VRConfig::Quirks::Upscaling;
