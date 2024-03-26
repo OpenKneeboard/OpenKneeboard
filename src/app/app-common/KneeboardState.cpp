@@ -240,7 +240,7 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::NEXT_BOOKMARK:
     case UserAction::TOGGLE_BOOKMARK:
     case UserAction::RELOAD_CURRENT_TAB:
-      mViews.at(mInputViewIndex)->PostUserAction(action);
+      GetActiveViewForGlobalInput()->PostUserAction(action);
       return;
     case UserAction::PREVIOUS_PROFILE:
       this->SwitchProfile(Direction::Previous);
@@ -470,7 +470,7 @@ void KneeboardState::SetCurrentTab(
 
   std::shared_ptr<KneeboardView> view;
   if (extra.mKneeboard == 0) {
-    view = mViews.at(mInputViewIndex);
+    view = GetActiveViewForGlobalInput();
   } else if (extra.mKneeboard <= mViews.size()) {
     view = mViews.at(extra.mKneeboard - 1);
   } else {
@@ -478,7 +478,7 @@ void KneeboardState::SetCurrentTab(
       "Requested kneeboard index {} does not exist, using active "
       "kneeboard",
       extra.mKneeboard);
-    view = mViews.at(mInputViewIndex);
+    view = GetActiveViewForGlobalInput();
   }
   view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
   const auto pageIDs = tab->GetPageIDs();
