@@ -229,7 +229,12 @@ HWNDPageSource::CreateWGCaptureItem() {
 }
 
 winrt::fire_and_forget HWNDPageSource::InitializeInputHook() noexcept {
+  auto weak = weak_from_this();
   co_await winrt::resume_after(std::chrono::milliseconds(100));
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
   PostMessageW(
     mWindow,
     gControlMessage,
