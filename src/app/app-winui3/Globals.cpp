@@ -33,7 +33,6 @@ std::weak_ptr<TroubleshootingStore> gTroubleshootingStore;
 std::weak_ptr<KneeboardState> gKneeboard;
 audited_ptr<DXResources> gDXResources;
 winrt::handle gMutex {};
-std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 RenderTargetID gGUIRenderTargetID;
 bool gShuttingDown = false;
 

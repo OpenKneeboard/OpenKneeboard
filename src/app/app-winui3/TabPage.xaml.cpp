@@ -113,8 +113,6 @@ TabPage::TabPage() {
         self->PaintNow();
       }
     }));
-  OpenKneeboardApp::TabPage projected {*this};
-  gTabs.push_back(winrt::make_weak(projected));
 }
 
 TabPage::~TabPage() {
