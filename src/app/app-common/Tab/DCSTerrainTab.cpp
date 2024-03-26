@@ -28,7 +28,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTerrainTab::DCSTerrainTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSTerrainTab::DCSTerrainTab(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : DCSTerrainTab(dxr, kbs, {}, _("Theater")) {
 }
 
@@ -108,13 +110,15 @@ void DCSTerrainTab::OnGameEvent(
   std::vector<std::filesystem::path> paths;
 
   for (auto path: potentialPaths) {
-    dprintf("Terrain tab: checking {}", path);
+    std::string message;
     if (std::filesystem::exists(path)) {
       paths.push_back(std::filesystem::canonical(path));
-      mDebugInformation += std::format("\u2714 {}\n", to_utf8(path));
+      message = std::format("\u2714 {}", to_utf8(path));
     } else {
-      mDebugInformation += std::format("\u274c {}\n", to_utf8(path));
+      message = std::format("\u274c {}", to_utf8(path));
     }
+    dprintf("Terrain tab: {}", message);
+    mDebugInformation += message + "\n";
   }
 
   if (mDebugInformation.ends_with("\n")) {
