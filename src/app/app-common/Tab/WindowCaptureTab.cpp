@@ -20,6 +20,7 @@
 #include <OpenKneeboard/WindowCaptureTab.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json.h>
 
 #include <Psapi.h>
@@ -52,7 +53,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const MatchSpecification& spec) {
-  auto ret = std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
+  auto ret = shared_with_final_release(new WindowCaptureTab(
     dxr,
     kbs,
     {},
@@ -70,7 +71,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const nlohmann::json& jsonSettings) {
   auto settings = jsonSettings.get<Settings>();
 
-  auto ret = std::shared_ptr<WindowCaptureTab>(
+  auto ret = shared_with_final_release(
     new WindowCaptureTab(dxr, kbs, persistentID, title, settings));
   ret->TryToStartCapture();
   return ret;
