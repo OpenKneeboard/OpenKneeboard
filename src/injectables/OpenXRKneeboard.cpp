@@ -201,7 +201,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "OpenXRKneeboard::xrEndFrame()");
   if (frameEndInfo->layerCount == 0) {
-    TraceLoggingWriteTagged(activity, "No layers.");
+    TraceLoggingWriteTagged(activity, "No game layers.");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
@@ -215,6 +215,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
   auto snapshot = shm->MaybeGetMetadata();
   if (!snapshot.HasMetadata()) {
     TraceLoggingWriteTagged(activity, "No metadata");
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  if (snapshot.GetLayerCount() < 1) {
+    TraceLoggingWriteTagged(activity, "No SHM layers");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
