@@ -80,10 +80,19 @@ struct Size {
     return static_cast<TV>(mHeight);
   }
 
-  constexpr Size<T> ScaledToFit(const Size<T>& container) const noexcept {
+  constexpr Size<T> ScaledToFit(const Size<T>& container,
+    ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {
     const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
     const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
     const auto scale = std::min(scaleX, scaleY);
+
+    if (scale > 1 && mode == ScaleToFitMode::ShrinkOnly) {
+      return *this;
+    }
+
+    if (scale < 1 && mode == ScaleToFitMode::GrowOnly) {
+      return *this;
+    }
 
     const Size<float> scaled {
       mWidth * scale,

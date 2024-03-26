@@ -184,19 +184,31 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     co_return;
   }
 
-  const PixelSize size = {
+  PixelSize size = {
     parsed.at("data").at("width"),
     parsed.at("data").at("height"),
   };
+  if (size.mWidth < 1 || size.mHeight < 1) {
+    dprint("WebView2 requested 0px area, ignoring");
+    co_return;
+  }
   if (
-    size.mWidth < 1 || size.mHeight < 1
-    || size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+    size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
     || size.mHeight > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
     dprintf(
       "WebView2 requested size {}x{} is outside of D3D11 limits",
       size.mWidth,
       size.mHeight);
-    co_return;
+    size = size.ScaledToFit(
+      {
+        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+      },
+      Geometry2D::ScaleToFitMode::ShrinkOnly);
+    if (size.mWidth < 1 || size.mHeight < 1) {
+      co_return;
+    }
+    dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
   mSize = size;
 
