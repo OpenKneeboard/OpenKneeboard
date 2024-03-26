@@ -158,10 +158,18 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) {
 }
 
 concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+  auto weak = weak_from_this();
+
   if (!hwnd) {
     co_return false;
   }
   co_await mUIThread;
+
+  auto self = weak.lock();
+  if (!self) {
+    co_return false;
+  }
+
   auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
   if (!source) {
     co_return false;
@@ -175,14 +183,23 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   mDelegate = source;
   this->SetDelegates({source});
   this->AddEventListener(
-    source->evWindowClosedEvent,
-    std::bind_front(&WindowCaptureTab::OnWindowClosed, this));
+    source->evWindowClosedEvent, [weak = weak_from_this()]() {
+      if (auto self = weak.lock()) {
+        self->OnWindowClosed();
+      }
+    });
   mHwnd = hwnd;
   co_return true;
 }
 
 winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
+  auto weak = weak_from_this();
   co_await winrt::resume_background();
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+
   const HWND desktop = GetDesktopWindow();
   HWND hwnd = NULL;
   while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
@@ -218,7 +235,12 @@ WindowCaptureTab::~WindowCaptureTab() {
 }
 
 winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
+  auto weak = weak_from_this();
   co_await mUIThread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
   this->Reload();
 }
 
@@ -397,6 +419,7 @@ void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
+  auto weak = weak_from_this();
   if (mHwnd) {
     co_return;
   }
@@ -413,12 +436,21 @@ concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
     // Give new windows (especially UWP) a chance to settle before checking
     // if they match
     co_await winrt::resume_after(std::chrono::seconds(1));
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
     if (!this->WindowMatches(hwnd)) {
       co_return;
     }
   }
 
   if (!co_await this->TryToStartCapture(hwnd)) {
+    co_return;
+  }
+
+  auto self = weak.lock();
+  if (!self) {
     co_return;
   }
 
@@ -458,9 +490,11 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
     }
   }
 
-  [hwnd](const auto& instance) -> winrt::fire_and_forget {
-    co_await instance->OnNewWindow(hwnd);
-  }(instance);
+  [hwnd](auto weak) -> winrt::fire_and_forget {
+    if (auto instance = weak.lock()) {
+      co_await instance->OnNewWindow(hwnd);
+    }
+  }(std::weak_ptr(instance));
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
