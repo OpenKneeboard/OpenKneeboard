@@ -73,6 +73,8 @@ class WindowCaptureTab final
     const winrt::guid& persistentID,
     std::string_view title,
     const nlohmann::json& settings);
+  static winrt::fire_and_forget final_release(
+    std::unique_ptr<WindowCaptureTab>);
   virtual ~WindowCaptureTab();
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();

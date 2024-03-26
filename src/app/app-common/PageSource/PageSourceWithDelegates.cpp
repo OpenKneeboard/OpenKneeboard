@@ -144,7 +144,7 @@ void PageSourceWithDelegates::RenderPage(
   const PixelRect& rect) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
-    OPENKNEEBOARD_BREAK;
+    // Expected e.g. for a window capture tab with no matching window
     return;
   }
 

@@ -268,6 +268,11 @@ nlohmann::json WindowCaptureTab::GetSettings() const {
   };
 }
 
+winrt::fire_and_forget WindowCaptureTab::final_release(
+  std::unique_ptr<WindowCaptureTab> self) {
+  co_await self->mUIThread;
+}
+
 std::unordered_map<HWND, WindowSpecification>
 WindowCaptureTab::GetTopLevelWindows() {
   std::unordered_map<HWND, WindowSpecification> ret;

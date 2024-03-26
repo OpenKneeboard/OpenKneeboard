@@ -101,7 +101,7 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
 
     // WGC does not support direct capture of sRGB
-    mFramePool = WGC::Direct3D11CaptureFramePool::Create(
+    mFramePool = WGC::Direct3D11CaptureFramePool::CreateFreeThreaded(
       mWinRTD3DDevice,
       this->GetPixelFormat(),
       WGCPageSource::SwapchainLength,
@@ -142,17 +142,21 @@ WGCPageSource::~WGCPageSource() = default;
 winrt::fire_and_forget WGCPageSource::final_release(
   std::unique_ptr<WGCPageSource> p) {
   p->RemoveAllEventListeners();
+  co_await p->mUIThread;
 
-  if (p->mFramePool) {
+  if (p->mCaptureSession) {
     p->mCaptureSession.Close();
-    p->mFramePool.Close();
-    p->mCaptureSession = {nullptr};
-    p->mCaptureItem = {nullptr};
-    p->mFramePool = {nullptr};
-    p->mNextFrame = {nullptr};
+    // Closing queues up some events in the main loop without keeping a strong
+    // reference :( Give them some time to clean up
+    co_await winrt::resume_after(std::chrono::milliseconds(100));
+    co_await p->mUIThread;
   }
 
-  co_await p->mUIThread;
+  p->mNextFrame = {nullptr};
+  p->mCaptureSession = {nullptr};
+  p->mCaptureItem = {nullptr};
+  p->mFramePool = {nullptr};
+
   p->mTexture = nullptr;
 }
 

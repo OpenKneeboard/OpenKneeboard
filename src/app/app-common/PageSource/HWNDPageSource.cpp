@@ -262,14 +262,14 @@ HWNDPageSource::~HWNDPageSource() = default;
 
 winrt::fire_and_forget HWNDPageSource::final_release(
   std::unique_ptr<HWNDPageSource> p) {
+  auto ptr = reinterpret_cast<uintptr_t>(p.get());
+  p->RemoveAllEventListeners();
   for (auto& [hwnd, handles]: p->mHooks) {
     if (handles.mHook32Subprocess) {
       TerminateProcess(handles.mHook32Subprocess.get(), 0);
       handles.mHook32Subprocess = {};
     }
   }
-
-  p->RemoveAllEventListeners();
 
   WGCPageSource::final_release(std::move(p));
   co_return;
