@@ -56,7 +56,6 @@
 #include <ranges>
 #include <regex>
 
-#include <icu.h>
 #include <shobjidl.h>
 
 using namespace OpenKneeboard;
@@ -378,30 +377,7 @@ void TabsSettingsPage::OnAddBrowserAddressTextChanged(
   if (valid) {
     try {
       winrt::Windows::Foundation::Uri uri {to_hstring(str)};
-      auto scheme = to_string(uri.SchemeName());
-      auto error = U_ZERO_ERROR;
-      auto casemap = ucasemap_open("", U_FOLD_CASE_DEFAULT, &error);
-
-      error = U_ZERO_ERROR;
-      const auto foldedLength = ucasemap_utf8FoldCase(
-        casemap,
-        nullptr,
-        0,
-        scheme.data(),
-        static_cast<int32_t>(scheme.size()),
-        &error);
-      std::string foldedScheme(static_cast<size_t>(foldedLength), '\0');
-
-      error = U_ZERO_ERROR;
-      ucasemap_utf8FoldCase(
-        casemap,
-        foldedScheme.data(),
-        static_cast<int32_t>(foldedScheme.size()),
-        scheme.data(),
-        static_cast<int32_t>(scheme.size()),
-        &error);
-
-      ucasemap_close(casemap);
+      const auto foldedScheme = fold_utf8(to_string(uri.SchemeName()));
 
       valid = (foldedScheme == "https") || (foldedScheme == "http")
         || (foldedScheme == "file");

@@ -58,7 +58,9 @@ winrt::hstring RenameTabDialog::Prompt() const noexcept {
 
 void RenameTabDialog::Prompt(const winrt::hstring& prompt) noexcept {
   mPrompt = prompt;
-  this->mPropertyChangedEvent(*this, winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Prompt"));
+  this->mPropertyChangedEvent(
+    *this,
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Prompt"));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -7,7 +7,7 @@ namespace OpenKneeboardApp {
   }
 
 	[default_interface]
-	unsealed runtimeclass WindowPickerUIData
+	unsealed runtimeclass WindowPickerUIData : Microsoft.UI.Xaml.Data.ICustomPropertyProvider
 	{
 		WindowPickerUIData();
 		Microsoft.UI.Xaml.Media.Imaging.BitmapSource Icon;

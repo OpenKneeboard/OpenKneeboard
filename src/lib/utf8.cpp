@@ -19,9 +19,12 @@
  */
 
 #include <OpenKneeboard/utf8.h>
+
 #include <shims/winrt/base.h>
 
 #include <regex>
+
+#include <icu.h>
 
 namespace OpenKneeboard {
 
@@ -40,6 +43,57 @@ std::string to_utf8(std::wstring_view in) {
 
 std::string to_utf8(const wchar_t* in) {
   return to_utf8(std::wstring_view(in));
+}
+
+class UTF8CaseMap {
+ public:
+  UTF8CaseMap(const char locale[]) {
+    auto error = U_ZERO_ERROR;
+    mImpl = ucasemap_open(locale, U_FOLD_CASE_DEFAULT, &error);
+  }
+
+  ~UTF8CaseMap() {
+    if (!mImpl) {
+      return;
+    }
+
+    ucasemap_close(mImpl);
+  }
+
+  inline operator const UCaseMap*() const noexcept {
+    return mImpl;
+  }
+
+  UTF8CaseMap() = delete;
+  UTF8CaseMap(const UTF8CaseMap&) = delete;
+  UTF8CaseMap& operator=(const UTF8CaseMap&) = delete;
+
+ private:
+  UCaseMap* mImpl {nullptr};
+};
+
+static UTF8CaseMap gFoldCaseMap("");
+
+std::string fold_utf8(std::string_view in) {
+  auto error = U_ZERO_ERROR;
+  const auto foldedLength = ucasemap_utf8FoldCase(
+    gFoldCaseMap,
+    nullptr,
+    0,
+    in.data(),
+    static_cast<int32_t>(in.size()),
+    &error);
+
+  std::string ret(static_cast<size_t>(foldedLength), '\0');
+  error = U_ZERO_ERROR;
+  const auto neededLength = ucasemap_utf8FoldCase(
+    gFoldCaseMap,
+    ret.data(),
+    ret.size(),
+    in.data(),
+    static_cast<int32_t>(in.size()),
+    &error);
+  return ret;
 }
 
 }// namespace OpenKneeboard

@@ -54,6 +54,8 @@ constexpr std::string_view to_utf8(const char (&in)[N]) {
   return {in, N};
 }
 
+std::string fold_utf8(std::string_view);
+
 std::string to_utf8(const std::wstring&);
 std::string to_utf8(std::wstring_view);
 std::string to_utf8(const wchar_t*);
