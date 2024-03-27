@@ -20,12 +20,15 @@
 #pragma once
 
 #include <OpenKneeboard/LaunchURI.h>
-#include <shellapi.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
 
 #include <unordered_map>
+
+#include <shellapi.h>
 
 static std::unordered_map<std::wstring, std::function<void(std::string_view)>>
   gHandlers;
@@ -54,10 +57,6 @@ winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uriStr) {
 
   std::wstring uriWstr(winrt::to_hstring(uriStr));
   ShellExecuteW(NULL, L"open", uriWstr.c_str(), nullptr, nullptr, SW_NORMAL);
-}
-
-winrt::Windows::Foundation::IAsyncAction LaunchSponsorURI() {
-  co_await LaunchURI("https://github.com/sponsors/fredemmott");
 }
 
 }// namespace OpenKneeboard

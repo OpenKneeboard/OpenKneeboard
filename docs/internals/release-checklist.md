@@ -9,7 +9,6 @@ parent: Internals
 * Update `Quick Start.pdf`
 * Update the `GameEvent` path if the format of existing messages has changed in a backwards-incompatible way
 * Check version number in CMakeLists.txt
-* Update sponsors list in about page
 
 ## Testing
 

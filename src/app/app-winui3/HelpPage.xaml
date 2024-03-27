@@ -60,34 +60,6 @@
       </StackPanel>
       <TextBlock
         Style="{ThemeResource TitleTextBlockStyle}">
-        Supporters
-      </TextBlock>
-      <Grid
-        ColumnDefinitions="Auto,*,Auto"
-        ColumnSpacing="8"
-        Padding="8"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1">
-        <FontIcon
-          Grid.Column="0"
-          Glyph="&#xEB51;"
-          VerticalAlignment="Center"
-          HorizontalAlignment="Center"
-          Foreground="#db61a2"
-          FontSize="48"
-        />
-        <TextBlock Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}">
-          You can help support OpenKneeboard by sponsoring development;
-          sponsorship helps with direct costs like code signing certificates,
-          and makes it possible to test and improve support for a broader
-          range of hardware.
-        </TextBlock>
-        <local:SponsorButton Grid.Column="2" VerticalAlignment="Top" />
-      </Grid>
-      <TextBlock
-        Style="{ThemeResource TitleTextBlockStyle}">
         About
       </TextBlock>
       <Expander

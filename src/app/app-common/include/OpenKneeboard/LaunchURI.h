@@ -20,6 +20,7 @@
 #pragma once
 
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <functional>
@@ -32,6 +33,5 @@ void RegisterURIHandler(
   std::function<void(std::string_view)> handler);
 
 winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uri);
-winrt::Windows::Foundation::IAsyncAction LaunchSponsorURI();
 
 }// namespace OpenKneeboard

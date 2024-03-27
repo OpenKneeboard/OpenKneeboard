@@ -1,8 +1,0 @@
-namespace OpenKneeboardApp
-{
-    [default_interface]
-    runtimeclass SponsorButton: Microsoft.UI.Xaml.Controls.Button
-    {
-        SponsorButton();
-    }
-}
