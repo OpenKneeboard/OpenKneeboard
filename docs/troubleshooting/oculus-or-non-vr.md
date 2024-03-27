@@ -5,6 +5,8 @@ parent: Troubleshooting
 
 # Troubleshooting Oculus or Non-VR Issues
 
+**Don't waste time on non-VR issues if you will only actually play the game with SteamVR or OpenXR**: fixing non-VR issues has no effect on whether SteamVR or OpenXR work.
+
 ## Kneeboard Is Not Visible
 
 Restart the game after each step to see if it's fixed.
