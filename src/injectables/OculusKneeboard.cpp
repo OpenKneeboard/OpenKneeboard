@@ -100,6 +100,10 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   if (!metadata.HasMetadata()) {
     return passthrough();
   }
+  if (metadata.GetLayerCount() < 1) {
+    return passthrough();
+  }
+
   const auto swapchainDimensions
     = Spriting::GetBufferSize(metadata.GetLayerCount());
 
