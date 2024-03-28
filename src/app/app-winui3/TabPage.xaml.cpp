@@ -62,11 +62,11 @@ namespace muxcp = winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-std::unordered_map<winrt::guid, std::weak_ptr<TabPage::CanvasResources>>
+std::unordered_map<TabView::RuntimeID, std::weak_ptr<TabPage::CanvasResources>>
   TabPage::sCanvasResources;
 
 std::shared_ptr<TabPage::CanvasResources> TabPage::GetCanvasResources(
-  const winrt::guid rootTabGUID) {
+  const TabView::RuntimeID& key) {
   // We can have multiple TabPages for the same Tab at the same time,
   // e.g. when alternating views
   //
@@ -76,13 +76,13 @@ std::shared_ptr<TabPage::CanvasResources> TabPage::GetCanvasResources(
   // 1. We need to preserve the resources
   // 2. We need to keep the RenderTarget, so that we have the same
   //   RenderTargetID, so the tabs themselves can maintain their caches
-  if (!sCanvasResources.contains(rootTabGUID)) {
+  if (!sCanvasResources.contains(key)) {
     auto ret = std::shared_ptr<CanvasResources>(new CanvasResources {});
-    sCanvasResources.emplace(rootTabGUID, ret);
+    sCanvasResources.emplace(key, ret);
     return ret;
   }
 
-  auto& it = sCanvasResources.at(rootTabGUID);
+  auto& it = sCanvasResources.at(key);
   if (auto ret = it.lock()) {
     return ret;
   }
@@ -370,7 +370,7 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 
 void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   mTabView = state;
-  mCanvasResources = GetCanvasResources(state->GetRootTab()->GetPersistentID());
+  mCanvasResources = GetCanvasResources(state->GetRuntimeID());
   AddEventListener(
     state->evNeedsRepaintEvent, std::bind_front(&TabPage::PaintLater, this));
 

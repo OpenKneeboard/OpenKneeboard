@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Pixels.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <memory>
@@ -39,7 +40,6 @@ class CursorRenderer;
 class D2DErrorRenderer;
 struct DXResources;
 class KneeboardView;
-class TabView;
 class ISelectableToolbarItem;
 class IToolbarFlyout;
 class IToolbarItem;
@@ -144,11 +144,11 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   };
 
   std::shared_ptr<CanvasResources> mCanvasResources;
-  static std::unordered_map<winrt::guid, std::weak_ptr<CanvasResources>>
+  static std::unordered_map<TabView::RuntimeID, std::weak_ptr<CanvasResources>>
     sCanvasResources;
 
   static std::shared_ptr<CanvasResources> GetCanvasResources(
-    const winrt::guid rootTabGUID);
+    const TabView::RuntimeID&);
 
   audited_ptr<OpenKneeboard::DXResources> mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;

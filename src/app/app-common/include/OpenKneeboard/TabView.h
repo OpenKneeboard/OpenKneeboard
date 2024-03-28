@@ -52,6 +52,11 @@ class TabView final : private EventReceiver {
     const std::shared_ptr<ITab>&);
   ~TabView();
 
+  class RuntimeID final : public UniqueIDBase<RuntimeID> {};
+  constexpr auto GetRuntimeID() const noexcept {
+    return mRuntimeID;
+  }
+
   void SetPageID(PageID);
   PageID GetPageID() const;
   std::vector<PageID> GetPageIDs() const;
@@ -78,6 +83,7 @@ class TabView final : private EventReceiver {
   Event<> evBookmarksChangedEvent;
 
  private:
+  RuntimeID mRuntimeID;
   const EventContext mEventContext;
 
   audited_ptr<DXResources> mDXR;
