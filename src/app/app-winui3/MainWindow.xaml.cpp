@@ -624,9 +624,12 @@ void MainWindow::ResetKneeboardView() {
 }
 
 winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
+  auto weak = get_weak();
   co_await mUIThread;
 
-  this->ResetKneeboardView();
+  if (auto self = weak.get()) {
+    self->ResetKneeboardView();
+  }
 }
 
 void MainWindow::UpdateTitleBarMargins(
