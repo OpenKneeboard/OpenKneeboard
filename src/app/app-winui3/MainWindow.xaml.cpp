@@ -604,6 +604,7 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 }
 
 void MainWindow::ResetKneeboardView() {
+  OPENKNEEBOARD_TraceLoggingScope("MainWindow::ResetKneeboardView()");
   for (const auto& event: mKneeboardViewEvents) {
     this->RemoveEventListener(event);
   }

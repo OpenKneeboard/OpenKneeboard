@@ -65,14 +65,12 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
 
   AddEventListener(
     this->evNeedsRepaintEvent, [this]() { this->mNeedsRepaint = true; });
-  AddEventListener(this->evFrameTimerPreEvent, [this]() {
-    const auto px = SHM::ActiveConsumers::Get().mNonVRPixelSize;
-    if (px == mLastNonVRPixelSize) {
-      return;
-    }
-    mLastNonVRPixelSize = px;
-    this->evNeedsRepaintEvent.Emit();
-  });
+  AddEventListener(
+    this->evFrameTimerPreEvent,
+    std::bind_front(&KneeboardState::BeforeFrame, this));
+  AddEventListener(
+    this->evFrameTimerPostEvent,
+    std::bind_front(&KneeboardState::AfterFrame, this));
 
   mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   AddEventListener(
@@ -181,6 +179,36 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
   return mViews.at(mInputViewIndex);
+}
+
+void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "KneeboardState::SetActiveInGameView()",
+    TraceLoggingValue(runtimeID.GetTemporaryValue(), "RuntimeID"));
+  for (int i = 0; i < mViews.size(); ++i) {
+    if (mViews.at(i)->GetRuntimeID() != runtimeID) {
+      continue;
+    }
+    if (mInputViewIndex == i) {
+      return;
+    }
+    mViews.at(mInputViewIndex)->PostCursorEvent({});
+    TraceLoggingWrite(
+      gTraceProvider,
+      "KneeboardState::SetActiveInGameView()/SettingView",
+      TraceLoggingGuid(mViews.at(i)->GetPersistentGUID(), "GUID"));
+    dprintf(
+      "Giving input focus to view {} at index {}",
+      mViews.at(i)->GetPersistentGUID(),
+      i);
+    mInputViewIndex = i;
+    evNeedsRepaintEvent.Emit();
+    evActiveViewChangedEvent.Emit();
+    return;
+  }
+  dprintf(
+    "Asked to give input focus to view {:#016x}, but couldn't find it",
+    runtimeID.GetTemporaryValue());
 }
 
 std::shared_ptr<KneeboardView> KneeboardState::GetAppWindowView() const {
@@ -318,31 +346,6 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
   TroubleshootingStore::Get()->OnGameEvent(ev);
 
   const auto tabs = mTabsList->GetTabs();
-
-  if (ev.name == GameEvent::EVT_SET_INPUT_FOCUS) {
-    const auto viewID = std::stoull(ev.value);
-    for (int i = 0; i < mViews.size(); ++i) {
-      if (mViews.at(i)->GetRuntimeID() != viewID) {
-        continue;
-      }
-      if (mInputViewIndex == i) {
-        return;
-      }
-      mViews.at(mInputViewIndex)->PostCursorEvent({});
-      dprintf(
-        "Giving input focus to view {} at index {}",
-        mViews.at(i)->GetPersistentGUID(),
-        i);
-      mInputViewIndex = i;
-      evNeedsRepaintEvent.Emit();
-      evActiveViewChangedEvent.Emit();
-      return;
-    }
-    dprintf(
-      "Asked to give input focus to view {:#016x}, but couldn't find it",
-      viewID);
-    return;
-  }
 
   if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
@@ -873,6 +876,34 @@ void KneeboardState::InitializeViews() {
     evActiveViewChangedEvent.Emit();
   }
   evNeedsRepaintEvent.Emit();
+}
+
+void KneeboardState::BeforeFrame() {
+  OPENKNEEBOARD_TraceLoggingScope("KneeboardState::BeforeFrame()");
+
+  const auto px = SHM::ActiveConsumers::Get().mNonVRPixelSize;
+  if (px == mLastNonVRPixelSize) {
+    return;
+  }
+  mLastNonVRPixelSize = px;
+  this->evNeedsRepaintEvent.Emit();
+}
+
+void KneeboardState::AfterFrame() {
+  OPENKNEEBOARD_TraceLoggingScope("KneeboardState::AfterFrame()");
+
+  const auto newActiveViewID = KneeboardViewID::FromTemporaryValue(
+    SHM::ActiveConsumers::Get().mActiveInGameViewID);
+  if (!newActiveViewID) {
+    return;
+  }
+
+  const auto activeView = this->GetActiveInGameView();
+  if (activeView && activeView->GetRuntimeID() == newActiveViewID) {
+    return;
+  }
+
+  this->SetActiveInGameView(newActiveViewID);
 }
 
 #define IT(cpptype, name) \

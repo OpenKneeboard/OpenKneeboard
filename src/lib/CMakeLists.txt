@@ -326,7 +326,6 @@ target_link_libraries(
   PUBLIC
   _libheaders
   ThirdParty::DirectXTK
-  OpenKneeboard-GameEvent
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
 )

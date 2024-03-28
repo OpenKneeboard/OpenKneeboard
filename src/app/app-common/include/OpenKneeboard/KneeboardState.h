@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ProfileSettings.h>
 #include <OpenKneeboard/RunnerThread.h>
 #include <OpenKneeboard/SHM.h>
@@ -81,6 +82,8 @@ class KneeboardState final
 
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
   std::shared_ptr<KneeboardView> GetActiveInGameView() const;
+  void SetActiveInGameView(KneeboardViewID runtimeID);
+
   std::shared_ptr<KneeboardView> GetAppWindowView() const;
   std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
@@ -184,6 +187,9 @@ class KneeboardState final
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
   void OnGameEvent(const GameEvent& ev) noexcept;
+
+  void BeforeFrame();
+  void AfterFrame();
 
   void StartOpenVRThread();
   void StartTabletInput();

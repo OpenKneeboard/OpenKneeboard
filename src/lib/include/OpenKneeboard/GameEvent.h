@@ -70,9 +70,6 @@ struct GameEvent final {
   /// String name of OpenKneeboard::UserAction enum member
   static constexpr char EVT_REMOTE_USER_ACTION[] = "RemoteUserAction";
 
-  /// String KneeboardViewID
-  static constexpr char EVT_SET_INPUT_FOCUS[] = "SetInputFocus";
-
   /// struct SetTabByIDEvent
   static constexpr char EVT_SET_TAB_BY_ID[] = "SetTabByID";
   /// struct SetTabByNameEvent

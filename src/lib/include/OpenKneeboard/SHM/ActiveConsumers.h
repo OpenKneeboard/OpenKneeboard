@@ -45,11 +45,13 @@ struct ActiveConsumers final {
   DWORD mElevatedConsumerProcessID {};
 
   PixelSize mNonVRPixelSize {};
+  uint64_t mActiveInGameViewID {};
 
   static void Clear();
   static ActiveConsumers Get();
   static void Set(ConsumerKind);
   static void SetNonVRPixelSize(PixelSize px);
+  static void SetActiveInGameViewID(uint64_t);
 
  private:
   class Impl;

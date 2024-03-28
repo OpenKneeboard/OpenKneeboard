@@ -59,6 +59,8 @@
 
 using namespace OpenKneeboard;
 
+using OpenKneeboard::SHM::ActiveConsumers;
+
 namespace OpenKneeboard {
 
 Viewer::Renderer::~Renderer() = default;
@@ -556,11 +558,7 @@ class TestViewerWindow final : private D3D11Resources {
     if (!(mSetInputFocus && mLayerID)) {
       return;
     }
-    GameEvent {
-      GameEvent::EVT_SET_INPUT_FOCUS,
-      std::to_string(mLayerID),
-    }
-      .Send();
+    ActiveConsumers::SetActiveInGameViewID(mLayerID);
   }
 
   void OnPaint() {
@@ -571,7 +569,6 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void OnResize(const D2D1_SIZE_U& size) {
-    using OpenKneeboard::SHM::ActiveConsumers;
     const auto now = ActiveConsumers::Clock::now();
     if ((now - ActiveConsumers::Get().mNonVRD3D11) > std::chrono::seconds(1)) {
       ActiveConsumers::SetNonVRPixelSize({size.width, size.height});
@@ -674,11 +671,7 @@ class TestViewerWindow final : private D3D11Resources {
       mLayerIndex = static_cast<uint8_t>(vkk - '1');
       this->PaintNow();
       if (mSetInputFocus) {
-        GameEvent {
-          GameEvent::EVT_SET_INPUT_FOCUS,
-          std::to_string(mLayerID),
-        }
-          .Send();
+        ActiveConsumers::SetActiveInGameViewID(mLayerID);
       }
       return;
     }

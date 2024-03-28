@@ -17,9 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/VRKneeboard.h>
+
+#include <ranges>
 
 using namespace DirectX::SimpleMath;
 
@@ -126,15 +128,12 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
   if (config.mVR.mEnableGazeInputFocus) {
     const auto activeLayerID = config.mGlobalInputLayerID;
 
-    for (const auto& layer: std::ranges::reverse_view(ret)) {
+    for (const auto& [layerConfig, renderParams]:
+         std::ranges::reverse_view(ret)) {
       if (
-        layer.mRenderParameters.mIsLookingAtKneeboard
-        && layer.mLayerConfig->mLayerID != activeLayerID) {
-        GameEvent {
-          GameEvent::EVT_SET_INPUT_FOCUS,
-          std::to_string(layer.mLayerConfig->mLayerID),
-        }
-          .Send();
+        renderParams.mIsLookingAtKneeboard
+        && layerConfig->mLayerID != activeLayerID) {
+        SHM::ActiveConsumers::SetActiveInGameViewID(layerConfig->mLayerID);
         break;
       }
     }

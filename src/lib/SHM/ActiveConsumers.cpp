@@ -149,6 +149,15 @@ void ActiveConsumers::SetNonVRPixelSize(PixelSize px) {
   p->mNonVRPixelSize = px;
 }
 
+void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
+  auto p = Impl::Get();
+  if (!p) {
+    return;
+  }
+
+  p->mActiveInGameViewID = id;
+}
+
 ActiveConsumers::T ActiveConsumers::Any() const {
   const auto ret = std::ranges::max(
     {mSteamVR, mOpenXR, mOculusD3D11, mOculusD3D12, mNonVRD3D11});

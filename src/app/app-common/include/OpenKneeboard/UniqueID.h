@@ -37,7 +37,7 @@ class UniqueIDBase : private _UniqueIDImpl {
   UniqueIDBase() {
     mValue = _UniqueIDImpl::GetAndIncrementNextValue();
   }
-  UniqueIDBase(nullptr_t) {
+  constexpr UniqueIDBase(nullptr_t) {
     mValue = 0;
   }
 
@@ -46,12 +46,16 @@ class UniqueIDBase : private _UniqueIDImpl {
   UniqueIDBase& operator=(const UniqueIDBase<T>&) = default;
   UniqueIDBase& operator=(UniqueIDBase<T>&&) = default;
 
+  constexpr operator bool() const noexcept {
+    return mValue != 0;
+  }
+
   // Values *must not* be persisted and restored
-  constexpr uint64_t GetTemporaryValue() const {
+  constexpr uint64_t GetTemporaryValue() const noexcept {
     return mValue;
   }
 
-  static constexpr T FromTemporaryValue(uint64_t value) {
+  static constexpr T FromTemporaryValue(uint64_t value) noexcept {
     T ret;
     ret.mValue = value;
     return ret;
