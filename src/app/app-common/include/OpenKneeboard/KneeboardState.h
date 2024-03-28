@@ -69,6 +69,13 @@ struct RunningGame {
   std::weak_ptr<GameInstance> mGameInstance;
 };
 
+enum class FramePostEventKind {
+  /// IsRepaintNeeded() was false
+  WithRepaint,
+  /// IsRepaintNeeded() was true
+  WithoutRepaint,
+};
+
 class KneeboardState final
   : private EventReceiver,
     public std::enable_shared_from_this<KneeboardState> {
@@ -90,8 +97,7 @@ class KneeboardState final
 
   Event<> evFrameTimerPreEvent;
   Event<> evFrameTimerEvent;
-  Event<> evFrameTimerPostEvent;
-  Event<> evNeedsRepaintEvent;
+  Event<FramePostEventKind> evFrameTimerPostEvent;
   Event<> evSettingsChangedEvent;
   Event<> evProfileSettingsChangedEvent;
   Event<> evCurrentProfileChangedEvent;
@@ -130,6 +136,7 @@ class KneeboardState final
   void PostUserAction(UserAction action);
 
   bool IsRepaintNeeded() const;
+  void SetRepaintNeeded();
   void Repainted();
 
   /** Implement `Lockable`; use `std::unique_lock`.
@@ -154,7 +161,7 @@ class KneeboardState final
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;
-  bool mNeedsRepaint = false;
+  std::atomic_flag mNeedsRepaint;
   winrt::apartment_context mUIThread;
   HWND mHwnd;
   audited_ptr<DXResources> mDXResources;
@@ -189,7 +196,7 @@ class KneeboardState final
   void OnGameEvent(const GameEvent& ev) noexcept;
 
   void BeforeFrame();
-  void AfterFrame();
+  void AfterFrame(FramePostEventKind);
 
   void StartOpenVRThread();
   void StartTabletInput();

@@ -307,6 +307,11 @@ void MainWindow::FrameTick() {
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
   if (!mKneeboard->IsRepaintNeeded()) {
+    {
+      OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
+      mKneeboard->evFrameTimerPostEvent.Emit(
+        FramePostEventKind::WithoutRepaint);
+    }
     TraceLoggingWriteStop(
       activity, "FrameTick", TraceLoggingValue("No repaint needed", "Result"));
     return;
@@ -325,7 +330,7 @@ void MainWindow::FrameTick() {
     activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
   {
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
-    mKneeboard->evFrameTimerPostEvent.Emit();
+    mKneeboard->evFrameTimerPostEvent.Emit(FramePostEventKind::WithRepaint);
   }
 }
 
@@ -621,7 +626,6 @@ void MainWindow::ResetKneeboardView() {
   };
 
   this->OnTabsChanged();
-  this->OnTabChanged();
 }
 
 winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
@@ -759,6 +763,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
 
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
+  OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabChanged()");
 
   if (!mSwitchingTabsFromNavSelection) {
     // Don't automatically move away from "Profiles"
@@ -813,6 +818,7 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
 
 winrt::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
+  OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabsChanged()");
   // In theory, we could directly mutate Navigation().MenuItems();
   // unfortunately, NavigationView contains a race condition, so
   // `MenuItems().Clear()` is unsafe.

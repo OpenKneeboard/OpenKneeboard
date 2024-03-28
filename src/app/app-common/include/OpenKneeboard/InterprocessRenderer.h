@@ -81,8 +81,6 @@ class InterprocessRenderer final
 
   KneeboardState* mKneeboard = nullptr;
 
-  bool mNeedsRepaint = true;
-
   std::atomic_flag mRendering;
 
   struct IPCTextureResources {

@@ -64,8 +64,6 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
-    this->evNeedsRepaintEvent, [this]() { this->mNeedsRepaint = true; });
-  AddEventListener(
     this->evFrameTimerPreEvent,
     std::bind_front(&KneeboardState::BeforeFrame, this));
   AddEventListener(
@@ -102,7 +100,9 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     mDirectInput->evAttachedControllersChangedEvent,
     this->evInputDevicesChangedEvent);
 
-  AddEventListener(this->evSettingsChangedEvent, this->evNeedsRepaintEvent);
+  AddEventListener(
+    this->evSettingsChangedEvent,
+    std::bind_front(&KneeboardState::SetRepaintNeeded, this));
 
   InitializeViews();
   AcquireExclusiveResources();
@@ -202,7 +202,7 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
       mViews.at(i)->GetPersistentGUID(),
       i);
     mInputViewIndex = i;
-    evNeedsRepaintEvent.Emit();
+    this->SetRepaintNeeded();
     evActiveViewChangedEvent.Emit();
     return;
   }
@@ -247,13 +247,13 @@ void KneeboardState::PostUserAction(UserAction action) {
       auto& forceZoom = this->mSettings.mVR.mForceZoom;
       forceZoom = !forceZoom;
       this->SaveSettings();
-      this->evNeedsRepaintEvent.Emit();
+      this->SetRepaintNeeded();
       return;
     }
     case UserAction::RECENTER_VR:
       dprint("Recentering");
       this->mSettings.mVR.mRecenterCount++;
-      this->evNeedsRepaintEvent.Emit();
+      this->SetRepaintNeeded();
       return;
     case UserAction::SWAP_FIRST_TWO_VIEWS:
       if (mViews.size() >= 2) {
@@ -300,7 +300,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       }
       this->mInputViewIndex = (this->mInputViewIndex + 1) % this->mViews.size();
       this->evActiveViewChangedEvent.Emit();
-      this->evNeedsRepaintEvent.Emit();
+      this->SetRepaintNeeded();
       return;
     case UserAction::INCREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mApp.mTint;
@@ -319,7 +319,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       return;
     }
     case UserAction::REPAINT_NOW:
-      this->evNeedsRepaintEvent.Emit();
+      this->SetRepaintNeeded();
       return;
   }
   // Use `return` instead of `break` above
@@ -526,7 +526,7 @@ void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   this->InitializeViews();
 
   this->SaveSettings();
-  this->evNeedsRepaintEvent.Emit();
+  this->SetRepaintNeeded();
 }
 
 void KneeboardState::SetVRSettings(const VRConfig& value) {
@@ -549,7 +549,7 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
 
   mSettings.mVR = value;
   this->SaveSettings();
-  this->evNeedsRepaintEvent.Emit();
+  this->SetRepaintNeeded();
 }
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
@@ -624,7 +624,7 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   this->SetVRSettings(newSettings.mVR);
 
   this->evSettingsChangedEvent.Emit();
-  this->evNeedsRepaintEvent.Emit();
+  this->SetRepaintNeeded();
 }
 
 void KneeboardState::SaveSettings() {
@@ -774,11 +774,18 @@ void KneeboardState::SwitchProfile(Direction direction) {
 }
 
 bool KneeboardState::IsRepaintNeeded() const {
-  return mNeedsRepaint;
+  return mNeedsRepaint.test();
+}
+
+void KneeboardState::SetRepaintNeeded() {
+  if (mNeedsRepaint.test_and_set()) {
+    return;
+  }
+  this->SetRepaintNeeded();
 }
 
 void KneeboardState::Repainted() {
-  mNeedsRepaint = false;
+  mNeedsRepaint.clear();
 }
 
 void KneeboardState::lock() {
@@ -846,7 +853,9 @@ void KneeboardState::InitializeViews() {
       }
     }
 
-    AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+    AddEventListener(
+      view->evNeedsRepaintEvent,
+      std::bind_front(&KneeboardState::SetRepaintNeeded, this));
   }
 
   bool viewChanged = false;
@@ -868,14 +877,15 @@ void KneeboardState::InitializeViews() {
         mAppWindowView = KneeboardView::Create(mDXResources, this, {});
         mAppWindowView->SetTabs(this->GetTabsList()->GetTabs());
         AddEventListener(
-          mAppWindowView->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+          mAppWindowView->evNeedsRepaintEvent,
+          std::bind_front(&KneeboardState::SetRepaintNeeded, this));
       }
   }
 
   if (viewChanged) {
     evActiveViewChangedEvent.Emit();
   }
-  evNeedsRepaintEvent.Emit();
+  this->SetRepaintNeeded();
 }
 
 void KneeboardState::BeforeFrame() {
@@ -886,10 +896,10 @@ void KneeboardState::BeforeFrame() {
     return;
   }
   mLastNonVRPixelSize = px;
-  this->evNeedsRepaintEvent.Emit();
+  this->SetRepaintNeeded();
 }
 
-void KneeboardState::AfterFrame() {
+void KneeboardState::AfterFrame(FramePostEventKind) {
   OPENKNEEBOARD_TraceLoggingScope("KneeboardState::AfterFrame()");
 
   const auto newActiveViewID = KneeboardViewID::FromTemporaryValue(

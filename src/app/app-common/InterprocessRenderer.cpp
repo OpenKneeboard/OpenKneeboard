@@ -207,7 +207,7 @@ void InterprocessRenderer::PostUserAction(UserAction action) {
     mFirstInvisible = true;
   }
 
-  mKneeboard->evNeedsRepaintEvent.Emit();
+  mKneeboard->SetRepaintNeeded();
 }
 
 InterprocessRenderer::IPCTextureResources*
@@ -297,9 +297,6 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
 
   mKneeboard = kneeboard;
 
-  const auto markDirty = weak_wrap(this)([](auto self) { self->MarkDirty(); });
-
-  AddEventListener(kneeboard->evNeedsRepaintEvent, markDirty);
   AddEventListener(
     kneeboard->evGameChangedEvent,
     [weak = weak_from_this()](DWORD pid, std::shared_ptr<GameInstance> game) {
@@ -308,25 +305,13 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
       }
     });
 
-  const auto views = kneeboard->GetAllViewsInFixedOrder();
-  for (int i = 0; i < views.size(); ++i) {
-    auto view = views.at(i);
-    AddEventListener(view->evCursorEvent, markDirty);
-  }
-
   this->RenderNow();
 
   AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
                      OPENKNEEBOARD_TraceLoggingScope(
                        "InterprocessRenderer::evFrameTimerEvent callback");
-                     if (self->mNeedsRepaint) {
-                       self->RenderNow();
-                     }
+                     self->RenderNow();
                    }));
-}
-
-void InterprocessRenderer::MarkDirty() {
-  mNeedsRepaint = true;
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -433,14 +418,13 @@ void InterprocessRenderer::RenderNow() noexcept {
   }
 
   this->SubmitFrame(shmLayers, inputLayerID);
-  this->mNeedsRepaint = false;
 }
 
 void InterprocessRenderer::OnGameChanged(
   DWORD processID,
   const std::shared_ptr<GameInstance>& game) {
   mCurrentGame = game;
-  this->MarkDirty();
+  mKneeboard->SetRepaintNeeded();
 }
 
 }// namespace OpenKneeboard
