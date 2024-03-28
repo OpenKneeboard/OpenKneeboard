@@ -61,16 +61,16 @@
 					Foreground="{ThemeResource TextFillColorSecondary}">
           If you use tabs with multiple pages, or more tabs than views
           (common with flight simulators), you probably want
-          'In-game active view'. Changing tabs or pages in the app window
-          will also change the current tab or page in-game.
+          'In-game active view'. Moving between tabs or pages in the app
+          window will also change the current tab or page in-game.
         </TextBlock>
 				<TextBlock
 					Style="{ThemeResource CaptionTextBlockStyle}"
 					Foreground="{ThemeResource TextFillColorSecondary}">
           If you want each view to always show the same tab, and each
           tab only has one page (e.g. sim racing overlays), you probably
-          want 'Independent view'. Changing tabs or pages in the app window
-          will only affect the app.
+          want 'Independent view'. Moving between tabs or pages in the app
+          window will not affect what you see in the game.
         </TextBlock>
       </StackPanel>
       <TextBlock
