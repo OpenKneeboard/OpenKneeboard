@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ReloadTabAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/ToggleBookmarkAction.h>
 #include <OpenKneeboard/UserActionHandler.h>
-#include <OpenKneeboard/ReloadTabAction.h>
 
 namespace OpenKneeboard {
 
@@ -30,7 +30,7 @@ UserActionHandler::~UserActionHandler() = default;
 std::unique_ptr<UserActionHandler> UserActionHandler::Create(
   KneeboardState* kneeboard,
   const std::shared_ptr<KneeboardView>& kneeboardView,
-  const std::shared_ptr<ITabView>& tab,
+  const std::shared_ptr<TabView>& tab,
   UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_PAGE:

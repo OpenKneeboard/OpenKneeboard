@@ -18,16 +18,16 @@
  * USA.
  */
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ReloadTabAction.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
 ReloadTabAction::ReloadTabAction(
   KneeboardState* kbs,
-  const std::shared_ptr<ITabView>& tab)
+  const std::shared_ptr<TabView>& tab)
   : ToolbarAction({}, _("This tab")),
     mMode(Mode::ThisTab),
     mKneeboardState(kbs),

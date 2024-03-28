@@ -24,7 +24,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/FlyoutMenuUILayer.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
-#include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/UILayerBase.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -68,7 +68,7 @@ class HeaderUILayer final : public UILayerBase,
     KneeboardView*);
 
   void DrawHeaderText(
-    const std::shared_ptr<ITabView>&,
+    const std::shared_ptr<TabView>&,
     ID2D1DeviceContext*,
     const PixelRect& rect) const;
   void DrawToolbar(
@@ -102,7 +102,7 @@ class HeaderUILayer final : public UILayerBase,
   };
 
   struct Toolbar {
-    std::weak_ptr<ITabView> mTabView {};
+    std::weak_ptr<TabView> mTabView {};
     D2D1_RECT_F mRect {};
     D2D1_RECT_F mTextRect {};
     std::shared_ptr<CursorClickableRegions<Button>> mButtons;

@@ -117,14 +117,14 @@ KneeboardViewID KneeboardView::GetRuntimeID() const {
 }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
-  if (std::ranges::equal(tabs, mTabViews, {}, {}, &ITabView::GetRootTab)) {
+  if (std::ranges::equal(tabs, mTabViews, {}, {}, &TabView::GetRootTab)) {
     return;
   }
 
   decltype(mTabViews) tabViews;
 
   for (const auto& tab: tabs) {
-    auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
+    auto it = std::ranges::find(mTabViews, tab, &TabView::GetTab);
     const auto tabView = (it != mTabViews.end())
       ? (*it)
       : std::make_shared<TabView>(mDXR, mKneeboard, tab);
@@ -222,7 +222,7 @@ void KneeboardView::NextTab() {
   }
 }
 
-std::shared_ptr<ITabView> KneeboardView::GetTabViewByID(
+std::shared_ptr<TabView> KneeboardView::GetTabViewByID(
   ITab::RuntimeID id) const {
   for (const auto& tabView: mTabViews) {
     if (tabView->GetTab()->GetRuntimeID() == id) {
@@ -244,7 +244,7 @@ std::shared_ptr<ITab> KneeboardView::GetCurrentTab() const {
   return mCurrentTabView->GetTab();
 }
 
-std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
+std::shared_ptr<TabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
@@ -732,8 +732,8 @@ void KneeboardView::SwapState(KneeboardView& other) {
 }
 
 void KneeboardView::SetTabViews(
-  std::vector<std::shared_ptr<ITabView>>&& views,
-  const std::shared_ptr<ITabView>& currentView) {
+  std::vector<std::shared_ptr<TabView>>&& views,
+  const std::shared_ptr<TabView>& currentView) {
   mTabViews = std::move(views);
 
   for (const auto& event: mTabEvents) {

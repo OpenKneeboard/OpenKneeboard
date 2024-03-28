@@ -20,41 +20,62 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
+#include <OpenKneeboard/inttypes.h>
 
+#include <memory>
 #include <vector>
+
+#include <d2d1.h>
 
 namespace OpenKneeboard {
 
+struct CursorEvent;
+class ITab;
 class KneeboardState;
 
-class TabView final : public ITabView, private EventReceiver {
+enum class TabMode {
+  NORMAL,
+  NAVIGATION,
+};
+
+class TabView final : private EventReceiver {
  public:
+  TabView() = delete;
   TabView(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::shared_ptr<ITab>&);
   ~TabView();
 
-  virtual void SetPageID(PageID) override;
-  virtual PageID GetPageID() const override;
-  virtual std::vector<PageID> GetPageIDs() const override;
+  void SetPageID(PageID);
+  PageID GetPageID() const;
+  std::vector<PageID> GetPageIDs() const;
 
-  virtual std::shared_ptr<ITab> GetRootTab() const override;
+  std::shared_ptr<ITab> GetRootTab() const;
 
-  virtual std::shared_ptr<ITab> GetTab() const override;
+  std::shared_ptr<ITab> GetTab() const;
 
-  virtual PreferredSize GetPreferredSize() const override;
+  PreferredSize GetPreferredSize() const;
 
-  virtual void PostCursorEvent(const CursorEvent&) override;
+  void PostCursorEvent(const CursorEvent&);
 
-  virtual TabMode GetTabMode() const override;
-  virtual bool SupportsTabMode(TabMode) const override;
-  virtual bool SetTabMode(TabMode) override;
+  TabMode GetTabMode() const;
+  bool SupportsTabMode(TabMode) const;
+  bool SetTabMode(TabMode);
+
+  Event<CursorEvent> evCursorEvent;
+  Event<> evNeedsRepaintEvent;
+  Event<> evPageChangedEvent;
+  Event<> evContentChangedEvent;
+  Event<PageIndex> evPageChangeRequestedEvent;
+  Event<> evAvailableFeaturesChangedEvent;
+  Event<> evTabModeChangedEvent;
+  Event<> evBookmarksChangedEvent;
 
  private:
   const EventContext mEventContext;

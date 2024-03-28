@@ -19,15 +19,15 @@
  */
 #include <OpenKneeboard/ClearUserInputAction.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
 ClearUserInputAction::ClearUserInputAction(
   KneeboardState* kbs,
-  const std::shared_ptr<ITabView>& tab,
+  const std::shared_ptr<TabView>& tab,
   CurrentPage_t)
   : ToolbarAction({}, _("This page")),
     mMode(Mode::CurrentPage),
@@ -38,7 +38,7 @@ ClearUserInputAction::ClearUserInputAction(
 
 ClearUserInputAction::ClearUserInputAction(
   KneeboardState* kbs,
-  const std::shared_ptr<ITabView>& tab,
+  const std::shared_ptr<TabView>& tab,
   AllPages_t)
   : ToolbarAction({}, _("All pages")),
     mMode(Mode::ThisTab),

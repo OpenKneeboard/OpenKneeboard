@@ -37,7 +37,7 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
   ToggleBookmarkAction(
     KneeboardState*,
     const std::shared_ptr<KneeboardView>&,
-    const std::shared_ptr<ITabView>&);
+    const std::shared_ptr<TabView>&);
   ~ToggleBookmarkAction();
 
   virtual bool IsVisible() const override;
@@ -53,7 +53,7 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
  private:
   KneeboardState* mKneeboardState = nullptr;
   std::weak_ptr<KneeboardView> mKneeboardView;
-  std::weak_ptr<ITabView> mTabView;
+  std::weak_ptr<TabView> mTabView;
 };
 
 }// namespace OpenKneeboard

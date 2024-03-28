@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 TabPreviousPageAction::TabPreviousPageAction(
   KneeboardState* kneeboard,
-  const std::shared_ptr<ITabView>& tabView)
+  const std::shared_ptr<TabView>& tabView)
   : ToolbarAction("\uE760", _("Previous Page")),
     mKneeboard(kneeboard),
     mTabView(tabView) {

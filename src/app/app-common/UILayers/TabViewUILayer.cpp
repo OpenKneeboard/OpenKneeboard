@@ -21,7 +21,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
 
 #include <OpenKneeboard/config.h>

@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 class IToolbarItem;
-class ITabView;
+class TabView;
 class KneeboardView;
 
 struct InGameActions {
@@ -36,7 +36,7 @@ struct InGameActions {
   static InGameActions Create(
     KneeboardState* kneeboard,
     const std::shared_ptr<KneeboardView>& kneeboardView,
-    const std::shared_ptr<ITabView>& tab);
+    const std::shared_ptr<TabView>& tab);
 };
 
 struct InAppActions {
@@ -46,7 +46,7 @@ struct InAppActions {
   static InAppActions Create(
     KneeboardState* kneeboard,
     const std::shared_ptr<KneeboardView>& kneeboardView,
-    const std::shared_ptr<ITabView>& tab);
+    const std::shared_ptr<TabView>& tab);
 };
 
 }// namespace OpenKneeboard

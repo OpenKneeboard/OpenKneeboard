@@ -31,12 +31,12 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
@@ -368,7 +368,7 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
   return button;
 }
 
-void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
+void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   mTabView = state;
   mCanvasResources = GetCanvasResources(state->GetRootTab()->GetPersistentID());
   AddEventListener(

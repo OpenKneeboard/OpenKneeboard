@@ -21,11 +21,12 @@
 
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
+
 #include <OpenKneeboard/inttypes.h>
 
 namespace OpenKneeboard {
 
-class ITabView;
+class TabView;
 class KneeboardState;
 class KneeboardView;
 
@@ -35,11 +36,11 @@ class ClearUserInputAction final : public ToolbarAction,
  public:
   ClearUserInputAction(
     KneeboardState*,
-    const std::shared_ptr<ITabView>&,
+    const std::shared_ptr<TabView>&,
     CurrentPage_t);
   ClearUserInputAction(
     KneeboardState*,
-    const std::shared_ptr<ITabView>&,
+    const std::shared_ptr<TabView>&,
     AllPages_t);
   ClearUserInputAction(KneeboardState*, AllTabs_t);
   ClearUserInputAction() = delete;
@@ -60,7 +61,7 @@ class ClearUserInputAction final : public ToolbarAction,
   enum class Mode { CurrentPage, ThisTab, AllTabs };
   Mode mMode;
   KneeboardState* mKneeboardState = nullptr;
-  std::weak_ptr<ITabView> mTabView;
+  std::weak_ptr<TabView> mTabView;
 };
 
 }// namespace OpenKneeboard

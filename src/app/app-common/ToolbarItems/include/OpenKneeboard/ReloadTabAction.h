@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard {
 
-class ITabView;
+class TabView;
 class KneeboardState;
 class KneeboardView;
 
@@ -34,7 +34,7 @@ class ReloadTabAction final : public ToolbarAction,
                               public UserActionHandler,
                               public virtual IToolbarItemWithConfirmation {
  public:
-  ReloadTabAction(KneeboardState*, const std::shared_ptr<ITabView>&);
+  ReloadTabAction(KneeboardState*, const std::shared_ptr<TabView>&);
   ReloadTabAction(KneeboardState*, AllTabs_t);
 
   ~ReloadTabAction();
@@ -57,7 +57,7 @@ class ReloadTabAction final : public ToolbarAction,
   Mode mMode;
   KneeboardState* mKneeboardState;
 
-  std::weak_ptr<ITabView> mTabView;
+  std::weak_ptr<TabView> mTabView;
 };
 
 }// namespace OpenKneeboard

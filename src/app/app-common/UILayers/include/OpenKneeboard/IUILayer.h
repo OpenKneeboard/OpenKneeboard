@@ -20,9 +20,9 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/RenderTarget.h>
+#include <OpenKneeboard/TabView.h>
 
 #include <memory>
 #include <span>
@@ -41,7 +41,7 @@ class IUILayer {
   using NextList = std::span<IUILayer*>;
 
   struct Context {
-    const std::shared_ptr<ITabView>& mTabView {nullptr};
+    const std::shared_ptr<TabView>& mTabView {nullptr};
     const std::shared_ptr<KneeboardView>& mKneeboardView {nullptr};
     bool mIsActiveForInput {false};
   };

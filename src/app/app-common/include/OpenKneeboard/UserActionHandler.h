@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 class KneeboardView;
-class ITabView;
+class TabView;
 
 class UserActionHandler {
  public:
@@ -38,7 +38,7 @@ class UserActionHandler {
   static std::unique_ptr<UserActionHandler> Create(
     KneeboardState* kneeboard,
     const std::shared_ptr<KneeboardView>& kneeboardView,
-    const std::shared_ptr<ITabView>& tab,
+    const std::shared_ptr<TabView>& tab,
     UserAction);
 };
 

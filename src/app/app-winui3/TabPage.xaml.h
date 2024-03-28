@@ -39,7 +39,7 @@ class CursorRenderer;
 class D2DErrorRenderer;
 struct DXResources;
 class KneeboardView;
-class ITabView;
+class TabView;
 class ISelectableToolbarItem;
 class IToolbarFlyout;
 class IToolbarItem;
@@ -60,7 +60,7 @@ namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct TabPage : TabPageT<TabPage>, EventReceiver {
-  using ITabView = ::OpenKneeboard::ITabView;
+  using TabView = ::OpenKneeboard::TabView;
 
   TabPage();
   ~TabPage();
@@ -79,7 +79,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
   std::shared_ptr<KneeboardView> mKneeboardView;
-  std::shared_ptr<ITabView> mTabView;
+  std::shared_ptr<TabView> mTabView;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   D2D1_COLOR_F mBackgroundColor;
@@ -97,7 +97,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void EnqueueCursorEvent(const CursorEvent&);
   void FlushCursorEvents();
 
-  void SetTab(const std::shared_ptr<ITabView>&);
+  void SetTab(const std::shared_ptr<TabView>&);
   winrt::fire_and_forget UpdateToolbar();
   void InitializeSwapChain();
   void ResizeSwapChain();

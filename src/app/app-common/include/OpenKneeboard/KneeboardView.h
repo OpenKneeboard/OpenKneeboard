@@ -37,7 +37,7 @@ namespace OpenKneeboard {
 struct CursorEvent;
 class CursorRenderer;
 class D2DErrorRenderer;
-class ITabView;
+class TabView;
 class IUILayer;
 class KneeboardState;
 class TabViewUILayer;
@@ -61,10 +61,10 @@ class KneeboardView final : private EventReceiver,
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
   void PostUserAction(UserAction);
 
-  std::shared_ptr<ITabView> GetCurrentTabView() const;
+  std::shared_ptr<TabView> GetCurrentTabView() const;
   std::shared_ptr<ITab> GetCurrentTab() const;
   TabIndex GetTabIndex() const;
-  std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const;
+  std::shared_ptr<TabView> GetTabViewByID(ITab::RuntimeID) const;
   void SetCurrentTabByIndex(
     TabIndex,
     const std::source_location& loc = std::source_location::current());
@@ -116,8 +116,8 @@ class KneeboardView final : private EventReceiver,
 
  private:
   void SetTabViews(
-    std::vector<std::shared_ptr<ITabView>>&& views,
-    const std::shared_ptr<ITabView>& currentView);
+    std::vector<std::shared_ptr<TabView>>&& views,
+    const std::shared_ptr<TabView>& currentView);
 
   void UpdateUILayers();
   enum class RelativePosition {
@@ -136,8 +136,8 @@ class KneeboardView final : private EventReceiver,
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   EventContext mEventContext;
-  std::vector<std::shared_ptr<ITabView>> mTabViews;
-  std::shared_ptr<ITabView> mCurrentTabView;
+  std::vector<std::shared_ptr<TabView>> mTabViews;
+  std::shared_ptr<TabView> mCurrentTabView;
 
   std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
 

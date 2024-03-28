@@ -41,7 +41,7 @@
 
 namespace OpenKneeboard {
 class ITab;
-class ITabView;
+class TabView;
 class BrowserTab;
 class DCSRadioLogTab;
 struct DXResources;

@@ -22,7 +22,7 @@
 
 namespace OpenKneeboard {
 
-TabNavigationAction::TabNavigationAction(const std::shared_ptr<ITabView>& state)
+TabNavigationAction::TabNavigationAction(const std::shared_ptr<TabView>& state)
   : ToolbarToggleAction("\uE700", _("Contents")), mTabView(state) {
   AddEventListener(
     state->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);

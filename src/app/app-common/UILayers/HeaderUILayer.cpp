@@ -21,10 +21,10 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/HeaderUILayer.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
@@ -436,7 +436,7 @@ void HeaderUILayer::LayoutToolbar(
 }// namespace OpenKneeboard
 
 void HeaderUILayer::DrawHeaderText(
-  const std::shared_ptr<ITabView>& tabView,
+  const std::shared_ptr<TabView>& tabView,
   ID2D1DeviceContext* ctx,
   const PixelRect& textRect) const {
   const auto& textSize = textRect.mSize;
