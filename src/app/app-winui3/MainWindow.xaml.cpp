@@ -322,6 +322,10 @@ void MainWindow::FrameTick() {
     std::shared_lock kbLock(*mKneeboard);
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
     mKneeboard->evFrameTimerPreEvent.Emit();
+    auto content = Frame().Content();
+    if (auto tab = content.try_as<TabPage>()) {
+      tab.PaintIfDirty();
+    }
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
   if (!mKneeboard->IsRepaintNeeded()) {

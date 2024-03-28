@@ -4,5 +4,7 @@ namespace OpenKneeboardApp
     runtimeclass TabPage: Microsoft.UI.Xaml.Controls.Page
     {
         TabPage();
+
+        void PaintIfDirty();
     }
 }

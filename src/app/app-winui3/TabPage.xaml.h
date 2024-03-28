@@ -73,6 +73,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const SizeChangedEventArgs&) noexcept;
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
 
+  void PaintIfDirty();
+
  private:
   bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
@@ -80,7 +82,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   std::shared_ptr<ITabView> mTabView;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-  winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
   winrt::com_ptr<ID2D1SolidColorBrush> mForegroundBrush;
 
@@ -111,7 +112,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   float mCompositionScaleX {1.0f};
   float mCompositionScaleY {1.0f};
   PixelSize mPanelDimensions {};
-  PixelSize mSwapChainDimensions {};
 
   struct PageMetrics {
     PixelSize mNativeSize;
@@ -136,8 +136,20 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   void AttachVisibility(const std::shared_ptr<IToolbarItem>&, IInspectable);
 
-  winrt::com_ptr<ID3D11Texture2D> mCanvas;
-  std::shared_ptr<RenderTarget> mRenderTarget;
+  struct CanvasResources {
+    winrt::com_ptr<ID3D11Texture2D> mCanvas;
+    std::shared_ptr<RenderTarget> mRenderTarget;
+    PixelSize mSwapChainDimensions {};
+    winrt::com_ptr<IDXGISwapChain1> mSwapChain;
+  };
+
+  std::shared_ptr<CanvasResources> mCanvasResources;
+  static std::unordered_map<winrt::guid, std::weak_ptr<CanvasResources>>
+    sCanvasResources;
+
+  static std::shared_ptr<CanvasResources> GetCanvasResources(
+    const winrt::guid rootTabGUID);
+
   audited_ptr<OpenKneeboard::DXResources> mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 

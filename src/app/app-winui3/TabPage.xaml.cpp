@@ -62,6 +62,36 @@ namespace muxcp = winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
+std::unordered_map<winrt::guid, std::weak_ptr<TabPage::CanvasResources>>
+  TabPage::sCanvasResources;
+
+std::shared_ptr<TabPage::CanvasResources> TabPage::GetCanvasResources(
+  const winrt::guid rootTabGUID) {
+  // We can have multiple TabPages for the same Tab at the same time,
+  // e.g. when alternating views
+  //
+  // We don't want switching views (i.e. looking around in VR) to force
+  // uncached renders, so:
+  //
+  // 1. We need to preserve the resources
+  // 2. We need to keep the RenderTarget, so that we have the same
+  //   RenderTargetID, so the tabs themselves can maintain their caches
+  if (!sCanvasResources.contains(rootTabGUID)) {
+    auto ret = std::shared_ptr<CanvasResources>(new CanvasResources {});
+    sCanvasResources.emplace(rootTabGUID, ret);
+    return ret;
+  }
+
+  auto& it = sCanvasResources.at(rootTabGUID);
+  if (auto ret = it.lock()) {
+    return ret;
+  }
+
+  auto ret = std::shared_ptr<CanvasResources>(new CanvasResources {});
+  it = ret;
+  return ret;
+}
+
 TabPage::TabPage() {
   InitializeComponent();
   OPENKNEEBOARD_TraceLoggingScope("TabPage::TabPage()");
@@ -97,22 +127,14 @@ TabPage::TabPage() {
         self->FlushCursorEvents();
       }
     }));
-  AddEventListener(
-    mKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
-      TraceLoggingWrite(
-        gTraceProvider,
-        "TabPageTickHandler",
-        TraceLoggingValue(self->mNeedsFrame, "NeedsFrame"),
-        TraceLoggingPointer(self.get(), "this"),
-        TraceLoggingValue(
-          self->mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
-        TraceLoggingValue(
-          to_hstring(self->mTabView->GetRootTab()->GetPersistentID()).c_str(),
-          "TabGUID"));
-      if (self->mNeedsFrame) {
-        self->PaintNow();
-      }
-    }));
+}
+
+void TabPage::PaintIfDirty() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "TabPage::PaintIfDirty()", TraceLoggingBoolean(mNeedsFrame, "NeedsFrame"));
+  if (mNeedsFrame) {
+    this->PaintNow();
+  }
 }
 
 TabPage::~TabPage() {
@@ -348,6 +370,7 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
+  mCanvasResources = GetCanvasResources(state->GetRootTab()->GetPersistentID());
   AddEventListener(
     state->evNeedsRepaintEvent, std::bind_front(&TabPage::PaintLater, this));
 
@@ -432,21 +455,23 @@ void TabPage::OnCanvasSizeChanged(
 
 void TabPage::ResizeSwapChain() {
   OPENKNEEBOARD_TraceLoggingScope("TabPage::ResizeSwapChain()");
-  mCanvas = nullptr;
-  mRenderTarget = {};
+
+  *mCanvasResources = {};
+  auto& [canvas, renderTarget, swapchainDimensions, swapchain]
+    = *mCanvasResources;
 
   DXGI_SWAP_CHAIN_DESC desc;
-  winrt::check_hresult(mSwapChain->GetDesc(&desc));
-  winrt::check_hresult(mSwapChain->ResizeBuffers(
+  winrt::check_hresult(swapchain->GetDesc(&desc));
+  winrt::check_hresult(swapchain->ResizeBuffers(
     desc.BufferCount,
     mPanelDimensions.mWidth,
     mPanelDimensions.mHeight,
     desc.BufferDesc.Format,
     desc.Flags));
 
-  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
-  mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
-  mSwapChainDimensions = mPanelDimensions;
+  winrt::check_hresult(swapchain->GetBuffer(0, IID_PPV_ARGS(canvas.put())));
+  renderTarget = RenderTarget::Create(mDXR, canvas);
+  swapchainDimensions = mPanelDimensions;
 }
 
 void TabPage::InitializeSwapChain() {
@@ -458,7 +483,11 @@ void TabPage::InitializeSwapChain() {
   if (mShuttingDown) {
     return;
   }
-  if (mPanelDimensions == mSwapChainDimensions) {
+
+  auto& [canvas, renderTarget, swapchainDimensions, swapchain]
+    = *mCanvasResources;
+
+  if (mPanelDimensions == swapchainDimensions) {
     return;
   }
   // BufferCount = 3: triple-buffer to avoid stalls
@@ -483,12 +512,12 @@ void TabPage::InitializeSwapChain() {
     .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
   };
   winrt::check_hresult(mDXR->mDXGIFactory->CreateSwapChainForComposition(
-    mDXR->mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
+    mDXR->mDXGIDevice.get(), &swapChainDesc, nullptr, swapchain.put()));
 
-  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
-  mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
-  Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
-  mSwapChainDimensions = mPanelDimensions;
+  winrt::check_hresult(swapchain->GetBuffer(0, IID_PPV_ARGS(canvas.put())));
+  renderTarget = RenderTarget::Create(mDXR, canvas);
+  Canvas().as<ISwapChainPanelNative>()->SetSwapChain(swapchain.get());
+  swapchainDimensions = mPanelDimensions;
 }
 
 void TabPage::PaintLater() {
@@ -513,31 +542,35 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     activity.StopWithResult("Invalid panel dimensions");
     return;
   }
-  if (!mSwapChain) {
+
+  if (!mCanvasResources->mSwapChain) {
     this->InitializeSwapChain();
-    if (!mSwapChain) {
+    if (!mCanvasResources->mSwapChain) {
       activity.StopWithResult("No swap chain");
       return;
     }
   }
-  if (mPanelDimensions != mSwapChainDimensions) {
+  if (mPanelDimensions != mCanvasResources->mSwapChainDimensions) {
     this->ResizeSwapChain();
   }
 
   const std::unique_lock lock(*mDXR);
   const auto cleanup = scope_guard([this]() {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/Present()");
-    mSwapChain->Present(0, 0);
+    mCanvasResources->mSwapChain->Present(0, 0);
     mNeedsFrame = false;
   });
 
+  auto canvas = mCanvasResources->mCanvas.get();
+  auto renderTarget = mCanvasResources->mRenderTarget.get();
+
   {
-    auto ctx = mRenderTarget->d2d();
+    auto ctx = renderTarget->d2d();
     ctx->Clear(mBackgroundColor);
 
     if (!mTabView) {
       D3D11_TEXTURE2D_DESC desc;
-      mCanvas->GetDesc(&desc);
+      canvas->GetDesc(&desc);
       mErrorRenderer->Render(
         ctx,
         _("Missing or Deleted Tab"),
@@ -556,10 +589,9 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
-    tab->RenderPage(
-      mRenderTarget.get(), mTabView->GetPageID(), metrics.mRenderRect);
+    tab->RenderPage(renderTarget, mTabView->GetPageID(), metrics.mRenderRect);
   } else {
-    auto d2d = mRenderTarget->d2d();
+    auto d2d = renderTarget->d2d();
     mErrorRenderer->Render(
       d2d, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
   }
@@ -580,7 +612,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   point.mX += metrics.mRenderRect.Left();
   point.mY += metrics.mRenderRect.Top();
   {
-    auto d2d = mRenderTarget->d2d();
+    auto d2d = renderTarget->d2d();
     mCursorRenderer->Render(
       d2d, point.Rounded<uint32_t>(), metrics.mRenderSize);
   }
