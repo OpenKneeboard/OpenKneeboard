@@ -221,23 +221,25 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
   const auto interval = std::chrono::milliseconds(
     static_cast<unsigned int>(1000 / FramesPerSecond));
 
-  ThreadGuard threadGuard;
-
   while (!stop.stop_requested()) {
     const auto start = std::chrono::steady_clock::now();
     this->FrameTick();
-    const auto duration = std::chrono::steady_clock::now() - start;
+    // Finish any pending UI stuff before figuring out how long to wait
+    co_await winrt::resume_after(std::chrono::milliseconds(1));
+    co_await mUIThread;
 
-    const auto wait = std::max(
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-        interval - duration),
-      std::chrono::milliseconds(1));
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now() - start);
+    if (duration >= interval) {
+      continue;
+    }
+    const auto wait = interval - duration;
     TraceLoggingWrite(
       gTraceProvider,
       "MainWindow::FrameLoop()/Wait",
       TraceLoggingValue(wait.count(), "ms"));
     co_await OpenKneeboard::resume_after(stop, wait);
-    threadGuard.CheckThread();
+    co_await mUIThread;
   }
   SetEvent(mFrameLoopCompletionEvent.get());
   co_return;
