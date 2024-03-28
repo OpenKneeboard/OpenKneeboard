@@ -78,7 +78,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
  private:
   bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
-  std::shared_ptr<KneeboardView> mKneeboardView;
   std::shared_ptr<TabView> mTabView;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
@@ -122,6 +121,10 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   std::vector<std::shared_ptr<IToolbarItem>> mToolbarItems;
 
+  std::vector<EventHandlerToken> mKneeboardViewEvents;
+  std::shared_ptr<KneeboardView> mKneeboardView;
+  void UpdateKneeboardView();
+
   muxc::ICommandBarElement CreateCommandBarElement(
     const std::shared_ptr<IToolbarItem>&);
   muxc::AppBarButton CreateAppBarButtonBase(
@@ -136,18 +139,15 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   void AttachVisibility(const std::shared_ptr<IToolbarItem>&, IInspectable);
 
-  struct CanvasResources {
-    winrt::com_ptr<ID3D11Texture2D> mCanvas;
-    std::shared_ptr<RenderTarget> mRenderTarget;
-    PixelSize mSwapChainDimensions {};
-    winrt::com_ptr<IDXGISwapChain1> mSwapChain;
-  };
+  winrt::com_ptr<ID3D11Texture2D> mCanvas;
+  PixelSize mSwapChainDimensions {};
+  winrt::com_ptr<IDXGISwapChain1> mSwapChain;
+  std::shared_ptr<RenderTarget> mRenderTarget;
 
-  std::shared_ptr<CanvasResources> mCanvasResources;
-  static std::unordered_map<TabView::RuntimeID, std::weak_ptr<CanvasResources>>
-    sCanvasResources;
-
-  static std::shared_ptr<CanvasResources> GetCanvasResources(
+  static std::unordered_map<TabView::RuntimeID, std::weak_ptr<RenderTarget>>
+    sRenderTarget;
+  static std::shared_ptr<RenderTarget> GetRenderTarget(
+    const audited_ptr<DXResources>&,
     const TabView::RuntimeID&);
 
   audited_ptr<OpenKneeboard::DXResources> mDXR;

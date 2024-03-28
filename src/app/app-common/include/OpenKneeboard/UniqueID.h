@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
+
 #include <concepts>
 #include <cstdint>
 #include <functional>
@@ -90,6 +92,9 @@ template <class T>
   requires std::derived_from<T, OpenKneeboard::UniqueIDBase<T>>
 struct std::hash<T> {
   constexpr std::size_t operator()(const T& id) const noexcept {
+    if (!id) {
+      OPENKNEEBOARD_BREAK;
+    }
     return static_cast<std::size_t>(id.GetTemporaryValue());
   }
 };

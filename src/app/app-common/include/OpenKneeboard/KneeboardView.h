@@ -93,6 +93,8 @@ class KneeboardView final : private EventReceiver,
   D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F& contentPoint) const;
   void PostCursorEvent(const CursorEvent& ev);
 
+  std::vector<winrt::guid> GetTabIDs() const noexcept;
+
   std::vector<Bookmark> GetBookmarks() const;
   void RemoveBookmark(const Bookmark&);
   void GoToBookmark(const Bookmark&);

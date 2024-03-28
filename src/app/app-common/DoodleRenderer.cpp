@@ -68,6 +68,9 @@ bool DoodleRenderer::HaveDoodles() const {
 }
 
 bool DoodleRenderer::HaveDoodles(PageID pageID) const {
+  if (!pageID) {
+    return false;
+  }
   auto it = mDrawings.find(pageID);
   if (it == mDrawings.end()) {
     return false;

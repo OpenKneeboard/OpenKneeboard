@@ -34,16 +34,36 @@ std::shared_ptr<RenderTarget> RenderTarget::Create(
   return std::shared_ptr<RenderTarget>(new RenderTarget(dxr, texture));
 }
 
+std::shared_ptr<RenderTarget> RenderTarget::Create(
+  const audited_ptr<DXResources>& dxr,
+  nullptr_t texture) {
+  return std::shared_ptr<RenderTarget>(new RenderTarget(dxr, nullptr));
+}
+
 RenderTarget::~RenderTarget() = default;
 
 RenderTarget::RenderTarget(
   const audited_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture)
-  : mDXR(dxr), mD3DTexture(texture) {
-  winrt::check_hresult(dxr->mD3D11Device->CreateRenderTargetView(
+  : mDXR(dxr) {
+  if (texture) {
+    this->SetD3DTexture(texture);
+  }
+}
+
+void RenderTarget::SetD3DTexture(
+  const winrt::com_ptr<ID3D11Texture2D>& texture) {
+  if (texture == mD3DTexture) {
+    return;
+  }
+  mD2DBitmap = nullptr;
+  mD3DRenderTargetView = nullptr;
+  mD3DTexture = texture;
+
+  winrt::check_hresult(mDXR->mD3D11Device->CreateRenderTargetView(
     texture.get(), nullptr, mD3DRenderTargetView.put()));
 
-  winrt::check_hresult(dxr->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+  winrt::check_hresult(mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     texture.as<IDXGISurface>().get(), nullptr, mD2DBitmap.put()));
 
   D3D11_TEXTURE2D_DESC desc;
@@ -60,10 +80,18 @@ RenderTargetID RenderTarget::GetID() const {
 }
 
 RenderTarget::D2D RenderTarget::d2d(const std::source_location& loc) {
+  if (!mD3DTexture) {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Attempted to start D2D without a texture");
+  }
   return {this->shared_from_this(), loc};
 }
 
-RenderTarget::D3D RenderTarget::d3d() {
+RenderTarget::D3D RenderTarget::d3d(const std::source_location& loc) {
+  if (!mD3DTexture) {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Attempted to start D3D without a texture");
+  }
   return {this->shared_from_this()};
 }
 

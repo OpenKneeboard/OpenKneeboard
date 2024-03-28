@@ -62,10 +62,11 @@ namespace muxcp = winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-std::unordered_map<TabView::RuntimeID, std::weak_ptr<TabPage::CanvasResources>>
-  TabPage::sCanvasResources;
+std::unordered_map<TabView::RuntimeID, std::weak_ptr<RenderTarget>>
+  TabPage::sRenderTarget;
 
-std::shared_ptr<TabPage::CanvasResources> TabPage::GetCanvasResources(
+std::shared_ptr<RenderTarget> TabPage::GetRenderTarget(
+  const audited_ptr<DXResources>& dxr,
   const TabView::RuntimeID& key) {
   // We can have multiple TabPages for the same Tab at the same time,
   // e.g. when alternating views
@@ -76,18 +77,18 @@ std::shared_ptr<TabPage::CanvasResources> TabPage::GetCanvasResources(
   // 1. We need to preserve the resources
   // 2. We need to keep the RenderTarget, so that we have the same
   //   RenderTargetID, so the tabs themselves can maintain their caches
-  if (!sCanvasResources.contains(key)) {
-    auto ret = std::shared_ptr<CanvasResources>(new CanvasResources {});
-    sCanvasResources.emplace(key, ret);
+  if (!sRenderTarget.contains(key)) {
+    auto ret = RenderTarget::Create(dxr, nullptr);
+    sRenderTarget.emplace(key, ret);
     return ret;
   }
 
-  auto& it = sCanvasResources.at(key);
+  auto& it = sRenderTarget.at(key);
   if (auto ret = it.lock()) {
     return ret;
   }
 
-  auto ret = std::shared_ptr<CanvasResources>(new CanvasResources {});
+  auto ret = RenderTarget::Create(dxr, nullptr);
   it = ret;
   return ret;
 }
@@ -123,6 +124,7 @@ TabPage::TabPage() {
   this->InitializePointerSource();
   AddEventListener(
     mKneeboard->evFrameTimerPreEvent, weak_wrap(this)([](auto self) {
+      self->UpdateKneeboardView();
       if (self->mHaveCursorEvents) {
         self->FlushCursorEvents();
       }
@@ -132,9 +134,7 @@ TabPage::TabPage() {
 void TabPage::PaintIfDirty() {
   OPENKNEEBOARD_TraceLoggingScope(
     "TabPage::PaintIfDirty()", TraceLoggingBoolean(mNeedsFrame, "NeedsFrame"));
-  if (mNeedsFrame) {
-    this->PaintNow();
-  }
+  this->PaintNow();
 }
 
 TabPage::~TabPage() {
@@ -180,20 +180,39 @@ void TabPage::InitializePointerSource() {
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
-  const auto id = ITab::RuntimeID::FromTemporaryValue(
-    winrt::unbox_value<uint64_t>(args.Parameter()));
-  mKneeboardView = mKneeboard->GetActiveViewForGlobalInput();
-  AddEventListener(mKneeboardView->evCursorEvent, [this](const auto& ev) {
-    if (ev.mSource == CursorSource::WINDOW_POINTER) {
-      mDrawCursor = false;
-    } else {
-      mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-      PaintLater();
-    }
-  });
-
-  this->SetTab(mKneeboardView->GetTabViewByID(id));
+  this->UpdateKneeboardView();
+  auto id = winrt::unbox_value<uint64_t>(args.Parameter());
+  const auto actualID = mKneeboard->GetActiveViewForGlobalInput()
+                          ->GetCurrentTabView()
+                          ->GetRuntimeID();
 }
+
+void TabPage::UpdateKneeboardView() {
+  auto view = mKneeboard->GetAppWindowView();
+  if (mKneeboardView == view) {
+    this->SetTab(mKneeboardView->GetCurrentTabView());
+    return;
+  }
+  for (const auto& event: mKneeboardViewEvents) {
+    this->RemoveEventListener(event);
+  }
+
+  mKneeboardView = view;
+  mKneeboardViewEvents = {
+    AddEventListener(
+      mKneeboardView->evCursorEvent,
+      [this](const auto& ev) {
+        if (ev.mSource == CursorSource::WINDOW_POINTER) {
+          mDrawCursor = false;
+        } else {
+          mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+          PaintLater();
+        }
+      }),
+  };
+
+  this->SetTab(mKneeboardView->GetCurrentTabView());
+};
 
 muxc::ICommandBarElement TabPage::CreateCommandBarElement(
   const std::shared_ptr<IToolbarItem>& item) {
@@ -369,10 +388,14 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 }
 
 void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
+  if (state == mTabView) {
+    return;
+  }
   mTabView = state;
-  mCanvasResources = GetCanvasResources(state->GetRuntimeID());
+  mRenderTarget = GetRenderTarget(mDXR, state->GetRuntimeID());
   AddEventListener(
     state->evNeedsRepaintEvent, std::bind_front(&TabPage::PaintLater, this));
+  this->PaintLater();
 
   this->UpdateToolbar();
 }
@@ -456,22 +479,20 @@ void TabPage::OnCanvasSizeChanged(
 void TabPage::ResizeSwapChain() {
   OPENKNEEBOARD_TraceLoggingScope("TabPage::ResizeSwapChain()");
 
-  *mCanvasResources = {};
-  auto& [canvas, renderTarget, swapchainDimensions, swapchain]
-    = *mCanvasResources;
+  mCanvas = {};
+  mSwapChain = {};
 
   DXGI_SWAP_CHAIN_DESC desc;
-  winrt::check_hresult(swapchain->GetDesc(&desc));
-  winrt::check_hresult(swapchain->ResizeBuffers(
+  winrt::check_hresult(mSwapChain->GetDesc(&desc));
+  winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount,
     mPanelDimensions.mWidth,
     mPanelDimensions.mHeight,
     desc.BufferDesc.Format,
     desc.Flags));
 
-  winrt::check_hresult(swapchain->GetBuffer(0, IID_PPV_ARGS(canvas.put())));
-  renderTarget = RenderTarget::Create(mDXR, canvas);
-  swapchainDimensions = mPanelDimensions;
+  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
+  mSwapChainDimensions = mPanelDimensions;
 }
 
 void TabPage::InitializeSwapChain() {
@@ -484,10 +505,7 @@ void TabPage::InitializeSwapChain() {
     return;
   }
 
-  auto& [canvas, renderTarget, swapchainDimensions, swapchain]
-    = *mCanvasResources;
-
-  if (mPanelDimensions == swapchainDimensions) {
+  if (mPanelDimensions == mSwapChainDimensions) {
     return;
   }
   // BufferCount = 3: triple-buffer to avoid stalls
@@ -512,12 +530,11 @@ void TabPage::InitializeSwapChain() {
     .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
   };
   winrt::check_hresult(mDXR->mDXGIFactory->CreateSwapChainForComposition(
-    mDXR->mDXGIDevice.get(), &swapChainDesc, nullptr, swapchain.put()));
+    mDXR->mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
 
-  winrt::check_hresult(swapchain->GetBuffer(0, IID_PPV_ARGS(canvas.put())));
-  renderTarget = RenderTarget::Create(mDXR, canvas);
-  Canvas().as<ISwapChainPanelNative>()->SetSwapChain(swapchain.get());
-  swapchainDimensions = mPanelDimensions;
+  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
+  Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
+  mSwapChainDimensions = mPanelDimensions;
 }
 
 void TabPage::PaintLater() {
@@ -543,34 +560,33 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     return;
   }
 
-  if (!mCanvasResources->mSwapChain) {
+  if (!mSwapChain) {
     this->InitializeSwapChain();
-    if (!mCanvasResources->mSwapChain) {
+    if (!mSwapChain) {
       activity.StopWithResult("No swap chain");
       return;
     }
   }
-  if (mPanelDimensions != mCanvasResources->mSwapChainDimensions) {
+  if (mPanelDimensions != mSwapChainDimensions) {
     this->ResizeSwapChain();
   }
 
   const std::unique_lock lock(*mDXR);
   const auto cleanup = scope_guard([this]() {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/Present()");
-    mCanvasResources->mSwapChain->Present(0, 0);
+    mSwapChain->Present(0, 0);
     mNeedsFrame = false;
   });
 
-  auto canvas = mCanvasResources->mCanvas.get();
-  auto renderTarget = mCanvasResources->mRenderTarget.get();
+  mRenderTarget->SetD3DTexture(mCanvas);
 
   {
-    auto ctx = renderTarget->d2d();
+    auto ctx = mRenderTarget->d2d();
     ctx->Clear(mBackgroundColor);
 
     if (!mTabView) {
       D3D11_TEXTURE2D_DESC desc;
-      canvas->GetDesc(&desc);
+      mCanvas->GetDesc(&desc);
       mErrorRenderer->Render(
         ctx,
         _("Missing or Deleted Tab"),
@@ -589,9 +605,10 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
-    tab->RenderPage(renderTarget, mTabView->GetPageID(), metrics.mRenderRect);
+    tab->RenderPage(
+      mRenderTarget.get(), mTabView->GetPageID(), metrics.mRenderRect);
   } else {
-    auto d2d = renderTarget->d2d();
+    auto d2d = mRenderTarget->d2d();
     mErrorRenderer->Render(
       d2d, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
   }
@@ -612,7 +629,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   point.mX += metrics.mRenderRect.Left();
   point.mY += metrics.mRenderRect.Top();
   {
-    auto d2d = renderTarget->d2d();
+    auto d2d = mRenderTarget->d2d();
     mCursorRenderer->Render(
       d2d, point.Rounded<uint32_t>(), metrics.mRenderSize);
   }

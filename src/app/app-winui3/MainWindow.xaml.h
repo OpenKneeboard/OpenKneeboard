@@ -108,7 +108,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::handle mFrameLoopCompletionEvent;
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
-  winrt::fire_and_forget OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget OnLoaded();

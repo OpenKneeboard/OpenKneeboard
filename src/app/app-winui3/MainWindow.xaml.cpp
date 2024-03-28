@@ -113,12 +113,9 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 
   ResetKneeboardView();
 
-  AddEventListener(mKneeboard->evActiveViewChangedEvent, [this]() {
-    if (mKneeboard->GetAppWindowView() == mKneeboardView) {
-      return;
-    }
-    this->OnViewOrderChanged();
-  });
+  AddEventListener(
+    mKneeboard->evActiveViewChangedEvent,
+    std::bind_front(&MainWindow::ResetKneeboardView, this));
   if (!IsElevated()) {
     AddEventListener(mKneeboard->evGameChangedEvent, [this](DWORD pid, auto) {
       if (pid) {
@@ -647,6 +644,11 @@ void MainWindow::ResetKneeboardView() {
     this->RemoveEventListener(event);
   }
 
+  std::vector<winrt::guid> previousTabs;
+  if (mKneeboardView) {
+    previousTabs = mKneeboardView->GetTabIDs();
+  }
+
   mKneeboardView = mKneeboard->GetAppWindowView();
 
   mKneeboardViewEvents = {
@@ -658,17 +660,10 @@ void MainWindow::ResetKneeboardView() {
       std::bind_front(&MainWindow::OnTabChanged, this)),
   };
 
-  this->OnTabsChanged();
-}
-
-winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
-  auto weak = get_weak();
-  co_await mUIThread;
-
-  if (auto self = weak.get()) {
-    if (self->mKneeboardView != self->mKneeboard->GetAppWindowView()) {
-      self->OnTabChanged();
-    }
+  if (mKneeboardView->GetTabIDs() != previousTabs) {
+    this->OnTabsChanged();
+  } else {
+    this->OnTabChanged();
   }
 }
 
@@ -823,6 +818,9 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   }
 
   const auto tab = mKneeboardView->GetCurrentTab();
+  if (mKneeboardView != mKneeboard->GetAppWindowView()) {
+    OPENKNEEBOARD_BREAK;
+  }
   if (!tab) {
     co_return;
   }

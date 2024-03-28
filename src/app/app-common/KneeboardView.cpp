@@ -770,4 +770,12 @@ void KneeboardView::SetTabViews(
   }
 }
 
+std::vector<winrt::guid> KneeboardView::GetTabIDs() const noexcept {
+  std::vector<winrt::guid> ret;
+  for (const auto& view: mTabViews) {
+    ret.push_back(view->GetRootTab()->GetPersistentID());
+  }
+  return ret;
+}
+
 }// namespace OpenKneeboard

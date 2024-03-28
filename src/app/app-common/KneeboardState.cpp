@@ -86,7 +86,9 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     for (auto& view: mViews) {
       view->SetTabs(tabs);
     }
-    mAppWindowView->SetTabs(tabs);
+    if (mAppWindowView) {
+      mAppWindowView->SetTabs(tabs);
+    }
   });
 
   mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
@@ -867,18 +869,17 @@ void KneeboardState::InitializeViews() {
   switch (mSettings.mViews.mAppWindowMode) {
     case AppWindowViewMode::NoDecision:
     case AppWindowViewMode::ActiveView:
-      mAppWindowView = GetActiveViewForGlobalInput();
+      mAppWindowView = {nullptr};
       break;
     case AppWindowViewMode::Independent:
-      if (
-        (!mAppWindowView)
-        || mAppWindowView->GetPersistentGUID() != winrt::guid {}) {
+      if (!mAppWindowView) {
         viewChanged = true;
         mAppWindowView = KneeboardView::Create(mDXResources, this, {});
         mAppWindowView->SetTabs(this->GetTabsList()->GetTabs());
         AddEventListener(
           mAppWindowView->evNeedsRepaintEvent,
           std::bind_front(&KneeboardState::SetRepaintNeeded, this));
+        viewChanged = true;
       }
   }
 

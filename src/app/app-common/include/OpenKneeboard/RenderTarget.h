@@ -52,9 +52,14 @@ class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
   static std::shared_ptr<RenderTarget> Create(
     const audited_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
+  static std::shared_ptr<RenderTarget> Create(
+    const audited_ptr<DXResources>& dxr,
+    nullptr_t texture);
 
   PixelSize GetDimensions() const;
   virtual RenderTargetID GetID() const;
+
+  void SetD3DTexture(const winrt::com_ptr<ID3D11Texture2D>&);
 
   class D2D;
   class D3D;
@@ -62,7 +67,7 @@ class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
   friend class D3D;
 
   D2D d2d(const std::source_location& loc = std::source_location::current());
-  D3D d3d();
+  D3D d3d(const std::source_location& loc = std::source_location::current());
 
  protected:
   RenderTarget(

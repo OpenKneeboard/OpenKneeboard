@@ -113,6 +113,9 @@ std::vector<PageID> PageSourceWithDelegates::GetPageIDs() const {
 
 std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   PageID pageID) const {
+  if (!pageID) {
+    return {nullptr};
+  }
   if (mPageDelegates.contains(pageID)) {
     return mPageDelegates.at(pageID).lock();
   }
