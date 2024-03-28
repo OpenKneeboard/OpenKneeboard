@@ -86,7 +86,13 @@ struct MainWindow : MainWindowT<MainWindow>,
   DispatcherQueueTimer mFrameTimer {nullptr};
   std::stop_source mFrameLoopStopSource;
   winrt::Windows::Foundation::IAsyncAction mFrameLoop {nullptr};
-  bool mSwitchingTabsFromNavSelection = false;
+
+  enum class TabSwitchReason {
+    InAppNavSelection,
+    ProfileSwitched,
+    Other,
+  };
+  TabSwitchReason mTabSwitchReason {TabSwitchReason::Other};
 
   // Used to track whether or not we've shown an elevation warning
   DWORD mElevatedConsumerProcessID {};

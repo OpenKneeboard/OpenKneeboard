@@ -55,6 +55,7 @@
 
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Microsoft.UI.Xaml.Media.Animation.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
@@ -193,10 +194,15 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     std::bind_front(&MainWindow::ResetKneeboardView, this));
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    [this]() -> winrt::fire_and_forget {
-      co_await mUIThread;
-      this->ResetKneeboardView();
-      auto backStack = Frame().BackStack();
+    [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto self = weak.get();
+      if (!self) {
+        co_return;
+      }
+      self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
+      self->ResetKneeboardView();
+      auto backStack = self->Frame().BackStack();
       std::vector<PageStackEntry> newBackStack;
       for (auto entry: backStack) {
         if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
@@ -206,7 +212,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
         newBackStack.push_back(entry);
       }
       backStack.ReplaceAll(newBackStack);
-      this->PromptForViewMode();
+      self->PromptForViewMode();
     });
 }
 
@@ -585,17 +591,24 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
     uiProfiles.Append(item);
 
     auto weakItem = make_weak(item);
-    item.Click([profile, weakItem](const auto&, const auto&) {
-      auto kneeboard = gKneeboard.lock();
-      auto settings = kneeboard->GetProfileSettings();
-      if (settings.mActiveProfile == profile.mID) {
-        weakItem.get().IsChecked(true);
-        return;
-      }
+    item.Click(
+      [weak = get_weak(), profile, weakItem](const auto&, const auto&) {
+        auto kneeboard = gKneeboard.lock();
+        auto settings = kneeboard->GetProfileSettings();
+        if (settings.mActiveProfile == profile.mID) {
+          weakItem.get().IsChecked(true);
+          return;
+        }
 
-      settings.mActiveProfile = profile.mID;
-      kneeboard->SetProfileSettings(settings);
-    });
+        auto self = weak.get();
+        if (!self) {
+          return;
+        }
+        self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
+
+        settings.mActiveProfile = profile.mID;
+        kneeboard->SetProfileSettings(settings);
+      });
 
     if (profile.mID == settings.mActiveProfile) {
       item.IsChecked(true);
@@ -775,7 +788,7 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabChanged()");
 
-  if (!mSwitchingTabsFromNavSelection) {
+  if (mTabSwitchReason != TabSwitchReason::InAppNavSelection) {
     // Don't automatically move away from "Profiles"
     if (
       Frame().CurrentSourcePageType().Name
@@ -821,9 +834,17 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
     }
   }
 
-  this->Frame().Navigate(
-    xaml_typename<TabPage>(), winrt::box_value(id.GetTemporaryValue()));
-  mSwitchingTabsFromNavSelection = false;
+  if (mTabSwitchReason == TabSwitchReason::Other) {
+    this->Frame().Navigate(
+      xaml_typename<TabPage>(),
+      winrt::box_value(id.GetTemporaryValue()),
+      Microsoft::UI::Xaml::Media::Animation::
+        SuppressNavigationTransitionInfo {});
+  } else {
+    this->Frame().Navigate(
+      xaml_typename<TabPage>(), winrt::box_value(id.GetTemporaryValue()));
+  }
+  mTabSwitchReason = TabSwitchReason::Other;
 }
 
 winrt::fire_and_forget MainWindow::OnTabsChanged() {
@@ -999,7 +1020,7 @@ void MainWindow::OnNavigationItemInvoked(
   const auto tabID = tag.mTabID;
 
   if (tag.mPageID) {
-    mSwitchingTabsFromNavSelection = true;
+    mTabSwitchReason = TabSwitchReason::InAppNavSelection;
 
     mKneeboardView->GoToBookmark({
       tabID,
@@ -1011,7 +1032,7 @@ void MainWindow::OnNavigationItemInvoked(
   if (
     tabID
     != mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()) {
-    mSwitchingTabsFromNavSelection = true;
+    mTabSwitchReason = TabSwitchReason::InAppNavSelection;
     mKneeboardView->SetCurrentTabByRuntimeID(tabID);
     return;
   }
@@ -1022,7 +1043,7 @@ void MainWindow::OnNavigationItemInvoked(
   }
 
   // Nope, perhaps we're in 'Settings' instead
-  mSwitchingTabsFromNavSelection = true;
+  mTabSwitchReason = TabSwitchReason::InAppNavSelection;
   Frame().Navigate(
     xaml_typename<TabPage>(), winrt::box_value(tabID.GetTemporaryValue()));
 }
