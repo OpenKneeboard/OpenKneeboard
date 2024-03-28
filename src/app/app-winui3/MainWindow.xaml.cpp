@@ -111,8 +111,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   mKneeboard = KneeboardState::Create(mHwnd, mDXR);
   gKneeboard = mKneeboard;
 
-  OnTabsChanged();
-  OnViewOrderChanged();
+  ResetKneeboardView();
 
   AddEventListener(mKneeboard->evActiveViewChangedEvent, [this]() {
     if (mKneeboard->GetAppWindowView() == mKneeboardView) {
@@ -359,9 +358,6 @@ void MainWindow::FrameTick() {
 winrt::fire_and_forget MainWindow::OnLoaded() {
   // WinUI3 gives us the spinning circle for a long time...
   SetCursor(LoadCursorW(NULL, IDC_ARROW));
-  mFrameLoopCompletionEvent
-    = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
-  mFrameLoop = this->FrameLoop();
 
   this->Show();
   SetWindowSubclass(
@@ -390,6 +386,11 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
     mKneeboard->GetGamesList()->StartInjector();
   }
   co_await mUIThread;
+
+  mFrameLoopCompletionEvent
+    = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  mFrameLoop = this->FrameLoop();
+
   co_await ShowSelfElevationWarning();
   co_await CheckAllDCSHooks(xamlRoot);
   co_await PromptForViewMode();
@@ -639,6 +640,9 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
 void MainWindow::ResetKneeboardView() {
   OPENKNEEBOARD_TraceLoggingScope("MainWindow::ResetKneeboardView()");
+  if (mKneeboard->GetAppWindowView() == mKneeboardView) {
+    return;
+  }
   for (const auto& event: mKneeboardViewEvents) {
     this->RemoveEventListener(event);
   }
@@ -662,7 +666,9 @@ winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
   co_await mUIThread;
 
   if (auto self = weak.get()) {
-    self->ResetKneeboardView();
+    if (self->mKneeboardView != self->mKneeboard->GetAppWindowView()) {
+      self->OnTabChanged();
+    }
   }
 }
 
@@ -865,6 +871,8 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
   this->mPropertyChangedEvent(
     *this,
     Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"NavigationItems"));
+
+  this->OnTabChanged();
 }
 
 winrt::Windows::Foundation::Collections::IVector<
