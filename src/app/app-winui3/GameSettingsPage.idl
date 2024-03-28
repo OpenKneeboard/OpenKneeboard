@@ -9,14 +9,13 @@ namespace OpenKneeboardApp
     }
 
     [default_interface]
-    unsealed runtimeclass GameInstanceUIData
+    unsealed runtimeclass GameInstanceUIData : Microsoft.UI.Xaml.Data.ICustomPropertyProvider
     {
         GameInstanceUIData();
         Microsoft.UI.Xaml.Media.Imaging.BitmapSource Icon;
         UInt64 InstanceID;
         String Name;
         String Path;
-        String Type;
         UInt8 OverlayAPI;
     }
 

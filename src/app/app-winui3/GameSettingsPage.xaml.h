@@ -42,6 +42,7 @@ using namespace OpenKneeboard;
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Data;
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Foundation::Collections;
 
@@ -95,17 +96,31 @@ struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
   void Name(const hstring&);
   hstring Path();
   void Path(const hstring&);
-  hstring Type();
-  void Type(const hstring&);
   uint8_t OverlayAPI();
   void OverlayAPI(uint8_t);
+
+  // ICustomPropertyProvider
+  auto Type() const {
+    return xaml_typename<OpenKneeboardApp::GameInstanceUIData>();
+  }
+
+  auto GetCustomProperty(const auto&) {
+    return ICustomProperty {nullptr};
+  }
+
+  auto GetIndexedProperty(const auto&, const auto&) {
+    return ICustomProperty {nullptr};
+  }
+
+  inline hstring GetStringRepresentation() const {
+    return mName;
+  }
 
  private:
   BitmapSource mIcon {nullptr};
   uint64_t mInstanceID;
   hstring mName;
   hstring mPath;
-  hstring mType;
   uint8_t mOverlayAPI;
 };
 

@@ -49,12 +49,12 @@ struct WindowPickerDialog : WindowPickerDialogT<WindowPickerDialog> {
     const AutoSuggestBox&,
     const AutoSuggestBoxQuerySubmittedEventArgs&) noexcept;
 
-  std::vector<IInspectable> GetFilteredWindows(std::wstring_view queryText);
-
  private:
   uint64_t mHwnd {};
-  std::vector<IInspectable> mWindows {nullptr};
+  std::vector<IInspectable> mWindows;
   bool mFiltered {false};
+
+  std::vector<IInspectable> GetFilteredWindows(std::wstring_view queryText);
 };
 
 struct WindowPickerUIData : WindowPickerUIDataT<WindowPickerUIData> {

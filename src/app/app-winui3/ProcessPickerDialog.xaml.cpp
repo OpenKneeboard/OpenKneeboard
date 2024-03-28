@@ -23,13 +23,16 @@
 #include "ProcessPickerDialog.g.cpp"
 // clang-format on
 
-#include <TlHelp32.h>
+#include "ExecutableIconFactory.h"
+
+#include <OpenKneeboard/utf8.h>
+
+#include <shims/filesystem>
 
 #include <algorithm>
 #include <set>
-#include <shims/filesystem>
 
-#include "ExecutableIconFactory.h"
+#include <TlHelp32.h>
 
 using namespace winrt::Windows::Foundation::Collections;
 using namespace OpenKneeboard;
@@ -61,7 +64,7 @@ ProcessPickerDialog::ProcessPickerDialog() {
   process.dwSize = sizeof(process);
   Process32First(snapshot.get(), &process);
   std::set<std::filesystem::path> seen;
-  std::vector<GameInstanceUIData> games;
+  std::vector<IInspectable> games;
   do {
     auto path = GetFullPathFromPID(process.th32ProcessID);
     if (path.empty()) {
@@ -79,16 +82,12 @@ ProcessPickerDialog::ProcessPickerDialog() {
     games.push_back(game);
   } while (Process32Next(snapshot.get(), &process));
 
-  std::sort(games.begin(), games.end(), [](const auto& a, const auto& b) {
-    return a.Name() < b.Name();
+  std::ranges::sort(games, {}, [](const auto& it) {
+    return it.as<GameInstanceUIData>().Name();
   });
 
-  auto winrtGames {winrt::single_threaded_vector<IInspectable>()};
-  for (const auto& game: games) {
-    winrtGames.Append(game);
-  }
-
-  List().ItemsSource(winrtGames);
+  mProcesses = games;
+  List().ItemsSource(single_threaded_vector(std::move(games)));
 }
 
 ProcessPickerDialog::~ProcessPickerDialog() {
@@ -109,6 +108,85 @@ void ProcessPickerDialog::OnListSelectionChanged(
     mSelectedPath = selected.Path();
     this->IsPrimaryButtonEnabled(true);
   }
+}
+
+void ProcessPickerDialog::OnAutoSuggestTextChanged(
+  const AutoSuggestBox& box,
+  const AutoSuggestBoxTextChangedEventArgs& args) noexcept {
+  if (args.Reason() != AutoSuggestionBoxTextChangeReason::UserInput) {
+    return;
+  }
+
+  const std::wstring_view queryText {box.Text()};
+  if (queryText.empty()) {
+    box.ItemsSource({nullptr});
+    if (mFiltered) {
+      List().ItemsSource(single_threaded_vector(
+        std::vector<IInspectable> {mProcesses.begin(), mProcesses.end()}));
+      mFiltered = false;
+    }
+    return;
+  }
+
+  auto matching = this->GetFilteredProcesses(queryText);
+
+  std::ranges::sort(matching, {}, [](const auto& inspectable) {
+    return fold_utf8(
+      to_string(inspectable.as<OpenKneeboardApp::GameInstanceUIData>()
+                  .GetStringRepresentation()));
+  });
+
+  box.ItemsSource(single_threaded_vector(std::move(matching)));
+}
+
+std::vector<IInspectable> ProcessPickerDialog::GetFilteredProcesses(
+  std::wstring_view queryText) {
+  if (queryText.empty()) {
+    return mProcesses;
+  }
+
+  const auto folded = fold_utf8(to_utf8(queryText));
+  auto words = std::string_view {folded}
+    | std::views::split(std::string_view {" "})
+    | std::views::transform([](auto subRange) {
+                 return std::string_view {subRange.begin(), subRange.end()};
+               });
+
+  std::vector<IInspectable> ret;
+  for (auto rawData: mProcesses) {
+    auto process = rawData.as<OpenKneeboardApp::GameInstanceUIData>();
+    // The 'name' is just the file basename
+    const auto path = fold_utf8(winrt::to_string(process.Path()));
+
+    bool matchedAllWords = true;
+    for (auto word: words) {
+      if (path.find(word) != path.npos) {
+        continue;
+      }
+      matchedAllWords = false;
+      break;
+    }
+    if (matchedAllWords) {
+      ret.push_back(process);
+    }
+  }
+
+  return ret;
+}
+
+void ProcessPickerDialog::OnAutoSuggestQuerySubmitted(
+  const AutoSuggestBox& box,
+  const AutoSuggestBoxQuerySubmittedEventArgs& args) noexcept {
+  if (auto it = args.ChosenSuggestion()) {
+    List().ItemsSource(single_threaded_vector<IInspectable>({it}));
+    List().SelectedItem(it);
+    return;
+  }
+
+  List().ItemsSource(
+    single_threaded_vector(this->GetFilteredProcesses(args.QueryText())));
+
+  mFiltered = true;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -109,7 +109,6 @@ IVector<IInspectable> GameSettingsPage::Games() noexcept {
     winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mLastSeenPath));
     winrtGame.Name(to_hstring(game->mName));
     winrtGame.Path(to_hstring(game->mPathPattern));
-    winrtGame.Type(to_hstring(game->mGame->GetNameForConfigFile()));
     winrtGame.OverlayAPI(static_cast<uint8_t>(game->mOverlayAPI));
 
     winrtGames.Append(winrtGame);
@@ -328,14 +327,6 @@ hstring GameInstanceUIData::Path() {
 
 void GameInstanceUIData::Path(const hstring& value) {
   mPath = value;
-}
-
-hstring GameInstanceUIData::Type() {
-  return mType;
-}
-
-void GameInstanceUIData::Type(const hstring& value) {
-  mType = value;
 }
 
 uint8_t GameInstanceUIData::OverlayAPI() {

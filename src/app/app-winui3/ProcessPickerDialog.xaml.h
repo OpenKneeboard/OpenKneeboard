@@ -37,8 +37,20 @@ struct ProcessPickerDialog : ProcessPickerDialogT<ProcessPickerDialog> {
     const IInspectable&,
     const SelectionChangedEventArgs&) noexcept;
 
+  void OnAutoSuggestTextChanged(
+    const AutoSuggestBox&,
+    const AutoSuggestBoxTextChangedEventArgs&) noexcept;
+
+  void OnAutoSuggestQuerySubmitted(
+    const AutoSuggestBox&,
+    const AutoSuggestBoxQuerySubmittedEventArgs&) noexcept;
+
  private:
   hstring mSelectedPath;
+  std::vector<IInspectable> mProcesses;
+  bool mFiltered {false};
+
+  std::vector<IInspectable> GetFilteredProcesses(std::wstring_view queryText);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
