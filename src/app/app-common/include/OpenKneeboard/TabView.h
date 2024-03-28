@@ -39,8 +39,8 @@ class ITab;
 class KneeboardState;
 
 enum class TabMode {
-  NORMAL,
-  NAVIGATION,
+  Normal,
+  Navigation,
 };
 
 class TabView final : private EventReceiver {
@@ -101,7 +101,7 @@ class TabView final : private EventReceiver {
   std::shared_ptr<ITab> mActiveSubTab;
   std::optional<PageID> mActiveSubTabPageID;
 
-  TabMode mTabMode = TabMode::NORMAL;
+  TabMode mTabMode = TabMode::Normal;
 
   void OnTabContentChanged();
   void OnTabPageAppended(SuggestedPageAppendAction);

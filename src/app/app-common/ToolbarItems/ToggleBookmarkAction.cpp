@@ -52,7 +52,7 @@ bool ToggleBookmarkAction::IsEnabled() const {
     return false;
   }
 
-  if (tabView->GetTabMode() != TabMode::NORMAL) {
+  if (tabView->GetTabMode() != TabMode::Normal) {
     return false;
   }
 

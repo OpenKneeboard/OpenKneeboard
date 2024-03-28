@@ -541,7 +541,7 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   std::unique_lock lock(*mKneeboard);
 
   auto view = this->GetCurrentTabView();
-  if (view->GetTabMode() != TabMode::NORMAL) {
+  if (view->GetTabMode() != TabMode::Normal) {
     OPENKNEEBOARD_BREAK;
     return {};
   }
@@ -629,7 +629,7 @@ void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
   if (GetCurrentTabView() != *it) {
     SetCurrentTabByIndex(it - mTabViews.begin());
   }
-  (*it)->SetTabMode(TabMode::NORMAL);
+  (*it)->SetTabMode(TabMode::Normal);
   (*it)->SetPageID(bookmark.mPageID);
 }
 

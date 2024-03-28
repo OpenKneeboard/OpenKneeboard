@@ -287,7 +287,7 @@ void BookmarksUILayer::OnClick(const Button& button) {
     mKneeboardView->SetCurrentTabByRuntimeID(button.mBookmark.mTabID);
   }
   auto tabView = mKneeboardView->GetCurrentTabView();
-  tabView->SetTabMode(TabMode::NORMAL);
+  tabView->SetTabMode(TabMode::Normal);
   tabView->SetPageID(button.mBookmark.mPageID);
 }
 

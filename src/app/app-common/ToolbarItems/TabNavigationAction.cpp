@@ -38,23 +38,23 @@ bool TabNavigationAction::IsEnabled() const {
   if (!tv) {
     return false;
   }
-  return tv->SupportsTabMode(TabMode::NAVIGATION);
+  return tv->SupportsTabMode(TabMode::Navigation);
 }
 
 bool TabNavigationAction::IsActive() {
   auto tv = mTabView.lock();
-  return tv && tv->GetTabMode() == TabMode::NAVIGATION;
+  return tv && tv->GetTabMode() == TabMode::Navigation;
 }
 
 void TabNavigationAction::Activate() {
   if (auto tv = mTabView.lock()) {
-    tv->SetTabMode(TabMode::NAVIGATION);
+    tv->SetTabMode(TabMode::Navigation);
   }
 }
 
 void TabNavigationAction::Deactivate() {
   if (auto tv = mTabView.lock()) {
-    tv->SetTabMode(TabMode::NORMAL);
+    tv->SetTabMode(TabMode::Normal);
   }
 }
 

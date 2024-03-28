@@ -77,10 +77,10 @@ std::shared_ptr<ITab> TabView::GetTab() const {
 
 PageID TabView::GetPageID() const {
   const auto mode = this->GetTabMode();
-  if (mode != TabMode::NORMAL && mActiveSubTabPageID) {
+  if (mode != TabMode::Normal && mActiveSubTabPageID) {
     return *mActiveSubTabPageID;
   }
-  if (mode == TabMode::NORMAL && mRootTabPage) {
+  if (mode == TabMode::Normal && mRootTabPage) {
     return mRootTabPage->mID;
   }
 
@@ -211,9 +211,9 @@ TabMode TabView::GetTabMode() const {
 
 bool TabView::SupportsTabMode(TabMode mode) const {
   switch (mode) {
-    case TabMode::NORMAL:
+    case TabMode::Normal:
       return true;
-    case TabMode::NAVIGATION: {
+    case TabMode::Navigation: {
       auto nav = std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab);
       return nav && nav->IsNavigationAvailable();
     }
@@ -239,11 +239,11 @@ bool TabView::SetTabMode(TabMode mode) {
   mActiveSubTabPageID = {};
 
   switch (mode) {
-    case TabMode::NORMAL:
+    case TabMode::Normal:
       break;
-    case TabMode::NAVIGATION: {
+    case TabMode::Navigation: {
       OPENKNEEBOARD_TraceLoggingScope(
-        "TabView::SetTabMode(TabMode::NAVIGATION)");
+        "TabView::SetTabMode(TabMode::Navigation)");
       mActiveSubTab = std::make_shared<NavigationTab>(
         mDXR,
         mRootTab,
@@ -265,7 +265,7 @@ bool TabView::SetTabMode(TabMode mode) {
             return;
           }
           mRootTabPage = {newPage, static_cast<PageIndex>(it - ids.begin())};
-          SetTabMode(TabMode::NORMAL);
+          SetTabMode(TabMode::Normal);
         });
       AddEventListener(
         mActiveSubTab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
@@ -273,7 +273,7 @@ bool TabView::SetTabMode(TabMode mode) {
     }
   }
 
-  if (mode != TabMode::NORMAL && !mActiveSubTab) {
+  if (mode != TabMode::Normal && !mActiveSubTab) {
     // Switch should have been exhaustive
     OPENKNEEBOARD_BREAK;
   }
