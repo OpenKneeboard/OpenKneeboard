@@ -60,6 +60,10 @@ void RenderTarget::SetD3DTexture(
   mD3DRenderTargetView = nullptr;
   mD3DTexture = texture;
 
+  if (!texture) {
+    return;
+  }
+
   winrt::check_hresult(mDXR->mD3D11Device->CreateRenderTargetView(
     texture.get(), nullptr, mD3DRenderTargetView.put()));
 

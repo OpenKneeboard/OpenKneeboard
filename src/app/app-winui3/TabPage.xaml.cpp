@@ -479,8 +479,9 @@ void TabPage::OnCanvasSizeChanged(
 void TabPage::ResizeSwapChain() {
   OPENKNEEBOARD_TraceLoggingScope("TabPage::ResizeSwapChain()");
 
+  // Can't resize swapchain if there are any reference to its' members
   mCanvas = {};
-  mSwapChain = {};
+  mRenderTarget->SetD3DTexture(nullptr);
 
   DXGI_SWAP_CHAIN_DESC desc;
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
@@ -492,6 +493,7 @@ void TabPage::ResizeSwapChain() {
     desc.Flags));
 
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
+  mRenderTarget->SetD3DTexture(mCanvas);
   mSwapChainDimensions = mPanelDimensions;
 }
 
