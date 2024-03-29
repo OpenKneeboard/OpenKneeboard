@@ -50,6 +50,7 @@ static HWND gTopLevelWindow {};
 static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
 static auto gPFN_GetCursorPos = &GetCursorPos;
+static auto gPFN_GetPhysicalCursorPos = &GetPhysicalCursorPos;
 static auto gPFN_GetFocus = &GetFocus;
 static auto gPFN_IsWindowVisible = &IsWindowVisible;
 
@@ -84,6 +85,15 @@ static BOOL WINAPI GetCursorPos_Hook(LPPOINT lpPoint) {
   return gPFN_GetCursorPos(lpPoint);
 }
 
+static BOOL WINAPI GetPhysicalCursorPos_Hook(LPPOINT lpPoint) {
+  // TODO: test with multiple DPIs
+  if (gInjectedPoint) {
+    *lpPoint = gInjectedPoint->mScreenPoint;
+    return TRUE;
+  }
+  return gPFN_GetPhysicalCursorPos(lpPoint);
+}
+
 static HWND WINAPI GetFocus_Hook() {
   if (ShouldInject()) {
     return gLastSetForegroundWindow;
@@ -108,6 +118,7 @@ static void InstallDetours() {
   DetourAttach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
   DetourAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourAttach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
   DetourAttach(&gPFN_GetFocus, &GetFocus_Hook);
   DetourAttach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
@@ -123,6 +134,7 @@ static void UninstallDetours() {
   DetourDetach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
   DetourDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourDetach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
   DetourDetach(&gPFN_GetFocus, &GetFocus_Hook);
   DetourDetach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
