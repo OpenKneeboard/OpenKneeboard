@@ -51,8 +51,11 @@ static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
 static auto gPFN_GetCursorPos = &GetCursorPos;
 static auto gPFN_GetPhysicalCursorPos = &GetPhysicalCursorPos;
+static auto gPFN_GetMessagePos = &GetMessagePos;
 static auto gPFN_GetFocus = &GetFocus;
+static auto gPFN_IsWindowEnabled = &IsWindowEnabled;
 static auto gPFN_IsWindowVisible = &IsWindowVisible;
+static auto gPFN_WindowFromPoint = &WindowFromPoint;
 
 static HWND gLastSetForegroundWindow {};
 
@@ -94,6 +97,14 @@ static BOOL WINAPI GetPhysicalCursorPos_Hook(LPPOINT lpPoint) {
   return gPFN_GetPhysicalCursorPos(lpPoint);
 }
 
+static DWORD WINAPI GetMessagePos_Hook() {
+  if (gInjectedPoint) {
+    return gInjectedPoint->mScreenPoint.x
+      + (gInjectedPoint->mScreenPoint.y << sizeof(DWORD) * 4);
+  }
+  return gPFN_GetMessagePos();
+}
+
 static HWND WINAPI GetFocus_Hook() {
   if (ShouldInject()) {
     return gLastSetForegroundWindow;
@@ -101,11 +112,25 @@ static HWND WINAPI GetFocus_Hook() {
   return gPFN_GetFocus();
 }
 
+static BOOL WINAPI IsWindowEnabled_Hook(HWND hwnd) {
+  if (ShouldInject()) {
+    return GetAncestor(hwnd, GA_ROOTOWNER) == gTopLevelWindow;
+  }
+  return gPFN_IsWindowEnabled(hwnd);
+}
+
 static BOOL WINAPI IsWindowVisible_Hook(HWND hwnd) {
   if (!gTopLevelWindow) {
     return gPFN_IsWindowVisible(hwnd);
   }
   return GetAncestor(hwnd, GA_ROOTOWNER) == gTopLevelWindow;
+}
+
+static HWND WINAPI WindowFromPoint_Hook(POINT point) {
+  if (gInjectedPoint) {
+    return gInjectedPoint->mHwnd;
+  }
+  return gPFN_WindowFromPoint(point);
 }
 
 static void InstallDetours() {
@@ -119,8 +144,11 @@ static void InstallDetours() {
   DetourAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
   DetourAttach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
+  DetourAttach(&gPFN_GetMessagePos, &GetMessagePos_Hook);
   DetourAttach(&gPFN_GetFocus, &GetFocus_Hook);
+  DetourAttach(&gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
   DetourAttach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
+  DetourAttach(&gPFN_WindowFromPoint, &WindowFromPoint_Hook);
 }
 
 static void UninstallDetours() {
@@ -135,8 +163,11 @@ static void UninstallDetours() {
   DetourDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
   DetourDetach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
+  DetourDetach(&gPFN_GetMessagePos, &GetMessagePos_Hook);
   DetourDetach(&gPFN_GetFocus, &GetFocus_Hook);
+  DetourDetach(&gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
   DetourDetach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
+  DetourDetach(&gPFN_WindowFromPoint, &WindowFromPoint_Hook);
 }
 
 static bool ProcessControlMessage(

@@ -109,7 +109,8 @@ class HWNDPageSource final : public WGCPageSource,
   const audited_ptr<DXResources> mDXR;
 
   winrt::apartment_context mUIThread;
-  HWND mWindow {};
+  HWND mCaptureWindow {};
+  HWND mInputWindow {};
   Options mOptions {};
 
   // In capture-space coordinates

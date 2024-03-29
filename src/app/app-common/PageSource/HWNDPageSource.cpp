@@ -149,10 +149,10 @@ HWNDPageSource::CreateWGCaptureItem() {
   auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
   try {
     winrt::check_hresult(interopFactory->CreateForWindow(
-      mWindow,
+      mCaptureWindow,
       winrt::guid_of<WGC::GraphicsCaptureItem>(),
       winrt::put_abi(item)));
-    LogAdapter(mWindow);
+    LogAdapter(mCaptureWindow);
   } catch (const winrt::hresult_error& e) {
     dprintf(
       "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
@@ -164,11 +164,12 @@ HWNDPageSource::CreateWGCaptureItem() {
     // We can't capture full-screen windows; if that's the problem, capture
     // the full screen instead :)
     RECT windowRect;
-    if (!GetWindowRect(mWindow, &windowRect)) {
+    if (!GetWindowRect(mCaptureWindow, &windowRect)) {
       dprint("Failed to get window rect");
       return nullptr;
     }
-    const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+    const auto monitor
+      = MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
     MONITORINFOEXW monitorInfo {sizeof(MONITORINFOEXW)};
     if (!GetMonitorInfoW(monitor, &monitorInfo)) {
       dprint("Failed to get monitor info");
@@ -198,7 +199,8 @@ HWNDPageSource::CreateWGCaptureItem() {
   {
     // DisplayInformation::CreateForWindowId only works for windows owned by
     // this thread (and process)... so we'll jump through some hoops.
-    const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+    const auto monitor
+      = MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
     auto displayID = winrt::Microsoft::UI::GetDisplayIdFromMonitor(monitor);
     auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
       CreateForDisplayId(displayID);
@@ -221,7 +223,8 @@ HWNDPageSource::CreateWGCaptureItem() {
   }
 
   item.Closed([this](auto&, auto&) {
-    this->mWindow = {};
+    this->mCaptureWindow = {};
+    this->mInputWindow = {};
     this->evWindowClosedEvent.Emit();
   });
   this->InitializeInputHook();
@@ -236,10 +239,10 @@ winrt::fire_and_forget HWNDPageSource::InitializeInputHook() noexcept {
     co_return;
   }
   PostMessageW(
-    mWindow,
+    mCaptureWindow,
     gControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::Initialize),
-    reinterpret_cast<LPARAM>(mWindow));
+    reinterpret_cast<LPARAM>(mCaptureWindow));
 }
 
 HWNDPageSource::HWNDPageSource(
@@ -249,12 +252,20 @@ HWNDPageSource::HWNDPageSource(
   const Options& options)
   : WGCPageSource(dxr, kneeboard, options),
     mDXR(dxr),
-    mWindow(window),
+    mCaptureWindow(window),
     mOptions(options) {
+  // Handle UWP input
+  if (
+    HWND child
+    = FindWindowExW(window, {}, L"ApplicationFrameInputSinkWindow", nullptr)) {
+    mInputWindow = child;
+  } else {
+    mInputWindow = window;
+  }
 }
 
 bool HWNDPageSource::HaveWindow() const {
-  return static_cast<bool>(mWindow);
+  return static_cast<bool>(mCaptureWindow);
 }
 
 // Destruction is handled in final_release instead
@@ -305,7 +316,7 @@ PixelSize HWNDPageSource::GetSwapchainDimensions(const PixelSize& contentSize) {
   if (++mRecreations <= 10) {
     return contentSize;
   }
-  const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+  const auto monitor = MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
   if (!monitor) {
     return contentSize;
   }
@@ -357,13 +368,13 @@ void HWNDPageSource::PostCursorEvent(
   EventContext,
   const CursorEvent& ev,
   PageID) {
-  if (!mWindow) {
+  if (!mCaptureWindow) {
     return;
   }
 
   // The event point should already be scaled to native content size
   const auto [target, point] = RecursivelyResolveWindowAndPoint(
-    mWindow, {std::lround(ev.mX), std::lround(ev.mY)});
+    mInputWindow, {std::lround(ev.mX), std::lround(ev.mY)});
   if (!target) {
     return;
   }
@@ -398,7 +409,7 @@ void HWNDPageSource::PostCursorEvent(
     target,
     gControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
-    reinterpret_cast<LPARAM>(mWindow));
+    reinterpret_cast<LPARAM>(mCaptureWindow));
   const scope_guard unhook([=]() {
     SendMessageW(
       target,
@@ -456,12 +467,12 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
     return {};
   }
 
-  if (IsIconic(mWindow)) {
+  if (IsIconic(mCaptureWindow)) {
     return {};
   }
 
   RECT clientRect;
-  if (!GetClientRect(mWindow, &clientRect)) {
+  if (!GetClientRect(mCaptureWindow, &clientRect)) {
     return {};
   }
 
@@ -470,7 +481,10 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
   RECT windowRect {};
   if (
     DwmGetWindowAttribute(
-      mWindow, DWMWA_EXTENDED_FRAME_BOUNDS, &windowRect, sizeof(windowRect))
+      mCaptureWindow,
+      DWMWA_EXTENDED_FRAME_BOUNDS,
+      &windowRect,
+      sizeof(windowRect))
     != S_OK) {
     return {};
   }
@@ -479,7 +493,7 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
   // `GetClientRect()` returns client coordinates, so the top left of the
   // client rect is always (0, 0), which isn't useful
   MapWindowPoints(
-    mWindow, HWND_DESKTOP, reinterpret_cast<POINT*>(&clientRect), 2);
+    mCaptureWindow, HWND_DESKTOP, reinterpret_cast<POINT*>(&clientRect), 2);
 
   const auto windowWidth = windowRect.right - windowRect.left;
   const auto scale = captureSize.Width<float>() / windowWidth;
