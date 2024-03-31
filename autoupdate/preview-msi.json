@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149052193",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149052193/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149052193/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.0-rc2",
-    "id": 149052193,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149137994",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149137994/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/149137994/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.0",
+    "id": 149137994,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84I4lsh",
-    "tag_name": "v1.8.0-rc2",
+    "node_id": "RE_kwDOGk0DR84I46pK",
+    "tag_name": "v1.8.0",
     "target_commitish": "master",
-    "name": "v1.8.0-rc2: bugfix",
+    "name": "v1.8.0",
     "draft": false,
-    "prerelease": true,
-    "created_at": "2024-03-29T18:38:28Z",
-    "published_at": "2024-03-29T19:55:03Z",
+    "prerelease": false,
+    "created_at": "2024-03-31T12:57:18Z",
+    "published_at": "2024-03-31T13:34:06Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/159321313",
-        "id": 159321313,
-        "node_id": "RA_kwDOGk0DR84Jfwzh",
-        "name": "OpenKneeboard-v1.8.0-rc2-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/159546738",
+        "id": 159546738,
+        "node_id": "RA_kwDOGk0DR84Jgn1y",
+        "name": "OpenKneeboard-v1.8.0-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 169119529,
+        "size": 169013947,
         "download_count": 0,
-        "created_at": "2024-03-29T19:02:18Z",
-        "updated_at": "2024-03-29T19:02:22Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0-rc2/OpenKneeboard-v1.8.0-rc2-DebugSymbols.zip"
+        "created_at": "2024-03-31T13:20:45Z",
+        "updated_at": "2024-03-31T13:20:48Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0/OpenKneeboard-v1.8.0-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/159321314",
-        "id": 159321314,
-        "node_id": "RA_kwDOGk0DR84Jfwzi",
-        "name": "OpenKneeboard-v1.8.0-rc2.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/159546739",
+        "id": 159546739,
+        "node_id": "RA_kwDOGk0DR84Jgn1z",
+        "name": "OpenKneeboard-v1.8.0.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -98,14 +98,14 @@
         "state": "uploaded",
         "size": 40022016,
         "download_count": 0,
-        "created_at": "2024-03-29T19:02:18Z",
-        "updated_at": "2024-03-29T19:02:20Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0-rc2/OpenKneeboard-v1.8.0-rc2.msi"
+        "created_at": "2024-03-31T13:20:45Z",
+        "updated_at": "2024-03-31T13:20:46Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0/OpenKneeboard-v1.8.0.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.0-rc2",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.0-rc2",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.8.0-rc2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0-rc2/OpenKneeboard-v1.8.0-rc2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes in v1.8.0-rc2\r\n\r\n- Fixed new crash when resizing the app window, including monitor resolution changes\r\n- Added search box to 'add running game' box\r\n\r\n# Changes in v1.8.0-rc1\r\n\r\n## Features\r\n\r\n- Added \"overlay mode\" to the app window. In kneeboard mode, the app window shows the most-recently active in-game view, and moving between tabs and pages in the app window changes what is shown in the most recently active in-game view. In overlay mode, moving between tabs and pages in the app window does not affect the in-game view. OpenKneeboard will ask what you want when a second view is added, and this can be changed later in advanced settings.\r\n- Added a search box to the window capture selection popup\r\n- Added `window.OpenKneeboard.SetPreferredPixelSize(width, height)` javascript API for web dashboards\r\n- Viewer: settings are now saved between restart (thanks @AviiNL !)\r\n- Viewer: replaced magenta color key support with true transparency\r\n- Viewer: streamer mode now enables borderless mode\r\n\r\n## Bug fixes\r\n\r\n- Fixed crash if non-VR support is enabled and the game changes resolution\r\n- Fixed crash when captured windows are rapidly created and removed (e.g. hold F6 while running iOverlay)\r\n- Fixed freezing or crashing if the game freezes or crashes\r\n- Fixed crash if switching profile or OpenKneeboard is closed while a window capture or web dashboard frame is in progress\r\n- Updated the Windows App SDK to v1.5, fixing OpenKneeboard sometimes not exiting fully; this will fix OpenKneeboard closing when upgrading from v1.8 to later versions\r\n- Fixed VR settings UI incorrectly disabling \"enabled in VR\" and \"default tab\" settings in some situations\r\n\r\n\r\n## Performance\r\n\r\n- Fixed extreme load when simultaneously looking directly at multiple overlapping views; this was especially common with iOverlay due to large fully-transparent areas, which may not have been *visibly* overlapping\r\n- Frame rate and timing for OpenKneeboard, the app window, the game, and any other viewers are now independent. This should fix stutters when not running OpenKneeboard on high-refresh-rate VRR monitors, or when the game frame loop pauses\r\n- Improved performance and fix stutters/stalls when using multiple window captures or web dashboards, especially under high CPU load, e.g. when switching mode or servers in iRacing. Issues were more likely and more pronounced with large numbers of window captures/web dashboards\r\n- SteamVR overlays will no longer lag by 1 OpenKneeboard frame; this would previously appear as showing as multiple tabs being visible overlapped, or, just not updating at all, especially when the footer clock is disabled\r\n- Rendering cache is now preserved when switching between tabs and views\r\n- Various high-load operations are now restricted to once-per-frame, as the work is wasted otherwise\r\n- Various high-load operations will now be skipped if they will not result in a change\r\n- Various standard Windows UI animations are now skipped if they are caused by an in-game change instead of a change in the app window\r\n- More consistent in-app frame pacing: OpenKneeboard now aims for frame start times to be equally spaced instead of aiming for a consistent time between the end of one frame and the start of the next. This will not affect game framerate, but may improve smoothness of overlays\r\n- Improved performance and removed stutters when resizing or moving the app window\r\n\r\n## Other changes\r\n\r\n- Adds HAGS state and monitor resolution/refresh rate to debug logs\r\n- Removed \"installation helper\"; used a different workaround for Microsoft DLL versioning issues\r\n- Installing new versions of OpenKneeboard will no longer automatically remove v1.2 (September 2022) or earlier, which were packaged as MSIX instead of as MSI files. This allows installation of modern versions of OpenKneeboard on systems with various group policy restrictions.\r\n",
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.0",
+    "body": "Start by downloading [OpenKneeboard-v1.8.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.0/OpenKneeboard-v1.8.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release primarily contains internal changes to reduce stutters in some situations, especially when using iOverlay. It also contains improvements to the Viewer app, and small usability improvements.\r\n\r\n## Features\r\n\r\n- Added \"overlay mode\" to the app window. In kneeboard mode, the app window shows the most-recently active in-game view, and moving between tabs and pages in the app window changes what is shown in the most recently active in-game view. In overlay mode, moving between tabs and pages in the app window does not affect the in-game view. OpenKneeboard will ask what you want when a second view is added, and this can be changed later in advanced settings.\r\n- Added a search box to the window capture selection popup\r\n- Added a search box to the 'add running game' popup\r\n- Added `window.OpenKneeboard.SetPreferredPixelSize(width, height)` javascript API for web dashboards\r\n- Viewer: settings are now saved between restart (thanks @AviiNL !)\r\n- Viewer: replaced magenta color key support with true transparency\r\n- Viewer: streamer mode now enables borderless mode\r\n\r\n## Bug fixes\r\n\r\n- Fixed crash if non-VR support is enabled and the game changes resolution\r\n- Fixed crash when captured windows are rapidly created and removed (e.g. hold F6 while running iOverlay)\r\n- Fixed freezing or crashing if the game freezes or crashes\r\n- Fixed crash if switching profile or OpenKneeboard is closed while a window capture or web dashboard frame is in progress\r\n- Updated the Windows App SDK to v1.5, fixing OpenKneeboard sometimes not exiting fully; this will fix OpenKneeboard closing when upgrading from v1.8 to later versions\r\n- Fixed VR settings UI incorrectly disabling \"enabled in VR\" and \"default tab\" settings in some situations\r\n- SteamVR overlays will no longer lag by 1 OpenKneeboard frame; this would previously appear as showing as multiple tabs being visible overlapped, or, just not updating at all, especially when the footer clock is disabled\r\n\r\n## Performance\r\n\r\n- Fixed extreme load when simultaneously looking directly at multiple overlapping views; this was especially common with iOverlay due to large fully-transparent areas, which may not have been *visibly* overlapping\r\n- Frame rate and timing for OpenKneeboard, the app window, the game, and any other viewers are now independent. This should fix stutters when not running OpenKneeboard on high-refresh-rate VRR monitors, or when the game frame loop pauses\r\n- Improved performance and fix stutters/stalls when using multiple window captures or web dashboards, especially under high CPU load, e.g. when switching mode or servers in iRacing. Issues were more likely and more pronounced with large numbers of window captures/web dashboards\r\n- Rendering cache is now preserved when switching between tabs and views\r\n- Various high-load operations are now restricted to once-per-frame, as the work is wasted otherwise\r\n- Various high-load operations will now be skipped if they will not result in a change\r\n- Various standard Windows UI animations are now skipped if they are caused by an in-game change instead of a change in the app window\r\n- More consistent in-app frame pacing: OpenKneeboard now aims for frame start times to be equally spaced instead of aiming for a consistent time between the end of one frame and the start of the next. This will not affect game framerate, but may improve smoothness of overlays\r\n- Improved performance and removed stutters when resizing or moving the app window\r\n\r\n## Other changes\r\n\r\n- Adds HAGS state and monitor resolution/refresh rate to debug logs\r\n- Removed \"installation helper\"; used a different workaround for Microsoft DLL versioning issues\r\n- Installing new versions of OpenKneeboard will no longer automatically remove v1.2 (September 2022) or earlier, which were packaged as MSIX instead of as MSI files. This allows installation of modern versions of OpenKneeboard on systems with various group policy restrictions.\r\n\r\n",
     "mentions_count": 1
   }
 ]
