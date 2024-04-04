@@ -73,7 +73,8 @@
           </local:SettingsSubpageData>
           <!-- E7FC Game -->
           <local:SettingsSubpageData ID="Games" Glyph="&#xE7FC;" Title="Games">
-            Use your kneeboard with a graphics tablet, and Oculus and non-VR games. SteamVR is always enabled.
+            Use OpenKneeboard with non-VR or legacy Oculus games, or some tablets. Games do not need to be added
+            if you are using SteamVR or OpenXR with no tablet, a Wacom tablet, or OpenTabletDriver.
           </local:SettingsSubpageData>
           <!-- F571 PrintAllPages -->
           <local:SettingsSubpageData ID="Tabs" Glyph="&#xF571;" Title="Tabs">
