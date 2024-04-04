@@ -30,3 +30,4 @@ Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](https://raw.
 ![Screenshot of the main app](screenshots/config-app.png)
 ![Non-VR Screenshot](screenshots/non-vr.png)
 ![VR Screenshot](screenshots/theater.png)
+![multiple SimHub dashboards in iRacing](screenshots/iracing.png)
