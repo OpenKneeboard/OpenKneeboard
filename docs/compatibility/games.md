@@ -12,7 +12,7 @@ parent: Compatibility
 | Direct3D 12  | ❌ | ✅ | ✅ | ✅ |
 | Vulkan       | ❌ | ✅ | ❌ | ✅ |
 
-Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR.
+Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR. Where possible, OpenXR is *strongly* recommended instead.
 
 OpenXR + Vulkan: the game must use `XR_KHR_vulkan_enable2` and the `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()` functions.
 
