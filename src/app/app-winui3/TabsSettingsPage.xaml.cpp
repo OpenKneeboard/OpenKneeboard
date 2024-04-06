@@ -415,10 +415,21 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
     matchSpec.mMatchTitle
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
+
+  const std::unordered_set<std::string_view> alwaysMatchWindowTitle {
+    // These are all `Chrome_WidgetWin_1` window classes - but matching title
+    // isn't correct for *all* electron apps, e.g. title should not be matched
+    // for Discord
+    "RacelabApps.exe",
+    // All "MainWindow"
+    "iOverlay.exe",
+  };
+
   // These are all `Chrome_WidgetWin_1` window classes - but matching title
   // isn't correct for *all* electron apps, e.g. title should not be matched
   // for Discord
-  if (windowSpec->mExecutableLastSeenPath.filename() == "RacelabApps.exe") {
+  if (alwaysMatchWindowTitle.contains(
+        windowSpec->mExecutableLastSeenPath.filename().string())) {
     matchSpec.mMatchTitle
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
