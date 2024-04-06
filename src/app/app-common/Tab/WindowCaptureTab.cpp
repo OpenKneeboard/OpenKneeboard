@@ -53,12 +53,11 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const MatchSpecification& spec) {
-  auto ret = shared_with_final_release(new WindowCaptureTab(
-    dxr,
-    kbs,
-    {},
-    to_utf8(spec.mExecutableLastSeenPath.stem()),
-    {.mSpec = spec}));
+  const auto tabTitle = (spec.mMatchTitle == TitleMatchKind::Exact)
+    ? spec.mTitle
+    : spec.mExecutableLastSeenPath.stem().string();
+  auto ret = shared_with_final_release(
+    new WindowCaptureTab(dxr, kbs, {}, tabTitle, {.mSpec = spec}));
   ret->TryToStartCapture();
   return ret;
 }
