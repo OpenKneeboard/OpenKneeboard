@@ -235,7 +235,19 @@ fire_and_forget TabsSettingsPage::ShowTabSettings(
   TabSettingsDialogContent().ContentTemplateSelector(
     TabSettingsTemplateSelector());
   co_await TabSettingsDialog().ShowAsync();
-}// namespace winrt::OpenKneeboardApp::implementation
+  // Without this, crash if you:
+  //
+  // 1. Open tab settings
+  // 2. Change a setting
+  // 3. Switch profile
+  // 4. Open tab settings for the same kind of tab
+  //
+  // Given that nulling out the content isn't enough, it seems like
+  // there's unsafe caching in `ContentPresenter`: the template is fine
+  // to re-use, but it shouldn't be re-using the old data
+  TabSettingsDialogContent().Content({nullptr});
+  TabSettingsDialogContent().ContentTemplateSelector({nullptr});
+}
 
 fire_and_forget TabsSettingsPage::RemoveTab(
   const IInspectable& sender,
