@@ -246,13 +246,16 @@ static void MigrateToViewsConfig(Settings& settings) {
 }
 
 Settings Settings::Load(std::string_view profile) {
+  std::optional<Settings> parentSettings;
   Settings settings;
 
   MigrateToProfiles(settings);
 
   if (profile != "default") {
     settings = Settings::Load("default");
+    parentSettings = settings;
   }
+
   const auto profileDir
     = Filesystem::GetSettingsDirectory() / "profiles" / profile;
 
@@ -262,7 +265,12 @@ Settings Settings::Load(std::string_view profile) {
 #undef IT
   MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");
 
-  if (!std::filesystem::exists(profileDir / "Views.json")) {
+  if (settings.mViews.mViews.empty() ||
+  (
+    parentSettings
+    && settings.mApp.mDeprecated.mDualKneeboards != parentSettings->mApp.mDeprecated.mDualKneeboards
+    &&
+    (!std::filesystem::exists(profileDir / "Views.json")))) {
     MigrateToViewsConfig(settings);
   }
 
