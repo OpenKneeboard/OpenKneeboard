@@ -147,8 +147,8 @@ function getTrackFileDateTime(trackFile)
   return string.gsub(trackFile, trackPattern, "%2")
 end
 
-function setMultiplayerMissionPath()
-    l("Mission: is multiplayer: ")
+function useTrackFileAsMission()
+    l("Mission: using track file")
     --[[
       DCS does not make the .miz available for multiplayer, however the
       the track file contains the kneeboard images, briefing etc.
@@ -178,13 +178,20 @@ end
 
 function callbacks.onMissionLoadBegin()
   l("onMissionLoadBegin: "..DCS.getMissionName())
-  if DCS.isMultiplayer() then
-    setMultiplayerMissionPath()
-  else 
-    local file = DCS.getMissionFilename()
-    file = file:gsub("^.[/\\]+", lfs.currentdir())
+  local haveMiz, mizOrError = pcall(DCS.getMissionFilename)
+  if haveMiz and not mizOrError then
+    haveMiz = false
+    mizOrError = "nil miz"
+  end
+  if haveMiz then
+    -- As of 2024-04-16, we have a .miz file in single player, and when
+    -- clicking 'create multiplayer server' from 'mission' in the main menu...
+    file = mizOrError:gsub("^.[/\\]+", lfs.currentdir())
     state.mission = file
     l("Mission: "..state.mission)
+  else
+    -- ... but not when joining a dedicated server; use the track file instead
+    useTrackFileAsMission()
   end
   local mission = DCS.getCurrentMission()
   if mission and mission.mission and mission.mission.theatre then
