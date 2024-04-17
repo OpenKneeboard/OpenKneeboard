@@ -36,7 +36,6 @@
 #include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <mutex>
 #include <ranges>
@@ -297,21 +296,18 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
 
   mKneeboard = kneeboard;
 
+  EventHandler<DWORD, std::shared_ptr<GameInstance>> testHandler {
+    weak_from_this(), &InterprocessRenderer::OnGameChanged};
+
   AddEventListener(
     kneeboard->evGameChangedEvent,
-    [weak = weak_from_this()](DWORD pid, std::shared_ptr<GameInstance> game) {
-      if (auto self = weak.lock()) {
-        self->OnGameChanged(pid, game);
-      }
-    });
+    {weak_from_this(), &InterprocessRenderer::OnGameChanged});
 
   this->RenderNow();
 
-  AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
-                     OPENKNEEBOARD_TraceLoggingScope(
-                       "InterprocessRenderer::evFrameTimerEvent callback");
-                     self->RenderNow();
-                   }));
+  AddEventListener(
+    kneeboard->evFrameTimerEvent,
+    {weak_from_this(), &InterprocessRenderer::RenderNow});
 }
 
 InterprocessRenderer::~InterprocessRenderer() {

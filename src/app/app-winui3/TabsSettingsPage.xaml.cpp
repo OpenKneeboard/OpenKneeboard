@@ -47,7 +47,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/inttypes.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <shims/utility>
 
@@ -88,14 +87,17 @@ TabsSettingsPage::TabsSettingsPage() {
 
   AddEventListener(
     mKneeboard->GetTabsList()->evTabsChangedEvent,
-    weak_wrap(this)([](auto self) {
-      if (self->mUIIsChangingTabs) {
-        return;
-      }
-      if (self->mPropertyChangedEvent) {
-        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
-      }
-    }));
+    {
+      get_weak(),
+      [](TabsSettingsPage* self) {
+        if (self->mUIIsChangingTabs) {
+          return;
+        }
+        if (self->mPropertyChangedEvent) {
+          self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
+        }
+      },
+    });
 
   CreateAddTabMenu(AddTabTopButton(), FlyoutPlacementMode::Bottom);
   CreateAddTabMenu(AddTabBottomButton(), FlyoutPlacementMode::Top);

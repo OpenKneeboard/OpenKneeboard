@@ -35,7 +35,6 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <algorithm>
 #include <ranges>
@@ -742,25 +741,27 @@ void KneeboardView::SetTabViews(
   mTabEvents.clear();
 
   for (const auto& tabView: mTabViews) {
+    auto repaint
+      = [weakTabView = std::weak_ptr(tabView), weak = weak_from_this()]() {
+          auto tabView = weakTabView.lock();
+          auto self = weak.lock();
+          if (!(tabView && self)) {
+            return;
+          }
+          if (self->GetCurrentTabView() != tabView) {
+            return;
+          }
+          self->evNeedsRepaintEvent.Emit();
+        };
+
     mTabEvents.insert(
       mTabEvents.end(),
       {
+        AddEventListener(tabView->evNeedsRepaintEvent, repaint),
         AddEventListener(
-          tabView->evNeedsRepaintEvent,
-          weak_wrap(tabView, this)([](auto tabView, auto self) {
-            if (tabView == self->GetCurrentTabView()) {
-              self->evNeedsRepaintEvent.Emit();
-            }
-          })),
+          tabView->GetRootTab()->evAvailableFeaturesChangedEvent, repaint),
         AddEventListener(
           tabView->evBookmarksChangedEvent, this->evBookmarksChangedEvent),
-        AddEventListener(
-          tabView->GetRootTab()->evAvailableFeaturesChangedEvent,
-          weak_wrap(tabView, this)([](auto tabView, auto self) {
-            if (tabView == self->GetCurrentTabView()) {
-              self->evNeedsRepaintEvent.Emit();
-            }
-          })),
       });
   }
 

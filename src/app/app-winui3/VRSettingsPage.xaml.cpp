@@ -30,7 +30,6 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 
 #include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <shims/filesystem>
 
@@ -51,7 +50,7 @@ VRSettingsPage::VRSettingsPage() {
   this->PopulateViews();
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    weak_wrap(this)([](auto self) { self->PopulateViews(); }));
+    {get_weak(), &VRSettingsPage::PopulateViews});
 }
 
 VRSettingsPage::~VRSettingsPage() {

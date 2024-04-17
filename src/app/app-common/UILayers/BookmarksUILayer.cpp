@@ -22,7 +22,6 @@
 #include <OpenKneeboard/KneeboardState.h>
 
 #include <OpenKneeboard/config.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 namespace OpenKneeboard {
 
@@ -63,10 +62,14 @@ BookmarksUILayer::BookmarksUILayer(
 void BookmarksUILayer::Init() {
   // Need the shared_ptr to exist first
   AddEventListener(
-    mKneeboardView->evBookmarksChangedEvent, weak_wrap(this)([](auto self) {
-      self->mButtons = {};
-      self->evNeedsRepaintEvent.Emit();
-    }));
+    mKneeboardView->evBookmarksChangedEvent,
+    {
+      weak_from_this(),
+      [](auto self) {
+        self->mButtons = {};
+        self->evNeedsRepaintEvent.Emit();
+      },
+    });
 }
 
 BookmarksUILayer::~BookmarksUILayer() {

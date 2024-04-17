@@ -36,7 +36,6 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <shims/utility>
 #include <shims/winrt/base.h>
@@ -80,9 +79,13 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
     mWintabMode = tablet->GetWintabMode();
     mTabletSettingsChangeToken = AddEventListener(
       tablet->evSettingsChangedEvent,
-      weak_wrap(this, tablet)([](auto self, auto tablet) {
-        self->mWintabMode = tablet->GetWintabMode();
-      }));
+      [weak = weak_from_this(), weakTablet = std::weak_ptr(tablet)] {
+        auto self = weak.lock();
+        auto tablet = weakTablet.lock();
+        if (self && tablet) {
+          self->mWintabMode = tablet->GetWintabMode();
+        }
+      });
   } else {
     mWintabMode = WintabMode::Disabled;
   }

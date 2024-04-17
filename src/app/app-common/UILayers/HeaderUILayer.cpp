@@ -34,7 +34,6 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <algorithm>
 
@@ -316,7 +315,7 @@ void HeaderUILayer::LayoutToolbar(
     mTabEvents = {
       this->AddEventListener(
         tabView->evAvailableFeaturesChangedEvent,
-        weak_wrap(this)([](auto self) { self->OnTabChanged(); })),
+        {weak_from_this(), &HeaderUILayer::OnTabChanged}),
     };
   }
 
@@ -348,7 +347,11 @@ void HeaderUILayer::LayoutToolbar(
 
   auto primaryLeft = 2 * margin;
 
-  auto resetToolbar = weak_wrap(this)([](auto self) { self->OnTabChanged(); });
+  auto resetToolbar = [weak = weak_from_this()]() {
+    if (auto self = weak.lock()) {
+      self->OnTabChanged();
+    }
+  };
 
   for (const auto& item: actions.mLeft) {
     const auto selectable
@@ -514,10 +517,14 @@ void HeaderUILayer::OnClick(const Button& button) {
   AddEventListener(
     secondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    secondaryMenu->evCloseMenuRequestedEvent, weak_wrap(this)([](auto self) {
-      self->mSecondaryMenu = {};
-      self->evNeedsRepaintEvent.Emit();
-    }));
+    secondaryMenu->evCloseMenuRequestedEvent,
+    {
+      weak_from_this(),
+      [](auto self) {
+        self->mSecondaryMenu = {};
+        self->evNeedsRepaintEvent.Emit();
+      },
+    });
   mSecondaryMenu = secondaryMenu;
   evNeedsRepaintEvent.Emit();
 }

@@ -21,7 +21,6 @@
 #include <OpenKneeboard/PlainTextPageSource.h>
 
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <winrt/Windows.Foundation.h>
 

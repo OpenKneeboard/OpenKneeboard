@@ -31,7 +31,6 @@
 #include <OpenKneeboard/UserInputDevice.h>
 
 #include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 using namespace OpenKneeboard;
 
@@ -43,10 +42,13 @@ InputSettingsPage::InputSettingsPage() {
 
   AddEventListener(
     mKneeboard->evInputDevicesChangedEvent,
-    weak_wrap(this)([](auto self) -> winrt::fire_and_forget {
-      co_await self->mUIThread;
-      self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Devices"));
-    }));
+    [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
+      co_await uiThread;
+      if (auto self = weak.get()) {
+        self->mPropertyChangedEvent(
+          *self, PropertyChangedEventArgs(L"Devices"));
+      }
+    });
 }
 
 InputSettingsPage::~InputSettingsPage() {

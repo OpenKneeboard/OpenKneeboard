@@ -51,7 +51,6 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
@@ -188,6 +187,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   AddEventListener(
     mKneeboard->evSettingsChangedEvent,
     std::bind_front(&MainWindow::ResetKneeboardView, this));
+
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
     [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
@@ -901,10 +901,6 @@ MainWindow::NavigationItems() noexcept {
 
     navItems.Append(item);
 
-    AddEventListener(
-      tab->evSettingsChangedEvent,
-      weak_wrap(tab, item)([](auto tab, auto item) {}));
-
     for (auto tabID = tab->GetRuntimeID();
          bookmark != bookmarks.end() && bookmark->mTabID == tabID;
          bookmark++) {
@@ -922,10 +918,16 @@ MainWindow::NavigationItems() noexcept {
       muxc::FontIcon renameIcon;
       renameIcon.Glyph(L"\uE8AC");
       renameItem.Icon(renameIcon);
-      renameItem.Click(discard_winrt_event_args(weak_wrap(
-        this, tab)([bookmark = *bookmark, title](auto self, auto tab) {
-        self->RenameBookmark(tab, bookmark, title);
-      })));
+      renameItem.Click([weak = get_weak(),
+                        weakTab = std::weak_ptr(tab),
+                        bookmark = *bookmark,
+                        title](const auto&, const auto&) {
+        auto self = weak.get();
+        auto tab = weakTab.lock();
+        if (self && tab) {
+          self->RenameBookmark(tab, bookmark, title);
+        }
+      });
 
       muxc::MenuFlyout contextFlyout;
       contextFlyout.Items().Append(renameItem);
@@ -945,8 +947,14 @@ MainWindow::NavigationItems() noexcept {
       icon.Glyph(L"\uE8AC");
       renameItem.Icon(icon);
 
-      renameItem.Click(discard_winrt_event_args(weak_wrap(
-        this, tab)([](auto self, auto tab) { self->RenameTab(tab); })));
+      renameItem.Click(
+        [weak = get_weak(), weakTab = std::weak_ptr(tab)](auto, auto) {
+          auto self = weak.get();
+          auto tab = weakTab.lock();
+          if (self && tab) {
+            self->RenameTab(tab);
+          }
+        });
       contextFlyout.Items().Append(renameItem);
     }
     item.ContextFlyout(contextFlyout);
@@ -1138,7 +1146,8 @@ void MainWindow::Show() {
   // ... but that doesn't let us do anything other than restore
   // normally
   //
-  // Always use `ShowWindow()` instead of `->Activate()` so that it's obvious if
+  // Always use `ShowWindow()` instead of `->Activate()` so that it's obvious
+  // if
   // `->Activate()` starts to be required.
   ShowWindow(mHwnd, minimized ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
 }

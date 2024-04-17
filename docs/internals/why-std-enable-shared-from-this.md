@@ -89,18 +89,6 @@ winrt::fire_and_forget MyClass::MyCoroutineMethod() {
 }
 ```
 
-The lambda callback case is pretty verbose, so OpenKneeboard includes `OpenKneeboard::weak_wrap()` to make things a bit better:
-
-```C++
-foo.OnSomeEvent(
-  weak_wrap(this)([](auto self) {
-    // `self` is a `WeakWrap::strong_t<decltype(this)>`, e.g. an
-    // `std::shared_ptr<decltype(this)>`
-    self->SomeMethod();
-  },
-  this);
-```
-
 ## Tangent: captures in coroutine lambdas
 
 ```C++

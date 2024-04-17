@@ -28,7 +28,6 @@
 #include <OpenKneeboard/KneeboardState.h>
 
 #include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <cmath>
 #include <numbers>

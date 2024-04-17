@@ -43,6 +43,50 @@ class EventContext final : public UniqueIDBase<EventContext> {};
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 
+namespace detail {
+
+template <class T>
+struct weak_ref_traits;
+
+template <class T>
+struct weak_ref_traits<std::weak_ptr<T>> {
+  static auto lock(std::weak_ptr<T> weak) {
+    return weak.lock();
+  }
+
+  using strong_type = std::shared_ptr<T>;
+};
+
+template <class T>
+struct weak_ref_traits<winrt::weak_ref<T>> {
+  static auto lock(winrt::weak_ref<T> weak) {
+    return weak.get();
+  }
+
+  using strong_type = decltype(lock(std::declval<winrt::weak_ref<T>>()));
+};
+
+}// namespace detail
+
+template <class T>
+concept weak_ref_or_ptr = requires(T a) {
+  {
+    detail::weak_ref_traits<T>::lock(a)
+  } -> std::convertible_to<typename detail::weak_ref_traits<T>::strong_type>;
+};
+
+static_assert(weak_ref_or_ptr<std::weak_ptr<int>>);
+static_assert(!weak_ref_or_ptr<std::shared_ptr<int>>);
+static_assert(!weak_ref_or_ptr<int*>);
+
+template <weak_ref_or_ptr Weak>
+auto lock_weak(Weak weak) {
+  return detail::weak_ref_traits<Weak>::lock(weak);
+}
+
+template <weak_ref_or_ptr T>
+using strong_t = typename detail::weak_ref_traits<T>::strong_type;
+
 template <class... Args>
 class Event;
 
@@ -55,11 +99,55 @@ class EventHandler final {
   constexpr EventHandler(const T& impl) : mImpl(impl) {
   }
 
-  template <std::convertible_to<std::function<void()>> T>
+  template <std::invocable<> T>
   constexpr EventHandler(const T& impl)
     requires(sizeof...(Args) > 0)
   {
     mImpl = [impl](Args...) { impl(); };
+  }
+
+  constexpr EventHandler(
+    const weak_ref_or_ptr auto& weak,
+    const std::type_identity_t<EventHandler<Args...>>& impl) {
+    mImpl = [weak, impl](Args&&... args) {
+      auto strong = lock_weak(weak);
+      if (!strong) {
+        return;
+      }
+      impl(std::forward<Args>(args)...);
+    };
+  }
+
+  template <
+    weak_ref_or_ptr TWeak,
+    class TRaw = decltype(lock_weak(std::declval<TWeak>()).get())>
+  constexpr EventHandler(
+    const TWeak& weak,
+    const std::invocable<TRaw, Args...> auto& impl) {
+    mImpl = [weak, impl](Args&&... args) {
+      auto strong = lock_weak(weak);
+      if (!strong) {
+        return;
+      }
+      std::invoke(impl, strong.get(), std::forward<Args>(args)...);
+    };
+  }
+
+  template <
+    weak_ref_or_ptr TWeak,
+    class TRaw = decltype(lock_weak(std::declval<TWeak>()).get())>
+  constexpr EventHandler(
+    const TWeak& weak,
+    const std::invocable<TRaw> auto& impl)
+    requires(sizeof...(Args) > 0)
+  {
+    mImpl = [weak, impl](Args&&... args) {
+      auto strong = lock_weak(weak);
+      if (!strong) {
+        return;
+      }
+      std::invoke(impl, strong.get());
+    };
   }
 
   explicit constexpr operator bool() const noexcept {

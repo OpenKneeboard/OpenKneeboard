@@ -43,7 +43,6 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <shims/source_location>
 
@@ -123,12 +122,16 @@ TabPage::TabPage() {
 
   this->InitializePointerSource();
   AddEventListener(
-    mKneeboard->evFrameTimerPreEvent, weak_wrap(this)([](auto self) {
-      self->UpdateKneeboardView();
-      if (self->mHaveCursorEvents) {
-        self->FlushCursorEvents();
-      }
-    }));
+    mKneeboard->evFrameTimerPreEvent,
+    {
+      get_weak(),
+      [](auto self) {
+        self->UpdateKneeboardView();
+        if (self->mHaveCursorEvents) {
+          self->FlushCursorEvents();
+        }
+      },
+    });
 }
 
 void TabPage::PaintIfDirty() {
@@ -252,20 +255,31 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
   button.IsEnabled(action->IsEnabled());
 
   button.IsChecked(action->IsActive());
-  button.Checked(discard_winrt_event_args(
-    weak_wrap(action)([](auto action) { action->Activate(); })));
-  button.Unchecked(discard_winrt_event_args(
-    weak_wrap(action)([](auto action) { action->Deactivate(); })));
+  button.Checked([weak = std::weak_ptr(action)](auto, auto) {
+    if (auto action = weak.lock()) {
+      action->Activate();
+    }
+  });
+  button.Unchecked([weak = std::weak_ptr(action)](auto, auto) {
+    if (auto action = weak.lock()) {
+      action->Deactivate();
+    }
+  });
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, button)(
-      [](auto self, auto action, auto button) noexcept
-      -> winrt::fire_and_forget {
-        co_await self->mUIThread;
+    [uiThread = mUIThread,
+     weakAction = std::weak_ptr(action),
+     weakButton
+     = winrt::make_weak(button)]() noexcept -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto action = weakAction.lock();
+      auto button = weakButton.get();
+      if (action && button) {
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
-      }));
+      }
+    });
 
   return button;
 }
@@ -285,12 +299,17 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, button)(
-      [](auto self, auto action, auto button) noexcept
-      -> winrt::fire_and_forget {
-        co_await self->mUIThread;
+    [uiThread = mUIThread,
+     weakAction = std::weak_ptr(action),
+     weakButton
+     = winrt::make_weak(button)]() noexcept -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto action = weakAction.lock();
+      auto button = weakButton.get();
+      if (action && button) {
         button.IsEnabled(action->IsEnabled());
-      }));
+      }
+    });
 
   return button;
 }
@@ -323,8 +342,14 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-  button.Click(discard_winrt_event_args(weak_wrap(this, action)(
-    [](auto self, auto action) { self->OnToolbarActionClick(action); })));
+  button.Click(
+    [weak = get_weak(), weakAction = std::weak_ptr(action)](auto, auto) {
+      auto self = weak.get();
+      auto action = weakAction.lock();
+      if (self && action) {
+        self->OnToolbarActionClick(action);
+      }
+    });
   return button;
 }
 
@@ -344,26 +369,42 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     tmfi.IsChecked(checkable->IsChecked());
     AddEventListener(
       checkable->evStateChangedEvent,
-      weak_wrap(this, tmfi, checkable)(
-        [](auto self, auto tmfi, auto checkable) -> winrt::fire_and_forget {
-          co_await self->mUIThread;
+      [uiThread = mUIThread,
+       weakTmfi = make_weak(tmfi),
+       weakCheckable = std::weak_ptr(checkable)]() -> winrt::fire_and_forget {
+        co_await uiThread;
+        auto tmfi = weakTmfi.get();
+        auto checkable = weakCheckable.lock();
+        if (tmfi && checkable) {
           tmfi.IsChecked(checkable->IsChecked());
-        }));
+        }
+      });
   } else {
     ret = {};
   }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
-  ret.Click(discard_winrt_event_args(weak_wrap(this, action)(
-    [](auto self, auto action) { self->OnToolbarActionClick(action); })));
+  ret.Click(
+    [weak = get_weak(), weakAction = std::weak_ptr(action)](auto, auto) {
+      auto self = weak.get();
+      auto action = weakAction.lock();
+      if (self && action) {
+        self->OnToolbarActionClick(action);
+      }
+    });
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, ret)(
-      [](auto self, auto action, auto ret) noexcept -> winrt::fire_and_forget {
-        co_await self->mUIThread;
-        ret.IsEnabled(action->IsEnabled());
-      }));
+    [uiThread = mUIThread,
+     weakAction = std::weak_ptr(action),
+     weakItem = winrt::make_weak(ret)]() noexcept -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto action = weakAction.lock();
+      auto item = weakItem.get();
+      if (action && item) {
+        item.IsEnabled(action->IsEnabled());
+      }
+    });
   return ret;
 }
 
@@ -444,13 +485,18 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    weak_wrap(this, visibility, control)(
-      [](auto self, auto visibility, auto control) -> winrt::fire_and_forget {
-        co_await self->mUIThread;
+    [uiThread = mUIThread,
+     weakVisibility = std::weak_ptr(visibility),
+     weakControl = winrt::make_weak(control)]() -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto control = weakControl.get();
+      auto visibility = weakVisibility.lock();
+      if (control && visibility) {
         control.Visibility(
           visibility->IsVisible() ? Visibility::Visible
                                   : Visibility::Collapsed);
-      }));
+      }
+    });
 }
 
 void TabPage::OnCanvasSizeChanged(

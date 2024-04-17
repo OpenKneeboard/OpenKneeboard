@@ -29,7 +29,6 @@
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/weak_wrap.h>
 
 #include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Microsoft.UI.Interop.h>
