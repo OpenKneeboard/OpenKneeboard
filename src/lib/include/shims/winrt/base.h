@@ -39,12 +39,6 @@
 
 namespace OpenKneeboard {
 
-auto discard_winrt_event_args(auto func) {
-  return [func](const winrt::Windows::Foundation::IInspectable&, const auto&) {
-    return func();
-  };
-}
-
 inline auto random_guid() {
   winrt::guid ret;
   CoCreateGuid(reinterpret_cast<GUID*>(&ret));
