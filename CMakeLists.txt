@@ -128,9 +128,6 @@ if(MSVC AND NOT CLANG_CL)
   list(
     APPEND COMMON_COMPILE_OPTIONS
 
-    # Standards-compliant C++20 coroutines
-    "/await:strict"
-
     # Synchronous writes to PDB files in case building with parallel CL.exe
     "/FS"
 
