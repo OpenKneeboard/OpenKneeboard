@@ -27,10 +27,12 @@
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
+
 #include <OpenKneeboard/dprint.h>
 
-#include <algorithm>
 #include <nlohmann/json.hpp>
+
+#include <algorithm>
 
 namespace OpenKneeboard {
 
@@ -109,7 +111,7 @@ void TabsList::LoadDefaultSettings() {
       mDXR,
       mKneeboard,
       Filesystem::GetRuntimeDirectory() / RuntimeFiles::QUICK_START_PDF),
-    std::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
+    DCSRadioLogTab::Create(mDXR, mKneeboard),
     std::make_shared<DCSBriefingTab>(mDXR, mKneeboard),
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),
     std::make_shared<DCSAircraftTab>(mDXR, mKneeboard),

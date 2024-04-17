@@ -36,10 +36,20 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
   });
 
-DCSRadioLogTab::DCSRadioLogTab(
+std::shared_ptr<DCSRadioLogTab> DCSRadioLogTab::Create(
   const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs)
-  : DCSRadioLogTab(dxr, kbs, {}, _("Radio Log"), {}) {
+  KneeboardState* kbs) {
+  return Create(dxr, kbs, {}, _("Radio Log"), {});
+}
+
+std::shared_ptr<DCSRadioLogTab> DCSRadioLogTab::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  std::string_view title,
+  const nlohmann::json& config) {
+  return std::shared_ptr<DCSRadioLogTab>(
+    new DCSRadioLogTab(dxr, kbs, persistentID, title, config));
 }
 
 DCSRadioLogTab::DCSRadioLogTab(
@@ -127,8 +137,13 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
   GameEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
+  auto weak = weak_from_this();
   if (event.name == DCS::EVT_SIMULATION_START) {
     co_await mUIThread;
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
     {
       const EventDelay eventDelay;
       switch (mMissionStartBehavior) {
@@ -157,6 +172,10 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
   const auto parsed = event.ParsedValue<DCS::MessageEvent>();
 
   co_await mUIThread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
 
   const EventDelay delay;
   std::string formatted;

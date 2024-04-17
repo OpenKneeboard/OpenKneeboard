@@ -35,10 +35,12 @@ namespace OpenKneeboard {
 
 class PlainTextPageSource;
 
-class DCSRadioLogTab final : public TabBase,
-                             public DCSTab,
-                             public PageSourceWithDelegates,
-                             public ITabWithSettings {
+class DCSRadioLogTab final
+  : public TabBase,
+    public DCSTab,
+    public PageSourceWithDelegates,
+    public ITabWithSettings,
+    public std::enable_shared_from_this<DCSRadioLogTab> {
  public:
   // Indices must match TabsSettingsPage.xaml
   enum class MissionStartBehavior : uint8_t {
@@ -46,8 +48,10 @@ class DCSRadioLogTab final : public TabBase,
     ClearHistory = 1,
   };
 
-  explicit DCSRadioLogTab(const audited_ptr<DXResources>&, KneeboardState*);
-  explicit DCSRadioLogTab(
+  static std::shared_ptr<DCSRadioLogTab> Create(
+    const audited_ptr<DXResources>&,
+    KneeboardState*);
+  static std::shared_ptr<DCSRadioLogTab> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -70,6 +74,13 @@ class DCSRadioLogTab final : public TabBase,
   void SetTimestampsEnabled(bool);
 
  protected:
+  explicit DCSRadioLogTab(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    std::string_view title,
+    const nlohmann::json& config);
+
   virtual void OnGameEvent(
     const GameEvent&,
     const std::filesystem::path& installPath,
