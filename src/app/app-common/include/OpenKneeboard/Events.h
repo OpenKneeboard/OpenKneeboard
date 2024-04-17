@@ -44,12 +44,38 @@ class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 
 template <class... Args>
-using EventHandler = std::function<void(Args...)>;
+class Event;
+
+template <class... Args>
+class EventHandler final {
+ public:
+  constexpr EventHandler() = default;
+
+  template <std::convertible_to<std::function<void(Args...)>> T>
+  constexpr EventHandler(const T& impl) : mImpl(impl) {
+  }
+
+  template <std::convertible_to<std::function<void()>> T>
+  constexpr EventHandler(const T& impl)
+    requires(sizeof...(Args) > 0)
+  {
+    mImpl = [impl](Args...) { impl(); };
+  }
+
+  explicit constexpr operator bool() const noexcept {
+    return !!mImpl;
+  }
+
+  void operator()(Args... args) const noexcept {
+    mImpl(args...);
+  }
+
+ private:
+  std::function<void(Args...)> mImpl;
+};
 
 class EventReceiver;
 
-template <class... Args>
-class Event;
 class EventConnectionBase;
 template <class... Args>
 class EventConnection;
@@ -276,13 +302,6 @@ class EventReceiver {
     Event<>& forwardAs,
     std::source_location location = std::source_location::current());
 
-  template <class... Args>
-    requires(sizeof...(Args) > 0)
-  EventHandlerToken AddEventListener(
-    Event<Args...>& event,
-    const std::function<void()>& handler,
-    std::source_location location = std::source_location::current());
-
   void RemoveEventListener(EventHandlerToken);
   void RemoveAllEventListeners();
 };
@@ -381,16 +400,6 @@ EventHandlerToken EventReceiver::AddEventListener(
   std::source_location location) {
   mSenders.push_back(event.AddHandler(handler, location));
   return mSenders.back()->mToken;
-}
-
-template <class... Args>
-  requires(sizeof...(Args) > 0)
-EventHandlerToken EventReceiver::AddEventListener(
-  Event<Args...>& event,
-  const std::function<void()>& handler,
-  std::source_location location) {
-  return AddEventListener(
-    event, [handler](Args...) { handler(); }, location);
 }
 
 template <class... Args>
