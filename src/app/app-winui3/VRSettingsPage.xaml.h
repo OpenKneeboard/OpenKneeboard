@@ -52,10 +52,10 @@ struct VRSettingsPage
   fire_and_forget OpenXREnabled(bool) noexcept;
 
   winrt::fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
-  fire_and_forget AddView(muxc::TabView, const IInspectable&) noexcept;
+  fire_and_forget AddView(muxc::TabView, IInspectable) noexcept;
 
   fire_and_forget RemoveView(
     muxc::TabView,

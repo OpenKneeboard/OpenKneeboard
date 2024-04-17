@@ -150,8 +150,8 @@ auto ReadableTime(const std::chrono::time_point<C, T>& time) {
 }
 
 winrt::fire_and_forget HelpPage::OnExportClick(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   constexpr winrt::guid thisCall {
     0x02308bd3,
     0x2b00,
@@ -362,8 +362,8 @@ std::wstring HelpPage::GetDPrintMessagesAsWString() noexcept {
 }
 
 winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   co_await CheckForUpdates(UpdateCheckType::Manual, this->XamlRoot());
 }
 

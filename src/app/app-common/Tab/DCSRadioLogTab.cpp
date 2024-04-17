@@ -36,7 +36,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
   });
 
-DCSRadioLogTab::DCSRadioLogTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSRadioLogTab::DCSRadioLogTab(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : DCSRadioLogTab(dxr, kbs, {}, _("Radio Log"), {}) {
 }
 
@@ -122,9 +124,9 @@ void DCSRadioLogTab::OnGameEvent(
 }
 
 winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
-  const GameEvent& event,
-  const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath) {
+  GameEvent event,
+  std::filesystem::path installPath,
+  std::filesystem::path savedGamesPath) {
   if (event.name == DCS::EVT_SIMULATION_START) {
     co_await mUIThread;
     {

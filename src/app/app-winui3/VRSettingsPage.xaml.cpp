@@ -59,8 +59,8 @@ VRSettingsPage::~VRSettingsPage() {
 }
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
@@ -120,7 +120,7 @@ bool VRSettingsPage::OpenXREnabled() noexcept {
 
 fire_and_forget VRSettingsPage::AddView(
   muxc::TabView tabView,
-  const IInspectable&) noexcept {
+  IInspectable) noexcept {
   auto kinds = AddViewKind().Items();
   kinds.Clear();
 

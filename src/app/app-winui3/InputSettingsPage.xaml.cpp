@@ -54,8 +54,8 @@ InputSettingsPage::~InputSettingsPage() {
 }
 
 fire_and_forget InputSettingsPage::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));

@@ -345,7 +345,7 @@ void WGCPageSource::PreOKBFrame() {
 void WGCPageSource::PostFrame() {
 }
 
-winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
+winrt::fire_and_forget WGCPageSource::ForceResize(PixelSize size) {
   OPENKNEEBOARD_TraceLoggingScope(
     "WGCPageSource::ForceResize()",
     TraceLoggingValue(size.mWidth, "Width"),

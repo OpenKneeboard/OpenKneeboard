@@ -84,9 +84,9 @@ class DCSRadioLogTab final : public TabBase,
   bool mShowTimestamps = false;
 
   winrt::fire_and_forget OnGameEventImpl(
-    const GameEvent&,
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath);
+    GameEvent,
+    std::filesystem::path installPath,
+    std::filesystem::path savedGamesPath);
 
   void LoadSettings(const nlohmann::json&);
 };

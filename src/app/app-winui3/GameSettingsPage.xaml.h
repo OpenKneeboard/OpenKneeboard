@@ -54,21 +54,17 @@ struct GameSettingsPage
   ~GameSettingsPage() noexcept;
 
   winrt::fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
   winrt::fire_and_forget AddRunningProcess(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  winrt::fire_and_forget RemoveGame(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  winrt::fire_and_forget AddExe(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
+  winrt::fire_and_forget RemoveGame(IInspectable, RoutedEventArgs) noexcept;
+  winrt::fire_and_forget AddExe(IInspectable, RoutedEventArgs) noexcept;
   winrt::fire_and_forget ChangeDCSSavedGamesPath(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
   IVector<IInspectable> Games() noexcept;
 

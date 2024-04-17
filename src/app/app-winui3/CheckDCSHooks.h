@@ -19,22 +19,22 @@
  */
 #pragma once
 
-#include <shims/winrt/base.h>
-#include <winrt/microsoft.ui.xaml.h>
-#include <winrt/windows.foundation.h>
+#include "FilePicker.h"
 
 #include <shims/filesystem>
+#include <shims/winrt/base.h>
 
-#include "FilePicker.h"
+#include <winrt/microsoft.ui.xaml.h>
+#include <winrt/windows.foundation.h>
 
 namespace OpenKneeboard {
 
 winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& root);
+  winrt::Microsoft::UI::Xaml::XamlRoot root);
 
 winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& root,
-  const std::filesystem::path& savedGamesPath);
+  winrt::Microsoft::UI::Xaml::XamlRoot root,
+  std::filesystem::path savedGamesPath);
 
 enum class DCSSavedGamesSelectionTrigger {
   /** User has not explicitly asked to choose a saved games location,

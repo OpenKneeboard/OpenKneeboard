@@ -64,8 +64,8 @@ GameSettingsPage::GameSettingsPage() {
 }
 
 fire_and_forget GameSettingsPage::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
@@ -122,8 +122,8 @@ GameSettingsPage::~GameSettingsPage() noexcept {
 }
 
 winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ::winrt::OpenKneeboardApp::ProcessPickerDialog picker;
   picker.XamlRoot(this->XamlRoot());
 
@@ -141,8 +141,8 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
 }
 
 winrt::fire_and_forget GameSettingsPage::AddExe(
-  const IInspectable& sender,
-  const RoutedEventArgs&) noexcept {
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
   constexpr winrt::guid thisCall {
     0x01944f0a,
     0x58a5,
@@ -199,8 +199,8 @@ void GameSettingsPage::OnOverlayAPIChanged(
 }
 
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
-  const IInspectable& sender,
-  const RoutedEventArgs&) noexcept {
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
   auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
   if (!instance) {
     co_return;
@@ -231,8 +231,8 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
 }
 
 winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
-  const IInspectable& sender,
-  const RoutedEventArgs&) noexcept {
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
   auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
     GetGameInstanceFromSender(mKneeboard.get(), sender));
   if (!instance) {

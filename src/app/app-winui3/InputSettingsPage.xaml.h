@@ -52,8 +52,8 @@ struct InputSettingsPage
   void IsOpenTabletDriverEnabled(bool);
 
   winrt::fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
   IVector<IInspectable> Devices() noexcept;
   void OnOrientationChanged(

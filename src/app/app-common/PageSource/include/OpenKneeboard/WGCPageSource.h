@@ -84,7 +84,7 @@ class WGCPageSource : public virtual IPageSource,
   virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) = 0;
   virtual void PostFrame();
 
-  winrt::fire_and_forget ForceResize(const PixelSize&);
+  winrt::fire_and_forget ForceResize(PixelSize);
 
  private:
   static constexpr int32_t SwapchainLength = 3;

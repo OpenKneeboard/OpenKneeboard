@@ -166,9 +166,9 @@ WebView2PageSource::InitializeContentToCapture() {
 }
 
 winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
-  const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,
-  const winrt::Microsoft::Web::WebView2::Core::
-    CoreWebView2WebMessageReceivedEventArgs& args) {
+  winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
+  winrt::Microsoft::Web::WebView2::Core::CoreWebView2WebMessageReceivedEventArgs
+    args) {
   const auto json = to_string(args.WebMessageAsJson());
   const auto parsed = nlohmann::json::parse(json);
 
@@ -472,7 +472,7 @@ void WebView2PageSource::ClearUserInput() {
 }
 
 winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::ImportJavascriptFile(const std::filesystem::path& path) {
+WebView2PageSource::ImportJavascriptFile(std::filesystem::path path) {
   std::ifstream f(path);
   std::stringstream ss;
   ss << f.rdbuf();

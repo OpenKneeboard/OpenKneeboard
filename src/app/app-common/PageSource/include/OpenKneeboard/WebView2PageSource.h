@@ -127,11 +127,12 @@ class WebView2PageSource final : public WGCPageSource,
   winrt::fire_and_forget FlushCursorEvents();
 
   winrt::fire_and_forget OnWebMessageReceived(
-    const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,
-    const winrt::Microsoft::Web::WebView2::Core::
-      CoreWebView2WebMessageReceivedEventArgs&);
+    winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
+    winrt::Microsoft::Web::WebView2::Core::
+      CoreWebView2WebMessageReceivedEventArgs);
 
-  winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(const std::filesystem::path& path);
+  winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(
+    std::filesystem::path path);
 
   static LRESULT CALLBACK WindowProc(
     HWND const window,

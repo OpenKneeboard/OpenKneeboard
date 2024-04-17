@@ -49,13 +49,11 @@ struct HelpPage : HelpPageT<HelpPage>,
     const RoutedEventArgs&) noexcept;
   void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
   void OnAgreeClick(const IInspectable&, const RoutedEventArgs&) noexcept;
-  winrt::fire_and_forget OnExportClick(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+  winrt::fire_and_forget OnExportClick(IInspectable, RoutedEventArgs) noexcept;
 
   winrt::fire_and_forget OnCheckForUpdatesClick(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
   bool AgreedToPrivacyWarning() noexcept;
   bool AgreeButtonIsEnabled() noexcept;
