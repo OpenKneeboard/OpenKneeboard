@@ -20,11 +20,12 @@ Please do not report crashes or freezes if:
 
 If you have an unsupported tablet driver, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) instead.
 
-**Please report crashes or freezes via [GitHub issues](https://go.openkneeboard.com/issues), and attach a zip file containing a single relevant (recent) dump file.
+**Please report crashes or freezes via [GitHub issues](https://go.openkneeboard.com/issues)**, and attach a zip file containing a single relevant (recent) dump file.
 - **WARNING**: these files can contain some personal information, such as the name of your computer, your username (e.g. it may contain `C:\Users\fred` which says your username is `fred`) and the contents of your kneeboard
 - If the file is too large, use a service like Google Drive, Dropbox, Onedrive or similar.
-- If you would prefer to share the dump privately, **a GitHub issue is still required**, but you can send a link to the dump file to `openkneeboard-dumps@fred.fredemmott.com`; if you sent an email, mention it in your GitHub issue, or it will not be seen
+- If you would prefer to share the dump privately, **a GitHub issue is still required**, but you can send a link to the dump file to `openkneeboard-dumps@fred.fredemmott.com`; if you send an email, mention it in your GitHub issue, or it will not be seen
 - If you are able to reliably reproduce the issue, please include steps with as much detail as you can, and any relevant files
+- **WARNING**: If you send an email without also filing a GitHub issue, it is very likely that your email will be automatically deleted before it is seen**
 
 ### Getting a dump file for a crash
 
