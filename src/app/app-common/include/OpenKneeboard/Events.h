@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/weak_refs.h>
 
 #include <shims/winrt/base.h>
 
@@ -42,50 +43,6 @@ namespace OpenKneeboard {
 class EventContext final : public UniqueIDBase<EventContext> {};
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
-
-namespace detail {
-
-template <class T>
-struct weak_ref_traits;
-
-template <class T>
-struct weak_ref_traits<std::weak_ptr<T>> {
-  static auto lock(std::weak_ptr<T> weak) {
-    return weak.lock();
-  }
-
-  using strong_type = std::shared_ptr<T>;
-};
-
-template <class T>
-struct weak_ref_traits<winrt::weak_ref<T>> {
-  static auto lock(winrt::weak_ref<T> weak) {
-    return weak.get();
-  }
-
-  using strong_type = decltype(lock(std::declval<winrt::weak_ref<T>>()));
-};
-
-}// namespace detail
-
-template <class T>
-concept weak_ref_or_ptr = requires(T a) {
-  {
-    detail::weak_ref_traits<T>::lock(a)
-  } -> std::convertible_to<typename detail::weak_ref_traits<T>::strong_type>;
-};
-
-static_assert(weak_ref_or_ptr<std::weak_ptr<int>>);
-static_assert(!weak_ref_or_ptr<std::shared_ptr<int>>);
-static_assert(!weak_ref_or_ptr<int*>);
-
-template <weak_ref_or_ptr Weak>
-auto lock_weak(Weak weak) {
-  return detail::weak_ref_traits<Weak>::lock(weak);
-}
-
-template <weak_ref_or_ptr T>
-using strong_t = typename detail::weak_ref_traits<T>::strong_type;
 
 template <class... Args>
 class Event;

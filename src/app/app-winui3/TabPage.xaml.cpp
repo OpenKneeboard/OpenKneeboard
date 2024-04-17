@@ -370,14 +370,14 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     AddEventListener(
       checkable->evStateChangedEvent,
       [uiThread = mUIThread,
-       weakTmfi = make_weak(tmfi),
-       weakCheckable = std::weak_ptr(checkable)]() -> winrt::fire_and_forget {
+       weak = weak_refs(tmfi, checkable)]() -> winrt::fire_and_forget {
         co_await uiThread;
-        auto tmfi = weakTmfi.get();
-        auto checkable = weakCheckable.lock();
-        if (tmfi && checkable) {
-          tmfi.IsChecked(checkable->IsChecked());
+        auto strong = lock_weaks(weak);
+        if (!strong) {
+          co_return;
         }
+        auto [tmfi, checkable] = *strong;
+        tmfi.IsChecked(checkable->IsChecked());
       });
   } else {
     ret = {};
@@ -486,16 +486,15 @@ void TabPage::AttachVisibility(
   AddEventListener(
     visibility->evStateChangedEvent,
     [uiThread = mUIThread,
-     weakVisibility = std::weak_ptr(visibility),
-     weakControl = winrt::make_weak(control)]() -> winrt::fire_and_forget {
+     weak = weak_refs(control, visibility)]() -> winrt::fire_and_forget {
       co_await uiThread;
-      auto control = weakControl.get();
-      auto visibility = weakVisibility.lock();
-      if (control && visibility) {
-        control.Visibility(
-          visibility->IsVisible() ? Visibility::Visible
-                                  : Visibility::Collapsed);
+      auto strong = lock_weaks(weak);
+      if (!strong) {
+        co_return;
       }
+      auto [control, visibility] = *strong;
+      control.Visibility(
+        visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
     });
 }
 

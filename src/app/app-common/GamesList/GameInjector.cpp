@@ -78,13 +78,13 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
   if (tablet) {
     mWintabMode = tablet->GetWintabMode();
     mTabletSettingsChangeToken = AddEventListener(
-      tablet->evSettingsChangedEvent,
-      [weak = weak_from_this(), weakTablet = std::weak_ptr(tablet)] {
-        auto self = weak.lock();
-        auto tablet = weakTablet.lock();
-        if (self && tablet) {
-          self->mWintabMode = tablet->GetWintabMode();
+      tablet->evSettingsChangedEvent, [weak = weak_refs(this, tablet)]() {
+        auto strong = lock_weaks(weak);
+        if (!strong) {
+          return;
         }
+        auto [self, tablet] = *strong;
+        self->mWintabMode = tablet->GetWintabMode();
       });
   } else {
     mWintabMode = WintabMode::Disabled;
