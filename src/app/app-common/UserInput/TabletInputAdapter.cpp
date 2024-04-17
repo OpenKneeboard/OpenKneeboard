@@ -135,6 +135,8 @@ WintabMode TabletInputAdapter::GetWintabMode() const {
 
 winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
   WintabMode mode) {
+  auto weak = weak_from_this();
+
   if (mode == GetWintabMode()) {
     co_return;
   }
@@ -155,8 +157,20 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
     dprint("Loaded wintab!");
   }
 
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+
   mSettings.mWintab = mode;
+
+  self.reset();
   co_await mUIThread;
+  self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+
   try {
     StartWintab();
   } catch (const winrt::hresult_error& e) {
@@ -175,7 +189,13 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
     : WintabTablet::Priority::ForegroundOnly;
   mWintabTablet->SetPriority(priority);
   // Again, make sure that doesn't crash :)
+
+  self.reset();
   co_await winrt::resume_after(std::chrono::milliseconds(100));
+  self = weak.lock();
+  if (!self) {
+    co_return;
+  }
   evSettingsChangedEvent.Emit();
 }
 
