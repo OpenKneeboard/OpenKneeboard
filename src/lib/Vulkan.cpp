@@ -26,7 +26,7 @@ Dispatch::Dispatch(
   VkInstance instance,
   PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
 #define IT(vkfun) \
-  this->##vkfun = reinterpret_cast<PFN_vk##vkfun>( \
+  this->vkfun = reinterpret_cast<PFN_vk##vkfun>( \
     getInstanceProcAddr(instance, "vk" #vkfun));
   OPENKNEEBOARD_VK_FUNCS
 #undef IT

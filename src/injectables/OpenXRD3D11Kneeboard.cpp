@@ -204,8 +204,6 @@ void OpenXRD3D11Kneeboard::RenderLayers(
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::RenderLayers()");
   D3D11::SavedState savedState(mImmediateContext);
 
-  const auto& sr = mSwapchainResources.at(swapchain);
-
   mRenderer->RenderLayers(
     mSwapchainResources.at(swapchain),
     swapchainTextureIndex,

@@ -25,7 +25,7 @@
 #include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/inttypes.h>
 
-#include <nlohmann/json_fwd.hpp>
+#include <shims/nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;

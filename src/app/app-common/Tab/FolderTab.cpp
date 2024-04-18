@@ -19,9 +19,10 @@
  */
 #include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/FolderTab.h>
+
 #include <OpenKneeboard/dprint.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

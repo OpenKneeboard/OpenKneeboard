@@ -326,13 +326,13 @@ class Impl {
   template <State in, State out>
   void Transition(
     const std::source_location& loc = std::source_location::current()) {
-    mState.Transition<in, out>(loc);
+    mState.template Transition<in, out>(loc);
   }
 
   // "Lockable" C++ named concept: supports std::unique_lock
 
   void lock() {
-    mState.Transition<State::Unlocked, State::TryLock>();
+    mState.template Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::lock()");
 
@@ -345,7 +345,7 @@ class Impl {
         *mHeader = {};
         break;
       default:
-        mState.Transition<State::TryLock, State::Unlocked>();
+        mState.template Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
         dprintf(
@@ -356,13 +356,13 @@ class Impl {
         return;
     }
 
-    mState.Transition<State::TryLock, State::Locked>();
+    mState.template Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity, "SHM::Impl::lock()", TraceLoggingValue("Success", "Result"));
   }
 
   bool try_lock() {
-    mState.Transition<State::Unlocked, State::TryLock>();
+    mState.template Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::try_lock()");
 
@@ -376,10 +376,10 @@ class Impl {
         break;
       case WAIT_TIMEOUT:
         // expected in try_lock()
-        mState.Transition<State::TryLock, State::Unlocked>();
+        mState.template Transition<State::TryLock, State::Unlocked>();
         return false;
       default:
-        mState.Transition<State::TryLock, State::Unlocked>();
+        mState.template Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity,
           "SHM::Impl::try_lock()",
@@ -391,7 +391,7 @@ class Impl {
         return false;
     }
 
-    mState.Transition<State::TryLock, State::Locked>();
+    mState.template Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity,
       "SHM::Impl::try_lock()",
@@ -400,9 +400,9 @@ class Impl {
   }
 
   void unlock() {
-    mState.Transition<State::Locked, State::Unlocked>();
+    mState.template Transition<State::Locked, State::Unlocked>();
     OPENKNEEBOARD_TraceLoggingScope("SHM::Impl::unlock()");
-    const auto ret = ReleaseMutex(mMutexHandle.get());
+    ReleaseMutex(mMutexHandle.get());
   }
 
  protected:
@@ -546,7 +546,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && p->IsValid() & p->mHeader->HaveFeeder();
+  return p && p->IsValid() && p->mHeader->HaveFeeder();
 }
 
 Writer::operator bool() const {

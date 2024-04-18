@@ -20,9 +20,10 @@
 #include "detours-ext.h"
 
 #include <OpenKneeboard/dprint.h>
-#include <TlHelp32.h>
 
 #include <vector>
+
+#include <TlHelp32.h>
 
 using namespace OpenKneeboard;
 
@@ -66,7 +67,7 @@ std::vector<HANDLE> GetAllThreads() {
 struct DetourTransaction::Impl {
   static bool mActive;
   std::vector<HANDLE> mThreads;
-  HANDLE mHeap;
+  HANDLE mHeap {nullptr};
 };
 bool DetourTransaction::Impl::mActive = false;
 

@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/json_fwd.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

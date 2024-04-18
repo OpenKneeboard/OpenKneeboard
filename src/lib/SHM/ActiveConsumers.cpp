@@ -50,6 +50,10 @@ class ActiveConsumers::Impl {
     const auto created = (GetLastError() != ERROR_ALREADY_EXISTS);
     mView = reinterpret_cast<ActiveConsumers*>(MapViewOfFile(
       mFileHandle.get(), FILE_MAP_WRITE, 0, 0, sizeof(ActiveConsumers)));
+    if (!mView) {
+      mFileHandle = {};
+      return;
+    }
     if (created) {
       *mView = {};
     }

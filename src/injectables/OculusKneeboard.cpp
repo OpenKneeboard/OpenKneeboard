@@ -201,7 +201,6 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       topMost = layerIndex;
     }
 
-    auto cacheKey = mRenderCacheKeys.at(layerIndex);
     if (mRenderCacheKeys.at(layerIndex) != params.mCacheKey) {
       needRender = true;
     }
@@ -209,7 +208,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     addedOVRLayers.push_back({
       .Header = { 
         .Type = ovrLayerType_Quad,
-        .Flags = {ovrLayerFlag_HighQuality},
+        .Flags = ovrLayerFlag_HighQuality,
       },
       .ColorTexture = mSwapchain,
       .Viewport = {
@@ -268,5 +267,7 @@ ovrPosef OculusKneeboard::GetOvrPosef(const Pose& pose) {
     .Position = {p.x, p.y, p.z},
   };
 }
+
+OculusKneeboard::Renderer::~Renderer() = default;
 
 }// namespace OpenKneeboard

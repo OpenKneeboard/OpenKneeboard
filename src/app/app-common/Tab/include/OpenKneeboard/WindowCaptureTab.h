@@ -29,15 +29,12 @@
 
 namespace OpenKneeboard {
 
-class HWNDPageSource;
-
 class WindowCaptureTab final
   : public TabBase,
     public ITabWithSettings,
     public PageSourceWithDelegates,
     public std::enable_shared_from_this<WindowCaptureTab> {
  public:
-  struct Settings;
   struct WindowSpecification {
     std::string mExecutablePathPattern;
     std::filesystem::path mExecutableLastSeenPath;
@@ -60,6 +57,13 @@ class WindowCaptureTab final
 
     constexpr auto operator<=>(const MatchSpecification&) const noexcept
       = default;
+  };
+  struct Settings {
+    MatchSpecification mSpec {};
+    bool mSendInput = false;
+    HWNDPageSource::Options mCaptureOptions {};
+
+    constexpr auto operator<=>(const Settings&) const noexcept = default;
   };
 
   WindowCaptureTab() = delete;

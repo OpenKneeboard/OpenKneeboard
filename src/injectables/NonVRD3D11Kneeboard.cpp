@@ -127,11 +127,9 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   const SHM::LayerConfig* layerConfig = nullptr;
-  uint8_t layerIndex = 0;
   for (uint8_t i = 0; i < layerCount; ++i) {
     layerConfig = snapshot.GetLayerConfig(i);
     if (layerConfig->mNonVREnabled) {
-      layerIndex = i;
       break;
     }
     layerConfig = nullptr;
@@ -146,7 +144,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   SHM::ActiveConsumers::SetNonVRPixelSize(sr.mDimensions);
 
   const auto flatConfig = layerConfig->mNonVR;
-  const auto& imageSize = layerConfig->mNonVR.mLocationOnTexture.mSize;
 
   const auto destRect = flatConfig.mPosition.Layout(
     sr.mDimensions, layerConfig->mNonVR.mLocationOnTexture.mSize);

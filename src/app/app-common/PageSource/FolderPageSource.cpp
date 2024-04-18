@@ -22,15 +22,17 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <shims/nlohmann/json.hpp>
+
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 
-#include <nlohmann/json.hpp>
-
 namespace OpenKneeboard {
 
-FolderPageSource::FolderPageSource(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+FolderPageSource::FolderPageSource(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
 }
 

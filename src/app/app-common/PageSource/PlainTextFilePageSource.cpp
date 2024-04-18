@@ -22,9 +22,9 @@
 
 #include <OpenKneeboard/scope_guard.h>
 
-#include <winrt/Windows.Foundation.h>
+#include <shims/nlohmann/json.hpp>
 
-#include <nlohmann/json.hpp>
+#include <winrt/Windows.Foundation.h>
 
 #include <fstream>
 

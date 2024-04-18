@@ -29,7 +29,7 @@
 
 #include <shims/winrt/base.h>
 
-#include <DirectXTK/SimpleMath.h>
+#include <directxtk/SimpleMath.h>
 
 #include <memory>
 #include <optional>

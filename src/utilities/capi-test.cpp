@@ -30,10 +30,10 @@
 #include <winrt/base.h>
 // clang-format on
 
-#include <OpenKneeboard_CAPI.h>
-
 #include <filesystem>
 #include <iostream>
+
+#include <OpenKneeboard_CAPI.h>
 
 static std::filesystem::path GetOpenKneeboardDLLPath() {
   const auto fromEnv = _wgetenv(L"OPENKNEEBOARD_CAPI_DLL");

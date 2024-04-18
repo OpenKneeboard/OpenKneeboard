@@ -86,7 +86,7 @@ class InjectionBootstrapper final {
           const auto path = std::get<1>(pair);
           return path.filename() == "GameOverlayRenderer64.dll";
         });
-    for (const auto [module, path]: dlls) {
+    for (const auto& [module, path]: dlls) {
       if (path.parent_path() != executableDir) {
         continue;
       }

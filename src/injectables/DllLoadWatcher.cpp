@@ -26,10 +26,11 @@
 #include <SubAuth.h>
 // clang-format on
 
-#include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
-
 #include "detours-ext.h"
+
+#include <OpenKneeboard/dprint.h>
+
+#include <shims/winrt/base.h>
 
 // There's a header for this, but only in the DDK
 typedef const UNICODE_STRING* PCUNICODE_STRING;
@@ -162,8 +163,10 @@ DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
   //
   // As LoadLibraryA internally locks, we can just call it again, at the
   // cost of an extra incref+decref.
-  FreeLibrary(LoadLibraryA(p->mName.c_str()));
-  p->mCallbacks.onDllLoaded();
+  if (auto handle = LoadLibraryA(p->mName.c_str())) {
+    FreeLibrary(handle);
+    p->mCallbacks.onDllLoaded();
+  }
   return S_OK;
 }
 

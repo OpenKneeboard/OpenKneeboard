@@ -33,7 +33,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 #include <atomic>
 #include <bit>

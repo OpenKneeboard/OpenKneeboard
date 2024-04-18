@@ -87,7 +87,6 @@ class DCSRadioLogTab final
     const std::filesystem::path& savedGamesPath) override;
 
  private:
-  struct Settings;
   winrt::apartment_context mUIThread;
   std::shared_ptr<PlainTextPageSource> mPageSource;
   MissionStartBehavior mMissionStartBehavior {

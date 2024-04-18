@@ -85,11 +85,11 @@ class ScopedStateTransitions final {
     TStateMachine* impl,
     const std::source_location& loc = std::source_location::current())
     : mImpl(impl), mSourceLocation(loc) {
-    mImpl->Transition<pre, state>(loc);
+    mImpl->template Transition<pre, state>(loc);
   }
 
   ~ScopedStateTransitions() {
-    mImpl->Transition<state, post>(mSourceLocation);
+    mImpl->template Transition<state, post>(mSourceLocation);
   }
 
   ScopedStateTransitions(ScopedStateTransitions&&) = delete;

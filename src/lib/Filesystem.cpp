@@ -54,8 +54,6 @@ std::filesystem::path GetTemporaryDirectory() {
     return sCache;
   }
 
-  wchar_t tempDirBuf[MAX_PATH];
-  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
   auto tempDir = GetTemporaryDirectoryRoot()
     / std::format("{:%F %H-%M-%S} {}",
 
@@ -111,7 +109,8 @@ std::filesystem::path GetImmutableDataDirectory() {
 
 static std::filesystem::path GetShellFolderPath(const KNOWNFOLDERID& folderID) {
   wchar_t* buffer = nullptr;
-  if (!SHGetKnownFolderPath(folderID, NULL, NULL, &buffer) == S_OK && buffer) {
+  if (!(SHGetKnownFolderPath(folderID, NULL, NULL, &buffer) == S_OK
+        && buffer)) {
     return {};
   }
   return {buffer};

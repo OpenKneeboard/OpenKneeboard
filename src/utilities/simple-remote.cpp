@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/GameEvent.h>
 
 using OpenKneeboard::GameEvent;
@@ -27,10 +25,12 @@ using OpenKneeboard::GameEvent;
 #define STRINGIFY(x) STRINGIFY_INNER(x)
 
 #include <OpenKneeboard/dprint.h>
+
 #include <Windows.h>
-#include <shellapi.h>
 
 #include <filesystem>
+
+#include <shellapi.h>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -43,10 +43,13 @@ int WINAPI wWinMain(
   auto argv = CommandLineToArgvW(pCmdLine, &argc);
 
   int repeat = 1;
+
+  wchar_t* wpgmptr {nullptr};
+  _get_wpgmptr(&wpgmptr);
   // argv[0] is sometimes the first arg, sometimes the program name
   if (
     std::filesystem::weakly_canonical(argv[0])
-    != std::filesystem::weakly_canonical(_wpgmptr)) {
+    != std::filesystem::weakly_canonical(wpgmptr)) {
     try {
       repeat = std::stoi(argv[0]);
     } catch (...) {

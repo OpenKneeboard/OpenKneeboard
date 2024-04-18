@@ -30,7 +30,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 #include <algorithm>
 

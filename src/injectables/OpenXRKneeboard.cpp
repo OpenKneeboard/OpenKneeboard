@@ -474,7 +474,11 @@ XrResult xrCreateSession(
   XrInstanceProperties instanceProps {XR_TYPE_INSTANCE_PROPERTIES};
   gNext->xrGetInstanceProperties(instance, &instanceProps);
   gRuntime.mVersion = instanceProps.runtimeVersion;
-  strncpy(gRuntime.mName, instanceProps.runtimeName, XR_MAX_RUNTIME_NAME_SIZE);
+  strncpy_s(
+    gRuntime.mName,
+    sizeof(gRuntime.mName),
+    instanceProps.runtimeName,
+    XR_MAX_RUNTIME_NAME_SIZE);
   dprintf("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
 
   const auto ret = gNext->xrCreateSession(instance, createInfo, session);

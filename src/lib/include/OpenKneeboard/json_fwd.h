@@ -19,9 +19,8 @@
  */
 #pragma once
 
+#include <shims/nlohmann/json_fwd.hpp>
 #include <shims/winrt/base.h>
-
-#include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 template <class T>

@@ -19,12 +19,13 @@
  */
 #pragma once
 
+#include "detours-ext.h"
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
-#include <Windows.h>
 
-#include "detours-ext.h"
+#include <Windows.h>
 
 namespace OpenKneeboard {
 
@@ -75,7 +76,7 @@ BOOL InjectedDLLMain(
       //   heap resources, and they *should* leave resource reclamation to the
       //   kernel; our destructors etc may depend on dlls that have already
       //   been unloaded.
-      auto leaked = instance.release();
+      [[maybe_unused]] auto intentionallyLeaked = instance.release();
       dprint("Process is shutting down, leaving cleanup for the kernel.");
       return TRUE;
     }

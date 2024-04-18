@@ -36,6 +36,7 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 
+#include <shims/nlohmann/json.hpp>
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
@@ -47,8 +48,6 @@
 #include <wil/cppwinrt_helpers.h>
 
 #include <windows.data.pdf.interop.h>
-
-#include <nlohmann/json.hpp>
 
 #include <cstring>
 #include <fstream>

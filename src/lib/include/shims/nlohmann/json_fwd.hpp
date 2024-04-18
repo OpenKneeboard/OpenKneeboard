@@ -17,27 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/json.h>
 
-using namespace OpenKneeboard::detail::SparseJson;
-
-namespace OpenKneeboard {
-
-static_assert(
-  ConstStrLowerFirst(Wrap("FooBar")).mBuffer == std::string_view {"fooBar"});
-static_assert(
-  ConstStrSkipFirst(Wrap("mFooBar")).mBuffer == std::string_view {"FooBar"});
-static_assert(
-  ConstStrSkipFirstLowerNext(Wrap("mFooBar")).mBuffer
-  == std::string_view {"fooBar"});
-
-}// namespace OpenKneeboard
-
-namespace nlohmann {
-void adl_serializer<winrt::guid>::to_json(json& j, const winrt::guid& v) {
-  j = winrt::to_string(winrt::to_hstring(v));
-}
-void adl_serializer<winrt::guid>::from_json(const json& j, winrt::guid& v) {
-  v = winrt::guid {j.get<std::string>()};
-}
-}// namespace nlohmann
+#pragma warning(push)
+#pragma warning(disable : 26819)// Unannotated fallthrough
+#include <nlohmann/json_fwd.hpp>
+#pragma warning(pop)

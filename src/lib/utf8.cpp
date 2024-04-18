@@ -86,7 +86,7 @@ std::string fold_utf8(std::string_view in) {
 
   std::string ret(static_cast<size_t>(foldedLength), '\0');
   error = U_ZERO_ERROR;
-  const auto neededLength = ucasemap_utf8FoldCase(
+  ucasemap_utf8FoldCase(
     gFoldCaseMap,
     ret.data(),
     ret.size(),

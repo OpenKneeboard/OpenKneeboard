@@ -259,7 +259,6 @@ void OpenXRVulkanKneeboard::RenderLayers(
   const auto& br = sr.mBufferResources.at(swapchainIndex);
 
   auto source = snapshot.GetTexture<SHM::Vulkan::Texture>();
-  auto sourceImage = source->GetVKImage();
   auto dest = br.mImageView.get();
 
   auto cb = br.mCommandBuffer;

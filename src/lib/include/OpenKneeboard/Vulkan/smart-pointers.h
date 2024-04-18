@@ -277,7 +277,7 @@ class MemoryMapping {
   MemoryMapping(const MemoryMapping&) = delete;
   MemoryMapping(MemoryMapping&&) = delete;
   MemoryMapping& operator=(const MemoryMapping&) = delete;
-  MemoryMapping& operator=(MemoryMapping&& other) {
+  MemoryMapping& operator=(MemoryMapping&& other) noexcept {
     if (mData) {
       mUnmapMemory(mDevice, mDeviceMemory);
     }

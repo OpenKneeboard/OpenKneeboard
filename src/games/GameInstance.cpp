@@ -72,4 +72,6 @@ GameInstance::GameInstance(
     mGame(game) {
 }
 
+GameInstance::~GameInstance() = default;
+
 }// namespace OpenKneeboard

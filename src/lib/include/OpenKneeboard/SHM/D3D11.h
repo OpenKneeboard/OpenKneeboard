@@ -79,7 +79,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   winrt::com_ptr<ID3D11Device5> mDevice;
   winrt::com_ptr<ID3D11DeviceContext4> mDeviceContext;
-  uint64_t mDeviceLUID;
+  uint64_t mDeviceLUID {};
 
   struct FenceAndValue {
     winrt::com_ptr<ID3D11Fence> mFence;

@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/WintabTablet.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/utf8.h>
@@ -67,7 +68,9 @@ class LibWintab {
   }
 
   LibWintab(const LibWintab&) = delete;
+  LibWintab(LibWintab&&) = delete;
   LibWintab& operator=(const LibWintab&) = delete;
+  LibWintab& operator=(LibWintab&&) = delete;
 
  private:
   unique_hmodule mWintab = 0;
@@ -77,7 +80,6 @@ class LibWintab {
 static WintabTablet* gInstance {nullptr};
 
 struct WintabTablet::Impl {
-  Impl() = delete;
   Impl(HWND window, Priority priority);
   ~Impl();
 
@@ -88,6 +90,12 @@ struct WintabTablet::Impl {
   HCTX mCtx {nullptr};
 
   unique_hwineventhook mEventHook;
+
+  Impl() = delete;
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
 };
 
 WintabTablet::WintabTablet(HWND window, Priority priority)
@@ -168,7 +176,7 @@ WintabTablet::Impl::Impl(HWND window, Priority priority) : mPriority(priority) {
 
   mWintab.WTInfoW(WTI_DEVICES, DVC_NPRESSURE, &axis);
 
-  for (UINT i = 0, tag; mWintab.WTInfoW(WTI_EXTENSIONS + i, EXT_TAG, &tag);
+  for (UINT i = 0, tag = 0; mWintab.WTInfoW(WTI_EXTENSIONS + i, EXT_TAG, &tag);
        ++i) {
     if (tag == WTX_EXPKEYS2 || tag == WTX_OBT) {
       UINT mask = 0;

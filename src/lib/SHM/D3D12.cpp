@@ -177,16 +177,6 @@ void Texture::PopulateCommandList(
     .SubresourceIndex = 0,
   };
   list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-  D3D12_RESOURCE_BARRIER outBarriers[] {
-      D3D12_RESOURCE_BARRIER {
-        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
-          .pResource = this->mTexture.get(),
-          .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-          .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        },
-      },
-    };
   check_hresult(list->Close());
 }
 

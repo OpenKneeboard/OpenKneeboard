@@ -32,7 +32,7 @@
 #include <shims/source_location>
 #include <shims/winrt/base.h>
 
-#include <DirectXTK/SimpleMath.h>
+#include <directxtk/SimpleMath.h>
 
 #include <thread>
 
@@ -143,7 +143,7 @@ bool SteamVRKneeboard::InitializeOpenVR() {
   }
   dprint(__FUNCTION__);
 
-  vr::EVRInitError err;
+  vr::EVRInitError err {};
   if (!mIVRSystem) {
     mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
     if (!mIVRSystem) {
@@ -235,8 +235,6 @@ void SteamVRKneeboard::Tick() {
   }
   const auto hmdPose = *maybeHMDPose;
   const auto vrLayers = this->GetLayers(snapshot, hmdPose);
-
-  const auto config = snapshot.GetConfig();
 
   auto srv
     = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();

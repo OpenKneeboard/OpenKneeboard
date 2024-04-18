@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/Game.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 #include <memory>
 
@@ -57,6 +57,8 @@ struct GameInstance {
     const std::string& name,
     const std::filesystem::path& path,
     const std::shared_ptr<Game>& game);
+
+  virtual ~GameInstance();
 
   const uint64_t mInstanceID;
 

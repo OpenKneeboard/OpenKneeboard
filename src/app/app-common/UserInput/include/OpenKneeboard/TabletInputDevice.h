@@ -19,11 +19,11 @@
  */
 #pragma once
 
+#include "UserInputDevice.h"
+
 #include <OpenKneeboard/TabletSettings.h>
 
-#include <nlohmann/json.hpp>
-
-#include "UserInputDevice.h"
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

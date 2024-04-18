@@ -39,13 +39,6 @@ std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>>
 
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
-struct WindowCaptureTab::Settings {
-  MatchSpecification mSpec {};
-  bool mSendInput = false;
-  HWNDPageSource::Options mCaptureOptions {};
-
-  constexpr auto operator<=>(const Settings&) const noexcept = default;
-};
 OPENKNEEBOARD_DECLARE_JSON(HWNDPageSource::Options);
 OPENKNEEBOARD_DECLARE_JSON(WindowCaptureTab::Settings);
 

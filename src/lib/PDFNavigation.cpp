@@ -45,7 +45,6 @@ namespace OpenKneeboard::PDFNavigation {
 using PageIndexMap = std::map<QPDFObjGen, PageIndex>;
 
 struct PDF::Impl {
-  Impl() = delete;
   Impl(const std::filesystem::path&);
   ~Impl();
 
@@ -56,6 +55,12 @@ struct PDF::Impl {
   winrt::file_handle mFile;
   winrt::handle mMapping;
   void* mView = nullptr;
+
+  Impl() = delete;
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
 };
 
 PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {

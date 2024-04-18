@@ -150,9 +150,11 @@ void CachedReader::ReleaseIPCHandles() {
 
   std::vector<HANDLE> events;
   for (const auto& [fenceHandle, fenceAndValue]: mIPCFences) {
-    auto event = CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL);
-    fenceAndValue.mFence->SetEventOnCompletion(fenceAndValue.mValue, event);
-    events.push_back(event);
+    if (auto event = CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL))
+      [[likely]] {
+      fenceAndValue.mFence->SetEventOnCompletion(fenceAndValue.mValue, event);
+      events.push_back(event);
+    }
   }
 
   WaitForMultipleObjects(events.size(), events.data(), true, INFINITE);

@@ -60,10 +60,9 @@ bool IsElevated() noexcept {
 }
 
 static bool IsShellElevatedImpl() noexcept {
-  HWND shellWindow {GetShellWindow()};
   DWORD processID {};
 
-  GetWindowThreadProcessId(shellWindow, &processID);
+  GetWindowThreadProcessId(GetShellWindow(), &processID);
   if (!processID) {
     return true;
   }
@@ -148,7 +147,6 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
   }
 
   // Relaunch as child of the (not-elevated) shell
-  const HWND shellWindow(GetShellWindow());
   DWORD shellProcessID {};
   GetWindowThreadProcessId(GetShellWindow(), &shellProcessID);
   if (!shellProcessID) {

@@ -23,7 +23,7 @@
 
 namespace OpenKneeboard {
 
-struct DCSWorldInstance : public GameInstance {
+struct DCSWorldInstance final : public GameInstance {
   DCSWorldInstance() = delete;
   DCSWorldInstance(const DCSWorldInstance&) = delete;
   DCSWorldInstance(DCSWorldInstance&&) = delete;

@@ -22,9 +22,10 @@
 #include <OpenKneeboard/PDFFilePageSource.h>
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/SingleFileTab.h>
+
 #include <OpenKneeboard/scope_guard.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

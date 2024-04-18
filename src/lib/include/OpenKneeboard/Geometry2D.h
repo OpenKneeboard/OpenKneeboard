@@ -22,6 +22,7 @@
 #include <array>
 #include <cmath>
 #include <compare>
+#include <concepts>
 
 #include <d2d1.h>
 #include <d3d11.h>
@@ -80,7 +81,8 @@ struct Size {
     return static_cast<TV>(mHeight);
   }
 
-  constexpr Size<T> ScaledToFit(const Size<T>& container,
+  constexpr Size<T> ScaledToFit(
+    const Size<T>& container,
     ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {
     const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
     const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
@@ -279,12 +281,12 @@ struct Rect {
 
   template <class TV = T>
   constexpr auto Left() const {
-    return mOffset.X<TV>();
+    return mOffset.template X<TV>();
   }
 
   template <class TV = T>
   constexpr auto Top() const {
-    return mOffset.Y<TV>();
+    return mOffset.template Y<TV>();
   }
 
   template <class TV = T>
@@ -310,12 +312,12 @@ struct Rect {
 
   template <class TV = T>
   constexpr auto Width() const noexcept {
-    return mSize.Width<TV>();
+    return mSize.template Width<TV>();
   }
 
   template <class TV = T>
   constexpr auto Height() const noexcept {
-    return mSize.Height<TV>();
+    return mSize.template Height<TV>();
   }
 
   constexpr Rect<T> WithOrigin(Origin origin, const Size<T>& container) const {
@@ -358,7 +360,10 @@ struct Rect {
   template <class TValue>
     requires std::floating_point<T>
   constexpr Rect<TValue> Rounded() const noexcept {
-    return {mOffset.Rounded<TValue>(), mSize.Rounded<TValue>()};
+    return {
+      mOffset.template Rounded<TValue>(),
+      mSize.template Rounded<TValue>(),
+    };
   }
 
   constexpr operator D3D11_RECT() const

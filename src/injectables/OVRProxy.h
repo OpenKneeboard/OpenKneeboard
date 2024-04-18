@@ -19,10 +19,10 @@
  */
 #pragma once
 
+#include <memory>
+
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_D3D.h>
-
-#include <memory>
 
 namespace OpenKneeboard {
 
@@ -47,7 +47,7 @@ struct OVRProxy {
   OVRProxy();
   // Implementation detail when we need something after a trailing comma
   // for macro funkiness
-  decltype(nullptr) mNullptr;
+  [[maybe_unused]] decltype(nullptr) mNullptr;
 };
 
 }// namespace OpenKneeboard

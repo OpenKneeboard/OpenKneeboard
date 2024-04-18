@@ -515,6 +515,8 @@ DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
         enabledTimelineSemaphores = true;
         continue;
       }
+      default:
+        continue;
     }
   }
 

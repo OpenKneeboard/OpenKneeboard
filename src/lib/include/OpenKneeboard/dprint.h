@@ -77,8 +77,8 @@ struct DPrintSettings {
 // in `GetDPrintResourceName()`
 struct DPrintMessageHeader {
   DWORD mProcessID = 0;
-  wchar_t mExecutable[MAX_PATH];
-  wchar_t mPrefix[MAX_PATH];
+  wchar_t mExecutable[MAX_PATH] {};
+  wchar_t mPrefix[MAX_PATH] {};
 };
 static_assert(sizeof(DPrintMessageHeader) % sizeof(wchar_t) == 0);
 static_assert(std::is_standard_layout_v<DPrintMessageHeader>);

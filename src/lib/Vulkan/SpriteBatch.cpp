@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.h>
 #include <OpenKneeboard/Vulkan.h>
 
@@ -128,11 +126,6 @@ void SpriteBatch::CreatePipeline() {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
     .attachmentCount = 1,
     .pAttachments = &colorBlendAttachmentState,
-  };
-  VkPipelineDepthStencilStateCreateInfo depthStencil {
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-    .minDepthBounds = 0,
-    .maxDepthBounds = 1,
   };
   VkPipelineViewportStateCreateInfo viewport {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
@@ -346,7 +339,6 @@ void SpriteBatch::End(const std::source_location& loc) {
     const Position dstTR {dstBR[0], dstTL[1]};
     const Position dstBL {dstTL[0], dstBR[1]};
 
-    const auto sourceIndex = sourceIndices.at(sprite.mSource);
     auto makeVertex = [=](const TexCoord& tc, const Position& pos) {
       return Vertex {
         .mPosition = pos,
@@ -378,14 +370,6 @@ void SpriteBatch::End(const std::source_location& loc) {
 
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
   memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
-
-  VkMappedMemoryRange memoryRange {
-    .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
-    .memory = mVertexBuffer.mMemory.get(),
-    .offset = 0,
-    .size = verticesByteSize,
-  };
-  // check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
 
   mVK->CmdPushConstants(
     mCommandBuffer,
@@ -442,11 +426,6 @@ void SpriteBatch::End(const std::source_location& loc) {
     vertexBufferOffsets);
 
   {
-    // TODO: once we stop one-shotting the command buffer, we can update the
-    // source infos after bind
-    VkDescriptorImageInfo samplerInfo {
-      .sampler = mSampler.get(),
-    };
     std::vector<VkDescriptorImageInfo> sourceInfos;
     sourceInfos.reserve(sources.size());
     for (const auto& source: sources) {
@@ -547,11 +526,6 @@ SpriteBatch::Vertex::GetAttributeDescription() {
       .offset = offsetof(Vertex, mTextureIndex),
     },
   };
-}
-
-static VkDeviceSize aligned_size(VkDeviceSize size, VkDeviceSize alignment) {
-  const auto maxPad = alignment - 1;
-  return (size + maxPad) & ~maxPad;
 }
 
 void SpriteBatch::CreateSampler() {
@@ -687,6 +661,8 @@ SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
         enabledDynamicRendering = true;
         continue;
       }
+      default:
+        continue;
     }
   }
 

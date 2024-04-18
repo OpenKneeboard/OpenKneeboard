@@ -22,7 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/RunnerThread.h>
 
-#include <nlohmann/json_fwd.hpp>
+#include <shims/nlohmann/json_fwd.hpp>
 
 #include <thread>
 

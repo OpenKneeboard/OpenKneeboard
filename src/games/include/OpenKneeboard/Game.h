@@ -19,9 +19,10 @@
  */
 #pragma once
 
-#include <memory>
-#include <nlohmann/json_fwd.hpp>
 #include <shims/filesystem>
+#include <shims/nlohmann/json_fwd.hpp>
+
+#include <memory>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -36,8 +37,8 @@ class Game : public std::enable_shared_from_this<Game> {
   virtual bool MatchesPath(const std::filesystem::path&) const;
 
   virtual const char* GetNameForConfigFile() const = 0;
-  virtual std::string GetUserFriendlyName(
-    const std::filesystem::path&) const = 0;
+  virtual std::string GetUserFriendlyName(const std::filesystem::path&) const
+    = 0;
   virtual std::vector<std::filesystem::path> GetInstalledPaths() const = 0;
   virtual bool DiscardOculusDepthInformationDefault() const;
 

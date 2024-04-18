@@ -18,10 +18,13 @@
  * USA.
  */
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
-#include <Windows.h>
+
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <cinttypes>
 #include <cstdlib>
@@ -93,15 +96,26 @@ TRACELOGGING_DEFINE_PROVIDER(
 static TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  wchar_t* wpgmptr {nullptr};
+  char* pgmptr {nullptr};
+  _get_wpgmptr(&wpgmptr);
+  _get_pgmptr(&pgmptr);
+
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
       TraceLoggingRegister(OpenKneeboard::gTraceProvider);
       TraceLoggingWriteStart(
-        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+        gActivity,
+        "Attached",
+        TraceLoggingValue(wpgmptr, "ExecutableW"),
+        TraceLoggingValue(pgmptr, "ExecutableA"));
       break;
     case DLL_PROCESS_DETACH:
       TraceLoggingWriteStop(
-        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+        gActivity,
+        "Attached",
+        TraceLoggingValue(wpgmptr, "ExecutableW"),
+        TraceLoggingValue(pgmptr, "ExecutableA"));
       TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
       break;
   }

@@ -35,7 +35,7 @@ class OculusKneeboard final : private VRKneeboard {
  public:
   class Renderer;
   OculusKneeboard();
-  ~OculusKneeboard();
+  virtual ~OculusKneeboard();
 
   void InstallHook(Renderer* renderer);
   void UninstallHook();
@@ -64,6 +64,8 @@ class OculusKneeboard final : private VRKneeboard {
 
 class OculusKneeboard::Renderer {
  public:
+  virtual ~Renderer();
+
   virtual SHM::CachedReader* GetSHM() = 0;
 
   virtual ovrTextureSwapChain CreateSwapChain(

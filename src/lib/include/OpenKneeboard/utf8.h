@@ -20,8 +20,7 @@
 #pragma once
 
 #include <shims/filesystem>
-
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 #include <concepts>
 #include <string>

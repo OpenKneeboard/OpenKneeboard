@@ -19,13 +19,13 @@
  */
 #include "OculusEndFrameHook.h"
 
+#include "DllLoadWatcher.h"
+#include "detours-ext.h"
+
 #include <OpenKneeboard/dprint.h>
 
 #include <mutex>
 #include <stdexcept>
-
-#include "DllLoadWatcher.h"
-#include "detours-ext.h"
 
 // Not declared in modern Oculus SDK headers, but used by some games (like DCS
 // World)
@@ -152,7 +152,9 @@ void OculusEndFrameHook::Impl::UninstallHook() {
 
   {
     DetourTransaction dt;
-#define IT(x) DetourDetach(reinterpret_cast<void**>(&next_##x), x##_hook);
+#define IT(x) \
+  DetourDetach( \
+    reinterpret_cast<void**>(&next_##x), reinterpret_cast<void*>(x##_hook));
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }

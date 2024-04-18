@@ -61,7 +61,7 @@ LONG DetourSingleAttach(T* ppPointer, T pDetour) {
 
 // Required for VS 2022 17.6 (1936) and below, compile error for 17.7 (1937) and
 // above
-#if _MSC_VER < 1937
+#if _MSC_VER < 1937 && !defined(CLANG_TIDY) && !defined(CLANG_CL)
 template <detours_function_pointer T>
 LONG DetourAttach(T* ppPointer, T pDetour) {
   return DetourAttach(reinterpret_cast<void**>(ppPointer), pDetour);

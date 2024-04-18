@@ -56,8 +56,8 @@ class Texture final : public SHM::IPCClientTexture {
 
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
-  VkDevice mDevice {VK_NULL_HANDLE};
   VkPhysicalDevice mPhysicalDevice {VK_NULL_HANDLE};
+  VkDevice mDevice {VK_NULL_HANDLE};
   uint32_t mQueueFamilyIndex {~(0ui32)};
   const VkAllocationCallbacks* mAllocator {nullptr};
 
@@ -140,7 +140,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
-  virtual void ReleaseIPCHandles();
+  virtual void ReleaseIPCHandles() override;
 
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};

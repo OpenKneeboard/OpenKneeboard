@@ -24,7 +24,7 @@
 
 #include <OpenKneeboard/scope_guard.h>
 
-#include <nlohmann/json.hpp>
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

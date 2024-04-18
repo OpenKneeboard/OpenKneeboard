@@ -22,7 +22,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRConfig.h>
 
-#include <DirectXTK/SimpleMath.h>
+#include <directxtk/SimpleMath.h>
 
 namespace OpenKneeboard {
 

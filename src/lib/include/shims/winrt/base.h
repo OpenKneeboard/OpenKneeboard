@@ -33,7 +33,10 @@
 #include <ppltasks.h>
 
 #include <winrt/Windows.Foundation.h>
+#pragma warning(push)
+#pragma warning(disable : 26820)// Potentially expensive copy operation
 #include <winrt/base.h>
+#pragma warning(pop)
 
 #include <stop_token>
 
@@ -41,7 +44,7 @@ namespace OpenKneeboard {
 
 inline auto random_guid() {
   winrt::guid ret;
-  CoCreateGuid(reinterpret_cast<GUID*>(&ret));
+  winrt::check_hresult(CoCreateGuid(reinterpret_cast<GUID*>(&ret)));
   return ret;
 }
 
@@ -72,14 +75,6 @@ make_stoppable(std::stop_token token, auto action, std::source_location loc) {
       gTraceProvider,
       "make_stoppable()/cancelled",
       TraceLoggingString(src.c_str(), "Source"));
-  } catch (const winrt::hresult_error& e) {
-    auto x = to_string(e.message());
-    __debugbreak();
-  } catch (const std::exception& e) {
-    auto x = e.what();
-    __debugbreak();
-  } catch (...) {
-    __debugbreak();
   }
 }
 
@@ -102,6 +97,8 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
     token, [timeout]() { return winrt::resume_after(timeout); }, loc);
 }
 
+}// namespace OpenKneeboard
+
 template <class CharT>
 struct std::formatter<winrt::guid, CharT>
   : std::formatter<std::basic_string_view<CharT>, CharT> {
@@ -117,5 +114,3 @@ struct std::formatter<winrt::guid, CharT>
     }
   }
 };
-
-}// namespace OpenKneeboard

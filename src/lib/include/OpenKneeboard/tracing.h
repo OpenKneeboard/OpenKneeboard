@@ -40,6 +40,51 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
     TraceLoggingValue(loc.line(), "Line"), \
     TraceLoggingValue(loc.function_name(), "Function")
 
+#ifdef CLANG_TIDY
+// We should be able to switch to the real definitions once
+// we're using `/Zc:preprocessor` and OPENKNEEBOARD_VA_OPT_SUPPORTED is true
+namespace ClangTidy {
+class TraceLoggingScopedActivity
+  : public TraceLoggingThreadActivity<gTraceProvider> {
+ public:
+  constexpr void Stop() {
+  }
+  constexpr void CancelAutoStop() {
+  }
+  constexpr void StopWithResult([[maybe_unused]] auto result) {
+  }
+};
+constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
+  return first;
+}
+}// namespace ClangTidy
+#define OPENKNEEBOARD_TraceLoggingScope(...)
+#define OPENKNEEBOARD_TraceLoggingScopedActivity(activity, ...) \
+  ClangTidy::TraceLoggingScopedActivity activity;
+#define OPENKNEEBOARD_TraceLoggingWrite(...)
+
+#undef TraceLoggingValue
+#undef TraceLoggingCountedWideString
+#undef TraceLoggingString
+#undef TraceLoggingBinary
+
+#undef TraceLoggingWrite
+#undef TraceLoggingWriteStart
+#undef TraceLoggingWriteStop
+#undef TraceLoggingWriteTagged
+
+#define TraceLoggingValue(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingCountedWideString(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingString(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingBinary(...) ClangTidy::maybe_unused(__VA_ARGS__)
+
+#define TraceLoggingWrite(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteStart(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteStop(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteTagged(...) ClangTidy::maybe_unused(__VA_ARGS__)
+
+#else
+
 // TraceLoggingWriteStart() requires the legacy preprocessor :(
 static_assert(_MSVC_TRADITIONAL);
 // Rewrite these macros if this fails, as presumably the above was fixed :)
@@ -150,4 +195,10 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     TraceLoggingValue(__FUNCTION__, "Function"), \
     ##__VA_ARGS__)
 
+#endif
+
 }// namespace OpenKneeboard
+
+#ifdef CLANG_TIDY
+namespace ClangTidy = OpenKneeboard::ClangTidy;
+#endif

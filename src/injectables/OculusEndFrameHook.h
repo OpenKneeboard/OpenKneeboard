@@ -19,10 +19,10 @@
  */
 #pragma once
 
-#include <OVR_CAPI.H>
-
 #include <functional>
 #include <memory>
+
+#include <OVR_CAPI.h>
 
 namespace OpenKneeboard {
 
