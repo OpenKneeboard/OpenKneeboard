@@ -57,6 +57,12 @@ struct OculusEndFrameHook::Impl {
   void InstallHook();
   void UninstallHook();
 
+  Impl() = delete;
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
+
  private:
   static Impl* gInstance;
   DllLoadWatcher mLibOVR {MODULE_NAME};

@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/DCSGrid.h>
+
 #include <OpenKneeboard/dprint.h>
 
 #include <GeographicLib/UTMUPS.hpp>
@@ -51,7 +52,7 @@ std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> DCSGrid::LatLongFromXY(
   // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
   const auto x = mOffsetX + dcsY;
   const auto y = mOffsetY + dcsX;
-  DCSWorld::GeoReal retLat, retLong;
+  DCSWorld::GeoReal retLat {}, retLong {};
 
   sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};

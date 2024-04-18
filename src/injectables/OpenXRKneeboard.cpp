@@ -360,7 +360,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
 
   if (needRender) {
-    uint32_t swapchainTextureIndex;
+    uint32_t swapchainTextureIndex {~(0ui32)};
     {
       OPENKNEEBOARD_TraceLoggingScope("AcquireSwapchainImage");
       check_xrresult(mOpenXR->xrAcquireSwapchainImage(

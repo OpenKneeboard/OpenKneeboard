@@ -143,7 +143,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       .ppEnabledExtensionNames = RequiredInstanceExtensions.data(),
     });
 
-  VkInstance instance;
+  VkInstance instance {};
   check_vkresult(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
 
   auto vkDestroyInstance = reinterpret_cast<PFN_vkDestroyInstance>(

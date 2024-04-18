@@ -66,7 +66,9 @@ class UTF8CaseMap {
 
   UTF8CaseMap() = delete;
   UTF8CaseMap(const UTF8CaseMap&) = delete;
+  UTF8CaseMap(UTF8CaseMap&&) = delete;
   UTF8CaseMap& operator=(const UTF8CaseMap&) = delete;
+  UTF8CaseMap& operator=(UTF8CaseMap&&) = delete;
 
  private:
   UCaseMap* mImpl {nullptr};

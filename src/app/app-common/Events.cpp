@@ -134,7 +134,7 @@ struct ThreadData {
     return sInstance;
   }
 
-  void EmitOrEnqueue(EmitterQueueItem&& item) noexcept {
+  void EmitOrEnqueue(const EmitterQueueItem& item) noexcept {
     auto& globals = GlobalData::Get();
     if (!globals.StartEvent()) {
       return;

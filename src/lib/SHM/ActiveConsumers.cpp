@@ -72,6 +72,11 @@ class ActiveConsumers::Impl {
     return sImpl.mView;
   }
 
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
+
  private:
   winrt::file_handle mFileHandle;
   ActiveConsumers* mView {nullptr};

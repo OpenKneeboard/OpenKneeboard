@@ -55,7 +55,9 @@ class TabletProxy final {
   ~TabletProxy();
 
   TabletProxy(const TabletProxy&) = delete;
+  TabletProxy(TabletProxy&&) = delete;
   TabletProxy& operator=(const TabletProxy&) = delete;
+  TabletProxy& operator=(TabletProxy&&) = delete;
 
  private:
   void Initialize();

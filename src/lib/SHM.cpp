@@ -126,6 +126,8 @@ struct Detail::IPCHandles {
       DUPLICATE_SAME_ACCESS));
   }
 
+  ~IPCHandles() = default;
+
   IPCHandles() = delete;
   IPCHandles(const IPCHandles&) = delete;
   IPCHandles(IPCHandles&&) = delete;
@@ -404,6 +406,11 @@ class Impl {
     OPENKNEEBOARD_TraceLoggingScope("SHM::Impl::unlock()");
     ReleaseMutex(mMutexHandle.get());
   }
+
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
 
  protected:
   StateMachine<State> mState = InitialState;

@@ -59,6 +59,11 @@ class TraceLoggingRegistration {
     TraceLoggingWriteStop(gActivity, "Invocation");
     TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
   }
+
+  TraceLoggingRegistration(const TraceLoggingRegistration&) = delete;
+  TraceLoggingRegistration(TraceLoggingRegistration&&) = delete;
+  TraceLoggingRegistration& operator=(const TraceLoggingRegistration&) = delete;
+  TraceLoggingRegistration& operator=(TraceLoggingRegistration&&) = delete;
 };
 }// namespace
 

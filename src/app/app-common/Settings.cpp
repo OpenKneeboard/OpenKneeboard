@@ -142,7 +142,7 @@ void Settings::Save(std::string_view profile) const {
   }
 
 #define IT(cpptype, x) \
-  MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x##".json");
+  MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x ".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 }

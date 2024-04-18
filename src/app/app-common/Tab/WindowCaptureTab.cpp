@@ -176,11 +176,8 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   mDelegate = source;
   this->SetDelegates({source});
   this->AddEventListener(
-    source->evWindowClosedEvent, [weak = weak_from_this()]() {
-      if (auto self = weak.lock()) {
-        self->OnWindowClosed();
-      }
-    });
+    source->evWindowClosedEvent,
+    {weak_from_this(), &WindowCaptureTab::OnWindowClosed});
   mHwnd = hwnd;
   co_return true;
 }
@@ -195,7 +192,7 @@ winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
 
   const HWND desktop = GetDesktopWindow();
   HWND hwnd = NULL;
-  while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
+  while ((hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr))) {
     if (!this->WindowMatches(hwnd)) {
       continue;
     }
@@ -272,7 +269,7 @@ WindowCaptureTab::GetTopLevelWindows() {
 
   const HWND desktop = GetDesktopWindow();
   HWND hwnd = NULL;
-  while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
+  while ((hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr))) {
     auto spec = GetWindowSpecification(hwnd);
     if (spec) {
       ret[hwnd] = *spec;
@@ -331,7 +328,7 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
   constexpr std::wstring_view uwpClass {L"ApplicationFrameWindow"};
   if (classBuf == uwpClass) {
     HWND child {};
-    while (child = FindWindowExW(hwnd, child, nullptr, nullptr)) {
+    while ((child = FindWindowExW(hwnd, child, nullptr, nullptr))) {
       DWORD childProcessID {};
       GetWindowThreadProcessId(child, &childProcessID);
       if (childProcessID != processID) {
@@ -488,11 +485,11 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
     }
   }
 
-  [hwnd](auto weak) -> winrt::fire_and_forget {
+  [](auto hwnd, auto weak) -> winrt::fire_and_forget {
     if (auto instance = weak.lock()) {
       co_await instance->OnNewWindow(hwnd);
     }
-  }(std::weak_ptr(instance));
+  }(hwnd, std::weak_ptr(instance));
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(

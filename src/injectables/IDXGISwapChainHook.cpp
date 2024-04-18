@@ -78,6 +78,12 @@ struct IDXGISwapChainHook::Impl {
 
   void UninstallHook();
 
+  Impl() = delete;
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
+
  private:
   static Impl* gInstance;
   static decltype(&IDXGISwapChain::Present) Next_IDXGISwapChain_Present;

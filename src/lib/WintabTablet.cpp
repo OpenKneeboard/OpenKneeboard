@@ -62,6 +62,7 @@ class LibWintab {
     WINTAB_FUNCTIONS
 #undef IT
   }
+  ~LibWintab() = default;
 
   operator bool() const {
     return mWintab != 0;

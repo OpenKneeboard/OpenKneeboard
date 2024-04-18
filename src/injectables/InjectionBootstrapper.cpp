@@ -73,8 +73,6 @@ class InjectionBootstrapper final {
   IDXGISwapChainHook mDXGIHook;
 
  public:
-  InjectionBootstrapper() = delete;
-
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
     wchar_t pathBuf[1024];
     const auto pathLen = GetModuleFileNameW(NULL, pathBuf, 1024);
@@ -125,6 +123,12 @@ class InjectionBootstrapper final {
     mOpenVRHook.UninstallHook();
     mDXGIHook.UninstallHook();
   }
+
+  InjectionBootstrapper() = delete;
+  InjectionBootstrapper(const InjectionBootstrapper&) = delete;
+  InjectionBootstrapper(InjectionBootstrapper&&) = delete;
+  InjectionBootstrapper& operator=(const InjectionBootstrapper&) = delete;
+  InjectionBootstrapper& operator=(InjectionBootstrapper&&) = delete;
 
  protected:
   ovrResult OnOVREndFrame(

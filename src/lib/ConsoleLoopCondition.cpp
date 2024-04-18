@@ -58,7 +58,7 @@ typedef std::chrono::
 
 bool ConsoleLoopCondition::Sleep(
   const std::chrono::steady_clock::duration& delay) {
-  int64_t expiration;
+  int64_t expiration {};
   GetSystemTimeAsFileTime((FILETIME*)&expiration);
   expiration += std::chrono::duration_cast<FILETIME_RESOLUTION>(delay).count();
   SetWaitableTimer(

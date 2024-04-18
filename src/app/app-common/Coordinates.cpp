@@ -22,6 +22,7 @@
 
 #include <GeographicLib/DMS.hpp>
 #include <GeographicLib/GeoCoords.hpp>
+
 #include <format>
 
 namespace OpenKneeboard::Coordinates {
@@ -30,7 +31,7 @@ static_assert(
   std::is_same_v<GeographicLib::Math::real, OpenKneeboard::GeoReal>);
 
 std::string DMSFormat(GeoReal angle, char pos, char neg) {
-  GeoReal degrees, minutes, seconds;
+  GeoReal degrees {}, minutes {}, seconds {};
   GeographicLib::DMS::Encode(angle, degrees, minutes, seconds);
   return std::format(
     "{} {:03.0f}°{:02.0f}'{:05.2f}\"",

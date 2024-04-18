@@ -76,6 +76,12 @@ struct IVRCompositorWaitGetPosesHook::Impl {
     const char* pchInterfaceVersion,
     vr::EVRInitError* peError);
 
+  Impl() = delete;
+  Impl(const Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
+
  private:
   static Impl* gInstance;
   Callbacks mCallbacks;
