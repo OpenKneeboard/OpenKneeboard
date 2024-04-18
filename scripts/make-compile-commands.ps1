@@ -1,6 +1,9 @@
 # Copyright (C) 2024 Fred Emmott <fred@fredemmott.com>
 # SPDX-License-Identifier: ISC
 
+# Make DirectXMath.h includable by Clang
+$extraArgs = "-D_XM_NO_INTRINSICS_"
+
 $wasCreated = $false;
 $mutex = New-Object System.Threading.Mutex($true, "com.fredemmott.merge-compile-commands", [ref] $wasCreated);
 if (!$wasCreated) {
@@ -21,7 +24,7 @@ foreach ($Folder in $Folders) {
     foreach ($Source in $(Get-Content $SourcesFile)) {
       $Entries += @{
         directory = $Folder;
-        command   = "$command `"$Source`"";
+        command   = "$command $extraArgs `"$Source`"";
         file      = "$Source";
       };
     }
