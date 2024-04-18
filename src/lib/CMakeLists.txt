@@ -330,7 +330,7 @@ target_link_libraries(
   OpenKneeboard-SHM
 )
 
-set(VERSION_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
+set(VERSION_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h")
 add_custom_target(
   OpenKneeboard-version-sources
   COMMAND
@@ -340,7 +340,7 @@ add_custom_target(
   -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
   -DVERSION_BUILD=${CMAKE_PROJECT_VERSION_TWEAK}
   -DRELEASE_NAME=${RELEASE_NAME}
-  "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in"
+  "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.in.h"
   "-DOUTPUT_CPP_FILE=${VERSION_CPP_FILE}"
   "-P${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
   DEPENDS
@@ -351,12 +351,13 @@ add_custom_target(
   WORKING_DIRECTORY
   "${CMAKE_SOURCE_DIR}"
 )
-ok_add_library(OpenKneeboard-version STATIC "${VERSION_CPP_FILE}")
+ok_add_library(OpenKneeboard-version INTERFACE)
 target_include_directories(
   OpenKneeboard-version
-  PUBLIC
-  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  INTERFACE
+  "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
+add_dependencies(OpenKneeboard-version INTERFACE OpenKneeboard-version-sources)
 
 ok_add_library(OpenKneeboard-shims INTERFACE)
 target_include_directories(

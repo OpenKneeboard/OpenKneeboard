@@ -17,19 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/version.h>
+#pragma once
+
+#include <cinttypes>
+#include <ctime>
+#include <string_view>
 
 namespace OpenKneeboard::Version {
 
-const uint16_t Major = @VERSION_MAJOR@;
-const uint16_t Minor = @VERSION_MINOR@;
-const uint16_t Patch = @VERSION_PATCH@;
-const uint16_t Build = @VERSION_BUILD@;
+// clang-format off
+static constexpr uint16_t Major = @VERSION_MAJOR@;
+static constexpr uint16_t Minor = @VERSION_MINOR@;
+static constexpr uint16_t Patch = @VERSION_PATCH@;
+static constexpr uint16_t Build = @VERSION_BUILD@;
 
-const std::string_view ReleaseName { "@RELEASE_NAME@" };
-const std::string_view TagName { "@MATCHING_TAG@" };
-const bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
-const bool IsTaggedVersion = @IS_TAGGED_VERSION@;
-const bool IsStableRelease = @IS_STABLE_RELEASE@;
+static constexpr std::string_view ReleaseName {"@RELEASE_NAME@"};
+static constexpr std::string_view TagName {"@MATCHING_TAG@"};
+static constexpr bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
+static constexpr bool IsTaggedVersion = @IS_TAGGED_VERSION@;
+static constexpr bool IsStableRelease = @IS_STABLE_RELEASE@;
+// clang-format on
 
 }// namespace OpenKneeboard::Version
