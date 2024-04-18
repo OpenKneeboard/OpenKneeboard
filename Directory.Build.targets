@@ -1,0 +1,35 @@
+<!--
+  Copyright (C) 2024 Fred Emmott <fred@fredemmott.com>
+  SPDX-License-Identifier: ISC
+-->
+<Project>
+  <!-- GetCompileCommands is defined by Microsoft.Cpp.ClangTidy.targets -->
+  <Target
+    Name="CompileFlagsAndSources"
+    DependsOnTargets="GetCompileCommands"
+    AfterTargets="ClCompile"
+    Condition="'@ClCompile' != ''">
+    <WriteLinesToFile
+      File="$(ProjectName).ClCompile_flags.txt"
+      Lines="@(CompileCommands)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
+    <WriteLinesToFile
+      File="$(ProjectName).ClCompile_sources.txt"
+      Lines="@(ClCompile)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
+  </Target>
+  <Target
+    Name="CompileCommands"
+    DependsOnTargets="CompileFlagsAndSources"
+    AfterTargets="CompileFlagsAndSources"
+    Condition="'@ClCompile' != ''">
+
+    <Exec
+      Command="powershell -NonInteractive -executionpolicy Unrestricted &quot;$(MSBuildThisFileDirectory)/make-compile-commands.ps1"
+    />
+  </Target>
+</Project>

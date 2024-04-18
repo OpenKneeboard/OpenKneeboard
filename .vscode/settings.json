@@ -118,5 +118,7 @@
   ],
   "editor.formatOnSave": true,
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "cmake.mergedCompileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"
 }

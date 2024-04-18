@@ -163,6 +163,11 @@ configure_file(
   "${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props"
   COPYONLY
 )
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.targets"
+  "${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.targets"
+  COPYONLY
+)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(BUILD_BITNESS 32 CACHE INTERNAL "")
