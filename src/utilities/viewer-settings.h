@@ -71,7 +71,7 @@ struct ViewerSettings final {
   static ViewerSettings Load();
   void Save();
 
-  constexpr auto operator<=>(const ViewerSettings&) const noexcept = default;
+  constexpr bool operator==(const ViewerSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(ViewerSettings)

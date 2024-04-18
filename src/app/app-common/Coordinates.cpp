@@ -42,7 +42,7 @@ std::string DMSFormat(GeoReal angle, char pos, char neg) {
 };
 
 std::string DMFormat(GeoReal angle, char pos, char neg) {
-  GeoReal degrees, minutes;
+  GeoReal degrees {}, minutes {};
   GeographicLib::DMS::Encode(angle, degrees, minutes);
   return std::format(
     "{} {:03.0f}°{:05.3f}'",

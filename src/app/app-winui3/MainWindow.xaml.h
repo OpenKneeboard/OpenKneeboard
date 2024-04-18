@@ -68,7 +68,7 @@ struct MainWindow : MainWindowT<MainWindow>,
     IInspectable box() const;
     static NavigationTag unbox(IInspectable);
 
-    constexpr auto operator<=>(const NavigationTag&) const = default;
+    constexpr bool operator==(const NavigationTag&) const = default;
   };
   winrt::Windows::Foundation::Collections::IVector<
     winrt::Windows::Foundation::IInspectable>

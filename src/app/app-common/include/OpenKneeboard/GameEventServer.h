@@ -53,10 +53,8 @@ class GameEventServer final
   void Start();
 
   winrt::Windows::Foundation::IAsyncAction Run();
-  static winrt::Windows::Foundation::IAsyncOperation<bool> RunSingle(
-    const std::weak_ptr<GameEventServer>&,
-    const winrt::handle& event,
-    const winrt::file_handle&);
+  static winrt::Windows::Foundation::IAsyncOperation<bool>
+  RunSingle(std::weak_ptr<GameEventServer>, HANDLE event, HANDLE mailslot);
   winrt::fire_and_forget DispatchEvent(std::string_view);
 };
 

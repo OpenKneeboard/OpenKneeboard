@@ -35,7 +35,7 @@ struct Bookmark {
   PageID mPageID;
   std::string mTitle;
 
-  constexpr auto operator<=>(const Bookmark&) const = default;
+  constexpr bool operator==(const Bookmark&) const = default;
 };
 
 }// namespace OpenKneeboard

@@ -40,19 +40,18 @@ struct AutoUpdateSettings final {
     std::string mFakeUpdateVersion {};
     bool mAlwaysCheck {false};
 
-    constexpr auto operator<=>(const Testing&) const noexcept = default;
+    constexpr bool operator==(const Testing&) const noexcept = default;
   };
 
   Testing mTesting {};
 
-  constexpr auto operator<=>(const AutoUpdateSettings&) const noexcept
-    = default;
+  constexpr bool operator==(const AutoUpdateSettings&) const noexcept = default;
 };
 
 struct AppSettings final {
   struct DualKneeboardSettings final {
     bool mEnabled = false;
-    constexpr auto operator<=>(const DualKneeboardSettings&) const noexcept
+    constexpr bool operator==(const DualKneeboardSettings&) const noexcept
       = default;
   };
 
@@ -60,8 +59,7 @@ struct AppSettings final {
     bool mEnabled = true;
     bool mLoop = false;
 
-    constexpr auto operator<=>(const BookmarkSettings&) const noexcept
-      = default;
+    constexpr bool operator==(const BookmarkSettings&) const noexcept = default;
   };
 
   struct InGameUISettings final {
@@ -70,8 +68,7 @@ struct AppSettings final {
     bool mFooterFrameCountEnabled = false;
     bool mBookmarksBarEnabled = true;
 
-    constexpr auto operator<=>(const InGameUISettings&) const noexcept
-      = default;
+    constexpr bool operator==(const InGameUISettings&) const noexcept = default;
   };
 
   struct TintSettings final {
@@ -85,7 +82,7 @@ struct AppSettings final {
     // No alpha given there are separate VR- and Non-VR-
     // settings for alpha.
 
-    constexpr auto operator<=>(const TintSettings&) const noexcept = default;
+    constexpr bool operator==(const TintSettings&) const noexcept = default;
   };
 
   std::optional<RECT> mWindowRect;
@@ -99,11 +96,11 @@ struct AppSettings final {
 
   struct Deprecated {
     DualKneeboardSettings mDualKneeboards {};
-    constexpr auto operator<=>(const Deprecated&) const noexcept = default;
+    constexpr bool operator==(const Deprecated&) const noexcept = default;
   };
   Deprecated mDeprecated;
 
-  constexpr auto operator<=>(const AppSettings&) const noexcept = default;
+  constexpr bool operator==(const AppSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(AppSettings);

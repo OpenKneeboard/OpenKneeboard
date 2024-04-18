@@ -32,13 +32,13 @@ struct MainWindowInfo {
     uint16_t mMinor {0};
     uint16_t mPatch {0};
     uint16_t mBuild {0};
-    constexpr auto operator<=>(const VersionInfo&) const = default;
+    constexpr bool operator==(const VersionInfo&) const = default;
   };
 
   HWND mHwnd {NULL};
   VersionInfo mVersion {};
 
-  constexpr auto operator<=>(const MainWindowInfo&) const = default;
+  constexpr bool operator==(const MainWindowInfo&) const = default;
 };
 static_assert(std::is_standard_layout_v<MainWindowInfo>);
 

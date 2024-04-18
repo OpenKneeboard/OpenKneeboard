@@ -25,7 +25,7 @@ namespace OpenKneeboard {
 struct TextSettings final {
   float mFontSize = 20.f;
 
-  constexpr auto operator<=>(const TextSettings&) const = default;
+  constexpr bool operator==(const TextSettings&) const = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(TextSettings)

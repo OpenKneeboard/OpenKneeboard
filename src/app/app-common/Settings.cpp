@@ -229,7 +229,7 @@ static void MigrateToViewsConfig(Settings& settings) {
     .mVR = ViewVRConfig::Independent(vrConfig),
     .mNonVR = ViewNonVRConfig {
       .mEnabled = true,
-      .mConstraints = settings.mDeprecatedNonVR,
+      .mConstraints = static_cast<const NonVRConstrainedPosition&>(settings.mDeprecatedNonVR),
       .mOpacity = settings.mDeprecatedNonVR.mOpacity,
     },
   };
@@ -259,8 +259,7 @@ Settings Settings::Load(std::string_view profile) {
   const auto profileDir
     = Filesystem::GetSettingsDirectory() / "profiles" / profile;
 
-#define IT(cpptype, x) \
-  MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
+#define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, profileDir / #x ".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
   MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");

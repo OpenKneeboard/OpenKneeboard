@@ -36,20 +36,20 @@ struct DirectInputSettings {
   struct ButtonBinding {
     std::unordered_set<uint64_t> mButtons;
     UserAction mAction;
-    constexpr auto operator<=>(const ButtonBinding&) const noexcept = default;
+    constexpr bool operator==(const ButtonBinding&) const noexcept = default;
   };
   struct Device {
     std::string mID;
     std::string mName;
     std::string mKind;
     std::vector<ButtonBinding> mButtonBindings;
-    constexpr auto operator<=>(const Device&) const noexcept = default;
+    constexpr bool operator==(const Device&) const noexcept = default;
   };
 
   bool mEnableMouseButtonBindings {false};
   std::unordered_map<std::string, Device> mDevices;
 
-  constexpr auto operator<=>(const DirectInputSettings&) const noexcept
+  constexpr bool operator==(const DirectInputSettings&) const noexcept
     = default;
 };
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(DirectInputSettings);

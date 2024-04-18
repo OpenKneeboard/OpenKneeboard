@@ -69,9 +69,9 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
 
   auto weak = weak_from_this();
   auto stop = mStop.get_token();
-  const auto handle = Win32::CreateMailslotW(
+  const auto mailslot = Win32::CreateMailslotW(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
-  if (!handle) {
+  if (!mailslot) {
     dprintf("Failed to create GameEvent mailslot: {}", GetLastError());
     co_return;
   }
@@ -87,7 +87,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
 
   try {
     while ((!stop.stop_requested())
-           && co_await RunSingle(weak, event, handle)) {
+           && co_await RunSingle(weak, event.get(), mailslot.get())) {
       // repeat!
     }
   } catch (const winrt::hresult_canceled&) {
@@ -98,13 +98,11 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
 }
 
 winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
-  const std::weak_ptr<GameEventServer>& instance,
-  const winrt::handle& notifyEvent,
-  const winrt::file_handle& handle) {
+  std::weak_ptr<GameEventServer> instance,
+  HANDLE notifyEvent,
+  HANDLE mailslot) {
   auto stop = instance.lock()->mStop.get_token();
-  OVERLAPPED overlapped {
-    .hEvent = notifyEvent.get(),
-  };
+  OVERLAPPED overlapped {.hEvent = notifyEvent};
 
   /* If there's no message yet, use this buffer size.
    *
@@ -117,7 +115,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   const constexpr DWORD DefaultBufferSize = 4096;
   DWORD bufferSize {DefaultBufferSize};
   if (
-    (!GetMailslotInfo(handle.get(), nullptr, &bufferSize, nullptr, nullptr))
+    (!GetMailslotInfo(mailslot, nullptr, &bufferSize, nullptr, nullptr))
     || bufferSize == MAILSLOT_NO_MESSAGE) {
     bufferSize = DefaultBufferSize;
   }
@@ -125,7 +123,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   std::vector<char> buffer(bufferSize);
   DWORD bytesRead {};
   const auto readFileResult = ReadFile(
-    handle.get(),
+    mailslot,
     buffer.data(),
     static_cast<DWORD>(buffer.size()),
     &bytesRead,
@@ -137,11 +135,11 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   }
 
   TraceLoggingWrite(gTraceProvider, "GameEventServer::RunSingle()/Wait");
-  co_await resume_on_signal(stop, notifyEvent.get());
+  co_await resume_on_signal(stop, notifyEvent);
   if (stop.stop_requested()) {
     co_return false;
   }
-  GetOverlappedResult(handle.get(), &overlapped, &bytesRead, TRUE);
+  GetOverlappedResult(mailslot, &overlapped, &bytesRead, TRUE);
 
   if (bytesRead == 0) {
     dprint("Read 0-byte GameEvent message");

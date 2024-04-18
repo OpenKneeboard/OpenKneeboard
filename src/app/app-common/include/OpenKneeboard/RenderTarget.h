@@ -47,7 +47,7 @@ struct DXResources;
 class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
  public:
   RenderTarget() = delete;
-  ~RenderTarget();
+  virtual ~RenderTarget();
 
   static std::shared_ptr<RenderTarget> Create(
     const audited_ptr<DXResources>& dxr,

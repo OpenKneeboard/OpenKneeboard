@@ -41,7 +41,7 @@ class WindowCaptureTab final
     std::string mWindowClass;
     std::string mTitle;
 
-    constexpr auto operator<=>(const WindowSpecification&) const noexcept
+    constexpr bool operator==(const WindowSpecification&) const noexcept
       = default;
   };
   struct MatchSpecification : public WindowSpecification {
@@ -55,7 +55,7 @@ class WindowCaptureTab final
     bool mMatchWindowClass {true};
     bool mMatchExecutable {true};
 
-    constexpr auto operator<=>(const MatchSpecification&) const noexcept
+    constexpr bool operator==(const MatchSpecification&) const noexcept
       = default;
   };
   struct Settings {
@@ -63,7 +63,7 @@ class WindowCaptureTab final
     bool mSendInput = false;
     HWNDPageSource::Options mCaptureOptions {};
 
-    constexpr auto operator<=>(const Settings&) const noexcept = default;
+    constexpr bool operator==(const Settings&) const noexcept = default;
   };
 
   WindowCaptureTab() = delete;

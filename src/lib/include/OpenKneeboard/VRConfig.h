@@ -44,7 +44,7 @@ struct VRPose {
 
   VRPose GetHorizontalMirror() const;
 
-  constexpr auto operator<=>(const VRPose&) const noexcept = default;
+  constexpr bool operator==(const VRPose&) const noexcept = default;
 };
 
 /** If gaze zoom is enabled, how close you need to be looking for zoom to
@@ -52,13 +52,13 @@ struct VRPose {
 struct GazeTargetScale {
   float mVertical {1.0f};
   float mHorizontal {1.0f};
-  constexpr auto operator<=>(const GazeTargetScale&) const noexcept = default;
+  constexpr bool operator==(const GazeTargetScale&) const noexcept = default;
 };
 
 struct VROpacityConfig {
   float mNormal {1.0f};
   float mGaze {1.0f};
-  constexpr auto operator<=>(const VROpacityConfig&) const noexcept = default;
+  constexpr bool operator==(const VROpacityConfig&) const noexcept = default;
 };
 
 /** VR settings that apply to every view/layer.
@@ -81,7 +81,7 @@ struct VRRenderConfig {
     };
     Upscaling mOpenXR_Upscaling {Upscaling::Automatic};
 
-    constexpr auto operator<=>(const Quirks&) const noexcept = default;
+    constexpr bool operator==(const Quirks&) const noexcept = default;
   };
   Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
@@ -92,7 +92,7 @@ struct VRRenderConfig {
   // Increment every time binding is pressed
   uint64_t mRecenterCount = 0;
 
-  constexpr auto operator<=>(const VRRenderConfig&) const noexcept = default;
+  constexpr bool operator==(const VRRenderConfig&) const noexcept = default;
 };
 static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
@@ -111,12 +111,12 @@ struct VRConfig : public VRRenderConfig {
     GazeTargetScale mGazeTargetScale {};
     VROpacityConfig mOpacity {};
 
-    constexpr auto operator<=>(const Deprecated&) const noexcept = default;
+    constexpr bool operator==(const Deprecated&) const noexcept = default;
   };
 
   Deprecated mDeprecated;
 
-  constexpr auto operator<=>(const VRConfig&) const noexcept = default;
+  constexpr bool operator==(const VRConfig&) const noexcept = default;
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE

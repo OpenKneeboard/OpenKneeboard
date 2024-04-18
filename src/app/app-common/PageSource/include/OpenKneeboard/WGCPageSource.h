@@ -61,7 +61,7 @@ class WGCPageSource : public virtual IPageSource,
   struct Options {
     bool mCaptureCursor {false};
 
-    constexpr auto operator<=>(const Options&) const noexcept = default;
+    constexpr bool operator==(const Options&) const noexcept = default;
   };
 
  protected:

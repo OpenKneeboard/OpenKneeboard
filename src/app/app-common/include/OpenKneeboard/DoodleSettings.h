@@ -27,7 +27,7 @@ struct DoodleSettings final {
     uint32_t mMinimumRadius;
     uint32_t mSensitivity;
 
-    constexpr auto operator<=>(const Tool&) const = default;
+    constexpr bool operator==(const Tool&) const = default;
   };
 
   Tool mPen {
@@ -39,7 +39,7 @@ struct DoodleSettings final {
     .mSensitivity = 150,
   };
 
-  constexpr auto operator<=>(const DoodleSettings&) const = default;
+  constexpr bool operator==(const DoodleSettings&) const = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(DoodleSettings)

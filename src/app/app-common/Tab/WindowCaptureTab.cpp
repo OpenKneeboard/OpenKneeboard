@@ -421,7 +421,7 @@ concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
 
   {
     const auto desktop = GetDesktopWindow();
-    HWND parent;
+    HWND parent {};
     while ((parent = GetParent(hwnd)) && parent != desktop) {
       hwnd = parent;
     }

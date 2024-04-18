@@ -183,7 +183,7 @@ EventDelay::EventDelay(std::source_location source) : mSourceLocation(source) {
   TraceLoggingWriteStart(
     mActivity,
     "EventDelay",
-    TraceLoggingValue(queue.mDelayDepth, "Depth"),
+    TraceLoggingValue(count, "Depth"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
 }
 

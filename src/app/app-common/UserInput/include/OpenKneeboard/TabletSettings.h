@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/WintabMode.h>
+
 #include <OpenKneeboard/json_fwd.h>
 
 #include <cinttypes>
@@ -42,7 +43,7 @@ struct TabletSettings final {
     std::unordered_set<uint64_t> mButtons;
     UserAction mAction;
 
-    constexpr auto operator<=>(const ButtonBinding&) const noexcept = default;
+    constexpr bool operator==(const ButtonBinding&) const noexcept = default;
   };
   struct Device {
     std::string mID;
@@ -50,7 +51,7 @@ struct TabletSettings final {
     std::vector<ButtonBinding> mExpressKeyBindings;
     TabletOrientation mOrientation {TabletOrientation::RotateCW90};
 
-    constexpr auto operator<=>(const Device&) const noexcept = default;
+    constexpr bool operator==(const Device&) const noexcept = default;
   };
 
   WintabMode mWintab {WintabMode::Disabled};
@@ -58,7 +59,7 @@ struct TabletSettings final {
 
   std::unordered_map<std::string, Device> mDevices;
 
-  constexpr auto operator<=>(const TabletSettings&) const noexcept = default;
+  constexpr bool operator==(const TabletSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(TabletSettings);

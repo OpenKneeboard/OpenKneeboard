@@ -41,7 +41,7 @@
 #include <d3d11_3.h>
 
 namespace OpenKneeboard {
-class CursorEvent;
+struct CursorEvent;
 class CursorRenderer;
 class ITab;
 class ToolbarAction;

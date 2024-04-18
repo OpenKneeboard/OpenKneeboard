@@ -88,8 +88,6 @@ void InterprocessRenderer::SubmitFrame(
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "InterprocessRenderer::SubmitFrame()");
 
-  const auto layerCount = shmLayers.size();
-
   auto ctx = mDXR->mD3D11ImmediateContext.get();
   const D3D11_BOX srcBox {
     0,
@@ -130,7 +128,7 @@ void InterprocessRenderer::SubmitFrame(
   SHM::Config config {
     .mGlobalInputLayerID
     = mKneeboard->GetActiveInGameView()->GetRuntimeID().GetTemporaryValue(),
-    .mVR = mKneeboard->GetVRSettings(),
+    .mVR = static_cast<const VRRenderConfig&>(mKneeboard->GetVRSettings()),
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };

@@ -17,9 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/Lua.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
@@ -78,6 +77,12 @@ class LuaRefImpl final {
     return mType;
   }
 
+  LuaRefImpl() = delete;
+  LuaRefImpl(const LuaRefImpl&) = delete;
+  LuaRefImpl(LuaRefImpl&&) = delete;
+  LuaRefImpl& operator=(const LuaRefImpl&) = delete;
+  LuaRefImpl& operator=(LuaRefImpl&&) = delete;
+
  private:
   std::shared_ptr<LuaStateImpl> mLua;
   int mRef = LUA_NOREF;
@@ -86,7 +91,6 @@ class LuaRefImpl final {
 
 class LuaStackCheck final {
  public:
-  LuaStackCheck() = delete;
   LuaStackCheck(const std::shared_ptr<LuaStateImpl>& lua) : mLua(lua) {
     if (!lua) {
       return;
@@ -106,6 +110,12 @@ class LuaStackCheck final {
       std::terminate();
     }
   }
+
+  LuaStackCheck() = delete;
+  LuaStackCheck(const LuaStackCheck&) = delete;
+  LuaStackCheck(LuaStackCheck&&) = delete;
+  LuaStackCheck& operator=(const LuaStackCheck&) = delete;
+  LuaStackCheck& operator=(LuaStackCheck&&) = delete;
 
  private:
   std::shared_ptr<LuaStateImpl> mLua;
@@ -179,7 +189,7 @@ std::string LuaRef::Get<std::string>() const {
 
   p->PushValueToStack();
 
-  size_t length;
+  size_t length {};
   const auto buffer = lua_tolstring(*lua, -1, &length);
   lua_pop(*lua, 1);
 

@@ -63,7 +63,7 @@ struct Size {
     return {mWidth * operand, mHeight * operand};
   }
 
-  constexpr auto operator<=>(const Size<T>&) const noexcept = default;
+  constexpr bool operator==(const Size<T>&) const noexcept = default;
 
   constexpr Size() {
   }
@@ -209,7 +209,7 @@ struct Point {
     return lhs;
   }
 
-  constexpr auto operator<=>(const Point<T>&) const noexcept = default;
+  constexpr bool operator==(const Point<T>&) const noexcept = default;
 
   template <class TValue, class TPoint = Point<TValue>>
   constexpr TPoint StaticCast() const noexcept {
@@ -331,7 +331,7 @@ struct Rect {
     };
   }
 
-  constexpr auto operator<=>(const Rect<T>&) const noexcept = default;
+  constexpr bool operator==(const Rect<T>&) const noexcept = default;
 
   template <class TValue, class TRect = Rect<TValue>>
   constexpr TRect StaticCast() const noexcept {

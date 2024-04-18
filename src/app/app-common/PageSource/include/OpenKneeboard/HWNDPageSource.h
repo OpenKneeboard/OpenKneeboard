@@ -57,7 +57,7 @@ class HWNDPageSource final : public WGCPageSource,
   struct Options : WGCPageSource::Options {
     CaptureArea mCaptureArea {CaptureArea::FullWindow};
 
-    constexpr auto operator<=>(const Options&) const noexcept = default;
+    constexpr bool operator==(const Options&) const noexcept = default;
   };
 
   static std::shared_ptr<HWNDPageSource> Create(

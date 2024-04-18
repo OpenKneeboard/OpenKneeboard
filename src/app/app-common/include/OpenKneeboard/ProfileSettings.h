@@ -37,7 +37,7 @@ struct ProfileSettings final {
 
     winrt::guid mGuid = random_guid();
 
-    constexpr auto operator<=>(const Profile&) const noexcept = default;
+    constexpr bool operator==(const Profile&) const noexcept = default;
   };
 
   std::string mActiveProfile;
@@ -54,7 +54,7 @@ struct ProfileSettings final {
   static ProfileSettings Load();
   void Save();
 
-  constexpr auto operator<=>(const ProfileSettings&) const noexcept = default;
+  constexpr bool operator==(const ProfileSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(ProfileSettings)

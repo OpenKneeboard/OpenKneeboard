@@ -32,7 +32,7 @@ class ITabWithSettings : public virtual ITab {
   virtual nlohmann::json GetSettings() const = 0;
 };
 
-template <std::derived_from<ITab> T>
+template <class T>
 struct TabSettingsTraits;
 
 template <std::derived_from<ITabWithSettings> T>
