@@ -17,17 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/dprint.h>
 
 using namespace OpenKneeboard;
 
 #include <Windows.h>
-#include <shellapi.h>
 
 #include <cstdlib>
+
+#include <shellapi.h>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing

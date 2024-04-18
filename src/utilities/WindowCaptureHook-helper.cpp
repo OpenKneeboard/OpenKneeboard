@@ -17,17 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <shellapi.h>
+
 #include <shims/Windows.h>
 
 #include <cstdlib>
+
+#include <shellapi.h>
 
 using namespace OpenKneeboard;
 

@@ -19,9 +19,8 @@
  */
 #pragma once
 
-#include <shims/winrt/base.h>
-
 #include <shims/filesystem>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 
@@ -39,7 +38,7 @@ enum class SubprocessResult : int {
 };
 
 concurrency::task<SubprocessResult> RunSubprocessAsync(
-  const std::filesystem::path& path,
-  const std::wstring& commandLine,
+  std::filesystem::path path,
+  std::wstring commandLine,
   RunAs) noexcept;
 };// namespace OpenKneeboard

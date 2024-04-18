@@ -1,8 +1,27 @@
+# TODO:
+#
+# 1) consider removing most of these exclusions, but in particular:
+#   - cppcoreguidelines-pro-type-cstyle-cast
+#   - cppcoreguidelines-narrowing-conversions
+# 2) more warnings-as-errors, in particular:
+#   - cppcoreguidelines-special-member-functions
+#   - cppcoreguidelines-init-variables
 ---
 Checks:
   - -*
   - concurrency-*
-WarningsAsErrors: true
+  - cppcoreguidelines-*
+  - -cppcoreguidelines-narrowing-conversions
+  - -cppcoreguidelines-avoid-magic-numbers
+  - -cppcoreguidelines-avoid-do-while
+  - -cppcoreguidelines-avoid-non-const-global-variables
+  - -cppcoreguidelines-avoid-c-arrays
+  - -cppcoreguidelines-owning-memory
+  - -cppcoreguidelines-prefer-member-initializer
+  - -cppcoreguidelines-non-private-member-variables-in-classes
+  - -cppcoreguidelines-macro-usage
+  - -cppcoreguidelines-pro-*
+WarningsAsErrors: 'concurrency-*,cppcoreguidelines-*coroutine*'
 ExtraArgs:
 - -Wno-unknown-pragmas
 - -Wno-missing-braces

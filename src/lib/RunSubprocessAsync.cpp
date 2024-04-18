@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/RunSubprocessAsync.h>
+
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -29,8 +30,8 @@
 namespace OpenKneeboard {
 
 concurrency::task<SubprocessResult> RunSubprocessAsync(
-  const std::filesystem::path& path,
-  const std::wstring& commandLine,
+  std::filesystem::path path,
+  std::wstring commandLine,
   RunAs runAs) noexcept {
   if (!std::filesystem::exists(path)) {
     co_return SubprocessResult::DoesNotExist;

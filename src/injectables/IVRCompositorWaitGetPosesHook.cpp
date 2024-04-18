@@ -19,15 +19,15 @@
  */
 #include "IVRCompositorWaitGetPosesHook.h"
 
+#include "DllLoadWatcher.h"
+#include "ScopedRWX.h"
+#include "detours-ext.h"
+
 #include <OpenKneeboard/dprint.h>
 
 #include <bit>
 #include <mutex>
 #include <stdexcept>
-
-#include "DllLoadWatcher.h"
-#include "ScopedRWX.h"
-#include "detours-ext.h"
 
 namespace OpenKneeboard {
 
@@ -224,7 +224,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
 
   gInstance = this;
 
-  vr::EVRInitError vrError;
+  vr::EVRInitError vrError {};
   auto compositor = reinterpret_cast<vr::IVRCompositor*>(
     Real_VR_GetGenericInterface(vr::IVRCompositor_Version, &vrError));
   if (!compositor) {

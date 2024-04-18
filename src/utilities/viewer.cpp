@@ -991,7 +991,8 @@ class TestViewerWindow final : private D3D11Resources {
           continue;
         }
         dprintf(L"Unrecognized graphics API {}", next);
-        exit(0);
+
+        exit(0);// NOLINT(concurrency-mt-unsafe)
       }
     }
 

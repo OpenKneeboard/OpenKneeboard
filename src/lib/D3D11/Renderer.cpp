@@ -26,10 +26,9 @@ namespace OpenKneeboard::D3D11 {
 SwapchainBufferResources::SwapchainBufferResources(
   ID3D11Device* device,
   ID3D11Texture2D* texture,
-  DXGI_FORMAT renderTargetViewFormat) {
-  mTexture = texture;
-
-  D3D11_TEXTURE2D_DESC textureDesc;
+  DXGI_FORMAT renderTargetViewFormat)
+  : mTexture(texture) {
+    D3D11_TEXTURE2D_DESC textureDesc;
   texture->GetDesc(&textureDesc);
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {

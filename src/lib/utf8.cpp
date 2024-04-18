@@ -89,7 +89,7 @@ std::string fold_utf8(std::string_view in) {
   ucasemap_utf8FoldCase(
     gFoldCaseMap,
     ret.data(),
-    ret.size(),
+    static_cast<int32_t>(ret.size()),
     in.data(),
     static_cast<int32_t>(in.size()),
     &error);

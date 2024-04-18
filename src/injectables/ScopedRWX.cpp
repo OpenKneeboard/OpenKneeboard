@@ -38,7 +38,7 @@ ScopedRWX::ScopedRWX(void* addr) : p(std::make_unique<Impl>()) {
 }
 
 ScopedRWX::~ScopedRWX() {
-  DWORD rwx;
+  DWORD rwx {};
   VirtualProtect(
     p->mMBI.BaseAddress, p->mMBI.RegionSize, p->mOldProtection, &rwx);
 }
