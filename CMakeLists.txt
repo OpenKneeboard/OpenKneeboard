@@ -23,6 +23,20 @@ set(
   "AssetTargetFallback=$(AssetTargetFallback);native"
 )
 
+find_program(
+  CLANG_TIDY
+  NAMES clang-tidy
+)
+if (CLANG_TIDY)
+  list(
+    APPEND
+    CMAKE_VS_GLOBALS
+    "RunCodeAnalysis=false"
+    "EnableMicrosoftCodeAnalysis=false"
+    "EnableClangTidyCodeAnalysis=true"
+  )
+endif ()
+
 add_compile_options(
 
   # Standard C++ exception behavior
@@ -115,6 +129,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${CMAKE_PROJECT_VERSION}")
 
 if(MSVC AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CLANG_CL 1 CACHE BOOL "Whether we're using clang-cl")
+  add_compile_definitions("CLANG_CL=1")
 else()
   set(CLANG_CL 0)
 endif()

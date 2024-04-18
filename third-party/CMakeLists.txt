@@ -1,5 +1,12 @@
 set(BUILD_SHARED_LIBS OFF)
 
+list(
+  APPEND
+  CMAKE_VS_GLOBALS
+  "ClangTidyToolPath=${CMAKE_CURRENT_SOURCE_DIR}"
+  "ClangTidyToolExe=clang-tidy-stub.bat"
+)
+
 set(
   THIRDPARTY_TOOLCHAIN_FILE
   "${CMAKE_CURRENT_BINARY_DIR}/toolchain.cmake"

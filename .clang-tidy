@@ -1,0 +1,11 @@
+---
+Checks:
+  - -*
+  - concurrency-*
+WarningsAsErrors: true
+ExtraArgs:
+- -Wno-unknown-pragmas
+- -Wno-missing-braces
+- -Wno-c++23-extensions
+- -Wno-vexing-parse
+- -DCLANG_TIDY=1

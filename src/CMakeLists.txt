@@ -1,4 +1,3 @@
-
 add_compile_options(
   "/Zc:__cplusplus"
   "/utf-8"
