@@ -10,6 +10,11 @@ install(
 )
 
 configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.targets"
+  "${CMAKE_BINARY_DIR}/Directory.Build.targets"
+  COPYONLY
+)
+configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/make-compile-commands.ps1"
 	"${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
 	COPYONLY

@@ -2,9 +2,7 @@
     "configurations": [
         {
             "name": "Win32",
-            "compilerPath": "cl.exe",
             "cppStandard": "c++20",
-            "intelliSenseMode": "windows-msvc-x64",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],

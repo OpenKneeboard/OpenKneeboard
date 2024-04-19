@@ -3,6 +3,8 @@
 
 # Make DirectXMath.h includable by Clang
 $extraArgs = "-D_XM_NO_INTRINSICS_"
+# Mostly used for TraceLogging fun
+$extraArgs += " -DCLANG_TIDY=1"
 
 $wasCreated = $false;
 $mutex = New-Object System.Threading.Mutex($true, "com.fredemmott.merge-compile-commands", [ref] $wasCreated);
