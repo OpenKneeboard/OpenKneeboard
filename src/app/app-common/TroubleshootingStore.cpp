@@ -19,11 +19,11 @@
  */
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/settings.h>
 #include <OpenKneeboard/version.h>
 
 #include <chrono>
@@ -44,14 +44,20 @@ std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
 class TroubleshootingStore::DPrintReceiver final
   : public OpenKneeboard::DPrintReceiver {
  public:
+  DPrintReceiver() = default;
   ~DPrintReceiver();
 
   std::vector<DPrintEntry> GetMessages();
 
   Event<DPrintEntry> evMessageReceived;
 
+  DPrintReceiver(const DPrintReceiver&) = delete;
+  DPrintReceiver(DPrintReceiver&&) = delete;
+  DPrintReceiver& operator=(const DPrintReceiver&) = delete;
+  DPrintReceiver& operator=(DPrintReceiver&&) = delete;
+
  protected:
-  virtual void OnMessage(const DPrintMessage& message) override;
+  void OnMessage(const DPrintMessage& message) override;
 
  private:
   std::vector<DPrintEntry> mMessages;

@@ -147,7 +147,7 @@ void FooterUILayer::Render(
   auto d2d = rt->d2d();
   d2d->FillRectangle(footerRect, mBackgroundBrush.get());
 
-  FLOAT dpix, dpiy;
+  FLOAT dpix {}, dpiy {};
   d2d->GetDpi(&dpix, &dpiy);
   const auto& dwf = mDXResources->mDWriteFactory;
   winrt::com_ptr<IDWriteTextFormat> clockFormat;

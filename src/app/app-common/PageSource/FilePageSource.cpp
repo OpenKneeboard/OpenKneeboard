@@ -42,7 +42,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
     dxr->mWIC->CreateComponentEnumerator(WICDecoder, 0, enumerator.put()));
 
   winrt::com_ptr<IUnknown> it;
-  ULONG fetched;
+  ULONG fetched {};
   while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
     const scope_guard clearIt([&]() { it = {nullptr}; });
     const auto info = it.as<IWICBitmapCodecInfo>();

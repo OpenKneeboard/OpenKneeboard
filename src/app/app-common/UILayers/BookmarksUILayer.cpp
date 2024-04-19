@@ -171,7 +171,7 @@ void BookmarksUILayer::Render(
   const auto height = metrics.mPreferredSize.mPixelSize.mHeight;
   const auto width = metrics.mNextArea.Left();
 
-  FLOAT dpix, dpiy;
+  FLOAT dpix {}, dpiy {};
   d2d->GetDpi(&dpix, &dpiy);
   const auto textHeight = width * scale * 0.75;
   winrt::com_ptr<IDWriteTextFormat> textFormat;

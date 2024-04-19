@@ -49,7 +49,7 @@ class RunnerThread final {
   RunnerThread& operator=(const RunnerThread&) = delete;
 
   RunnerThread(RunnerThread&&) = delete;
-  RunnerThread& operator=(RunnerThread&&);
+  RunnerThread& operator=(RunnerThread&&) noexcept;
 
  private:
   ThreadGuard mThreadGuard;

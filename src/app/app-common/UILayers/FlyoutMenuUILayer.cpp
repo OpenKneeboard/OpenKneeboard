@@ -256,7 +256,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   const auto textHeight = std::lround(selectableItemHeight * 0.67f);
   const auto separatorHeight = selectableItemHeight;
 
-  FLOAT dpix, dpiy;
+  FLOAT dpix {}, dpiy {};
   d2d->GetDpi(&dpix, &dpiy);
   auto dwf = mDXResources->mDWriteFactory;
 

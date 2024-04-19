@@ -33,6 +33,8 @@ RunnerThread::RunnerThread() = default;
 RunnerThread::RunnerThread(
   std::string_view name,
   std::function<winrt::Windows::Foundation::IAsyncAction(std::stop_token)> impl,
+  // Not a coroutine.
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
   const std::source_location& loc)
   : mName(std::string {name}) {
   mDQC = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
@@ -40,12 +42,9 @@ RunnerThread::RunnerThread(
   mCompletionEvent
     = winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 
-  mDQC.DispatcherQueue().TryEnqueue(
-    [name = winrt::to_hstring(name),
-     impl,
-     stop = mStopSource.get_token(),
-     loc = loc,
-     event = mCompletionEvent.get()]() -> winrt::fire_and_forget {
+  mDQC.DispatcherQueue().TryEnqueue(std::bind_front(
+    [](auto name, auto impl, auto stop, auto loc, auto event)
+      -> winrt::fire_and_forget {
       const scope_guard setEventOnExit([event, name]() {
         TraceLoggingWrite(
           gTraceProvider,
@@ -57,7 +56,12 @@ RunnerThread::RunnerThread(
       SetThreadDescription(GetCurrentThread(), name.c_str());
       ThreadGuard threadGuard;
       co_await impl(stop);
-    });
+    },
+    winrt::to_hstring(name),
+    impl,
+    mStopSource.get_token(),
+    loc,
+    mCompletionEvent.get()));
 }
 
 RunnerThread::~RunnerThread() {
@@ -86,7 +90,7 @@ void RunnerThread::Stop() {
   })(std::move(mCompletionEvent), std::move(mDQC));
 }
 
-RunnerThread& RunnerThread::operator=(RunnerThread&& other) {
+RunnerThread& RunnerThread::operator=(RunnerThread&& other) noexcept {
   this->Stop();
   mDQC = std::move(other.mDQC);
   mStopSource = std::move(other.mStopSource);

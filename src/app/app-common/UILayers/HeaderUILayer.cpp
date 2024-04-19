@@ -248,7 +248,7 @@ void HeaderUILayer::DrawToolbar(
     = buttons.front().mRect.bottom - buttons.front().mRect.top;
   const auto strokeWidth = buttonHeight / 15;
 
-  FLOAT dpix, dpiy;
+  FLOAT dpix {}, dpiy {};
   d2d->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> glyphFormat;
   winrt::check_hresult(mDXResources->mDWriteFactory->CreateTextFormat(
@@ -452,7 +452,7 @@ void HeaderUILayer::DrawHeaderText(
   const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
   auto& dwf = mDXResources->mDWriteFactory;
 
-  FLOAT dpix, dpiy;
+  FLOAT dpix {}, dpiy {};
   ctx->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
   winrt::check_hresult(dwf->CreateTextFormat(

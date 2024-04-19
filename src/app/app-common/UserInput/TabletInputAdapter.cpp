@@ -371,7 +371,7 @@ void TabletInputAdapter::OnTabletInput(
   auto maxY = tablet.mMaxY;
 
   if (state.mIsActive) {
-    float x, y;
+    float x {}, y {};
     switch (device->GetOrientation()) {
       case TabletOrientation::Normal:
         x = state.mX;

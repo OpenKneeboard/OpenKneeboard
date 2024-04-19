@@ -240,24 +240,23 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
     auto handler = Impl::LinkHandler::Create(pageLinks);
     AddEventListener(
       handler->evClicked,
-      [weak](EventContext ctx, const PDFNavigation::Link& link) {
-        auto self = weak.lock();
-        if (!self) {
-          return;
-        }
-        const auto& dest = link.mDestination;
-        switch (dest.mType) {
-          case PDFNavigation::DestinationType::Page:
-            self->evPageChangeRequestedEvent.Emit(
-              ctx, self->GetPageIDForIndex(dest.mPageIndex));
-            break;
-          case PDFNavigation::DestinationType::URI: {
-            [=]() -> winrt::fire_and_forget {
-              co_await LaunchURI(dest.mURI);
-            }();
-            break;
+      {
+        weak,
+        // Not a coroutine.
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
+        [](auto self, EventContext ctx, const PDFNavigation::Link& link) {
+          const auto& dest = link.mDestination;
+          switch (dest.mType) {
+            case PDFNavigation::DestinationType::Page:
+              self->evPageChangeRequestedEvent.Emit(
+                ctx, self->GetPageIDForIndex(dest.mPageIndex));
+              break;
+            case PDFNavigation::DestinationType::URI: {
+              LaunchURI(dest.mURI);
+              break;
+            }
           }
-        }
+        },
       });
     linkHandlers[this->GetPageIDForIndex(i)] = handler;
   }
@@ -269,7 +268,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   stayingAlive.reset();
   co_await uiThread;
-  if (stayingAlive = weak.lock()) {
+  if ((stayingAlive = weak.lock())) {
     this->evAvailableFeaturesChangedEvent.Emit();
   }
 }
@@ -550,7 +549,7 @@ void PDFFilePageSource::RenderPage(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [=](auto rt, const auto& size) {
+    [this, pageID](auto rt, const auto& size) {
       this->RenderPageContent(rt, pageID, {{0, 0}, size});
     },
     cacheDimensions);

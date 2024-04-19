@@ -132,7 +132,7 @@ class TestViewerWindow final : private D3D11Resources {
   struct ShaderDrawInfo {
     union {
       std::array<float, 2> mDimensions;
-      const std::byte PADDING[16];
+      std::byte PADDING[16];
     };
   };
 
