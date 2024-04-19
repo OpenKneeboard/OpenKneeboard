@@ -173,8 +173,7 @@ LuaType LuaRef::GetType() const noexcept {
   return p->GetType();
 }
 
-template <>
-std::string LuaRef::Get<std::string>() const {
+std::string LuaTypeTraits<std::string>::Get(detail::LuaRefImpl* p) {
   if (!p) {
     throw LuaTypeError("Tried to get an invalid ref");
   }
@@ -191,13 +190,12 @@ std::string LuaRef::Get<std::string>() const {
 
   size_t length {};
   const auto buffer = lua_tolstring(*lua, -1, &length);
+  const std::string ret {buffer, length};
   lua_pop(*lua, 1);
-
-  return std::string {buffer, length};
+  return ret;
 }
 
-template <>
-double LuaRef::Get<double>() const {
+lua_Integer LuaTypeTraits<lua_Integer>::Get(detail::LuaRefImpl* p) {
   if (!p) {
     throw LuaTypeError("Tried to get an invalid ref");
   }
@@ -206,15 +204,35 @@ double LuaRef::Get<double>() const {
 
   if (p->GetType() != LuaType::TNumber) {
     throw LuaTypeError(std::format(
-      "A doublewas requested, but the value is a {}",
+      "An integer was requested, but the value is a {}",
       lua_typename(*lua, static_cast<int>(p->GetType()))));
   }
 
   p->PushValueToStack();
-  const double value = lua_tonumber(*lua, -1);
+  const auto ret = lua_tointeger(*lua, -1);
   lua_pop(*lua, 1);
 
-  return value;
+  return ret;
+}
+
+lua_Number LuaTypeTraits<lua_Number>::Get(detail::LuaRefImpl* p) {
+  if (!p) {
+    throw LuaTypeError("Tried to get an invalid ref");
+  }
+  auto lua = p->GetLua();
+  const LuaStackCheck stackCheck(lua);
+
+  if (p->GetType() != LuaType::TNumber) {
+    throw LuaTypeError(std::format(
+      "A number was requested, but the value is a {}",
+      lua_typename(*lua, static_cast<int>(p->GetType()))));
+  }
+
+  p->PushValueToStack();
+  const auto ret = lua_tonumber(*lua, -1);
+  lua_pop(*lua, 1);
+
+  return ret;
 }
 
 LuaRef LuaRef::at(const char* wantedKey) const {
@@ -277,20 +295,6 @@ bool LuaRef::operator==(const LuaRef& other) const noexcept {
   scope_guard popValues([&]() { lua_pop(*lua, 2); });
 
   return lua_rawequal(*lua, -1, -2);
-}
-
-bool LuaRef::operator==(const char* value) const noexcept {
-  if (GetType() != LuaType::TString) {
-    return false;
-  }
-  return Get<std::string>() == value;
-}
-
-bool LuaRef::operator==(std::string_view value) const noexcept {
-  if (GetType() != LuaType::TString) {
-    return false;
-  }
-  return Get<std::string>() == value;
 }
 
 LuaRef::const_iterator LuaRef::begin() const noexcept {

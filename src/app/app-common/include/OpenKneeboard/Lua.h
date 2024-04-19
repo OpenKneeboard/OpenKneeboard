@@ -19,9 +19,10 @@
  */
 #pragma once
 
+#include <shims/filesystem>
+
 #include <concepts>
 #include <memory>
-#include <shims/filesystem>
 #include <stdexcept>
 
 extern "C" {
@@ -39,7 +40,6 @@ extern "C" {
  * auto myLuaRef = luaState.GetGlobal("BAR");
  * auto myStr = myVar.Get<std::string>();
  * auto myDouble = myVar.Get<double>();
- * auto myInt = myVar.Cast<double>();
  *
  * for (const auto& [key, value]: myVar) {
  *   // ...
@@ -96,30 +96,56 @@ enum class LuaType : int {
 };
 
 template <class T>
-constexpr bool allow_implicit_conversion_from_LuaRef = false;
-
-// Too unsafe, mixed meanings
-template <>
-constexpr bool allow_implicit_conversion_from_LuaRef<bool> = false;
+struct LuaTypeTraits;// = delete
 
 template <>
-constexpr bool allow_implicit_conversion_from_LuaRef<std::string> = true;
+struct LuaTypeTraits<bool>;// = delete
+
+template <>
+struct LuaTypeTraits<std::string> {
+  static std::string Get(detail::LuaRefImpl*);
+};
+
+template <>
+struct LuaTypeTraits<lua_Integer> {
+  static lua_Integer Get(detail::LuaRefImpl*);
+};
+
+template <>
+struct LuaTypeTraits<lua_Number> {
+  static lua_Number Get(detail::LuaRefImpl*);
+};
+
 template <std::integral T>
-constexpr bool allow_implicit_conversion_from_LuaRef<T> = true;
+struct LuaTypeTraits<T> {
+  static auto Get(detail::LuaRefImpl* p) {
+    return static_cast<T>(LuaTypeTraits<lua_Integer>::Get(p));
+  }
+};
+
 template <std::floating_point T>
-constexpr bool allow_implicit_conversion_from_LuaRef<T> = true;
+struct LuaTypeTraits<T> {
+  static auto Get(detail::LuaRefImpl* p) {
+    return static_cast<T>(LuaTypeTraits<lua_Number>::Get(p));
+  }
+};
 
 template <class T>
-concept implicitly_convertible_from_LuaRef
-  = allow_implicit_conversion_from_LuaRef<T>;
+concept implicitly_convertible_from_LuaRef = requires(detail::LuaRefImpl* p) {
+  { LuaTypeTraits<T>::Get(p) } -> std::same_as<T>;
+};
+
+static_assert(implicitly_convertible_from_LuaRef<std::string>);
+static_assert(implicitly_convertible_from_LuaRef<lua_Integer>);
+static_assert(implicitly_convertible_from_LuaRef<int8_t>);
+static_assert(implicitly_convertible_from_LuaRef<int64_t>);
+static_assert(!implicitly_convertible_from_LuaRef<bool>);
 
 /** Reference to a Lua value.
  *
  * General usage:
  * - Get<T>(): get the value as a T, throwing an exception if the type
  *   doesn't exactly match
- * - Cast<T>(): get the value as a T, throwing an exception if the types
- *   are not `static_cast<>`able
  * - at(): index a table; throws if the ref isn't a table, or the key
  *   doesn't exist
  * - contains(): check if a key exists, or throw if the ref isn't a table
@@ -135,19 +161,31 @@ class LuaRef final {
   ~LuaRef();
 
   bool operator==(const LuaRef&) const noexcept;
-  template <class T>
-    requires requires(const LuaRef& r) {
-      r.Cast<T>();
-    }
-  bool operator==(const T& value) const noexcept {
+
+  template <implicitly_convertible_from_LuaRef T>
+  bool operator==(const T& other) const noexcept {
     try {
-      return this->Cast<T>() == value;
+      return p && LuaTypeTraits<T>::Get(*p) == other;
     } catch (const LuaTypeError&) {
       return false;
     }
   }
-  bool operator==(const char* value) const noexcept;
-  bool operator==(std::string_view value) const noexcept;
+
+  bool operator==(const char* value) const noexcept {
+    try {
+      return p && LuaTypeTraits<std::string>::Get(p.get()) == value;
+    } catch (const LuaTypeError&) {
+      return false;
+    }
+  }
+
+  bool operator==(std::string_view value) const noexcept {
+    try {
+      return p && LuaTypeTraits<std::string>::Get(p.get()) == value;
+    } catch (const LuaTypeError&) {
+      return false;
+    }
+  }
 
   LuaType GetType() const noexcept;
 
@@ -155,9 +193,7 @@ class LuaRef final {
   LuaRef at(const char*) const;
   LuaRef at(const LuaRef&) const;
   template <class Key>
-    requires requires(const LuaRef& r, const Key& k) {
-      r == k;
-    }
+    requires requires(const LuaRef& r, const Key& k) { r == k; }
   bool contains(const Key& wantedKey) const {
     for (const auto& [key, value]: *this) {
       if (key == wantedKey) {
@@ -175,40 +211,14 @@ class LuaRef final {
   const_iterator begin() const noexcept;
   const_iterator end() const noexcept;
 
-  // Explicit casts
-
-  template <class T>
-  T Get() const = delete;
-
-  template <>
-  std::string Get<std::string>() const;
-
-  template <>
-  double Get<double>() const;
-
-  template <class T>
-    requires requires(LuaRef x) {
-      x.Get<T>();
-    }
-  T Cast() const {
-    return Get<T>();
+  template <implicitly_convertible_from_LuaRef T>
+  T Get() const {
+    return LuaTypeTraits<T>::Get(p.get());
   }
 
-  template <std::integral T>
-  T Cast() const {
-    return static_cast<T>(Get<double>());
-  }
-  template <std::floating_point T>
-    requires(!std::same_as<double, T>)
-  T Cast()
-  const {
-    return static_cast<T>(Get<double>());
-  }
-
-  // Implicit conversions
   template <implicitly_convertible_from_LuaRef T>
   operator T() const {
-    return Cast<T>();
+    return LuaTypeTraits<T>::Get(p.get());
   }
 
   // **BONK** Go to C++ jail

@@ -60,8 +60,8 @@ static std::string GetCountries(const LuaRef& countries) {
 
 struct DCSBriefingWind {
   DCSBriefingWind(const LuaRef& data) {
-    mSpeed = data["speed"].Cast<float>();
-    mDirection = data["dir"].Cast<int>();
+    mSpeed = data["speed"];
+    mDirection = data["dir"];
     mStandardDirection = (180 + mDirection) % 360;
     if (mDirection == 0) {
       mDirection = 360;
@@ -87,7 +87,7 @@ void DCSBriefingTab::SetMissionImages(
   const auto force = mission.at(
     CoalitionKey("pictureFileNameN", "pictureFileNameR", "pictureFileNameB"));
   for (auto&& [i, resourceName]: force) {
-    const auto fileName = mapResource[resourceName].Cast<std::string>();
+    const auto fileName = mapResource[resourceName].Get<std::string>();
     const auto path = resourcePath / fileName;
     if (std::filesystem::is_regular_file(path)) {
       images.push_back(path);
@@ -107,11 +107,11 @@ void DCSBriefingTab::PushMissionOverview(
   const auto startSecondsSinceMidnight = mission["start_time"];
   const auto startDateTime = std::format(
     "{:04d}-{:02d}-{:02d} {:%T}",
-    startDate["Year"].Cast<unsigned int>(),
-    startDate["Month"].Cast<unsigned int>(),
-    startDate["Day"].Cast<unsigned int>(),
+    startDate["Year"].Get<uint16_t>(),
+    startDate["Month"].Get<uint16_t>(),
+    startDate["Day"].Get<uint16_t>(),
     std::chrono::seconds {
-      startSecondsSinceMidnight.Cast<unsigned int>(),
+      startSecondsSinceMidnight.Get<unsigned int>(),
     });
 
   std::string redCountries = _("Unknown.");
@@ -157,10 +157,10 @@ void DCSBriefingTab::PushMissionOverview(
 
 void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
   const auto weather = mission["weather"];
-  const auto temperature = weather["season"]["temperature"].Cast<int>();
-  const auto qnhMmHg = weather["qnh"].Cast<float>();
+  const auto temperature = weather["season"]["temperature"].Get<int>();
+  const auto qnhMmHg = weather["qnh"].Get<float>();
   const auto qnhInHg = qnhMmHg / 25.4;
-  const auto cloudBase = weather["clouds"]["base"].Cast<int>();
+  const auto cloudBase = weather["clouds"]["base"].Get<int>();
   const auto wind = weather["wind"];
   DCSBriefingWind windAtGround {wind["atGround"]};
   DCSBriefingWind windAt2000 {wind["at2000"]};
@@ -211,15 +211,15 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   const auto startDate = mission.at("date");
   const auto xyBulls = mission["coalition"][key]["bullseye"];
   const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
-    xyBulls["x"].Cast<DCSWorld::GeoReal>(),
-    xyBulls["y"].Cast<DCSWorld::GeoReal>());
+    xyBulls["x"].Get<DCSWorld::GeoReal>(),
+    xyBulls["y"].Get<DCSWorld::GeoReal>());
 
   DCSMagneticModel magModel(mInstallationPath);
   magVar = magModel.GetMagneticVariation(
     std::chrono::year_month_day {
-      std::chrono::year {startDate["Year"].Cast<int>()},
-      std::chrono::month {startDate["Month"].Cast<unsigned>()},
-      std::chrono::day {startDate["Day"].Cast<unsigned>()},
+      std::chrono::year {startDate["Year"].Get<int>()},
+      std::chrono::month {startDate["Month"].Get<unsigned>()},
+      std::chrono::day {startDate["Day"].Get<unsigned>()},
     },
     static_cast<float>(bullsLat),
     static_cast<float>(bullsLong));
@@ -247,7 +247,7 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
 
   const auto weather = mission["weather"];
   const auto wind = weather["wind"];
-  const auto temperature = weather["season"]["temperature"].Cast<int>();
+  const auto temperature = weather["season"]["temperature"].Get<int>();
   DCSBriefingWind windAtGround {wind["atGround"]};
   DCSBriefingWind windAt2000 {wind["at2000"]};
   DCSBriefingWind windAt8000 {wind["at8000"]};
