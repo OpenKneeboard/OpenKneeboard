@@ -107,8 +107,6 @@ void PlainTextFilePageSource::OnFileModified(
     return;
   }
 
-  const auto newWriteTime = std::filesystem::last_write_time(mPath);
-
   mPageSource->SetText(this->GetFileContent());
   mPageSource->SetPlaceholderText(_("[empty file]"));
   this->evContentChangedEvent.Emit();

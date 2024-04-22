@@ -34,7 +34,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSBriefingTab::DCSBriefingTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSBriefingTab::DCSBriefingTab(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : DCSBriefingTab(dxr, kbs, {}, _("Briefing")) {
 }
 
@@ -43,9 +45,9 @@ DCSBriefingTab::DCSBriefingTab(
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)
-  : TabBase(persistentID, title),
-    DCSTab(kbs),
+  : DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
+    TabBase(persistentID, title),
     mKneeboard(kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(

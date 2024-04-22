@@ -15,7 +15,7 @@ configure_file(
   COPYONLY
 )
 configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/make-compile-commands.ps1"
+	"${CMAKE_CURRENT_SOURCE_DIR}/make-compile-commands.in.ps1"
 	"${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
-	COPYONLY
+	@ONLY
 )

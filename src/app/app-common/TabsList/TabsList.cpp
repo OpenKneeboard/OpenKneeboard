@@ -105,7 +105,6 @@ void TabsList::LoadSettings(const nlohmann::json& config) {
 }
 
 void TabsList::LoadDefaultSettings() {
-  auto kbs = mKneeboard;
   this->SetTabs({
     std::make_shared<SingleFileTab>(
       mDXR,

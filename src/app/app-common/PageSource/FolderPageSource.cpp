@@ -89,7 +89,7 @@ void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
   }
   decltype(mContents) newContents;
   bool modifiedOrNew = false;
-  for (const auto entry:
+  for (const auto& entry:
        std::filesystem::recursive_directory_iterator(directory)) {
     if (!entry.is_regular_file()) {
       continue;

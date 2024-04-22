@@ -93,10 +93,9 @@ class WGCPageSource : public virtual IPageSource,
   void PreOKBFrame();
   void OnWGCFrame();
 
-  Options mOptions;
-
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
+  Options mOptions;
 
   PageID mPageID {};
 

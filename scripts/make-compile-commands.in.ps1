@@ -22,7 +22,7 @@ foreach ($Folder in $Folders) {
     if (!(Test-Path $SourcesFile)) {
       continue;
     }
-    $Command = "`"C:\WINDOWS\system32\CL.exe`" $(Get-Content $FlagFile)"
+    $Command = "`"@CMAKE_CXX_COMPILER@`" $(Get-Content $FlagFile)"
     foreach ($Source in $(Get-Content $SourcesFile)) {
       $Entries += @{
         directory = $Folder;

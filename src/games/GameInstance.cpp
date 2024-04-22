@@ -53,11 +53,11 @@ GameInstance::GameInstance(
     mPathPattern = j.at("PathPattern");
   } else if (j.contains("Path")) {
     mPathPattern = j.at("Path");
-    mLastSeenPath = j.at("Path");
+    mLastSeenPath = j.at("Path").get<std::filesystem::path>();
   }
 
   if (j.contains("LastSeenPath")) {
-    mLastSeenPath = j.at("LastSeenPath");
+    mLastSeenPath = j.at("LastSeenPath").get<std::filesystem::path>();
   }
 }
 

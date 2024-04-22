@@ -62,6 +62,8 @@ class DCSBriefingTab final : public TabBase,
     const std::filesystem::path&) override;
 
  private:
+  KneeboardState* mKneeboard {nullptr};
+
   std::shared_ptr<DCSExtractedMission> mMission;
   std::shared_ptr<ImageFilePageSource> mImagePages;
   std::shared_ptr<PlainTextPageSource> mTextPages;
@@ -83,9 +85,8 @@ class DCSBriefingTab final : public TabBase,
     auto operator<=>(const DCSState&) const = default;
   };
   DCSState mDCSState;
-  KneeboardState* mKneeboard;
 
-  constexpr const char* CoalitionKey(
+  inline const char* CoalitionKey(
     const char* neutralKey,
     const char* redforKey,
     const char* blueforKey) {

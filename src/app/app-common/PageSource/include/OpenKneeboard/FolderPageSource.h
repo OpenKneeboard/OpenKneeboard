@@ -32,7 +32,7 @@
 
 namespace OpenKneeboard {
 
-struct KneeboardState;
+class KneeboardState;
 
 class FolderPageSource final
   : public PageSourceWithDelegates,

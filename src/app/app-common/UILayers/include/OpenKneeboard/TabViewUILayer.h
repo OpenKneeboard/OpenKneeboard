@@ -26,7 +26,7 @@
 #include <memory>
 
 namespace OpenKneeboard {
-struct D2DErrorRenderer;
+class D2DErrorRenderer;
 struct DXResources;
 
 class TabViewUILayer final : public IUILayer {

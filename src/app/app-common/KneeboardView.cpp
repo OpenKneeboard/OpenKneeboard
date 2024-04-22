@@ -453,9 +453,21 @@ void KneeboardView::PostUserAction(UserAction action) {
         static_cast<int>(action));
       OPENKNEEBOARD_BREAK;
       return;
-    case UserAction::TOGGLE_VISIBILITY:
-    case UserAction::TOGGLE_FORCE_ZOOM:
+    case UserAction::CYCLE_ACTIVE_VIEW:
+    case UserAction::DECREASE_BRIGHTNESS:
+    case UserAction::DISABLE_TINT:
+    case UserAction::ENABLE_TINT:
+    case UserAction::HIDE:
+    case UserAction::INCREASE_BRIGHTNESS:
     case UserAction::RECENTER_VR:
+    case UserAction::REPAINT_NOW:
+    case UserAction::SHOW:
+    case UserAction::SWAP_FIRST_TWO_VIEWS:
+    case UserAction::TOGGLE_FORCE_ZOOM:
+    case UserAction::TOGGLE_TINT:
+    case UserAction::TOGGLE_VISIBILITY:
+    case UserAction::NEXT_PROFILE:
+    case UserAction::PREVIOUS_PROFILE:
       // Handled by KneeboardState
       return;
   }

@@ -193,6 +193,10 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
     case DCS::MessageType::Trigger:
       formatted += ">> ";
       break;
+    case DCS::MessageType::Invalid:
+      dprint("Invalid DCS message type");
+      OPENKNEEBOARD_BREAK;
+      co_return;
   }
   formatted += parsed.message;
   mPageSource->PushMessage(formatted);

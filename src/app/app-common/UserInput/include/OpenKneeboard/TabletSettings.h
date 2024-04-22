@@ -43,7 +43,7 @@ struct TabletSettings final {
     std::unordered_set<uint64_t> mButtons;
     UserAction mAction;
 
-    constexpr bool operator==(const ButtonBinding&) const noexcept = default;
+    bool operator==(const ButtonBinding&) const noexcept = default;
   };
   struct Device {
     std::string mID;
@@ -51,7 +51,7 @@ struct TabletSettings final {
     std::vector<ButtonBinding> mExpressKeyBindings;
     TabletOrientation mOrientation {TabletOrientation::RotateCW90};
 
-    constexpr bool operator==(const Device&) const noexcept = default;
+    bool operator==(const Device&) const noexcept = default;
   };
 
   WintabMode mWintab {WintabMode::Disabled};
@@ -59,7 +59,7 @@ struct TabletSettings final {
 
   std::unordered_map<std::string, Device> mDevices;
 
-  constexpr bool operator==(const TabletSettings&) const noexcept = default;
+  bool operator==(const TabletSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(TabletSettings);

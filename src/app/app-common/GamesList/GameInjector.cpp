@@ -78,7 +78,10 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
   if (tablet) {
     mWintabMode = tablet->GetWintabMode();
     mTabletSettingsChangeToken = AddEventListener(
-      tablet->evSettingsChangedEvent, [weak = weak_refs(this, tablet)]() {
+      tablet->evSettingsChangedEvent,
+      // not a coroutine
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
+      [weak = weak_refs(this, tablet)]() {
         auto strong = lock_weaks(weak);
         if (!strong) {
           return;

@@ -100,7 +100,7 @@ struct AppSettings final {
   };
   Deprecated mDeprecated;
 
-  constexpr bool operator==(const AppSettings&) const noexcept = default;
+  bool operator==(const AppSettings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(AppSettings);

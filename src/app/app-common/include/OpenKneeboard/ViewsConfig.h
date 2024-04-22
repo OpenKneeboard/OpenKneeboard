@@ -156,7 +156,7 @@ struct ViewConfig {
 
   winrt::guid mDefaultTabID;
 
-  constexpr bool operator==(const ViewConfig&) const noexcept = default;
+  bool operator==(const ViewConfig&) const noexcept = default;
 };
 
 enum class AppWindowViewMode {

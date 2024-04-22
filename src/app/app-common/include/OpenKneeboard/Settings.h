@@ -55,7 +55,7 @@ struct Settings final {
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
-  constexpr bool operator==(const Settings&) const noexcept = default;
+  bool operator==(const Settings&) const noexcept = default;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(Settings);

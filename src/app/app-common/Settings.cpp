@@ -98,7 +98,7 @@ static void MaybeSaveJSON(
 /** Used for GamesList and TabsList, where we don't want to merge configs -
  * either inherit, or overwrite */
 template <>
-static void MaybeSaveJSON<nlohmann::json>(
+void MaybeSaveJSON<nlohmann::json>(
   const nlohmann::json& parentValue,
   const nlohmann::json& value,
   const std::filesystem::path& path) {

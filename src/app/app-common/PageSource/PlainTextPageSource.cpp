@@ -39,7 +39,7 @@ PlainTextPageSource::PlainTextPageSource(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   std::string_view placeholderText)
-  : mDXR(dxr), mPlaceholderText(placeholderText), mKneeboard(kbs) {
+  : mDXR(dxr), mKneeboard(kbs), mPlaceholderText(placeholderText) {
   mFontSize = kbs->GetTextSettings().mFontSize;
 
   auto dwf = mDXR->mDWriteFactory;

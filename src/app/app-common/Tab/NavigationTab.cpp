@@ -316,7 +316,6 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
   m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f;
   // arbitrary LGTM value
   m.mStroke = m.mBleed * 0.3f;
-  const auto height = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
 
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);

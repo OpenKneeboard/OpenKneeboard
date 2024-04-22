@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 #include <OpenKneeboard/LaunchURI.h>
 
 #include <shims/winrt/base.h>
