@@ -77,6 +77,9 @@ jobs:
           $version="$(Get-Content version.txt)"
           Add-Content $Env:GITHUB_OUTPUT "VERSION=${version}"
           echo "::endgroup::"
+      - name: add-msbuild-to-path
+        if: ${{matrix.config == 'Debug' }}
+        uses: microsoft/setup-msbuild@v2
       - name: clang-tidy
         if: ${{matrix.config == 'Debug' }}
         working-directory: build
