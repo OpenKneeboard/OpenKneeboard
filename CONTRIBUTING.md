@@ -38,7 +38,7 @@ auto example_a = [](const std::string& foo) -> winrt::fire_and_forget {
   co_await wait_for_something();
   do_stuff(foo); // `foo` may now be invalid
 };
-auto example_b = [&foo]() -> winrt::fire_and_forget {
+auto example_b = [foo]() -> winrt::fire_and_forget {
   co_await wait_for_something();
   do_stuff(foo); // `foo` may now be invalid
 }
