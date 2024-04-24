@@ -154,7 +154,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
         auto firstID = first->first;
         auto firstTimeout = first->second;
 
-        for (const auto [id, timeout]: mTabletsToTimeout) {
+        for (const auto& [id, timeout]: mTabletsToTimeout) {
           if (timeout < firstTimeout) {
             firstID = id;
             firstTimeout = timeout;
@@ -251,6 +251,9 @@ void OTDIPCClient::ProcessMessage(
       return;
     case MessageType::State:
       this->ProcessMessage(reinterpret_cast<const State* const>(header));
+      return;
+    case MessageType::Ping:
+      // nothing to do
       return;
   }
 }

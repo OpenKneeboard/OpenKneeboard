@@ -107,6 +107,8 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
 
   auto deviceName = mDevice->GetName();
   dprintf("Starting DirectInputListener::Run() for {}", deviceName);
+  // not a coroutine, also not a reference or a parameter
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
   const scope_guard logOnExit([deviceName]() {
     dprintf(
       "Exiting DirectInputListener::Run() for {}, with {} uncaught exceptions",

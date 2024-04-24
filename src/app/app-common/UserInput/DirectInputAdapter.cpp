@@ -129,6 +129,8 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
     const winrt::guid guid {device->GetID()};
 
     const auto iit
+      // not a coroutine
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
       = std::ranges::find_if(instances, [guid](const auto& instance) {
           return guid == winrt::guid {instance.guidInstance};
         });

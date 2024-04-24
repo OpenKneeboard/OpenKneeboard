@@ -156,7 +156,6 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
 
   auto dwf = mDXResources->mDWriteFactory;
 
-  const auto textFontSize = titleFontSize * 0.6f;
   winrt::com_ptr<IDWriteTextFormat> titleFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
     VariableWidthUIFont,

@@ -36,9 +36,8 @@
 #include <OpenKneeboard_CAPI.h>
 
 static std::filesystem::path GetOpenKneeboardDLLPath() {
-  const auto fromEnv = _wgetenv(
-    L"OPENKNEEBOARD_CAPI_DLL");// NOLINT(clang-diagnostic-deprecated-declarations)
-  if (fromEnv) {
+  wchar_t* fromEnv {nullptr};
+  if (_wdupenv_s(&fromEnv, nullptr, L"OPENKNEEBOARD_CAPI_DLL") == 0) {
     return fromEnv;
   }
 

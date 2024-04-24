@@ -23,9 +23,9 @@
 #include <OpenKneeboard/FooterUILayer.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/Tracing.h>
 
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/tracing.h>
 
 #include <algorithm>
 

@@ -32,10 +32,6 @@
 
 #include <dwrite.h>
 
-static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
-  return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
-}
-
 namespace OpenKneeboard {
 
 std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(

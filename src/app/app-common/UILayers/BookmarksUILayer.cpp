@@ -247,12 +247,10 @@ bool BookmarksUILayer::IsEnabled() const {
     && !mKneeboardView->GetBookmarks().empty();
 }
 
-static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
-  return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
+bool BookmarksUILayer::Button::operator==(const Button& other) const noexcept {
+  return (memcmp(&mRect, &other.mRect, sizeof(mRect)) == 0)
+    && (mBookmark == mBookmark);
 }
-
-bool BookmarksUILayer::Button::operator==(const Button& other) const noexcept
-  = default;
 
 BookmarksUILayer::Buttons BookmarksUILayer::LayoutButtons() {
   if (auto buttons = mButtons) {

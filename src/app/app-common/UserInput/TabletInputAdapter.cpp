@@ -67,7 +67,7 @@ TabletInputAdapter::TabletInputAdapter(
   HWND window,
   KneeboardState* kneeboard,
   const TabletSettings& settings)
-  : mWindow(window), mKneeboard(kneeboard) {
+  : mKneeboard(kneeboard), mWindow(window) {
   OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::TabletInputAdapter()");
   LoadSettings(settings);
 }
