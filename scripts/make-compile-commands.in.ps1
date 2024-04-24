@@ -1,37 +1,32 @@
 # Copyright (C) 2024 Fred Emmott <fred@fredemmott.com>
 # SPDX-License-Identifier: ISC
 
-# Make DirectXMath.h includable by Clang
-$extraArgs = "-D_XM_NO_INTRINSICS_"
-# Mostly used for TraceLogging fun
-$extraArgs += " -DCLANG_TIDY=1"
+$extraArgs = @(
+  # Make DirectXMath.h includable by Clang
+  "/D_XM_NO_INTRINSICS_",
+  # Mostly used for TraceLogging fun
+  "/DCLANG_TIDY=1"
+)
 
-$wasCreated = $false;
-$mutex = New-Object System.Threading.Mutex($true, "com.fredemmott.merge-compile-commands", [ref] $wasCreated);
-if (!$wasCreated) {
-  $mutex.WaitOne() | Out-Null;
-}
-
+$Entries = @()
 $Folders = Get-ChildItem -Path . -Filter '*.ClCompile_flags.txt' -Recurse | % { Split-Path -parent $_.FullName } | Get-Unique
 
 foreach ($Folder in $Folders) {
   $FlagFiles = Get-ChildItem -Path $Folder -Filter '*.ClCompile_flags.txt' | % { $_.FullName }
-  $Entries = @()
   foreach ($FlagFile in $FlagFiles) {
     $SourcesFile = $FlagFile.Replace('ClCompile_flags.txt', 'ClCompile_sources.txt')
     if (!(Test-Path $SourcesFile)) {
       continue;
     }
-    $Command = "`"@NATIVE_PATH_CMAKE_CXX_COMPILER@`" $(Get-Content $FlagFile)"
+    $Command = "`"@NATIVE_PATH_CMAKE_CXX_COMPILER@`" $($extraArgs -join ' ') $(Get-Content $FlagFile)"
     foreach ($Source in $(Get-Content $SourcesFile)) {
       $Entries += @{
         directory = $Folder;
-        command   = "$command $extraArgs `"$Source`"";
+        command   = "$command `"$Source`"";
         file      = "$Source";
       };
     }
   }
-  ConvertTo-Json $Entries | Set-Content -Path "$Folder/compile_commands.json" -Encoding UTF8
 }
 
-$mutex.ReleaseMutex();
+ConvertTo-Json $Entries | Set-Content -Path "compile_commands.json" -Encoding UTF8

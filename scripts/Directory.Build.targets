@@ -22,14 +22,4 @@
       WriteOnlyWhenDifferent="true"
     />
   </Target>
-  <Target
-    Name="CompileCommands"
-    DependsOnTargets="CompileFlagsAndSources"
-    AfterTargets="CompileFlagsAndSources"
-    Condition="'@ClCompile' != ''">
-
-    <Exec
-      Command="powershell -NonInteractive -executionpolicy Unrestricted &quot;$(MSBuildThisFileDirectory)/make-compile-commands.ps1"
-    />
-  </Target>
 </Project>

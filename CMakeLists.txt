@@ -188,3 +188,32 @@ install(
 include(dualarch.cmake)
 
 add_subdirectory("installer")
+
+macro(append_recursive_targets VAR SUBDIR)
+  get_property(NON_RECURSIVE_TARGETS DIRECTORY "${SUBDIR}" PROPERTY BUILDSYSTEM_TARGETS)
+  list(APPEND ${VAR} ${NON_RECURSIVE_TARGETS})
+  get_property(SUBDIRS DIRECTORY "${SUBDIR}" PROPERTY SUBDIRECTORIES)
+  foreach(CHILD IN LISTS SUBDIRS)
+    append_recursive_targets("${VAR}" "${CHILD}")
+  endforeach() 
+endmacro()
+
+find_program(POWERSHELL powershell)
+
+if(POWERSHELL)
+  set(SRC_TARGETS "")
+  append_recursive_targets(SRC_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
+  add_custom_target(
+    compile_commands
+    ALL
+    COMMAND
+    "${POWERSHELL}"
+    -NonInteractive
+    -ExecutionPolicy Bypass
+    "${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
+    DEPENDS "${SRC_TARGETS}"
+    BYPRODUCTS "${CMAKE_BINARY_DIR}/compile_commands.json"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+  )
+endif()

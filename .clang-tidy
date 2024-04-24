@@ -9,6 +9,7 @@
 ---
 Checks:
   - -*
+  - clang-diagnostic-*
   - concurrency-*
   - cppcoreguidelines-*
   - -cppcoreguidelines-narrowing-conversions

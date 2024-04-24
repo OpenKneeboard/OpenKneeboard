@@ -118,7 +118,6 @@
   ],
   "editor.formatOnSave": true,
   "files.eol": "\n",
-  "cmake.mergedCompileCommands": "${workspaceFolder}/build/compile_commands.json",
   "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
   "C_Cpp.codeAnalysis.clangTidy.enabled": true,
   "C_Cpp.default.intelliSenseMode": "windows-msvc-x64",
