@@ -77,6 +77,10 @@ jobs:
           $version="$(Get-Content version.txt)"
           Add-Content $Env:GITHUB_OUTPUT "VERSION=${version}"
           echo "::endgroup::"
+      - name: clang-tidy
+        if: ${{matrix.config == 'Debug' }}
+        working-directory: build
+        run: msbuild /t:ClangTidy com.openkneeboard.sln
       - name: Create MSI
         working-directory: build
         id: create-msi
