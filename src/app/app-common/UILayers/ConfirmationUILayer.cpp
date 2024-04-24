@@ -23,10 +23,6 @@
 
 #include <OpenKneeboard/config.h>
 
-static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
-  return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
-}
-
 namespace OpenKneeboard {
 
 std::shared_ptr<ConfirmationUILayer> ConfirmationUILayer::Create(
