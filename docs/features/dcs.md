@@ -34,15 +34,18 @@ This will show any *image files* for the current aircraft, from:
 - ***`DCS installation path`***`\Mods\aircraft\`***`module`***`\Cockpit\KNEEBOARD\pages`
 - ***`DCS installation path`***`\Mods\aircraft\`***`module`***`\Cockpit\Scripts\KNEEBOARD\pages`
 
-'***`aircraft`***' and '***`module`***' are usually the same; two exceptions are:
+'***`aircraft`***' and '***`module`***' are usually the same; exceptions include:
 - The `F-16C` module in the DCS installation corresponds to the `F-16C_60` aircraft in *Saved Games*
 - The `FA-18C` module in the DCS installation corresponds to the `FA-18C_hornet` aircraft in *Saved Games*
+- The `AH-64D` module in the DCS installation corresponds to the `AH-64D_BLK_II` aircraft in *Saved Games*
 
 For example, I put my A-10C kneeboard images in `C:\Users\fred\Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
 
 You can see the full paths that OpenKneeboard is looking for files in
 Settings -> Tabs, with a tick or cross next to them showing whether or
 not the folder exists.
+
+These paths are the same as the paths that DCS itself uses.
 
 ## The 'DCS Briefing' Tab
 
