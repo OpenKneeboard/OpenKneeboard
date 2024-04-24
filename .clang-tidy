@@ -22,6 +22,7 @@ Checks:
   - -cppcoreguidelines-non-private-member-variables-in-classes
   - -cppcoreguidelines-macro-usage
   - -cppcoreguidelines-pro-*
+HeaderFilterRegex: '.*([/\\]src[/\\].*'
 WarningsAsErrors: 'concurrency-*,cppcoreguidelines-*coroutine*'
 ExtraArgs:
 - -Wno-unknown-pragmas
