@@ -30,8 +30,9 @@
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <shims/winrt/Microsoft.UI.Interop.h>
+
 #include <winrt/Microsoft.Graphics.Display.h>
-#include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>

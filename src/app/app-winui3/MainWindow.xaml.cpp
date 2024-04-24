@@ -52,7 +52,8 @@
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
-#include <winrt/Microsoft.UI.Interop.h>
+#include <shims/winrt/Microsoft.UI.Interop.h>
+
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Animation.h>
 #include <winrt/Windows.ApplicationModel.Core.h>

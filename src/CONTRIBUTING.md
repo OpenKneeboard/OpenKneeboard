@@ -80,3 +80,7 @@ auto example_a = [&foo]() -> void {
     return;
 };
 ```
+
+### Errors in third-party header files
+
+For the most part, these will already be ignored. For clang-diagnostic errors, you may need to introduce a shim header file; search the tree for `#pragma clang diagnostic` for examples.
