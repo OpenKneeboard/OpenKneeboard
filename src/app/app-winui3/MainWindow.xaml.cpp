@@ -721,7 +721,10 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   mWinEventHook.reset();
   // TODO: a lot of this should be moved to the Application class.
   dprint("Removing instance data...");
-  std::filesystem::remove(MainWindow::GetInstanceDataPath());
+  try {
+    std::filesystem::remove(MainWindow::GetInstanceDataPath());
+  } catch (const std::filesystem::filesystem_error&) {
+  }
   gShuttingDown = true;
 
   if (mWindowPosition) {
@@ -1164,8 +1167,19 @@ LRESULT MainWindow::SubclassProc(
   LPARAM lParam,
   UINT_PTR uIdSubclass,
   DWORD_PTR dwRefData) {
-  if (uMsg == WM_SIZE || uMsg == WM_MOVE) {
-    reinterpret_cast<MainWindow*>(dwRefData)->SaveWindowPosition();
+  auto self = reinterpret_cast<MainWindow*>(dwRefData);
+  switch (uMsg) {
+    case WM_SIZE:
+    case WM_MOVE:
+      self->SaveWindowPosition();
+      break;
+    case WM_ENDSESSION:
+      dprint("Processing WM_QUERYENDSESSION");
+      self->Shutdown();
+      break;
+    default:
+      // Just the default behavior
+      break;
   }
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
