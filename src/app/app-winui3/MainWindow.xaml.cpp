@@ -1175,6 +1175,9 @@ LRESULT MainWindow::SubclassProc(
       break;
     case WM_ENDSESSION:
       dprint("Processing WM_QUERYENDSESSION");
+      // This won't complete as the window message loop is never re-entered, but
+      // we want to do as much as we can, especially clearing the 'unsafe
+      // shutdown' marker
       self->Shutdown();
       break;
     default:
