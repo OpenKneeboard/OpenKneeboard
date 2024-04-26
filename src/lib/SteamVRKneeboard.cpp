@@ -37,6 +37,7 @@
 #include <thread>
 
 #include <TlHelp32.h>
+#include <WtsApi32.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <dxgi1_2.h>
@@ -437,6 +438,8 @@ std::optional<SteamVRKneeboard::Pose> SteamVRKneeboard::GetHMDPose(
 }// namespace OpenKneeboard
 
 static bool IsSteamVRRunning() {
+  static bool sIsRunning = false;
+  OPENKNEEBOARD_TraceLoggingScope("IsSteamVRRunning()");
   // We 'should' just call `vr::VR_Init()` and check the result, but it leaks:
   // https://github.com/ValveSoftware/openvr/issues/310
   //
@@ -444,22 +447,40 @@ static bool IsSteamVRRunning() {
   // 2022-01-13)
   //
   // Also reproduced with vr::VR_IsHmdPresent()
-  winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
-  if (!snapshot) {
-    dprint("Failed to get a snapshot");
-    return false;
-  }
-  PROCESSENTRY32 process;
-  process.dwSize = sizeof(process);
-  if (!Process32First(snapshot.get(), &process)) {
-    return false;
-  }
-  do {
-    if (std::wstring_view(process.szExeFile) == L"vrmonitor.exe") {
-      return true;
+  WTS_PROCESS_INFO_EXW* processes {nullptr};
+  DWORD processCount {0};
+  DWORD level = 1;
+  if (!WTSEnumerateProcessesExW(
+        WTS_CURRENT_SERVER_HANDLE,
+        &level,
+        WTS_CURRENT_SESSION,
+        reinterpret_cast<LPWSTR*>(&processes),
+        &processCount)) {
+    const auto code = GetLastError();
+    if (code == ERROR_BAD_LENGTH) {
+      // We don't provide a length, but sometimes WTSEnumerateProcessesExW
+      // internally fails
+      return sIsRunning;
     }
-  } while (Process32Next(snapshot.get(), &process));
-  return false;
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "WTSEnumerateProcessesExW() failed with {}", code);
+  }
+
+  static constexpr std::wstring_view SteamVRExecutable {L"vrmonitor.exe"};
+
+  sIsRunning = false;
+
+  for (DWORD i = 0; i < processCount; ++i) {
+    const auto& process = processes[i];
+    if (std::wstring_view(process.pProcessName) == SteamVRExecutable) {
+      sIsRunning = true;
+      break;
+    }
+  }
+  WTSFreeMemory(processes);
+  processes = nullptr;
+
+  return sIsRunning;
 }
 
 winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
