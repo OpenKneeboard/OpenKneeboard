@@ -103,12 +103,53 @@ void DCSBriefingTab::Reload() noexcept {
   const auto dictionary = lua.GetGlobal("dictionary");
   const auto mapResource = lua.GetGlobal("mapResource");
 
-  this->SetMissionImages(mission, mapResource, localized);
-  this->PushMissionOverview(mission, dictionary);
-  this->PushMissionSituation(mission, dictionary);
-  this->PushMissionObjective(mission, dictionary);
-  this->PushMissionWeather(mission);
-  this->PushBullseyeData(mission);
+  std::vector<std::pair<std::string_view, std::function<void()>>>
+    sectionLoaders {
+      {
+        "SetMissionImages",
+        std::bind_front(
+          &DCSBriefingTab::SetMissionImages,
+          this,
+          mission,
+          mapResource,
+          localized),
+      },
+      {
+        "PushMissionOverview",
+        std::bind_front(
+          &DCSBriefingTab::PushMissionOverview, this, mission, dictionary),
+      },
+      {
+        "PushMissionSituation",
+        std::bind_front(
+          &DCSBriefingTab::PushMissionSituation, this, mission, dictionary),
+      },
+      {
+        "PushMissionObjective",
+        std::bind_front(
+          &DCSBriefingTab::PushMissionObjective, this, mission, dictionary),
+      },
+      {
+        "PushMissionWeather",
+        std::bind_front(&DCSBriefingTab::PushMissionWeather, this, mission),
+      },
+      {
+        "PushBullseyeData",
+        std::bind_front(&DCSBriefingTab::PushBullseyeData, this, mission),
+      },
+    };
+
+  for (const auto& [name, loader]: sectionLoaders) {
+    try {
+      loader();
+    } catch (const LuaIndexError& e) {
+      dprintf("LuaIndexError in {}: {}", name, e.what());
+    } catch (const LuaTypeError& e) {
+      dprintf("LuaTypeError in {}: {}", name, e.what());
+    } catch (const LuaError& e) {
+      dprintf("LuaError in {}: {}", name, e.what());
+    }
+  }
 
   this->evContentChangedEvent.Emit();
 }
