@@ -585,6 +585,9 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
 }
 
 void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+  if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
+    dprintf("Switching to profile: '{}'", profiles.mActiveProfile);
+  }
   // We want the evSettingsChanged event in particular to be emitted
   // first, so that we don't save
   mSaveSettingsEnabled = false;
