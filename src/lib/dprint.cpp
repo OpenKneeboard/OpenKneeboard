@@ -34,8 +34,10 @@
 namespace OpenKneeboard {
 
 static std::wstring GetDPrintResourceName(std::wstring_view key) {
+  // v2: explicit size added
+  // v3: compatibility for 32-bit sender and 64-bit receiver
   return std::format(
-    L"{}.dprint.v2.{}", OpenKneeboard::ProjectReverseDomainW, key);
+    L"{}.dprint.v3.{}", OpenKneeboard::ProjectReverseDomainW, key);
 }
 
 #define IPC_RESOURCE_NAME_FUNC(resource) \
