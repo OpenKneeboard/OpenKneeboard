@@ -421,8 +421,10 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
 
   WindowCaptureTab::MatchSpecification matchSpec {*windowSpec};
 
-  // WPF apps do not use window classes correctly
-  if (windowSpec->mWindowClass.starts_with("HwndWrapper[")) {
+  // WPF and WindowsForms apps do not use window classes correctly
+  if (
+    windowSpec->mWindowClass.starts_with("HwndWrapper[")
+    || windowSpec->mWindowClass.starts_with("WindowsForms")) {
     matchSpec.mMatchWindowClass = false;
     matchSpec.mMatchTitle
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
