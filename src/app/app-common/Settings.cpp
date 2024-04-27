@@ -246,6 +246,7 @@ static void MigrateToViewsConfig(Settings& settings) {
 }
 
 Settings Settings::Load(std::string_view profile) {
+  dprintf("Loading profile: '{}'", profile);
   std::optional<Settings> parentSettings;
   Settings settings;
 
