@@ -73,8 +73,12 @@ struct DPrintSettings {
   static void Set(const DPrintSettings&);
 };
 
-// If you change this structure, you *MUST* also change the version
-// in `GetDPrintResourceName()`
+/**  If you change this structure, you *MUST* also change the version
+ * in `GetDPrintResourceName()`.
+ *
+ * USE DEFINED-SIZE FIELDS ONLY - THIS STRUCT MUST BE
+ * COMPATIBLE BETWEEN 32-BIT AND 64-BIT BINARIES.
+ */
 struct DPrintMessageHeader {
   DWORD mProcessID = 0;
   wchar_t mExecutable[MAX_PATH] {};
@@ -83,18 +87,23 @@ struct DPrintMessageHeader {
 static_assert(sizeof(DPrintMessageHeader) % sizeof(wchar_t) == 0);
 static_assert(std::is_standard_layout_v<DPrintMessageHeader>);
 
-// If you change this structure, you *MUST* also change the version
-// in `GetDPrintResourceName()`
+/* If you change this structure, you *MUST* also change the version
+ * in `GetDPrintResourceName()`
+ *
+ * USE DEFINED-SIZE FIELDS ONLY - THIS STRUCT MUST BE
+ * COMPATIBLE BETWEEN 32-BIT AND 64-BIT BINARIES.
+ */
 struct DPrintMessage {
  public:
-  static constexpr size_t StructSize = 4096;
-  static constexpr auto MaxMessageLength
-    = (StructSize - (sizeof(DPrintMessageHeader) + sizeof(size_t)))
+  using PortableSize = uint64_t;
+  static constexpr PortableSize StructSize = 4096;
+  static constexpr PortableSize MaxMessageLength
+    = (StructSize - (sizeof(DPrintMessageHeader) + sizeof(PortableSize)))
     / sizeof(wchar_t);
 
   DPrintMessageHeader mHeader {};
   wchar_t mMessage[MaxMessageLength];
-  size_t mMessageLength {};
+  PortableSize mMessageLength {};
 };
 static_assert(std::is_standard_layout_v<DPrintMessage>);
 static_assert(sizeof(DPrintMessage) == DPrintMessage::StructSize);
