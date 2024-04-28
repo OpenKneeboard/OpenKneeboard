@@ -7,6 +7,8 @@ parent: How-To
 
 Wacom tablets can either be used with Wacom's drivers, or [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc).
 
+**To use Wacom's drivers, you must use driver v6.4.5 or earlier**, as essential features have been removed in v6.4.6 of Wacom's driver.
+
 ## Using Wacom's drivers
 
 You need to enable the tablet by:

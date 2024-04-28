@@ -7,6 +7,15 @@ parent: Troubleshooting
 
 If you're having problems, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc); the rest of this document only applies to Wacom's driver.
 
+## Unable to bind any buttons
+
+If your Wacom driver is v6.4.6 or later, uninstall the Wacom driver, and install driver v6.4.5 or earlier, as Wacom have removed necessary features from the v6.4.6 driver.
+
+If your tablet or system requires a newer driver you can:
+
+- ask Wacom to re-add support for "Application Defined" ExpressKey and pen button behaviors
+- use OpenTabletDriver instead
+
 ## Tablet only works properly when OpenKneeboard is the active window
 
 ### Symptoms
