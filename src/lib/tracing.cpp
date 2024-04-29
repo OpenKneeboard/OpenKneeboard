@@ -39,6 +39,7 @@ wchar_t* GetFullPathForCurrentExecutable() {
   static wchar_t sBuffer[MAX_PATH] {};
 
   std::call_once(sOnce, [&buffer = sBuffer]() {
+    memset(buffer, 0, std::size(buffer) * sizeof(buffer[0]));
     // `QueryFullProcessImageNameW()` requires a real handle,
     // not the pseudo-handle returned by `GetCurrentProcess()`.
     winrt::handle process {OpenProcess(
@@ -51,7 +52,6 @@ wchar_t* GetFullPathForCurrentExecutable() {
       return;
     }
     auto characterCount = static_cast<DWORD>(std::size(buffer));
-    memset(buffer, 0, std::size(buffer) * sizeof(buffer[0]));
     const auto result
       = QueryFullProcessImageNameW(process.get(), 0, buffer, &characterCount);
     if (result == 0) {
