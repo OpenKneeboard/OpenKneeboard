@@ -11,6 +11,7 @@ target_link_libraries(
 	PRIVATE
 	lualib
 	OpenKneeboard-dprint
+	OpenKneeboard-tracing
 	OpenKneeboard-GameEvent)
 set_target_properties(
 	OpenKneeboard-lua-api
@@ -24,6 +25,7 @@ target_link_libraries(
 	OpenKneeboard-c-api
 	PRIVATE
 	OpenKneeboard-dprint
+	OpenKneeboard-tracing
 	OpenKneeboard-GameEvent)
 set_target_properties(
 	OpenKneeboard-c-api

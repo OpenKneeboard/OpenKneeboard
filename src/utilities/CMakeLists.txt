@@ -17,9 +17,11 @@ ok_add_executable(
 )
 target_link_libraries(
   test-gameevent-feeder
+  PRIVATE
   OpenKneeboard-GameEvent
   OpenKneeboard-consolelib
   OpenKneeboard-games
+  OpenKneeboard-tracing
 )
 
 add_utility_executable(
@@ -33,6 +35,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-GameEvent
+  OpenKneeboard-tracing
 )
 
 add_utility_executable(
@@ -44,8 +47,9 @@ add_utility_executable(
 target_link_libraries(
   OpenKneeboard-RemoteControl-SET_PROFILE
   PRIVATE
-  OpenKneeboard-dprint
   OpenKneeboard-GameEvent
+  OpenKneeboard-dprint
+  OpenKneeboard-tracing
 )
 
 add_utility_executable(
@@ -91,7 +95,13 @@ ok_add_executable(
   fake-dcs.cpp
   remote-traceprovider.cpp
 )
-target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
+target_link_libraries(
+  fake-dcs
+  PRIVATE
+  OpenKneeboard-GameEvent
+  OpenKneeboard-games
+  OpenKneeboard-tracing
+)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
 # StreamDeck and VoiceAttack
@@ -142,6 +152,7 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
     PRIVATE
     OpenKneeboard-GameEvent
     OpenKneeboard-dprint
+    OpenKneeboard-tracing
   )
 endforeach()
 

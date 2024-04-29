@@ -52,9 +52,10 @@ BOOL InjectedDLLMain(
       fullDllPath.resize(len);
     }
     dprintf(
-      "Attached {} to process: {}",
-      Version::ReleaseName,
-      winrt::to_string(fullDllPath));
+      L"Attached {} to process: {} -> {}",
+      Version::ReleaseNameW,
+      fullDllPath,
+      GetFullPathForCurrentExecutable());
 
     DetourRestoreAfterWith();
     DisableThreadLibraryCalls(hinst);

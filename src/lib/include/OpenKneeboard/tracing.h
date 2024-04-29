@@ -33,6 +33,12 @@
 
 namespace OpenKneeboard {
 
+wchar_t* GetFullPathForCurrentExecutable();
+
+#define TraceLoggingThisExecutable() \
+  TraceLoggingValue( \
+    ::OpenKneeboard::GetFullPathForCurrentExecutable(), "Executable")
+
 TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
 
 #define OPENKNEEBOARD_TraceLoggingSourceLocation(loc) \

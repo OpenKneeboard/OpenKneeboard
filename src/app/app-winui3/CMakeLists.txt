@@ -76,6 +76,7 @@ target_link_libraries(
   OpenKneeboard-32bit-runtime-components
   OpenKneeboard-games
   OpenKneeboard-handles
+  OpenKneeboard-tracing
   OpenKneeboard-version
   System::Comctl32
   System::Dbghelp

@@ -42,17 +42,11 @@ TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
 class TraceLoggingRegistration {
  public:
   TraceLoggingRegistration() {
-    wchar_t* wpgmptr {nullptr};
-    char* pgmptr {nullptr};
-    _get_wpgmptr(&wpgmptr);
-    _get_pgmptr(&pgmptr);
-
     TraceLoggingRegister(OpenKneeboard::gTraceProvider);
     TraceLoggingWriteStart(
       gActivity,
       "Invocation",
-      TraceLoggingValue(wpgmptr, "ExecutableW"),
-      TraceLoggingValue(pgmptr, "ExecutableA"),
+      TraceLoggingThisExecutable(),
       TraceLoggingValue(GetCommandLineW(), "Command Line"));
   }
   ~TraceLoggingRegistration() {

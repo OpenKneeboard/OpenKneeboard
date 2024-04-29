@@ -113,6 +113,19 @@ target_link_libraries(
   _libheaders
 )
 
+ok_add_library(OpenKneeboard-tracing STATIC tracing.cpp)
+target_link_libraries(
+  OpenKneeboard-tracing
+  PRIVATE
+  OpenKneeboard-dprint
+  ThirdParty::CppWinRT
+)
+target_link_libraries(
+  OpenKneeboard-tracing
+  PUBLIC
+  _libheaders
+)
+
 ok_add_library(
   OpenKneeboard-D3D11
   STATIC

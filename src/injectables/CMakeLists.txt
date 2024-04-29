@@ -68,6 +68,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-tracing
   OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-SHM
@@ -86,6 +87,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-tracing
   OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-SHM-Client-D3D11
@@ -105,6 +107,7 @@ target_link_libraries(
   OpenKneeboard-ScopedRWX
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-tracing
   OpenKneeboard-version
   d3d12-hooks
   detours-ext
@@ -162,6 +165,7 @@ target_link_libraries(
   OpenKneeboard-AutoDetect
   PRIVATE
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-tracing
   OpenKneeboard-version
   detours-ext
   dxgi-hooks
@@ -173,10 +177,11 @@ target_link_libraries(
   OpenKneeboard-TabletProxy
   PRIVATE
   detours-ext
-  OpenKneeboard-dprint
   OpenKneeboard-FindMainWindow
   OpenKneeboard-GetMainHWND
   OpenKneeboard-Wintab
+  OpenKneeboard-dprint
+  OpenKneeboard-tracing
   OpenKneeboard-version
 )
 
@@ -185,6 +190,7 @@ target_link_libraries(
   OpenKneeboard-WindowCaptureHook
   PRIVATE
   OpenKneeboard-config
+  OpenKneeboard-tracing
   _libheaders
   detours-ext
 )

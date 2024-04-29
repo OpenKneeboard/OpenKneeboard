@@ -17,11 +17,52 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
-namespace OpenKneeboard {
-TRACELOGGING_DEFINE_PROVIDER(
-  gTraceProvider,
-  "OpenKneeboard",
+#include <shims/source_location>
+#include <shims/winrt/base.h>
 
+#include <Windows.h>
+
+#include <thread>
+
+#include <processthreadsapi.h>
+
+namespace OpenKneeboard {
+
+wchar_t* GetFullPathForCurrentExecutable() {
+  static std::once_flag sOnce;
+  // `QueryFullProcessImageNameW()` requires us to provide a size; it doesn't
+  // support the usual 'pass a nullptr and get the size back, then call again'
+  // thing.
+  static wchar_t sBuffer[MAX_PATH] {};
+
+  std::call_once(sOnce, [&buffer = sBuffer]() {
+    // `QueryFullProcessImageNameW()` requires a real handle,
+    // not the pseudo-handle returned by `GetCurrentProcess()`.
+    winrt::handle process {OpenProcess(
+      PROCESS_QUERY_LIMITED_INFORMATION, false, GetCurrentProcessId())};
+    if (!process) {
+      dprintf(
+        "OpenProcess(..., GetCurrentProcessID()) failed: {} @ {}",
+        GetLastError(),
+        std::source_location::current());
+      return;
+    }
+    auto characterCount = static_cast<DWORD>(std::size(buffer));
+    memset(buffer, 0, std::size(buffer) * sizeof(buffer[0]));
+    const auto result
+      = QueryFullProcessImageNameW(process.get(), 0, buffer, &characterCount);
+    if (result == 0) {
+      dprintf(
+        "QueryFullProcessImageNameW() returned {}, failed with {:#018x} @ {}",
+        result,
+        GetLastError(),
+        std::source_location::current());
+    }
+  });
+  return sBuffer;
 }
+
+}// namespace OpenKneeboard
