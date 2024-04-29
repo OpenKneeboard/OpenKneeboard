@@ -87,7 +87,13 @@ void DCSBriefingTab::SetMissionImages(
   const auto force = mission.at(
     CoalitionKey("pictureFileNameN", "pictureFileNameR", "pictureFileNameB"));
   for (auto&& [i, resourceName]: force) {
-    const auto fileName = mapResource[resourceName].Get<std::string>();
+    // `resourceName` will almost always be a string starting with `ResKey_`,
+    // which will be an entry in the `mapResource` dictionary created in
+    // `l10n\DEFAULT\mapResource`; this isn't required, and some missions
+    // just containing a raw filename instead.
+    const auto fileName = mapResource.contains(resourceName)
+      ? mapResource[resourceName].Get<std::string>()
+      : resourceName.Get<std::string>();
     const auto path = resourcePath / fileName;
     if (std::filesystem::is_regular_file(path)) {
       images.push_back(path);
