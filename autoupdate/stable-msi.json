@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/151592226",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/151592226/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/151592226/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.1",
-    "id": 151592226,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/153144662",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/153144662/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/153144662/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.2",
+    "id": 153144662,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84JCR0i",
-    "tag_name": "v1.8.1",
+    "node_id": "RE_kwDOGk0DR84JIM1W",
+    "tag_name": "v1.8.2",
     "target_commitish": "master",
-    "name": "v1.8.1",
+    "name": "v1.8.2",
     "draft": false,
     "prerelease": false,
-    "created_at": "2024-04-17T15:40:16Z",
-    "published_at": "2024-04-17T16:05:52Z",
+    "created_at": "2024-04-28T13:59:11Z",
+    "published_at": "2024-04-28T14:38:38Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/162665485",
-        "id": 162665485,
-        "node_id": "RA_kwDOGk0DR84JshQN",
-        "name": "OpenKneeboard-v1.8.1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/164746585",
+        "id": 164746585,
+        "node_id": "RA_kwDOGk0DR84J0dVZ",
+        "name": "OpenKneeboard-v1.8.2-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 168981170,
+        "size": 169115483,
         "download_count": 0,
-        "created_at": "2024-04-17T16:02:18Z",
-        "updated_at": "2024-04-17T16:02:24Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.1/OpenKneeboard-v1.8.1-DebugSymbols.zip"
+        "created_at": "2024-04-28T14:22:01Z",
+        "updated_at": "2024-04-28T14:22:06Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.2/OpenKneeboard-v1.8.2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/162665486",
-        "id": 162665486,
-        "node_id": "RA_kwDOGk0DR84JshQO",
-        "name": "OpenKneeboard-v1.8.1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/164746584",
+        "id": 164746584,
+        "node_id": "RA_kwDOGk0DR84J0dVY",
+        "name": "OpenKneeboard-v1.8.2.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -98,13 +98,13 @@
         "state": "uploaded",
         "size": 40157184,
         "download_count": 0,
-        "created_at": "2024-04-17T16:02:18Z",
-        "updated_at": "2024-04-17T16:02:21Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.1/OpenKneeboard-v1.8.1.msi"
+        "created_at": "2024-04-28T14:22:00Z",
+        "updated_at": "2024-04-28T14:22:02Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.2/OpenKneeboard-v1.8.2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.1",
-    "body": "Start by downloading [OpenKneeboard-v1.8.1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.1/OpenKneeboard-v1.8.1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThere are no changes since v1.8.1-rc1; changes since v1.8.0 are listed below.\r\n\r\n# Bug fixes\r\n\r\n- New profiles will now default to using views from the default profile that were set in v1.7 or above, like other settings. Previous versions would only copy the 'dual kneeboards' setting from v1.6 and below, which was replaced with the 'views' feature\r\n- Fix crash when changing tab settings, switching profile, then changing settings for the same kind of tab (workaround for WinUI3 UI caching bug)\r\n- Updated to Windows App SDK v1.5.2; this fixes:\r\n  - timers - including the frame timer - triggering incorrectly if the primary display is not running at 60hz\r\n  - several issues with autosuggest and drop-down popups when display scaling is not set to 100%\r\n  - several crashes when interacting with the OpenKneeboard app\r\n\r\n# Other changes\r\n\r\n- When adding a new Window Capture tab for an iOverlay window, OpenKneeboard will default to matching the window title\r\n- Changed description of 'games' settings to clarify when games need to be added\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.2",
+    "body": "Start by downloading [OpenKneeboard-v1.8.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.2/OpenKneeboard-v1.8.2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Bug fixes\r\n\r\n- Fix rare OpenKneeboard app crash when using OpenTabletDriver\r\n- Fix OpenKneeboard app crash when attempting to enable tablet mouse emulation for windows captured from 32-bit applications\r\n- 'Would you like to report a crash?' pop-up is no longer shown if OpenKneeboard was closed due to logging out of/shutting down/rebooting Windows\r\n- Window class is now ignored by default for captured windows built using Windows Forms, such as vPilot\r\n- DCS: Fix missing content for multiplayer servers that are not dedicated servers\r\n- DCS: Fix incorrect installation paths for the AH-64D; this fixes misleading indicators in the debug information, however, as the built-in kneeboard pages are Lua, OpenKneeboard remains unable to display them\r\n"
   }
 ]
