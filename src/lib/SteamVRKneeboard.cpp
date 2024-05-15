@@ -247,6 +247,8 @@ void SteamVRKneeboard::Tick() {
   auto ctx = mDXR.mD3D11ImmediateContext.get();
   std::vector<size_t> activeLayers;
 
+  const auto baseTint = snapshot.GetConfig().mTint;
+
   for (size_t layerIndex = 0; layerIndex < vrLayers.size(); ++layerIndex) {
     this->InitializeLayer(layerIndex);
     const auto [layer, renderParams] = vrLayers.at(layerIndex);
@@ -269,6 +271,13 @@ void SteamVRKneeboard::Tick() {
     ctx->ClearRenderTargetView(
       mRenderTargetView.get(), DirectX::Colors::Transparent);
 
+    const DirectX::XMVECTORF32 layerTint {
+      baseTint[0] * renderParams.mKneeboardOpacity,
+      baseTint[1] * renderParams.mKneeboardOpacity,
+      baseTint[2] * renderParams.mKneeboardOpacity,
+      baseTint[3] * renderParams.mKneeboardOpacity,
+    };
+
     const auto& imageSize = layer->mVR.mLocationOnTexture.mSize;
     mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize);
     mSpriteBatch->Draw(
@@ -278,7 +287,7 @@ void SteamVRKneeboard::Tick() {
         {0, 0},
         layer->mVR.mLocationOnTexture.mSize,
       },
-      D3D11::Opacity {renderParams.mKneeboardOpacity});
+      layerTint);
     mSpriteBatch->End();
 
     // ... then atomic copy to OpenVR texture
