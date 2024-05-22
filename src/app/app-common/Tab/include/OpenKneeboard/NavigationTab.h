@@ -42,11 +42,11 @@ class NavigationTab final : public TabBase,
  public:
   using Entry = NavigationEntry;
 
+  NavigationTab() = delete;
   NavigationTab(
     const audited_ptr<DXResources>&,
     const std::shared_ptr<ITab>& rootTab,
-    const std::vector<NavigationEntry>& entries,
-    const D2D1_SIZE_U& preferredSize);
+    const std::vector<NavigationEntry>& entries);
   ~NavigationTab();
 
   virtual std::string GetGlyph() const override;

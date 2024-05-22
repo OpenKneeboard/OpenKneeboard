@@ -248,11 +248,7 @@ bool TabView::SetTabMode(TabMode mode) {
         mDXR,
         mRootTab,
         std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
-          ->GetNavigationEntries(),
-        mRootTab
-          ->GetPreferredSize(
-            mRootTabPage ? (mRootTabPage->mID) : (PageID {nullptr}))
-          .mPixelSize);
+          ->GetNavigationEntries());
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
         [this](EventContext ctx, PageID newPage) {

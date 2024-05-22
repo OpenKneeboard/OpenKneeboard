@@ -36,8 +36,7 @@ bool NavigationTab::Button::operator==(
 NavigationTab::NavigationTab(
   const audited_ptr<DXResources>& dxr,
   const std::shared_ptr<ITab>& rootTab,
-  const std::vector<NavigationEntry>& entries,
-  const D2D1_SIZE_U& _ignoredPreferredSize)
+  const std::vector<NavigationEntry>& entries)
   : TabBase(winrt::guid {}, rootTab->GetTitle()),
     mDXR(dxr),
     mRootTab(rootTab),
@@ -45,9 +44,9 @@ NavigationTab::NavigationTab(
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::NavigationTab()");
   const auto columns = entries.size() >= 10
     ? std::max(
-      1ui32,
-      static_cast<uint32_t>(
-        (mPreferredSize.mWidth * 1.5f) / mPreferredSize.mHeight))
+        1ui32,
+        static_cast<uint32_t>(
+          (mPreferredSize.mWidth * 1.5f) / mPreferredSize.mHeight))
     : 1;
   const auto entriesPerPage
     = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
