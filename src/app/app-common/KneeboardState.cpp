@@ -625,6 +625,7 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   this->SetAppSettings(newSettings.mApp);
   this->SetDoodlesSettings(newSettings.mDoodles);
   mGamesList->LoadSettings(newSettings.mGames);
+  mDirectInput->LoadSettings(newSettings.mDirectInput);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
   this->SetVRSettings(newSettings.mVR);
 
