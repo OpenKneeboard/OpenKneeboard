@@ -25,7 +25,7 @@ If you have an unsupported tablet driver, you might want to [try OpenTabletDrive
 - If the file is too large, use a service like Google Drive, Dropbox, Onedrive or similar.
 - If you would prefer to share the dump privately, **a GitHub issue is still required**, but you can send a link to the dump file to `openkneeboard-dumps@fred.fredemmott.com`; if you send an email, mention it in your GitHub issue, or it will not be seen
 - If you are able to reliably reproduce the issue, please include steps with as much detail as you can, and any relevant files
-- **WARNING**: If you send an email without also filing a GitHub issue, it is very likely that your email will be automatically deleted before it is seen**
+- **WARNING**: If you send an email without also filing a GitHub issue, it is very likely that your email will be automatically deleted before it is seen
 
 ### Getting a dump file for a crash
 
