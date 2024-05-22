@@ -669,6 +669,13 @@ class TestViewerWindow final : private D3D11Resources {
 
     if (vkk >= '1' && vkk <= '9') {
       mLayerIndex = static_cast<uint8_t>(vkk - '1');
+      if (mLayerIndex == 0) {
+        SetWindowTextW(mHwnd, L"OpenKneeboard Viewer");
+      } else {
+        SetWindowTextW(
+          mHwnd,
+          std::format(L"OpenKneeboard Viewer - {}", mLayerIndex + 1).c_str());
+      }
       this->PaintNow();
       if (mSetInputFocus) {
         ActiveConsumers::SetActiveInGameViewID(mLayerID);
