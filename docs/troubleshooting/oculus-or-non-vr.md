@@ -16,7 +16,7 @@ Restart the game after each step to see if it's fixed.
 2. Do not run OpenKneeboard as administrator/elevated.
 3. Make sure that the game is in OpenKneeboard's games list, and the path is correct.
 4. If using RivaTuner Statistics Server or the MSI Afterburner overlay, turn on 'Use Microsoft Detours API hooking' at the bottom of the overlay profile's setup page in RTSS/Afterburner
-5. **Also check everything in the 'Game Crashes' section below**
+5. **Also try everything in the 'Game Crashes' section below**, even if the game is not crashing
 
 ## Game Crashes
 
