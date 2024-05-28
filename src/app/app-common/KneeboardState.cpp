@@ -132,6 +132,8 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "KneeboardState::GetViewRenderInfo()");
   std::vector<ViewRenderInfo> ret;
 
   const size_t count = mSettings.mViews.mViews.size();
@@ -166,6 +168,22 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       .mFullSize = layoutSize,
       .mIsActiveForInput = (i == mInputViewIndex),
     });
+
+    TraceLoggingWriteTagged(
+      activity,
+      "KneeboardState::GetViewRenderInfo()/View",
+      TraceLoggingHexUInt64(
+        view->GetRuntimeID().GetTemporaryValue(), "RuntimeID"),
+      TraceLoggingGuid(view->GetPersistentGUID(), "PersistentID"),
+      OPENKNEEBOARD_TraceLoggingSize2D(
+        contentSize.mPixelSize, "PreferredPixelSize"),
+      OPENKNEEBOARD_TraceLoggingRect(
+        (ret.back().mVR ? ret.back().mVR->mLocationOnTexture : PixelRect {}),
+        "VRLocationOnTexture"),
+      OPENKNEEBOARD_TraceLoggingRect(
+        (ret.back().mNonVR ? ret.back().mNonVR->mLocationOnTexture
+                           : PixelRect {}),
+        "NonVRLocationOnTexture"));
   }
 
   return ret;
