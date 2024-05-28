@@ -69,22 +69,30 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
   ClangTidy::TraceLoggingScopedActivity activity;
 #define OPENKNEEBOARD_TraceLoggingWrite(...)
 
+#undef TraceLoggingProviderEnabled
+
 #undef TraceLoggingValue
 #undef TraceLoggingCountedWideString
 #undef TraceLoggingString
 #undef TraceLoggingBinary
 #undef TraceLoggingGuid
+#undef TraceLoggingHexUInt64
+#undef TraceLoggingHexUInt64Array
 
 #undef TraceLoggingWrite
 #undef TraceLoggingWriteStart
 #undef TraceLoggingWriteStop
 #undef TraceLoggingWriteTagged
 
+#define TraceLoggingProviderEnabled(...) ClangTidy::maybe_unused(__VA_ARGS__)
+
 #define TraceLoggingValue(...) ClangTidy::maybe_unused(__VA_ARGS__)
 #define TraceLoggingCountedWideString(...) ClangTidy::maybe_unused(__VA_ARGS__)
 #define TraceLoggingString(...) ClangTidy::maybe_unused(__VA_ARGS__)
 #define TraceLoggingBinary(...) ClangTidy::maybe_unused(__VA_ARGS__)
 #define TraceLoggingGuid(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingHexUInt64(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingHexUInt64Array(...) ClangTidy::maybe_unused(__VA_ARGS__)
 
 #define TraceLoggingWrite(...) ClangTidy::maybe_unused(__VA_ARGS__)
 #define TraceLoggingWriteStart(...) ClangTidy::maybe_unused(__VA_ARGS__)

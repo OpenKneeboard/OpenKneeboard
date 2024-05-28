@@ -60,6 +60,9 @@ std::filesystem::path PlainTextFilePageSource::GetPath() const {
 }
 
 void PlainTextFilePageSource::SetPath(const std::filesystem::path& path) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "PlainTextFilePageSource::SetPath()",
+    TraceLoggingValue(path.c_str(), "Path"));
   if (path == mPath) {
     return;
   }

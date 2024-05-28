@@ -49,6 +49,7 @@
 
 #include <windows.data.pdf.interop.h>
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -285,6 +286,11 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   }
   std::unique_lock lock(p->mMutex);
   p->mPageIDs.resize(index + 1);
+  TraceLoggingWrite(
+    gTraceProvider,
+    "PDFFilePageSource::GetPageIDForIndex()",
+    TraceLoggingValue(index, "Index"),
+    TraceLoggingHexUInt64(p->mPageIDs.back().GetTemporaryValue(), "PageID"));
   return p->mPageIDs.back();
 }
 
@@ -358,6 +364,17 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
 
   std::unique_lock lock(p->mMutex);
   p->mPageIDs.resize(pageCount);
+
+  if (TraceLoggingProviderEnabled(gTraceProvider, 0, 0)) {
+    std::vector<uint64_t> values(pageCount);
+    std::ranges::transform(
+      p->mPageIDs, begin(values), &PageID::GetTemporaryValue);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "PDFFilePageSource::GetPageIDs()",
+      TraceLoggingHexUInt64Array(values.data(), values.size(), "PageIDs"));
+  }
+
   return p->mPageIDs;
 }
 

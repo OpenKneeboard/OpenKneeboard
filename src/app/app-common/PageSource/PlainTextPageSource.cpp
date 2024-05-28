@@ -128,8 +128,18 @@ PageIndex PlainTextPageSource::GetPageCount() const {
 }
 
 std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
-  if (mPageIDs.size() < GetPageCount()) {
-    mPageIDs.resize(GetPageCount());
+  const auto pageCount = this->GetPageCount();
+  if (mPageIDs.size() < pageCount) {
+    mPageIDs.resize(pageCount);
+    if (TraceLoggingProviderEnabled(gTraceProvider, 0, 0)) {
+      std::vector<uint64_t> values(pageCount);
+      std::ranges::transform(
+        mPageIDs, begin(values), &PageID::GetTemporaryValue);
+      TraceLoggingWrite(
+        gTraceProvider,
+        "PlainTextPageSource::GetPageIDs()",
+        TraceLoggingHexUInt64Array(values.data(), values.size(), "PageIDs"));
+    }
   }
   return mPageIDs;
 }

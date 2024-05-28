@@ -83,8 +83,17 @@ void TabViewUILayer::Render(
   const IUILayer::NextList&,
   const Context& context,
   const PixelRect& rect) {
-  OPENKNEEBOARD_TraceLoggingScope("TabViewUILayer::Render()");
   const auto tabView = context.mTabView;
+
+  OPENKNEEBOARD_TraceLoggingScope(
+    "TabViewUILayer::Render()",
+    TraceLoggingHexUInt64(rt->GetID().GetTemporaryValue(), "RenderTargetID"),
+    TraceLoggingGuid(
+      (tabView && tabView->GetTab()) ? tabView->GetTab()->GetPersistentID()
+                                     : winrt::guid {},
+      "TabID"),
+    TraceLoggingHexUInt64(
+      tabView ? tabView->GetPageID().GetTemporaryValue() : 0ui64, "PageID"));
 
   if (!tabView) {
     auto d2d = rt->d2d();

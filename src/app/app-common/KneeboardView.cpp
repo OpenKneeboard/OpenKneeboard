@@ -388,7 +388,9 @@ void KneeboardView::RenderWithChrome(
   RenderTarget* rt,
   const PixelRect& rect,
   bool isActiveForInput) noexcept {
-  OPENKNEEBOARD_TraceLoggingScope("KneeboardView::RenderWithChrome()");
+  OPENKNEEBOARD_TraceLoggingScope(
+    "KneeboardView::RenderWithChrome()",
+    TraceLoggingHexUInt64(rt->GetID().GetTemporaryValue(), "RenderTargetID"));
   if (!mCurrentTabView) {
     auto d2d = rt->d2d();
     d2d->FillRectangle(rect, mErrorBackgroundBrush.get());

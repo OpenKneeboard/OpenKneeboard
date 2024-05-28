@@ -44,6 +44,8 @@ ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr)
 
 void ImageFilePageSource::SetPaths(
   const std::vector<std::filesystem::path>& paths) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "ImageFilePageSource::SetPaths()");
   mPages.clear();
   mPages.reserve(paths.size());
   for (const auto& path: paths) {
@@ -61,6 +63,11 @@ void ImageFilePageSource::SetPaths(
       .mPath = path,
       .mWatcher = watcher,
     });
+    TraceLoggingWriteTagged(
+      activity,
+      "ImageFilePageSource::SetPaths()/Page",
+      TraceLoggingValue(path.c_str(), "Path"),
+      TraceLoggingHexUInt64(mPages.back().mID.GetTemporaryValue(), "PageID"));
   }
 }
 
