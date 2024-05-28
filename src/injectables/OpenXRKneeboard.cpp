@@ -296,6 +296,13 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   for (size_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto [layer, params] = vrLayers.at(layerIndex);
+    OPENKNEEBOARD_TraceLoggingScopedActivity(
+      layerActivity,
+      "OpenXRKneeboard::xrEndFrame()/LayerSprites",
+      TraceLoggingValue(layerIndex, "LayerIndex"),
+      TraceLoggingHexUInt64(layer->mLayerID, "LayerID"),
+      OPENKNEEBOARD_TraceLoggingRect(
+        layer->mVR.mLocationOnTexture, "LocationOnTexture"));
 
     cacheKeys.push_back(params.mCacheKey);
     PixelRect destRect {
@@ -309,9 +316,17 @@ XrResult OpenXRKneeboard::xrEndFrame(
           break;
         }
         [[fallthrough]];
-      case Upscaling::AlwaysOn:
-        destRect.mSize = destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
+      case Upscaling::AlwaysOn: {
+        const auto upscaled
+          = destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
+        TraceLoggingWriteTagged(
+          layerActivity,
+          "OpenXRKneeboard::xrEndFrame()/LayerSprites/Upscale",
+          OPENKNEEBOARD_TraceLoggingSize2D(destRect.mSize, "OriginalSize"),
+          OPENKNEEBOARD_TraceLoggingSize2D(upscaled, "NewSize"));
+        destRect.mSize = upscaled;
         break;
+      }
       case Upscaling::AlwaysOff:
         // nothing to do
         break;
@@ -322,6 +337,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .mDestRect = destRect,
       .mOpacity = params.mKneeboardOpacity,
     });
+
+    TraceLoggingWriteTagged(
+      layerActivity,
+      "OpenXRKneeboard::xrEndFrame()/LayerSprites/Sprite",
+      OPENKNEEBOARD_TraceLoggingRect(
+        layerSprites.back().mSourceRect, "SourceRect"),
+      OPENKNEEBOARD_TraceLoggingRect(layerSprites.back().mDestRect, "DestRect"),
+      TraceLoggingValue(layerSprites.back().mOpacity, "Opacity"));
 
     if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
@@ -771,10 +794,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
 extern "C" {
 XrResult __declspec(dllexport) XRAPI_CALL
-  OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
-    const XrNegotiateLoaderInfo* loaderInfo,
-    const char* layerName,
-    XrNegotiateApiLayerRequest* apiLayerRequest) {
+OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
+  const XrNegotiateLoaderInfo* loaderInfo,
+  const char* layerName,
+  XrNegotiateApiLayerRequest* apiLayerRequest) {
   dprintf("{}", __FUNCTION__);
 
   if (layerName != OpenKneeboard::OpenXRLayerName) {

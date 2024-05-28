@@ -46,6 +46,15 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
     TraceLoggingValue(loc.line(), "Line"), \
     TraceLoggingValue(loc.function_name(), "Function")
 
+#define OPENKNEEBOARD_TraceLoggingSize2D(size2d, name) \
+  TraceLoggingValue(size2d.Width(), name "/Width"), \
+    TraceLoggingValue(size2d.Height(), name "/Height")
+
+#define OPENKNEEBOARD_TraceLoggingRect(pr, name) \
+  TraceLoggingValue(pr.Left(), name "/Left"), \
+    TraceLoggingValue(pr.Top(), name "/Top"), \
+    OPENKNEEBOARD_TraceLoggingSize2D(pr, name)
+
 #ifdef CLANG_TIDY
 // We should be able to switch to the real definitions once
 // we're using `/Zc:preprocessor` and OPENKNEEBOARD_VA_OPT_SUPPORTED is true
