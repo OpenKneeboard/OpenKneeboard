@@ -293,7 +293,9 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
 
     return {
       size,
-      (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
+      (unscaledContentArea.StaticCast<float>() * ratio)
+        .Rounded<uint32_t>()
+        .Clamped(MaxViewRenderSize),
     };
   }
   const auto now = SHM::ActiveConsumers::Clock::now();
@@ -305,7 +307,9 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
     return {
       size,
-      (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
+      (unscaledContentArea.StaticCast<float>() * ratio)
+        .Rounded<uint32_t>()
+        .Clamped(MaxViewRenderSize),
     };
   }
 
@@ -330,7 +334,9 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
           = static_cast<float>(rect.mSize.mWidth) / idealSize.mWidth;
         return {
           rect.mSize,
-          (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
+          (unscaledContentArea.StaticCast<float>() * ratio)
+            .Rounded<uint32_t>()
+            .Clamped(MaxViewRenderSize),
         };
       }
     } else {
@@ -347,7 +353,9 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
   return {
     size,
-    (unscaledContentArea.StaticCast<float>() * ratio).Rounded<uint32_t>(),
+    (unscaledContentArea.StaticCast<float>() * ratio)
+      .Rounded<uint32_t>()
+      .Clamped(MaxViewRenderSize),
   };
 }
 

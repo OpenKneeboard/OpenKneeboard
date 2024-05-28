@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <compare>
@@ -329,6 +330,23 @@ struct Rect {
       mSize,
       origin,
     };
+  }
+
+  constexpr Rect<T> Clamped(const Rect<T>& container) const {
+    const Point<T> topLeft {
+      std::clamp(Left(), container.Left(), container.Right()),
+      std::clamp(Top(), container.Top(), container.Bottom()),
+    };
+    const Size<T> size {
+      std::clamp(Width(), T {0}, container.Width() - topLeft.X()),
+      std::clamp(Height(), T {0}, container.Height() - topLeft.Y()),
+    };
+    return {topLeft, size};
+  }
+
+  /// Convenience method for containers anchored at {0 , 0}
+  constexpr Rect<T> Clamped(const Size<T>& containerSize) const {
+    return Clamped({Point<T> {}, containerSize});
   }
 
   constexpr bool operator==(const Rect<T>&) const noexcept = default;

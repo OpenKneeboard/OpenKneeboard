@@ -506,7 +506,8 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
       (clientRect.right - clientRect.left) * scale,
       (clientRect.bottom - clientRect.top) * scale,
     }}
-    .Rounded<uint32_t>();
+    .Rounded<uint32_t>()
+    .Clamped(captureSize);
 }
 
 void HWNDPageSource::InstallWindowHooks(HWND target) {
