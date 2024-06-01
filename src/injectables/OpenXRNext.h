@@ -32,7 +32,8 @@
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
 #define XR_USE_GRAPHICS_API_VULKAN
-#include <openxr/openxr.h>
+#include <shims/openxr/openxr.h>
+
 #include <openxr/openxr_platform.h>
 
 #include <utility>

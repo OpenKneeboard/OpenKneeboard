@@ -46,7 +46,8 @@
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
 #define XR_USE_GRAPHICS_API_VULKAN
-#include <openxr/openxr.h>
+#include <shims/openxr/openxr.h>
+
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr_reflection.h>
 
@@ -94,9 +95,7 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return { \
-      #enum_name \
-    }; \
+    return {#enum_name}; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -736,7 +735,7 @@ XrResult xrGetInstanceProcAddr(
   dprintf(
     "Unsupported OpenXR call '{}' with instance {:#016x} and no next",
     name,
-    reinterpret_cast<uintptr_t>(instance));
+    std::bit_cast<uint64_t>(instance));
   return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 

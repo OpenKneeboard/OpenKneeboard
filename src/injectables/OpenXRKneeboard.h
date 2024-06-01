@@ -25,13 +25,12 @@
 #include <d3d11.h>
 // clang-format on
 
-#include <OpenKneeboard/VRKneeboard.h>
-
 #include <OpenKneeboard/config.h>
 
-#include <shims/source_location>
+#include <OpenKneeboard/VRKneeboard.h>
 
-#include <openxr/openxr.h>
+#include <shims/openxr/openxr.h>
+#include <shims/source_location>
 
 #include <format>
 #include <span>

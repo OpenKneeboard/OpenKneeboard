@@ -25,29 +25,27 @@
 
 #include <OpenKneeboard/Opaque64BitHandle.h>
 
-namespace OpenKneeboard::Vulkan::Detail {
+namespace OpenKneeboard::OpenXR::Detail {
 
 /*
- * The Vulkan headers define handles by default in a way such that
+ * The OpenXR headers define handles by default in a way such that
  * all handles in 32-bit builds are considered the same type, so can't be used
  * in overload resolution. Let's fix this.
  */
 template <class T>
-struct NonDispatchableHandle64 : public OpenKneeboard::Opaque64BitHandle<T> {
+struct Handle64 : public OpenKneeboard::Opaque64BitHandle<T> {
   using Opaque64BitHandle<T>::Opaque64BitHandle;
 };
 
-}// namespace OpenKneeboard::Vulkan::Detail
+}// namespace OpenKneeboard::OpenXR::Detail
 
-#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) \
-  struct object \
-    : public ::OpenKneeboard::Vulkan::Detail::NonDispatchableHandle64< \
-        object> { \
-    using NonDispatchableHandle64<object>::NonDispatchableHandle64; \
+#define XR_DEFINE_HANDLE(object) \
+  struct object : public ::OpenKneeboard::OpenXR::Detail::Handle64<object> { \
+    using Handle64<object>::Handle64; \
   };
 // As Vulkan usually uses `uint64_t` for 32-bit handles, it can't use nullptr;
 // as we have a nullptr overload in our struct, it'll work fine
-#define VK_NULL_HANDLE nullptr
+#define XR_NULL_HANDLE nullptr
 #endif// OPENKNEEBOARD_32BIT_BUILD
 
-#include <vulkan/vulkan.h>
+#include <openxr/openxr.h>
