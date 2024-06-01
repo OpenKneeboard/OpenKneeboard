@@ -21,6 +21,10 @@ if(BUILD_BITNESS EQUAL 64)
       "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET}32,IMPORTED_LOCATION>>"
     )
   endforeach()
+  list(
+    APPEND RUNTIME_FILES
+    "$<PATH:GET_PARENT_PATH,$<GENEX_EVAL:$<TARGET_PROPERTY:OpenKneeboard-OpenXR32,IMPORTED_LOCATION>>>/OpenKneeboard-OpenXR32.json"
+  )
 endif()
 
 set(

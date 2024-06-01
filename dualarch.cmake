@@ -1,5 +1,6 @@
 set(
   DUAL_ARCH_COMPONENTS
+  OpenKneeboard-OpenXR
   OpenKneeboard-WindowCaptureHook
   OpenKneeboard-WindowCaptureHook-Helper
   OpenKneeboard-c-api

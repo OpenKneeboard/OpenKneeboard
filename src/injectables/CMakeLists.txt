@@ -151,14 +151,20 @@ configure_file(
   OpenKneeboard-OpenXR.intermediate.json
   NEWLINE_STYLE UNIX
 )
-foreach(PREFIX IN ITEMS "" "$<TARGET_FILE_DIR:OpenKneeboard-OpenXR>/")
-  file(
-    GENERATE
-    OUTPUT "${PREFIX}OpenKneeboard-OpenXR.json"
-    INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
-    NEWLINE_STYLE UNIX
-  )
-endforeach()
+if(BUILD_BITNESS EQUAL 64)
+  set(OPENXR_JSON_OUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.json")
+else()
+  set(OPENXR_JSON_OUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR${BUILD_BITNESS}.json")
+endif()
+file(
+  GENERATE
+  OUTPUT "${OPENXR_JSON_OUT}"
+  INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
+  NEWLINE_STYLE UNIX
+)
+if(BUILD_BITNESS EQUAL 32)
+  install(FILES "${OPENXR_JSON_OUT}" TYPE BIN COMPONENT DualArch)
+endif()
 
 add_module_library(OpenKneeboard-AutoDetect InjectionBootstrapper.cpp)
 target_link_libraries(
