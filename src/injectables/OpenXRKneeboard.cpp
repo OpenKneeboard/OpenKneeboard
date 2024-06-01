@@ -95,9 +95,7 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return { \
-      #enum_name \
-    }; \
+    return {#enum_name}; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -675,15 +673,14 @@ XRAPI_ATTR XrResult XRAPI_CALL xrDestroySession(XrSession session) {
   return gNext->xrDestroySession(session);
 }
 
-XrResult xrDestroyInstance(XrInstance instance) {
+XRAPI_ATTR XrResult XRAPI_CALL xrDestroyInstance(XrInstance instance) {
   delete gKneeboard;
   gKneeboard = nullptr;
   return gNext->xrDestroyInstance(instance);
 }
 
-XrResult xrEndFrame(
-  XrSession session,
-  const XrFrameEndInfo* frameEndInfo) noexcept {
+XRAPI_ATTR XrResult XRAPI_CALL
+xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) noexcept {
   if (gKneeboard) {
     return gKneeboard->xrEndFrame(session, frameEndInfo);
   }
