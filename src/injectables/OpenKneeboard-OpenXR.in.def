@@ -1,0 +1,4 @@
+LIBRARY OpenKneeboard-OpenXR@BUILD_BITNESS@
+EXPORTS
+; needed as __declspec(dllexport) does not play nice with __stdcall from XRAPI_CALL
+OpenKneeboard_xrNegotiateLoaderApiLayerInterface

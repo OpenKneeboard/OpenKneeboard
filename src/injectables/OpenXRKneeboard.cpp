@@ -796,8 +796,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   return TRUE;
 }
 
-extern "C" {
-XrResult __declspec(dllexport) XRAPI_CALL
+extern "C" XRAPI_ATTR XrResult XRAPI_CALL
 OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
   const XrNegotiateLoaderInfo* loaderInfo,
   const char* layerName,
@@ -817,5 +816,4 @@ OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
   apiLayerRequest->createApiLayerInstance
     = &OpenKneeboard::xrCreateApiLayerInstance;
   return XR_SUCCESS;
-}
 }

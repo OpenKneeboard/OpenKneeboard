@@ -114,8 +114,16 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_module_library(
+configure_file(
+  OpenKneeboard-OpenXR.in.def
+  OpenKneeboard-OpenXR${BUILD_BITNESS}.def
+  @ONLY
+  NEWLINE_STYLE UNIX
+)
+ok_add_library(
   OpenKneeboard-OpenXR
+  MODULE
+  OpenKneeboard-OpenXR${BUILD_BITNESS}.def
   OpenXRKneeboard.cpp
   OpenXRD3D11Kneeboard.cpp
   OpenXRD3D12Kneeboard.cpp
