@@ -95,26 +95,42 @@ void VRSettingsPage::SteamVREnabled(bool enabled) {
   mKneeboard->SetVRSettings(config);
 }
 
-bool VRSettingsPage::OpenXREnabled() noexcept {
+static bool IsOpenXRAPILayerEnabled(
+  const std::filesystem::path& jsonPath,
+  DWORD extraFlags) {
   DWORD data {};
   DWORD dataSize = sizeof(data);
-  const auto jsonPath
-    = std::filesystem::canonical(
-        RuntimeFiles::GetInstallationDirectory() / RuntimeFiles::OPENXR_JSON)
-        .wstring();
+
   const auto result = RegGetValueW(
     HKEY_LOCAL_MACHINE,
     gOpenXRLayerSubkey,
     jsonPath.c_str(),
-    RRF_RT_DWORD,
+    RRF_RT_DWORD | extraFlags,
     nullptr,
     &data,
     &dataSize);
+
   if (result != ERROR_SUCCESS) {
     return false;
   }
   const auto disabled = static_cast<bool>(data);
   return !disabled;
+}
+
+bool VRSettingsPage::OpenXR64Enabled() noexcept {
+  const auto jsonPath = std::filesystem::canonical(
+                          RuntimeFiles::GetInstallationDirectory()
+                          / RuntimeFiles::OPENXR_64BIT_JSON)
+                          .wstring();
+  return IsOpenXRAPILayerEnabled(jsonPath, RRF_SUBKEY_WOW6464KEY);
+}
+
+bool VRSettingsPage::OpenXR32Enabled() noexcept {
+  const auto jsonPath = std::filesystem::canonical(
+                          RuntimeFiles::GetInstallationDirectory()
+                          / RuntimeFiles::OPENXR_32BIT_JSON)
+                          .wstring();
+  return IsOpenXRAPILayerEnabled(jsonPath, RRF_SUBKEY_WOW6432KEY);
 }
 
 fire_and_forget VRSettingsPage::AddView(
@@ -293,15 +309,24 @@ void VRSettingsPage::PopulateViews() noexcept {
   TabView().SelectedIndex(0);
 }
 
-fire_and_forget VRSettingsPage::OpenXREnabled(bool enabled) noexcept {
-  if (enabled == OpenXREnabled()) {
+fire_and_forget VRSettingsPage::OpenXR64Enabled(bool enabled) noexcept {
+  if (enabled == OpenXR64Enabled()) {
     co_return;
   }
 
   const auto newValue = enabled ? OpenXRMode::AllUsers : OpenXRMode::Disabled;
-  const auto oldValue = enabled ? OpenXRMode::Disabled : OpenXRMode::AllUsers;
-  co_await SetOpenXRModeWithHelperProcess(newValue, {oldValue});
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"OpenXREnabled"));
+  co_await SetOpenXR64ModeWithHelperProcess(newValue);
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"OpenXR64Enabled"));
+}
+
+fire_and_forget VRSettingsPage::OpenXR32Enabled(bool enabled) noexcept {
+  if (enabled == OpenXR32Enabled()) {
+    co_return;
+  }
+
+  const auto newValue = enabled ? OpenXRMode::AllUsers : OpenXRMode::Disabled;
+  co_await SetOpenXR32ModeWithHelperProcess(newValue);
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"OpenXR32Enabled"));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -21,6 +21,7 @@
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RunSubprocessAsync.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+
 #include <OpenKneeboard/dprint.h>
 
 #include <format>
@@ -39,26 +40,30 @@ static auto LaunchAndWaitForOpenXRHelperSubprocess(
   return RunSubprocessAsync(exePath, commandLine, runas);
 }
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
-  OpenXRMode mode,
-  std::optional<OpenXRMode> oldMode) {
-  if (oldMode && mode != *oldMode) {
-    switch (*oldMode) {
-      case OpenXRMode::Disabled:
-        break;
-      case OpenXRMode::AllUsers:
-        co_await LaunchAndWaitForOpenXRHelperSubprocess(
-          RunAs::Administrator, L"disable-HKLM");
-        break;
-    }
-  }
-
+winrt::Windows::Foundation::IAsyncAction SetOpenXR64ModeWithHelperProcess(
+  OpenXRMode mode) {
   switch (mode) {
     case OpenXRMode::Disabled:
+      co_await LaunchAndWaitForOpenXRHelperSubprocess(
+        RunAs::Administrator, L"disable-HKLM-64");
       break;
     case OpenXRMode::AllUsers:
       co_await LaunchAndWaitForOpenXRHelperSubprocess(
-        RunAs::Administrator, L"enable-HKLM");
+        RunAs::Administrator, L"enable-HKLM-64");
+      break;
+  }
+}
+
+winrt::Windows::Foundation::IAsyncAction SetOpenXR32ModeWithHelperProcess(
+  OpenXRMode mode) {
+  switch (mode) {
+    case OpenXRMode::Disabled:
+      co_await LaunchAndWaitForOpenXRHelperSubprocess(
+        RunAs::Administrator, L"disable-HKLM-32");
+      break;
+    case OpenXRMode::AllUsers:
+      co_await LaunchAndWaitForOpenXRHelperSubprocess(
+        RunAs::Administrator, L"enable-HKLM-32");
       break;
   }
 }

@@ -25,18 +25,27 @@
  */
 
 #include <OpenKneeboard/RuntimeFiles.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+
+#include <shims/filesystem>
+
 #include <Windows.h>
-#include <shellapi.h>
 
 #include <functional>
-#include <shims/filesystem>
 #include <string>
+
+#include <shellapi.h>
 
 using namespace OpenKneeboard;
 
-static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
+enum class RegistryView {
+  WOW64_64,
+  WOW64_32,
+};
+
+static HKEY OpenOrCreateImplicitLayerRegistryKey(RegistryView view, HKEY root) {
   HKEY openXRKey {0};
   const auto result = RegCreateKeyExW(
     root,
@@ -44,7 +53,8 @@ static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
     0,
     nullptr,
     0,
-    KEY_ALL_ACCESS,
+    KEY_ALL_ACCESS
+      | ((view == RegistryView::WOW64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
     nullptr,
     &openXRKey,
     nullptr);
@@ -55,9 +65,10 @@ static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
 }
 
 static void DisableOpenXRLayers(
+  RegistryView view,
   HKEY root,
   std::function<bool(std::wstring_view)> predicate) {
-  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(root);
+  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(view, root);
   if (!openXRKey) {
     return;
   }
@@ -95,33 +106,32 @@ static void DisableOpenXRLayers(
 }
 
 static void DisableOpenXRLayer(
+  RegistryView view,
   HKEY root,
-  const std::filesystem::path& directory) {
-  auto jsonPath
-    = std::filesystem::canonical(directory / RuntimeFiles::OPENXR_JSON)
-        .wstring();
+  const std::filesystem::path& rawJsonPath) {
+  const auto jsonPath = std::filesystem::canonical(rawJsonPath).wstring();
 
-  DisableOpenXRLayers(root, [jsonPath](std::wstring_view layerPath) {
+  DisableOpenXRLayers(view, root, [jsonPath](std::wstring_view layerPath) {
     return layerPath == jsonPath;
   });
 }
 
 static void EnableOpenXRLayer(
+  RegistryView view,
   HKEY root,
-  const std::filesystem::path& directory) {
-  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(root);
+  const std::filesystem::path& rawJsonPath) {
+  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(view, root);
   if (!openXRKey) {
     dprint("Failed to open or create OpenXR key");
     return;
   }
 
-  const auto jsonFile = RuntimeFiles::OPENXR_JSON.filename().wstring();
-  auto jsonPath
-    = std::filesystem::canonical(directory / RuntimeFiles::OPENXR_JSON)
-        .wstring();
-  DisableOpenXRLayers(root, [jsonFile, jsonPath](std::wstring_view layerPath) {
-    return layerPath != jsonPath && layerPath.ends_with(jsonFile);
-  });
+  const auto jsonPath = std::filesystem::canonical(rawJsonPath).wstring();
+  const auto jsonFile = rawJsonPath.filename().wstring();
+  DisableOpenXRLayers(
+    view, root, [jsonFile, jsonPath](std::wstring_view layerPath) {
+      return layerPath != jsonPath && layerPath.ends_with(jsonFile);
+    });
 
   DWORD disabled = 0;
   const auto success = RegSetValueExW(
@@ -147,9 +157,7 @@ namespace OpenKneeboard {
 TRACELOGGING_DEFINE_PROVIDER(
   gTraceProvider,
   "OpenKneeboard.OpenXR.Helper",
-  (
-    0x2489967e, 0xa7f2, 0x5db8, 0xba, 0x74, 0x27, 0xc3, 0x5b, 0x94, 0x4d, 0x56
-  ));
+  (0x2489967e, 0xa7f2, 0x5db8, 0xba, 0x74, 0x27, 0xc3, 0x5b, 0x94, 0x4d, 0x56));
 }// namespace OpenKneeboard
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
@@ -171,23 +179,28 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   }
   dprintf(L"OpenXR: {} -> {}", argv[0], argv[1]);
   const auto command = std::wstring_view(argv[0]);
-  const auto path = std::wstring_view(argv[1]);
-  if (command == L"disable-HKCU") {
-    DisableOpenXRLayer(HKEY_CURRENT_USER, path);
+  const std::filesystem::path directory {std::wstring_view(argv[1])};
+
+  const auto layer64 = directory / RuntimeFiles::OPENXR_64BIT_JSON;
+  if (command == L"disable-HKLM-64") {
+    DisableOpenXRLayer(RegistryView::WOW64_64, HKEY_LOCAL_MACHINE, layer64);
     return 0;
   }
-  if (command == L"disable-HKLM") {
-    DisableOpenXRLayer(HKEY_LOCAL_MACHINE, path);
+  if (command == L"enable-HKLM-64") {
+    EnableOpenXRLayer(RegistryView::WOW64_64, HKEY_LOCAL_MACHINE, layer64);
     return 0;
   }
-  if (command == L"enable-HKCU") {
-    EnableOpenXRLayer(HKEY_CURRENT_USER, path);
+
+  const auto layer32 = directory / RuntimeFiles::OPENXR_32BIT_JSON;
+  if (command == L"disable-HKLM-32") {
+    DisableOpenXRLayer(RegistryView::WOW64_32, HKEY_LOCAL_MACHINE, layer32);
     return 0;
   }
-  if (command == L"enable-HKLM") {
-    EnableOpenXRLayer(HKEY_LOCAL_MACHINE, path);
+  if (command == L"enable-HKLM-32") {
+    EnableOpenXRLayer(RegistryView::WOW64_32, HKEY_LOCAL_MACHINE, layer32);
     return 0;
   }
+
   dprintf(L"Invalid command: {}", command);
   return 1;
 }

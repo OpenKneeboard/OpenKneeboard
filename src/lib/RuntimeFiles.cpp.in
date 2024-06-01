@@ -1,8 +1,6 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 
 namespace OpenKneeboard::RuntimeFiles {
-
-const std::filesystem::path OPENXR_JSON("OpenKneeboard-OpenXR.json");
 const std::filesystem::path QUICK_START_PDF("Quick Start.pdf");
 
 const std::filesystem::path DCSWORLD_HOOK_DLL(
@@ -29,8 +27,14 @@ const std::filesystem::path OCULUS_D3D11_DLL(
 const std::filesystem::path OCULUS_D3D12_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-oculus-d3d12>");
 
-const std::filesystem::path OPENXR_DLL(
+const std::filesystem::path OPENXR_64BIT_JSON("OpenKneeboard-OpenXR.json");
+const std::filesystem::path OPENXR_64BIT_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>");
+
+const std::filesystem::path OPENXR_32BIT_JSON("OpenKneeboard-OpenXR32.json");
+const std::filesystem::path OPENXR_32BIT_DLL(
+  "$<PATH:GET_FILENAME,$<TARGET_PROPERTY:OpenKneeboard-OpenXR32,IMPORTED_LOCATION>>");
+
 
 const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");

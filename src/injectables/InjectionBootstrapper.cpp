@@ -288,7 +288,9 @@ class InjectionBootstrapper final {
 
   void CheckForOpenXRAPILayer() {
     for (auto [module, path]: GetInProcessDLLs()) {
-      if (path.filename() == RuntimeFiles::OPENXR_DLL) {
+      if (
+        path.filename() == RuntimeFiles::OPENXR_64BIT_DLL
+        || path.filename() == RuntimeFiles::OPENXR_32BIT_DLL) {
         dprint("Found OpenKneeboard OpenXR API layer in-process");
         mFlags |= FLAG_OPENXR;
         return;

@@ -48,8 +48,12 @@ struct VRSettingsPage
 
   bool SteamVREnabled();
   void SteamVREnabled(bool);
-  bool OpenXREnabled() noexcept;
-  fire_and_forget OpenXREnabled(bool) noexcept;
+
+  bool OpenXR64Enabled() noexcept;
+  fire_and_forget OpenXR64Enabled(bool) noexcept;
+
+  bool OpenXR32Enabled() noexcept;
+  fire_and_forget OpenXR32Enabled(bool) noexcept;
 
   winrt::fire_and_forget RestoreDefaults(
     IInspectable,

@@ -8,13 +8,15 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <local:MetersNumberFormatter x:Key="MetersFormatter" />
-    <local:DegreesValueConverter x:Key="DegreesConverter" />
-    <local:MultiplierValueConverter x:Key="MultiplierConverter" />
-    <local:PercentValueConverter x:Key="PercentConverter" />
+    <local:MetersNumberFormatter x:Key="MetersFormatter"/>
+    <local:DegreesValueConverter x:Key="DegreesConverter"/>
+    <local:MultiplierValueConverter x:Key="MultiplierConverter"/>
+    <local:PercentValueConverter x:Key="PercentConverter"/>
   </Page.Resources>
   <ScrollViewer>
-    <StackPanel Margin="16" Spacing="8" x:DefaultBindMode="TwoWay">
+    <StackPanel Margin="16"
+                Spacing="8"
+                x:DefaultBindMode="TwoWay">
       <Grid
         ColumnDefinitions="*, Auto"
         Margin="0,0,0,8">
@@ -22,19 +24,16 @@
           Grid.Column="0"
           Text="Virtual Reality Settings"
           Style="{StaticResource TitleTextBlockStyle}"
-          Margin="0,0,0,8"
-        />
+          Margin="0,0,0,8"/>
         <Button
           Grid.Column="1"
           Content="Restore defaults"
-          Click="RestoreDefaults"
-        />
+          Click="RestoreDefaults"/>
       </Grid>
       <TextBlock
         Text="System"
         Style="{StaticResource SubtitleTextBlockStyle}"
-        Margin="0,0,0,16"
-      />
+        Margin="0,0,0,16"/>
       <StackPanel
         Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -46,20 +45,22 @@
           Header="Legacy SteamVR support (OpenVR)"
           OnContent="Enabled"
           OffContent="Disabled"
-          IsOn="{x:Bind SteamVREnabled}"
-        />
+          IsOn="{x:Bind SteamVREnabled}"/>
         <ToggleSwitch
-          Header="OpenXR support"
-          IsOn="{x:Bind OpenXREnabled}"
+          Header="OpenXR support for 64-bit games"
+          IsOn="{x:Bind OpenXR64Enabled}"
           OnContent="Enabled"
-          OffContent="Disabled"
-        />
+          OffContent="Disabled"/>
+        <ToggleSwitch
+          Header="OpenXR support for 32-bit games"
+          IsOn="{x:Bind OpenXR32Enabled}"
+          OnContent="Enabled"
+          OffContent="Disabled"/>
       </StackPanel>
       <TextBlock
         Text="Views"
         Style="{StaticResource SubtitleTextBlockStyle}"
-        Margin="0,0,0,16"
-      />
+        Margin="0,0,0,16"/>
       <StackPanel
         Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -69,8 +70,7 @@
         <TabView
           x:Name="TabView"
           AddTabButtonClick="AddView"
-          TabCloseRequested="RemoveView"
-        />
+          TabCloseRequested="RemoveView"/>
       </StackPanel>
       <ContentDialog
         x:Name="AddViewDialog"
@@ -87,13 +87,13 @@
             -->
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="local:UIDataItem">
-                <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
+                <TextBlock Text="{x:Bind ToString(),Mode=OneTime}"/>
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
         </StackPanel>
       </ContentDialog>
-      <local:AppWindowViewModeDialog x:Name="AppWindowViewModeDialog" />
+      <local:AppWindowViewModeDialog x:Name="AppWindowViewModeDialog"/>
     </StackPanel>
   </ScrollViewer>
 </Page>

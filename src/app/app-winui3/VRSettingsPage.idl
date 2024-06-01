@@ -6,6 +6,7 @@ namespace OpenKneeboardApp
         VRSettingsPage();
 
         Boolean SteamVREnabled;
-        Boolean OpenXREnabled;
+        Boolean OpenXR64Enabled;
+        Boolean OpenXR32Enabled;
     }
 }

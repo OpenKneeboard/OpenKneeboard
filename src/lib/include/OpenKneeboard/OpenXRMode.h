@@ -19,11 +19,12 @@
  */
 #pragma once
 
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <optional>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -32,7 +33,9 @@ enum class OpenXRMode {
   AllUsers,
 };
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
-  OpenXRMode newMode,
-  std::optional<OpenXRMode> oldMode = {});
+winrt::Windows::Foundation::IAsyncAction SetOpenXR64ModeWithHelperProcess(
+  OpenXRMode newMode);
+
+winrt::Windows::Foundation::IAsyncAction SetOpenXR32ModeWithHelperProcess(
+  OpenXRMode newMode);
 }// namespace OpenKneeboard
