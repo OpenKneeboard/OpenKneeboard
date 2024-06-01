@@ -24,7 +24,7 @@
 //
 // ... but, as that means we need to pull in openxr_platform.h now and that
 // can only be included once, we need to pull in all the supported APIs
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 #include <d3d11.h>
 #include <d3d12.h>

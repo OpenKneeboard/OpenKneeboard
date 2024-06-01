@@ -22,7 +22,7 @@
 #include "impl/OPENKNEEBOARD_VK_FUNCS.h"
 #include "vkresult.h"
 
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 #include <concepts>
 
@@ -155,7 +155,7 @@ template <class T>
 class StandaloneDeleter {
  public:
   using pointer = T;
-  using DestroyFun = void (*)(T, const VkAllocationCallbacks*);
+  using DestroyFun = void(VKAPI_PTR*)(T, const VkAllocationCallbacks*);
 
   StandaloneDeleter() = default;
   constexpr StandaloneDeleter(

@@ -20,8 +20,10 @@ DeriveLineEnding: false
 DerivePointerAlignment: false
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^".+'
+  - Regex: '^<OpenKneeboard/config.h>'
     Priority: 1
+  - Regex: '^".+'
+    Priority: 2
   - Regex: '^<OpenKneeboard/[A-Z].+.+'
     CaseSensitive: true
     Priority: 10

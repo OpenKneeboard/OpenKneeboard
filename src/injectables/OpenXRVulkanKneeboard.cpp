@@ -26,7 +26,7 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 #include <d3d11_4.h>
 #include <dxgi1_6.h>

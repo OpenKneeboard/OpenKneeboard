@@ -20,6 +20,8 @@
 
 #include "OpenXRKneeboard.h"
 
+#include <OpenKneeboard/config.h>
+
 #include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRD3D12Kneeboard.h"
 #include "OpenXRNext.h"
@@ -29,13 +31,12 @@
 #include <OpenKneeboard/Spriting.h>
 #include <OpenKneeboard/StateMachine.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 #include <memory>
 #include <string>
@@ -93,7 +94,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:

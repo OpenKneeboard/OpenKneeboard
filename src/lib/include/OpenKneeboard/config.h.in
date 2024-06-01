@@ -27,6 +27,12 @@ namespace OpenKneeboard {
 
 inline namespace Config {
 
+// clang-format off
+constexpr auto BuildBitness = @BUILD_BITNESS@;
+// clang-format on
+constexpr bool Is32BitBuild = (BuildBitness == 32);
+constexpr bool Is64BitBuild = (BuildBitness == 64);
+
 // As we lock the entire SHM segment before touching the texture, buffering
 // isn't needed; that said, keep a buffer anyway, as seeing frame counters
 // go backwards is a very easy way to diagnose issues :)
@@ -94,3 +100,9 @@ inline void fatal [[noreturn]] () {
  */
 #define OPENKNEEBOARD_FATAL \
   { OpenKneeboard::Detail::fatal(); }
+
+// clang-format off
+#define OPENKNEEBOARD_BUILD_BITNESS @BUILD_BITNESS@
+// clang-format on
+#define OPENKNEEBOARD_32BIT_BUILD (OPENKNEEBOARD_BUILD_BITNESS == 32)
+#define OPENKNEEBOARD_64BIT_BUILD (OPENKNEEBOARD_BUILD_BITNESS == 64)

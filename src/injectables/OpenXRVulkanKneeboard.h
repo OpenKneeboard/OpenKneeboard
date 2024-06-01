@@ -20,6 +20,8 @@
 #pragma once
 #define XR_USE_GRAPHICS_API_VULKAN
 
+#include <OpenKneeboard/config.h>
+
 #include "OpenXRKneeboard.h"
 
 #include <OpenKneeboard/SHM/Vulkan.h>
@@ -27,12 +29,10 @@
 #include <OpenKneeboard/Vulkan/ExtendedCreateInfo.h>
 #include <OpenKneeboard/Vulkan/SpriteBatch.h>
 
-#include <OpenKneeboard/config.h>
-
 #include <d3d11_4.h>
 
 // clang-format off
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 #include <openxr/openxr_platform.h>
 // clang-format on
 

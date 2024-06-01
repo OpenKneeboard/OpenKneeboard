@@ -21,7 +21,7 @@
 
 #include "impl/OPENKNEEBOARD_VK_FUNCS.h"
 
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 #include <functional>
 #include <type_traits>

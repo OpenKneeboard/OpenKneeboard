@@ -25,7 +25,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
-#include <vulkan/vulkan.h>
+#include <shims/vulkan/vulkan.h>
 
 namespace OpenKneeboard::Vulkan {
 
