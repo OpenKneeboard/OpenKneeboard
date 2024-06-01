@@ -23,6 +23,8 @@
 #include "HelpPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "CheckForUpdates.h"
 #include "FilePicker.h"
 
@@ -33,7 +35,6 @@
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
@@ -58,6 +59,40 @@
 #include <zip.h>
 
 using namespace OpenKneeboard;
+
+namespace {
+enum class RegistryView {
+  Wow64_64 = 64,
+  Wow64_32 = 32,
+};
+
+std::wstring GetRegistryStringValue(
+  RegistryView view,
+  HKEY hkey,
+  LPCWSTR subKey,
+  LPCWSTR value) noexcept {
+  DWORD byteCount {};
+  const DWORD flags = RRF_RT_REG_SZ
+    | ((view == RegistryView::Wow64_64) ? RRF_SUBKEY_WOW6464KEY
+                                        : RRF_SUBKEY_WOW6432KEY);
+
+  const auto getSizeResult
+    = RegGetValueW(hkey, subKey, value, flags, nullptr, nullptr, &byteCount);
+  if (getSizeResult != ERROR_SUCCESS) {
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
+  std::wstring buffer(byteCount / sizeof(wchar_t), L'\0');
+  const auto result = RegGetValueW(
+    hkey, subKey, value, flags, nullptr, buffer.data(), &byteCount);
+  if (result != ERROR_SUCCESS) {
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+  return buffer;
+}
+}// namespace
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -491,16 +526,112 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   return ret;
 }
 
-std::string HelpPage::GetOpenXRInfo() noexcept {
-  return std::format(
-    "Runtime\n=======\n\n{}\nAPI Layers\n==========\n\n64-bit "
-    "HKLM\n-----------\n\n{}\n64-bit HKCU\n-----------\n\n{}",
-    GetOpenXRRuntime(),
-    GetOpenXRLayers(HKEY_LOCAL_MACHINE),
-    GetOpenXRLayers(HKEY_CURRENT_USER));
+static std::string GetOpenXRRuntime(RegistryView view) noexcept {
+  std::string ret = std::format(
+    "Active {}-bit Runtime\n--------------\n\n", static_cast<int>(view));
+
+  try {
+    const auto activeRuntime = GetRegistryStringValue(
+      view,
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Khronos\\OpenXR\\1",
+      L"ActiveRuntime");
+    ret += to_utf8(activeRuntime) + "\n\n";
+  } catch (const std::exception& e) {
+    ret += std::format("FAILED TO READ FROM REGISTRY: {}\n\n", e.what());
+  }
+
+  ret += std::format(
+    "Installed {}-bit Runtimes\n------------------\n\n",
+    static_cast<int>(view));
+
+  unique_hkey key;
+  {
+    HKEY buffer {};
+    RegOpenKeyExW(
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Khronos\\OpenXR\\1\\AvailableRuntimes",
+      0,
+      KEY_READ
+        | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
+      &buffer);
+    key.reset(buffer);
+  }
+
+  if (!key) {
+    return "No available runtimes?";
+  }
+
+  wchar_t path[1024];
+  auto pathLength = static_cast<DWORD>(std::size(path));
+  DWORD data;
+  auto dataLength = static_cast<DWORD>(sizeof(data));
+  DWORD dataType;
+
+  DWORD runtimeCount = 0;
+
+  for (DWORD i = 0; RegEnumValueW(
+                      key.get(),
+                      i,
+                      &path[0],
+                      &pathLength,
+                      nullptr,
+                      &dataType,
+                      reinterpret_cast<LPBYTE>(&data),
+                      &dataLength)
+       == ERROR_SUCCESS;
+       i++,
+             pathLength = static_cast<DWORD>(std::size(path)),
+             dataLength = static_cast<DWORD>(sizeof(data))) {
+    const auto pathUtf8
+      = winrt::to_string(std::wstring_view {path, pathLength});
+    if (dataType != REG_DWORD) {
+      ret += std::format(
+        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
+      continue;
+    }
+    const auto disabled = static_cast<bool>(data);
+    if (disabled) {
+      ret += std::format("- DISABLED: {}\n", pathUtf8);
+      continue;
+    }
+
+    const auto fspath
+      = std::filesystem::path(std::wstring_view {path, pathLength});
+    if (!std::filesystem::exists(fspath)) {
+      ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
+      continue;
+    }
+
+    nlohmann::json json;
+    {
+      std::ifstream f(fspath.c_str());
+      f >> json;
+    }
+    const auto runtime = json.at("runtime");
+
+    const auto dllPathStr = runtime.at("library_path").get<std::string>();
+    std::filesystem::path dllPath(dllPathStr);
+    if (dllPath.is_relative()) {
+      dllPath = (fspath.parent_path() / dllPath).lexically_normal();
+    }
+
+    const auto runtimeName
+      = (runtime.contains("name") && runtime.at("name").is_string())
+      ? runtime.at("name").get<std::string>()
+      : "Unnamed Runtime";
+    ret += std::format(
+      "- #{}: {}\n    - DLL: {}\n    - JSON: {}\n",
+      ++runtimeCount,
+      runtimeName,
+      to_utf8(dllPath),
+      pathUtf8);
+  }
+
+  return ret;
 }
 
-std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
+std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
   unique_hkey key;
   {
     HKEY buffer {};
@@ -508,7 +639,8 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
       root,
       L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
       0,
-      KEY_READ,
+      KEY_READ
+        | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
       &buffer);
     key.reset(buffer);
   }
@@ -586,102 +718,21 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
   return ret;
 }
 
-std::string HelpPage::GetOpenXRRuntime() noexcept {
-  std::string ret {"Active Runtime\n--------------\n\n"};
-
-  try {
-    const auto activeRuntime = wil::reg::get_value<std::wstring>(
-      HKEY_LOCAL_MACHINE, L"SOFTWARE\\Khronos\\OpenXR\\1", L"ActiveRuntime");
-    ret += to_utf8(activeRuntime) + "\n\n";
-  } catch (const std::exception& e) {
-    ret += std::format("FAILED TO READ FROM REGISTRY: {}\n\n", e.what());
-  }
-
-  ret += "Installed Runtimes\n------------------\n\n";
-
-  unique_hkey key;
-  {
-    HKEY buffer {};
-    RegOpenKeyExW(
-      HKEY_LOCAL_MACHINE,
-      L"SOFTWARE\\Khronos\\OpenXR\\1\\AvailableRuntimes",
-      0,
-      KEY_READ,
-      &buffer);
-    key.reset(buffer);
-  }
-
-  if (!key) {
-    return "No available runtimes?";
-  }
-
-  wchar_t path[1024];
-  auto pathLength = static_cast<DWORD>(std::size(path));
-  DWORD data;
-  auto dataLength = static_cast<DWORD>(sizeof(data));
-  DWORD dataType;
-
-  DWORD runtimeCount = 0;
-
-  for (DWORD i = 0; RegEnumValueW(
-                      key.get(),
-                      i,
-                      &path[0],
-                      &pathLength,
-                      nullptr,
-                      &dataType,
-                      reinterpret_cast<LPBYTE>(&data),
-                      &dataLength)
-       == ERROR_SUCCESS;
-       i++,
-             pathLength = static_cast<DWORD>(std::size(path)),
-             dataLength = static_cast<DWORD>(sizeof(data))) {
-    const auto pathUtf8
-      = winrt::to_string(std::wstring_view {path, pathLength});
-    if (dataType != REG_DWORD) {
-      ret += std::format(
-        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
-      continue;
-    }
-    const auto disabled = static_cast<bool>(data);
-    if (disabled) {
-      ret += std::format("- DISABLED: {}\n", pathUtf8);
-      continue;
-    }
-
-    const auto fspath
-      = std::filesystem::path(std::wstring_view {path, pathLength});
-    if (!std::filesystem::exists(fspath)) {
-      ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
-      continue;
-    }
-
-    nlohmann::json json;
-    {
-      std::ifstream f(fspath.c_str());
-      f >> json;
-    }
-    const auto runtime = json.at("runtime");
-
-    const auto dllPathStr = runtime.at("library_path").get<std::string>();
-    std::filesystem::path dllPath(dllPathStr);
-    if (dllPath.is_relative()) {
-      dllPath = (fspath.parent_path() / dllPath).lexically_normal();
-    }
-
-    const auto runtimeName
-      = (runtime.contains("name") && runtime.at("name").is_string())
-      ? runtime.at("name").get<std::string>()
-      : "Unnamed Runtime";
-    ret += std::format(
-      "- #{}: {}\n    - DLL: {}\n    - JSON: {}\n",
-      ++runtimeCount,
-      runtimeName,
-      to_utf8(dllPath),
-      pathUtf8);
-  }
-
-  return ret;
+std::string HelpPage::GetOpenXRInfo() noexcept {
+  return std::format(
+    "64-bit Runtime\n=======\n\n{}"
+    "\n\n32-bit Runtime\n=======\n\n{}"
+    "\n\nAPI Layers\n=========="
+    "\n\n64-bit "
+    "HKLM\n-----------\n\n{}\n64-bit HKCU\n-----------\n\n{}"
+    "\n\n32-bit "
+    "HKLM\n-----------\n\n{}\n32-bit HKCU\n-----------\n\n{}",
+    GetOpenXRRuntime(RegistryView::Wow64_64),
+    GetOpenXRRuntime(RegistryView::Wow64_32),
+    GetOpenXRLayers(RegistryView::Wow64_64, HKEY_LOCAL_MACHINE),
+    GetOpenXRLayers(RegistryView::Wow64_64, HKEY_CURRENT_USER),
+    GetOpenXRLayers(RegistryView::Wow64_32, HKEY_LOCAL_MACHINE),
+    GetOpenXRLayers(RegistryView::Wow64_32, HKEY_CURRENT_USER));
 }
 
 bool HelpPage::AgreeButtonIsEnabled() noexcept {

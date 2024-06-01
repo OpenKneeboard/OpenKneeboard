@@ -69,8 +69,6 @@ struct HelpPage : HelpPageT<HelpPage>,
 
   static std::string GetUpdateLog() noexcept;
   static std::string GetOpenXRInfo() noexcept;
-  static std::string GetOpenXRLayers(HKEY root) noexcept;
-  static std::string GetOpenXRRuntime() noexcept;
   static std::string GetActiveConsumers() noexcept;
 
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
