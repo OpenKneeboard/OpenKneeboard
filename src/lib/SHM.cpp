@@ -90,7 +90,7 @@ struct Detail::FrameMetadata final {
   alignas(2 * sizeof(LONG64))
     std::array<LONG64, SHMSwapchainLength> mFrameReadyFenceValues {0};
 
-  size_t GetRenderCacheKey() const;
+  uint64_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
 };
 using Detail::FrameMetadata;
@@ -227,7 +227,7 @@ Snapshot::State Snapshot::GetState() const {
 Snapshot::~Snapshot() {
 }
 
-size_t Snapshot::GetRenderCacheKey() const {
+uint64_t Snapshot::GetRenderCacheKey() const {
   // This is lazy, and only works because:
   // - session ID already contains random data
   // - we're only combining *one* other value which isn't
@@ -639,7 +639,7 @@ Snapshot Reader::MaybeGetUncached(
   return Snapshot(p->mHeader, copier, handles.get(), dest);
 }
 
-size_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
+uint64_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
   if (!(p && p->mHeader)) {
     return {};
   }
@@ -688,7 +688,7 @@ bool FrameMetadata::HaveFeeder() const {
         == HeaderFlags::FEEDER_ATTACHED);
 }
 
-size_t FrameMetadata::GetRenderCacheKey() const {
+uint64_t FrameMetadata::GetRenderCacheKey() const {
   // This is lazy, and only works because:
   // - session ID already contains random data
   // - we're only combining *one* other value which isn't

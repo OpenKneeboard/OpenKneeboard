@@ -162,9 +162,9 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
     .mKneeboardPose = kneeboardPose,
     .mKneeboardSize
     = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
+    .mCacheKey = cacheKey,
     .mKneeboardOpacity = isLookingAtKneeboard ? layer.mVR.mOpacity.mGaze
                                               : layer.mVR.mOpacity.mNormal,
-    .mCacheKey = cacheKey,
     .mIsLookingAtKneeboard = isLookingAtKneeboard,
   };
 }

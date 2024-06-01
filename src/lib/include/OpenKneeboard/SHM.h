@@ -222,7 +222,7 @@ class Snapshot final {
 
   uint64_t GetSessionID() const;
   /// Changes even if the feeder restarts with frame ID 0
-  size_t GetRenderCacheKey() const;
+  uint64_t GetRenderCacheKey() const;
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
@@ -281,7 +281,7 @@ class Reader {
    *
    * Changes even if the feeder restarts from frame ID 0.
    */
-  size_t GetRenderCacheKey(ConsumerKind kind) const;
+  uint64_t GetRenderCacheKey(ConsumerKind kind) const;
 
   uint64_t GetSessionID() const;
 

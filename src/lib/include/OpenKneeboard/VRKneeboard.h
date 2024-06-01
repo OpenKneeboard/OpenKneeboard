@@ -41,8 +41,8 @@ class VRKneeboard {
   struct RenderParameters {
     Pose mKneeboardPose;
     Vector2 mKneeboardSize;
+    uint64_t mCacheKey;
     float mKneeboardOpacity;
-    size_t mCacheKey;
     bool mIsLookingAtKneeboard;
   };
 
