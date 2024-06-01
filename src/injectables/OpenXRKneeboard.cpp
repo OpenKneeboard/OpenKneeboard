@@ -95,7 +95,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -197,7 +199,7 @@ OpenXRNext* OpenXRKneeboard::GetOpenXR() {
   return mOpenXR.get();
 }
 
-XrResult OpenXRKneeboard::xrEndFrame(
+XRAPI_ATTR XrResult XRAPI_CALL OpenXRKneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
@@ -492,7 +494,7 @@ static const T* findInXrNextChain(XrStructureType type, const void* next) {
   return nullptr;
 }
 
-XrResult xrCreateSession(
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
   XrInstance instance,
   const XrSessionCreateInfo* createInfo,
   XrSession* session) noexcept {
@@ -605,7 +607,7 @@ XrResult xrCreateSession(
 }
 
 // Provided by XR_KHR_vulkan_enable2
-XrResult xrCreateVulkanInstanceKHR(
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanInstanceKHR(
   XrInstance instance,
   const XrVulkanInstanceCreateInfoKHR* origCreateInfo,
   VkInstance* vulkanInstance,
@@ -635,7 +637,7 @@ XrResult xrCreateVulkanInstanceKHR(
 }
 
 // Provided by XR_KHR_vulkan_enable2
-XrResult xrCreateVulkanDeviceKHR(
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanDeviceKHR(
   XrInstance instance,
   const XrVulkanDeviceCreateInfoKHR* origCreateInfo,
   VkDevice* vulkanDevice,
@@ -667,7 +669,7 @@ XrResult xrCreateVulkanDeviceKHR(
   return ret;
 }
 
-XrResult xrDestroySession(XrSession session) {
+XRAPI_ATTR XrResult XRAPI_CALL xrDestroySession(XrSession session) {
   delete gKneeboard;
   gKneeboard = nullptr;
   return gNext->xrDestroySession(session);
@@ -688,7 +690,7 @@ XrResult xrEndFrame(
   return gNext->xrEndFrame(session, frameEndInfo);
 }
 
-XrResult xrGetInstanceProcAddr(
+XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
   PFN_xrVoidFunction* function) {
@@ -739,7 +741,7 @@ XrResult xrGetInstanceProcAddr(
   return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 
-XrResult xrCreateApiLayerInstance(
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   const XrInstanceCreateInfo* info,
   const struct XrApiLayerCreateInfo* layerInfo,
   XrInstance* instance) {
