@@ -14,6 +14,18 @@
                     />
                 </RegistryKey>
             </Component>
+            <Component Id="OpenXRAPILayerRegistration32Bit" Win64="no" Guid="{0573e4dd-b409-4d98-af2b-196d02f0672f}">
+                <RegistryKey
+                    Root="HKLM"
+                    Key="SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit">
+                    <RegistryValue
+                        Type="integer"
+                        Name="[INSTALL_ROOT]bin\OpenKneeboard-OpenXR32.json"
+                        Value="0"
+                        KeyPath="yes"
+                    />
+                </RegistryKey>
+            </Component>
         </DirectoryRef>
     </Fragment>
 </Wix>
