@@ -36,7 +36,7 @@ These contain much more detail than the standard logs; they may affect performan
 1. Start an administrator command prompt or terminal; for example
     1. Open the start menu
     1. Type 'command prompt' but don't hit enter
-    1. Hit command+shift+enter; alternatively, click 'run as administrator' if it appears on the right hand side, or right-click then click 'run as administrator'
+    1. Hit ctrl+shift+enter; alternatively, click 'run as administrator' if it appears on the right hand side, or right-click then click 'run as administrator'
     1. Press 'yes' if Windows prompts you for permission
 1. In the administrator command prompt:
     - if the last line starts with `PS`, copy-paste the following and hit enter:
