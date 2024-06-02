@@ -19,6 +19,8 @@
  */
 #include "viewer.h"
 
+#include <OpenKneeboard/config.h>
+
 #include "viewer-d3d11.h"
 #include "viewer-d3d12.h"
 #include "viewer-vulkan.h"
@@ -34,7 +36,6 @@
 #include <OpenKneeboard/SHM/D3D11.h>
 #include <OpenKneeboard/Shaders/D3D/Viewer.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -56,6 +57,12 @@
 #include <dwrite.h>
 #include <dxgi1_6.h>
 #include <shellapi.h>
+
+#if OPENKNEEBOARD_32BIT_BUILD
+#define VIEWER_WINDOW_TITLE L"32-bit OpenKneeboard Viewer"
+#else
+#define VIEWER_WINDOW_TITLE L"OpenKneeboard Viewer"
+#endif
 
 using namespace OpenKneeboard;
 
@@ -246,7 +253,7 @@ class TestViewerWindow final : private D3D11Resources {
     mHwnd = CreateWindowExW(
       WS_EX_NOREDIRECTIONBITMAP,
       CLASS_NAME,
-      L"OpenKneeboard Viewer",
+      VIEWER_WINDOW_TITLE,
       mSettings.mBorderless ? WS_POPUP : WS_OVERLAPPEDWINDOW,
       mSettings.mWindowX,
       mSettings.mWindowY,
@@ -670,11 +677,12 @@ class TestViewerWindow final : private D3D11Resources {
     if (vkk >= '1' && vkk <= '9') {
       mLayerIndex = static_cast<uint8_t>(vkk - '1');
       if (mLayerIndex == 0) {
-        SetWindowTextW(mHwnd, L"OpenKneeboard Viewer");
+        SetWindowTextW(mHwnd, VIEWER_WINDOW_TITLE);
       } else {
         SetWindowTextW(
           mHwnd,
-          std::format(L"OpenKneeboard Viewer - {}", mLayerIndex + 1).c_str());
+          std::format(L"{} - {}", VIEWER_WINDOW_TITLE, mLayerIndex + 1)
+            .c_str());
       }
       this->PaintNow();
       if (mSetInputFocus) {

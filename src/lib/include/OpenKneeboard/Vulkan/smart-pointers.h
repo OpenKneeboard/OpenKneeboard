@@ -187,7 +187,8 @@ template <destroyable_instance_resource T>
 class InstanceResourceDeleter {
  public:
   using pointer = T;
-  using DestroyFun = void (*)(VkInstance, T, const VkAllocationCallbacks*);
+  using DestroyFun
+    = void(VKAPI_PTR*)(VkInstance, T, const VkAllocationCallbacks*);
 
   InstanceResourceDeleter() = default;
   constexpr InstanceResourceDeleter(

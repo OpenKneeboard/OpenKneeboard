@@ -20,6 +20,14 @@ if(BUILD_BITNESS EQUAL 32)
   add_custom_target(OpenKneeboard-32bit-runtime-components)
   add_dependencies(OpenKneeboard-32bit-runtime-components ${DUAL_ARCH_COMPONENTS})
 
+  add_custom_target(OpenKneeboard-32bit-subbuild)
+  add_dependencies(
+    OpenKneeboard-32bit-subbuild
+    OpenKneeboard-32bit-runtime-components
+    # Build this too for testing 32-bit and 64-bit interoperability
+    OpenKneeboard-Viewer
+  )
+
   foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
     add_custom_target("${TARGET}32" INTERFACE IMPORTED GLOBAL)
     set_target_properties(
@@ -49,6 +57,8 @@ if(BUILD_BITNESS EQUAL 32)
 
     install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DualArchDebugSymbols)
   endforeach()
+
+  ##### SKIP THE REST OF THIS FILE #####
   return()
 endif()
 
@@ -95,7 +105,7 @@ ExternalProject_Add(
   "${CMAKE_COMMAND}"
   --build "<BINARY_DIR>"
   --config "$<CONFIG>"
-  --target OpenKneeboard-32bit-runtime-components
+  --target OpenKneeboard-32bit-subbuild
   INSTALL_COMMAND
   "${CMAKE_COMMAND}"
   --install "<BINARY_DIR>"
