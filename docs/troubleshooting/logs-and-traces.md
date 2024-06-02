@@ -30,7 +30,7 @@ Normally, the order in which you start OpenKneeboard and the game does not matte
 
 ## Standard Traces
 
-These contain much more detail than the standard logs; they may affect performance of the game, but are required for diagnosing most performance issue, along with particularly complicated non-performance issues. You only need to collect a trace if you are asked for one.
+These contain much more detail than the standard logs; they may affect performance of the game, but are required for diagnosing most performance issue, along with particularly complicated non-performance issues. **You only need to collect a trace if you are asked for one.**
 
 1. Close OpenKneeboard and the game
 1. Start an administrator command prompt or terminal; for example
@@ -60,7 +60,7 @@ These contain much more detail than the standard logs; they may affect performan
 
 ## Detailed OpenXR Traces
 
-These contain the same information as the standard traces, in addition to information on exactly how the game and OpenKneeboard are using OpenXR. You only need to collect a detailed OpenXR trace if you are asked for one.
+These contain the same information as the standard traces, in addition to information on exactly how the game and OpenKneeboard are using OpenXR. **You only need to collect a detailed OpenXR trace if you are asked for one.**
 
 1. Download the msvc-x64 [OpenXR-Tracing](https://github.com/fredemmott/OpenXR-Tracing/releases/latest), and extract it somewhere handy
 2. Download the [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI/releases/latest), and extract it somewhere handy
