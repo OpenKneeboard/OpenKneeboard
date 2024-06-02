@@ -41,7 +41,7 @@ These contain much more detail than the standard logs; they may affect performan
 1. In the administrator command prompt:
     - if the last line starts with `PS`, copy-paste the following and hit enter:
       ```
-      cd "${env:HOMEPATH}\Desktop"`
+      cd "${env:HOMEPATH}\Desktop"
       ```
     - otherwise, copy-paste the following and hit enter:
       ```
