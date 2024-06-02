@@ -309,6 +309,29 @@ class Impl {
   FrameMetadata* mHeader = nullptr;
 
   Impl() {
+    // For debugging 32-bit/64-bit interop stuff
+    static std::once_flag sDumpLayoutOnce;
+    std::call_once(sDumpLayoutOnce, []() {
+      dprintf(
+        "SHM information:\n"
+        L"- Path: {}\n"
+        L"- Size: {}\n"
+        L"- Config offset: {}\n"
+        L"- Config size: {}\n"
+        L"- Layer config offset: {}\n"
+        L"- Layer config size: {}\n"
+        L"- Feeder PID offset: {}\n"
+        L"- Feeder PID size: {}\n",
+        SHMPath(),
+        SHM_SIZE,
+        offsetof(FrameMetadata, mConfig),
+        sizeof(FrameMetadata::mConfig),
+        offsetof(FrameMetadata, mLayers),
+        sizeof(LayerConfig),
+        offsetof(FrameMetadata, mFeederProcessID),
+        sizeof(FrameMetadata::mFeederProcessID));
+    });
+
     auto fileHandle = Win32::CreateFileMappingW(
       INVALID_HANDLE_VALUE,
       NULL,
@@ -458,7 +481,7 @@ class Writer::Impl : public SHM::Impl<WriterState> {
 
 Writer::Writer(uint64_t gpuLUID) {
   const auto path = SHMPath();
-  dprintf(L"Initializing SHM writer of size {} with path {}", SHM_SIZE, path);
+  dprint(L"Initializing SHM writer");
 
   p = std::make_shared<Impl>();
   if (!p->IsValid()) {
@@ -570,7 +593,7 @@ uint64_t Reader::GetSessionID() const {
 Reader::Reader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Reader()");
   const auto path = SHMPath();
-  dprintf(L"Initializing SHM reader of size {} with path {}", SHM_SIZE, path);
+  dprint(L"Initializing SHM reader");
 
   this->p = std::make_shared<Impl>();
   if (!p->IsValid()) {
