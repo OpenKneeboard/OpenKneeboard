@@ -47,7 +47,7 @@ These contain much more detail than the standard logs; they may affect performan
       ```
       cd "%HOMEPATH%\Desktop"
       ```
-1. In the administrator command prompt, copy-paste the following and then hit enter:
+1. In the administrator command prompt, copy-paste the following as one line, and then hit enter:
     ```
     wpr -start "C:\Program Files\OpenKneeboard\scripts\OpenKneeboard.wprp" -filemode
     ```
