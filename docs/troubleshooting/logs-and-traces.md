@@ -20,11 +20,13 @@ Then, save the logs:
 2. Expand the 'Debugging Information' section
 3. Read and agree to the disclaimer
 4. Click 'Save all as...'
-5. Share the created zip either in a new thread the `#openkneeboard-help` Discord channel or new GitHub issue, along with a description of the problem.
+5. Share the created zip along with the latest log from the game either in a new thread the `#openkneeboard-help` Discord channel or new GitHub issue, along with a description of the problem.
 
 ![Screenshot highlighting where to click for steps 1-4 above](../screenshots/save-logs.png)
 
-Normally, when you start OpenKneeboard does not matter; for log collection it does, as we want the OpenKneeboard log to contain the game's startup.
+Logs for DCS World are in `Saved Games\DCS\Logs` - include whichever is more recent, the `.log` file or a `.zip`; the folder in the saved games folder might be called `DCS.openbeta` or similar instead. For other games, search the game's forums for information.
+
+Normally, the order in which you start OpenKneeboard and the game does not matter; for log collection it does, as we want the OpenKneeboard log to contain the game's startup.
 
 ## Standard Traces
 
@@ -42,7 +44,7 @@ These contain much more detail than the standard logs; they may affect performan
 6. Wait for the problem to occur
 7. In the administrator command prompt, copy-paste `wpr -stop trace.etl`
 8. Also [save the debug logs](#saving-debug-logs)
-9. Share the debug logs zip and the `trace.etl` file in a new thread in the `#openkneeboard-help` Discord channel or a new Github issue, along with a description of the problem. 
+9. Share the debug logs zip, game log, and the `trace.etl` file in a new thread in the `#openkneeboard-help` Discord channel or a new Github issue, along with a description of the problem. 
 
 ## Detailed OpenXR Traces
 
