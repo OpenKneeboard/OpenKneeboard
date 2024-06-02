@@ -65,6 +65,37 @@ static uint64_t CreateSessionID() {
     | randDist(randDevice);
 }
 
+namespace {
+/* Wrapper for a HANDLE that is always 64-bits large
+ *
+ * From
+ * https://learn.microsoft.com/en-us/windows/win32/winprog64/interprocess-communication:
+ *
+ * > 64-bit versions of Windows use 32-bit handles for interoperability. When
+ * > sharing a handle between 32-bit and 64-bit applications, only the lower 32
+ * > bits are significant, so it is safe to truncate the handle (when passing it
+ * > from 64-bit to 32-bit) or sign-extend the handle (when passing it from
+ * > 32-bit to 64-bit).
+ */
+class FixedSizeHandle final {
+ public:
+  FixedSizeHandle() noexcept = default;
+
+  FixedSizeHandle(HANDLE value) noexcept
+    : mValue(std::bit_cast<uintptr_t>(value)) {
+  }
+
+  operator HANDLE() const noexcept {
+    return std::bit_cast<HANDLE>(static_cast<uintptr_t>(mValue));
+  }
+
+ private:
+  uint64_t mValue {};
+};
+static_assert(sizeof(FixedSizeHandle) == sizeof(uint64_t));
+
+}// namespace
+
 struct Detail::FrameMetadata final {
   // Use the magic string to make sure we don't have
   // uninitialized memory that happens to have the
@@ -85,8 +116,8 @@ struct Detail::FrameMetadata final {
 
   DWORD mFeederProcessID {};
   // If you're looking for texture size, it's in Config
-  HANDLE mTexture {};
-  HANDLE mFence {};
+  FixedSizeHandle mTexture {};
+  FixedSizeHandle mFence {};
 
   alignas(2 * sizeof(LONG64))
     std::array<LONG64, SHMSwapchainLength> mFrameReadyFenceValues {0};
