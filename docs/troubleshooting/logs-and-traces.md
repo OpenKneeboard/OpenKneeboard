@@ -33,18 +33,30 @@ Normally, the order in which you start OpenKneeboard and the game does not matte
 These contain much more detail than the standard logs; they may affect performance of the game, but are required for diagnosing most performance issue, along with particularly complicated non-performance issues. You only need to collect a trace if you are asked for one.
 
 1. Close OpenKneeboard and the game
-2. Start an administrator command prompt or terminal; for example
+1. Start an administrator command prompt or terminal; for example
     1. Open the start menu
-    2. Type 'command prompt' but don't hit enter
-    3. Hit command+shift+enter; alternatively, click 'run as administrator' if it appears on the right hand side, or right-click then click 'run as administrator'
-    4. Press 'yes' if Windows prompts you for permission
-3. In the administrator command prompt, copy-paste `wpr -start "C:\Program Files\OpenKneeboard\scripts\OpenKneeboard.wprp" -filemode` and hit enter
-4. Start OpenKneeboard
-5. Start the game
-6. Wait for the problem to occur
-7. In the administrator command prompt, copy-paste `wpr -stop trace.etl`
-8. Also [save the debug logs](#saving-debug-logs)
-9. Share the debug logs zip, game log, and the `trace.etl` file in a new thread in the `#openkneeboard-help` Discord channel or a new Github issue, along with a description of the problem. 
+    1. Type 'command prompt' but don't hit enter
+    1. Hit command+shift+enter; alternatively, click 'run as administrator' if it appears on the right hand side, or right-click then click 'run as administrator'
+    1. Press 'yes' if Windows prompts you for permission
+1. In the administrator command prompt:
+    - if the last line starts with `PS`, copy-paste the following and hit enter:
+      ```
+      cd "${env:HOMEPATH}\Desktop"`
+      ```
+    - otherwise, copy-paste the following and hit enter:
+      ```
+      cd "%HOMEPATH%\Desktop"
+      ```
+1. In the administrator command prompt, copy-paste the following and then hit enter:
+    ```
+    wpr -start "C:\Program Files\OpenKneeboard\scripts\OpenKneeboard.wprp" -filemode
+    ```
+1. Start OpenKneeboard
+1. Start the game
+1. Wait for the problem to occur
+1. In the administrator command prompt, copy-paste `wpr -stop trace.etl` then hit enter; this will create a `trace.etl` in the current folder, which if you followed the steps above, should be your desktop.
+1. Also [save the debug logs](#saving-debug-logs)
+1. Share the debug logs zip, game log, and the `trace.etl` file in a new thread in the `#openkneeboard-help` Discord channel or a new Github issue, along with a description of the problem. 
 
 ## Detailed OpenXR Traces
 
