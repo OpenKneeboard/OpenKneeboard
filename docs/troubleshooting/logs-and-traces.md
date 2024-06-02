@@ -34,10 +34,10 @@ These contain much more detail than the standard logs; they may affect performan
 
 1. Close OpenKneeboard and the game
 2. Start an administrator command prompt or terminal; for example
-  1. Open the start menu
-  2. Type 'command prompt' but don't hit enter
-  3. Hit command+shift+enter
-  4. Press 'yes' if Windows prompts you for permission
+    1. Open the start menu
+    2. Type 'command prompt' but don't hit enter
+    3. Hit command+shift+enter; alternatively, click 'run as administrator' if it appears on the right hand side, or right-click then click 'run as administrator'
+    4. Press 'yes' if Windows prompts you for permission
 3. In the administrator command prompt, copy-paste `wpr -start "C:\Program Files\OpenKneeboard\scripts\OpenKneeboard.wprp" -filemode` and hit enter
 4. Start OpenKneeboard
 5. Start the game
