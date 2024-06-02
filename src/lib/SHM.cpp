@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include "SHM/ReaderState.h"
 #include "SHM/WriterState.h"
 
@@ -26,7 +28,6 @@
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/bitflags.h>
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
@@ -426,7 +427,7 @@ class Writer::Impl : public SHM::Impl<WriterState> {
 
 Writer::Writer(uint64_t gpuLUID) {
   const auto path = SHMPath();
-  dprintf(L"Initializing SHM writer with path {}", path);
+  dprintf(L"Initializing SHM writer of size {} with path {}", SHM_SIZE, path);
 
   p = std::make_shared<Impl>();
   if (!p->IsValid()) {
@@ -538,7 +539,7 @@ uint64_t Reader::GetSessionID() const {
 Reader::Reader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Reader()");
   const auto path = SHMPath();
-  dprintf(L"Initializing SHM reader with path {}", path);
+  dprintf(L"Initializing SHM reader of size {} with path {}", SHM_SIZE, path);
 
   this->p = std::make_shared<Impl>();
   if (!p->IsValid()) {
