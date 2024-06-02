@@ -33,9 +33,11 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
     * VR
       * SteamVR
       * Oculus: D3D11 and D3D12
-      * OpenXR: D3D11, D3D12, and Vulkan
+      * 64-bit OpenXR: D3D11, D3D12, and Vulkan
+      * 32-bit OpenXR: D3D11, D3D12, and Vulkan
     * Non-VR: D3D11
   * Check for issues in Visual Studio performance profiler
+  * Check for issues in OpenXR-Tracing in WPA
   * Check a trace via ETL while in VR: maintains even 90hz, no stalls
 * Bindings
   * Physical joystick/throttle
