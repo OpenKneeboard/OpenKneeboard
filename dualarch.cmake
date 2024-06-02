@@ -27,8 +27,7 @@ if(BUILD_BITNESS EQUAL 32)
     # Build this too for testing 32-bit and 64-bit interoperability
     OpenKneeboard-Viewer
   )
-  get_target_property(OUTPUT_NAME OpenKneeboard-Viewer OUTPUT_NAME)
-  set_target_properties(OpenKneeboard-Viewer PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}32")
+  set_target_properties(OpenKneeboard-Viewer PROPERTIES OUTPUT_NAME "$OpenKneeboard-Viewer32")
 
   foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
     add_custom_target("${TARGET}32" INTERFACE IMPORTED GLOBAL)
