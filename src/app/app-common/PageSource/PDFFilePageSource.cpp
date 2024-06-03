@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
@@ -30,7 +32,6 @@
 #include <OpenKneeboard/PDFNavigation.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -220,7 +221,15 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
     std::shared_lock lock(p->mMutex);
     path = p->mCopy->GetPath();
   }
-  PDFNavigation::PDF pdf(path);
+  std::optional<PDFNavigation::PDF> maybePdf;
+  try {
+    maybePdf.emplace(path);
+  } catch (const std::runtime_error& e) {
+    dprintf("Failed to load PDFNavigation for PDF {}: {}", path, e.what());
+    co_return;
+  }
+  auto pdf = std::move(*maybePdf);
+
   const auto bookmarks = pdf.GetBookmarks();
   decltype(p->mBookmarks) navigation;
   for (int i = 0; i < bookmarks.size(); i++) {
