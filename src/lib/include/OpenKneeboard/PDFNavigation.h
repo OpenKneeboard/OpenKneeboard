@@ -21,14 +21,16 @@
 #pragma once
 
 #include <OpenKneeboard/inttypes.h>
-#include <d2d1.h>
+
+#include <shims/filesystem>
 
 #include <cinttypes>
 #include <map>
 #include <memory>
-#include <shims/filesystem>
 #include <string>
 #include <vector>
+
+#include <d2d1.h>
 
 namespace OpenKneeboard::PDFNavigation {
 
@@ -63,10 +65,13 @@ class PDF final {
  public:
   PDF() = delete;
   PDF(const std::filesystem::path&);
+  PDF(PDF&&);
   ~PDF();
 
   std::vector<Bookmark> GetBookmarks();
   std::vector<std::vector<Link>> GetLinks();
+
+  PDF& operator=(PDF&&);
 
  private:
   struct Impl;

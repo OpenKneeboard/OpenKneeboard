@@ -61,7 +61,10 @@ struct PDF::Impl {
 PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {
 }
 
+PDF::PDF(PDF&&) = default;
 PDF::~PDF() = default;
+
+PDF& PDF::operator=(PDF&&) = default;
 
 static QPDFObjectHandle PageFromDest(
   QPDFOutlineDocumentHelper& outlineHelper,
