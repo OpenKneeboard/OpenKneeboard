@@ -19,6 +19,13 @@ The one exception is if there is an update for OpenKneeboard: installing or upda
 
 Mice are not supported in-game; the toolbar is shown as it can be used with graphics tablets, like those made by Wacom or Huion.
 
+Mouse support is unlikely to be added soon as it requires interfering with how the game accesses the mouse and other input devices. This is likely to cause issues with:
+
+- anti-cheat
+- the mouse and other input devices becoming unusable in the game itself
+
+Mouse support is not planned; any updates will be here, and/or in release notes.
+
 ## How do I use my iPad, Microsoft Surface, other tablet computer, or phone with OpenKneeboard?
 
 OpenKneeboard only supports graphics tablets (sometimes called 'artists tablets') such as those made by Wacom or Huion, not tablet computers or phones.
