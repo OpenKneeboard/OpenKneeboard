@@ -94,7 +94,7 @@ void DCSTerrainTab::OnGameEvent(
   mTerrain = event.value;
   const auto normalized = NormalizeTerrain(event.value);
 
-  mDebugInformation.clear();
+  mDebugInformation = DCSTab::DebugInformationHeader;
 
   std::vector<std::filesystem::path> potentialPaths {
     savedGamesPath / "KNEEBOARD" / mTerrain,
@@ -118,11 +118,7 @@ void DCSTerrainTab::OnGameEvent(
       message = std::format("\u274c {}", to_utf8(path));
     }
     dprintf("Terrain tab: {}", message);
-    mDebugInformation += message + "\n";
-  }
-
-  if (mDebugInformation.ends_with("\n")) {
-    mDebugInformation.pop_back();
+    mDebugInformation += "\n" + message;
   }
 
   evDebugInformationHasChanged.Emit(mDebugInformation);
