@@ -28,7 +28,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSAircraftTab::DCSAircraftTab(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : DCSAircraftTab(dxr, kbs, {}, _("Aircraft")) {
 }
 
@@ -81,7 +83,7 @@ void DCSAircraftTab::OnGameEvent(
   mAircraft = event.value;
   const auto moduleName = DCSWorld::GetModuleNameForLuaAircraft(mAircraft);
 
-  mDebugInformation.clear();
+  mDebugInformation = DCSTab::DebugInformationHeader;
 
   std::vector<std::filesystem::path> paths;
 
@@ -92,19 +94,17 @@ void DCSAircraftTab::OnGameEvent(
          installPath / "Mods" / "aircraft" / moduleName / "Cockpit" / "Scripts"
            / "KNEEBOARD" / "pages",
        }) {
+    std::string message;
     if (std::filesystem::exists(path)) {
       paths.push_back(std::filesystem::canonical(path));
-      mDebugInformation += std::format("\u2714 {}\n", to_utf8(path));
+      message = "\u2714 " + to_utf8(path);
     } else {
-      mDebugInformation += std::format("\u274c {}\n", to_utf8(path));
+      message = "\u274c " + to_utf8(path);
     }
+    dprintf("Aircraft tab: {}", message);
+    mDebugInformation += "\n" + message;
   }
 
-  if (mDebugInformation.ends_with('\n')) {
-    mDebugInformation.pop_back();
-  }
-
-  dprint("Aircraft tab:" + mDebugInformation);
   evDebugInformationHasChanged.Emit(mDebugInformation);
 
   if (mPaths == paths) {

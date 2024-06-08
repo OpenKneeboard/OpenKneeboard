@@ -24,6 +24,8 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 
+#include <OpenKneeboard/utf8.h>
+
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
@@ -38,6 +40,11 @@ class DCSTab : public virtual ITab, public virtual EventReceiver {
   DCSTab() = delete;
 
  protected:
+  static constexpr std::string_view DebugInformationHeader = _(
+    "A tick or a cross indicates whether or not the folder exists, not whether "
+    "or not it is meant to exist. Some crosses are expected, and not "
+    "necessarily an error.\n");
+
   virtual void OnGameEvent(
     const GameEvent&,
     const std::filesystem::path& installPath,
