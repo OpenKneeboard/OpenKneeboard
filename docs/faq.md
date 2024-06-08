@@ -24,7 +24,7 @@ Mouse support is unlikely to be added soon as it requires interfering with how t
 - anti-cheat
 - the mouse and other input devices becoming unusable in the game itself
 
-Mouse support is not planned; any updates will be here, and/or in release notes.
+Mouse support is not planned; any updates will be on [the GitHub issue](https://github.com/OpenKneeboard/OpenKneeboard/issues/374). If there are no updates there, there is no news or ETA.
 
 ## How do I use my iPad, Microsoft Surface, other tablet computer, or phone with OpenKneeboard?
 
