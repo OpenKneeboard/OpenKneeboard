@@ -50,6 +50,8 @@
 
 #include <shims/utility>
 
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
+
 #include <microsoft.ui.xaml.window.h>
 
 #include <ranges>
@@ -177,6 +179,15 @@ static std::shared_ptr<ITab> find_tab(const IInspectable& sender) {
   return *it;
 }
 
+void TabsSettingsPage::CopyDebugInfo(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  const auto text = unbox_value<hstring>(sender.as<FrameworkElement>().Tag());
+  Windows::ApplicationModel::DataTransfer::DataPackage package;
+  package.SetText(text);
+  Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+}
+
 fire_and_forget TabsSettingsPage::ShowDebugInfo(
   const IInspectable& sender,
   const RoutedEventArgs&) {
@@ -200,6 +211,7 @@ fire_and_forget TabsSettingsPage::ShowDebugInfo(
 
   DebugInfoDialog().Title(winrt::box_value(
     to_hstring(std::format("'{}' - Debug Information", tab->GetTitle()))));
+  CopyDebugInfoButton().Tag(winrt::box_value(to_hstring(info)));
   co_await DebugInfoDialog().ShowAsync();
 }
 

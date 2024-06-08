@@ -72,6 +72,7 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowTabSettings(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);
+  void CopyDebugInfo(const IInspectable&, const RoutedEventArgs&);
 
   void OnTabsChanged(
     const IInspectable&,

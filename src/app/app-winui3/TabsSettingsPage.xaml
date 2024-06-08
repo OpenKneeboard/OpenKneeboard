@@ -42,8 +42,8 @@
           <FontIcon Glyph="&#xEbE8;"/>
         </Button>
         <Button Grid.Column="3"
-            Tag="{x:Bind InstanceID,Mode=OneTime}"
-            Click="RemoveTab">
+                Tag="{x:Bind InstanceID,Mode=OneTime}"
+                Click="RemoveTab">
           <SymbolIcon Symbol="Delete"/>
         </Button>
       </Grid>
@@ -232,7 +232,7 @@
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
   <ScrollViewer VerticalScrollMode="Auto"
-      Padding="24">
+                Padding="24">
     <StackPanel Margin="0,0,0,16">
       <Grid
         ColumnDefinitions="*,Auto,Auto"
@@ -334,10 +334,28 @@
         x:Name="DebugInfoDialog"
         CloseButtonText="Close"
         DefaultButton="Close">
-        <TextBlock
-          x:Name="DebugInfoText"
-          IsTextSelectionEnabled="true"
-          Style="{ThemeResource BodyTextBlockStyle}"/>
+        <StackPanel
+          Orientation="Vertical"
+          Spacing="20">
+          <TextBlock
+            x:Name="DebugInfoText"
+            IsTextSelectionEnabled="true"
+            Style="{ThemeResource BodyTextBlockStyle}"/>
+          <HyperlinkButton
+            x:Name="CopyDebugInfoButton"
+            HorizontalContentAlignment="Center"
+            Click="CopyDebugInfo">
+            <Grid ColumnDefinitions="*,Auto">
+              <FontIcon
+                Grid.Column="0"
+                Glyph="&#xe8c8;"
+                FontFamily="{StaticResource SymbolThemeFontFamily}"/>
+              <TextBlock
+                Margin="8,4,4,4"
+                Grid.Column="1">Copy to clipboard</TextBlock>
+            </Grid>
+          </HyperlinkButton>
+        </StackPanel>
       </ContentDialog>
       <ContentDialog
         x:Name="TabSettingsDialog"
@@ -345,7 +363,7 @@
         CloseButtonText="Close"
         DefaultButton="Close">
         <ScrollViewer VerticalScrollMode="Auto"
-            Padding="24">
+                      Padding="24">
           <ContentPresenter
             x:Name="TabSettingsDialogContent"/>
         </ScrollViewer>
