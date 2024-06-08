@@ -1,4 +1,4 @@
-﻿<Page
+<Page
   x:Class="OpenKneeboardApp.TabsSettingsPage"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -353,21 +353,22 @@
       </ContentDialog>
       <ContentDialog
         x:Name="DebugInfoDialog"
-        CloseButtonText="Close">
+        CloseButtonText="Close"
+        DefaultButton="Close">
         <TextBlock
           x:Name="DebugInfoText"
           IsTextSelectionEnabled="true"
-          Style="{ThemeResource BodyTextBlockStyle}"
-        />
+          Style="{ThemeResource BodyTextBlockStyle}"/>
       </ContentDialog>
       <ContentDialog
         x:Name="TabSettingsDialog"
         Title="Tab Settings"
-        CloseButtonText="Close">
-        <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+        CloseButtonText="Close"
+        DefaultButton="Close">
+        <ScrollViewer VerticalScrollMode="Auto"
+            Padding="24">
           <ContentPresenter
-            x:Name="TabSettingsDialogContent"
-          />
+            x:Name="TabSettingsDialogContent"/>
         </ScrollViewer>
       </ContentDialog>
     </StackPanel>
