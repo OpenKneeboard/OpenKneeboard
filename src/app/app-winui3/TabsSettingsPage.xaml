@@ -1,4 +1,4 @@
-<Page
+﻿<Page
   x:Class="OpenKneeboardApp.TabsSettingsPage"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,7 +8,7 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
     <DataTemplate
       x:Key="TabListEntry"
       x:DataType="local:TabUIData">
@@ -25,14 +25,13 @@
           ToolTipService.ToolTip="Tab settings"
           Margin="0,0,8,0"
           Click="ShowTabSettings">
-          <FontIcon Glyph="&#xe713;" />
+          <FontIcon Glyph="&#xe713;"/>
         </Button>
         <TextBlock
           Grid.Column="1"
           Style="{StaticResource BodyStrongTextBlockStyle}"
           Text="{x:Bind Title,Mode=OneWay}"
-          VerticalAlignment="Center"
-        />
+          VerticalAlignment="Center"/>
         <Button
           Grid.Column="2"
           Tag="{x:Bind InstanceID,Mode=OneTime}"
@@ -40,10 +39,12 @@
           Margin="0,0,8,0"
           Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility},Mode=OneWay}"
           Click="ShowDebugInfo">
-          <FontIcon Glyph="&#xEbE8;" />
+          <FontIcon Glyph="&#xEbE8;"/>
         </Button>
-        <Button Grid.Column="3" Tag="{x:Bind InstanceID,Mode=OneTime}" Click="RemoveTab">
-          <SymbolIcon Symbol="Delete" />
+        <Button Grid.Column="3"
+            Tag="{x:Bind InstanceID,Mode=OneTime}"
+            Click="RemoveTab">
+          <SymbolIcon Symbol="Delete"/>
         </Button>
       </Grid>
     </DataTemplate>
@@ -53,8 +54,7 @@
       x:DataType="local:TabUIData">
       <TextBox
         Text="{x:Bind Title,Mode=TwoWay}"
-        Header="Tab name"
-      />
+        Header="Tab name"/>
     </DataTemplate>
     <!-- Any Tab -->
     <DataTemplate
@@ -64,10 +64,9 @@
         Orientation="Vertical"
         Spacing="8"
         x:DefaultBindMode="TwoWay">
-        <ContentPresenter 
+        <ContentPresenter
           Content="{x:Bind Mode=OneTime}"
-          ContentTemplate="{StaticResource TabSettingsCommon}"
-        />
+          ContentTemplate="{StaticResource TabSettingsCommon}"/>
       </StackPanel>
     </DataTemplate>
     <!-- Browser Tab -->
@@ -78,28 +77,24 @@
         Orientation="Vertical"
         Spacing="8"
         x:DefaultBindMode="TwoWay">
-        <ContentPresenter 
+        <ContentPresenter
           Content="{x:Bind Mode=OneTime}"
-          ContentTemplate="{StaticResource TabSettingsCommon}"
-        />
+          ContentTemplate="{StaticResource TabSettingsCommon}"/>
         <ToggleSwitch
           IsOn="{x:Bind IsBackgroundTransparent}"
           Header="Transparent background"
           OffContent="Background is solid"
-          OnContent="Background is transparent"
-        />
+          OnContent="Background is transparent"/>
         <ToggleSwitch
           IsOn="{x:Bind IsSimHubIntegrationEnabled}"
           Header="SimHub integration"
           OffContent="Disabled"
-          OnContent="Automatically resize to fit SimHub dashboards"
-        />
+          OnContent="Automatically resize to fit SimHub dashboards"/>
         <ToggleSwitch
           IsOn="{x:Bind IsDeveloperToolsWindowEnabled}"
           Header="Developer tools window"
           OffContent="Disabled"
-          OnContent="Enabled"
-        />
+          OnContent="Enabled"/>
       </StackPanel>
     </DataTemplate>
     <!-- DCS Radio Tab -->
@@ -110,10 +105,9 @@
         Orientation="Vertical"
         Spacing="8"
         x:DefaultBindMode="TwoWay">
-        <ContentPresenter 
+        <ContentPresenter
           Content="{x:Bind Mode=OneTime}"
-          ContentTemplate="{StaticResource TabSettingsCommon}"
-        />
+          ContentTemplate="{StaticResource TabSettingsCommon}"/>
         <RadioButtons
           SelectedIndex="{x:Bind MissionStartBehavior}"
           MaxColumns="2"
@@ -125,27 +119,24 @@
           IsOn="{x:Bind TimestampsEnabled}"
           Header="Timestamps"
           OffContent="No Timestamps"
-          OnContent="Show Timestamps"
-        />
+          OnContent="Show Timestamps"/>
       </StackPanel>
     </DataTemplate>
     <!-- Window Capture Tab -->
     <DataTemplate
-    x:Key="WindowCaptureTabTemplate"
-    x:DataType="local:WindowCaptureTabUIData">
+      x:Key="WindowCaptureTabTemplate"
+      x:DataType="local:WindowCaptureTabUIData">
       <StackPanel
         Orientation="Vertical"
         Spacing="8"
         x:DefaultBindMode="TwoWay">
-        <ContentPresenter 
+        <ContentPresenter
           Content="{x:Bind Mode=OneTime}"
-          ContentTemplate="{StaticResource TabSettingsCommon}"
-        />
+          ContentTemplate="{StaticResource TabSettingsCommon}"/>
         <TextBox
           Header="Executable path"
           Text="{x:Bind ExecutablePathPattern}"
-          PlaceholderText="Executable path pattern"
-        />
+          PlaceholderText="Executable path pattern"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
@@ -155,8 +146,7 @@
           Header="Capture client area"
           IsOn="{x:Bind CaptureClientArea}"
           OnContent="Crop classic window borders, title bars, and menu bars"
-          OffContent="The entire window is captured"
-        />
+          OffContent="The entire window is captured"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
@@ -169,8 +159,7 @@
           Header="Use graphics tablet as mouse"
           IsOn="{x:Bind IsInputEnabled}"
           OnContent="Enabled"
-          OffContent="Disabled"
-        />
+          OffContent="Disabled"/>
         <ComboBox
           Header="Match window title"
           SelectedIndex="{x:Bind MatchWindowTitle}">
@@ -181,19 +170,16 @@
         <TextBox
           Header="Window title"
           Text="{x:Bind WindowTitle}"
-          PlaceholderText="Window title"
-        />
+          PlaceholderText="Window title"/>
         <ToggleSwitch
           Header="Match window class"
           IsOn="{x:Bind MatchWindowClass}"
           OnContent="Enabled"
-          OffContent="Disabled"
-        />
+          OffContent="Disabled"/>
         <TextBox
           Header="Window class"
           Text="{x:Bind WindowClass}"
-          IsEnabled="False"
-        />
+          IsEnabled="False"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
@@ -220,8 +206,7 @@
           Header="Show Windows mouse cursor"
           IsOn="{x:Bind IsCursorCaptureEnabled}"
           OnContent="The real mouse cursor is visible in the tab"
-          OffContent="The real mouse cursor is not not visible in the tab"
-        />
+          OffContent="The real mouse cursor is not not visible in the tab"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
@@ -243,11 +228,11 @@
       Generic="{StaticResource GenericTabTemplate}"
       Browser="{StaticResource BrowserTabTemplate}"
       DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
-      WindowCapture="{StaticResource WindowCaptureTabTemplate}"
-    />
+      WindowCapture="{StaticResource WindowCaptureTabTemplate}"/>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
-  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+  <ScrollViewer VerticalScrollMode="Auto"
+      Padding="24">
     <StackPanel Margin="0,0,0,16">
       <Grid
         ColumnDefinitions="*,Auto,Auto"
@@ -256,8 +241,7 @@
           Grid.Column="0"
           Style="{StaticResource TitleTextBlockStyle}"
           Text="Tab Settings"
-          Margin="0,0,0,8"
-        />
+          Margin="0,0,0,8"/>
         <Button
           Grid.Column="1"
           Margin="0,0,8,0"
@@ -268,8 +252,7 @@
             <FontIcon
               Grid.Column="0"
               Glyph="&#xE710;"
-              FontFamily="{StaticResource SymbolThemeFontFamily}"
-            />
+              FontFamily="{StaticResource SymbolThemeFontFamily}"/>
             <TextBlock
               Margin="4,0,0,0"
               Grid.Column="1">
@@ -280,8 +263,7 @@
         <Button
           Grid.Column="2"
           Content="Restore defaults"
-          Click="RestoreDefaults"
-        />
+          Click="RestoreDefaults"/>
       </Grid>
       <ListView
         Grid.Row="1"
@@ -291,8 +273,7 @@
         CanDragItems="True"
         CanReorderItems="True"
         AllowDrop="True"
-        ItemTemplate="{StaticResource TabListEntry}"
-      />
+        ItemTemplate="{StaticResource TabListEntry}"/>
       <Button
         Margin="0,24,0,0"
         HorizontalAlignment="Center"
@@ -302,8 +283,7 @@
           <FontIcon
             Grid.Column="0"
             Glyph="&#xE710;"
-            FontFamily="{StaticResource SymbolThemeFontFamily}"
-          />
+            FontFamily="{StaticResource SymbolThemeFontFamily}"/>
           <TextBlock
             Margin="8,4,4,4"
             Grid.Column="1">
@@ -347,8 +327,7 @@
             x:Name="AddBrowserAddress"
             Header="Dashboard Address:"
             PlaceholderText="https://example.com"
-            TextChanged="OnAddBrowserAddressTextChanged"
-          />
+            TextChanged="OnAddBrowserAddressTextChanged"/>
         </StackPanel>
       </ContentDialog>
       <ContentDialog
