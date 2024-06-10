@@ -153,9 +153,9 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
 
   auto cacheKey = snapshot.GetRenderCacheKey();
   if (isLookingAtKneeboard) {
-    cacheKey |= 1;
+    cacheKey |= 1ui64;
   } else {
-    cacheKey &= ~static_cast<size_t>(1);
+    cacheKey &= ~(1ui64);
   }
 
   return {
