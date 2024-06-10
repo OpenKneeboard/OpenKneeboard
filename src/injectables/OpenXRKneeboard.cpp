@@ -95,7 +95,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -442,22 +444,37 @@ XrResult OpenXRKneeboard::xrEndFrame(
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity,
+    "OpenXRKNeeboard::GetHMDPose()",
+    TraceLoggingValue(displayTime, "displayTime"));
   static Pose sCache {};
   static XrTime sCacheKey {};
   if (displayTime == sCacheKey) {
+    activity.StopWithResult("Using Cached Value");
     return sCache;
   }
 
   XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
-  if (
-    mOpenXR->xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
-    != XR_SUCCESS) {
+  const auto locateResult
+    = mOpenXR->xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location);
+  if (locateResult != XR_SUCCESS) {
+    TraceLoggingWriteStop(
+      activity,
+      "OpenXRKneeboard::GetHMDPose()",
+      TraceLoggingValue("locateFailed", "result"),
+      TraceLoggingValue(static_cast<int64_t>(locateResult), "xrResult"),
+      TraceLoggingValue(
+        std::string(xrresult_to_string(locateResult)).c_str(),
+        "xrResultString"));
+    activity.CancelAutoStop();
     return {};
   }
 
   const auto desiredFlags = XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
     | XR_SPACE_LOCATION_POSITION_VALID_BIT;
   if ((location.locationFlags & desiredFlags) != desiredFlags) {
+    activity.StopWithResult("missingFlags");
     return {};
   }
 
