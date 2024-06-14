@@ -569,25 +569,37 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
   DWORD dataType;
 
   DWORD runtimeCount = 0;
+  bool moreRuntimes = true;
 
-  for (DWORD i = 0; RegEnumValueW(
-                      key.get(),
-                      i,
-                      &path[0],
-                      &pathLength,
-                      nullptr,
-                      &dataType,
-                      reinterpret_cast<LPBYTE>(&data),
-                      &dataLength)
-       == ERROR_SUCCESS;
-       i++,
+  for (DWORD i = 0; moreRuntimes; i++,
              pathLength = static_cast<DWORD>(std::size(path)),
              dataLength = static_cast<DWORD>(sizeof(data))) {
+    switch (RegEnumValueW(
+      key.get(),
+      i,
+      &path[0],
+      &pathLength,
+      nullptr,
+      &dataType,
+      reinterpret_cast<LPBYTE>(&data),
+      &dataLength)) {
+      case ERROR_SUCCESS:
+        break;
+      case ERROR_NO_MORE_ITEMS:
+        moreRuntimes = false;
+        continue;
+        break;
+      case ERROR_MORE_DATA:
+        // Bigger than DWORD means not a DWORD; handled by REG_DWORD check below
+        break;
+    }
+
     const auto pathUtf8
       = winrt::to_string(std::wstring_view {path, pathLength});
+
     if (dataType != REG_DWORD) {
       ret += std::format(
-        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
+        "- ERROR - INVALID REGISTRY VALUE (not DWORD): {}\n", pathUtf8);
       continue;
     }
     const auto disabled = static_cast<bool>(data);
@@ -659,24 +671,32 @@ std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
 
   size_t extensionCount = 0;
 
-  for (DWORD i = 0; RegEnumValueW(
-                      key.get(),
-                      i,
-                      &path[0],
-                      &pathLength,
-                      nullptr,
-                      &dataType,
-                      reinterpret_cast<LPBYTE>(&data),
-                      &dataLength)
-       == ERROR_SUCCESS;
-       i++,
+  bool moreLayers = true;
+  for (DWORD i = 0; moreLayers; i++,
              pathLength = static_cast<DWORD>(std::size(path)),
              dataLength = static_cast<DWORD>(sizeof(data))) {
+    switch (RegEnumValueW(
+      key.get(),
+      i,
+      &path[0],
+      &pathLength,
+      nullptr,
+      &dataType,
+      reinterpret_cast<LPBYTE>(&data),
+      &dataLength)) {
+      case ERROR_SUCCESS:
+        break;
+      case ERROR_MORE_DATA:
+        break;
+      case ERROR_NO_MORE_ITEMS:
+        moreLayers = false;
+        continue;
+    }
     const auto pathUtf8
       = winrt::to_string(std::wstring_view {path, pathLength});
     if (dataType != REG_DWORD) {
       ret += std::format(
-        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
+        "- ERROR - INVALID REGISTRY VALUE (not DWORD): {}\n", pathUtf8);
       continue;
     }
     const auto disabled = static_cast<bool>(data);
