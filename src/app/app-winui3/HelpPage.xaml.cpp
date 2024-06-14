@@ -527,19 +527,34 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
 
   size_t extensionCount = 0;
 
-  for (DWORD i = 0; RegEnumValueW(
-                      key.get(),
-                      i,
-                      &path[0],
-                      &pathLength,
-                      nullptr,
-                      &dataType,
-                      reinterpret_cast<LPBYTE>(&data),
-                      &dataLength)
-       == ERROR_SUCCESS;
-       i++,
+  bool moreLayers = true;
+
+  for (DWORD i = 0; moreLayers; i++,
              pathLength = static_cast<DWORD>(std::size(path)),
              dataLength = static_cast<DWORD>(sizeof(data))) {
+    switch (RegEnumValueW(
+      key.get(),
+      i,
+      &path[0],
+      &pathLength,
+      nullptr,
+      &dataType,
+      reinterpret_cast<LPBYTE>(&data),
+      &dataLength)) {
+      case ERROR_SUCCESS:
+        break;
+      case ERROR_MORE_DATA:
+        // bigger than DWORD means not a DWORD, so handled in dataType check
+        // below
+        break;
+      case ERROR_NO_MORE_ITEMS:
+        moreLayers = false;
+        continue;
+      default:
+        OPENKNEEBOARD_BREAK;
+        continue;
+    }
+
     const auto pathUtf8
       = winrt::to_string(std::wstring_view {path, pathLength});
     if (dataType != REG_DWORD) {
