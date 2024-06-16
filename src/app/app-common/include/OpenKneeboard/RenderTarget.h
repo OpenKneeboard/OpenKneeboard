@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/StateMachine.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/dprint.h>
@@ -46,6 +47,12 @@ struct DXResources;
  */
 class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
  public:
+  enum class State {
+    Unattached,
+    D2D,
+    D3D,
+  };
+
   RenderTarget() = delete;
   virtual ~RenderTarget();
 
@@ -75,9 +82,7 @@ class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
  private:
-  enum class Mode { Unattached, D2D, D3D };
-  Mode mMode {Mode::Unattached};
-
+  StateMachine<State> mState {State::Unattached};
   PixelSize mDimensions;
 
   audited_ptr<DXResources> mDXR;

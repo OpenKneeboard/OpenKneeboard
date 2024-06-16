@@ -28,6 +28,12 @@
 
 namespace OpenKneeboard {
 
+using State = RenderTarget::State;
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::Unattached, State::D2D);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::Unattached, State::D3D);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::D2D, State::Unattached);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::D3D, State::Unattached);
+
 std::shared_ptr<RenderTarget> RenderTarget::Create(
   const audited_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
@@ -138,17 +144,7 @@ RenderTarget::D2D::D2D(
 }
 
 void RenderTarget::D2D::Acquire() {
-  auto& mode = mParent->mMode;
-  if (mode != Mode::Unattached) {
-    mParent = nullptr;
-    dprintf(
-      "Attempted to activate D2D for a render target in mode {}",
-      static_cast<int>(mode));
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  mode = Mode::D2D;
+  mParent->mState.Transition<State::Unattached, State::D2D>();
 
   (*this)->SetTarget(mUnsafeParent->mD2DBitmap.get());
   mUnsafeParent->mDXR->PushD2DDraw(mSourceLocation);
@@ -168,17 +164,7 @@ void RenderTarget::D2D::Release() {
   mUnsafeParent->mDXR->PopD2DDraw();
   mUnsafeParent->mDXR->mD2DDeviceContext->SetTarget(nullptr);
 
-  auto& mode = mParent->mMode;
-  if (mode != Mode::D2D) {
-    dprintf(
-      "{}: attempting to release D2D, but mode is {}",
-      __FUNCTION__,
-      static_cast<int>(mode));
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  mode = Mode::Unattached;
+  mUnsafeParent->mState.Transition<State::D2D, State::Unattached>();
 }
 
 void RenderTarget::D2D::Reacquire() {
@@ -214,16 +200,7 @@ RenderTarget::D3D::D3D(const std::shared_ptr<RenderTarget>& parent)
   }
   mUnsafeParent = parent.get();
 
-  auto& mode = mParent->mMode;
-  if (mode != Mode::Unattached) {
-    mParent = nullptr;
-    dprintf(
-      "Attempted to activate D3D for a render target in mode {}",
-      static_cast<int>(mode));
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-  mode = Mode::D3D;
+  mParent->mState.Transition<State::Unattached, State::D3D>();
 }
 
 RenderTarget::D3D::~D3D() {
@@ -231,15 +208,7 @@ RenderTarget::D3D::~D3D() {
     return;
   }
 
-  auto& mode = mParent->mMode;
-  if (mode != Mode::D3D) {
-    dprintf(
-      "Attempting to leave D3D for render target in mode {}",
-      static_cast<int>(mode));
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-  mode = Mode::Unattached;
+  mParent->mState.Transition<State::D3D, State::Unattached>();
 }
 
 ID3D11Texture2D* RenderTarget::D3D::texture() const {
