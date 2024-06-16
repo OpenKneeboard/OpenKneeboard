@@ -125,11 +125,14 @@ void SpriteBatch::Begin(
     rtvSize.Height<LONG>(),
   };
 
+  ID3D11ShaderResourceView* nullsrv {nullptr};
+
   auto ctx = mDeviceContext.get();
   ctx->IASetInputLayout(nullptr);
   ctx->VSSetShader(nullptr, nullptr, 0);
   ctx->RSSetViewports(1, &viewport);
   ctx->RSSetScissorRects(1, &scissorRect);
+  ctx->PSSetShaderResources(0, 1, &nullsrv);
   ctx->OMSetRenderTargets(1, &rtv, nullptr);
   ctx->OMSetDepthStencilState(nullptr, 0);
   ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
@@ -176,6 +179,8 @@ void SpriteBatch::End() {
       "target not set; double-End() or Begin() not called?");
   }
   mDXTKSpriteBatch->End();
+  ID3D11RenderTargetView* nullrtv {nullptr};
+  mDeviceContext->OMSetRenderTargets(1, &nullrtv, nullptr);
   mTarget = nullptr;
 }
 
