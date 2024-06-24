@@ -36,7 +36,7 @@ jobs:
           Exit 0
       - name: Create pull request
         if: ${{ steps.UpdateScript.outputs.HAVE_CHANGES }}
-        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c
         with:
           path: source
           author: "OpenKneeboard Bot <openkneeboard-bot@users.noreply.github.com>"
