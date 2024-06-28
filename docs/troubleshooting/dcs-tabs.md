@@ -5,6 +5,19 @@ parent: Troubleshooting
 
 # The DCS Tabs
 
+## I still see DCS's built-in kneeboard
+
+OpenKneeboard does not modify or replace DCS's kneeboard; it provides an additional one. If you do not see OpenKneeboard, see the answer below. If you do not want to see DCS's built-in kneeboard, use a different key combination to show/hide it.
+
+## I don't see OpenKneeboard
+
+See troubleshooting pages for:
+
+- [OpenXR](steamvr-or-openxr.md)
+- [Non-VR](oculus-or-nonvr.md)
+- [Legacy Oculus API (LibOVR)](oculus-or-nonvr.md)
+- [Legacy SteamVR API (OpenVR)](steamvr-or-openxr.md)
+
 ## None of the tabs ever show anything
 
 1. Check if the Theater tab loads for Caucasus or NTTR; if so, check a different section.
