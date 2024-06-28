@@ -5,6 +5,10 @@ parent: Troubleshooting
 
 # Troubleshooting OpenXR or Legacy SteamVR API (OpenVR) Issues
 
+## If you using the legacy SteamVR API but the game supports OpenXR
+
+If the game supports OpenXR without using OpenComposite, use OpenXR instead. OpenComposite is unsupported.
+
 ## Game Crashes
 
 If OpenKneeboard's Games List, change 'Rendering API' from 'Auto-detect' to SteamVR or OpenXR; this isn't usually needed, but reduces the changes of incompatibilities with other programs. If the game is not in OpenKneeboard's game's list, ignore this - it isn't needed for SteamVR or OpenXR.

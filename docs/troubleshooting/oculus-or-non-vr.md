@@ -8,6 +8,10 @@ parent: Troubleshooting
 **Don't waste time on non-VR issues if you will only actually play the game with SteamVR or OpenXR**: fixing non-VR issues makes it slightly
 *less* likely that SteamVR or OpenXR will work.
 
+## If you using the legacy Oculus API but the game supports OpenXR
+
+If the game supports OpenXR without using OpenComposite, use OpenXR instead. OpenComposite is unsupported.
+
 ## Kneeboard Is Not Visible
 
 Restart the game after each step to see if it's fixed.
