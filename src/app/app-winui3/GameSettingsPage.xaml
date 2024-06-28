@@ -9,7 +9,8 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
     <!-- Common Settings-->
-    <DataTemplate x:Key="CommonSettings" x:DataType="local:GameInstanceUIData">
+    <DataTemplate x:Key="CommonSettings"
+                  x:DataType="local:GameInstanceUIData">
       <StackPanel
         Orientation="Vertical"
         Spacing="12">
@@ -20,26 +21,31 @@
             Width="48"
             CornerRadius="8"
             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-            <Image Height="32" Width="32" Source="{x:Bind Icon}" />
+            <Image Height="32"
+                   Width="32"
+                   Source="{x:Bind Icon}"/>
           </Grid>
           <TextBlock
             Grid.Column="1"
             Margin="8,0,0,0"
             Style="{StaticResource SubtitleTextBlockStyle}"
             Text="{x:Bind Name}"
-            VerticalAlignment="Center"
-          />
+            VerticalAlignment="Center"/>
           <Button
             Grid.Column="2"
             VerticalAlignment="Top"
             Tag="{x:Bind InstanceID}"
             Click="RemoveGame">
-            <SymbolIcon Symbol="Delete" />
+            <SymbolIcon Symbol="Delete"/>
           </Button>
         </Grid>
-        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
-        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
-        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}"
+                   Text="Path"/>
+        <TextBlock Style="{ThemeResource BodyTextBlockStyle}"
+                   Margin="16,0,0,0"
+                   Text="{x:Bind Path}"/>
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}"
+                   Text="Rendering API"/>
         <ComboBox
           Margin="16,0,0,0"
           Tag="{x:Bind InstanceID}"
@@ -47,28 +53,29 @@
           SelectionChanged="OnOverlayAPIChanged">
           <x:String>No overlay</x:String>
           <x:String>Auto-detect</x:String>
-          <x:String>SteamVR</x:String>
+          <x:String>Legacy SteamVR (OpenVR)</x:String>
           <x:String>OpenXR</x:String>
-          <x:String>Oculus + Direct3D 11</x:String>
-          <x:String>Oculus + Direct3D 12</x:String>
+          <x:String>Legacy Oculus (LibOVR) + Direct3D 11</x:String>
+          <x:String>Legacy Oculus (LibOVR) + Direct3D 12</x:String>
           <x:String>Direct3D 11 (Non-VR)</x:String>
         </ComboBox>
       </StackPanel>
     </DataTemplate>
     <!-- Generic games - common settings only -->
-    <DataTemplate x:Key="GenericGameTemplate" x:DataType="local:GameInstanceUIData">
-      <ContentPresenter 
+    <DataTemplate x:Key="GenericGameTemplate"
+                  x:DataType="local:GameInstanceUIData">
+      <ContentPresenter
         Content="{x:Bind}"
         ContentTemplate="{StaticResource CommonSettings}"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
-        Padding="12"
-      />
+        Padding="12"/>
     </DataTemplate>
     <!-- DCS World -->
-    <DataTemplate x:Key="DCSWorldTemplate" x:DataType="local:DCSWorldInstanceUIData">
+    <DataTemplate x:Key="DCSWorldTemplate"
+                  x:DataType="local:DCSWorldInstanceUIData">
       <StackPanel
         Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -77,22 +84,22 @@
         BorderThickness="1"
         Padding="12"
         Spacing="12">
-        <ContentPresenter 
+        <ContentPresenter
           Content="{x:Bind}"
-          ContentTemplate="{StaticResource CommonSettings}"
-        />
-        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Saved Games path" />
+          ContentTemplate="{StaticResource CommonSettings}"/>
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}"
+                   Text="Saved Games path"/>
         <HyperlinkButton
           Tag="{x:Bind InstanceID}"
           Margin="12,0,0,0"
           Content="{x:Bind SavedGamesPath}"
-          Click="ChangeDCSSavedGamesPath"
-        />
+          Click="ChangeDCSSavedGamesPath"/>
       </StackPanel>
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
-  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+  <ScrollViewer VerticalScrollMode="Auto"
+                Padding="24">
     <StackPanel Margin="0,0,0,16">
       <Grid
         ColumnDefinitions="*, Auto, Auto"
@@ -101,8 +108,7 @@
           Grid.Column="0"
           Style="{StaticResource TitleTextBlockStyle}"
           Text="Game Settings"
-          Margin="0,0,0,8"
-        />
+          Margin="0,0,0,8"/>
         <Button
           Grid.Column="1"
           Margin="0,0,8,0"
@@ -112,8 +118,7 @@
             <FontIcon
               Grid.Column="0"
               Glyph="&#xE710;"
-              FontFamily="{StaticResource SymbolThemeFontFamily}"
-            />
+              FontFamily="{StaticResource SymbolThemeFontFamily}"/>
             <TextBlock
               Margin="4,0,0,0"
               Grid.Column="1">Add a game</TextBlock>
@@ -124,32 +129,35 @@
                 Click="AddRunningProcess"
                 Text="Add a game that's running">
                 <MenuFlyoutItem.Icon>
-                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
+                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                            Glyph="&#xE768;"/>
                 </MenuFlyoutItem.Icon>
               </MenuFlyoutItem>
-              <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
+              <MenuFlyoutItem Text="Add an exe file"
+                              Click="AddExe">
                 <MenuFlyoutItem.Icon>
-                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
+                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                            Glyph="&#xE838;"/>
                 </MenuFlyoutItem.Icon>
               </MenuFlyoutItem>
             </MenuFlyout>
           </Button.Flyout>
         </Button>
-				<Button
-					Grid.Column="2"
-					Content="Restore defaults"
-					Click="RestoreDefaults"
-				/>
+        <Button
+          Grid.Column="2"
+          Content="Restore defaults"
+          Click="RestoreDefaults"/>
       </Grid>
-      <ItemsRepeater ItemsSource="{x:Bind Games, Mode=OneWay}" Margin="8,8,8,8">
+      <ItemsRepeater ItemsSource="{x:Bind Games, Mode=OneWay}"
+                     Margin="8,8,8,8">
         <ItemsRepeater.Layout>
-          <StackLayout Orientation="Vertical" Spacing="8" />
+          <StackLayout Orientation="Vertical"
+                       Spacing="8"/>
         </ItemsRepeater.Layout>
         <ItemsRepeater.ItemTemplate>
           <local:GameInstanceUIDataTemplateSelector
             GenericGame="{StaticResource GenericGameTemplate}"
-            DCSWorld="{StaticResource DCSWorldTemplate}"
-          />
+            DCSWorld="{StaticResource DCSWorldTemplate}"/>
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
       <Button
@@ -160,8 +168,7 @@
           <FontIcon
             Grid.Column="0"
             Glyph="&#xE710;"
-            FontFamily="{StaticResource SymbolThemeFontFamily}"
-          />
+            FontFamily="{StaticResource SymbolThemeFontFamily}"/>
           <TextBlock
             Margin="8,4,4,4"
             Grid.Column="1">Add a game</TextBlock>
@@ -172,12 +179,15 @@
               Click="AddRunningProcess"
               Text="Add a game that's running">
               <MenuFlyoutItem.Icon>
-                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                          Glyph="&#xE768;"/>
               </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
-            <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
+            <MenuFlyoutItem Text="Add an exe file"
+                            Click="AddExe">
               <MenuFlyoutItem.Icon>
-                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                          Glyph="&#xE838;"/>
               </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
           </MenuFlyout>
