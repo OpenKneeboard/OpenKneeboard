@@ -1,9 +1,9 @@
 ---
-title: Oculus or Non-VR
+title: Non-VR or Legacy Oculus API (LibOVR)
 parent: Troubleshooting
 ---
 
-# Troubleshooting Oculus or Non-VR Issues
+# Troubleshooting Non-VR or Legacy Oculus API (LibOVR) Issues
 
 **Don't waste time on non-VR issues if you will only actually play the game with SteamVR or OpenXR**: fixing non-VR issues makes it slightly
 *less* likely that SteamVR or OpenXR will work.

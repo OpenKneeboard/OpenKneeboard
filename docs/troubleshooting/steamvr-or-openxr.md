@@ -1,9 +1,9 @@
 ---
-title: SteamVR or OpenXR
+title: OpenXR or Legacy SteamVR API (OpenVR)
 parent: Troubleshooting
 ---
 
-# Troubleshooting SteamVR or OpenXR Issues
+# Troubleshooting OpenXR or Legacy SteamVR API (OpenVR) Issues
 
 ## Game Crashes
 
