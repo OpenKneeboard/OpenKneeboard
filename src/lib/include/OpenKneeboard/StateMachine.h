@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <atomic>
 #include <concepts>
 #include <format>
 #include <memory>
@@ -41,7 +42,7 @@ constexpr auto formattable_state(State state) noexcept {
 }
 }// namespace ADL
 
-template <class State>
+template <class State, class StateContainer = State>
 class StateMachine final {
  public:
   StateMachine() = delete;
@@ -50,6 +51,24 @@ class StateMachine final {
 
   template <State in, State out>
     requires is_valid_state_transition_v<in, out>
+    && std::same_as<std::atomic<State>, StateContainer>
+  constexpr void Transition(
+    const std::source_location& loc = std::source_location::current()) {
+    auto current = in;
+    if (!mState.compare_exchange_strong(current, out)) [[unlikely]] {
+      using namespace ADL;
+      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+        loc,
+        "Unexpected state `{}`; expected (`{}` -> `{}`)",
+        formattable_state(current),
+        formattable_state(in),
+        formattable_state(out));
+    }
+  }
+
+  template <State in, State out>
+    requires is_valid_state_transition_v<in, out>
+    && std::same_as<State, StateContainer>
   constexpr void Transition(
     const std::source_location& loc = std::source_location::current()) {
     if (mState != in) [[unlikely]] {
@@ -74,8 +93,11 @@ class StateMachine final {
   StateMachine& operator=(StateMachine&&) = delete;
 
  private:
-  State mState;
+  StateContainer mState;
 };
+
+template <class T>
+using AtomicStateMachine = StateMachine<T, std::atomic<T>>;
 
 template <class TStateMachine, auto pre, auto state, auto post>
 class ScopedStateTransitions final {

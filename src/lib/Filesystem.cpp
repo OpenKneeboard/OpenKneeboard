@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.h>
+#include <OpenKneeboard/StateMachine.h>
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
@@ -32,7 +33,27 @@
 
 #include <ShlObj.h>
 
+namespace OpenKneeboard {
+
+enum class TemporaryDirectoryState {
+  Uninitialized,
+  Cleaned,
+  Initialized,
+};
+
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  TemporaryDirectoryState::Uninitialized,
+  TemporaryDirectoryState::Cleaned);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  TemporaryDirectoryState::Cleaned,
+  TemporaryDirectoryState::Initialized);
+
+}// namespace OpenKneeboard
+
 namespace OpenKneeboard::Filesystem {
+
+static AtomicStateMachine<TemporaryDirectoryState> gTemporaryDirectoryState {
+  TemporaryDirectoryState::Uninitialized};
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
   wchar_t tempDirBuf[MAX_PATH];
@@ -53,6 +74,10 @@ static std::filesystem::path GetTemporaryDirectoryImpl() {
     std::filesystem::create_directories(tempDir);
   }
 
+  gTemporaryDirectoryState.Transition<
+    TemporaryDirectoryState::Cleaned,
+    TemporaryDirectoryState::Initialized>();
+
   return std::filesystem::canonical(tempDir);
 }
 
@@ -66,6 +91,9 @@ std::filesystem::path GetTemporaryDirectory() {
 }
 
 void CleanupTemporaryDirectories() {
+  gTemporaryDirectoryState.Transition<
+    TemporaryDirectoryState::Uninitialized,
+    TemporaryDirectoryState::Cleaned>();
   const auto root = GetTemporaryDirectoryRoot();
   dprintf("Cleaning temporary directory root: {}", root);
   if (!std::filesystem::exists(root)) {
