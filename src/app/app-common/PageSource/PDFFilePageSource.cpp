@@ -322,7 +322,12 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
     p->mCache.clear();
     p->mPageIDs.clear();
 
-    if (!std::filesystem::is_regular_file(p->mPath)) {
+    try {
+      if (!std::filesystem::is_regular_file(p->mPath)) {
+        co_return;
+      }
+    } catch (const std::exception& e) {
+      dprintf("Exception checking if PDF path is a regular file: {}", e.what());
       co_return;
     }
   }
