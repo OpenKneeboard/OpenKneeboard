@@ -342,6 +342,8 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
                   p->mPath.extension());
   p->mCopy = std::make_shared<Filesystem::TemporaryCopy>(p->mPath, tempPath);
 
+  co_await uiThread;
+
   this->ReloadRenderer();
   this->ReloadNavigation();
 }
