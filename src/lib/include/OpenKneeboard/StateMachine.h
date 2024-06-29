@@ -42,11 +42,10 @@ constexpr auto formattable_state(State state) noexcept {
 }
 }// namespace ADL
 
-template <class State, class StateContainer = State>
+template <class State, State InitialState, class StateContainer = State>
 class StateMachine final {
  public:
-  StateMachine() = delete;
-  constexpr StateMachine(State initialState) : mState(initialState) {
+  constexpr StateMachine() {
   }
 
   template <State in, State out>
@@ -93,11 +92,12 @@ class StateMachine final {
   StateMachine& operator=(StateMachine&&) = delete;
 
  private:
-  StateContainer mState;
+  StateContainer mState {InitialState};
 };
 
-template <class T>
-using AtomicStateMachine = StateMachine<T, std::atomic<T>>;
+template <class State, State InitialState>
+using AtomicStateMachine
+  = StateMachine<State, InitialState, std::atomic<State>>;
 
 template <class TStateMachine, auto pre, auto state, auto post>
 class ScopedStateTransitions final {

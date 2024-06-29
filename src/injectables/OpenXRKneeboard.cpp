@@ -66,7 +66,7 @@ OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
 OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
   VulkanXRState::VKEnable2Instance,
   VulkanXRState::VKEnable2InstanceAndDevice);
-static StateMachine gVulkanXRState(VulkanXRState::NoVKEnable2);
+static StateMachine<VulkanXRState, VulkanXRState::NoVKEnable2> gVulkanXRState;
 
 static constexpr XrPosef XR_POSEF_IDENTITY {
   .orientation = {0.0f, 0.0f, 0.0f, 1.0f},
@@ -95,9 +95,7 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return { \
-      #enum_name \
-    }; \
+    return {#enum_name}; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:

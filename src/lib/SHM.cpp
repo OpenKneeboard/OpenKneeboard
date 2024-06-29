@@ -468,7 +468,7 @@ class Impl {
   Impl& operator=(Impl&&) = delete;
 
  protected:
-  StateMachine<State> mState = InitialState;
+  StateMachine<State, InitialState> mState;
 };
 
 class Writer::Impl : public SHM::Impl<WriterState> {

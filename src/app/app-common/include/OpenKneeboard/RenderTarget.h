@@ -82,7 +82,7 @@ class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
  private:
-  StateMachine<State> mState {State::Unattached};
+  StateMachine<State, State::Unattached> mState;
   PixelSize mDimensions;
 
   audited_ptr<DXResources> mDXR;

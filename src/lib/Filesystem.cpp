@@ -52,8 +52,10 @@ OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
 
 namespace OpenKneeboard::Filesystem {
 
-static AtomicStateMachine<TemporaryDirectoryState> gTemporaryDirectoryState {
-  TemporaryDirectoryState::Uninitialized};
+static AtomicStateMachine<
+  TemporaryDirectoryState,
+  TemporaryDirectoryState::Uninitialized>
+  gTemporaryDirectoryState;
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
   wchar_t tempDirBuf[MAX_PATH];
