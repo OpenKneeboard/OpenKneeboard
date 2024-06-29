@@ -41,21 +41,7 @@ static std::filesystem::path GetTemporaryDirectoryRoot() {
   / L"OpenKneeboard";
 }
 
-std::filesystem::path GetTemporaryDirectory() {
-  static std::filesystem::path sCache;
-  static std::mutex sMutex;
-  thread_local std::filesystem::path sThreadCache;
-  if (!sThreadCache.empty()) {
-    return sThreadCache;
-  }
-  std::unique_lock lock(sMutex);
-  if (!sCache.empty()) {
-    sThreadCache = sCache;
-    return sCache;
-  }
-
-  wchar_t tempDirBuf[MAX_PATH];
-  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
+static std::filesystem::path GetTemporaryDirectoryImpl() {
   auto tempDir = GetTemporaryDirectoryRoot()
     / std::format("{:%F %H-%M-%S} {}",
 
@@ -67,14 +53,21 @@ std::filesystem::path GetTemporaryDirectory() {
     std::filesystem::create_directories(tempDir);
   }
 
-  sCache = std::filesystem::canonical(tempDir);
-  sThreadCache = sCache;
+  return std::filesystem::canonical(tempDir);
+}
 
-  return sCache;
+std::filesystem::path GetTemporaryDirectory() {
+  static std::filesystem::path sPath;
+  static std::once_flag sFlag;
+
+  std::call_once(
+    sFlag, [&path = sPath]() { path = GetTemporaryDirectoryImpl(); });
+  return sPath;
 }
 
 void CleanupTemporaryDirectories() {
   const auto root = GetTemporaryDirectoryRoot();
+  dprintf("Cleaning temporary directory root: {}", root);
   if (!std::filesystem::exists(root)) {
     return;
   }
@@ -83,6 +76,8 @@ void CleanupTemporaryDirectories() {
   for (const auto& it: std::filesystem::directory_iterator(root)) {
     std::filesystem::remove_all(it.path(), ignored);
   }
+
+  dprintf("New temporary directory: {}", Filesystem::GetTemporaryDirectory());
 }
 
 std::filesystem::path GetRuntimeDirectory() {
@@ -197,5 +192,4 @@ TemporaryCopy::~TemporaryCopy() noexcept {
 std::filesystem::path TemporaryCopy::GetPath() const noexcept {
   return mCopy;
 }
-
 };// namespace OpenKneeboard::Filesystem
