@@ -303,7 +303,7 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   return p->mPageIDs.back();
 }
 
-winrt::fire_and_forget PDFFilePageSource::Reload() {
+winrt::fire_and_forget PDFFilePageSource::Reload() try {
   static uint64_t sCount = 0;
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
@@ -322,12 +322,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
     p->mCache.clear();
     p->mPageIDs.clear();
 
-    try {
-      if (!std::filesystem::is_regular_file(p->mPath)) {
-        co_return;
-      }
-    } catch (const std::exception& e) {
-      dprintf("Exception checking if PDF path is a regular file: {}", e.what());
+    if (!std::filesystem::is_regular_file(p->mPath)) {
       co_return;
     }
   }
@@ -350,6 +345,10 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   this->ReloadRenderer();
   this->ReloadNavigation();
+
+} catch (const std::exception& e) {
+  dprintf("WARNING: Exception reloading PDFFilePageSource: {}", e.what());
+  OPENKNEEBOARD_BREAK;
 }
 
 winrt::fire_and_forget PDFFilePageSource::final_release(
