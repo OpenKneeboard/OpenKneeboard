@@ -6,7 +6,7 @@ Go to https://openkneeboard.com for more information.
 
 ## Building and contributing
 
-See [the internals documentation](https://openkneeboard.com/internals/).
+See [the internals documentation](https://openkneeboard.com/internals/README.html).
 
 ## License
 
