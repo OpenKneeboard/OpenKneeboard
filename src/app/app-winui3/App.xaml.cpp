@@ -22,6 +22,8 @@
 #include "App.xaml.h"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
@@ -38,7 +40,6 @@
 #include <OpenKneeboard/WebView2PageSource.h>
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
@@ -284,7 +285,17 @@ static void LogSystemInformation() {
 
 static void LogInstallationInformation() {
   const auto dir = Filesystem::GetRuntimeDirectory();
-  dprintf(L"Installation directory: {}", dir.wstring());
+  const auto dirStr = dir.wstring();
+  dprintf(L"Runtime directory: {}", dirStr);
+
+  RegSetKeyValueW(
+    HKEY_CURRENT_USER,
+    Config::RegistrySubKey,
+    L"InstallationBinPath",
+    REG_SZ,
+    dirStr.c_str(),
+    static_cast<DWORD>((dirStr.size() + 1) * sizeof(wchar_t)));
+
   for (const auto& entry: std::filesystem::directory_iterator(dir)) {
     if (!entry.is_regular_file()) {
       continue;
