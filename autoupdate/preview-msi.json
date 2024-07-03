@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/158514444",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/158514444/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/158514444/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.3",
-    "id": 158514444,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/160475995",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/160475995/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/160475995/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.4",
+    "id": 160475995,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Jcr0M",
-    "tag_name": "v1.8.3",
+    "node_id": "RE_kwDOGk0DR84JkKtb",
+    "tag_name": "v1.8.4",
     "target_commitish": "master",
-    "name": "v1.8.3",
+    "name": "v1.8.4: bugfixes",
     "draft": false,
     "prerelease": false,
-    "created_at": "2024-06-02T18:49:53Z",
-    "published_at": "2024-06-02T19:20:12Z",
+    "created_at": "2024-07-03T18:54:53Z",
+    "published_at": "2024-07-03T20:37:59Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/171498564",
-        "id": 171498564,
-        "node_id": "RA_kwDOGk0DR84KONxE",
-        "name": "OpenKneeboard-v1.8.3-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/177514691",
+        "id": 177514691,
+        "node_id": "RA_kwDOGk0DR84KlKjD",
+        "name": "OpenKneeboard-v1.8.4-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 168261303,
+        "size": 171912890,
         "download_count": 0,
-        "created_at": "2024-06-02T19:13:11Z",
-        "updated_at": "2024-06-02T19:13:17Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.3/OpenKneeboard-v1.8.3-DebugSymbols.zip"
+        "created_at": "2024-07-03T19:17:43Z",
+        "updated_at": "2024-07-03T19:17:46Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.4/OpenKneeboard-v1.8.4-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/171498563",
-        "id": 171498563,
-        "node_id": "RA_kwDOGk0DR84KONxD",
-        "name": "OpenKneeboard-v1.8.3.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/177514690",
+        "id": 177514690,
+        "node_id": "RA_kwDOGk0DR84KlKjC",
+        "name": "OpenKneeboard-v1.8.4.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 40132608,
+        "size": 40394752,
         "download_count": 0,
-        "created_at": "2024-06-02T19:13:11Z",
-        "updated_at": "2024-06-02T19:13:13Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.3/OpenKneeboard-v1.8.3.msi"
+        "created_at": "2024-07-03T19:17:43Z",
+        "updated_at": "2024-07-03T19:17:44Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.4/OpenKneeboard-v1.8.4.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.3",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.3",
-    "body": "Start by downloading [OpenKneeboard-v1.8.3.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.3/OpenKneeboard-v1.8.3.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Bug Fixes\r\n\r\n- Fix accumulation of rounding errors which could lead to game OpenXR errors with specific combinations of content sizes when headers/footers were disabled\r\n- Update the Windows App SDK to v1.5.3; this fixes a bug that could lead to OpenKneeboard inappropriately becoming the active window\r\n- Fix DirectInput bindings from profiles not being loaded when switching profiles\r\n- Tint/brightness are applied when using the legacy SteamVR API (OpenVR)\r\n\r\n# Other enhancements\r\n\r\n- The viewer window title will now show the view number if showing a view other than the first. This is to make it possible to capture multiple viewers in tools like OBS."
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.4",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.4",
+    "body": "Start by downloading [OpenKneeboard-v1.8.4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.4/OpenKneeboard-v1.8.4.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Improvements\r\n\r\n- Added path mapping for DCS F-4E\r\n- Added a note that a 'cross' by a path in the debug information for DCS paths does not indicate an error, just that the folder does not exist\r\n- Relabeled \"Oculus\" and \"SteamVR\" to \"Legacy Oculus\" and \"Legacy SteamVR\" in game settings to match VR settings\r\n- The installation path is now recorded in the registry under `HKEY_CURRENT_USER\\Software\\Fred Emmott\\OpenKneeboard\\InstallationBinPath`; this can be used to locate OpenKneeboard's API DLLs.\r\n\r\n# Bugfixes\r\n\r\n- Fixed a crash when attempting to load corrupted PDF files\r\n- Fix rare crash or failure to load PDFs depending on system-specific timing\r\n- OpenXR API layer information in debug logs now correctly handles (and indicates) if there are invalid registry values, i.e. not DWORDs\r\n- Fixed rendering sometimes stalling or exceptions being raised due to ordering issues when rendering to cache and rendering from the same cache (switching the same resource between a shader resource and a render target)\r\n- Updated Windows App SDK to v1.5.4; this may improve cursor click handling in Web Dashboard tabs, and various other app issues"
   }
 ]
