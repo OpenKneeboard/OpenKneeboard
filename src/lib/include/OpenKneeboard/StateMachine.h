@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <array>
 #include <atomic>
 #include <concepts>
 #include <format>
@@ -29,11 +30,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
-
 namespace OpenKneeboard {
-
-template <auto InState, auto OutState>
-constexpr bool is_valid_state_transition_v = false;
 
 namespace ADL {
 template <class State>
@@ -42,19 +39,96 @@ constexpr auto formattable_state(State state) noexcept {
 }
 }// namespace ADL
 
-template <class State, State InitialState, class StateContainer = State>
-class StateMachine final {
- public:
-  constexpr StateMachine() {
+template <class State>
+  requires std::is_enum_v<State>
+struct Transition final {
+  Transition() = delete;
+  consteval Transition(State in, State out) : mIn(in), mOut(out) {
   }
 
+  const State mIn;
+  const State mOut;
+};
+
+template <class T, size_t N>
+using Transitions = std::array<Transition<T>, N>;
+
+template <
+  class State,
+  class StateContainer,
+  State InitialState,
+  size_t TransitionCount,
+  std::array<Transition<State>, TransitionCount> Transitions>
+  requires(TransitionCount >= 1) && std::is_enum_v<State>
+class StateMachineBase {
+ public:
+  using Values = State;
+
+  constexpr StateMachineBase() {
+  }
+
+  State Get() const noexcept {
+    return mState;
+  }
+
+  StateMachineBase(const StateMachineBase&) = delete;
+  StateMachineBase(StateMachineBase&&) = delete;
+  StateMachineBase& operator=(const StateMachineBase&) = delete;
+  StateMachineBase& operator=(StateMachineBase&&) = delete;
+
   template <State in, State out>
-    requires is_valid_state_transition_v<in, out>
-    && std::same_as<std::atomic<State>, StateContainer>
+  static consteval bool IsValidTransition() {
+    for (const auto& it: Transitions) {
+      if (it.mIn == in && it.mOut == out) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+ protected:
+  StateContainer mState {InitialState};
+};
+
+template <class State, State InitialState, auto Transitions>
+class StateMachine final : public StateMachineBase<
+                             State,
+                             State,
+                             InitialState,
+                             Transitions.size(),
+                             Transitions> {
+ public:
+  template <State in, State out>
   constexpr void Transition(
     const std::source_location& loc = std::source_location::current()) {
+    static_assert(this->template IsValidTransition<in, out>());
+    if (this->mState != in) [[unlikely]] {
+      using namespace ADL;
+      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+        loc,
+        "Unexpected state `{}`; expected (`{}` -> `{}`)",
+        formattable_state(this->mState),
+        formattable_state(in),
+        formattable_state(out));
+    }
+    this->mState = out;
+  }
+};
+
+template <class State, State InitialState, auto Transitions>
+class AtomicStateMachine final : public StateMachineBase<
+                                   State,
+                                   std::atomic<State>,
+                                   InitialState,
+                                   Transitions.size(),
+                                   Transitions> {
+ public:
+  template <State in, State out>
+  constexpr void Transition(
+    const std::source_location& loc = std::source_location::current()) {
+    static_assert(this->template IsValidTransition<in, out>());
     auto current = in;
-    if (!mState.compare_exchange_strong(current, out)) [[unlikely]] {
+    if (!this->mState.compare_exchange_strong(current, out)) [[unlikely]] {
       using namespace ADL;
       OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
         loc,
@@ -64,40 +138,7 @@ class StateMachine final {
         formattable_state(out));
     }
   }
-
-  template <State in, State out>
-    requires is_valid_state_transition_v<in, out>
-    && std::same_as<State, StateContainer>
-  constexpr void Transition(
-    const std::source_location& loc = std::source_location::current()) {
-    if (mState != in) [[unlikely]] {
-      using namespace ADL;
-      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-        loc,
-        "Unexpected state `{}`; expected (`{}` -> `{}`)",
-        formattable_state(mState),
-        formattable_state(in),
-        formattable_state(out));
-    }
-    mState = out;
-  }
-
-  State Get() const noexcept {
-    return mState;
-  }
-
-  StateMachine(const StateMachine&) = delete;
-  StateMachine(StateMachine&&) = delete;
-  StateMachine& operator=(const StateMachine&) = delete;
-  StateMachine& operator=(StateMachine&&) = delete;
-
- private:
-  StateContainer mState {InitialState};
 };
-
-template <class State, State InitialState>
-using AtomicStateMachine
-  = StateMachine<State, InitialState, std::atomic<State>>;
 
 template <class TStateMachine, auto pre, auto state, auto post>
 class ScopedStateTransitions final {
@@ -171,35 +212,40 @@ auto make_scoped_state_transitions(
   return ScopedStateTransitions<TStateMachine, pre, state, post>(smPtr, loc);
 }
 
-template <class State>
-concept lockable_state = requires() {
-  { State::Unlocked } -> std::convertible_to<State>;
-  { State::TryLock } -> std::convertible_to<State>;
-  { State::Locked } -> std::convertible_to<State>;
+template <class T>
+consteval auto lockable_transitions() {
+  using TT = Transition<T>;
+  return std::array {
+    TT {T::Unlocked, T::TryLock},
+    TT {T::TryLock, T::Unlocked},
+    TT {T::TryLock, T::Locked},
+    TT {T::Locked, T::Unlocked},
+  };
 }
-// clang-format off
-    && is_valid_state_transition_v<State::Unlocked, State::TryLock>
-    && is_valid_state_transition_v<State::TryLock, State::Locked>
-    && is_valid_state_transition_v<State::TryLock, State::Unlocked>
-    && is_valid_state_transition_v<State::Locked, State::Unlocked>
-    && !is_valid_state_transition_v<State::Locked, State::TryLock>;
-// clang-format on
-
-enum class LockState {
+enum class LockStates {
   Unlocked,
   TryLock,
   Locked,
 };
+using LockState = StateMachine<
+  LockStates,
+  LockStates::Unlocked,
+  lockable_transitions<LockStates>()>;
 
-#define OPENKNEEBOARD_DECLARE_STATE_TRANSITION(IN, OUT) \
-  template <> \
-  constexpr bool is_valid_state_transition_v<IN, OUT> = true;
-#define OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(STATES) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION(STATES::Unlocked, STATES::TryLock) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION(STATES::TryLock, STATES::Unlocked) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION(STATES::TryLock, STATES::Locked) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION(STATES::Locked, STATES::Unlocked)
-OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(LockState);
-static_assert(lockable_state<LockState>);
+template <class T>
+concept lockable_state_machine = requires() {
+  { T::Values::Unlocked } -> std::same_as<typename T::Values>;
+  { T::Values::TryLock } -> std::same_as<typename T::Values>;
+  { T::Values::Locked } -> std::same_as<typename T::Values>;
+}
+// clang-format off
+    && T::template IsValidTransition<T::Values::Unlocked, T::Values::TryLock>()
+    && T::template IsValidTransition<T::Values::TryLock, T::Values::Locked>()
+    && T::template IsValidTransition<T::Values::TryLock, T::Values::Unlocked>()
+    && T::template IsValidTransition<T::Values::Locked, T::Values::Unlocked>()
+    && !T::template IsValidTransition<T::Values::Locked, T::Values::TryLock>();
+// clang-format on
+
+static_assert(lockable_state_machine<LockState>);
 
 }// namespace OpenKneeboard

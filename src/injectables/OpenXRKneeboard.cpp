@@ -59,14 +59,22 @@ enum class VulkanXRState {
   VKEnable2Instance,
   VKEnable2InstanceAndDevice,
 };
-}
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+
+StateMachine<
+  VulkanXRState,
   VulkanXRState::NoVKEnable2,
-  VulkanXRState::VKEnable2Instance);
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
-  VulkanXRState::VKEnable2Instance,
-  VulkanXRState::VKEnable2InstanceAndDevice);
-static StateMachine<VulkanXRState, VulkanXRState::NoVKEnable2> gVulkanXRState;
+  std::array {
+    Transition {
+      VulkanXRState::NoVKEnable2,
+      VulkanXRState::VKEnable2Instance,
+    },
+    Transition {
+      VulkanXRState::VKEnable2Instance,
+      VulkanXRState::VKEnable2InstanceAndDevice,
+    },
+  }>
+  gVulkanXRState {};
+}// namespace
 
 static constexpr XrPosef XR_POSEF_IDENTITY {
   .orientation = {0.0f, 0.0f, 0.0f, 1.0f},

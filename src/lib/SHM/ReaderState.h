@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/StateMachine.h>
 
+#include <OpenKneeboard/array.h>
+
 namespace OpenKneeboard::SHM {
 
 #define OPENKNEEBOARD_SHM_READER_STATES \
@@ -47,19 +49,17 @@ constexpr auto formattable_state(ReaderState state) noexcept {
     "Invalid SHM ReaderState: {}",
     static_cast<std::underlying_type_t<ReaderState>>(state));
 }
+
+using ReaderStateMachine = StateMachine<
+  ReaderState,
+  ReaderState::Unlocked,
+  array_cat(
+    lockable_transitions<ReaderState>(),
+    std::array {
+      Transition {ReaderState::Locked, ReaderState::CreatingSnapshot},
+      Transition {ReaderState::CreatingSnapshot, ReaderState::Locked},
+    })>;
+
+static_assert(lockable_state_machine<SHM::ReaderStateMachine>);
+
 }// namespace OpenKneeboard::SHM
-
-namespace OpenKneeboard {
-
-OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(SHM::ReaderState)
-
-#define IT(IN, OUT) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION( \
-    SHM::ReaderState::IN, SHM::ReaderState::OUT)
-IT(Locked, CreatingSnapshot)
-IT(CreatingSnapshot, Locked)
-#undef IT
-
-static_assert(lockable_state<SHM::ReaderState>);
-
-}// namespace OpenKneeboard

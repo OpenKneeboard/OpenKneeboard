@@ -33,7 +33,9 @@
 
 #include <ShlObj.h>
 
-namespace OpenKneeboard {
+namespace OpenKneeboard::Filesystem {
+
+namespace {
 
 enum class TemporaryDirectoryState {
   Uninitialized,
@@ -41,21 +43,21 @@ enum class TemporaryDirectoryState {
   Initialized,
 };
 
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
-  TemporaryDirectoryState::Uninitialized,
-  TemporaryDirectoryState::Cleaned);
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
-  TemporaryDirectoryState::Cleaned,
-  TemporaryDirectoryState::Initialized);
-
-}// namespace OpenKneeboard
-
-namespace OpenKneeboard::Filesystem {
-
-static AtomicStateMachine<
+AtomicStateMachine<
   TemporaryDirectoryState,
-  TemporaryDirectoryState::Uninitialized>
-  gTemporaryDirectoryState;
+  TemporaryDirectoryState::Uninitialized,
+  std::array {
+    Transition {
+      TemporaryDirectoryState::Uninitialized,
+      TemporaryDirectoryState::Cleaned,
+    },
+    Transition {
+      TemporaryDirectoryState::Cleaned,
+      TemporaryDirectoryState::Initialized,
+    },
+  }>
+  gTemporaryDirectoryState {};
+}// namespace
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
   wchar_t tempDirBuf[MAX_PATH];

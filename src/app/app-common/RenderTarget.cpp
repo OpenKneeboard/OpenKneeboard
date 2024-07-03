@@ -28,12 +28,6 @@
 
 namespace OpenKneeboard {
 
-using State = RenderTarget::State;
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::Unattached, State::D2D);
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::Unattached, State::D3D);
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::D2D, State::Unattached);
-OPENKNEEBOARD_DECLARE_STATE_TRANSITION(State::D3D, State::Unattached);
-
 std::shared_ptr<RenderTarget> RenderTarget::Create(
   const audited_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture) {

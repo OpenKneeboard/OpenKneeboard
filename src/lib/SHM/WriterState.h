@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/StateMachine.h>
 
+#include <OpenKneeboard/array.h>
+
 namespace OpenKneeboard::SHM {
 
 #define OPENKNEEBOARD_SHM_WRITER_STATES \
@@ -50,23 +52,23 @@ constexpr auto formattable_state(WriterState state) noexcept {
     "Invalid SHM WriterState: {}",
     static_cast<std::underlying_type_t<WriterState>>(state));
 }
-}// namespace OpenKneeboard::SHM
 
-namespace OpenKneeboard {
-
-OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(SHM::WriterState)
-#define IT(IN, OUT) \
-  OPENKNEEBOARD_DECLARE_STATE_TRANSITION( \
-    SHM::WriterState::IN, SHM::WriterState::OUT)
-IT(Locked, FrameInProgress)
-IT(FrameInProgress, SubmittingFrame)
-IT(SubmittingFrame, Locked)
-IT(Locked, SubmittingEmptyFrame)
-IT(SubmittingEmptyFrame, Locked)
-IT(Locked, Detaching)
-IT(Detaching, Locked)
+using WriterStateMachine = StateMachine<
+  WriterState,
+  WriterState::Unlocked,
+  array_cat(
+    lockable_transitions<WriterState>(),
+    std::array {
+      Transition {WriterState::Locked, WriterState::FrameInProgress},
+      Transition {WriterState::FrameInProgress, WriterState::SubmittingFrame},
+      Transition {WriterState::SubmittingFrame, WriterState::Locked},
+      Transition {WriterState::Locked, WriterState::SubmittingEmptyFrame},
+      Transition {WriterState::SubmittingEmptyFrame, WriterState::Locked},
+      Transition {WriterState::Locked, WriterState::Detaching},
+      Transition {WriterState::Detaching, WriterState::Locked},
+    })>;
 #undef IT
 
-static_assert(lockable_state<SHM::WriterState>);
+static_assert(lockable_state_machine<SHM::WriterStateMachine>);
 
-}// namespace OpenKneeboard
+}// namespace OpenKneeboard::SHM

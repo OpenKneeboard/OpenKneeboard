@@ -300,9 +300,10 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   return &mHeader->mLayers[layerIndex];
 }
 
-template <lockable_state State, State InitialState = State::Unlocked>
+template <lockable_state_machine TStateMachine>
 class Impl {
  public:
+  using State = TStateMachine::Values;
   winrt::handle mFileHandle;
   winrt::handle mMutexHandle;
   std::byte* mMapping = nullptr;
@@ -468,12 +469,12 @@ class Impl {
   Impl& operator=(Impl&&) = delete;
 
  protected:
-  StateMachine<State, InitialState> mState;
+  TStateMachine mState;
 };
 
-class Writer::Impl : public SHM::Impl<WriterState> {
+class Writer::Impl : public SHM::Impl<WriterStateMachine> {
  public:
-  using SHM::Impl<WriterState, WriterState::Unlocked>::Impl;
+  using SHM::Impl<WriterStateMachine>::Impl;
 
   DWORD mProcessID = GetCurrentProcessId();
   uint64_t mGPULUID {};
@@ -514,6 +515,7 @@ Writer::~Writer() {
 }
 
 void Writer::SubmitEmptyFrame() {
+  using State = WriterState;
   const auto transitions = make_scoped_state_transitions<
     State::Locked,
     State::SubmittingEmptyFrame,
@@ -523,6 +525,7 @@ void Writer::SubmitEmptyFrame() {
 }
 
 Writer::NextFrameInfo Writer::BeginFrame() noexcept {
+  using State = WriterState;
   p->Transition<State::Locked, State::FrameInProgress>();
 
   const auto textureIndex
@@ -548,7 +551,7 @@ bool Writer::try_lock() {
   return p->try_lock();
 }
 
-class Reader::Impl : public SHM::Impl<ReaderState> {
+class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
  public:
   winrt::handle mFeederProcessHandle;
   uint64_t mSessionID {~(0ui64)};
