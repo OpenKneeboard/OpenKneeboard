@@ -21,7 +21,7 @@ I recommend that programs attempt to locate the DLL by:
 
 `OpenKneeboard_send_utf8()` is recommended for all apps, except those that are already heavily using Win32 'wide' APIs. The message name and value **must** be in UTF-8, not the current system code page.
 
-```C
+```c
 OPENKNEEBOARD_CAPI void OpenKneeboard_send_utf8(
   const char* messageName,
   size_t messageNameByteCount,
