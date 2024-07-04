@@ -52,8 +52,7 @@ The value is one of:
 - `NEXT_PROFILE`
 - `TOGGLE_VISIBILITY`
 - `TOGGLE_FORCE_ZOOM`
-- `SWITCH_KNEEBOARDS` - *until v1.7*
-- `SWAP_FIRST_TWO_VIEWS` - *v1.7 and above*
+- `SWAP_FIRST_TWO_VIEWS` - *added in v1.7; replaced `SWITCH_KNEEBOARDS` in earlier versions*
 - `RECENTER_VR`
 - `HIDE`
 - `SHOW`
@@ -62,10 +61,7 @@ The value is one of:
 - `TOGGLE_TINT`
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
-- `RELOAD_CURRENT_TAB`
-- `REPAINT_NOW`
-
-`RELOAD_CURRENT_TAB` is new in v1.5 and above. Use with caution since there is no undo for this function!
+- `RELOAD_CURRENT_TAB` - *use with caution: this removes all notes or other interaction, and there is no undo for this function*
 
 ## SetTabByID
 
