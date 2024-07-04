@@ -36,8 +36,9 @@ includes most of the kneeboard pages for the F14, F16, and F18.
 
 1. [Check if this has already been reported](https://github.com/OpenKneeboard/OpenKneeboard/issues?q=is%3Aissue)
 2. If not, please [report the issue](https://github.com/OpenKneeboard/OpenKneeboard/issues/new) so it can be fixed in a future version of OpenKneeboard; include the incorrect path, corrected path, and the module name
-3. If you are running `v1.7.0+gha.1555` or later and are comfortable editing JSON:
+3. If you are comfortable editing JSON:
    1. Open `%PROGRAMFILES%\OpenKneeboard\share` in Windows explorer
    2. Open the `Saved Games\OpenKneeboard` folder too
    3. Copy `DCS-Aircraft-Mapping.json` from the `share` folder to OpenKneeboard's Saved Games folder
    4. Edit `Saved Games\OpenKneeboard\DCS-Aircraft-Mapping.json` to include the correction
+   5. If it works, attach your modified `DCS-Aircraft-Mapping.json` to your GitHub issue
