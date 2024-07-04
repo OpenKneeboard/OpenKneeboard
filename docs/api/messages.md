@@ -150,3 +150,9 @@ Value: JSON-encoded Object:
    - `Relative`: Tint and brightness is enabled, and `Brightness` is added to the current kneeboard brightness. `Brightness` must be between `-1.0` and `1.0`
 
 `Brightness` must be a float, not an integer - for example, `0` and `1` are not valid values, and must be replaced with `0.0` or `1.0`.
+
+## Requesting additional APIs
+
+Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
+
+If your request fits that purpose, search for an existing feature request GitHub issue. If there is one, add a thumbs up reaction to the top post, otherwise create a new one. Do not add '+1'/'me too' comments.

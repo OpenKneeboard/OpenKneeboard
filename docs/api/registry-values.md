@@ -6,7 +6,9 @@ parent: APIs
 
 ## `HKEY_CURRENT_USER\Software\Fred Emmott\OpenKneeboard`
 
-### `InstallationBinPath` - `REG_SZ` - *read-only, v1.8.4 and above*
+### `InstallationBinPath`
+
+`REG_SZ` - *read-only, v1.8.4 and above*
 
 On startup, OpenKneeboard writes the path of the folder containing `OpenKneeboardApp.exe`, along with the API DLLs. Remote controls can be founded by checking `..\utilities\`
 
@@ -14,7 +16,9 @@ This will usually contain `C:\Program Files\OpenKneeboard\bin`
 
 OpenKneeboard only writes this value, it does not read it.
 
-### `SettingsPath` - `REG_SZ` - *read-only, v1.8.5 and above*
+### `SettingsPath`
+
+`REG_SZ` - *read-only, v1.8.5 and above*
 
 On startup, OpenKneeboard writes the path of its' settings folder.
 
