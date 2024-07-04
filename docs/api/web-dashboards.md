@@ -22,6 +22,16 @@ There are several ways to detect if your web page is being accessed within OpenK
 - the `<body>` element has the `OpenKneeboard` class
 - the `<body>` element has the `OpenKneeboard_WebView2` class; this also indicates that OpenKneeboard is using Microsoft's Chromium-based-Edge 'WebView2' browser engine
 
+## Transparency
+
+OpenKneeboard's virtual browser window is fully transparent; this allows full RGBA transparency via standard CSS, e.g.:
+
+```CSS
+body.OpenKneeboard {
+    background-color: transparent;
+}
+```
+
 ## JavaScript APIs
 
 All APIs are methods on the `window.OpenKneeboard` object; it is best practice to confirm that OpenKneeboard is being used and the API you want is available; for example, if you want to call [`SetPreferredPixelSize()`](#setpreferredpixelsize), a safe way to call it is like this:
