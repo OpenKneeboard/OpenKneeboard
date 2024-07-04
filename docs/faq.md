@@ -123,3 +123,9 @@ DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is ex
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit. This is not a supported use-case of OpenKneeboard.
 
 You are welcome to fork and follow the terms of the license to create a new project, however I am unable to provide any assistance to third-party projects.
+
+## How do I control OpenKneeboard from my app?
+
+Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
+
+With that in mind, take a look at [the API documentation](https://openkneeboard.com/api/); if your feature requires an additional API and fits with the intended purposes of OpenKneeboard, open a feature request or pull request for an additional API.
