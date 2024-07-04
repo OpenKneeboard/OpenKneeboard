@@ -91,3 +91,30 @@ Resized to 3x3 (75%):
 ![A 3x3 image - there is a light grey vertical line in the first column, and a dark grey in the second column](resize-3x3.png)
 
 The vertical line now straddles two pixels, with a gradient between them; this results in blurry text and lines.
+
+## How do I use OpenKneeboard to show content from my app?
+
+You have three options:
+- implement a custom tab type in OpenKneeboard with C++ and Direct3D 11
+- provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
+- provide a window, and instruct users on how to configure a Window Capture tab for your app
+
+DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
+
+OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
+
+Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
+
+## How do I choose where my app's content is displayed in VR?
+
+Instruct users on how to change their user settings to your recommendations.
+
+OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
+
+DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
+
+## How do I use OpenKneeboard to create my own OpenXR overlay?
+
+OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit. This is not a supported use-case of OpenKneeboard.
+
+You are welcome to fork and follow the terms of the license to create a new project, however I am unable to provide any assistance to third-party projects.
