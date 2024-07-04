@@ -102,6 +102,8 @@ You have three options:
 - provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
 - provide a window, and instruct users on how to configure a Window Capture tab for your app
 
+OpenKneeboard has additional integration APIs available for [web dashboards](api/web-dashboards.md).
+
 DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
