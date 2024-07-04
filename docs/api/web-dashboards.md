@@ -24,21 +24,20 @@ There are several ways to detect if your web page is being accessed within OpenK
 
 ## JavaScript APIs
 
-All APIs are methods on the `window.OpenKneeboard` object; it is best practice to confirm that OpenKneeboard is being used and the API you want is available; for example, if you want to call [`SetPreferredPixelSize()`](#openkneeboardsetpreferredpixelsize), a safe way to call it is like this:
+All APIs are methods on the `window.OpenKneeboard` object; it is best practice to confirm that OpenKneeboard is being used and the API you want is available; for example, if you want to call [`SetPreferredPixelSize()`](#setpreferredpixelsize), a safe way to call it is like this:
 
 ```JavaScript
 if (window.OpenKneeboard?.SetPreferredPixelSize) {
-    OpenKneeboard.SetPreferredPixelSize(/* args go here */);
+    OpenKneeboard.SetPreferredPixelSize(width, height);
 }
 ```
 
-### `OpenKneeboard.SetPreferredPixelSize()`
+### SetPreferredPixelSize
 
 Set the preferred pixel size and aspect ratio for this page.
 
 ```JavaScript
 OpenKneeboard.SetPreferredPixelSize(width, height);
-);
 ```
 
 `width` and `height`:
