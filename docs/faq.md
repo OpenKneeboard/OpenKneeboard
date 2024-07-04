@@ -95,7 +95,9 @@ Resized to 3x3 (75%):
 
 The vertical line now straddles two pixels, with a gradient between them; this results in blurry text and lines.
 
-## How do I use OpenKneeboard to show content from my app?
+## Third-Party Developers
+
+### How do I use OpenKneeboard to show content from my app?
 
 You have three options:
 - implement a custom tab type in OpenKneeboard with C++ and Direct3D 11
@@ -110,7 +112,7 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 
 Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
 
-## How do I choose where my app's content is displayed in VR?
+### How do I choose where my app's content is displayed in VR?
 
 Instruct users on how to change their user settings to your recommendations.
 
@@ -118,7 +120,7 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 
 DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
 
-## How do I use OpenKneeboard to create my own OpenXR overlay?
+### How do I use OpenKneeboard to create my own OpenXR overlay?
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit. This is not a supported use-case of OpenKneeboard.
 
@@ -132,8 +134,10 @@ Alternatively, if you don't need to handle input, it is relatively straightforwa
 
 Your code will need to handle copying your overlay into the composition layer swapchains; this will require basic knowledge of the graphics APIs you care about, e.g. Direct3D 11, Direct3D 12, Vulkan. If you are not familiar with graphics APIs, the official Vulkan tutorial and various 'hello triangle' tutorials are sufficient. You may find Microsoft's [DirectXTK](https://github.com/microsoft/DirectXTK) and [DirectXTK12](https://github.com/microsoft/DirectXTK12) projects useful. If you are not familiar with 3D math for positioning your layer, DirectXTK's SimpleMath component can be useful, or the [`xr_linear.h` header from the OpenXR SDK](https://github.com/KhronosGroup/OpenXR-SDK/blob/main/src/common/xr_linear.h).
 
-## How do I control OpenKneeboard from my app?
+### How do I control OpenKneeboard from my app?
 
 Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
 
 With that in mind, take a look at [the API documentation](https://openkneeboard.com/api/); if your feature requires an additional API and fits with the intended purposes of OpenKneeboard, open a feature request or pull request for an additional API.
+
+DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
