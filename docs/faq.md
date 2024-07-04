@@ -106,7 +106,7 @@ You have three options:
 
 OpenKneeboard has additional integration APIs available for [web dashboards](api/web-dashboards.md).
 
-DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
+Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
 
@@ -118,7 +118,7 @@ Instruct users on how to change their user settings to your recommendations.
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
 
-DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
+Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
 ### How do I use OpenKneeboard to create my own OpenXR overlay?
 
@@ -140,4 +140,4 @@ Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to 
 
 With that in mind, take a look at [the API documentation](https://openkneeboard.com/api/); if your feature requires an additional API and fits with the intended purposes of OpenKneeboard, open a feature request or pull request for an additional API.
 
-DO NOT WRITE SOFTWARE THAT CHANGES OPENKNEEBOARD'S CONFIGURATION FILES; it is extremely likely to break users' configuration when they update OpenKneeboard.
+Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
