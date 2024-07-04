@@ -26,7 +26,7 @@ There are several ways to detect if your web page is being accessed within OpenK
 
 OpenKneeboard's virtual browser window is fully transparent; this allows full RGBA transparency via standard CSS, e.g.:
 
-```CSS
+```css
 body.OpenKneeboard {
     background-color: transparent;
 }
@@ -36,7 +36,7 @@ body.OpenKneeboard {
 
 All APIs are methods on the `window.OpenKneeboard` object; it is best practice to confirm that OpenKneeboard is being used and the API you want is available; for example, if you want to call [`SetPreferredPixelSize()`](#setpreferredpixelsize), a safe way to call it is like this:
 
-```JavaScript
+```js
 if (window.OpenKneeboard?.SetPreferredPixelSize) {
     OpenKneeboard.SetPreferredPixelSize(width, height);
 }
@@ -46,7 +46,7 @@ if (window.OpenKneeboard?.SetPreferredPixelSize) {
 
 Set the preferred pixel size and aspect ratio for this page.
 
-```JavaScript
+```js
 OpenKneeboard.SetPreferredPixelSize(width, height);
 ```
 
