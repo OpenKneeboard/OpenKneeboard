@@ -284,6 +284,19 @@ static void LogSystemInformation() {
 }
 
 static void LogInstallationInformation() {
+  {
+    const auto dir = Filesystem::GetSettingsDirectory();
+    const auto dirStr = dir.wstring();
+    dprintf(L"Settings directory: {}", dirStr);
+    RegSetKeyValueW(
+      HKEY_CURRENT_USER,
+      Config::RegistrySubKey,
+      L"SettingsPath",
+      REG_SZ,
+      dirStr.c_str(),
+      static_cast<DWORD>((dirStr.size() + 1) * sizeof(wchar_t)));
+  }
+
   const auto dir = Filesystem::GetRuntimeDirectory();
   const auto dirStr = dir.wstring();
   dprintf(L"Runtime directory: {}", dirStr);
