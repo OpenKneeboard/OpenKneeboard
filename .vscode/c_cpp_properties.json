@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "Win32",
-            "cppStandard": "c++20",
+            "cppStandard": "c++23",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],

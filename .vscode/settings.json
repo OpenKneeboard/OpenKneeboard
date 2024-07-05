@@ -102,7 +102,7 @@
     "source_location": "cpp"
   },
   "cmake.configureOnOpen": true,
-  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.cppStandard": "c++23",
   "[xml]": {
     "editor.formatOnSave": false
   },
