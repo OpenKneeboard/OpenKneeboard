@@ -158,8 +158,13 @@ static std::filesystem::path GetOpenKneeboardDLLPath() {
   // once v1.8.4+ are widespread
 
   wchar_t* programFiles = nullptr;
-  winrt::check_hresult(
-    SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &programFiles));
+  try {
+    winrt::check_hresult(SHGetKnownFolderPath(
+      FOLDERID_ProgramFilesX64, 0, nullptr, &programFiles));
+  } catch (...) {
+    CoTaskMemFree(programFiles);
+    throw;
+  }
 
   const auto ret = std::filesystem::path(programFiles) / L"OpenKneeboard"
     / L"bin" / OPENKNEEBOARD_CAPI_DLL_NAME_W;
