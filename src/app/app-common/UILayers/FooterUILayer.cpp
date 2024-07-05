@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/DXResources.h>
@@ -24,7 +26,6 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <algorithm>
@@ -229,6 +230,7 @@ void FooterUILayer::OnGameEvent(const GameEvent& ev) {
   if (ev.name == DCSWorld::EVT_MISSION_TIME) {
     const auto times = ev.TryParsedValue<DCSWorld::MissionTimeEvent>();
     if (!times) {
+      dprintf("Failed to parse mission times: {}", times.error().what);
       return;
     }
     const auto currentTime

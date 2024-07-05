@@ -23,6 +23,7 @@
 #include <OpenKneeboard/utf8.h>
 
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <string>
 #include <vector>
@@ -41,14 +42,17 @@ struct GameEvent final {
     return nlohmann::json::parse(this->value);
   }
 
-  // TODO (C++23): std::expected with exception
+  struct JSONParseError {
+    std::string what;
+  };
+
   template <class T>
-  std::optional<T> TryParsedValue() const {
+  std::expected<T, JSONParseError> TryParsedValue() const {
     // Intentionally not propagating the std::logic_error
     try {
       return ParsedValue<T>();
-    } catch (const nlohmann::json::exception& e) {
-      return {};
+    } catch (const nlohmann::json::parse_error& e) {
+      return std::unexpected {JSONParseError {e.what()}};
     }
   }
 
