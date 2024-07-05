@@ -43,7 +43,6 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
 - `OPENKNEEBOARD_CAPI_DLL_NAME_A` will be the filename as a C string literal, e.g. `"OpenKneeboard_CAPI64.dll"` or `"OpenKneeboard_CAPI32.dll"`
 - `OPENKNEEBOARD_CAPI_DLL_NAME_W` will be the filename as a C wide-string literal, e.g. `L"OpenKneeboard_CAPI64.dll"` or `L"OpenKneeboard_CAPI32.dll"`
 
-
 ## Messages
 
 See [the messages documentation](messages.md) for information on supported messages.
@@ -51,4 +50,5 @@ See [the messages documentation](messages.md) for information on supported messa
 ## Examples
 
 - [C++](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/utilities/capi-test.cpp)
+- [C#](https://gist.github.com/fredemmott/7a4d4f8584c7f217977fd39cebc98dba)
 - [Python](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/utilities/capi-test.py)
