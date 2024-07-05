@@ -11,6 +11,14 @@ These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be us
 - [an Elgato StreamDeck](./streamdeck.md)
 - [VoiceAttack](./voice-attack.md)
 
+## Third-Party Developers
+
+It is *strongly* recommended you use [the API](../api/index.md) instead.
+
+If you do write code that uses the remote controls, you should find them by following the [same process documented for the C API](../api/c.md#locating-the-dll); the remote controls are in `..\utilities\` relative to the DLL.
+
+## Basic Remtoe Controls
+
 Most remote controls are straightforward:
 
 - `OpenKneeboard-RemoteControl-PREVIOUS_TAB.exe`: tell OpenKneeboard to go to the previous tab
