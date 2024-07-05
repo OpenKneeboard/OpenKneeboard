@@ -11,7 +11,9 @@ The C API is able to send information, events, or requests to OpenKneeboard; it 
  - The DLL is installed and kept up to date in `C:\Program Files\OpenKneeboard\bin\`
  - The header is available in `C:\Program Files\OpenKneeboard\include\`
 
- As the implementation changes with every release, you should dynamically load the DLL using `LoadLibraryW()`, and find the function of interest with `GetProcAddress()`.
+ As the implementation changes with every release, you should dynamically load the DLL using `LoadLibraryW()`, and find the function of interest with `GetProcAddress()`, or equivalent features in your preferred programming language.
+
+## Locating the DLL
 
 I recommend that programs attempt to locate the DLL by:
 
