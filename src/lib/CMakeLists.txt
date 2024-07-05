@@ -198,9 +198,10 @@ ok_add_library(
   "${RUNTIME_FILES_CPP}"
   RuntimeFilesGetInstallationDirectory.cpp
 )
-target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 target_link_libraries(
   OpenKneeboard-RuntimeFiles
+  PUBLIC
+  _libheaders
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-Filesystem
@@ -439,14 +440,13 @@ target_link_libraries(
   OpenKneeboard-shims
   OpenKneeboard-config
   _libheaders
-)
-target_link_libraries(
-  OpenKneeboard-Filesystem
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-UTF8
   System::Shlwapi
   ThirdParty::CppWinRT
+  ThirdParty::OutPtr
+  ThirdParty::WIL
 )
 
 ok_add_library(OpenKneeboard-WindowCaptureControl STATIC WindowCaptureControl.cpp)

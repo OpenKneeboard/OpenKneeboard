@@ -21,6 +21,8 @@
 
 #include <shims/filesystem>
 
+struct _GUID;
+
 namespace OpenKneeboard::Filesystem {
 
 /** Differs from std::filesystem::temp_directory_path() in that
@@ -30,6 +32,8 @@ std::filesystem::path GetLocalAppDataDirectory();
 std::filesystem::path GetRuntimeDirectory();
 std::filesystem::path GetImmutableDataDirectory();
 std::filesystem::path GetSettingsDirectory();
+
+std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID);
 
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 

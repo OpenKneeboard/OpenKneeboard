@@ -286,20 +286,14 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   }
 
   {
-    wchar_t* localAppData {nullptr};
-    if (
-      SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &localAppData)
-        == S_OK
-      && localAppData) {
-      const auto crashDumps
-        = std::filesystem::path(localAppData) / L"CrashDumps";
-      if (std::filesystem::is_directory(crashDumps)) {
-        for (const auto entry:
-             std::filesystem::recursive_directory_iterator(crashDumps)) {
-          if (entry.path().filename().wstring().starts_with(
-                L"OpenKneeboardApp.exe")) {
-            dumps.push_back({entry.path(), entry.last_write_time()});
-          }
+    const auto crashDumps
+      = Filesystem::GetKnownFolderPath(FOLDERID_LocalAppData) / L"CrashDumps";
+    if (std::filesystem::is_directory(crashDumps)) {
+      for (const auto entry:
+           std::filesystem::recursive_directory_iterator(crashDumps)) {
+        if (entry.path().filename().wstring().starts_with(
+              L"OpenKneeboardApp.exe")) {
+          dumps.push_back({entry.path(), entry.last_write_time()});
         }
       }
     }

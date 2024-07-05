@@ -377,29 +377,24 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   const scope_guard unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
 
-  wchar_t* savedGamesBuffer = nullptr;
-  {
-    const auto result = SHGetKnownFolderPath(
-      FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer);
-    if (result != S_OK) {
-      const winrt::hresult_error error {result};
-      const auto message = std::format(
-        _(L"Windows was unable to find your 'Saved Games' folder; "
-          L"OpenKneeboard "
-          L"is unable to start.\n\nSHGetKnownFolderPath() failed: {:#08x} - "
-          L"{}"),
-        static_cast<const uint32_t>(result),
-        std::wstring_view {error.message()});
-      MessageBoxW(
-        NULL,
-        message.c_str(),
-        _(L"Windows Configuration Error"),
-        MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-      return 1;
-    }
+  try {
+    gDumpDirectory
+      = Filesystem::GetKnownFolderPath(FOLDERID_SavedGames) / "OpenKneeboard";
+  } catch (const winrt::hresult_error& error) {
+    const auto message = std::format(
+      _(L"Windows was unable to find your 'Saved Games' folder; "
+        L"OpenKneeboard "
+        L"is unable to start.\n\nSHGetKnownFolderPath() failed: {:#08x} - "
+        L"{}"),
+      static_cast<const uint32_t>(error.code().value),
+      std::wstring_view {error.message()});
+    MessageBoxW(
+      NULL,
+      message.c_str(),
+      _(L"Windows Configuration Error"),
+      MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+    return 1;
   }
-  gDumpDirectory = std::filesystem::path {std::wstring_view {savedGamesBuffer}}
-    / "OpenKneeboard";
   std::filesystem::create_directories(gDumpDirectory);
   SetUnhandledExceptionFilter(&OnUnhandledException);
   set_terminate(&OnTerminate);

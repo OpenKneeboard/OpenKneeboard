@@ -128,16 +128,13 @@ static std::filesystem::path GetDCSPath(const char* lastSubKey) {
 
 static std::filesystem::path GetSavedGamesPath() {
   static std::filesystem::path sPath;
-  if (!sPath.empty()) {
-    return sPath;
-  }
+  static std::once_flag sOnce;
 
-  wchar_t* buffer = nullptr;
-  if (
-    SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
-    && buffer) {
-    sPath = std::filesystem::canonical(std::wstring_view(buffer));
-  }
+  std::call_once(sOnce, [&path = sPath]() {
+    sPath = std::filesystem::canonical(
+      Filesystem::GetKnownFolderPath(FOLDERID_SavedGames));
+  });
+
   return sPath;
 }
 

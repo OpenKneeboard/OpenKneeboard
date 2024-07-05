@@ -28,6 +28,10 @@
 
 #include <Windows.h>
 
+#include <wil/resource.h>
+
+#include <ztd/out_ptr.hpp>
+
 #include <format>
 #include <mutex>
 
@@ -58,6 +62,13 @@ AtomicStateMachine<
   }>
   gTemporaryDirectoryState {};
 }// namespace
+
+std::filesystem::path GetKnownFolderPath(const GUID& knownFolderID) {
+  wil::unique_cotaskmem_ptr<wchar_t> buffer;
+  winrt::check_hresult(SHGetKnownFolderPath(
+    knownFolderID, NULL, NULL, ztd::out_ptr::out_ptr(buffer)));
+  return {buffer.get()};
+}
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
   wchar_t tempDirBuf[MAX_PATH];
@@ -136,21 +147,12 @@ std::filesystem::path GetImmutableDataDirectory() {
   return sCache;
 }
 
-static std::filesystem::path GetShellFolderPath(const KNOWNFOLDERID& folderID) {
-  wchar_t* buffer = nullptr;
-  if (!(SHGetKnownFolderPath(folderID, NULL, NULL, &buffer) == S_OK
-        && buffer)) {
-    return {};
-  }
-  return {buffer};
-}
-
 std::filesystem::path GetSettingsDirectory() {
   static std::filesystem::path sPath;
   static std::once_flag sFlag;
 
   std::call_once(sFlag, [p = &sPath]() {
-    const auto base = GetShellFolderPath(FOLDERID_SavedGames);
+    const auto base = GetKnownFolderPath(FOLDERID_SavedGames);
     if (base.empty()) {
       return;
     }
@@ -166,7 +168,7 @@ std::filesystem::path GetLocalAppDataDirectory() {
   static std::once_flag sFlag;
 
   std::call_once(sFlag, [p = &sPath]() {
-    const auto base = GetShellFolderPath(FOLDERID_LocalAppData);
+    const auto base = GetKnownFolderPath(FOLDERID_LocalAppData);
     if (base.empty()) {
       return;
     }

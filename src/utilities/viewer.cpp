@@ -591,21 +591,16 @@ class TestViewerWindow final : private D3D11Resources {
       return;
     }
 
-    wchar_t* pathBuf {nullptr};
-    SHGetKnownFolderPath(FOLDERID_Pictures, NULL, NULL, &pathBuf);
-    if (!pathBuf) {
-      return;
-    }
-    const std::filesystem::path baseDir {pathBuf};
-    const auto path = baseDir / "OpenKneeboard"
-      / std::format("capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
-                    Version::Major,
-                    Version::Minor,
-                    Version::Patch,
-                    Version::Build,
-                    std::chrono::zoned_time(
-                      std::chrono::current_zone(),
-                      std::chrono::system_clock::now()));
+    const auto path
+      = Filesystem::GetKnownFolderPath(FOLDERID_Pictures) / "OpenKneeboard"
+      / std::format(
+          "capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
+          Version::Major,
+          Version::Minor,
+          Version::Patch,
+          Version::Build,
+          std::chrono::zoned_time(
+            std::chrono::current_zone(), std::chrono::system_clock::now()));
     std::filesystem::create_directories(path.parent_path());
 
     mRenderer->SaveTextureToFile(
