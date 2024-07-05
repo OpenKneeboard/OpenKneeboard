@@ -66,7 +66,7 @@ AtomicStateMachine<
 std::filesystem::path GetKnownFolderPath(const GUID& knownFolderID) {
   wil::unique_cotaskmem_ptr<wchar_t> buffer;
   winrt::check_hresult(SHGetKnownFolderPath(
-    knownFolderID, NULL, NULL, ztd::out_ptr::out_ptr(buffer)));
+    knownFolderID, KF_FLAG_CREATE, NULL, ztd::out_ptr::out_ptr(buffer)));
   return {buffer.get()};
 }
 
