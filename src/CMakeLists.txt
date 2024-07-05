@@ -21,11 +21,6 @@ add_compile_definitions(
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
-# TODO (C++23): replace all calls with std::unreachable()
-add_compile_definitions(
-  "OPENKNEEBOARD_UNREACHABLE=__assume(false)"
-)
-
 add_subdirectory(shaders)
 
 # Always link this so we never accidentally use the SDK version

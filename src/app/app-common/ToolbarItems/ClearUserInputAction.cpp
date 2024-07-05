@@ -98,7 +98,7 @@ bool ClearUserInputAction::IsEnabled() const {
       }
       return false;
   }
-  OPENKNEEBOARD_UNREACHABLE;
+  std::unreachable();
 }
 
 void ClearUserInputAction::Execute() {
@@ -131,9 +131,9 @@ void ClearUserInputAction::Execute() {
       wce->ClearUserInput(tabView->GetPageID());
       return;
     case Mode::AllTabs:
-      OPENKNEEBOARD_UNREACHABLE;
+      std::unreachable();
   }
-  OPENKNEEBOARD_UNREACHABLE;
+  std::unreachable();
 }
 
 std::string_view ClearUserInputAction::GetConfirmationTitle() const {
@@ -145,12 +145,12 @@ std::string_view ClearUserInputAction::GetConfirmationTitle() const {
     case Mode::AllTabs:
       return _("Clear all pages in every tab?");
   }
-  OPENKNEEBOARD_UNREACHABLE;
+  std::unreachable();
 }
 
 std::string_view ClearUserInputAction::GetConfirmationDescription() const {
   return _("This will erase all notes, drawings, or other annotations.");
-  OPENKNEEBOARD_UNREACHABLE;
+  std::unreachable();
 }
 
 std::string_view ClearUserInputAction::GetConfirmButtonLabel() const {
@@ -162,7 +162,7 @@ std::string_view ClearUserInputAction::GetConfirmButtonLabel() const {
     case Mode::AllTabs:
       return _("Clear all pages and tabs");
   }
-  OPENKNEEBOARD_UNREACHABLE;
+  std::unreachable();
 }
 std::string_view ClearUserInputAction::GetCancelButtonLabel() const {
   return _("Cancel");
