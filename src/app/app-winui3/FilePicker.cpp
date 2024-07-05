@@ -21,6 +21,10 @@
 
 #include <OpenKneeboard/handles.h>
 
+#include <algorithm>
+#include <ranges>
+#include <string>
+
 namespace OpenKneeboard {
 
 FilePicker::FilePicker(HWND parent) : mParent(parent) {
@@ -41,15 +45,14 @@ void FilePicker::SuggestedFileName(const std::wstring& fileName) {
 void FilePicker::AppendFileType(
   const std::wstring& name,
   const std::vector<std::wstring>& extensions) {
-  // No std::views::join_with until C++23 :'(
-  std::wstring pattern;
-  for (auto ext: extensions) {
-    if (pattern.empty()) {
-      pattern = std::format(L"*{}", ext);
-      continue;
-    }
-    pattern += std::format(L";*{}", ext);
-  }
+  using namespace std::literals::string_literals;
+
+  // clang-format off
+  const auto pattern = extensions
+    | std::views::transform([](const auto& ext) { return L"*"s + ext; })
+    | std::views::join_with(L";"s)
+    | std::ranges::to<std::wstring>();
+  // clang-format on
 
   mFileTypes.push_back({
     .mName = std::wstring {name},
