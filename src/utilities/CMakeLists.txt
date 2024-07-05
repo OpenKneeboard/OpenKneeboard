@@ -201,3 +201,6 @@ target_include_directories(
   capi-test
   PRIVATE
   "$<TARGET_PROPERTY:OpenKneeboard-c-api,INTERFACE_INCLUDE_DIRECTORIES>")
+set_property(
+  TARGET capi-test
+  PROPERTY CXX_STANDARD 17)
