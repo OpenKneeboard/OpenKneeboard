@@ -21,6 +21,8 @@
 
 #include <shims/filesystem>
 
+#include <thread>
+
 struct _GUID;
 
 namespace OpenKneeboard::Filesystem {
@@ -34,6 +36,15 @@ std::filesystem::path GetImmutableDataDirectory();
 std::filesystem::path GetSettingsDirectory();
 
 std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID);
+
+template <const _GUID& knownFolderID>
+auto GetKnownFolderPath() {
+  static std::once_flag sOnce;
+  static std::filesystem::path sPath;
+  std::call_once(
+    sOnce, [&path = sPath]() { sPath = GetKnownFolderPath(knownFolderID); });
+  return sPath;
+}
 
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 

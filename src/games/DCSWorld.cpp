@@ -126,18 +126,6 @@ static std::filesystem::path GetDCSPath(const char* lastSubKey) {
   return std::filesystem::canonical(path);
 }
 
-static std::filesystem::path GetSavedGamesPath() {
-  static std::filesystem::path sPath;
-  static std::once_flag sOnce;
-
-  std::call_once(sOnce, [&path = sPath]() {
-    sPath = std::filesystem::canonical(
-      Filesystem::GetKnownFolderPath(FOLDERID_SavedGames));
-  });
-
-  return sPath;
-}
-
 bool DCSWorld::MatchesPath(const std::filesystem::path& path) const {
   return path.filename() == "DCS.exe";
 }
@@ -153,11 +141,13 @@ std::filesystem::path DCSWorld::GetInstalledPath(Version version) {
 }
 
 std::filesystem::path DCSWorld::GetSavedGamesPath(Version version) {
+  const auto savedGames = Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>();
+
   switch (version) {
     case Version::OPEN_BETA:
-      return OpenKneeboard::GetSavedGamesPath() / "DCS.openbeta";
+      return savedGames / "DCS.openbeta";
     case Version::STABLE:
-      return OpenKneeboard::GetSavedGamesPath() / "DCS";
+      return savedGames / "DCS";
   }
   return {};
 }

@@ -152,7 +152,7 @@ std::filesystem::path GetSettingsDirectory() {
   static std::once_flag sFlag;
 
   std::call_once(sFlag, [p = &sPath]() {
-    const auto base = GetKnownFolderPath(FOLDERID_SavedGames);
+    const auto base = GetKnownFolderPath<FOLDERID_SavedGames>();
     if (base.empty()) {
       return;
     }
@@ -168,7 +168,7 @@ std::filesystem::path GetLocalAppDataDirectory() {
   static std::once_flag sFlag;
 
   std::call_once(sFlag, [p = &sPath]() {
-    const auto base = GetKnownFolderPath(FOLDERID_LocalAppData);
+    const auto base = GetKnownFolderPath<FOLDERID_LocalAppData>();
     if (base.empty()) {
       return;
     }

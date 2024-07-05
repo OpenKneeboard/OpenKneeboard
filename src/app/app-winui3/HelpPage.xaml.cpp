@@ -287,7 +287,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
 
   {
     const auto crashDumps
-      = Filesystem::GetKnownFolderPath(FOLDERID_LocalAppData) / L"CrashDumps";
+      = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / L"CrashDumps";
     if (std::filesystem::is_directory(crashDumps)) {
       for (const auto entry:
            std::filesystem::recursive_directory_iterator(crashDumps)) {

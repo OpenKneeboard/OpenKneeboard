@@ -592,7 +592,7 @@ class TestViewerWindow final : private D3D11Resources {
     }
 
     const auto path
-      = Filesystem::GetKnownFolderPath(FOLDERID_Pictures) / "OpenKneeboard"
+      = Filesystem::GetKnownFolderPath<FOLDERID_Pictures>() / "OpenKneeboard"
       / std::format(
           "capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
           Version::Major,

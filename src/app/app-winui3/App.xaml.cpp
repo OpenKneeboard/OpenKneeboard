@@ -379,7 +379,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   try {
     gDumpDirectory
-      = Filesystem::GetKnownFolderPath(FOLDERID_SavedGames) / "OpenKneeboard";
+      = Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>() / "OpenKneeboard";
   } catch (const winrt::hresult_error& error) {
     const auto message = std::format(
       _(L"Windows was unable to find your 'Saved Games' folder; "
