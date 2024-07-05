@@ -27,15 +27,20 @@
 #include <OpenKneeboard/tracing.h>
 
 static void init() {
-  static bool sInitialized = false;
-  if (sInitialized) {
-    return;
-  }
-  sInitialized = true;
-
   OpenKneeboard::DPrintSettings::Set({
     .prefix = "OpenKneeboard-CAPI",
   });
+
+  wchar_t buf[1024];
+  const auto length = GetModuleFileNameW(NULL, buf, std::size(buf));
+  if (length) {
+    OpenKneeboard::dprintf(
+      L"new API client: {}", std::wstring_view {buf, length});
+  } else {
+    OpenKneeboard::dprintf(
+      "new API client - failed to get client path: {:#018x}",
+      static_cast<uint64_t>(GetLastError()));
+  }
 }
 
 OPENKNEEBOARD_CAPI void OpenKneeboard_send_utf8(
@@ -43,8 +48,6 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_utf8(
   size_t eventNameByteCount,
   const char* eventValue,
   size_t eventValueByteCount) {
-  init();
-
   const OpenKneeboard::GameEvent ge {
     {eventName, eventNameByteCount},
     {eventValue, eventValueByteCount},
@@ -57,8 +60,6 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
   size_t eventNameCharCount,
   const wchar_t* eventValue,
   size_t eventValueCharCount) {
-  init();
-
   const OpenKneeboard::GameEvent ge {
     winrt::to_string(std::wstring_view {eventName, eventNameCharCount}),
     winrt::to_string(std::wstring_view {eventValue, eventValueCharCount}),
@@ -86,6 +87,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
       TraceLoggingRegister(OpenKneeboard::gTraceProvider);
       TraceLoggingWriteStart(
         gActivity, "Attached", TraceLoggingThisExecutable());
+      init();
       break;
     case DLL_PROCESS_DETACH:
       TraceLoggingWriteStop(
