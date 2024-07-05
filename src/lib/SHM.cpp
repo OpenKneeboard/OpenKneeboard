@@ -33,14 +33,13 @@
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
-#include <shims/utility>
-
 #include <Windows.h>
 
 #include <bit>
 #include <concepts>
 #include <format>
 #include <random>
+#include <utility>
 
 #include <processthreadsapi.h>
 
@@ -654,9 +653,7 @@ Snapshot Reader::MaybeGetUncached(
     TraceLoggingWriteTagged(
       activity,
       "SHM::Reader::MaybeGetUncached/incorrect_kind",
-      TraceLoggingValue(
-        static_cast<std::underlying_type_t<ConsumerKind>>(kind),
-        "Consumer kind"),
+      TraceLoggingValue(std::to_underlying(kind), "Consumer kind"),
       TraceLoggingValue(
         p->mHeader->mConfig.mTarget.GetRawMaskForDebugging(), "Target kind"));
     activity.StopWithResult("incorrect_kind");
@@ -775,7 +772,7 @@ std::underlying_type_t<ConsumerKind> ConsumerPattern::GetRawMaskForDebugging()
 }
 
 bool ConsumerPattern::Matches(ConsumerKind kind) const {
-  return (mKindMask & std23::to_underlying(kind)) == mKindMask;
+  return (mKindMask & std::to_underlying(kind)) == mKindMask;
 }
 
 Snapshot CachedReader::MaybeGet(const std::source_location& loc) {

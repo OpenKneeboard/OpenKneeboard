@@ -177,8 +177,7 @@ class TestViewerWindow final : private D3D11Resources {
   };
 
   static constexpr auto LastFillMode = ViewerFillMode::Transparent;
-  static constexpr auto FillModeCount
-    = static_cast<std::underlying_type_t<ViewerFillMode>>(LastFillMode) + 1;
+  static constexpr auto FillModeCount = std::to_underlying(LastFillMode) + 1;
 
   bool mShowVR {false};
 
@@ -635,10 +634,7 @@ class TestViewerWindow final : private D3D11Resources {
           return;
         }
         mSettings.mFillMode = static_cast<ViewerFillMode>(
-          (static_cast<std::underlying_type_t<ViewerFillMode>>(
-             mSettings.mFillMode)
-           + 1)
-          % FillModeCount);
+          (std::to_underlying(mSettings.mFillMode) + 1) % FillModeCount);
         this->PaintNow();
         return;
       // Streamer
@@ -661,8 +657,7 @@ class TestViewerWindow final : private D3D11Resources {
         auto& align = mSettings.mAlignment;
 
         align = static_cast<ViewerAlignment>(
-          (static_cast<std::underlying_type_t<ViewerAlignment>>(align) + 1)
-          % (int)ViewerAlignmentsCount());
+          (std::to_underlying(align) + 1) % (int)ViewerAlignmentsCount());
 
         this->PaintNow();
         return;

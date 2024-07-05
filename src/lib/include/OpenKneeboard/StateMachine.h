@@ -35,7 +35,7 @@ namespace OpenKneeboard {
 namespace ADL {
 template <class State>
 constexpr auto formattable_state(State state) noexcept {
-  return static_cast<std::underlying_type_t<State>>(state);
+  return std::to_underlying(state);
 }
 }// namespace ADL
 

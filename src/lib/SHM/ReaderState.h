@@ -46,8 +46,7 @@ constexpr auto formattable_state(ReaderState state) noexcept {
 #undef IT
   }
   OPENKNEEBOARD_LOG_AND_FATAL(
-    "Invalid SHM ReaderState: {}",
-    static_cast<std::underlying_type_t<ReaderState>>(state));
+    "Invalid SHM ReaderState: {}", std::to_underlying(state));
 }
 
 using ReaderStateMachine = StateMachine<

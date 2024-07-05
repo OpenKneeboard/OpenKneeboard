@@ -184,8 +184,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       "Found GPU {:04x}:{:04x} with type {}: \"{}\"",
       props.vendorID,
       props.deviceID,
-      static_cast<std::underlying_type_t<VkPhysicalDeviceType>>(
-        props.deviceType),
+      std::to_underlying(props.deviceType),
       props.deviceName);
     if (id.deviceLUIDValid) {
       static_assert(VK_LUID_SIZE == sizeof(uint64_t));

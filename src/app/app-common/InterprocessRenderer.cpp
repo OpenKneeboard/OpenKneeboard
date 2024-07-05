@@ -71,8 +71,7 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
       return {SHM::ConsumerKind::NonVRD3D11};
     default:
       dprintf(
-        "Unhandled overlay API: {}",
-        std::underlying_type_t<OverlayAPI>(game->mOverlayAPI));
+        "Unhandled overlay API: {}", std::to_underlying(game->mOverlayAPI));
       OPENKNEEBOARD_BREAK;
       return {};
   }

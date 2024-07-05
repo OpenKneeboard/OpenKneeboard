@@ -49,8 +49,7 @@ constexpr auto formattable_state(WriterState state) noexcept {
 #undef IT
   }
   OPENKNEEBOARD_LOG_AND_FATAL(
-    "Invalid SHM WriterState: {}",
-    static_cast<std::underlying_type_t<WriterState>>(state));
+    "Invalid SHM WriterState: {}", std::to_underlying(state));
 }
 
 using WriterStateMachine = StateMachine<

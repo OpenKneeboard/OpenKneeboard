@@ -125,9 +125,8 @@ enum class ConsumerKind : uint32_t {
 class ConsumerPattern final {
  public:
   ConsumerPattern();
-  ConsumerPattern(std::underlying_type_t<ConsumerKind>(consumerKindMask));
-  ConsumerPattern(ConsumerKind kind)
-    : mKindMask(std::underlying_type_t<ConsumerKind>(kind)) {
+  ConsumerPattern(std::underlying_type_t<ConsumerKind> consumerKindMask);
+  ConsumerPattern(ConsumerKind kind) : mKindMask(std::to_underlying(kind)) {
   }
 
   bool Matches(ConsumerKind) const;

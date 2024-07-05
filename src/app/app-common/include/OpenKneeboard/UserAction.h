@@ -68,9 +68,7 @@ inline constexpr std::string to_string(UserAction action) {
     OPENKNEEBOARD_USER_ACTIONS
 #undef IT
     default:
-      return std::format(
-        "Unknown UserAction: {}",
-        static_cast<std::underlying_type_t<UserAction>>(action));
+      return std::format("Unknown UserAction: {}", std::to_underlying(action));
   }
 }
 

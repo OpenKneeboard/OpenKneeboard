@@ -103,7 +103,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -580,8 +582,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
       default:
         dprintf(
           "ERROR: Unrecognized VulkanXRState: {}",
-          static_cast<std::underlying_type_t<VulkanXRState>>(
-            gVulkanXRState.Get()));
+          std::to_underlying(gVulkanXRState.Get()));
         OPENKNEEBOARD_BREAK;
         return ret;
     }

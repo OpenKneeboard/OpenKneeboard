@@ -37,13 +37,13 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
-#include <shims/utility>
 #include <shims/winrt/base.h>
 
 #include <chrono>
 #include <mutex>
 #include <thread>
 #include <unordered_set>
+#include <utility>
 
 namespace OpenKneeboard {
 
@@ -227,7 +227,7 @@ void GameInjector::CheckProcess(
         break;
       default:
         dprintf(
-          "Unhandled OverlayAPI: {}", std23::to_underlying(game->mOverlayAPI));
+          "Unhandled OverlayAPI: {}", std::to_underlying(game->mOverlayAPI));
         OPENKNEEBOARD_BREAK;
         return;
     }

@@ -48,14 +48,13 @@
 #include <OpenKneeboard/inttypes.h>
 #include <OpenKneeboard/scope_guard.h>
 
-#include <shims/utility>
-
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
 #include <microsoft.ui.xaml.window.h>
 
 #include <ranges>
 #include <regex>
+#include <utility>
 
 #include <shobjidl.h>
 
@@ -317,9 +316,7 @@ void TabsSettingsPage::CreateTab(
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
     default:
-      dprintf(
-        "Adding tab with kind {}",
-        static_cast<std::underlying_type_t<TabType>>(tabType));
+      dprintf("Adding tab with kind {}", std::to_underlying(tabType));
   }
 
   switch (tabType) {
@@ -728,7 +725,7 @@ std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {
 
 uint8_t DCSRadioLogTabUIData::MissionStartBehavior() const {
   auto tab = this->GetTab();
-  return tab ? std23::to_underlying(tab->GetMissionStartBehavior()) : 0;
+  return tab ? std::to_underlying(tab->GetMissionStartBehavior()) : 0;
 }
 
 void DCSRadioLogTabUIData::MissionStartBehavior(uint8_t value) {

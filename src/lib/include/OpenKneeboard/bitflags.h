@@ -26,8 +26,8 @@ namespace OpenKneeboard {
 
 /// Specialize this for your enum class to enable operator overloads
 template <class T>
-  requires std::is_enum_v<T> && std::unsigned_integral<
-    std::underlying_type_t<T>>
+  requires std::is_enum_v<T>
+  && std::unsigned_integral<std::underlying_type_t<T>>
 constexpr bool is_bitflags_v = false;
 
 template <class T>
