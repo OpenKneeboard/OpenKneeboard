@@ -87,7 +87,6 @@ target_link_libraries(
   System::Dxgi
   ThirdParty::DirectXTex
   ThirdParty::DirectXTK
-  ThirdParty::OutPtr
 )
 
 ok_add_executable(

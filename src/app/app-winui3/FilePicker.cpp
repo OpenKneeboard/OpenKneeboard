@@ -21,10 +21,6 @@
 
 #include <OpenKneeboard/handles.h>
 
-#include <ztd/out_ptr.hpp>
-
-namespace zop = ztd::out_ptr;
-
 namespace OpenKneeboard {
 
 FilePicker::FilePicker(HWND parent) : mParent(parent) {
@@ -144,7 +140,7 @@ std::optional<std::filesystem::path> FilePicker::PickSaveFile() const {
 std::filesystem::path FilePicker::GetPathFromShellItem(IShellItem* shellItem) {
   unique_co_task_ptr<wchar_t> pathStr;
   winrt::check_hresult(
-    shellItem->GetDisplayName(SIGDN_FILESYSPATH, zop::out_ptr(pathStr)));
+    shellItem->GetDisplayName(SIGDN_FILESYSPATH, std::out_ptr(pathStr)));
   const std::filesystem::path path(std::wstring_view(pathStr.get()));
   if (std::filesystem::exists(path)) {
     return std::filesystem::canonical(path);

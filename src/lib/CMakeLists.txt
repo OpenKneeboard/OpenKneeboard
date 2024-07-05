@@ -59,7 +59,7 @@ target_link_libraries(
   OpenKneeboard-handles
   INTERFACE
   _libheaders
-  ThirdParty::OutPtr)
+)
 
 ok_add_library(OpenKneeboard-Elevation STATIC Elevation.cpp)
 target_link_libraries(
@@ -445,7 +445,6 @@ target_link_libraries(
   OpenKneeboard-UTF8
   System::Shlwapi
   ThirdParty::CppWinRT
-  ThirdParty::OutPtr
   ThirdParty::WIL
 )
 
