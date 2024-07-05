@@ -54,9 +54,8 @@ std::vector<BytePattern> ComputeFunctionPatterns(
   for (auto& pattern: patterns) {
     dprintf(
       "{:016x} (mask {:016x})",
-      // TODO (C++23) std::byteswap
-      _byteswap_uint64(pattern.value),
-      _byteswap_uint64(pattern.mask));
+      std::byteswap(pattern.value),
+      std::byteswap(pattern.mask));
   }
 
   return patterns;
