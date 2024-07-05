@@ -14,8 +14,10 @@ The C API is able to send information, events, or requests to OpenKneeboard; it 
  As the implementation changes with every release, you should dynamically load the DLL using `LoadLibraryW()`, and find the function of interest with `GetProcAddress()`.
 
 I recommend that programs attempt to locate the DLL by:
-- checking for the presence of an `OPENKNEEBOARD_CAPI_DLL` environment variable; if present, use it as the full path to the DLL
-- otherwise, check `%ProgramFiles%\OpenKneeboard\bin\`. Program files should ideally be located with `SHGetKnownFolderPath()`, but the `ProgramFiles` environment variable can also be used when `SHGetKnownFolderPath()` is impractical
+
+1. Check for the presence of an `OPENKNEEBOARD_CAPI_DLL` environment variable; if present, use it as the full path to the DLL.
+2. If that fails, check for the [InstallationBinPath](registry-values.md#installationbinpath) registry value; this is set when OpenKneeboard launches in v1.8.4 and above
+3. If that fails, check `%ProgramFiles%\OpenKneeboard\bin\`. Program files should ideally be located with `SHGetKnownFolderPath()` or equivalent (e.g. `Environment.GetFolderPath()` in .Net), but the `ProgramFiles` environment variable can also be used
 
 ## Functions
 
