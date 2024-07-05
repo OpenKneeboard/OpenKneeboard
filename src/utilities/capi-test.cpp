@@ -32,22 +32,11 @@
 
 #include <filesystem>
 #include <iostream>
+#include <optional>
 
 #include <OpenKneeboard_CAPI.h>
 
-static std::filesystem::path GetOpenKneeboardDLLPath() {
-  wchar_t* fromEnv {nullptr};
-  if (_wdupenv_s(&fromEnv, nullptr, L"OPENKNEEBOARD_CAPI_DLL") == 0) {
-    return fromEnv;
-  }
-
-  wchar_t* programFiles = nullptr;
-  winrt::check_hresult(
-    SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &programFiles));
-
-  return std::filesystem::path(programFiles) / L"OpenKneeboard" / L"bin"
-    / OPENKNEEBOARD_CAPI_DLL_NAME_W;
-}
+static std::filesystem::path GetOpenKneeboardDLLPath();
 
 int main(int argc, char** argv) {
   if (argc < 2 || argc > 3) {
@@ -104,4 +93,78 @@ int main(int argc, char** argv) {
 
   FreeLibrary(dll);
   return 0;
+}
+
+static std::optional<std::filesystem::path>
+GetOpenKneeboardDLLPathFromEnvironment() {
+  // When C++23 is widely available, a combination of `std::unique_ptr` and
+  // `std::out_ptr` would be better than calling `free()`; there's
+  // third-party implementations of `out_ptr` for earlier versions of C++,
+  // but I'm avoiding additional dependencies for this example.
+
+  wchar_t* fromEnv {nullptr};
+  size_t fromEnvCharCount {};
+  if (
+    _wdupenv_s(&fromEnv, &fromEnvCharCount, L"OPENKNEEBOARD_CAPI_DLL") != 0
+    || !fromEnv) {
+    // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
+    free(fromEnv);
+    return {};
+  }
+
+  const std::filesystem::path ret {
+    std::wstring_view {fromEnv, fromEnvCharCount - 1}};
+  // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
+  free(fromEnv);
+  return ret;
+}
+
+// Requires OpenKneeboard v1.8.4 or above
+static std::optional<std::filesystem::path>
+GetOpenKneeboardDLLPathFromRegistry() {
+  DWORD regType {REG_SZ};
+  wchar_t regValue[MAX_PATH];
+  DWORD regValueByteCount {std::size(regValue) * sizeof(wchar_t)};
+  if (
+    RegGetValueW(
+      HKEY_CURRENT_USER,
+      L"Software\\Fred Emmott\\OpenKneeboard",
+      L"InstallationBinPath",
+      // Always use the 64-bit registry, even if built as 32-bits
+      RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY | RRF_ZEROONFAILURE,
+      &regType,
+      regValue,
+      &regValueByteCount)
+      != ERROR_SUCCESS
+    || regType != REG_SZ || regValueByteCount <= 0) {
+    return {};
+  }
+
+  return std::filesystem::path {std::wstring_view {
+           regValue, (regValueByteCount / sizeof(wchar_t)) - 1}}
+  / OPENKNEEBOARD_CAPI_DLL_NAME_W;
+}
+
+static std::filesystem::path GetOpenKneeboardDLLPath() {
+  if (const auto ret = GetOpenKneeboardDLLPathFromEnvironment()) {
+    return *ret;
+  }
+
+  if (const auto ret = GetOpenKneeboardDLLPathFromRegistry()) {
+    return *ret;
+  }
+
+  // Fall back to Program Files for v1.8.3 and below; this should be removed
+  // once v1.8.4+ are widespread
+
+  wchar_t* programFiles = nullptr;
+  winrt::check_hresult(
+    SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &programFiles));
+
+  const auto ret = std::filesystem::path(programFiles) / L"OpenKneeboard"
+    / L"bin" / OPENKNEEBOARD_CAPI_DLL_NAME_W;
+
+  // Another opportunity for std::unique_ptr + std::out_ptr when using C++23
+  CoTaskMemFree(programFiles);
+  return ret;
 }
