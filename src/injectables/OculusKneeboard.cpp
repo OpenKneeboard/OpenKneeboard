@@ -248,7 +248,15 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   }
 
   if (topMost != 0) {
+    if (topMost < addedOVRLayers.size()) [[likely]] {
     std::swap(addedOVRLayers.back(), addedOVRLayers.at(topMost));
+    } else {
+      dprintf(
+        "topMost layer has index {}, but count is {}",
+        topMost,
+        addedOVRLayers.size());
+      OPENKNEEBOARD_BREAK;
+    }
   }
 
   return next(
