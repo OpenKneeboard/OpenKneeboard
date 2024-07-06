@@ -20,10 +20,12 @@
 #include "OculusEndFrameHook.h"
 
 #include "DllLoadWatcher.h"
+#include "OVRRuntimeDLLNames.h"
 #include "detours-ext.h"
 
 #include <OpenKneeboard/dprint.h>
 
+#include <array>
 #include <mutex>
 #include <stdexcept>
 
@@ -48,13 +50,11 @@ ovr_SubmitFrame2(
 
 namespace OpenKneeboard {
 
-static const char* MODULE_NAME = "LibOVRRT64_1.dll";
-
 struct OculusEndFrameHook::Impl {
   Impl(const Callbacks&);
   ~Impl();
 
-  void InstallHook();
+  void InstallHook(std::shared_ptr<DllLoadWatcher> runtime);
   void UninstallHook();
 
   Impl() = delete;
@@ -65,7 +65,10 @@ struct OculusEndFrameHook::Impl {
 
  private:
   static Impl* gInstance;
-  DllLoadWatcher mLibOVR {MODULE_NAME};
+
+  std::vector<std::shared_ptr<DllLoadWatcher>> mRuntimes;
+  std::weak_ptr<DllLoadWatcher> mActiveRuntime;
+
   Callbacks mCallbacks;
   std::mutex mInstallMutex;
 
@@ -103,17 +106,26 @@ void OculusEndFrameHook::UninstallHook() {
   }
 }
 
-OculusEndFrameHook::Impl::Impl(const Callbacks& cb)
-  : mLibOVR(MODULE_NAME), mCallbacks(cb) {
-  mLibOVR.InstallHook({
-    .onDllLoaded = std::bind_front(&Impl::InstallHook, this),
-  });
-  this->InstallHook();
+OculusEndFrameHook::Impl::Impl(const Callbacks& cb) : mCallbacks(cb) {
+  for (const auto runtime: OVRRuntimeDLLNames) {
+    auto watcher = std::make_shared<DllLoadWatcher>(runtime);
+    watcher->InstallHook({
+      .onDllLoaded =
+        [weak = std::weak_ptr {watcher}, this]() {
+          if (auto watcher = weak.lock()) {
+            this->InstallHook(watcher);
+          }
+        },
+    });
+    this->InstallHook(watcher);
+    mRuntimes.push_back(std::move(watcher));
+  }
 }
 
-void OculusEndFrameHook::Impl::InstallHook() {
+void OculusEndFrameHook::Impl::InstallHook(
+  std::shared_ptr<DllLoadWatcher> runtime) {
   std::unique_lock lock(mInstallMutex);
-  if (!mLibOVR.IsDllLoaded()) {
+  if (!runtime->IsDllLoaded()) {
     return;
   }
 
@@ -128,8 +140,8 @@ void OculusEndFrameHook::Impl::InstallHook() {
 
   // Find outside of the transaction as DetourFindFunction calls LoadLibrary
 #define IT(x) \
-  next_##x \
-    = reinterpret_cast<decltype(&x)>(DetourFindFunction(MODULE_NAME, #x));
+  next_##x = reinterpret_cast<decltype(&x)>( \
+    DetourFindFunction(runtime->GetDLLName(), #x));
   HOOKED_ENDFRAME_FUNCS
 #undef IT
 
@@ -139,6 +151,20 @@ void OculusEndFrameHook::Impl::InstallHook() {
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }
+
+  mActiveRuntime = runtime;
+
+  {
+    const auto handle = GetModuleHandleA(runtime->GetDLLName());
+    if (handle) {
+      wchar_t path[1024];
+      const auto pathLength = GetModuleFileNameW(handle, path, std::size(path));
+      dprintf(L"LibOVR runtime path: {}", std::wstring_view {path, pathLength});
+    } else {
+      dprint("Have LibOVR runtime, but couldn't determine path");
+    }
+  }
+
   dprint("Attached OculusEndFrameHook");
 
   if (mCallbacks.onHookInstalled) {
@@ -154,7 +180,12 @@ void OculusEndFrameHook::Impl::UninstallHook() {
   if (gInstance != this) {
     return;
   }
-  mLibOVR.UninstallHook();
+  auto runtime = mActiveRuntime.lock();
+  if (!runtime) {
+    return;
+  }
+
+  runtime->UninstallHook();
 
   {
     DetourTransaction dt;

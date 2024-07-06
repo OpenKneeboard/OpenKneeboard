@@ -38,6 +38,8 @@ namespace OpenKneeboard {
  */
 class DllLoadWatcher final {
  public:
+  DllLoadWatcher() = delete;
+
   DllLoadWatcher(std::string_view name);
   ~DllLoadWatcher();
 
@@ -50,6 +52,8 @@ class DllLoadWatcher final {
 
   void InstallHook(const Callbacks&);
   void UninstallHook();
+
+  const char* GetDLLName() const noexcept;
 
  private:
   struct Impl;

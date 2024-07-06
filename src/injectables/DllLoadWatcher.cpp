@@ -170,6 +170,10 @@ DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
   return S_OK;
 }
 
+const char* DllLoadWatcher::GetDLLName() const noexcept {
+  return p->mName.c_str();
+}
+
 void CALLBACK DllLoadWatcher::Impl::OnNotification(
   ULONG reason,
   PCLDR_DLL_NOTIFICATION_DATA data,

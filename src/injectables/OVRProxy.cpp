@@ -19,9 +19,13 @@
  */
 #include "OVRProxy.h"
 
-#include <stdexcept>
-
+#include "OVRRuntimeDLLNames.h"
 #include "detours-ext.h"
+
+#include <OpenKneeboard/dprint.h>
+
+#include <mutex>
+#include <stdexcept>
 
 namespace OpenKneeboard {
 
@@ -35,8 +39,24 @@ std::shared_ptr<OVRProxy> OVRProxy::Get() {
   return gInstance;
 }
 
+static const char* GetActiveRuntimeDLLName() {
+  static std::once_flag sOnce;
+  static const char* sActiveRuntime {nullptr};
+  std::call_once(sOnce, [&runtime = sActiveRuntime]() {
+    for (const auto it: OVRRuntimeDLLNames) {
+      if (GetModuleHandleA(it)) {
+        dprintf("OVRProxy found runtime: {}", it);
+        runtime = it;
+        return;
+      }
+    }
+  });
+  return sActiveRuntime;
+}
+
 #define X(x) \
-  x(reinterpret_cast<decltype(x)>(DetourFindFunction("LibOVRRT64_1.dll", #x))),
+  x(reinterpret_cast<decltype(x)>( \
+    DetourFindFunction(GetActiveRuntimeDLLName(), #x))),
 OVRProxy::OVRProxy()
   : OPENKNEEBOARD_OVRPROXY_FUNCS
 #undef X
