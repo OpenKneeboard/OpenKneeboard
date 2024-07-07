@@ -59,6 +59,7 @@ ScopedDeviceContextStateChange::ScopedDeviceContextStateChange(
 }
 
 ScopedDeviceContextStateChange::~ScopedDeviceContextStateChange() {
+  OPENKNEEBOARD_TraceLoggingScope("~D3D11::ScopedDeviceContextStateChange()");
   mContext->SwapDeviceContextState(mOriginalState.get(), nullptr);
 }
 
