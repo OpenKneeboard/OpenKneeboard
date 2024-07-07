@@ -59,15 +59,13 @@ With that in mind, take a look at [the API documentation](https://openkneeboard.
 
 Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
-## Other API layers that manipulate poses
+## API layers that manipulate poses
 
 ### What should the API layer order be?
 
-My understanding is that the order should not matter, as long as the API layer provides consistent handling of spaces and poses.
+Pose manipulation layers should be closer to the runtime and farther from the game than OpenKneeboard; this is because **OpenKneeboard does nothing that the game itself is not allowed to do**, and pose manipulation layers generally want to manipulate OpenKneeboard's world-locked content the same way as they manipulate the game world, along with any world-locked content the game produces (e.g. HUDs and menus are world-locked overlays in some games).
 
-If I'm wrong, the answer is that your layer should be closer to the runtime and farther from the game than OpenKneeboard; this is because **OpenKneeboard does nothing that the game itself is not allowed to do**.
-
-If your pose manipulation layer needs to be between the game and OpenKneeboard, it is incorrect, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games to do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
+If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games to do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
 
 ### What do you mean by 'consistent handling'?
 
