@@ -19,14 +19,14 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
+
 #include "IDXGISwapChainHook.h"
 #include "OculusKneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/D3D11/Renderer.h>
 #include <OpenKneeboard/SHM/D3D11.h>
-
-#include <OpenKneeboard/config.h>
 
 #include <shims/winrt/base.h>
 
@@ -58,8 +58,9 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext> mD3D11DeviceContext;
+  winrt::com_ptr<ID3D11DeviceContext1> mD3D11DeviceContext;
   std::unique_ptr<D3D11::Renderer> mRenderer;
+  D3D11::DeviceContextState mRenderState;
 
   using SwapchainBufferResources = D3D11::SwapchainBufferResources;
   using SwapchainResources = D3D11::SwapchainResources;

@@ -19,11 +19,12 @@
  */
 #include "OculusD3D11Kneeboard.h"
 
+#include <OpenKneeboard/config.h>
+
 #include "OVRProxy.h"
 
 #include <OpenKneeboard/D3D11.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <OVR_CAPI_D3D.h>
@@ -118,7 +119,8 @@ void OculusD3D11Kneeboard::RenderLayers(
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "OculusD3D11::RenderLayers");
 
-  D3D11::SavedState state(mD3D11DeviceContext);
+  D3D11::ScopedDeviceContextStateChange savedState {
+    mD3D11DeviceContext, &mRenderState};
 
   mRenderer->RenderLayers(
     *mSwapchain,
@@ -139,7 +141,9 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
     OPENKNEEBOARD_TraceLoggingScope("InitResources");
     winrt::check_hresult(
       swapChain->GetDevice(IID_PPV_ARGS(mD3D11Device.put())));
-    mD3D11Device->GetImmediateContext(mD3D11DeviceContext.put());
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    mD3D11Device->GetImmediateContext(ctx.put());
+    mD3D11DeviceContext = ctx.as<ID3D11DeviceContext1>();
     mRenderer = std::make_unique<D3D11::Renderer>(mD3D11Device.get());
   }
 

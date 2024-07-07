@@ -19,13 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
+
 #include "OpenXRKneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/D3D11/Renderer.h>
 #include <OpenKneeboard/SHM/D3D11.h>
-
-#include <OpenKneeboard/config.h>
 
 struct XrGraphicsBindingD3D11KHR;
 
@@ -63,8 +63,10 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
 
   winrt::com_ptr<ID3D11Device> mDevice;
-  winrt::com_ptr<ID3D11DeviceContext> mImmediateContext;
+  winrt::com_ptr<ID3D11DeviceContext1> mImmediateContext;
   std::unique_ptr<D3D11::Renderer> mRenderer;
+
+  D3D11::DeviceContextState mRenderState;
 
   using SwapchainBufferResources = D3D11::SwapchainBufferResources;
   using SwapchainResources = D3D11::SwapchainResources;

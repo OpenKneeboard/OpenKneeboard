@@ -34,21 +34,51 @@
 
 namespace OpenKneeboard::D3D11 {
 
-class SavedState final {
+/** An isolated state so we don't interfere with the app or other DLLs.
+ *
+ * This is intended to be used in combination with
+ * ScopedDeviceContextStateChange, which will initialize it with the device if
+ * needed.
+ */
+class DeviceContextState final {
  public:
-  SavedState(const winrt::com_ptr<ID3D11DeviceContext>&);
-  SavedState(ID3D11DeviceContext*);
-  ~SavedState();
+  DeviceContextState() = default;
+  DeviceContextState(ID3D11Device1*);
 
-  SavedState() = delete;
-  SavedState(const SavedState&) = delete;
-  SavedState(SavedState&&) = delete;
-  SavedState& operator=(const SavedState&) = delete;
-  SavedState& operator=(SavedState&&) = delete;
+  inline bool IsValid() const noexcept {
+    return !!mState;
+  }
+
+  inline auto Get() const noexcept {
+    return mState.get();
+  }
 
  private:
-  struct Impl;
-  Impl* mImpl {nullptr};
+  winrt::com_ptr<ID3DDeviceContextState> mState;
+};
+
+class ScopedDeviceContextStateChange final {
+ public:
+  /** Switch to the provided new state.
+   *
+   * If `newState` is invalid, this will replace it with a new
+   * `DeviceContextState` initialized with the provided context's D3D11 device.
+   */
+  ScopedDeviceContextStateChange(
+    const winrt::com_ptr<ID3D11DeviceContext1>&,
+    DeviceContextState* newState);
+  ~ScopedDeviceContextStateChange();
+
+  ScopedDeviceContextStateChange() = delete;
+  ScopedDeviceContextStateChange(const ScopedDeviceContextStateChange&)
+    = delete;
+  ScopedDeviceContextStateChange& operator=(
+    const ScopedDeviceContextStateChange&)
+    = delete;
+
+ private:
+  winrt::com_ptr<ID3D11DeviceContext1> mContext;
+  winrt::com_ptr<ID3DDeviceContextState> mOriginalState;
 };
 
 using Opacity = ::OpenKneeboard::D3D::Opacity;

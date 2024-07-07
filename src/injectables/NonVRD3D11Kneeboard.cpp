@@ -19,12 +19,13 @@
  */
 #include "NonVRD3D11Kneeboard.h"
 
+#include <OpenKneeboard/config.h>
+
 #include "InjectedDLLMain.h"
 
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
@@ -80,7 +81,7 @@ void NonVRD3D11Kneeboard::InitializeResources(IDXGISwapChain* swapchain) {
 
   mResources = Resources {
     device.get(),
-    context.get(),
+    context.as<ID3D11DeviceContext1>(),
     swapchain,
     SwapchainResources {
       PixelSize {textureDesc.Width, textureDesc.Height},
@@ -155,7 +156,9 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   };
 
   {
-    D3D11::SavedState savedState(mResources->mImmediateContext);
+    D3D11::ScopedDeviceContextStateChange savedState(
+      mResources->mImmediateContext, &mResources->mRenderState);
+
     mResources->mRenderer->RenderLayers(
       sr, 0, snapshot, {&layer, 1}, RenderMode::Overlay);
   }

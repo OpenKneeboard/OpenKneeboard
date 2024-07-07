@@ -49,10 +49,12 @@ class NonVRD3D11Kneeboard final {
 
   struct Resources {
     ID3D11Device* mDevice {nullptr};
-    ID3D11DeviceContext* mImmediateContext {nullptr};
+    winrt::com_ptr<ID3D11DeviceContext1> mImmediateContext;
     IDXGISwapChain* mSwapchain {nullptr};
     SwapchainResources mSwapchainResources;
     std::unique_ptr<D3D11::Renderer> mRenderer;
+
+    D3D11::DeviceContextState mRenderState;
   };
   std::optional<Resources> mResources;
 

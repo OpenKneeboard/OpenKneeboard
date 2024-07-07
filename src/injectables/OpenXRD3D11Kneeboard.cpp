@@ -55,7 +55,9 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard()");
 
   mDevice.copy_from(binding.device);
-  mDevice->GetImmediateContext(mImmediateContext.put());
+  winrt::com_ptr<ID3D11DeviceContext> ctx;
+  mDevice->GetImmediateContext(ctx.put());
+  mImmediateContext = ctx.as<ID3D11DeviceContext1>();
 
   mRenderer = std::make_unique<D3D11::Renderer>(mDevice.get());
 }
@@ -203,7 +205,9 @@ void OpenXRD3D11Kneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   const std::span<SHM::LayerSprite>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::RenderLayers()");
-  D3D11::SavedState savedState(mImmediateContext);
+
+  D3D11::ScopedDeviceContextStateChange savedState(
+    mImmediateContext, &mRenderState);
 
   mRenderer->RenderLayers(
     mSwapchainResources.at(swapchain),

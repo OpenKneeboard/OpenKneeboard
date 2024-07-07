@@ -29,58 +29,37 @@
 
 namespace OpenKneeboard::D3D11 {
 
-struct SavedState::Impl {
-  winrt::com_ptr<ID3D11DeviceContext1> mContext;
-  winrt::com_ptr<ID3DDeviceContextState> mState;
-  static thread_local bool tHaveSavedState;
-};
+DeviceContextState::DeviceContextState(ID3D11Device1* device) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::DeviceContextState(ID3D11Device1*)");
 
-thread_local bool SavedState::Impl::tHaveSavedState {false};
-
-SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx)
-  : SavedState(ctx.get()) {
-}
-
-SavedState::SavedState(ID3D11DeviceContext* ctx) {
-  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
-  if (Impl::tHaveSavedState) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Nested D3D11 SavedStates detected");
-  }
-
-  Impl::tHaveSavedState = true;
-  mImpl = new Impl {};
-  check_hresult(ctx->QueryInterface(IID_PPV_ARGS(mImpl->mContext.put())));
-
-  winrt::com_ptr<ID3D11Device> device;
-  ctx->GetDevice(device.put());
   auto featureLevel = device->GetFeatureLevel();
-
-  winrt::com_ptr<ID3DDeviceContextState> newState;
-  {
-    OPENKNEEBOARD_TraceLoggingScope("CreateDeviceContextState");
-    check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
-      (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
-        ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
-        : 0,
-      &featureLevel,
-      1,
-      D3D11_SDK_VERSION,
-      __uuidof(ID3D11Device),
-      nullptr,
-      newState.put()));
-  }
-  {
-    OPENKNEEBOARD_TraceLoggingScope("SwapDeviceContextState");
-    mImpl->mContext->SwapDeviceContextState(
-      newState.get(), mImpl->mState.put());
-  }
+  check_hresult(device->CreateDeviceContextState(
+    (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
+      ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
+      : 0,
+    &featureLevel,
+    1,
+    D3D11_SDK_VERSION,
+    __uuidof(ID3D11Device),
+    nullptr,
+    mState.put()));
 }
 
-SavedState::~SavedState() {
-  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::~SavedState()");
-  mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
-  Impl::tHaveSavedState = false;
-  delete mImpl;
+ScopedDeviceContextStateChange::ScopedDeviceContextStateChange(
+  const winrt::com_ptr<ID3D11DeviceContext1>& context,
+  DeviceContextState* newState)
+  : mContext(context) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::ScopedDeviceContextStateChange()");
+  if (!newState->IsValid()) {
+    winrt::com_ptr<ID3D11Device> device;
+    context->GetDevice(device.put());
+    *newState = {device.as<ID3D11Device1>().get()};
+  }
+  context->SwapDeviceContextState(newState->Get(), mOriginalState.put());
+}
+
+ScopedDeviceContextStateChange::~ScopedDeviceContextStateChange() {
+  mContext->SwapDeviceContextState(mOriginalState.get(), nullptr);
 }
 
 SpriteBatch::SpriteBatch(ID3D11Device* device) {
