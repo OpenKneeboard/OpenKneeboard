@@ -7,7 +7,7 @@ has_children: true
 
 ## Overview
 
-OpenKneeboard is a C++20 app built using CMake; it has 3 main components:
+OpenKneeboard is a C++23 app built using CMake; it has 3 main components:
 
 * the main Win32 GUI app: primarily intended for configuration, and can be used
   as a non-VR view.
@@ -18,7 +18,9 @@ OpenKneeboard is a C++20 app built using CMake; it has 3 main components:
 * a DCS Lua script and corresponding DLL: exports data from DCS World, such as
   the current mission, theater, and aircraft
 
-OpenKneeboard is written in C++20, except for the Lua components.
+The C API example targets C++17 in order to be accessible to a wider audience.
+
+OpenKneeboard currently only targets Visual Studio 2022 - not clang - due to limitations in the WinUI3 components - however it aims to be clean with `clang-tidy`. Specifically, OpenKneeboard aims to be buildable both with the latest version of Visual Studio 2022, and whichever version is currently in the GitHub Actions runner, which is often a few releases behind. As of 2024-07-07, this compilers' C++23 support is not complete, but does include some useful features over C++20, especially in the standard library.
 
 ## Building
 
