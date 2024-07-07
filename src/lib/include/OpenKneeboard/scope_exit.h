@@ -20,7 +20,6 @@
 #pragma once
 
 #include <functional>
-#include <optional>
 
 namespace OpenKneeboard {
 
@@ -28,13 +27,16 @@ namespace OpenKneeboard {
 // available yet
 class scope_exit final {
  private:
-  std::optional<std::function<void()>> mCallback;
+  std::function<void()> mCallback;
 
  public:
   scope_exit(std::function<void()> f);
   ~scope_exit() noexcept;
 
   void abandon();
+
+  scope_exit(scope_exit&&) noexcept = default;
+  scope_exit& operator=(scope_exit&&) noexcept = default;
 
   scope_exit() = delete;
   scope_exit(const scope_exit&) = delete;

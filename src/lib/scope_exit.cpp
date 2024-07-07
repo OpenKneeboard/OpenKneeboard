@@ -29,7 +29,7 @@ scope_exit::~scope_exit() noexcept {
   if (!mCallback) {
     return;
   }
-  (*mCallback)();
+  mCallback();
 }
 
 void scope_exit::abandon() {
