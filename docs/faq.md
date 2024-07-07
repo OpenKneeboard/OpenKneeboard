@@ -95,7 +95,15 @@ Resized to 3x3 (75%):
 
 The vertical line now straddles two pixels, with a gradient between them; this results in blurry text and lines.
 
-## I use a tool that changes how my real-world movement affect in-game movement; how do I use it with OpenKneeboard?
+## OpenKneeboard moves slightly ('floats' or 'shudders') compared to the in-game world. What's up?
+
+This generally means that your game is running at a lower framerate than your headset, and is unavoidable: OpenKneeboard provides a fixed real-world location, and it is up to the runtime and headset to render these. As OpenKneeboard is simple 2D content with a known 3D position, the headset/runtime can do a better job of adjusting OpenKneeboard's content for real-world movement than it can the game itself.
+
+One way to think about it is that runtimes/headsets are doing something equivalent to 100% perfect reprojection for OpenKneeboard's content, but not for the game - this is because for 2D content, it's just projection, not *re*-projection.
+
+This effect can be exaggerated by tools that change how your real-world movement affects in-game movement, especially if reprojection/SW/ASW or similar techniques are disabled.
+
+## I use a tool that changes how my real-world movement affects in-game movement; how do I use it with OpenKneeboard?
 
 If the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard*, then:
 
