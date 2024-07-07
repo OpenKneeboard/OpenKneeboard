@@ -90,7 +90,7 @@ If your pose manipulation layer needs to be between the game and OpenKneeboard, 
   - It allows a consistent behavior regardless of which spaces the game uses. For example, some games only use `VIEW` and `LOCAL`, some use `STAGE`, some use both `LOCAL` and `STAGE`, and future games are likely to use `LOCAL_FLOOR` instead of the combination
 - Your layer must consistently handle poses specified in `XrCompositionLayerQuad` structures in `xrEndFrame()`
 
-  In most frames, OpenKneeboard just re-submits its' quad layers with the same space (currently derived from `LOCAL`) and pose as the previous frame; if you see movement and you have not recentered OpenKneeboard that frame, this indicates that your layer is not handling poses and spaces consistently.
+  In most frames, OpenKneeboard just re-submits its quad layers with the same space (currently derived from `LOCAL`) and pose as the previous frame; if you see movement and you have not recentered OpenKneeboard that frame, this indicates that your layer is not handling poses and spaces consistently.
 
   When a recentering binding is pressed, it calls `xrLocateSpace()`, comparing `VIEW` to `LOCAL`, and stores the offset. This offset is then used for the new frame, and all future frames, until the next recentering.
 
