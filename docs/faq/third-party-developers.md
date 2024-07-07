@@ -65,6 +65,8 @@ Do not write software that changes OpenKneeboard's configuration files; it is *e
 
 Pose manipulation layers should be closer to the runtime and farther from the game than OpenKneeboard; this is because **OpenKneeboard does nothing that the game itself is not allowed to do**, and pose manipulation layers generally want to manipulate OpenKneeboard's world-locked content the same way as they manipulate the game world, along with any world-locked content the game produces (e.g. HUDs and menus are world-locked overlays in some games).
 
+If OpenKneeboard is closer to the runtime than your layer, OpenKneeboard's world-locked content should be locked to the real-world instead of your modified world space, which is generally undesirable, but otherwise everything should work fine.
+
 If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games to do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
 
 ### What do you mean by 'consistent handling'?
