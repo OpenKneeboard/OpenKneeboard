@@ -99,6 +99,8 @@ If your pose manipulation layer needs to be between the game and OpenKneeboard, 
   - the other API layer does not consistently handle all active spaces/poses
   - the other API layer reads swapchain images, and assumes that the swapchain will be updated every frame; this is not required and OpenKneeboard does not do it by default. You can test if this is the cause of the problem by turning on 'update swapchains every frame' under "Compatibility Quirks" in OpenKneeboard's advanced setings
 
+  Several other API layers have had bugs due to tracking more information about spaces than they need to; you will usually need to keep track of the reference space type for each `xrSpace`, but not more than that. Calling `xrLocateSpace()` many times per frame should be efficient enough and is much less error-prone than tracking the games' calls.
+
   ### How do I investigate what's going on?
 
   [OpenXR-Tracing] is a useful tool for this, combined with [Tabnalysis](https://apps.microsoft.com/detail/9nqlk2m4rp4j).
