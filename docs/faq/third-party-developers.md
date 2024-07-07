@@ -21,7 +21,7 @@ You have three options:
 - provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
 - provide a window, and instruct users on how to configure a Window Capture tab for your app
 
-OpenKneeboard has additional integration APIs available for [web dashboards](api/web-dashboards.md); however, text quality will be higher for text or PDF files.
+OpenKneeboard has additional integration APIs available for [web dashboards](../api/web-dashboards.md); however, text quality will be higher for text or PDF files.
 
 Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
