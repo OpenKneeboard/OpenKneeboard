@@ -114,6 +114,10 @@ Sorry, I do not investigate unknown problems with these kind of layers, as I've 
 
 As a user, your best way forward is to look for help from the other tool, and consider pointing the developer towards [the developer FAQ for this](faq/third-party-developers.md#api-layers-that-manipulate-poses).
 
+## I have a question about a feature request
+
+See [the feature requests FAQ](faq/feature-requests.md).
+
 ## I'm a third party developer and have a question
 
 The third-party developer FAQ has been split to [a separate page](faq/third-party-developers.md).
