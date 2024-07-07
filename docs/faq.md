@@ -97,10 +97,10 @@ The vertical line now straddles two pixels, with a gradient between them; this r
 
 ## I use a tool that changes how my real-world movement affect in-game movement; how do I use it with OpenKneeboard?
 
-Follow the instructions for the other tool. If the other tool does not provide instructions:
+If the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard*, then:
 
-- install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI)
-- move the other tool *below* OpenKneeboard
+1. install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI)
+2. move the other tool *below* OpenKneeboard
 
 Sorry, I do not investigate unknown problems with these kind of layers, as I've done it too many times; what I've learned in the past is in [the developer FAQ for this](faq/third-party-developers.md#api-layers-that-manipulate-poses). That said, if there is evidence of a bug in OpenKneeboard rather than an unknown interaction problem, please open an issue on GitHub.
 
