@@ -7,7 +7,7 @@ All new contributors will be required to agree to a non-exclusive Contributor Li
 * to use libraries that is not compatible with the current license, e.g. WinUI3 (as of Feburary 2022) or GhostScript (potentially improving PDF support)
 * to use artwork that is not compatible with the current license, e.g. GlyphIcons
 
-**IMPORTANT**: To avoid potential future issues, the CLA is not limited to circumstances like the above; it would, for example, also allow me to use any contributions in proprietary software.
+**IMPORTANT**: To avoid potential future issues, the CLA is not limited to circumstances like the above; for example, it would hypothetically allow me to relicense future versions of OpenKneeboard under an entirely different license.
 
 ## clang-tidy
 
