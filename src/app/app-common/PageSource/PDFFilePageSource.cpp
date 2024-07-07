@@ -34,7 +34,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <shims/nlohmann/json.hpp>
@@ -466,7 +466,7 @@ void PDFFilePageSource::PostCursorEvent(
     return;
   }
 
-  scope_guard repaint([&]() { evNeedsRepaintEvent.Emit(); });
+  scope_exit repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
   CursorEvent pageEvent {ev};
   pageEvent.mX /= contentSize.mWidth;

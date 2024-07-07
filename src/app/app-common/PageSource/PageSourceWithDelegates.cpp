@@ -17,12 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <algorithm>
 #include <numeric>
@@ -237,7 +238,7 @@ void PageSourceWithDelegates::ClearUserInput(PageID pageID) {
     return;
   }
 
-  const scope_guard updateState(
+  const scope_exit updateState(
     [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
 
   auto withCursorEvents
@@ -250,7 +251,7 @@ void PageSourceWithDelegates::ClearUserInput(PageID pageID) {
 }
 
 void PageSourceWithDelegates::ClearUserInput() {
-  const scope_guard updateState(
+  const scope_exit updateState(
     [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
 
   mDoodles->Clear();

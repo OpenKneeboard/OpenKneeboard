@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/FlyoutMenuUILayer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
@@ -27,8 +29,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <dwrite.h>
 
@@ -125,7 +126,7 @@ void FlyoutMenuUILayer::Render(
   auto previous = mPrevious;
   if (previous && !mRecursiveCall) {
     mRecursiveCall = true;
-    const scope_guard endRecursive([this]() { mRecursiveCall = false; });
+    const scope_exit endRecursive([this]() { mRecursiveCall = false; });
 
     std::vector<IUILayer*> submenuNext {this};
     submenuNext.reserve(next.size() + 1);
@@ -157,7 +158,7 @@ void FlyoutMenuUILayer::Render(
 
   auto d2d = rt->d2d();
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
-  const scope_guard popClip([&d2d]() { d2d->PopAxisAlignedClip(); });
+  const scope_exit popClip([&d2d]() { d2d->PopAxisAlignedClip(); });
 
   if (!mPrevious) {
     d2d->FillRectangle(rect, mBGOverpaintBrush.get());

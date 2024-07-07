@@ -149,7 +149,7 @@ target_link_libraries(
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   OpenKneeboard-dprint
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
   OpenKneeboard-shims
   OpenKneeboard-version
 )

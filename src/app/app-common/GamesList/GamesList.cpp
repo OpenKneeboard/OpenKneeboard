@@ -25,7 +25,7 @@
 #include <OpenKneeboard/GenericGame.h>
 #include <OpenKneeboard/KneeboardState.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <windows.h>
 
@@ -97,7 +97,7 @@ nlohmann::json GamesList::GetSettings() const {
 
 void GamesList::LoadSettings(const nlohmann::json& config) {
   mInstances.clear();
-  const scope_guard emitOnExit(
+  const scope_exit emitOnExit(
     [this]() { this->evSettingsChangedEvent.Emit(); });
 
   if (config.is_null()) {

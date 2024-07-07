@@ -17,26 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <optional>
-#include <functional>
+#include <OpenKneeboard/scope_exit.h>
 
 namespace OpenKneeboard {
 
-/// Alternative to wxScopeGuard that doesn't swallow exceptions
-class scope_guard final {
- private:
-  std::optional<std::function<void()>> mCallback;
+scope_exit::scope_exit(std::function<void()> f) : mCallback(f) {
+}
 
- public:
-  scope_guard(std::function<void()> f);
-  ~scope_guard() noexcept;
+// Destructors can't/shouldn't throw; if the callback throws, terminate.
+scope_exit::~scope_exit() noexcept {
+  if (!mCallback) {
+    return;
+  }
+  (*mCallback)();
+}
 
-  void abandon();
-
-  scope_guard(const scope_guard& other) = delete;
-  scope_guard& operator=(const scope_guard&) = delete;
-};
+void scope_exit::abandon() {
+  mCallback = {};
+}
 
 }// namespace OpenKneeboard

@@ -27,7 +27,7 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/filesystem>
 
@@ -162,7 +162,7 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   TraceLoggingRegister(gTraceProvider);
-  const scope_guard unregisterTraceProvider(
+  const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
   DPrintSettings::Set({
     .prefix = "OpenXR-Helper",

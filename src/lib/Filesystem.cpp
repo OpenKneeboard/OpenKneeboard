@@ -22,7 +22,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/winrt/base.h>
 
@@ -191,7 +191,7 @@ void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
   PIDLIST_ABSOLUTE pidl {nullptr};
   check_hresult(
     SHParseDisplayName(path.wstring().c_str(), nullptr, &pidl, 0, nullptr));
-  const scope_guard freePidl([pidl] { CoTaskMemFree(pidl); });
+  const scope_exit freePidl([pidl] { CoTaskMemFree(pidl); });
   check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
 }
 

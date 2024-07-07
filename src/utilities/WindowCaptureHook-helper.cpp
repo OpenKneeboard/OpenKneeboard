@@ -22,7 +22,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/Windows.h>
 
@@ -51,7 +51,7 @@ int WINAPI wWinMain(
   PWSTR pCmdLine,
   int nCmdShow) {
   TraceLoggingRegister(gTraceProvider);
-  const scope_guard unregisterTraceProvider(
+  const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
   DPrintSettings::Set({
     .prefix = std::format("WindowCaptureHook-helper-{}", sizeof(void*) * 8),

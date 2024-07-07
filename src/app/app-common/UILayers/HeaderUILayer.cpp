@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/HeaderUILayer.h>
@@ -31,8 +33,7 @@
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
@@ -109,7 +110,7 @@ void HeaderUILayer::PostCursorEvent(
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu && !mRecursiveCall) {
     mRecursiveCall = true;
-    const scope_guard endRecursive([this]() { mRecursiveCall = false; });
+    const scope_exit endRecursive([this]() { mRecursiveCall = false; });
 
     std::vector<IUILayer*> menuNext {this};
     std::ranges::copy(next, std::back_inserter(menuNext));
@@ -122,7 +123,7 @@ void HeaderUILayer::PostCursorEvent(
   const auto renderSize = *mLastRenderSize;
   auto toolbar = mToolbar;
   if (toolbar && toolbar->mButtons) {
-    scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
+    scope_exit repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
     CursorEvent toolbarEvent {cursorEvent};
     toolbarEvent.mX *= renderSize.mWidth;
     toolbarEvent.mY *= renderSize.mHeight;

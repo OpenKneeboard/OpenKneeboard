@@ -24,7 +24,7 @@
 #include <OpenKneeboard/WintabTablet.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/version.h>
 
 #include <Windows.h>
@@ -107,7 +107,7 @@ void TabletProxy::Initialize() {
     return;
   }
 
-  const scope_guard cleanupOnFailure([this]() {
+  const scope_exit cleanupOnFailure([this]() {
     if (mInitialized) {
       return;
     }

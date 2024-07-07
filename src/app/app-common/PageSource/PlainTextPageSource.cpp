@@ -18,13 +18,14 @@
  * USA.
  */
 
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <Unknwn.h>
 
@@ -357,7 +358,7 @@ void PlainTextPageSource::LayoutMessages() {
     return;
   }
 
-  const scope_guard repaintAtEnd(
+  const scope_exit repaintAtEnd(
     [this]() { this->evContentChangedEvent.Emit(); });
 
   for (auto message: mMessagesToLayout) {

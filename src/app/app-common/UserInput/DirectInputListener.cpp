@@ -26,7 +26,7 @@
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <array>
 
@@ -78,7 +78,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   winrt::com_ptr<IDirectInput8> di,
   std::shared_ptr<DirectInputDevice> device,
   HANDLE completionHandle) {
-  const scope_guard markComplete(
+  const scope_exit markComplete(
     [completionHandle]() { SetEvent(completionHandle); });
 
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
@@ -109,7 +109,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   dprintf("Starting DirectInputListener::Run() for {}", deviceName);
   // not a coroutine, also not a reference or a parameter
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
-  const scope_guard logOnExit([deviceName]() {
+  const scope_exit logOnExit([deviceName]() {
     dprintf(
       "Exiting DirectInputListener::Run() for {}, with {} uncaught exceptions",
       deviceName,

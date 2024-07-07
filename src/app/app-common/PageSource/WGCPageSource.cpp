@@ -28,7 +28,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/winrt/Microsoft.UI.Interop.h>
 
@@ -246,9 +246,9 @@ void WGCPageSource::OnWGCFrame() {
        && (captureSize.Height <= mSwapchainDimensions.mHeight))
     ? mSwapchainDimensions
     : this->GetSwapchainDimensions({
-      static_cast<uint32_t>(captureSize.Width),
-      static_cast<uint32_t>(captureSize.Height),
-    });
+        static_cast<uint32_t>(captureSize.Width),
+        static_cast<uint32_t>(captureSize.Height),
+      });
 
   if (swapchainDimensions != mSwapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope(

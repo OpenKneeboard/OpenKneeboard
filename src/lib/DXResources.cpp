@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 
 // clang-format off
@@ -65,7 +65,7 @@ D3D11Resources::D3D11Resources() {
          i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapterIt.put()))
        == S_OK;
        ++i) {
-    const scope_guard releaseIt([&]() { adapterIt = {nullptr}; });
+    const scope_exit releaseIt([&]() { adapterIt = {nullptr}; });
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
     dprintf(
@@ -85,7 +85,7 @@ D3D11Resources::D3D11Resources() {
 
     D3DKMT_OPENADAPTERFROMLUID kmtAdapter {.AdapterLuid = desc.AdapterLuid};
     winrt::check_nt(D3DKMTOpenAdapterFromLuid(&kmtAdapter));
-    const scope_guard closeKMT([&kmtAdapter]() noexcept {
+    const scope_exit closeKMT([&kmtAdapter]() noexcept {
       D3DKMT_CLOSEADAPTER closeAdapter {kmtAdapter.hAdapter};
       winrt::check_nt(D3DKMTCloseAdapter(&closeAdapter));
     });

@@ -22,7 +22,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <wil/cppwinrt.h>
 #include <wil/cppwinrt_helpers.h>
@@ -66,12 +66,12 @@ winrt::fire_and_forget OTDIPCClient::final_release(
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
-  const scope_guard markCompletion([handle = mCompletionHandle.get()]() {
+  const scope_exit markCompletion([handle = mCompletionHandle.get()]() {
     dprint("Setting OTDIPC completion handle");
     SetEvent(handle);
   });
   dprint("Starting OTD-IPC client");
-  const scope_guard exitMessage([]() {
+  const scope_exit exitMessage([]() {
     dprintf(
       "Tearing down OTD-IPC client with {} uncaught exceptions",
       std::uncaught_exceptions());
@@ -117,7 +117,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
   }
 
   dprint("Connected to OTD-IPC server");
-  const scope_guard exitMessage([]() {
+  const scope_exit exitMessage([]() {
     dprintf(
       "Tearing down OTD-IPC connection with {} uncaught exceptions",
       std::uncaught_exceptions());

@@ -46,7 +46,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/inttypes.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
@@ -289,7 +289,7 @@ fire_and_forget TabsSettingsPage::RemoveTab(
   }
 
   mUIIsChangingTabs = true;
-  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
+  const scope_exit changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
   auto tabsList = mKneeboard->GetTabsList();
   const auto tabs = tabsList->GetTabs();
@@ -528,7 +528,7 @@ void TabsSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   const std::shared_lock lock(*mKneeboard);
 
   mUIIsChangingTabs = true;
-  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
+  const scope_exit changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
   auto initialIndex = List().SelectedIndex();
   if (initialIndex == -1) {
@@ -572,7 +572,7 @@ void TabsSettingsPage::OnTabsChanged(
   }
   // ... but act on the insert :)
   mUIIsChangingTabs = true;
-  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
+  const scope_exit changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
   std::vector<std::shared_ptr<ITab>> reorderedTabs;
   for (auto item: items) {

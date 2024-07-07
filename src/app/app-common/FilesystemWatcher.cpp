@@ -21,7 +21,7 @@
 #include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::Storage::Search;
@@ -108,7 +108,7 @@ winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
   static_assert(tickDelta == std::chrono::nanoseconds(100));
 
   mSettling = true;
-  const scope_guard settled([this]() { mSettling = false; });
+  const scope_exit settled([this]() { mSettling = false; });
 
   while (true) {
     auto self = weak.lock();

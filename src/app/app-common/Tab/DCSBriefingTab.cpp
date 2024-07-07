@@ -28,7 +28,7 @@
 #include <OpenKneeboard/PlainTextPageSource.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 using DCS = OpenKneeboard::DCSWorld;
 
@@ -71,7 +71,7 @@ std::string DCSBriefingTab::GetStaticGlyph() {
 }
 
 void DCSBriefingTab::Reload() noexcept {
-  const scope_guard emitEvents([this]() {
+  const scope_exit emitEvents([this]() {
     this->evContentChangedEvent.Emit();
     this->evAvailableFeaturesChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();

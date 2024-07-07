@@ -34,7 +34,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <mutex>
@@ -365,7 +365,7 @@ void InterprocessRenderer::RenderNow() noexcept {
     return;
   }
 
-  const scope_guard markDone([this]() { mRendering.clear(); });
+  const scope_exit markDone([this]() { mRendering.clear(); });
 
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "InterprocessRenderer::RenderNow()");

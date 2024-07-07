@@ -23,7 +23,7 @@
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <source_location>
 
@@ -45,7 +45,7 @@ RunnerThread::RunnerThread(
   mDQC.DispatcherQueue().TryEnqueue(std::bind_front(
     [](auto name, auto impl, auto stop, auto loc, auto event)
       -> winrt::fire_and_forget {
-      const scope_guard setEventOnExit([event, name]() {
+      const scope_exit setEventOnExit([event, name]() {
         TraceLoggingWrite(
           gTraceProvider,
           "RunnerThread/SetEvent",

@@ -36,7 +36,7 @@
 #include <OpenKneeboard/TroubleshootingStore.h>
 
 #include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 
@@ -212,7 +212,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   }
   const auto zipPath = *maybePath;
   const auto zipPathUtf8 = to_utf8(zipPath);
-  const scope_guard openWhenDone(
+  const scope_exit openWhenDone(
     [zipPath]() { Filesystem::OpenExplorerWithSelectedFile(zipPath); });
 
   using unique_zip = std::unique_ptr<zip_t, CHandleDeleter<zip_t*, &zip_close>>;

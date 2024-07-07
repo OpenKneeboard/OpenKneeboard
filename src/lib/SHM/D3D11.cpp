@@ -20,7 +20,7 @@
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 namespace OpenKneeboard::SHM::D3D11 {
 

@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/GetMainHWND.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/winrt/base.h>
 
@@ -41,7 +42,7 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   }
   const auto cached = gCache.mInfo;
   gCache.mInfo = {};
-  const scope_guard updateCacheTime([&]() { gCache.mCacheTime = now; });
+  const scope_exit updateCacheTime([&]() { gCache.mCacheTime = now; });
 
   auto name
     = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectReverseDomainW);
@@ -55,7 +56,7 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   if (!mapping) {
     return {};
   }
-  scope_guard closeView([=]() { UnmapViewOfFile(mapping); });
+  scope_exit closeView([=]() { UnmapViewOfFile(mapping); });
 
   MEMORY_BASIC_INFORMATION mappingInfo;
   VirtualQuery(GetCurrentProcess(), &mappingInfo, sizeof(mappingInfo));

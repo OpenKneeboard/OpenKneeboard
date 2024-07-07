@@ -24,7 +24,7 @@
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <ranges>
@@ -44,7 +44,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
   winrt::com_ptr<IUnknown> it;
   ULONG fetched {};
   while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
-    const scope_guard clearIt([&]() { it = {nullptr}; });
+    const scope_exit clearIt([&]() { it = {nullptr}; });
     const auto info = it.as<IWICBitmapCodecInfo>();
     UINT neededBufferSize = 0;
     winrt::check_hresult(

@@ -35,7 +35,7 @@
 #include <OpenKneeboard/TabletInputAdapter.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/winrt/base.h>
 
@@ -423,7 +423,7 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   }
 
   const auto cleanup
-    = scope_guard([&]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
+    = scope_exit([&]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
   WriteProcessMemory(
     process, targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
 

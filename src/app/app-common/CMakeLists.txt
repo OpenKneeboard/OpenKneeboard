@@ -34,7 +34,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-games
   OpenKneeboard-handles
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
   System::D2d1
   System::Dinput8
   System::Dwmapi

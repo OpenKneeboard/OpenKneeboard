@@ -17,12 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/EndlessNotebookTab.h>
 #include <OpenKneeboard/FilePageSource.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/nlohmann/json.hpp>
 
@@ -97,7 +98,7 @@ void EndlessNotebookTab::SetPath(const std::filesystem::path& rawPath) {
 }
 
 void EndlessNotebookTab::Reload() {
-  const scope_guard contentChanged([this]() { evContentChangedEvent.Emit(); });
+  const scope_exit contentChanged([this]() { evContentChangedEvent.Emit(); });
 
   mPageIDs.clear();
   mSourcePageID = {nullptr};

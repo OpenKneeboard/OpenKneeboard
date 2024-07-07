@@ -18,11 +18,12 @@
  * USA.
  */
 
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/NavigationTab.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <cstring>
 
@@ -180,7 +181,7 @@ void NavigationTab::PostCursorEvent(
   if (!mButtonTrackers.contains(pageID)) {
     return;
   }
-  scope_guard repaintOnExit([&]() { evNeedsRepaintEvent.Emit(); });
+  scope_exit repaintOnExit([&]() { evNeedsRepaintEvent.Emit(); });
   mButtonTrackers.at(pageID)->PostCursorEvent(ctx, ev);
 }
 

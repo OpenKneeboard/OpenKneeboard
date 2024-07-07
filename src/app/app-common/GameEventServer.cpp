@@ -17,14 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <Windows.h>
@@ -64,7 +65,7 @@ GameEventServer::~GameEventServer() {
 }
 
 winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
-  const scope_guard markCompletion(
+  const scope_exit markCompletion(
     [handle = mCompletionHandle.get()]() { SetEvent(handle); });
 
   auto weak = weak_from_this();
@@ -77,7 +78,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   }
 
   dprint("Started listening for game events");
-  const scope_guard logOnExit([]() {
+  const scope_exit logOnExit([]() {
     dprintf(
       "GameEventServer shutting down with {} uncaught exceptions",
       std::uncaught_exceptions());
@@ -166,7 +167,7 @@ winrt::fire_and_forget GameEventServer::DispatchEvent(std::string_view ref) {
   TraceLoggingActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
-  const scope_guard stopActivity(
+  const scope_exit stopActivity(
     [&activity]() { TraceLoggingWriteStop(activity, "GameEvent"); });
   if (event.name != GameEvent::EVT_MULTI_EVENT) {
     this->evGameEvent.EnqueueForContext(mUIThread, event);

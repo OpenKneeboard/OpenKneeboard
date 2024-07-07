@@ -20,7 +20,7 @@
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/nlohmann/json.hpp>
 
@@ -71,7 +71,7 @@ void PlainTextFilePageSource::SetPath(const std::filesystem::path& path) {
 }
 
 void PlainTextFilePageSource::Reload() {
-  scope_guard emitEvents([this]() {
+  scope_exit emitEvents([this]() {
     this->evContentChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });

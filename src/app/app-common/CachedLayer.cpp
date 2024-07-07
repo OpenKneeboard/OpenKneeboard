@@ -22,7 +22,7 @@
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/audited_ptr.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <DirectXColors.h>
 

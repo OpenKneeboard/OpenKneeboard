@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DirectInputAdapter.h>
@@ -36,10 +38,9 @@
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/UserAction.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <algorithm>
 #include <string>
@@ -61,7 +62,7 @@ KneeboardState::ReleaseHwndResources() {
 
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
-  const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
+  const scope_exit saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
     this->evFrameTimerPreEvent,
@@ -609,7 +610,7 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   // We want the evSettingsChanged event in particular to be emitted
   // first, so that we don't save
   mSaveSettingsEnabled = false;
-  const scope_guard storeFutureChanges(
+  const scope_exit storeFutureChanges(
     [this]() { mSaveSettingsEnabled = true; });
 
   const EventDelay delay;// lock must be released first

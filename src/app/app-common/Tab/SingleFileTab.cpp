@@ -23,7 +23,7 @@
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/SingleFileTab.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/nlohmann/json.hpp>
 
@@ -56,11 +56,11 @@ SingleFileTab::SingleFileTab(
   std::string_view title,
   const nlohmann::json& settings)
   : SingleFileTab(
-    dxr,
-    kbs,
-    persistentID,
-    title,
-    settings.at("Path").get<std::filesystem::path>()) {
+      dxr,
+      kbs,
+      persistentID,
+      title,
+      settings.at("Path").get<std::filesystem::path>()) {
 }
 
 SingleFileTab::~SingleFileTab() {

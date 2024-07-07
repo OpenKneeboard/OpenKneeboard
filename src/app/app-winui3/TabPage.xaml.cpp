@@ -23,6 +23,8 @@
 #include "TabPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "Globals.h"
 
 #include <OpenKneeboard/CreateTabActions.h>
@@ -41,8 +43,7 @@
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/source_location>
 
@@ -619,7 +620,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   }
 
   const std::unique_lock lock(*mDXR);
-  const auto cleanup = scope_guard([this]() {
+  const auto cleanup = scope_exit([this]() {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/Present()");
     mSwapChain->Present(0, 0);
     mNeedsFrame = false;

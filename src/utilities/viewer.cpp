@@ -38,7 +38,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
@@ -774,7 +774,7 @@ class TestViewerWindow final : private D3D11Resources {
     auto ctx = mD2D->mD2DDeviceContext.get();
     ctx->SetTarget(mWindowBitmap.get());
     ctx->BeginDraw();
-    scope_guard endDraw([&ctx]() { ctx->EndDraw(); });
+    scope_exit endDraw([&ctx]() { ctx->EndDraw(); });
 
     const auto clientSize = GetClientSize();
     auto text = std::format(
@@ -1120,7 +1120,7 @@ int WINAPI wWinMain(
   PWSTR pCmdLine,
   int nCmdShow) {
   TraceLoggingRegister(gTraceProvider);
-  const scope_guard unregisterTraceProvider(
+  const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
 
   DPrintSettings::Set({.prefix = "OpenKneeboard-Viewer"});

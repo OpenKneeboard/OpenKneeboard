@@ -20,13 +20,14 @@
 
 #include "OpenXRD3D11Kneeboard.h"
 
+#include <OpenKneeboard/config.h>
+
 #include "OpenXRNext.h"
 
 #include <OpenKneeboard/D3D11.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>

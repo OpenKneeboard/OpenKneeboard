@@ -23,6 +23,8 @@
 #include "AdvancedSettingsPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "Globals.h"
 
 #include <OpenKneeboard/AppSettings.h>
@@ -37,8 +39,7 @@
 #include <OpenKneeboard/ViewsConfig.h>
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
@@ -347,7 +348,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
     co_return;
   }
 
-  const scope_guard propertyChanged(
+  const scope_exit propertyChanged(
     [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
       co_await uiThread;
       if (auto self = weak.get()) {

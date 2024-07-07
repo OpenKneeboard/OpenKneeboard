@@ -72,7 +72,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-dprint
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
   ThirdParty::CppWinRT
   System::Shell32
 )
@@ -283,7 +283,7 @@ target_link_libraries(
 )
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
 )
 
 ok_add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
@@ -315,9 +315,9 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-dprint)
 
-ok_add_library(OpenKneeboard-scope_guard STATIC scope_guard.cpp)
+ok_add_library(OpenKneeboard-scope_exit STATIC scope_exit.cpp)
 target_link_libraries(
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
   PUBLIC
   _libheaders)
 

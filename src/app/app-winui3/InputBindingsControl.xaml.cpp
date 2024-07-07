@@ -31,7 +31,7 @@
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/UserInputDevice.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <microsoft.ui.xaml.window.h>
@@ -153,7 +153,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
     = mDevice->GetID() == to_string(to_hstring({GUID_SysKeyboard}));
 
   EventHookToken hookToken;
-  auto unhook = scope_guard(
+  auto unhook = scope_exit(
     [this, hookToken] { mDevice->evButtonEvent.RemoveHook(hookToken); });
   mDevice->evButtonEvent.AddHook(
     [hookToken,

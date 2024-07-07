@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
@@ -25,9 +27,8 @@
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/TabView.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 namespace OpenKneeboard {
 
@@ -133,7 +134,7 @@ void TabView::SetPageID(PageID page) {
 }
 
 void TabView::OnTabContentChanged() {
-  const scope_guard updateOnExit([this] {
+  const scope_exit updateOnExit([this] {
     this->evContentChangedEvent.Emit();
     if (!mActiveSubTab) {
       evNeedsRepaintEvent.Emit();

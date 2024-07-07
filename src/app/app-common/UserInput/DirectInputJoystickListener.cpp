@@ -21,7 +21,7 @@
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/DirectInputJoystickListener.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 namespace OpenKneeboard {
 
@@ -37,7 +37,7 @@ DirectInputJoystickListener::~DirectInputJoystickListener() = default;
 void DirectInputJoystickListener::Poll() {
   decltype(mState) newState {};
   this->GetState(sizeof(mState), &newState);
-  scope_guard updateState([&]() { mState = newState; });
+  scope_exit updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
   for (uint8_t i = 0; i < sizeof(mState.rgbButtons); ++i) {

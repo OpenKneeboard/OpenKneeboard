@@ -41,7 +41,7 @@
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
@@ -374,7 +374,7 @@ static void LogInstallationInformation() {
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   TraceLoggingRegister(gTraceProvider);
-  const scope_guard unregisterTraceProvider(
+  const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
 
   try {

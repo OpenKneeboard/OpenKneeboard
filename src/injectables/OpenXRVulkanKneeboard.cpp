@@ -23,7 +23,7 @@
 #include "OpenXRNext.h"
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/vulkan/vulkan.h>

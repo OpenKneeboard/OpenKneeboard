@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/Elevation.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <thread>
 
@@ -163,11 +164,11 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
   SIZE_T size {};
   InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
   auto tal = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(new char[size]);
-  const scope_guard freeTalMemory(
+  const scope_exit freeTalMemory(
     [tal]() { delete reinterpret_cast<char*>(tal); });
 
   winrt::check_bool(InitializeProcThreadAttributeList(tal, 1, 0, &size));
-  const scope_guard deleteTal([tal]() { DeleteProcThreadAttributeList(tal); });
+  const scope_exit deleteTal([tal]() { DeleteProcThreadAttributeList(tal); });
 
   auto rawProcess = shellProcess.get();
 

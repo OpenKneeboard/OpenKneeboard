@@ -80,7 +80,7 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-D3D12
   OpenKneeboard-SHM-Client-Vulkan
   OpenKneeboard-Viewer-Shaders
-  OpenKneeboard-scope_guard
+  OpenKneeboard-scope_exit
   System::D2d1
   System::D3d11
   System::Dcomp

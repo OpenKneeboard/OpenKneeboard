@@ -20,7 +20,7 @@
 #include <OpenKneeboard/Events.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <queue>
 

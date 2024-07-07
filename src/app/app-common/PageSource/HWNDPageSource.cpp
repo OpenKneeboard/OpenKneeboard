@@ -28,7 +28,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/winrt/Microsoft.UI.Interop.h>
 
@@ -409,7 +409,7 @@ void HWNDPageSource::PostCursorEvent(
     gControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
     reinterpret_cast<LPARAM>(mCaptureWindow));
-  const scope_guard unhook([=]() {
+  const scope_exit unhook([=]() {
     SendMessageW(
       target,
       gControlMessage,

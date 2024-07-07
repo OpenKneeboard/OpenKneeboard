@@ -22,7 +22,7 @@
 #include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <Windows.h>
 

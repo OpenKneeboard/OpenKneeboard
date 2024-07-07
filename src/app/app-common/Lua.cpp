@@ -20,7 +20,7 @@
 #include <OpenKneeboard/Lua.h>
 
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
@@ -292,7 +292,7 @@ bool LuaRef::operator==(const LuaRef& other) const noexcept {
 
   p->PushValueToStack();
   other.p->PushValueToStack();
-  scope_guard popValues([&]() { lua_pop(*lua, 2); });
+  scope_exit popValues([&]() { lua_pop(*lua, 2); });
 
   return lua_rawequal(*lua, -1, -2);
 }

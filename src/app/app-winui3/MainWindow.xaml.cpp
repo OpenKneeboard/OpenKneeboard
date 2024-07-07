@@ -25,6 +25,8 @@
 #endif
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "App.xaml.h"
 #include "CheckDCSHooks.h"
 #include "CheckForUpdates.h"
@@ -45,10 +47,9 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
@@ -560,7 +561,7 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
   std::wstring title(L"OpenKneeboard");
 
-  const scope_guard setTitle([&title, this]() {
+  const scope_exit setTitle([&title, this]() {
     if (IsElevated()) {
       title += L" [Administrator]";
     }

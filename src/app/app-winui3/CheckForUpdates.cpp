@@ -23,15 +23,16 @@
 #include "CheckForUpdates.h"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
 #include "Globals.h"
 
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/LaunchURI.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 
@@ -204,7 +205,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
   dprintf(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
-  scope_guard oncePerDay([&]() {
+  scope_exit oncePerDay([&]() {
     settings.mDisabledUntil = now + (60 * 60 * 24);
     appSettings.mAutoUpdate = settings;
     gKneeboard.lock()->SetAppSettings(appSettings);

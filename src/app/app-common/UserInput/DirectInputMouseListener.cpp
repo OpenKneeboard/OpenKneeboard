@@ -21,7 +21,7 @@
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/DirectInputMouseListener.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 namespace OpenKneeboard {
 
@@ -37,7 +37,7 @@ DirectInputMouseListener::~DirectInputMouseListener() = default;
 void DirectInputMouseListener::Poll() {
   decltype(mState) newState {};
   this->GetState(sizeof(mState), &newState);
-  scope_guard updateState([&]() { mState = newState; });
+  scope_exit updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
   for (size_t i = 0; i < sizeof(mState.rgbButtons); ++i) {

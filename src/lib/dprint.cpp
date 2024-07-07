@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/Win32.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/scope_exit.h>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
@@ -210,7 +211,7 @@ void DPrintSettings::Set(const DPrintSettings& settings) {
 }
 
 DPrintReceiver::DPrintReceiver() {
-  scope_guard cleanup([this]() {
+  scope_exit cleanup([this]() {
     if (mUsable) {
       return;
     }
