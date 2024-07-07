@@ -95,49 +95,6 @@ Resized to 3x3 (75%):
 
 The vertical line now straddles two pixels, with a gradient between them; this results in blurry text and lines.
 
-## Third-Party Developers
+## I'm a third party developer and have a question
 
-### How do I use OpenKneeboard to show content from my app?
-
-You have three options:
-- implement a custom tab type in OpenKneeboard with C++ and Direct3D 11
-- provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
-- provide a window, and instruct users on how to configure a Window Capture tab for your app
-
-OpenKneeboard has additional integration APIs available for [web dashboards](api/web-dashboards.md); however, text quality will be higher for text or PDF files.
-
-Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
-
-OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
-
-Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
-
-### How do I choose where my app's content is displayed in VR?
-
-Instruct users on how to change their user settings to your recommendations.
-
-OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
-
-Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
-
-### How do I use OpenKneeboard to create my own OpenXR overlay?
-
-OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit. This is not a supported use-case of OpenKneeboard.
-
-You are welcome to fork and follow the terms of the license to create a new project, however I am unable to provide any assistance to third-party projects.
-
-Alternatively, if you don't need to handle input, it is relatively straightforward to create your own OpenXR overlay from scratch:
-
-1. create an OpenXR API layer
-2. in your layer, implement the `xrEndFrame()` function
-3. Append additional composition layers to the layer submitted in `XrFrameEndInfo` struct
-
-Your code will need to handle copying your overlay into the composition layer swapchains; this will require basic knowledge of the graphics APIs you care about, e.g. Direct3D 11, Direct3D 12, Vulkan. If you are not familiar with graphics APIs, the official Vulkan tutorial and various 'hello triangle' tutorials are sufficient. You may find Microsoft's [DirectXTK](https://github.com/microsoft/DirectXTK) and [DirectXTK12](https://github.com/microsoft/DirectXTK12) projects useful. If you are not familiar with 3D math for positioning your layer, DirectXTK's SimpleMath component can be useful, or the [`xr_linear.h` header from the OpenXR SDK](https://github.com/KhronosGroup/OpenXR-SDK/blob/main/src/common/xr_linear.h).
-
-### How do I control OpenKneeboard from my app?
-
-Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
-
-With that in mind, take a look at [the API documentation](https://openkneeboard.com/api/); if your feature requires an additional API and fits with the intended purposes of OpenKneeboard, open a feature request or pull request for an additional API.
-
-Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
+The third-party developer FAQ has been split to [a separate page](faq/third-party-developers.md).
