@@ -67,7 +67,7 @@ Pose manipulation layers should be closer to the runtime and farther from the ga
 
 If OpenKneeboard is closer to the runtime than your layer, OpenKneeboard's world-locked content should be locked to the real-world instead of your modified world space, which is generally undesirable, but otherwise everything should work fine.
 
-If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games to do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
+If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
 
 ### What do you mean by 'consistent handling'?
 
@@ -76,7 +76,7 @@ If your pose manipulation layer needs to be between the game and OpenKneeboard, 
     2. I ask "where is space *c* compared to space *b*?"; say the answer is "space *c* is 1 meter to the right of space *b*"
     3. If I then ask "where is space *c* compared to space *a*?", the answer **must** be 1 + 1 = 2, i.e. "space *c* is 2 meters to the right of space *a*'.
     4. If I submit a quad layer with a position 0.5 meters to the right of space *b*, it should appear half way between spaces *b* and *c*
-    5. If I submit a quad layer with a position 1.5 meters to the right of space *a*, it should appear in the same positon as if it were positioned 0.5 meters to the right of space *b*
+    5. If I submit a quad layer with a position 1.5 meters to the right of space *a*, it should appear in the same position as if it were positioned 0.5 meters to the right of space *b*
     6. Equivalent requirements apply for orientation
 2. World-locked positions (i.e. based on local, stage, or local_floor spaces) should be consistent *between* frames, in terms of in-game world. If your layer manipulates poses, this implies that it probably will not be in terms of real-world space. For example, if I submit `(1, 1, -1) in myXrSpaceDerivedFromLocal` and it appears at a certain in-game position, *any* later frames that also use `(1, 1, -1) in myXrSpaceDerivedLocal` should be in the same in-game position
 
