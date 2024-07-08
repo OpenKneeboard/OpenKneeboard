@@ -59,6 +59,30 @@ With that in mind, take a look at [the API documentation](https://openkneeboard.
 
 Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
+## Why doesn't the mouse emulation work correctly in my web dashboard?
+
+This is generally a limitation of Edge WebView2 or WinUI3's integration with it; Microsoft have periodically published improvements to this. Most of these improvements have been delivered by Windows Update, however some are delivered as an update to the Windows App SDK, which requires OpenKneeboard to be rebuilt with the new SDK.
+
+A future version of OpenKneeboard may gain support for directly exposing its' own cursor events via `window.OpenKneeboard.addEventListener('cursor', ...)` or similar; any updates will be on issue #240. These would avoid WebView2 limitations, but would require manually implementing DOM click events, e.g. via `document.elementFromPoint()`.
+
+## Why doesn't the mouse emulation work correctly in my app when using Window Capture tabs?
+
+Windows and app development frameworks try very hard in many different ways to make sure that the mouse cursor only affects the foreground window. OpenKneeboard tries to work around this by sending events itself, and intercepting Win32 functions such as `GetForegroundWindow()`. Some frameworks and apps use mechanisms that OpenKneeboard does not intercept, or OpenKneeboard's implementation does not fool the app.
+
+These issues are extremely time consuming, and there are too many different frameworks and apps for me to investigate them, but contributions are very welcome - however, this is an advanced topic.
+
+You will need familiarity with:
+- C++
+- the Win32 API
+- window messages and how they work (e.g. WM_MOUSEMOVE) and related APIs (e.g. RawInput, HID)
+- how your app and/or framework handles mouse events
+  - alternatively, if you use a source-available GUI framework, a willingness to dig into your frameworks' source code
+  - alternatively, if you use a closed-source GUI framework, a willingness to dig into how your framework works via reverse engineering tools. For .Net there's ILSpy (for .Net), and for native code there's Ghidra or IDA
+
+It is easy for OpenKneeboard to send additional or different window messages, and to intercept additional functions; the hard part is figuring out what messages and functions, and what the modified behavior should be.
+
+If you are familiar with the various components except for OpenKneeboard, please reach out in `#code-help` [on Discord](https://go.openkneeboard.com/discord).
+
 ## API layers that manipulate poses
 
 ### What should the API layer order be?

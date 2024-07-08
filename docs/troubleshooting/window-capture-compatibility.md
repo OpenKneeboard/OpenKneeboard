@@ -16,10 +16,11 @@ While OpenKneeboard's own cursor will move, it will not move the Windows mouse c
 
 ## Mouse/tablet forwarding
 
-- UWP apps are not supported at all. These generally show up in task manager with a 'Runtime Broker' process
-- Apps with specialized mouse handling may have problems, or may work better with a tablet than the mouse
+If mouse/tablet forwarding does not work for you with a specific app, it is simply incompatible. There is no configuration, no troubleshooting, or anything else you can do to fix it, [unless you are a C++ developer familiar with Win32 and your framework](../faq/third-party-developers.md#why-doesnt-the-mouse-emulation-work-correctly-in-my-app-when-using-window-capture-tabs).
 
-This not necessarily a bug in the apps; Windows only supports mouse interaction with the active Window. OpenKneeboard attempts to work around this restriction, but it is not how Windows, apps, or their frameworks are designed to work.
+Apps, frameworks, and Windows itself try very hard to make it so mouse movement only affects active window; sometimes, despite OpenKneeboards' best efforts, they succeed.
+
+These issues are very time consuming, and there are too many apps/frameworks for me to investigate them. There is no need to ask, or to open bug reports/feature requests.
 
 ### Specific apps with compatibility issues
 
