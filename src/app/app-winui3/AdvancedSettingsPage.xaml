@@ -11,7 +11,7 @@
     <local:PercentValueConverter x:Key="PercentConverter"/>
   </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto"
-      Padding="24">
+                Padding="24">
     <StackPanel
       Orientation="Vertical"
       Spacing="16"
@@ -335,10 +335,23 @@
           caused by bugs in other OpenXR components.
         </TextBlock>
         <ToggleSwitch
-          Header="Oculus SDK: Discard depth information"
-          OffContent="Disabled - incompatible with DCS"
-          OnContent="Enabled - compatible with DCS"
+          Header="Legacy Oculus API (LibOVR): Discard depth information"
+          OffContent="Disabled - keep depth information"
+          OnContent="Enabled - discard depth information"
           IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"/>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
+          If the OpenKneeboard is not visible in games using the legacy Oculus
+          API (LibOVR), this may fix it; however, when things work correctly
+          without it, it may significantly reduce the quality of reprojection.
+        </TextBlock>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
+          When this option helps, it indicates a bug in the game or the active
+          OVR runtime.
+        </TextBlock>
         <ComboBox
           Header="OpenXR: Upscale images"
           SelectedIndex="{x:Bind Quirk_OpenXR_Upscaling, Mode=TwoWay}">
