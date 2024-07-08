@@ -29,6 +29,19 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 
 Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
 
+## I haven't yet built an app; how do I get content into OpenKneeboard?
+
+The best way is to implement a new tab type in C++ with Direct3D11/Direct2D/DirectWrite.
+
+That is not particularly friendly, so an alternative is to implement your content as an HTML page - OpenKneeboard offers [additional web APIs](../api/web-dashboards.md). If you need to go beyond what JavaScript enables, consider making your app a webserver, like [BMS Kneeboard Server](https://github.com/AviiNL/bms-kneeboard-server).
+
+I do not recommend building a separate GUI app and using Window Capture: there are too many frameworks/apps for me to consider building an API for good integration, e.g:
+- this approach does not support pages/bookmarks/table of contents
+- GUI apps can *only* be controlled in game via tablet -> mouse emulation, unless you build your own input system that runs independently. OpenKneeboard's standard next/previous page/bookmark bindings etc will not work
+- changes to the GUI framework may break mouse emulation in an update, entirely outside of your control; if that happens, [you'll need to fix it](#why-doesnt-the-mouse-emulation-work-correctly-in-my-app-when-using-window-capture-tabs)
+
+There are no particular GUI frameworks I recommend, but I recommend finding an example app in the same framework and making sure that mouse injection works well enough for your purposes.
+
 ## How do I choose where my app's content is displayed in VR?
 
 Instruct users on how to change their user settings to your recommendations.
@@ -71,7 +84,7 @@ Windows and app development frameworks try very hard in many different ways to m
 
 These issues are extremely time consuming, and there are too many different frameworks and apps for me to investigate them, but contributions are very welcome - however, this is an advanced topic.
 
-You will need familiarity with:
+To directly fix the injection, you will need familiarity with:
 - C++
 - the Win32 API
 - window messages and how they work (e.g. WM_MOUSEMOVE) and related APIs (e.g. RawInput, HID)
@@ -82,6 +95,14 @@ You will need familiarity with:
 It is easy for OpenKneeboard to send additional or different window messages, and to intercept additional functions; the hard part is figuring out what messages and functions, and what the modified behavior should be.
 
 If you are familiar with the various components except for OpenKneeboard, please reach out in `#code-help` [on Discord](https://go.openkneeboard.com/discord).
+
+### An alternative approach
+
+OpenKneeboard could directly pass your application its' own raw cursor events, and leave it up to your app to deal with them. Your app might then to choose to inject them into the GUI framework itself (usually via accessibility or testing APIs), or just do its' own thing with the events.
+
+This would be via extensions to [the C API](../api/c.md), so you would need to be familiar with how to call C functions from your programming language of choice - some examples are at the bottom of the page.
+
+If this approach is interesting to you, please reach out in `#code-help` [on Discord](https://go.openkneeboard.com/discord); it is not currently planned, and is unlikely to be implemented unless there are signs of interest.
 
 ## API layers that manipulate poses
 
