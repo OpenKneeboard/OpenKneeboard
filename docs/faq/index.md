@@ -1,6 +1,7 @@
 ---
 nav_order: 4
 title: FAQ
+has_children: true
 ---
 
 # Frequently Asked Questions
