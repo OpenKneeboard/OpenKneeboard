@@ -22,7 +22,7 @@ For other feature requests, search [GitHub Issues](https://github.com/OpenKneebo
 
 ## How do I show support for a feature request?
 
-Add a thumbs up to the first comment on the GitHub issue. Comments equivalent to "this is important to me too" are always noisy spam.
+Add a thumbs up to the first comment on the GitHub issue. Comments equivalent to "this is important to me too" do not add anything.
 
 ## When will my feature be added?
 
