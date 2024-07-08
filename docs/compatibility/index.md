@@ -5,7 +5,11 @@ nav_order: 2
 
 # Compatibility
 
-- 64-bit Windows 10 May 2020 Update (version 2004 or 10.0.19041) or newer
-- A graphics card that supports Direct3D 11.1
+- 64-bit Windows Home or Pro that is still under 'General Availability' support from Microsoft; as of 2024-07-08, this means Windows 10 22H2 or newer, or Windows 11 22H2 or newer. You can see your current version by opening the start menu, typing 'winver', and running the winver program when it appears.
+- A graphics card and driver that supports Direct3D 11.1
 
-Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11, although there are currently no known issues.
+For up-to-date information on supported versions of Windows, see Microsoft's lifecycle documentation for [Windows 10](https://learn.microsoft.com/en-us/lifecycle/products/windows-10-home-and-pro) or [Windows 11](https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro).
+
+If you are running Windows 10 N, Windows 10 KN, Windows 11 N, or Windows 11 KN, you may need to [install the Media Feature Pack](https://support.microsoft.com/en-us/topic/media-feature-pack-list-for-windows-n-editions-c1c6fffa-d052-8338-7a79-a4bb980a700a). These versions of Windows are available in Europe and South Korea in order to comply with local regulations, and by default omit Windows components that are required by OpenKneeboard for image and other media handling.
+
+Enterprise, server, and other non-consumer editions of Windows are not supported, as they may be missing required Windows components.
