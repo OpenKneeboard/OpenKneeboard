@@ -114,6 +114,10 @@ Sorry, I do not investigate unknown problems with these kind of layers, as I've 
 
 As a user, your best way forward is to look for help from the other tool, and consider pointing the developer towards [the developer FAQ for this](faq/third-party-developers.md#api-layers-that-manipulate-poses).
 
+## What settings do you recommend?
+
+I choose what the defaults are, so, the defaults ;)
+
 ## I have a question about a feature request
 
 See [the feature requests FAQ](faq/feature-requests.md).
