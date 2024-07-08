@@ -349,8 +349,8 @@
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
-          When this option helps, it indicates a bug in the game or the active
-          OVR runtime.
+          When this option helps, it indicates a bug in the game, the active
+          OVR runtime, or another mod.
         </TextBlock>
         <ComboBox
           Header="OpenXR: Upscale images"
