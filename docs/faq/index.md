@@ -2,6 +2,7 @@
 nav_order: 4
 title: FAQ
 has_children: true
+has_toc: false
 ---
 
 # Frequently Asked Questions
