@@ -8,65 +8,64 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <local:PercentValueConverter x:Key="PercentConverter" />
+    <local:PercentValueConverter x:Key="PercentConverter"/>
   </Page.Resources>
-  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+  <ScrollViewer VerticalScrollMode="Auto"
+      Padding="24">
     <StackPanel
       Orientation="Vertical"
       Spacing="16"
       x:DefaultBindMode="TwoWay">
       <TextBlock
         Text="Multiple Views"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
-					Header="Change the active view by looking"
+          Header="Change the active view by looking"
           OffContent="Bindings and pen strokes always affect the first view"
           OnContent="Bindings and pen strokes affect the view you're looking at"
-          IsOn="{x:Bind GazeInputFocus}"
-        />
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+          IsOn="{x:Bind GazeInputFocus}"/>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           Both kneeboards use the same set of tabs, but track the active tab
           and pages separately. Buttons and pen strokes always go to the
           primary kneeboard - bind a button to switch kneeboards to control
           the second kneeboard.
         </TextBlock>
         <ComboBox
-          Header="App window view" 
+          Header="App window view"
           SelectedIndex="{x:Bind AppWindowViewMode}">
           <x:String>Ask later</x:String>
           <x:String>In-game active view (flight sims)</x:String>
           <x:String>Independent view (overlays, racing)</x:String>
         </ComboBox>
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           The app window can show and control the active in-game view
           (for VR, this is whichever you looked at most recently), or it can
           be independent. This changes the behavior of tab/page changes,
           including button bindings if the OpenKneeboard window is the
           foreground window.
         </TextBlock>
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           If you use tabs with multiple pages, or more tabs than views
           (common with flight simulators), you probably want
           'In-game active view'. Moving between tabs or pages in the app
           window will also change the current tab or page in-game.
         </TextBlock>
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           If you want each view to always show the same tab, and each
           tab only has one page (e.g. sim racing overlays), you probably
           want 'Independent view'. Moving between tabs or pages in the app
@@ -75,280 +74,249 @@
       </StackPanel>
       <TextBlock
         Text="Mouse button bindings"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
           OffContent="Disabled"
           OnContent="Enabled"
-          IsOn="{x:Bind EnableMouseButtonBindings}"
-        />
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+          IsOn="{x:Bind EnableMouseButtonBindings}"/>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           Allows binding mouse buttons in the "Input Settings" page; this is
           disabled by default as it is rarely used, but a common source of
           problems.
         </TextBlock>
-			</StackPanel>
+      </StackPanel>
       <TextBlock
         Text="Profiles"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
           OffContent="Single profile"
           OnContent="Multiple profiles"
-          IsOn="{x:Bind MultipleProfiles}"
-        />
-			</StackPanel>
+          IsOn="{x:Bind MultipleProfiles}"/>
+      </StackPanel>
       <TextBlock
         Text="Bookmarks"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
           OffContent="Disabled"
           OnContent="Enabled"
-          IsOn="{x:Bind Bookmarks}"
-        />
-			</StackPanel>
+          IsOn="{x:Bind Bookmarks}"/>
+      </StackPanel>
       <TextBlock
         Text="Looping"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
           Header="Pages"
           OffContent="Pages do not loop"
           OnContent="First and last pages loop"
-          IsOn="{x:Bind LoopPages}"
-        />
+          IsOn="{x:Bind LoopPages}"/>
         <ToggleSwitch
           Header="Tabs"
           OffContent="Tabs do not loop"
           OnContent="First and last tabs loop"
-          IsOn="{x:Bind LoopTabs}"
-        />
+          IsOn="{x:Bind LoopTabs}"/>
         <ToggleSwitch
           Header="Profiles"
           OffContent="Profiles do not loop"
           OnContent="First and last profiles loop"
           IsEnabled="{x:Bind MultipleProfiles,Mode=OneWay}"
-          IsOn="{x:Bind LoopProfiles}"
-        />
+          IsOn="{x:Bind LoopProfiles}"/>
         <ToggleSwitch
           Header="Bookmarks"
           OffContent="Bookmarks do not loop"
           OnContent="First and last bookmarks loop"
           IsEnabled="{x:Bind Bookmarks,Mode=OneWay}"
-          IsOn="{x:Bind LoopBookmarks}"
-        />
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+          IsOn="{x:Bind LoopBookmarks}"/>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
 					By default, 'Previous Page' is disabled on the first page, and
 					'Next Page' is disabled on the last page. Alternatively, pages can
 					loop so that if you're on the first page, 'Previous Page' will take
 					you to the last page, and if you're on the last page, 'Next Page'
 					will take you to the first page. Looping is similarly supported for
           tabs, profiles, and bookmarks;
-				</TextBlock>
+        </TextBlock>
       </StackPanel>
       <TextBlock
         Text="Tint and brightness"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
       <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
-					Header="Enabled"
+          Header="Enabled"
           OffContent="Full brightness, no tint"
           OnContent="Custom tint and brightness"
-          IsOn="{x:Bind TintEnabled}"
-        />
+          IsOn="{x:Bind TintEnabled}"/>
         <Slider
           Header="Brightness"
           Value="{x:Bind TintBrightness}"
           TickPlacement="Outside"
           TickFrequency="5"
-          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-        />
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"/>
         <TextBlock
           Text="Tint color - use white for no tint"
-          Style="{ThemeResource BodyTextBlockStyle}"
-        />
+          Style="{ThemeResource BodyTextBlockStyle}"/>
         <ColorPicker
           Color="{x:Bind Tint}"
-          ColorSpectrumShape="Ring"
-        />
+          ColorSpectrumShape="Ring"/>
       </StackPanel>
-			<Grid ColumnDefinitions="*, Auto">
-				<TextBlock 
-					Grid.Column="0"
-					Text="Drawing" 
-					Style="{StaticResource SubtitleTextBlockStyle}" 
-				/>
-				<Button
-					Grid.Column="1"
-					Content="Restore defaults"
-					Click="RestoreDoodleDefaults"
-				/>
-			</Grid>
-			<StackPanel 
-				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
-				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
-				CornerRadius="4"
-				BorderThickness="1"
-				Padding="8"
-        Spacing="12">
-				<Slider 
-					Header="Minimum pen stroke size" 
-					Value="{x:Bind MinimumPenRadius}"
-					TickPlacement="Outside" 
-					TickFrequency="5" 
-					StepFrequency="1" 
-					Maximum="50" 
-					Minimum="0"
-				/>
-				<Slider 
-					Header="Pen sensitivity"
-					Value="{x:Bind PenSensitivity}"
-					TickPlacement="Outside" 
-					TickFrequency="5" 
-					StepFrequency="1" 
-					Maximum="50" 
-					Minimum="0"
-				/>
-				<Slider 
-					Header="Minimum eraser size"
-					Value="{x:Bind MinimumEraseRadius}"
-					TickPlacement="Outside" 
-					TickFrequency="50" 
-					StepFrequency="1" 
-					Maximum="300" 
-					Minimum="0.0"
-				/>
-				<Slider 
-					Header="Eraser sensitivity"
-					Value="{x:Bind EraseSensitivity}"
-					TickPlacement="Outside" 
-					TickFrequency="100" 
-					StepFrequency="1" 
-					Maximum="500" 
-					Minimum="1.0"
-				/>
-			</StackPanel>
-			<Grid ColumnDefinitions="*, Auto">
-				<TextBlock 
-					Grid.Column="0"
-					Text="Text" 
-					Style="{StaticResource SubtitleTextBlockStyle}" 
-				/>
-				<Button
-					Grid.Column="1"
-					Content="Restore defaults"
-					Click="RestoreTextDefaults"
-				/>
-			</Grid>
-			<StackPanel 
-				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
-				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
-				CornerRadius="4"
-				BorderThickness="1"
-				Padding="8"
-        Spacing="12">
-				<Slider 
-					Header="Font size" 
-					Value="{x:Bind TextPageFontSize}"
-					TickPlacement="Outside" 
-					TickFrequency="5" 
-					StepFrequency="1" 
-					Maximum="30" 
-					Minimum="6"
-				/>
-			</StackPanel>
-      <TextBlock
-        Text="In-Game Interface"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
-      <StackPanel Orientation="Vertical"
+      <Grid ColumnDefinitions="*, Auto">
+        <TextBlock
+          Grid.Column="0"
+          Text="Drawing"
+          Style="{StaticResource SubtitleTextBlockStyle}"/>
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDoodleDefaults"/>
+      </Grid>
+      <StackPanel
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
         Padding="8"
         Spacing="12">
+        <Slider
+          Header="Minimum pen stroke size"
+          Value="{x:Bind MinimumPenRadius}"
+          TickPlacement="Outside"
+          TickFrequency="5"
+          StepFrequency="1"
+          Maximum="50"
+          Minimum="0"/>
+        <Slider
+          Header="Pen sensitivity"
+          Value="{x:Bind PenSensitivity}"
+          TickPlacement="Outside"
+          TickFrequency="5"
+          StepFrequency="1"
+          Maximum="50"
+          Minimum="0"/>
+        <Slider
+          Header="Minimum eraser size"
+          Value="{x:Bind MinimumEraseRadius}"
+          TickPlacement="Outside"
+          TickFrequency="50"
+          StepFrequency="1"
+          Maximum="300"
+          Minimum="0.0"/>
+        <Slider
+          Header="Eraser sensitivity"
+          Value="{x:Bind EraseSensitivity}"
+          TickPlacement="Outside"
+          TickFrequency="100"
+          StepFrequency="1"
+          Maximum="500"
+          Minimum="1.0"/>
+      </StackPanel>
+      <Grid ColumnDefinitions="*, Auto">
+        <TextBlock
+          Grid.Column="0"
+          Text="Text"
+          Style="{StaticResource SubtitleTextBlockStyle}"/>
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreTextDefaults"/>
+      </Grid>
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <Slider
+          Header="Font size"
+          Value="{x:Bind TextPageFontSize}"
+          TickPlacement="Outside"
+          TickFrequency="5"
+          StepFrequency="1"
+          Maximum="30"
+          Minimum="6"/>
+      </StackPanel>
+      <TextBlock
+        Text="In-Game Interface"
+        Style="{ThemeResource SubtitleTextBlockStyle}"/>
+      <StackPanel Orientation="Vertical"
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  CornerRadius="4"
+                  BorderThickness="1"
+                  Padding="8"
+                  Spacing="12">
         <ToggleSwitch
           Header="Header and toolbar"
           OffContent="No in-game header or toolbar"
           OnContent="In-game header and toolbar are shown"
-          IsOn="{x:Bind InGameHeader}"
-        />
+          IsOn="{x:Bind InGameHeader}"/>
         <ToggleSwitch
           Header="Footer and clock"
           OffContent="No in-game footer or clock"
           OnContent="In-game footer and clock are shown"
-          IsOn="{x:Bind InGameFooter}"
-        />
+          IsOn="{x:Bind InGameFooter}"/>
         <ToggleSwitch
           Header="Frame counter in footer"
           OffContent="Frame counter is not shown"
           OnContent="The number of OpenKneeboard frames is shown"
           IsOn="{x:Bind InGameFooterFrameCount}"
-          IsEnabled="{x:Bind InGameFooter,Mode=OneWay}"
-        />
+          IsEnabled="{x:Bind InGameFooter,Mode=OneWay}"/>
       </StackPanel>
-			<Grid ColumnDefinitions="*, Auto">
-				<TextBlock 
-					Grid.Column="0"
-					Text="Compatibility quirks" 
-					Style="{StaticResource SubtitleTextBlockStyle}" 
-				/>
-				<Button
-					Grid.Column="1"
-					Content="Restore defaults"
-					Click="RestoreQuirkDefaults"
-				/>
-			</Grid>
-			<StackPanel 
-				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
-				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
-				CornerRadius="4"
-				BorderThickness="1"
-				Padding="8"
+      <Grid ColumnDefinitions="*, Auto">
+        <TextBlock
+          Grid.Column="0"
+          Text="Compatibility quirks"
+          Style="{StaticResource SubtitleTextBlockStyle}"/>
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreQuirkDefaults"/>
+      </Grid>
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
         Spacing="12">
         <ComboBox
-          Header="Elevation" 
+          Header="Elevation"
           SelectedIndex="{x:Bind DesiredElevation}"
           IsEnabled="{x:Bind CanChangeElevation,Mode=OneWay}">
           <x:String>Run elevated if launched elevated</x:String>
@@ -356,23 +324,21 @@
           <x:String>Run as normal user</x:String>
         </ComboBox>
         <ToggleSwitch
-					Header="OpenXR: Always update swapchains"
+          Header="OpenXR: Always update swapchains"
           OffContent="Disabled - swapchains are only updated when changed"
           OnContent="Enabled - swapchains are updated on every game frame"
-          IsOn="{x:Bind Quirk_OpenXR_AlwaysUpdateSwapchain}"
-        />
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+          IsOn="{x:Bind Quirk_OpenXR_AlwaysUpdateSwapchain}"/>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           This reduces performance, but can workaround flickering issues
           caused by bugs in other OpenXR components.
         </TextBlock>
         <ToggleSwitch
-					Header="Oculus SDK: Discard depth information"
+          Header="Oculus SDK: Discard depth information"
           OffContent="Disabled - incompatible with DCS"
           OnContent="Enabled - compatible with DCS"
-          IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"
-        />
+          IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"/>
         <ComboBox
           Header="OpenXR: Upscale images"
           SelectedIndex="{x:Bind Quirk_OpenXR_Upscaling, Mode=TwoWay}">
@@ -386,15 +352,15 @@
 
           https://github.com/OpenKneeboard/OpenKneeboard/issues/503
         -->
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
           Increases the resolution of content before passing to the OpenXR
           runtime; runtimes are theoretically able to produce better results
           than OpenKneeboard can, but in practice OpenKneeboard produces better
           results than some vendors.
         </TextBlock>
-			</StackPanel>
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </Page>
