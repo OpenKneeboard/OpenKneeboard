@@ -1,5 +1,6 @@
 ---
 parent: FAQ
+title: Feature Requests FAQ
 ---
 # Feature Requests FAQ
 {: .no_toc }

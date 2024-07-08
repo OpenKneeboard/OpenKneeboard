@@ -12,6 +12,11 @@ title: FAQ
 1. TOC
 {:toc}
 
+Also see:
+- The [feature requests FAQ](feature-requests.md)
+- The [third-party developer FAQ](third-party-developers.md)
+
+
 ## When should I start OpenKneeboard?
 
 For the most part, it doesn't matter; if you find that OpenKneeboard only works reliably if you start things in a certain order, please [report a bug](https://go.openkneeboard.com/issues).
@@ -110,18 +115,10 @@ If the other tool provides instructions for OpenKneeboard, follow those instruct
 1. install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI)
 2. move the other tool *below* OpenKneeboard
 
-Sorry, I do not investigate unknown problems with these kind of layers, as I've done it too many times; what I've learned in the past is in [the developer FAQ for this](faq/third-party-developers.md#api-layers-that-manipulate-poses). That said, if there is evidence of a bug in OpenKneeboard rather than an unknown interaction problem, please open an issue on GitHub.
+Sorry, I do not investigate unknown problems with these kind of layers, as I've done it too many times; what I've learned in the past is in [the developer FAQ for this](third-party-developers.md#api-layers-that-manipulate-poses). That said, if there is evidence of a bug in OpenKneeboard rather than an unknown interaction problem, please open an issue on GitHub.
 
-As a user, your best way forward is to look for help from the other tool, and consider pointing the developer towards [the developer FAQ for this](faq/third-party-developers.md#api-layers-that-manipulate-poses).
+As a user, your best way forward is to look for help from the other tool, and consider pointing the developer towards [the developer FAQ for this](third-party-developers.md#api-layers-that-manipulate-poses).
 
 ## What settings do you recommend?
 
 I choose what the defaults are, so, the defaults ;)
-
-## I have a question about a feature request
-
-See [the feature requests FAQ](faq/feature-requests.md).
-
-## I'm a third party developer and have a question
-
-The third-party developer FAQ has been split to [a separate page](faq/third-party-developers.md).
