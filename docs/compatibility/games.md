@@ -5,16 +5,27 @@ parent: Compatibility
 
 # Game Compatibility
 
-| Graphics API | Non-VR | OpenXR | Oculus | OpenVR (SteamVR) |
+| Graphics API | Non-VR | OpenXR | Legacy Oculus API (OVR) | Legacy SteamVR API (OpenVR) |
 | -------------|--------|--------|--------|---------|
 | OpenGL       | ❌ | ❌ | ❌ | ✅ |
 | Direct3D 11  | ✅ | ✅ | ✅ | ✅ |
 | Direct3D 12  | ❌ | ✅ | ✅ | ✅ |
 | Vulkan       | ❌ | ✅ | ❌ | ✅ |
 
-Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR. Where possible, OpenXR is *strongly* recommended instead.
-
 OpenXR + Vulkan: the game must use `XR_KHR_vulkan_enable2` and the `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()` functions.
+
+Legacy Oculus API (OVR):
+
+- where possible, OpenXR is *strongly* recommended instead
+- only Link or Air Link are supported
+- Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR. Virtual Desktop is likely to be supported in the future - any updates will be on issue #608
+
+Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended instead
+
+32-bit games:
+
+- in v1.8 and below, only OpenVR is supported for 32-bit games
+- in v1.9 and above, 32-bit OpenXR games will also be supported.
 
 ## Common Games
 
