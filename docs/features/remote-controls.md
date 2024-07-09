@@ -44,6 +44,8 @@ Most remote controls are straightforward:
 
 These simple ones optionally take an argument to repeat the event - for example, to go forward 5 pages, run `...NEXT_PAGE.exe 5`.
 
+**WARNING**: like changing profiles in the app, , changing profiles via a remote control discard all of the user's notes, bookmarks, and all other state, e.g. the current page for each tab, DCS radio history, etc.
+
 ## `OpenKneeboard-RemoteControl-SET_PROFILE.exe`
 
 This must be ran with parameters:

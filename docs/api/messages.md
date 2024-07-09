@@ -48,8 +48,8 @@ The value is one of:
 - `NEXT_TAB`
 - `PREVIOUS_PAGE`
 - `NEXT_PAGE`
-- `PREVIOUS_PROFILE`
-- `NEXT_PROFILE`
+- `PREVIOUS_PROFILE` - *see profiles warning below*
+- `NEXT_PROFILE`: - *see profiles warning below*
 - `TOGGLE_VISIBILITY`
 - `TOGGLE_FORCE_ZOOM`
 - `SWAP_FIRST_TWO_VIEWS` - *added in v1.7; replaced `SWITCH_KNEEBOARDS` in earlier versions*
@@ -62,6 +62,8 @@ The value is one of:
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
 - `RELOAD_CURRENT_TAB` - *use with caution: this removes all notes or other interaction, and there is no undo for this function*
+
+**WARNING**: like changing profiles in the app, or via a remote control, changing profiles via the API will discard all of the user's notes, bookmarks, and all other state, e.g. the current page for each tab, DCS radio history, etc.
 
 ## SetTabByID
 
@@ -121,6 +123,8 @@ Value: JSON-encoded object:
 
 - `ID`: *string* - the ID of the profile to switch to
 
+**WARNING**: like changing profiles in the app, or via a remote control, changing profiles via the API will discard all of the user's notes, bookmarks, and all other state, e.g. the current page for each tab, DCS radio history, etc.
+
 ## SetProfileByName
 
 Value: JSON-encoded object:
@@ -132,6 +136,10 @@ Value: JSON-encoded object:
 ```
 
 - `Name`: *string* - the name of the profile to switch to
+
+**WARNING**: like changing profiles in the app, or via a remote control, changing profiles via the API will discard all of the user's notes, bookmarks, and all other state, e.g. the current page for each tab, DCS radio history, etc.
+
+## SetProfileByName
 
 ## SetBrightness
 
