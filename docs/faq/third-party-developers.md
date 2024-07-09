@@ -108,26 +108,21 @@ If this approach is interesting to you, please reach out in `#code-help` [on Dis
 
 ### What should the API layer order be?
 
-Pose manipulation layers should be closer to the runtime and farther from the game than OpenKneeboard; this is because **OpenKneeboard does nothing that the game itself is not allowed to do**, and pose manipulation layers generally want to manipulate OpenKneeboard's world-locked content the same way as they manipulate the game world, along with any world-locked content the game produces (e.g. HUDs and menus are world-locked overlays in some games).
+First, see [the user FAQ](index.md#i-use-another-openxr-tool-api-layer-what-should-the-order-be); like other API layers, pose manipulation layers should be closer to the runtime and farther from the game than OpenKneeboard, as:
+
+- it would be valid for the game itself to also do the same things that OpenKneeboard does
+- pose manipulation layers generally want to manipulate OpenKneeboard's world-locked content the same way as they manipulate the game world, along with any world-locked content the game produces (e.g. HUDs and menus are world-locked overlays in some games)
+- OpenKneeboard does not modify the games's API calls, except for appending a quad layer in `xrEndFrame()`; it does however make several additional, *independent* API calls, in particular, `xrLocateSpace()`, and `xrCreateReferenceSpace()`
 
 If OpenKneeboard is closer to the runtime than your layer, OpenKneeboard's world-locked content should be locked to the real-world instead of your modified world space, which is generally undesirable, but otherwise everything should work fine.
 
-If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games do the same things, and it is not possible for your layer to be closer to the game than the game itself. 
+If your pose manipulation layer needs to be between the game and OpenKneeboard, your layer most likely has incorrect behavior, and will also be broken for some games: OpenKneeboard does nothing that the game itself is not allowed to do, some games do the same things, and it is not possible for your layer to be closer to the game than the game itself.
 
-### What do you mean by 'consistent handling'?
-
-1. Within a single frame, xrSpaces and poses must be handled consistently. This includes both in the results of `xrLocateSpace()`, and in the handling of poses in submitted `XrCompositionLayerQuad` structures. For example:
-    1. I ask "where is space *a* compared to space *b*?"; say the answer is "space *a* is 1 meter to the left of space *b*"
-    2. I ask "where is space *c* compared to space *b*?"; say the answer is "space *c* is 1 meter to the right of space *b*"
-    3. If I then ask "where is space *c* compared to space *a*?", the answer **must** be 1 + 1 = 2, i.e. "space *c* is 2 meters to the right of space *a*'.
-    4. If I submit a quad layer with a position 0.5 meters to the right of space *b*, it should appear half way between spaces *b* and *c*
-    5. If I submit a quad layer with a position 1.5 meters to the right of space *a*, it should appear in the same position as if it were positioned 0.5 meters to the right of space *b*
-    6. Equivalent requirements apply for orientation
-2. World-locked positions (i.e. based on local, stage, or local_floor spaces) should be consistent *between* frames, in terms of in-game world. If your layer manipulates poses, this implies that it probably will not be in terms of real-world space. For example, if I submit `(1, 1, -1) in myXrSpaceDerivedFromLocal` and it appears at a certain in-game position, *any* later frames that also use `(1, 1, -1) in myXrSpaceDerivedLocal` should be in the same in-game position
+While OpenKneeboard is not bug-free, *every* time I have investigated an ordering requirement issue, it has turned out to be bug in the other layer; while I no longer investigate unknown interactions between layers, I am happy to investigate issues if there is evidence that OpenKneeboard has a bug, including dependencies on unspecified behavior.
 
 ### What requirements does OpenKneeboard have for spaces and poses?
 
-- Spaces and poses must be handled consistently as above
+- Spaces and poses must be handled consistently; see [below](#what-do-you-mean-by-consistent-handling) for details.
 - It currently uses `VIEW` and `LOCAL` spaces; it is likely to use `STAGE` and `LOCAL_FLOOR` in the future. They are currently avoided as limitations of previous generations of headsets made them less useful.
 - Your layer must handle multiple `xrSpace` handles referring to the same reference space, as OpenKneeboard calls `xrCreateReferenceSpace()` independently of the game, instead of attempting to track and re-use the game's `xrSpace`s. The reasons for this are:
   - It is permitted, and would also be valid for the game to create multiple spaces referring to the same reference space
@@ -145,6 +140,17 @@ If your pose manipulation layer needs to be between the game and OpenKneeboard, 
   - the other API layer reads swapchain images, and assumes that the swapchain will be updated every frame; this is not required and OpenKneeboard does not do it by default. You can test if this is the cause of the problem by turning on 'update swapchains every frame' under "Compatibility Quirks" in OpenKneeboard's advanced setings
 
   Several other API layers have had bugs due to tracking more information about spaces than they need to; you will usually need to keep track of the reference space type for each `xrSpace`, but not more than that. Calling `xrLocateSpace()` many times per frame should be efficient enough and is much less error-prone than tracking the games' calls.
+
+### What do you mean by 'consistent handling'?
+
+1. Within a single frame, xrSpaces and poses must be handled consistently. This includes both in the results of `xrLocateSpace()`, and in the handling of poses in submitted `XrCompositionLayerQuad` structures. For example:
+    1. I ask "where is space *a* compared to space *b*?"; say the answer is "space *a* is 1 meter to the left of space *b*"
+    2. I ask "where is space *c* compared to space *b*?"; say the answer is "space *c* is 1 meter to the right of space *b*"
+    3. If I then ask "where is space *c* compared to space *a*?", the answer **must** be 1 + 1 = 2, i.e. "space *c* is 2 meters to the right of space *a*'.
+    4. If I submit a quad layer with a position 0.5 meters to the right of space *b*, it should appear half way between spaces *b* and *c*
+    5. If I submit a quad layer with a position 1.5 meters to the right of space *a*, it should appear in the same position as if it were positioned 0.5 meters to the right of space *b*
+    6. Equivalent requirements apply for orientation
+2. World-locked positions (i.e. based on local, stage, or local_floor spaces) should be consistent *between* frames, in terms of in-game world. If your layer manipulates poses, this implies that it probably will not be in terms of real-world space. For example, if I submit `(1, 1, -1) in myXrSpaceDerivedFromLocal` and it appears at a certain in-game position, *any* later frames that also use `(1, 1, -1) in myXrSpaceDerivedLocal` should be in the same in-game position
 
   ### How do I investigate what's going on?
 
