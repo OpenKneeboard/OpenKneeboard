@@ -166,9 +166,9 @@ You can also use [the OpenXR Conformance Test Suite](https://github.com/KhronosG
 
 Recommended tests:
 
-- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "XrCompositionLayerQuad"`
-- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "QuadHands"`
-- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "[composition][interactive]"`
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "QuadHands"` is often a clear example of problems; make sure that the quad layers move with the cubes while your layer is manipulating poses
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "XrCompositionLayerQuad"` is a non-interactive test checking technical correctness
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "[composition][interactive]"` includes QuadHands among a variety of other related tests
 
 For interactive tests, you will be prompted to press 'select' or 'menu'; on an oculus touch controller via Link or Airlink, these are the 'A' and 'B' buttons, not the actual menu and select buttons. For other controllers, the binding will vary.
 
