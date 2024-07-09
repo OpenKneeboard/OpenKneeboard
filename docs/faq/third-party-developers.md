@@ -130,16 +130,17 @@ While OpenKneeboard is not bug-free, *every* time I have investigated an orderin
   - It allows a consistent behavior regardless of which spaces the game uses. For example, some games only use `VIEW` and `LOCAL`, some use `STAGE`, some use both `LOCAL` and `STAGE`, and future games are likely to use `LOCAL_FLOOR` instead of the combination
 - Your layer must consistently handle poses specified in `XrCompositionLayerQuad` structures in `xrEndFrame()`
 
-  In most frames, OpenKneeboard just re-submits its quad layers with the same space (currently derived from `LOCAL`) and pose as the previous frame; if you see movement and you have not recentered OpenKneeboard that frame, this indicates that your layer is not handling poses and spaces consistently.
+In most frames, OpenKneeboard just re-submits its quad layers with the same space (currently derived from `LOCAL`) and pose as the previous frame; if you see movement and you have not recentered OpenKneeboard that frame, this indicates that your layer is not handling poses and spaces consistently.
 
-  When a recentering binding is pressed, it calls `xrLocateSpace()`, comparing `VIEW` to `LOCAL`, and stores the offset. This offset is then used for the new frame, and all future frames, until the next recentering.
+When a recentering binding is pressed, it calls `xrLocateSpace()`, comparing `VIEW` to `LOCAL`, and stores the offset. This offset is then used for the new frame, and all future frames, until the next recentering.
 
-  The three most common causes of bad interactions between OpenKneeboard and other API layers are:
-  - the other API layer assumes only one space will be created for each reference space type
-  - the other API layer does not consistently handle all active spaces/poses
-  - the other API layer reads swapchain images, and assumes that the swapchain will be updated every frame; this is not required and OpenKneeboard does not do it by default. You can test if this is the cause of the problem by turning on 'update swapchains every frame' under "Compatibility Quirks" in OpenKneeboard's advanced setings
+The three most common causes of bad interactions between OpenKneeboard and other API layers are:
 
-  Several other API layers have had bugs due to tracking more information about spaces than they need to; you will usually need to keep track of the reference space type for each `xrSpace`, but not more than that. Calling `xrLocateSpace()` many times per frame should be efficient enough and is much less error-prone than tracking the games' calls.
+- the other API layer assumes only one space will be created for each reference space type
+- the other API layer does not consistently handle all active spaces/poses
+- the other API layer reads swapchain images, and assumes that the swapchain will be updated every frame; this is not required and OpenKneeboard does not do it by default. You can test if this is the cause of the problem by turning on 'update swapchains every frame' under "Compatibility Quirks" in OpenKneeboard's advanced setings
+
+Several other API layers have had bugs due to tracking more information about spaces than they need to; you will usually need to keep track of the reference space type for each `xrSpace`, but not more than that. Calling `xrLocateSpace()` many times per frame should be efficient enough and is much less error-prone than tracking the games' calls.
 
 ### What do you mean by 'consistent handling'?
 
@@ -152,12 +153,12 @@ While OpenKneeboard is not bug-free, *every* time I have investigated an orderin
     6. Equivalent requirements apply for orientation
 2. World-locked positions (i.e. based on local, stage, or local_floor spaces) should be consistent *between* frames, in terms of in-game world. If your layer manipulates poses, this implies that it probably will not be in terms of real-world space. For example, if I submit `(1, 1, -1) in myXrSpaceDerivedFromLocal` and it appears at a certain in-game position, *any* later frames that also use `(1, 1, -1) in myXrSpaceDerivedLocal` should be in the same in-game position
 
-  ### How do I investigate what's going on?
+### How do I investigate what's going on?
 
-  [OpenXR-Tracing] is a useful tool for this, combined with [Tabnalysis](https://apps.microsoft.com/detail/9nqlk2m4rp4j).
+[OpenXR-Tracing] is a useful tool for this, combined with [Tabnalysis](https://apps.microsoft.com/detail/9nqlk2m4rp4j).
 
-  ### I found a bug in OpenKneeboard's handling of spaces and poses
+### I found a bug in OpenKneeboard's handling of spaces and poses
 
-  Great! Please open an issue on GitHub with details - ideally traces from [OpenXR-Tracing] - showing the incorrect behavior.
+Great! Please open an issue on GitHub with details - ideally traces from [OpenXR-Tracing] - showing the incorrect behavior.
 
-  [OpenXR-Tracing]: https://github.com/fredemmott/OpenXR-Tracing
+[OpenXR-Tracing]: https://github.com/fredemmott/OpenXR-Tracing
