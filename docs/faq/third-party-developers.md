@@ -157,6 +157,21 @@ Several other API layers have had bugs due to tracking more information about sp
 
 [OpenXR-Tracing] is a useful tool for this, combined with [Tabnalysis](https://apps.microsoft.com/detail/9nqlk2m4rp4j).
 
+You can also use [the OpenXR Conformance Test Suite](https://github.com/KhronosGroup/OpenXR-CTS/releases/latest); I recommend:
+
+1. Disabling all API layers
+2. Running the following tests and making sure they pass
+3. Enabling your API layer and doing any required configuration
+4. Running the tests again. For interactive tests, do any required recentering/calibration/... required for your layer to have an effect
+
+Recommended tests:
+
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "XrCompositionLayerQuad"`
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "QuadHands"`
+- `conformance_cli.exe -G D3D11 --apiVersion 1.0 "[composition][interactive]"`
+
+For interactive tests, you will be prompted to press 'select' or 'menu'; on an oculus touch controller via Link or Airlink, these are the 'A' and 'B' buttons, not the actual menu and select buttons. For other controllers, the binding will vary.
+
 ### I found a bug in OpenKneeboard's handling of spaces and poses
 
 Great! Please open an issue on GitHub with details - ideally traces from [OpenXR-Tracing] - showing the incorrect behavior.
