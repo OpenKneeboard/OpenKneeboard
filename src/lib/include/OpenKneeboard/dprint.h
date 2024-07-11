@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/source_location>
@@ -60,6 +61,62 @@ void dprintf(detail::wformat_string<Args...> fmt, Args&&... args) {
   static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
+
+/** Utility for logging object lifetime.
+ *
+ * Example usage:
+ *
+ * ```
+ * const auto lock = DPrintLifetime { std::unique_lock { (*p->mDXR) }, "Lock" };
+ * ```
+ *
+ * Note this will log at runtime in release builds, so calls should probably not
+ * be committed.
+ */
+template <class T>
+class DPrintLifetime final {
+ public:
+  DPrintLifetime() = delete;
+  DPrintLifetime(
+    std::string_view what,
+    T&& it,
+    const std::source_location& loc = std::source_location::current())
+    : mValue(std::move(it)),
+      mWhat(what),
+      mLoc(loc),
+      mUncaughtExceptions(std::uncaught_exceptions()) {
+    dprintf(
+      "{} in {}() @ {}:{}",
+      mWhat,
+      loc.function_name(),
+      loc.file_name(),
+      loc.line());
+  }
+
+  ~DPrintLifetime() {
+    dprintf(
+      "~{} with {} new exceptions in {}() @ {}:{}",
+      mWhat,
+      std::uncaught_exceptions() - mUncaughtExceptions,
+      mLoc.function_name(),
+      mLoc.file_name(),
+      mLoc.line());
+  }
+
+  operator T&() noexcept {
+    return mValue;
+  }
+
+  operator const T&() const noexcept {
+    return mValue;
+  }
+
+ private:
+  const T mValue;
+  const std::string mWhat;
+  const std::source_location mLoc;
+  const int mUncaughtExceptions;
+};
 
 struct DPrintSettings {
   enum class ConsoleOutputMode {
