@@ -57,7 +57,6 @@
 #include <mutex>
 #include <random>
 #include <shared_mutex>
-#include <thread>
 #include <unordered_map>
 
 #include <inttypes.h>
@@ -68,17 +67,15 @@ using namespace winrt::Windows::Storage;
 
 namespace OpenKneeboard {
 
-struct PDFFilePageSource::Impl final {
+struct PDFFilePageSource::DocumentResources final {
   using LinkHandler = CursorClickableRegions<PDFNavigation::Link>;
 
-  audited_ptr<DXResources> mDXR;
   std::filesystem::path mPath;
   std::shared_ptr<Filesystem::TemporaryCopy> mCopy;
 
+  std::shared_ptr<FilesystemWatcher> mWatcher;
+
   PdfDocument mPDFDocument {nullptr};
-  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
-  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
-  winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
 
   std::vector<NavigationEntry> mBookmarks;
   std::unordered_map<PageID, std::shared_ptr<LinkHandler>> mLinks;
@@ -86,49 +83,45 @@ struct PDFFilePageSource::Impl final {
   bool mNavigationLoaded = false;
 
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mCache;
-  std::unique_ptr<DoodleRenderer> mDoodles;
-  std::shared_ptr<FilesystemWatcher> mWatcher;
 
   std::vector<PageID> mPageIDs;
-
-  std::shared_mutex mMutex;
 };
 
 PDFFilePageSource::PDFFilePageSource(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : p(new Impl {.mDXR = dxr}) {
-  const std::unique_lock d2dlock(*(p->mDXR));
-  p->mPDFRenderer = dxr->mPDFRenderer;
-  p->mBackgroundBrush = dxr->mWhiteBrush;
-  p->mHighlightBrush = dxr->mHighlightBrush;
-  p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
+  : mDXR(dxr) {
+  const std::unique_lock d2dlock(*mDXR);
+  mBackgroundBrush = dxr->mWhiteBrush;
+  mHighlightBrush = dxr->mHighlightBrush;
+  mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   AddEventListener(
-    p->mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
+    mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
 }
 
 PDFFilePageSource::~PDFFilePageSource() {
   this->RemoveAllEventListeners();
-  if (p->mPDFDocument) {
-    // Windows.Data.Pdf.PdfDocument's destructor re-enters the message loop -
-    // which means we can do:
-    // 1. Enter message loop
-    // 2. Enter ~PDFFilePageSource()
-    // 3. Enter ~PdfDocument()
-    // 4. Re-enter the message loop while `this` is partially destructed, and
-    //    has an invalid vtable
-    // 5. Double-free if the condition that led to the deletion is still
-    //    present, or make pure virtual calls, or...
-
-    // Work around this by rescheduling the deletion until 'later'
-    [](auto threadGuard, auto deleteLater) -> winrt::fire_and_forget {
-      threadGuard.CheckThread();
-      // WIL::resume_foreground guarantees that we will be rescheduled, even
-      // though we're not changing threads.
-      co_await wil::resume_foreground(winrt::Microsoft::UI::Dispatching::
-                                        DispatcherQueue::GetForCurrentThread());
-    }(mThreadGuard, std::move(p->mPDFDocument));
+  if (!(mDocumentResources && mDocumentResources->mPDFDocument)) {
+    return;
   }
+  // Windows.Data.Pdf.PdfDocument's destructor re-enters the message loop -
+  // which means we can do:
+  // 1. Enter message loop
+  // 2. Enter ~PDFFilePageSource()
+  // 3. Enter ~PdfDocument()
+  // 4. Re-enter the message loop while `this` is partially destructed, and
+  //    has an invalid vtable
+  // 5. Double-free if the condition that led to the deletion is still
+  //    present, or make pure virtual calls, or...
+
+  // Work around this by rescheduling the deletion until 'later'
+  [](auto threadGuard, auto deleteLater) -> winrt::fire_and_forget {
+    threadGuard.CheckThread();
+    // WIL::resume_foreground guarantees that we will be rescheduled, even
+    // though we're not changing threads.
+    co_await wil::resume_foreground(winrt::Microsoft::UI::Dispatching::
+                                      DispatcherQueue::GetForCurrentThread());
+  }(mThreadGuard, std::move(mDocumentResources->mPDFDocument));
 }
 
 std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
@@ -162,8 +155,11 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 
     std::filesystem::path path;
     {
-      std::shared_lock readLock(p->mMutex);
-      path = p->mCopy->GetPath();
+      std::shared_lock readLock(mMutex);
+      if (!mDocumentResources) {
+        co_return;
+      }
+      path = mDocumentResources->mCopy->GetPath();
 
       if (!std::filesystem::is_regular_file(path)) {
         co_return;
@@ -190,9 +186,10 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
     dprintf("Opened PDF file {} for render", path.string());
 
     {
-      std::unique_lock lock(p->mMutex);
-      p->mPDFDocument = std::move(document);
-      p->mPageIDs.resize(p->mPDFDocument.PageCount());
+      std::unique_lock lock(mMutex);
+      mDocumentResources->mPDFDocument = std::move(document);
+      mDocumentResources->mPageIDs.resize(
+        mDocumentResources->mPDFDocument.PageCount());
     }
   }
 
@@ -206,20 +203,24 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
 
-  if (!std::filesystem::is_regular_file(p->mCopy->GetPath())) {
+  if (!mDocumentResources) {
+    co_return;
+  }
+
+  if (!std::filesystem::is_regular_file(mDocumentResources->mCopy->GetPath())) {
     co_return;
   }
 
   co_await winrt::resume_background();
   auto stayingAlive = weak.lock();
-  if (!stayingAlive) {
+  if (!(stayingAlive && mDocumentResources)) {
     co_return;
   }
 
   std::filesystem::path path;
   {
-    std::shared_lock lock(p->mMutex);
-    path = p->mCopy->GetPath();
+    std::shared_lock lock(mMutex);
+    path = mDocumentResources->mCopy->GetPath();
   }
   std::optional<PDFNavigation::PDF> maybePdf;
   try {
@@ -231,23 +232,23 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto pdf = std::move(*maybePdf);
 
   const auto bookmarks = pdf.GetBookmarks();
-  decltype(p->mBookmarks) navigation;
+  decltype(mDocumentResources->mBookmarks) navigation;
   for (int i = 0; i < bookmarks.size(); i++) {
     const auto& it = bookmarks[i];
     navigation.push_back({it.mName, this->GetPageIDForIndex(it.mPageIndex)});
   }
 
   {
-    std::unique_lock lock(p->mMutex);
-    p->mBookmarks = std::move(navigation);
-    p->mNavigationLoaded = true;
+    std::unique_lock lock(mMutex);
+    mDocumentResources->mBookmarks = std::move(navigation);
+    mDocumentResources->mNavigationLoaded = true;
   }
 
   const auto links = pdf.GetLinks();
-  decltype(p->mLinks) linkHandlers;
+  decltype(mDocumentResources->mLinks) linkHandlers;
   for (int i = 0; i < links.size(); ++i) {
     const auto& pageLinks = links.at(i);
-    auto handler = Impl::LinkHandler::Create(pageLinks);
+    auto handler = DocumentResources::LinkHandler::Create(pageLinks);
     AddEventListener(
       handler->evClicked,
       {
@@ -272,8 +273,8 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   }
 
   {
-    std::unique_lock lock(p->mMutex);
-    p->mLinks = std::move(linkHandlers);
+    std::unique_lock lock(mMutex);
+    mDocumentResources->mLinks = std::move(linkHandlers);
   }
 
   stayingAlive.reset();
@@ -284,23 +285,24 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 }
 
 PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
-  if (!p) {
+  if (!mDocumentResources) {
     return {};
   }
   {
-    std::shared_lock lock(p->mMutex);
-    if (index < p->mPageIDs.size()) {
-      return p->mPageIDs.at(index);
+    std::shared_lock lock(mMutex);
+    if (index < mDocumentResources->mPageIDs.size()) {
+      return mDocumentResources->mPageIDs.at(index);
     }
   }
-  std::unique_lock lock(p->mMutex);
-  p->mPageIDs.resize(index + 1);
+  std::unique_lock lock(mMutex);
+  mDocumentResources->mPageIDs.resize(index + 1);
   TraceLoggingWrite(
     gTraceProvider,
     "PDFFilePageSource::GetPageIDForIndex()",
     TraceLoggingValue(index, "Index"),
-    TraceLoggingHexUInt64(p->mPageIDs.back().GetTemporaryValue(), "PageID"));
-  return p->mPageIDs.back();
+    TraceLoggingHexUInt64(
+      mDocumentResources->mPageIDs.back().GetTemporaryValue(), "PageID"));
+  return mDocumentResources->mPageIDs.back();
 }
 
 winrt::fire_and_forget PDFFilePageSource::Reload() try {
@@ -310,19 +312,20 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
 
   {
     auto self = weak.lock();
-    if (!self) {
+    if (!(self && mDocumentResources)) {
       co_return;
     }
 
-    std::unique_lock lock(p->mMutex);
-    p->mCopy = {};
-    p->mBookmarks.clear();
-    p->mLinks.clear();
-    p->mNavigationLoaded = false;
-    p->mCache.clear();
-    p->mPageIDs.clear();
+    mDoodles->Clear();
 
-    if (!std::filesystem::is_regular_file(p->mPath)) {
+    std::unique_lock lock(mMutex);
+
+    mDocumentResources.reset(new DocumentResources {
+      .mPath = mDocumentResources->mPath,
+      .mWatcher = std::move(mDocumentResources->mWatcher),
+    });
+
+    if (!std::filesystem::is_regular_file(mDocumentResources->mPath)) {
       co_return;
     }
   }
@@ -331,15 +334,16 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
   co_await winrt::resume_background();
 
   auto self = weak.lock();
-  if (!self) {
+  if (!(self && mDocumentResources)) {
     co_return;
   }
   auto tempPath = Filesystem::GetTemporaryDirectory()
     / std::format(L"{:08x}-{}{}",
                   ++sCount,
-                  p->mPath.stem().wstring().substr(0, 16),
-                  p->mPath.extension());
-  p->mCopy = std::make_shared<Filesystem::TemporaryCopy>(p->mPath, tempPath);
+                  mDocumentResources->mPath.stem().wstring().substr(0, 16),
+                  mDocumentResources->mPath.extension());
+  mDocumentResources->mCopy = std::make_shared<Filesystem::TemporaryCopy>(
+    mDocumentResources->mPath, tempPath);
 
   co_await uiThread;
 
@@ -358,9 +362,9 @@ winrt::fire_and_forget PDFFilePageSource::final_release(
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {
-  std::shared_lock lock(p->mMutex);
-  if (p->mPDFDocument) {
-    return p->mPDFDocument.PageCount();
+  std::shared_lock lock(mMutex);
+  if (mDocumentResources && mDocumentResources->mPDFDocument) {
+    return mDocumentResources->mPDFDocument.PageCount();
   }
   return 0;
 }
@@ -371,39 +375,39 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
     return {};
   }
   {
-    std::shared_lock lock(p->mMutex);
-    if (pageCount == p->mPageIDs.size()) {
-      return p->mPageIDs;
+    std::shared_lock lock(mMutex);
+    if (pageCount == mDocumentResources->mPageIDs.size()) {
+      return mDocumentResources->mPageIDs;
     }
   }
 
-  std::unique_lock lock(p->mMutex);
-  p->mPageIDs.resize(pageCount);
+  std::unique_lock lock(mMutex);
+  mDocumentResources->mPageIDs.resize(pageCount);
 
   if (TraceLoggingProviderEnabled(gTraceProvider, 0, 0)) {
     std::vector<uint64_t> values(pageCount);
     std::ranges::transform(
-      p->mPageIDs, begin(values), &PageID::GetTemporaryValue);
+      mDocumentResources->mPageIDs, begin(values), &PageID::GetTemporaryValue);
     TraceLoggingWrite(
       gTraceProvider,
       "PDFFilePageSource::GetPageIDs()",
       TraceLoggingHexUInt64Array(values.data(), values.size(), "PageIDs"));
   }
 
-  return p->mPageIDs;
+  return mDocumentResources->mPageIDs;
 }
 
 PreferredSize PDFFilePageSource::GetPreferredSize(PageID id) {
-  if (!p) {
+  if (!mDocumentResources) {
     return {};
   }
 
-  auto it = std::ranges::find(p->mPageIDs, id);
-  if (it == p->mPageIDs.end()) {
+  auto it = std::ranges::find(mDocumentResources->mPageIDs, id);
+  if (it == mDocumentResources->mPageIDs.end()) {
     return {};
   }
-  const auto index = it - p->mPageIDs.begin();
-  auto size = p->mPDFDocument.GetPage(index).Size();
+  const auto index = it - mDocumentResources->mPageIDs.begin();
+  auto size = mDocumentResources->mPDFDocument.GetPage(index).Size();
 
   return {
     {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)},
@@ -417,12 +421,12 @@ void PDFFilePageSource::RenderPageContent(
   const PixelRect& rect) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPageContent()");
   // Keep alive
-  auto p = this->p;
+  auto p = this->mDocumentResources;
   if (!p) {
     return;
   }
 
-  std::shared_lock lock(p->mMutex);
+  std::shared_lock lock(mMutex);
 
   const auto pageIt = std::ranges::find(p->mPageIDs, id);
   if (pageIt == p->mPageIDs.end()) {
@@ -433,7 +437,7 @@ void PDFFilePageSource::RenderPageContent(
   auto page = p->mPDFDocument.GetPage(index);
 
   auto ctx = rt->d2d();
-  ctx->FillRectangle(rect, p->mBackgroundBrush.get());
+  ctx->FillRectangle(rect, mBackgroundBrush.get());
 
   PDF_RENDER_PARAMS params {
     .DestinationWidth = rect.Width(),
@@ -444,8 +448,8 @@ void PDFFilePageSource::RenderPageContent(
     rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
 
   {
-    const std::unique_lock d2dlock(*(p->mDXR));
-    winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
+    const std::unique_lock d2dlock(*mDXR);
+    winrt::check_hresult(mDXR->mPDFRenderer->RenderPageToDeviceContext(
       winrt::get_unknown(page), ctx, &params));
   }
 }
@@ -456,12 +460,12 @@ void PDFFilePageSource::PostCursorEvent(
   PageID pageID) {
   const auto contentSize = this->GetPreferredSize(pageID).mPixelSize;
 
-  if (!p->mLinks.contains(pageID)) {
-    p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
+  if (!mDocumentResources->mLinks.contains(pageID)) {
+    mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
     return;
   }
 
-  auto links = p->mLinks.at(pageID);
+  auto links = mDocumentResources->mLinks.at(pageID);
   if (!links) {
     return;
   }
@@ -478,33 +482,34 @@ void PDFFilePageSource::PostCursorEvent(
     return;
   }
 
-  p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
+  mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
 }
 
 bool PDFFilePageSource::CanClearUserInput(PageID id) const {
-  return p->mDoodles->HaveDoodles(id);
+  return mDoodles->HaveDoodles(id);
 }
 
 bool PDFFilePageSource::CanClearUserInput() const {
-  return p->mDoodles->HaveDoodles();
+  return mDoodles->HaveDoodles();
 }
 
 void PDFFilePageSource::ClearUserInput(PageID id) {
-  p->mDoodles->ClearPage(id);
+  mDoodles->ClearPage(id);
 }
 
 void PDFFilePageSource::ClearUserInput() {
-  p->mDoodles->Clear();
+  mDoodles->Clear();
 }
 
 void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
   PageID pageID,
   const D2D1_RECT_F& contentRect) {
-  if (!p->mLinks.contains(pageID)) {
+  if (!mDocumentResources->mLinks.contains(pageID)) {
     return;
   }
-  const auto hoverButton = p->mLinks.at(pageID)->GetHoverButton();
+  const auto hoverButton
+    = mDocumentResources->mLinks.at(pageID)->GetHoverButton();
   if (!hoverButton) {
     return;
   }
@@ -520,23 +525,25 @@ void PDFFilePageSource::RenderOverDoodles(
   };
   const auto radius = contentHeight * 0.006f;
   ctx->DrawRoundedRectangle(
-    D2D1::RoundedRect(rect, radius, radius),
-    p->mHighlightBrush.get(),
-    radius / 3);
+    D2D1::RoundedRect(rect, radius, radius), mHighlightBrush.get(), radius / 3);
 }
 
 std::filesystem::path PDFFilePageSource::GetPath() const {
-  return p->mPath;
+  return mDocumentResources->mPath;
 }
 
 void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
-  if (path == p->mPath) {
+  if (mDocumentResources && path == mDocumentResources->mPath) {
     return;
   }
-  p->mPath = path;
-  p->mWatcher = FilesystemWatcher::Create(path);
+
+  mDocumentResources.reset(new DocumentResources {
+    .mPath = path,
+    .mWatcher = FilesystemWatcher::Create(path),
+  });
+
   AddEventListener(
-    p->mWatcher->evFilesystemModifiedEvent,
+    mDocumentResources->mWatcher->evFilesystemModifiedEvent,
     [weak = weak_from_this()](auto path) {
       if (auto self = weak.lock()) {
         self->OnFileModified(path);
@@ -546,19 +553,20 @@ void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
 }
 
 bool PDFFilePageSource::IsNavigationAvailable() const {
-  return p->mNavigationLoaded && this->GetPageCount() > 2;
+  return mDocumentResources->mNavigationLoaded && this->GetPageCount() > 2;
 }
 
 std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
-  std::shared_lock lock(p->mMutex);
-  if (!p->mBookmarks.empty()) {
-    return p->mBookmarks;
+  std::shared_lock lock(mMutex);
+  if (!mDocumentResources->mBookmarks.empty()) {
+    return mDocumentResources->mBookmarks;
   }
 
   std::vector<NavigationEntry> entries;
   for (PageIndex i = 0; i < this->GetPageCount(); ++i) {
     entries.push_back({
-      std::format(_("Page {} ({})"), i + 1, to_utf8(p->mPath.stem())),
+      std::format(
+        _("Page {} ({})"), i + 1, to_utf8(mDocumentResources->mPath.stem())),
       this->GetPageIDForIndex(i),
     });
   }
@@ -571,13 +579,13 @@ void PDFFilePageSource::RenderPage(
   const PixelRect& rect) {
   const auto rtid = rt->GetID();
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");
-  if (!p->mCache.contains(rtid)) {
-    p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
+  if (!mDocumentResources->mCache.contains(rtid)) {
+    mDocumentResources->mCache[rtid] = std::make_unique<CachedLayer>(mDXR);
   }
   const auto cacheDimensions
     = this->GetPreferredSize(pageID).mPixelSize.IntegerScaledToFit(
       MaxViewRenderSize);
-  p->mCache[rtid]->Render(
+  mDocumentResources->mCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),
     rt,
@@ -587,12 +595,12 @@ void PDFFilePageSource::RenderPage(
     cacheDimensions);
 
   const auto d2d = rt->d2d();
-  p->mDoodles->Render(d2d, pageID, rect);
+  mDoodles->Render(d2d, pageID, rect);
   this->RenderOverDoodles(d2d, pageID, rect);
 }
 
 void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {
-  if (p && path == p->mPath) {
+  if (mDocumentResources && path == mDocumentResources->mPath) {
     this->Reload();
   }
 }

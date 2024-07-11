@@ -29,11 +29,13 @@
 #include <shims/winrt/base.h>
 
 #include <memory>
+#include <shared_mutex>
 
 namespace OpenKneeboard {
 
 class KneeboardState;
 struct DXResources;
+class DoodleRenderer;
 
 class PDFFilePageSource final
   : virtual public IPageSourceWithCursorEvents,
@@ -78,8 +80,15 @@ class PDFFilePageSource final
 
  private:
   winrt::apartment_context mUIThread;
-  struct Impl;
-  std::shared_ptr<Impl> p;
+
+  audited_ptr<DXResources> mDXR;
+  mutable std::shared_mutex mMutex;
+  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
+  std::unique_ptr<DoodleRenderer> mDoodles;
+
+  struct DocumentResources;
+  std::shared_ptr<DocumentResources> mDocumentResources;
 
   winrt::fire_and_forget ReloadRenderer();
   winrt::fire_and_forget ReloadNavigation();
