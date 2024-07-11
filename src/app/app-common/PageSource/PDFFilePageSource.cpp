@@ -67,6 +67,19 @@ using namespace winrt::Windows::Storage;
 
 namespace OpenKneeboard {
 
+// Convenience wrapper to make it easy to wrap all locks in `DPrintLifetime`
+static constexpr auto wrap_lock(
+  auto&& lock,
+  [[maybe_unused]] const std::source_location& location
+  = std::source_location::current()) {
+  if constexpr (false) {
+    return DPrintLifetime<std::decay_t<decltype(lock)>> {
+      "PDFLock", std::move(lock), location};
+  } else {
+    return lock;
+  }
+}
+
 struct PDFFilePageSource::DocumentResources final {
   using LinkHandler = CursorClickableRegions<PDFNavigation::Link>;
 
@@ -155,7 +168,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 
     std::filesystem::path path;
     {
-      std::shared_lock readLock(mMutex);
+      const auto readLock = wrap_lock(std::shared_lock {mMutex});
       if (!mDocumentResources) {
         co_return;
       }
@@ -186,7 +199,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
     dprintf("Opened PDF file {} for render", path.string());
 
     {
-      std::unique_lock lock(mMutex);
+      const auto lock = wrap_lock(std::unique_lock {mMutex});
       mDocumentResources->mPDFDocument = std::move(document);
       mDocumentResources->mPageIDs.resize(
         mDocumentResources->mPDFDocument.PageCount());
@@ -219,7 +232,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   std::filesystem::path path;
   {
-    std::shared_lock lock(mMutex);
+    const auto lock = wrap_lock(std::shared_lock {mMutex});
     path = mDocumentResources->mCopy->GetPath();
   }
   std::optional<PDFNavigation::PDF> maybePdf;
@@ -239,7 +252,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   }
 
   {
-    std::unique_lock lock(mMutex);
+    const auto lock = wrap_lock(std::unique_lock {mMutex});
     mDocumentResources->mBookmarks = std::move(navigation);
     mDocumentResources->mNavigationLoaded = true;
   }
@@ -273,7 +286,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   }
 
   {
-    std::unique_lock lock(mMutex);
+    const auto lock = wrap_lock(std::unique_lock {mMutex});
     mDocumentResources->mLinks = std::move(linkHandlers);
   }
 
@@ -289,12 +302,12 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
     return {};
   }
   {
-    std::shared_lock lock(mMutex);
+    const auto lock = wrap_lock(std::shared_lock {mMutex});
     if (index < mDocumentResources->mPageIDs.size()) {
       return mDocumentResources->mPageIDs.at(index);
     }
   }
-  std::unique_lock lock(mMutex);
+  const auto lock = wrap_lock(std::unique_lock {mMutex});
   mDocumentResources->mPageIDs.resize(index + 1);
   TraceLoggingWrite(
     gTraceProvider,
@@ -318,7 +331,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
 
     mDoodles->Clear();
 
-    std::unique_lock lock(mMutex);
+    const auto lock = wrap_lock(std::unique_lock {mMutex});
 
     mDocumentResources.reset(new DocumentResources {
       .mPath = mDocumentResources->mPath,
@@ -362,7 +375,7 @@ winrt::fire_and_forget PDFFilePageSource::final_release(
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {
-  std::shared_lock lock(mMutex);
+  const auto lock = wrap_lock(std::shared_lock {mMutex});
   if (mDocumentResources && mDocumentResources->mPDFDocument) {
     return mDocumentResources->mPDFDocument.PageCount();
   }
@@ -375,13 +388,13 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
     return {};
   }
   {
-    std::shared_lock lock(mMutex);
+    const auto lock = wrap_lock(std::shared_lock {mMutex});
     if (pageCount == mDocumentResources->mPageIDs.size()) {
       return mDocumentResources->mPageIDs;
     }
   }
 
-  std::unique_lock lock(mMutex);
+  const auto lock = wrap_lock(std::unique_lock {mMutex});
   mDocumentResources->mPageIDs.resize(pageCount);
 
   if (TraceLoggingProviderEnabled(gTraceProvider, 0, 0)) {
@@ -426,7 +439,7 @@ void PDFFilePageSource::RenderPageContent(
     return;
   }
 
-  std::shared_lock lock(mMutex);
+  const auto lock = wrap_lock(std::shared_lock {mMutex});
 
   const auto pageIt = std::ranges::find(p->mPageIDs, id);
   if (pageIt == p->mPageIDs.end()) {
@@ -557,7 +570,7 @@ bool PDFFilePageSource::IsNavigationAvailable() const {
 }
 
 std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
-  std::shared_lock lock(mMutex);
+  const auto lock = wrap_lock(std::shared_lock {mMutex});
   if (!mDocumentResources->mBookmarks.empty()) {
     return mDocumentResources->mBookmarks;
   }
