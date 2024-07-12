@@ -191,7 +191,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
     std::filesystem::path path;
     {
       const auto readLock = wrap_lock(std::shared_lock {mMutex});
-      if (!mDocumentResources) {
+      if (!(mDocumentResources && mDocumentResources->mCopy)) {
         co_return;
       }
       path = mDocumentResources->mCopy->GetPath();
