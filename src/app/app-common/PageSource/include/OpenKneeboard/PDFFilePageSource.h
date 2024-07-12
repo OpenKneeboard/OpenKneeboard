@@ -28,6 +28,8 @@
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
 
+#include <winrt/Microsoft.UI.Dispatching.h>
+
 #include <memory>
 #include <shared_mutex>
 
@@ -79,7 +81,11 @@ class PDFFilePageSource final
     override;
 
  private:
+  using DQ = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
   winrt::apartment_context mUIThread;
+  // Useful because `wil::resume_foreground()` will *always* enqueue, never
+  // execute immediately
+  DQ mUIThreadDispatcherQueue = DQ::GetForCurrentThread();
 
   audited_ptr<DXResources> mDXR;
   mutable std::shared_mutex mMutex;

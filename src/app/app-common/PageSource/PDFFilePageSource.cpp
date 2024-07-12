@@ -98,6 +98,49 @@ struct PDFFilePageSource::DocumentResources final {
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mCache;
 
   std::vector<PageID> mPageIDs;
+
+  static auto Create(
+    const std::filesystem::path& path,
+    std::shared_ptr<FilesystemWatcher>&& watcher) {
+    return std::shared_ptr<DocumentResources> {
+      new DocumentResources(path, std::move(watcher)),
+      final_release_deleter<DocumentResources> {}};
+  }
+
+  /** Work around https://github.com/microsoft/WindowsAppSDK/issues/3506
+   *
+   * Windows.Data.Pdf.PdfDocument's destructor re-enters the message loop -
+   * which means we can do:
+   * 1. Enter message loop
+   * 2. Enter ~PDFFilePageSource()
+   * 3. Enter ~PdfDocument()
+   * 4. Re-enter the message loop while `this` is partially destructed, and
+   *    has an invalid vtable
+   * 5. Double-free if the condition that led to the deletion is still
+   *    present, or make pure virtual calls, or...
+   */
+  static winrt::fire_and_forget final_release(
+    std::unique_ptr<DocumentResources> self) {
+    co_await wil::resume_foreground(self->mDispatcherQueue);
+    self->mPDFDocument = nullptr;
+    if (!self->mCopy) {
+      co_return;
+    }
+    // Leave cleaning up the copy until the renderer is done
+    co_await wil::resume_foreground(self->mDispatcherQueue);
+  }
+
+  DocumentResources() = delete;
+
+ private:
+  DocumentResources(
+    const std::filesystem::path& path,
+    std::shared_ptr<FilesystemWatcher>&& watcher)
+    : mPath(path), mWatcher(std::move(watcher)) {
+  }
+
+  using DispatcherQueue = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
+  DispatcherQueue mDispatcherQueue = DispatcherQueue::GetForCurrentThread();
 };
 
 PDFFilePageSource::PDFFilePageSource(
@@ -114,27 +157,6 @@ PDFFilePageSource::PDFFilePageSource(
 
 PDFFilePageSource::~PDFFilePageSource() {
   this->RemoveAllEventListeners();
-  if (!(mDocumentResources && mDocumentResources->mPDFDocument)) {
-    return;
-  }
-  // Windows.Data.Pdf.PdfDocument's destructor re-enters the message loop -
-  // which means we can do:
-  // 1. Enter message loop
-  // 2. Enter ~PDFFilePageSource()
-  // 3. Enter ~PdfDocument()
-  // 4. Re-enter the message loop while `this` is partially destructed, and
-  //    has an invalid vtable
-  // 5. Double-free if the condition that led to the deletion is still
-  //    present, or make pure virtual calls, or...
-
-  // Work around this by rescheduling the deletion until 'later'
-  [](auto threadGuard, auto deleteLater) -> winrt::fire_and_forget {
-    threadGuard.CheckThread();
-    // WIL::resume_foreground guarantees that we will be rescheduled, even
-    // though we're not changing threads.
-    co_await wil::resume_foreground(winrt::Microsoft::UI::Dispatching::
-                                      DispatcherQueue::GetForCurrentThread());
-  }(mThreadGuard, std::move(mDocumentResources->mPDFDocument));
 }
 
 std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
@@ -200,6 +222,14 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 
     {
       const auto lock = wrap_lock(std::unique_lock {mMutex});
+      // Another workaround for
+      // https://github.com/microsoft/WindowsAppSDK/issues/3506
+      if (mDocumentResources->mPDFDocument) {
+        ([dq = mUIThreadDispatcherQueue](
+           auto deleteLater) -> winrt::fire_and_forget {
+          co_await wil::resume_foreground(dq);
+        })(std::move(mDocumentResources->mPDFDocument));
+      }
       mDocumentResources->mPDFDocument = std::move(document);
       mDocumentResources->mPageIDs.resize(
         mDocumentResources->mPDFDocument.PageCount());
@@ -216,24 +246,37 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
 
-  if (!mDocumentResources) {
-    co_return;
-  }
+  std::weak_ptr<DocumentResources> weakDoc;
 
-  if (!std::filesystem::is_regular_file(mDocumentResources->mCopy->GetPath())) {
-    co_return;
+  {
+    auto doc = ([this]() {
+      const auto lock = wrap_lock(std::shared_lock {mMutex});
+      return mDocumentResources;
+    })();
+    if (!doc) {
+      co_return;
+    }
+
+    if (!std::filesystem::is_regular_file(doc->mCopy->GetPath())) {
+      co_return;
+    }
+    weakDoc = doc;
   }
 
   co_await winrt::resume_background();
   auto stayingAlive = weak.lock();
-  if (!(stayingAlive && mDocumentResources)) {
+  auto doc = weakDoc.lock();
+  if (!(stayingAlive && doc)) {
     co_return;
   }
 
   std::filesystem::path path;
   {
     const auto lock = wrap_lock(std::shared_lock {mMutex});
-    path = mDocumentResources->mCopy->GetPath();
+    if (doc != this->mDocumentResources) {
+      co_return;
+    }
+    path = doc->mCopy->GetPath();
   }
   std::optional<PDFNavigation::PDF> maybePdf;
   try {
@@ -245,7 +288,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto pdf = std::move(*maybePdf);
 
   const auto bookmarks = pdf.GetBookmarks();
-  decltype(mDocumentResources->mBookmarks) navigation;
+  decltype(doc->mBookmarks) navigation;
   for (int i = 0; i < bookmarks.size(); i++) {
     const auto& it = bookmarks[i];
     navigation.push_back({it.mName, this->GetPageIDForIndex(it.mPageIndex)});
@@ -253,8 +296,11 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   {
     const auto lock = wrap_lock(std::unique_lock {mMutex});
-    mDocumentResources->mBookmarks = std::move(navigation);
-    mDocumentResources->mNavigationLoaded = true;
+    if (doc != mDocumentResources) {
+      co_return;
+    }
+    doc->mBookmarks = std::move(navigation);
+    doc->mNavigationLoaded = true;
   }
 
   const auto links = pdf.GetLinks();
@@ -288,7 +334,10 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   {
     const auto lock = wrap_lock(std::unique_lock {mMutex});
-    mDocumentResources->mLinks = std::move(linkHandlers);
+    if (doc != mDocumentResources) {
+      co_return;
+    }
+    doc->mLinks = std::move(linkHandlers);
   }
 
   stayingAlive.reset();
@@ -334,10 +383,8 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
 
     const auto lock = wrap_lock(std::unique_lock {mMutex});
 
-    mDocumentResources.reset(new DocumentResources {
-      .mPath = mDocumentResources->mPath,
-      .mWatcher = std::move(mDocumentResources->mWatcher),
-    });
+    mDocumentResources = DocumentResources::Create(
+      mDocumentResources->mPath, std::move(mDocumentResources->mWatcher));
 
     if (!std::filesystem::is_regular_file(mDocumentResources->mPath)) {
       co_return;
@@ -519,6 +566,11 @@ void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
   PageID pageID,
   const D2D1_RECT_F& contentRect) {
+  const auto lock = wrap_lock(std::shared_lock(mMutex));
+  if (!mDocumentResources) {
+    return;
+  }
+
   if (!mDocumentResources->mLinks.contains(pageID)) {
     return;
   }
@@ -551,10 +603,8 @@ void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
     return;
   }
 
-  mDocumentResources.reset(new DocumentResources {
-    .mPath = path,
-    .mWatcher = FilesystemWatcher::Create(path),
-  });
+  mDocumentResources
+    = DocumentResources::Create(path, FilesystemWatcher::Create(path));
 
   AddEventListener(
     mDocumentResources->mWatcher->evFilesystemModifiedEvent,
