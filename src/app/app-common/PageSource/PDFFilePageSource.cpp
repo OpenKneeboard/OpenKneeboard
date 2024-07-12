@@ -253,7 +253,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
       const auto lock = wrap_lock(std::shared_lock {mMutex});
       return mDocumentResources;
     })();
-    if (!doc) {
+    if (!(doc && doc->mCopy)) {
       co_return;
     }
 
