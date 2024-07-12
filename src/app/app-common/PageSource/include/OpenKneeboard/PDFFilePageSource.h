@@ -96,8 +96,8 @@ class PDFFilePageSource final
   struct DocumentResources;
   std::shared_ptr<DocumentResources> mDocumentResources;
 
-  winrt::fire_and_forget ReloadRenderer();
-  winrt::fire_and_forget ReloadNavigation();
+  winrt::fire_and_forget ReloadRenderer(std::weak_ptr<DocumentResources>);
+  winrt::fire_and_forget ReloadNavigation(std::weak_ptr<DocumentResources>);
 
   void OnFileModified(const std::filesystem::path& path);
 

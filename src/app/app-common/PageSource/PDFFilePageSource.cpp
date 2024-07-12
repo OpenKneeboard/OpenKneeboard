@@ -178,23 +178,24 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   return ret;
 }
 
-winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
+winrt::fire_and_forget PDFFilePageSource::ReloadRenderer(
+  std::weak_ptr<DocumentResources> weakDoc) {
   auto weak = weak_from_this();
-  auto uiThread = mUIThread;
 
   {
     auto self = weak.lock();
-    if (!self) {
+    auto doc = weakDoc.lock();
+    if (!(self && doc && doc == self->mDocumentResources)) {
       co_return;
     }
 
     std::filesystem::path path;
     {
       const auto readLock = wrap_lock(std::shared_lock {mMutex});
-      if (!(mDocumentResources && mDocumentResources->mCopy)) {
+      if (!(doc && doc->mCopy)) {
         co_return;
       }
-      path = mDocumentResources->mCopy->GetPath();
+      path = doc->mCopy->GetPath();
 
       if (!std::filesystem::is_regular_file(path)) {
         co_return;
@@ -224,35 +225,32 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
       const auto lock = wrap_lock(std::unique_lock {mMutex});
       // Another workaround for
       // https://github.com/microsoft/WindowsAppSDK/issues/3506
-      if (mDocumentResources->mPDFDocument) {
+      if (doc->mPDFDocument) {
         ([dq = mUIThreadDispatcherQueue](
            auto deleteLater) -> winrt::fire_and_forget {
           co_await wil::resume_foreground(dq);
-        })(std::move(mDocumentResources->mPDFDocument));
+        })(std::move(doc->mPDFDocument));
       }
-      mDocumentResources->mPDFDocument = std::move(document);
-      mDocumentResources->mPageIDs.resize(
-        mDocumentResources->mPDFDocument.PageCount());
+      doc->mPDFDocument = std::move(document);
+      doc->mPageIDs.resize(doc->mPDFDocument.PageCount());
     }
   }
 
+  auto uiThread = mUIThread;
   co_await uiThread;
+
   if (auto self = weak.lock()) {
     evContentChangedEvent.Emit();
   }
 }
 
-winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
+winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
+  std::weak_ptr<DocumentResources> weakDoc) {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
 
-  std::weak_ptr<DocumentResources> weakDoc;
-
   {
-    auto doc = ([this]() {
-      const auto lock = wrap_lock(std::shared_lock {mMutex});
-      return mDocumentResources;
-    })();
+    auto doc = weakDoc.lock();
     if (!(doc && doc->mCopy)) {
       co_return;
     }
@@ -260,22 +258,18 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
     if (!std::filesystem::is_regular_file(doc->mCopy->GetPath())) {
       co_return;
     }
-    weakDoc = doc;
   }
 
   co_await winrt::resume_background();
   auto stayingAlive = weak.lock();
   auto doc = weakDoc.lock();
-  if (!(stayingAlive && doc)) {
+  if (!(stayingAlive && doc && doc == mDocumentResources)) {
     co_return;
   }
 
   std::filesystem::path path;
   {
     const auto lock = wrap_lock(std::shared_lock {mMutex});
-    if (doc != this->mDocumentResources) {
-      co_return;
-    }
     path = doc->mCopy->GetPath();
   }
   std::optional<PDFNavigation::PDF> maybePdf;
@@ -296,9 +290,6 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   {
     const auto lock = wrap_lock(std::unique_lock {mMutex});
-    if (doc != mDocumentResources) {
-      co_return;
-    }
     doc->mBookmarks = std::move(navigation);
     doc->mNavigationLoaded = true;
   }
@@ -334,9 +325,6 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 
   {
     const auto lock = wrap_lock(std::unique_lock {mMutex});
-    if (doc != mDocumentResources) {
-      co_return;
-    }
     doc->mLinks = std::move(linkHandlers);
   }
 
@@ -348,16 +336,19 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 }
 
 PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
-  if (!mDocumentResources) {
-    return {};
-  }
   {
     const auto lock = wrap_lock(std::shared_lock {mMutex});
+    if (!mDocumentResources) {
+      return {};
+    }
     if (index < mDocumentResources->mPageIDs.size()) {
       return mDocumentResources->mPageIDs.at(index);
     }
   }
   const auto lock = wrap_lock(std::unique_lock {mMutex});
+  if (!mDocumentResources) {
+    return {};
+  }
   mDocumentResources->mPageIDs.resize(index + 1);
   TraceLoggingWrite(
     gTraceProvider,
@@ -372,6 +363,8 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
   static uint64_t sCount = 0;
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
+
+  std::weak_ptr<DocumentResources> weakDoc;
 
   {
     auto self = weak.lock();
@@ -389,27 +382,32 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
     if (!std::filesystem::is_regular_file(mDocumentResources->mPath)) {
       co_return;
     }
+
+    weakDoc = mDocumentResources;
   }
 
   // Do copy in a background thread so we're not hung up on antivirus
   co_await winrt::resume_background();
 
   auto self = weak.lock();
-  if (!(self && mDocumentResources)) {
-    co_return;
+  {
+    auto doc = weakDoc.lock();
+    if (!(self && doc)) {
+      co_return;
+    }
+    auto tempPath = Filesystem::GetTemporaryDirectory()
+      / std::format(L"{:08x}-{}{}",
+                    ++sCount,
+                    doc->mPath.stem().wstring().substr(0, 16),
+                    doc->mPath.extension());
+    doc->mCopy
+      = std::make_shared<Filesystem::TemporaryCopy>(doc->mPath, tempPath);
   }
-  auto tempPath = Filesystem::GetTemporaryDirectory()
-    / std::format(L"{:08x}-{}{}",
-                  ++sCount,
-                  mDocumentResources->mPath.stem().wstring().substr(0, 16),
-                  mDocumentResources->mPath.extension());
-  mDocumentResources->mCopy = std::make_shared<Filesystem::TemporaryCopy>(
-    mDocumentResources->mPath, tempPath);
 
   co_await uiThread;
 
-  this->ReloadRenderer();
-  this->ReloadNavigation();
+  this->ReloadRenderer(weakDoc);
+  this->ReloadNavigation(weakDoc);
 
 } catch (const std::exception& e) {
   dprintf("WARNING: Exception reloading PDFFilePageSource: {}", e.what());
@@ -482,20 +480,20 @@ void PDFFilePageSource::RenderPageContent(
   const PixelRect& rect) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPageContent()");
   // Keep alive
-  auto p = this->mDocumentResources;
-  if (!p) {
+  auto doc = this->mDocumentResources;
+  if (!doc) {
     return;
   }
 
   const auto lock = wrap_lock(std::shared_lock {mMutex});
 
-  const auto pageIt = std::ranges::find(p->mPageIDs, id);
-  if (pageIt == p->mPageIDs.end()) {
+  const auto pageIt = std::ranges::find(doc->mPageIDs, id);
+  if (pageIt == doc->mPageIDs.end()) {
     return;
   }
-  const auto index = pageIt - p->mPageIDs.begin();
+  const auto index = pageIt - doc->mPageIDs.begin();
 
-  auto page = p->mPDFDocument.GetPage(index);
+  auto page = doc->mPDFDocument.GetPage(index);
 
   auto ctx = rt->d2d();
   ctx->FillRectangle(rect, mBackgroundBrush.get());
