@@ -100,17 +100,25 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
 }// namespace OpenKneeboard
 
 template <class CharT>
-struct std::formatter<winrt::guid, CharT>
+struct std::formatter<winrt::hstring, CharT>
   : std::formatter<std::basic_string_view<CharT>, CharT> {
-  template <class FormatContext>
-  auto format(const winrt::guid& guid, FormatContext& fc) const {
-    auto ret = winrt::to_hstring(guid);
+  auto format(const winrt::hstring& value, auto& formatContext) const {
     if constexpr (std::same_as<CharT, wchar_t>) {
       return std::formatter<std::basic_string_view<CharT>, CharT>::format(
-        std::basic_string_view<CharT> {ret.data(), ret.size()}, fc);
+        static_cast<std::basic_string_view<CharT>>(value), formatContext);
     } else {
       return std::formatter<std::basic_string_view<CharT>, CharT>::format(
-        std::basic_string_view<CharT> {winrt::to_string(ret)}, fc);
+        winrt::to_string(value), formatContext);
     }
+  }
+};
+
+template <class CharT>
+struct std::formatter<winrt::guid, CharT>
+  : std::formatter<winrt::hstring, CharT> {
+  auto format(const winrt::guid& guid, auto& formatContext) const {
+    auto string = winrt::to_hstring(guid);
+    return std::formatter<winrt::hstring, CharT>::format(
+      winrt::to_hstring(guid), formatContext);
   }
 };
