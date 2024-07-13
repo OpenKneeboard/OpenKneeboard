@@ -251,10 +251,10 @@ void PlainTextPageSource::RenderPage(
   }
 
   {
-    auto text = winrt::to_hstring(std::format(
-      _("Page {} of {}"),
+    auto text = std::format(
+      _(L"Page {} of {}"),
       *pageIndex + 1,
-      std::max<PageIndex>(*pageIndex + 1, GetPageCount())));
+      std::max<PageIndex>(*pageIndex + 1, GetPageCount()));
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     ctx->DrawTextW(
