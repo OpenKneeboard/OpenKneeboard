@@ -755,7 +755,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateInstanceExtensionProperties(
   XrExtensionProperties* properties) {
   // This is installed as an implicit layer; for behavior spec, see:
   // https://registry.khronos.org/OpenXR/specs/1.0/loader.html#api-layer-conventions-and-rules
-  if (layerName == OpenXRApiLayerName) {
+  if (layerName && layerName == OpenXRApiLayerName) {
     *propertyCountOutput = 0;
     // We don't implement any instance extensions
     return XR_SUCCESS;
@@ -763,7 +763,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateInstanceExtensionProperties(
 
   // As we don't implement any extensions, just delegate to the runtime or next
   // layer.
-  if (gNext && gNext->have_xrEnumerateInstanceExtensionProperties()) {
+  if (gNext && gNext->xrEnumerateInstanceExtensionProperties) {
     return gNext->xrEnumerateInstanceExtensionProperties(
       layerName, propertyCapacityInput, propertyCountOutput, properties);
   }

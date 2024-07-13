@@ -68,20 +68,7 @@ class OpenXRNext final {
  public:
   OpenXRNext(XrInstance, PFN_xrGetInstanceProcAddr);
 
-#define IT(func) \
-  template <class... Args> \
-  auto func(Args&&... args) { \
-    return this->m_##func(std::forward<Args>(args)...); \
-  } \
-  bool have_##func() const noexcept { \
-    return m_##func != nullptr; \
-  }
-  IT(xrGetInstanceProcAddr)
-  OPENKNEEBOARD_NEXT_OPENXR_FUNCS
-#undef IT
-
- private:
-#define IT(func) PFN_##func m_##func {nullptr};
+#define IT(func) PFN_##func func {nullptr};
   IT(xrGetInstanceProcAddr)
   OPENKNEEBOARD_NEXT_OPENXR_FUNCS
 #undef IT
