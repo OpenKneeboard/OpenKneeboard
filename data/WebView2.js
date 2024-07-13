@@ -1,9 +1,10 @@
 console.log("OpenKneeboard integration attached");
 
 class OpenKneeboard {
-    constructor() {
-        console.log("OpenKneeboard::Constructor()");
+    constructor(runtimeData) {
+        console.log("OpenKneeboard::Constructor()", runtimeData);
         document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
+        this.#runtimeData = runtimeData;
     }
 
     OnDOMContentLoaded() {
@@ -16,4 +17,10 @@ class OpenKneeboard {
             data: { width, height },
         });
     }
+
+    GetVersion() {
+        return this.#runtimeData.Version;
+    }
+
+    #runtimeData;
 }

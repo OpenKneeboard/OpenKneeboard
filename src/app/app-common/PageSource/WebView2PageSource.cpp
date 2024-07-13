@@ -18,12 +18,14 @@
  * USA.
  */
 
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/WebView2PageSource.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/json_format.h>
 #include <OpenKneeboard/version.h>
 
 #include <Windows.h>
@@ -130,14 +132,35 @@ WebView2PageSource::InitializeContentToCapture() {
   co_await this->ImportJavascriptFile(
     Filesystem::GetImmutableDataDirectory() / "WebView2.js");
 
+  const nlohmann::json initData {
+    {
+      "Version",
+      {
+        {
+          "Components",
+          {
+            {"Major", Version::Major},
+            {"Minor", Version::Minor},
+            {"Patch", Version::Patch},
+            {"Build", Version::Build},
+          },
+        },
+        {"HumanReadable", Version::ReleaseName},
+        {"IsGitHubActionBuild", Version::IsGithubActionsBuild},
+        {"IsTaggedVersion", Version::IsTaggedVersion},
+        {"IsStableRelease", Version::IsStableRelease},
+      },
+    },
+  };
+
   if (mSettings.mIntegrateWithSimHub) {
     co_await this->ImportJavascriptFile(
       Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
-    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      L"window.OpenKneeboard = new OpenKneeboard_SimHub();");
+    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(std::format(
+      L"window.OpenKneeboard = new OpenKneeboard_SimHub({});", initData));
   } else {
     co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      L"window.OpenKneeboard = new OpenKneeboard();");
+      std::format(L"window.OpenKneeboard = new OpenKneeboard({});", initData));
   }
 
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
