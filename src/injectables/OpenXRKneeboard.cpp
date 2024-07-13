@@ -748,6 +748,38 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateApiLayerProperties(
   return XR_SUCCESS;
 }
 
+XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateInstanceExtensionProperties(
+  const char* layerName,
+  uint32_t propertyCapacityInput,
+  uint32_t* propertyCountOutput,
+  XrExtensionProperties* properties) {
+  // This is installed as an implicit layer; for behavior spec, see:
+  // https://registry.khronos.org/OpenXR/specs/1.0/loader.html#api-layer-conventions-and-rules
+  if (layerName == OpenXRApiLayerName) {
+    *propertyCountOutput = 0;
+    // We don't implement any instance extensions
+    return XR_SUCCESS;
+  }
+
+  // As we don't implement any extensions, just delegate to the runtime or next
+  // layer.
+  if (gNext && gNext->have_xrEnumerateInstanceExtensionProperties()) {
+    return gNext->xrEnumerateInstanceExtensionProperties(
+      layerName, propertyCapacityInput, propertyCountOutput, properties);
+  }
+
+  if (layerName) {
+    // If layerName is non-null and not our layer, it should be an earlier
+    // layer, or we should have a `next`
+    return XR_ERROR_API_LAYER_NOT_PRESENT;
+  }
+
+  // for NULL layerName, we append our list to the next; as we have none, that
+  // just means we have 0 again
+  *propertyCountOutput = 0;
+  return XR_SUCCESS;
+}
+
 XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
@@ -786,6 +818,12 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   if (name == "xrEnumerateApiLayerProperties") {
     *function
       = reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
+    return XR_SUCCESS;
+  }
+
+  if (name == "xrEnumerateInstanceExtensionProperties") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(
+      &xrEnumerateInstanceExtensionProperties);
     return XR_SUCCESS;
   }
 

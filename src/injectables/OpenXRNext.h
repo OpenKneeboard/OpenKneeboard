@@ -50,6 +50,7 @@
   IT(xrDestroySpace) \
   IT(xrDestroySwapchain) \
   IT(xrEndFrame) \
+  IT(xrEnumerateInstanceExtensionProperties) \
   IT(xrEnumerateSwapchainFormats) \
   IT(xrEnumerateSwapchainImages) \
   IT(xrGetInstanceProperties) \
@@ -71,6 +72,9 @@ class OpenXRNext final {
   template <class... Args> \
   auto func(Args&&... args) { \
     return this->m_##func(std::forward<Args>(args)...); \
+  } \
+  bool have_##func() const noexcept { \
+    return m_##func != nullptr; \
   }
   IT(xrGetInstanceProcAddr)
   OPENKNEEBOARD_NEXT_OPENXR_FUNCS
