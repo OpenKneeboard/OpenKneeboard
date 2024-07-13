@@ -81,8 +81,9 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-constexpr std::string_view OpenXRLayerName {Config::OpenXRApiLayerName};
-static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
+static_assert(OpenXRApiLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
+static_assert(
+  OpenXRApiLayerDescription.size() <= XR_MAX_API_LAYER_DESCRIPTION_SIZE);
 
 // Don't use a unique_ptr as on process exit, windows doesn't clean these up
 // in a useful order, and Microsoft recommend just leaking resources on
@@ -711,6 +712,44 @@ xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) noexcept {
   return gNext->xrEndFrame(session, frameEndInfo);
 }
 
+XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateApiLayerProperties(
+  uint32_t propertyCapacityInput,
+  uint32_t* propertyCountOutput,
+  XrApiLayerProperties* properties) {
+  // We only return our own properties per spec:
+  // https://registry.khronos.org/OpenXR/specs/1.0/loader.html#api-layer-conventions-and-rules
+
+  *propertyCountOutput = 1;
+  if (propertyCapacityInput == 0) {
+    // Do not return XR_ERROR_SIZE_SUFFICIENT for 0, per
+    // https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#buffer-size-parameters
+    return XR_SUCCESS;
+  }
+
+  if (properties->type != XR_TYPE_API_LAYER_PROPERTIES) {
+    return XR_ERROR_VALIDATION_FAILURE;
+  }
+
+  memset(properties->layerName, 0, std::size(properties->layerName));
+  memcpy_s(
+    properties->layerName,
+    std::size(properties->layerName),
+    OpenXRApiLayerName.data(),
+    OpenXRApiLayerName.size());
+
+  properties->specVersion = XR_CURRENT_API_VERSION;
+
+  properties->layerVersion = Version::OpenXRApiLayerImplementationVersion;
+
+  memcpy_s(
+    properties->description,
+    std::size(properties->description),
+    OpenXRApiLayerDescription.data(),
+    OpenXRApiLayerDescription.size());
+
+  return XR_SUCCESS;
+}
+
 XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
@@ -746,17 +785,18 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   }
   ///// END XR_KHR_vulkan_enable2 /////
 
+  if (name == "xrEnumerateApiLayerProperties") {
+    *function
+      = reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
+    return XR_SUCCESS;
+  }
+
   if (gNext) {
     return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
   }
 
-  if (name == "xrEnumerateApiLayerProperties") {
-    // No need to do anything here; should be implemented by the runtime
-    return XR_SUCCESS;
-  }
-
   dprintf(
-    "Unsupported OpenXR call '{}' with instance {:#016x} and no next",
+    "Unsupported OpenXR call '{}' with instance {:#018x} and no next",
     name,
     std::bit_cast<uint64_t>(instance));
   return XR_ERROR_FUNCTION_UNSUPPORTED;
@@ -824,8 +864,8 @@ OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
   XrNegotiateApiLayerRequest* apiLayerRequest) {
   dprintf("{}", __FUNCTION__);
 
-  if (layerName != OpenKneeboard::OpenXRLayerName) {
-    dprintf("Layer name mismatch:\n -{}\n +{}", OpenXRLayerName, layerName);
+  if (layerName != OpenXRApiLayerName) {
+    dprintf("Layer name mismatch:\n -{}\n +{}", OpenXRApiLayerName, layerName);
     return XR_ERROR_INITIALIZATION_FAILED;
   }
 

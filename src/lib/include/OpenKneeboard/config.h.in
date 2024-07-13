@@ -21,15 +21,15 @@
 
 #include <OpenKneeboard/Pixels.h>
 
+#include <string>
+
 #include <intrin.h>
 
 namespace OpenKneeboard {
 
 inline namespace Config {
 
-// clang-format off
-constexpr auto BuildBitness = @BUILD_BITNESS@;
-// clang-format on
+constexpr auto BuildBitness = sizeof(void*) * 8;
 constexpr bool Is32BitBuild = (BuildBitness == 32);
 constexpr bool Is64BitBuild = (BuildBitness == 64);
 
@@ -51,7 +51,10 @@ constexpr unsigned int BookmarksBarPercent = HeaderPercent;
 
 constexpr const char ProjectReverseDomainA[] {"@PROJECT_REVERSE_DOMAIN@"};
 constexpr const wchar_t ProjectReverseDomainW[] {L"@PROJECT_REVERSE_DOMAIN@"};
-constexpr const char OpenXRApiLayerName[] {"@PROJECT_OPENXR_API_LAYER_NAME@"};
+constexpr const std::string_view OpenXRApiLayerName {
+  "@PROJECT_OPENXR_API_LAYER_NAME@"};
+constexpr const std::string_view OpenXRApiLayerDescription {
+  "@PROJECT_OPENXR_API_LAYER_DESCRIPTION@"};
 
 constexpr const wchar_t RegistrySubKey[] {
   L"SOFTWARE\\Fred Emmott\\OpenKneeboard"};

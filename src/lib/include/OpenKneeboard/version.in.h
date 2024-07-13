@@ -37,6 +37,8 @@ static constexpr std::string_view TagName {"@MATCHING_TAG@"};
 static constexpr bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
 static constexpr bool IsTaggedVersion = @IS_TAGGED_VERSION@;
 static constexpr bool IsStableRelease = @IS_STABLE_RELEASE@;
+
+static constexpr uint32_t OpenXRApiLayerImplementationVersion = @OPENXR_API_LAYER_IMPLEMENTATION_VERSION@;
 // clang-format on
 
 }// namespace OpenKneeboard::Version
