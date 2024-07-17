@@ -101,17 +101,6 @@ endif()
 
 project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.8.5.${VERSION_BUILD} LANGUAGES CXX C)
 
-# The "implementation_version" field of the layer's JSON file is a string, but it should
-# match the `uint32_t` field of XrApiLayerProperties.
-#
-# The specification is inconsistent about whether this should be for 'any major changes'
-# or 'backwards compatible' (sic?) changes. We also can't fit the full version number in
-# that, so let's just go for:
-# - 8 bits for the major version
-# - 24 bits for the minor version
-math(EXPR OPENXR_API_LAYER_IMPLEMENTATION_VERSION "(${CMAKE_PROJECT_VERSION_MAJOR} << 24) | ${CMAKE_PROJECT_VERSION_MINOR}")
-message(STATUS "OpenXR API layer implementation version: ${OPENXR_API_LAYER_IMPLEMENTATION_VERSION}")
-
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
 message(STATUS "CMake Generator: ${CMAKE_GENERATOR}")

@@ -4,7 +4,7 @@
     "name": "${PROJECT_OPENXR_API_LAYER_NAME}",
     "library_path": ".\\$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>",
     "api_version": "1.0",
-    "implementation_version": "${OPENXR_API_LAYER_IMPLEMENTATION_VERSION}",
+    "implementation_version": "1",
     "description": "${PROJECT_OPENXR_API_LAYER_DESCRIPTION}",
     "functions": {
       "xrNegotiateLoaderApiLayerInterface": "OpenKneeboard_xrNegotiateLoaderApiLayerInterface"
