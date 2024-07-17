@@ -192,6 +192,9 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2WebMessageReceivedEventArgs
     args) {
+  const auto weak = weak_from_this();
+  const auto uiThread = mUIThread;
+
   const auto json = to_string(args.WebMessageAsJson());
   const auto parsed = nlohmann::json::parse(json);
 
@@ -246,7 +249,12 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   mController.RasterizationScale(1.0);
   WGCPageSource::ForceResize(size);
 
-  co_await mUIThread;
+  co_await uiThread;
+
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
 
   evContentChangedEvent.Emit();
   evNeedsRepaintEvent.Emit();
