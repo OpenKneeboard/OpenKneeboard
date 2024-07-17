@@ -222,6 +222,8 @@ void WGCPageSource::OnWGCFrame() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "WGCPageSource::OnWGCFrame()");
 
+  const auto keepAlive = shared_from_this();
+
   auto frame = mNextFrame;
   mNextFrame = {nullptr};
   if (!frame) {
@@ -350,6 +352,7 @@ winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
     "WGCPageSource::ForceResize()",
     TraceLoggingValue(size.mWidth, "Width"),
     TraceLoggingValue(size.mHeight, "Height"));
+  mThreadGuard.CheckThread();
   mFramePool.Recreate(
     mWinRTD3DDevice,
     this->GetPixelFormat(),
