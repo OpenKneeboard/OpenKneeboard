@@ -1,7 +1,6 @@
-class OpenKneeboardSimHubAPI extends OpenKneeboardAPI {
-  constructor(...args) {
-    console.log("OpenKneeboardSimHubAPI::Constructor()");
-    super(...args);
+class OpenKneeboardSimHubHooks {
+  constructor() {
+    console.log("OpenKneeboardSimHubHooks::Constructor()");
     this.hookWindowSimhub();
   }
 
@@ -58,6 +57,6 @@ class OpenKneeboardSimHubAPI extends OpenKneeboardAPI {
     const width = $(".maincontainer").width();
     const height = $(".maincontainer").height();
 
-    this.SetPreferredPixelSize(width, height);
+    window.OpenKneeboard.SetPreferredPixelSize(width, height);
   }
 }

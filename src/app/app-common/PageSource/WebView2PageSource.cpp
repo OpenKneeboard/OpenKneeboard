@@ -153,14 +153,14 @@ WebView2PageSource::InitializeContentToCapture() {
     },
   };
 
+  co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
+    std::format(L"window.OpenKneeboard = new OpenKneeboardAPI({});", initData));
+
   if (mSettings.mIntegrateWithSimHub) {
     co_await this->ImportJavascriptFile(
       Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
-    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(std::format(
-      L"window.OpenKneeboard = new OpenKneeboardSimHubAPI({});", initData));
-  } else {
-    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(std::format(
-      L"window.OpenKneeboard = new OpenKneeboardAPI({});", initData));
+    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
+      L"window.OpenKneeboard.SimHubHooks = new OpenKneeboardSimHubHooks();");
   }
 
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
