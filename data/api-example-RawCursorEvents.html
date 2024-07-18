@@ -25,14 +25,18 @@
         OpenKneeboard's API is not detected; add this page as a web dashboard tab at <a id="thisPageURI"></a>.
     </p>
     <p id="apiError"></p>
-    <table id="dataTable" class="hidden">
-        <tr>
-            <th>Buttons</th>
-            <th>X</th>
-            <th>Y</th>
-            <th>TouchState</th>
-        </tr>
-    </table>
+    <div id="okbClient" class="hidden">
+        <button onclick="runForever()">Run forever</button>
+        <button onclick="runFiveSeconds()">Run for five seconds</button>
+        <table id="dataTable">
+            <tr>
+                <th>Buttons</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>TouchState</th>
+            </tr>
+        </table>
+    </div>
     <script>
         function OnCursorEvent(ev) {
             const detail = ev.detail;
@@ -57,14 +61,35 @@
             let children = table.children;
             table.insertBefore(row, children.length == 1 ? null : children.item(1));
         }
+
+        async function runForever() {
+            await OpenKneeboard.SetCursorEventsMode('Raw');
+        }
+
+        async function runFiveSeconds() {
+            await OpenKneeboard.SetCursorEventsMode('Raw');
+            await new Promise(
+                (resolve, reject) => {
+                    setTimeout(() => {
+                        resolve("OK");
+                    },
+                        5000);
+                });
+            await OpenKneeboard.SetCursorEventsMode("MouseEmulation");
+        }
+
         async function InitializePage() {
             document.getElementById('apiRequired').classList.add('hidden');
-            document.getElementById('dataTable').classList.remove('hidden');
+            document.getElementById('okbClient').classList.remove('hidden');
 
             OpenKneeboard.addEventListener('cursor', OnCursorEvent);
+            await OpenKneeboard.SetPreferredPixelSize(512, 512);
 
             try {
-                await OpenKneeboard.EnableExperimentalFeature('RawCursorEvents', 2024071801);
+                await OpenKneeboard.EnableExperimentalFeatures([
+                    { name: 'RawCursorEvents', version: 2024071802 },
+                    { name: 'SetCursorEventsMode', version: 2024071801 },
+                ]);
             } catch (error) {
                 let errorP = document.getElementById('error');
                 errorP.textContent = "Initializing the RawCursorEvents API failed: " + error;

@@ -50,11 +50,20 @@ using ExFeature = WebView2PageSource::ExperimentalFeature;
 
 namespace {
 const ExFeature RawCursorEventsFeature {"RawCursorEvents", 2024071801};
+const ExFeature RawCursorEventsToggleableFeature {
+  "RawCursorEvents",
+  2024071802};
 const ExFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071801};
+const ExFeature DoodlesOnlyToggleableFeature {"DoodlesOnly", 2024071802};
+
+const ExFeature SetCursorEventsModeFeature {"SetCursorEventsMode", 2024071801};
 
 std::array SupportedExperimentalFeatures {
   RawCursorEventsFeature,
+  RawCursorEventsToggleableFeature,
   DoodlesOnlyFeature,
+  DoodlesOnlyToggleableFeature,
+  SetCursorEventsModeFeature,
 };
 
 };// namespace
@@ -270,6 +279,12 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     co_return;
   }
 
+  if (message == "OpenKneeboard/SetCursorEventsMode") {
+    respond(
+      co_await this->OnSetCursorEventsModeMessage(parsed.at("messageData")));
+    co_return;
+  }
+
   OPENKNEEBOARD_BREAK;
   respond(std::unexpected(std::format("Invalid JS API request: {}", message)));
 }
@@ -344,6 +359,50 @@ WebView2PageSource::OnResizeMessage(nlohmann::json args) {
 
   co_return success("resized");
 }
+
+concurrency::task<WebView2PageSource::OKBPromiseResult>
+WebView2PageSource::OnSetCursorEventsModeMessage(nlohmann::json args) {
+  auto missingFeature = [](auto feature) {
+    return std::unexpected {std::format(
+      "SetCursorEventMode() failed - the experimental feature `{}` version "
+      "`{}` is required.",
+      feature.mName,
+      feature.mVersion)};
+  };
+  if (!std::ranges::contains(
+        mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
+    co_return missingFeature(SetCursorEventsModeFeature);
+  }
+  const std::string mode = args.at("mode");
+
+  auto success = []() { return nlohmann::json {{"result", "success"}}; };
+
+  if (mode == "MouseEmulation") {
+    mCursorEventsMode = CursorEventsMode::MouseEmulation;
+    co_return success();
+  }
+
+  if (mode == "DoodlesOnly") {
+    if (!std::ranges::contains(
+          mEnabledExperimentalFeatures, DoodlesOnlyToggleableFeature)) {
+      co_return missingFeature(DoodlesOnlyToggleableFeature);
+    }
+    mCursorEventsMode = CursorEventsMode::DoodlesOnly;
+    co_return success();
+  }
+
+  if (mode == "Raw") {
+    if (!std::ranges::contains(
+          mEnabledExperimentalFeatures, RawCursorEventsToggleableFeature)) {
+      co_return missingFeature(RawCursorEventsFeature);
+    }
+    mCursorEventsMode = CursorEventsMode::Raw;
+    co_return success();
+  }
+
+  co_return std::unexpected(std::format("Unrecognized mode '{}'", mode));
+}
+
 concurrency::task<WebView2PageSource::OKBPromiseResult>
 WebView2PageSource::OnGetAvailableExperimentalFeaturesMessage(
   nlohmann::json args) {
@@ -386,30 +445,44 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
         version));
     }
 
+    dprintf(
+      "WARNING: JS enabled experimental feature `{}` version `{}`",
+      name,
+      version);
+
+    mEnabledExperimentalFeatures.push_back(feature);
+    enabledFeatures.push_back(feature);
+
+    if (
+      feature == RawCursorEventsToggleableFeature
+      || feature == DoodlesOnlyToggleableFeature
+      || feature == SetCursorEventsModeFeature) {
+      // Nothing to do except enable these
+      continue;
+    }
+
     if (feature == RawCursorEventsFeature) {
       if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been changed by "
+          "Can not enable `{}`, as the cursor mode has already been changed "
+          "by "
           "this page.",
           name));
       }
       mCursorEventsMode = CursorEventsMode::Raw;
-      mEnabledExperimentalFeatures.push_back(feature);
-      enabledFeatures.push_back(feature);
       continue;
     }
 
     if (feature == DoodlesOnlyFeature) {
       if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been changed by "
+          "Can not enable `{}`, as the cursor mode has already been changed "
+          "by "
           "this page.",
           name));
       }
 
       mCursorEventsMode = CursorEventsMode::DoodlesOnly;
-      mEnabledExperimentalFeatures.push_back(feature);
-      enabledFeatures.push_back(feature);
       continue;
     }
 

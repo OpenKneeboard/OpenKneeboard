@@ -163,6 +163,8 @@ class WebView2PageSource final : public WGCPageSource,
     nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnGetAvailableExperimentalFeaturesMessage(
     nlohmann::json args);
+  concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
+    nlohmann::json args);
 
   winrt::fire_and_forget SendJSEvent(
     std::string_view eventType,

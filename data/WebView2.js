@@ -28,6 +28,10 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#runtimeData.Version;
     }
 
+    SetCursorEventsMode(mode) {
+        return this.#AsyncRequest("OpenKneeboard/SetCursorEventsMode", { mode });
+    }
+
     EnableExperimentalFeature(name, version) {
         return this.EnableExperimentalFeatures([{ name, version }]);
     }

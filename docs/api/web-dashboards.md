@@ -152,9 +152,8 @@ Return values will be the same; if any feature names/versions are not supported,
 
 This feature requires:
 - OpenKneeboard v1.9 or above
-- experimental feature: `RawCursorEvents` version `2024071801`
-
-This feature is incompatible with the 'DoodlesOnly' experimental feature.
+- experimental feature: `RawCursorEvents` version `2024071802`
+- experimental feature: `SetCursorEventsMode` version `2024071801`
 
 This event provides access to OpenKneeboard's raw cursor events, bypassing browser mouse emulation.
 
@@ -163,10 +162,14 @@ Enabling this experimental feature will disable the mouse emulation, and start t
 ```js
 // Example:
 OpenKneeboard.addEventListener('cursor', (ev) => { console.log(ev.detail); });
-await OpenKneeboard.EnableExperimentalFeature("RawCursorEvents", 2024071801);
+await OpenKneeboard.EnableExperimentalFeatures([
+  {name: "RawCursorEvents", version: 2024071802},
+  {name: "SetCursorEventsMode", version: 2024071801},
+]);
+await OpenKneeboard.SetCursorEventsMode("Raw");
 ```
 
-For version 2024071801 of the experimental feature, the events will be of this form:
+For version 2024071802 of the experimental feature, the events will be of this form:
 
 ```js
 {
@@ -188,11 +191,18 @@ These events are used for both tablet and mouse events.
 
 An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
 
+#### Change history
+
+##### 2024071801 -> 2024071802
+
+- enabling the feature now only makes the cursor event mode available, it does not automatically switch to it
+- it is no longer incompatible with the `DoodlesOnly` feature
+
 ### DoodlesOnly
 
 This feature requires:
 - OpenKneeboard v1.9 or above
-- experimental feature: `DoodlesOnly` version `2024071801`
+- experimental feature: `DoodlesOnly` version `2024071802`
 
 This feature is incompatible with the 'RawCursorEvents' experimental feature.
 
@@ -202,5 +212,38 @@ As the mouse emulation is disabled, after enabling this feature, it is no longer
 
 ```js
 // Example:
-await OpenKneeboard.EnableExperimentalFeature("DoodlesOnly", 2024071801);
+await OpenKneeboard.EnableExperimentalFeatures([
+  {name: "DoodlesOnly", version: 2024071802},
+  {name: "SetCursorEventsMode", version: 2024071801},
+]);
+await OpenKneeboard.SetCursorEventsMode("DoodlesOnly");
 ```
+
+#### Change history
+
+##### 2024071801 -> 2024071802
+
+- enabling the feature now only makes the cursor event mode available, it does not automatically switch to it
+- it is no longer incompatible with the `RawCursorEvents` feature
+
+### SetCursorEventsMode
+
+This feature requires:
+- OpenKneeboard v1.9 or above
+- experimental feature: `SetCursorEventsMode` version `2024071801`
+
+```js
+// Syntax:
+OpenKneeboard.SetCursorEventsMode("MouseEmulation" | "DoodlesOnly" | "Raw"): Promise<any>;
+// Example:
+await OpenKneeboard.EnableExperimentalFeatures([
+  {name: "RawCursorEvents", version: 2024071802},
+  {name: "SetCursorEventsMode", version: 2024071801},
+]);
+await OpenKneeboard.SetCursorEventsMode("Raw");
+```
+
+- setting the mode to `"Raw"` requires `RawCursorEvents` version `2024071802`
+- setting the mode to `"DoodlesOnly"` requires `DoodlesOnly` version `2024071802`
+
+An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
