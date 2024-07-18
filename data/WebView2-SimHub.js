@@ -1,6 +1,6 @@
-class OpenKneeboard_SimHub extends OpenKneeboard {
+class OpenKneeboardSimHubAPI extends OpenKneeboardAPI {
   constructor(...args) {
-    console.log("OpenKneeboard_SimHub::Constructor()");
+    console.log("OpenKneeboardSimHubAPI::Constructor()");
     super(...args);
     this.hookWindowSimhub();
   }

@@ -1,8 +1,8 @@
 console.log("OpenKneeboard integration attached");
 
-class OpenKneeboard {
+class OpenKneeboardAPI {
     constructor(runtimeData) {
-        console.log("OpenKneeboard::Constructor()", runtimeData);
+        console.log("OpenKneeboardAPI::constructor()", runtimeData);
 
         this.#runtimeData = runtimeData;
         this.#inflightRequests = {};
