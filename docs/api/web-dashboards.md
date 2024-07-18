@@ -91,3 +91,84 @@ This function returns an object like the following:
 The two forms of version number are used because:
 - Some Windows features only support the 4-numbers form
 - The string version is much more understandable to people than the 4-numbers form
+
+## Experimental JavaScript APIs
+
+These features will be changed without notice; you should avoid using them in released software if possible; reach out in `#code-talk` [on Discord](https://go.openkneeboard.com/discord) before releasing software that uses them.
+
+Experimental features are identified by a name, and a version number (usually `YYYYMMDDnn`, where 'nn' increments if there are multiple revisions within a day); they must be explicitly enabled.
+
+### GetAvailableExperimentalFeatures
+
+This function will fail with an exception in tagged releases of OpenKneeboard; it is *only* an interactive introspection tool to aid development. This functions requires OpenKneeboard v1.9 or above.
+
+It will return a `Promise`; example usage:
+
+```js
+await OpenKneeboard.GetAvailableExperimentalFeatures()
+```
+
+The resulting value will contain the names and versions of all available experimental features, but the format is intentionally undefined, as it is *only* intended for interactive use, e.g. in a developer tools window.
+
+### EnableExperimentalFeature
+
+```js
+// Syntax:
+OpenKneeboard.EnableExperimentalFeature(name: string, version: number): Promise<any>;
+// Example:
+await OpenKneeboard.EnableExperimentalFeature("foo", 2024071801);
+```
+
+On success, the Promise will resolve to a JSON object, which may contain additional information for debugging.
+
+On failure, the Promise will be rejected, with a string error message indicating the reason. Likely reasons for failure are unrecognized features or versions.
+
+### EnableExperimentalFeatures
+
+Enable multiple features in one go.
+
+```js
+// Example:
+await OpenKneeboard.EnableExperimentalFeature([
+  { name: "Foo", version: 1234 },
+  { name: "Bar", version: 5678 },
+]);
+```
+
+Return values will be the same; if any feature names/versions are not supported, the function will indicate failure - however, preceding features may have been enabled
+
+### 'cursor' event
+
+This feature requires:
+- OpenKneeboard v1.9 or above
+- experimental feature: `RawCursorEvents` version `2024071801`
+
+This event provides access to OpenKneeboard's raw cursor events, bypassing browser mouse emulation.
+
+Enabling this experimental feature will disable the mouse emulation, and start these events being emitted.
+
+```js
+// Example:
+OpenKneeboard.addEventListener('cursor', (ev) => { console.log(ev.detail); });
+await OpenKneeboard.EnableExperimentalFeature("RawCursorEvents", 2024071801);
+```
+
+For version 2024071801 of the experimental feature, the events will be of this form:
+
+```js
+{
+  buttons: int,
+  position: { x: number, y: number },
+  touchState: "NearSurface" | "NotNearSurface" | "TouchingSurface",
+}
+```
+
+These events are used for both tablet and mouse events.
+
+- `buttons`: bitmask; the lowest bit is left click or the tablet pen tip. Other buttons are additional mice buttons or buttons on the tablet (not pen)
+- `position`: positions in pixels
+  - `x` and `y` are floating point; especially with a tablet, the cursor can be positioned between two logical pixels
+- `touchState`
+  - for tablets, this is self-descriptive
+  - for mice, `NotNearSurface` means "outside of the web page's area", and `TouchingSurface` means 'clicking'
+  - you should usually hide any cursors you may be showing if the state changes to `NotNearSurface`

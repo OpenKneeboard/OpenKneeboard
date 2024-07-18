@@ -98,7 +98,7 @@ void HeaderUILayer::PostCursorEvent(
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  if (cursorEvent.mSource == CursorSource::WINDOW_POINTER) {
+  if (cursorEvent.mSource == CursorSource::WindowPointer) {
     this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
     return;
   }

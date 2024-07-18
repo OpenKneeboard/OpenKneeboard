@@ -18,6 +18,8 @@
  * USA.
  */
 
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
@@ -29,7 +31,6 @@
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 
@@ -414,9 +415,8 @@ void TabletInputAdapter::OnTabletInput(
     y /= canvasSize.mHeight;
 
     CursorEvent event {
-      .mTouchState = (state.mPenButtons & 1)
-        ? CursorTouchState::TOUCHING_SURFACE
-        : CursorTouchState::NEAR_SURFACE,
+      .mTouchState = (state.mPenButtons & 1) ? CursorTouchState::TouchingSurface
+                                             : CursorTouchState::NearSurface,
       .mX = std::clamp<float>(x, 0, 1),
       .mY = std::clamp<float>(y, 0, 1),
       .mPressure = static_cast<float>(state.mPressure) / tablet.mMaxPressure,

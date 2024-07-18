@@ -17,12 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <mutex>
@@ -110,7 +111,7 @@ void DoodleRenderer::FlushCursorEvents() {
 
     bool drawing = false;
     for (const auto& event: page.mBufferedEvents) {
-      if (event.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
+      if (event.mTouchState != CursorTouchState::TouchingSurface) {
         page.mHaveCursor = false;
         continue;
       }

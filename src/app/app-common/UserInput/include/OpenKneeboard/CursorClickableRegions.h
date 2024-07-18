@@ -21,18 +21,19 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Events.h>
-#include <d2d1.h>
 
 #include <memory>
 #include <mutex>
 #include <optional>
 
+#include <d2d1.h>
+
 namespace OpenKneeboard {
 
 template <class T>
 concept ClickableRegion = requires(T a) {
-                            { a.mRect } -> std::convertible_to<D2D1_RECT_F>;
-                          };
+  { a.mRect } -> std::convertible_to<D2D1_RECT_F>;
+};
 
 template <ClickableRegion Button>
 class CursorClickableRegions final
@@ -92,24 +93,24 @@ class CursorClickableRegions final
       }
     }
 
-    if (ev.mTouchState == CursorTouchState::NEAR_SURFACE) {
+    if (ev.mTouchState == CursorTouchState::NearSurface) {
       mHoverButton = buttonUnderCursor;
-    } else if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    } else if (ev.mTouchState == CursorTouchState::NotNearSurface) {
       mHoverButton.reset();
     }
 
     if (
-      mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
+      mCursorTouching && ev.mTouchState == CursorTouchState::TouchingSurface) {
       return;
     }
 
     if (
       (!mCursorTouching)
-      && ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
+      && ev.mTouchState != CursorTouchState::TouchingSurface) {
       return;
     }
 
-    mCursorTouching = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
+    mCursorTouching = (ev.mTouchState == CursorTouchState::TouchingSurface);
 
     if (mCursorTouching) {
       // Touch start

@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/BookmarksUILayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
-
-#include <OpenKneeboard/config.h>
 
 namespace OpenKneeboard {
 
@@ -82,7 +82,7 @@ void BookmarksUILayer::PostCursorEvent(
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
   if (
-    cursorEvent.mSource == CursorSource::WINDOW_POINTER || !this->IsEnabled()) {
+    cursorEvent.mSource == CursorSource::WindowPointer || !this->IsEnabled()) {
     this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
     return;
   }

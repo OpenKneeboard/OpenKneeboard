@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/BookmarksUILayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
@@ -33,7 +35,6 @@
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/UserActionHandler.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <algorithm>
@@ -372,7 +373,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
     return;
   }
 
-  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+  if (ev.mTouchState == CursorTouchState::NotNearSurface) {
     mCursorCanvasPoint.reset();
   } else {
     mCursorCanvasPoint = {ev.mX, ev.mY};

@@ -48,6 +48,13 @@ namespace OpenKneeboard {
 class WebView2PageSource final : public WGCPageSource,
                                  public IPageSourceWithCursorEvents {
  public:
+  struct ExperimentalFeature {
+    std::string mName;
+    uint64_t mVersion;
+
+    bool operator==(const ExperimentalFeature&) const noexcept = default;
+  };
+
   WebView2PageSource() = delete;
   virtual ~WebView2PageSource();
 
@@ -125,6 +132,12 @@ class WebView2PageSource final : public WGCPageSource,
   std::queue<CursorEvent> mCursorEvents;
   uint32_t mMouseButtons {};
 
+  enum class CursorEventsMode {
+    MouseEmulation,
+    Raw,
+  };
+  CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
+
   winrt::fire_and_forget FlushCursorEvents();
 
   winrt::fire_and_forget OnWebMessageReceived(
@@ -138,11 +151,21 @@ class WebView2PageSource final : public WGCPageSource,
   using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
 
   concurrency::task<OKBPromiseResult> OnResizeMessage(nlohmann::json args);
+  concurrency::task<OKBPromiseResult> OnEnableExperimentalFeaturesMessage(
+    nlohmann::json args);
+  concurrency::task<OKBPromiseResult> OnGetAvailableExperimentalFeaturesMessage(
+    nlohmann::json args);
+
+  winrt::fire_and_forget SendJSEvent(
+    std::string_view eventType,
+    nlohmann::json eventOptions);
 
   static LRESULT CALLBACK WindowProc(
     HWND const window,
     UINT const message,
     WPARAM const wparam,
     LPARAM const lparam) noexcept;
+
+  std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
 };
 }// namespace OpenKneeboard

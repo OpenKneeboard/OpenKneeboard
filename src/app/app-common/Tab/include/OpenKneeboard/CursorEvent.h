@@ -22,16 +22,23 @@
 #include <cstdint>
 
 namespace OpenKneeboard {
+
+#define OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES \
+  IT(TouchingSurface) \
+  IT(NearSurface) \
+  IT(NotNearSurface)
+
 enum class CursorTouchState {
-  TOUCHING_SURFACE,
-  NEAR_SURFACE,
-  NOT_NEAR_SURFACE,
+#define IT(x) x,
+  OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES
+#undef IT
 };
-enum class CursorSource { WINDOW_POINTER, TABLET };
+
+enum class CursorSource { WindowPointer, Tablet };
 
 struct CursorEvent {
-  CursorSource mSource = CursorSource::TABLET;
-  CursorTouchState mTouchState = CursorTouchState::NOT_NEAR_SURFACE;
+  CursorSource mSource = CursorSource::Tablet;
+  CursorTouchState mTouchState = CursorTouchState::NotNearSurface;
   float mX = 0, mY = 0, mPressure = 0;
   uint32_t mButtons = 0;
 };

@@ -31,7 +31,7 @@ void UILayerBase::PostNextCursorEvent(
   const CursorEvent& cursorEvent) {
   const auto [first, rest] = Split(next);
 
-  if (cursorEvent.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+  if (cursorEvent.mTouchState == CursorTouchState::NotNearSurface) {
     first->PostCursorEvent(rest, context, eventContext, {});
     return;
   }

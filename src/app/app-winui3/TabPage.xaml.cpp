@@ -206,10 +206,10 @@ void TabPage::UpdateKneeboardView() {
     AddEventListener(
       mKneeboardView->evCursorEvent,
       [this](const auto& ev) {
-        if (ev.mSource == CursorSource::WINDOW_POINTER) {
+        if (ev.mSource == CursorSource::WindowPointer) {
           mDrawCursor = false;
         } else {
-          mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+          mDrawCursor = ev.mTouchState != CursorTouchState::NotNearSurface;
           PaintLater();
         }
       }),
@@ -774,10 +774,9 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
   }
 
   this->EnqueueCursorEvent(CursorEvent {
-    .mSource = CursorSource::WINDOW_POINTER,
-    .mTouchState = (leftClick || rightClick)
-      ? CursorTouchState::TOUCHING_SURFACE
-      : CursorTouchState::NEAR_SURFACE,
+    .mSource = CursorSource::WindowPointer,
+    .mTouchState = (leftClick || rightClick) ? CursorTouchState::TouchingSurface
+                                             : CursorTouchState::NearSurface,
     .mX = canvasPoint.x,
     .mY = canvasPoint.y,
     .mPressure = rightClick ? 0.8f : 0.0f,

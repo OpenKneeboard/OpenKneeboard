@@ -38,6 +38,26 @@
 #include <wrl.h>
 
 namespace OpenKneeboard {
+
+#define IT(x) {CursorTouchState::x, #x},
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  CursorTouchState,
+  {OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES});
+#undef IT
+
+using ExFeature = WebView2PageSource::ExperimentalFeature;
+
+namespace {
+const ExFeature RawCursorEventsFeature {"RawCursorEvents", 2024071801};
+
+std::array SupportedExperimentalFeatures {
+  RawCursorEventsFeature,
+};
+
+};// namespace
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExFeature, mName, mVersion);
+
 std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
@@ -219,7 +239,7 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
         response.emplace("result", result.value());
       } else {
         response.emplace("error", result.error());
-        dprintf("WebView2 API error: {}", result.error());
+        dprintf("WARNING: WebView2 API error: {}", result.error());
       }
 
       self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
@@ -232,6 +252,21 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     respond(co_await this->OnResizeMessage(parsed.at("messageData")));
     co_return;
   }
+
+  if (message == "OpenKneeboard/EnableExperimentalFeatures") {
+    respond(co_await this->OnEnableExperimentalFeaturesMessage(
+      parsed.at("messageData")));
+    co_return;
+  }
+
+  if (message == "OpenKneeboard/GetAvailableExperimentalFeatures") {
+    respond(co_await this->OnGetAvailableExperimentalFeaturesMessage(
+      parsed.at("messageData")));
+    co_return;
+  }
+
+  OPENKNEEBOARD_BREAK;
+  respond(std::unexpected(std::format("Invalid JS API request: {}", message)));
 }
 
 concurrency::task<WebView2PageSource::OKBPromiseResult>
@@ -303,6 +338,73 @@ WebView2PageSource::OnResizeMessage(nlohmann::json args) {
   evNeedsRepaintEvent.Emit();
 
   co_return success("resized");
+}
+concurrency::task<WebView2PageSource::OKBPromiseResult>
+WebView2PageSource::OnGetAvailableExperimentalFeaturesMessage(
+  nlohmann::json args) {
+  if constexpr (Version::IsTaggedVersion) {
+    co_return std::unexpected(
+      "Listing experimental features is not enabled in tagged "
+      "releases of OpenKneeboard");
+  }
+
+  co_return nlohmann::json {SupportedExperimentalFeatures};
+}
+
+concurrency::task<WebView2PageSource::OKBPromiseResult>
+WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
+  std::vector<ExperimentalFeature> enabledFeatures;
+
+  for (const auto& featureSpec: args.at("features")) {
+    const std::string name = featureSpec.at("name");
+    const uint64_t version = featureSpec.at("version");
+
+    if (std::ranges::contains(
+          mEnabledExperimentalFeatures, name, &ExperimentalFeature::mName)) {
+      co_return std::unexpected(
+        std::format("Experimental feature `{}` is already enabled", name));
+    }
+
+    const ExperimentalFeature feature {name, version};
+
+    if (!std::ranges::contains(SupportedExperimentalFeatures, feature)) {
+      if (!std::ranges::contains(
+            SupportedExperimentalFeatures, name, &ExperimentalFeature::mName)) {
+        co_return std::unexpected(
+          std::format("`{}` is not a recognized experimental feature", name));
+      }
+
+      co_return std::unexpected(std::format(
+        "`{}` is a recognized experimental feature, but `{}` is not a "
+        "supported version",
+        name,
+        version));
+    }
+
+    if (feature == RawCursorEventsFeature) {
+      mCursorEventsMode = CursorEventsMode::Raw;
+      mEnabledExperimentalFeatures.push_back(feature);
+      enabledFeatures.push_back(feature);
+      continue;
+    }
+
+    const auto message = std::format(
+      "OpenKneeboard internal error: `{}` v{} is a recognized but unhandled "
+      "experimental feature",
+      name,
+      version);
+    dprint(message);
+    OPENKNEEBOARD_BREAK;
+    co_return std::unexpected(message);
+  }
+
+  co_return nlohmann::json {
+    {"result", std::format("enabled {} features", enabledFeatures.size())},
+    {"details",
+     {
+       {"features", enabledFeatures},
+     }},
+  };
 }
 
 void WebView2PageSource::InitializeComposition() noexcept {
@@ -448,8 +550,47 @@ void WebView2PageSource::PostCursorEvent(
   if (!mController) {
     return;
   }
-  std::unique_lock lock(mCursorEventsMutex);
-  mCursorEvents.push(event);
+
+  if (mCursorEventsMode == CursorEventsMode::MouseEmulation) {
+    std::unique_lock lock(mCursorEventsMutex);
+    mCursorEvents.push(event);
+    return;
+  }
+
+  assert(mCursorEventsMode == CursorEventsMode::Raw);
+  this->SendJSEvent(
+    "cursor",
+    {
+      {"detail",
+       {
+         {"touchState", event.mTouchState},
+         {"buttons", event.mButtons},
+         {"position",
+          {
+            {"x", event.mX},
+            {"y", event.mY},
+          }},
+       }},
+    });
+}
+
+winrt::fire_and_forget WebView2PageSource::SendJSEvent(
+  std::string_view eventType,
+  nlohmann::json eventOptions) {
+  auto weak = weak_from_this();
+  auto thread = mWorkerThread;
+  co_await thread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+
+  const nlohmann::json message {
+    {"eventType", eventType},
+    {"eventOptions", eventOptions},
+  };
+
+  mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
 }
 
 winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
@@ -491,7 +632,7 @@ winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
       keys |= VKey::RightButton;
     }
 
-    if (event.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    if (event.mTouchState == CursorTouchState::NotNearSurface) {
       if (mMouseButtons & 1) {
         mController.SendMouseInput(EVKind::LeftButtonUp, keys, 0, {});
       }

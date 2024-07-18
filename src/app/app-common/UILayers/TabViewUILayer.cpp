@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
@@ -24,7 +26,6 @@
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/utf8.h>
 
 namespace OpenKneeboard {
@@ -43,7 +44,7 @@ void TabViewUILayer::PostCursorEvent(
   const Context& context,
   const EventContext&,
   const CursorEvent& ev) {
-  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+  if (ev.mTouchState == CursorTouchState::NotNearSurface) {
     mCursorPoint.reset();
     context.mTabView->PostCursorEvent({});
     return;

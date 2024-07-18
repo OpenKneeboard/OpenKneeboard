@@ -1,8 +1,9 @@
 console.log("OpenKneeboard integration attached");
 
-class OpenKneeboardAPI {
+class OpenKneeboardAPI extends EventTarget {
     constructor(runtimeData) {
         console.log("OpenKneeboardAPI::constructor()", runtimeData);
+        super();
 
         this.#runtimeData = runtimeData;
         this.#inflightRequests = {};
@@ -27,6 +28,24 @@ class OpenKneeboardAPI {
         return this.#runtimeData.Version;
     }
 
+    EnableExperimentalFeature(name, version) {
+        return this.EnableExperimentalFeatures([{ name, version }]);
+    }
+
+    EnableExperimentalFeatures(features) {
+        return this.#AsyncRequest("OpenKneeboard/EnableExperimentalFeatures", { features });
+    }
+
+    /** WARNING: NOT AVAILABLE IN RELEASED BUILDS.
+     * 
+     * This function is only available as a tool during development; it **WILL** fail
+     * in release builds.
+     */
+    GetAvailableExperimentalFeatures() {
+        console.log("WARNING: OpenKneeboard.GetAvailableExperimentalFeatures() **WILL** fail in tagged releases. It is only for use during development, not to check feature availability.");
+        return this.#AsyncRequest("OpenKneeboard/GetAvailableExperimentalFeatures", {});
+    }
+
     #runtimeData;
     #inflightRequests;
     #nextAsyncCallID;
@@ -41,6 +60,12 @@ class OpenKneeboardAPI {
 
     #OnNativeMessage(event) {
         const message = event.data;
+
+        if ('eventType' in message) {
+            this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));
+            return;
+        }
+
         if (!('callID' in message)) {
             return;
         }

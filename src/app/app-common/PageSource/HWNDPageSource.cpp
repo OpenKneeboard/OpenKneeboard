@@ -392,7 +392,7 @@ void HWNDPageSource::PostCursorEvent(
   }
   LPARAM lParam = MAKELPARAM(point.x, point.y);
 
-  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+  if (ev.mTouchState == CursorTouchState::NotNearSurface) {
     if (mMouseButtons & 1) {
       PostMessage(target, WM_LBUTTONUP, wParam, lParam);
     }
