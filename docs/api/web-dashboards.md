@@ -55,6 +55,8 @@ OpenKneeboard.SetPreferredPixelSize(width, height);
 - must be greater than or equal to 1
 - must be less than or equal to `D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION` (16384 as of Direct3D 11.1).
 
+In version 1.9 and above, this will return a `Promise`; if it resolves, it will indicate the actual size used. If the operation fails, it will be rejected with a string indicating the error.
+
 ### GetVersion
 
 *This requires OpenKneeboard v1.9 and above.*
