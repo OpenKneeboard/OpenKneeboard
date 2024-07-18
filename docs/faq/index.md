@@ -112,19 +112,9 @@ This effect can be exaggerated by tools that change how your real-world movement
 
 ## I use another OpenXR tool (API layer); what should the order be?
 
-OpenKneeboard itself has no layer ordering requirements. That said, if the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard* and you want the other tool to affect OpenKneeboard or you encounter issues, then install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI) and:
+If the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard* and you want the other tool to affect OpenKneeboard or you encounter issues, then install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI) and position OpenKneeboard *above* the other layers.
 
-- If you want OpenKneeboard to be anchored to the 'game world' (for example, fixed relative to your in-game rendered cockpit), put OpenKneeboard *above* the other tool
-- If you want OpenKneeboard to be anchored to the 'real world' (for example, fixed relative to your steering wheel, HOTAS, or literally on your knee), put OpenKneeboard *below* the other tool
-- If you're unsure, try both ways and see which you prefer.
-
-OpenKneeboard should usually be above other layers (anchored to the game world) as:
-
-- OpenKneeboard does nothing the game itself is not allowed to do
-- Except for adding the overlay, OpenKneeboard does not *modify* what the game does; it primarily adds additional, independent API calls
-- So, other API layers should generally be able to treat OpenKneeboard as if it were part of the game; this is also generally what is wanted
-
-If you encounter problems, you can try putting the layer above OpenKneeboard; if this solves problems, it is most likely a bug in the other layer, especially in the handling of poses/spaces. It is expected that it may introduce other problems.
+If you encounter problems, you can try putting the layer above OpenKneeboard; if this solves problems, it is most likely a bug in the other layer, especially in the handling of poses/spaces. It is expected that it may introduce other problems; in particular, OpenKneeboard is likely to be locked to the real world (i.e. your room), rather than the game world (e.g. your in-game rendered cockpit), unlike the rest of the game.
 
 *I do not provide support for third-party tools*. While OpenKneeboard is not bug-free, *every* time I have investigated an ordering requirement issue, it has turned out to be bug in the other layer; while I no longer investigate unknown interactions between layers, I am happy to investigate issues where there is evidence that the issue is in OpenKneeboard. "It is fixed by changing the layer order or disabling OpenKneeboard" is not evidence of a bug in OpenKneeboard if other layers are present.
 
@@ -132,20 +122,18 @@ If you are a developer of a layer that manipulates poses or spaces, there is a [
 
 ## I use a tool that changes how my real-world movement affects in-game movement; how do I use it with OpenKneeboard?
 
-OpenKneeboard itself has no layer ordering requirements. That said, if the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard* and you want the other tool to affect OpenKneeboard or you encounter issues, then:
+If the other tool provides instructions for OpenKneeboard, follow those instructions. *If the other tool does not provide instructions for OpenKneeboard*:
 
 1. install and run [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI)
 2. put OpenKneeboard *above* the other tool
 
-If you encounter problems, you can try putting the layer above OpenKneeboard; if this solves problems, it is most likely a bug in the other layer, especially in the handling of poses/spaces. It is expected that it may introduce other problems.
-
 If the other tool is below OpenKneeboard, OpenKneeboard will be anchored to your in-game world - for example, it will be in a constant position relative to your in-game plane/car cockpit. If this is not the case, contact the developers of your tool for assistance.
 
-If the other tool is above OpenKneeboard, OpenKneeboard will be anchored to something in the real-world - generally your room, but specific behavior depends on your setup and tracking system. It will *not* be anchored to the in-game world if using one of these tools.
+If the other tool is above OpenKneeboard, OpenKneeboard will be anchored to something in the real-world - generally your room, but specific behavior depends on your setup and tracking system. It will *not* be anchored to the in-game world if using one of these tools. This is almost never what you want - it will be inconsistent with the rest of the game.
 
-*I do not provide support for third-party tools*. While OpenKneeboard is not bug-free, *every* time I have investigated an ordering requirement issue, it has turned out to be bug in the other layer; while I no longer investigate unknown interactions between layers, I am happy to investigate issues where there is evidence that the issue is in OpenKneeboard. "It is fixed by changing the layer order or disabling OpenKneeboard" is not evidence of a bug in OpenKneeboard if other layers are present.
+If you encounter problems, you can try putting the layer above OpenKneeboard; if this solves issues, it is most likely a bug in the other layer, especially if this is required for the game or its' VR mode to function at all. It is likely that this ordering will mean that OpenKneeboard is not displayed in the correct position - this can only be fixed by solving whatever issue leads to the ordering requirement, which is almost always a bug in the other layer.
 
-Sorry, I do not investigate unknown problems with these kind of layers, as I've done it too many times; what I've learned in the past is in [the developer FAQ for this](third-party-developers.md#api-layers-that-manipulate-poses). That said, if there is evidence of a bug in OpenKneeboard rather than an unknown interaction problem, please open an issue on GitHub.
+*I do not provide support for or investigate issues with third-party tools*. While OpenKneeboard is not bug-free, *every* time I have investigated an ordering requirement issue, it has turned out to be bug in the other layer; while I no longer investigate unknown interactions between layers, I am happy to investigate issues where there is evidence that the issue is in OpenKneeboard. "It is fixed by changing the layer order or disabling OpenKneeboard" is not evidence of a bug in OpenKneeboard if other layers are present.
 
 As a user, your best way forward is to look for help from the other tool, and consider pointing the developer towards [the developer FAQ for this](third-party-developers.md#api-layers-that-manipulate-poses).
 
