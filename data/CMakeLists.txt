@@ -15,3 +15,10 @@ list(
     PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 set(DATA_SOURCES "${DATA_SOURCES}" PARENT_SCOPE)
+
+install(
+    FILES
+    api-example-RawCursorEvents.html
+    DESTINATION
+    "share/doc"
+)

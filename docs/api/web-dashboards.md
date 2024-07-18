@@ -186,6 +186,8 @@ These events are used for both tablet and mouse events.
   - for mice, `NotNearSurface` means "outside of the web page's area", and `TouchingSurface` means 'clicking'
   - you should usually hide any cursors you may be showing if the state changes to `NotNearSurface`
 
+An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
+
 ### DoodlesOnly
 
 This feature requires:

@@ -1,0 +1,86 @@
+<html>
+
+<head>
+    <title>
+        RawCursorEvents API Example
+    </title>
+    <style>
+        body {
+            background-color: white;
+            font-family: sans-serif;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #thisPageURI {
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <p id="apiRequired">
+        OpenKneeboard's API is not detected; add this page as a web dashboard tab at <a id="thisPageURI"></a>.
+    </p>
+    <p id="apiError"></p>
+    <table id="dataTable" class="hidden">
+        <tr>
+            <th>Buttons</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>TouchState</th>
+        </tr>
+    </table>
+    <script>
+        function OnCursorEvent(ev) {
+            const detail = ev.detail;
+
+            let buttons = document.createElement('td');
+            let x = document.createElement('td');
+            let y = document.createElement('td');
+            let touchState = document.createElement('td');
+
+            let row = document.createElement('tr');
+            row.appendChild(buttons);
+            row.appendChild(x);
+            row.appendChild(y);
+            row.appendChild(touchState);
+
+            buttons.textContent = detail.buttons;
+            x.textContent = detail.position.x;
+            y.textContent = detail.position.y;
+            touchState.textContent = detail.touchState;
+
+            let table = document.getElementById('dataTable');
+            let children = table.children;
+            table.insertBefore(row, children.length == 1 ? null : children.item(1));
+        }
+        async function InitializePage() {
+            document.getElementById('apiRequired').classList.add('hidden');
+            document.getElementById('dataTable').classList.remove('hidden');
+
+            OpenKneeboard.addEventListener('cursor', OnCursorEvent);
+
+            try {
+                OpenKneeboard.EnableExperimentalFeature('RawCursorEvents', 2024071801);
+            } catch (error) {
+                let errorP = document.getElementById('error');
+                errorP.textContent = "Initializing the RawCursorEvents API failed: " + error;
+                errorP.classList.remove('hidden');
+            }
+        }
+
+        let link = document.getElementById('thisPageURI');
+        link.href = window.location.href;
+        link.textContent = window.location.href;
+
+        if (window.OpenKneeboard) {
+            InitializePage();
+        }
+    </script>
+</body>
+
+
+</html>
