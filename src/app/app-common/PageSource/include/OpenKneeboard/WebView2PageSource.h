@@ -166,6 +166,25 @@ class WebView2PageSource final : public WGCPageSource,
   concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
     nlohmann::json args);
 
+  winrt::fire_and_forget SendJSLog(auto&&... args) {
+    const auto jsArgs
+      = nlohmann::json::array({std::forward<decltype(args)>(args)...});
+    auto weak = weak_from_this();
+    auto thread = mWorkerThread;
+    co_await thread;
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+
+    const nlohmann::json message {
+      {"OpenKneeboard_WebView2_MessageType", "console.log"},
+      {"logArgs", jsArgs},
+    };
+
+    mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
+  }
+
   winrt::fire_and_forget SendJSEvent(
     std::string_view eventType,
     nlohmann::json eventOptions);

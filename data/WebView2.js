@@ -64,26 +64,33 @@ class OpenKneeboardAPI extends EventTarget {
 
     #OnNativeMessage(event) {
         const message = event.data;
-
-        if ('eventType' in message) {
-            this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));
+        if (!("OpenKneeboard_WebView2_MessageType" in message)) {
             return;
         }
 
-        if (!('callID' in message)) {
-            return;
-        }
-        const callID = message.callID;
-        if (callID in this.#inflightRequests) {
-            try {
-                if (message.result) {
-                    this.#inflightRequests[callID].resolve(message.result);
-                } else {
-                    this.#inflightRequests[callID].reject(message.error);
+        switch (message.OpenKneeboard_WebView2_MessageType) {
+            case "console.log":
+                console.log(...message.logArgs);
+                return;
+            case "Event":
+                this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));
+                return;
+            case "AsyncResponse":
+                if (!('callID' in message)) {
+                    return;
                 }
-            } finally {
-                delete this.#inflightRequests[callID];
-            }
+                const callID = message.callID;
+                if (callID in this.#inflightRequests) {
+                    try {
+                        if (message.result) {
+                            this.#inflightRequests[callID].resolve(message.result);
+                        } else {
+                            this.#inflightRequests[callID].reject(message.error);
+                        }
+                    } finally {
+                        delete this.#inflightRequests[callID];
+                    }
+                }
         }
     }
 }

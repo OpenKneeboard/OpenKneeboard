@@ -247,6 +247,7 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
         co_return;
       }
       nlohmann::json response {
+        {"OpenKneeboard_WebView2_MessageType", "AsyncResponse"},
         {"callID", callID},
       };
       if (result.has_value()) {
@@ -461,7 +462,18 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
       continue;
     }
 
+    auto warnObsolete = [this](const auto& feature) {
+      const auto warning = std::format(
+        "WARNING: enabling an obsolete experimental feature: `{}` version "
+        "`{}`",
+        feature.mName,
+        feature.mVersion);
+      dprint(warning);
+      this->SendJSLog(warning);
+    };
+
     if (feature == RawCursorEventsFeature) {
+      warnObsolete(feature);
       if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
           "Can not enable `{}`, as the cursor mode has already been changed "
@@ -474,6 +486,7 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
     }
 
     if (feature == DoodlesOnlyFeature) {
+      warnObsolete(feature);
       if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
           "Can not enable `{}`, as the cursor mode has already been changed "
@@ -481,7 +494,6 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
           "this page.",
           name));
       }
-
       mCursorEventsMode = CursorEventsMode::DoodlesOnly;
       continue;
     }
@@ -696,6 +708,7 @@ winrt::fire_and_forget WebView2PageSource::SendJSEvent(
   }
 
   const nlohmann::json message {
+    {"OpenKneeboard_WebView2_MessageType", "Event"},
     {"eventType", eventType},
     {"eventOptions", eventOptions},
   };
