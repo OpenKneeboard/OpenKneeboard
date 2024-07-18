@@ -94,7 +94,18 @@ The two forms of version number are used because:
 
 ## Experimental JavaScript APIs
 
-These features will be changed without notice; you should avoid using them in released software if possible; reach out in `#code-talk` [on Discord](https://go.openkneeboard.com/discord) before releasing software that uses them.
+These features will be changed without notice, and in any update, including patch releases; you should avoid using them in released software if possible; reach out in `#code-talk` [on Discord](https://go.openkneeboard.com/discord) before releasing software that uses them.
+
+If you want to use an experimental API with the goal of switching to a stable API when it is used, the best approach is to wrap enabling it in a `try`/`catch`, e.g.:
+
+```js
+try {
+  await OpenKneeboard.EnableExperimentalFeature('foo', 1234);
+  TurnOnMyUseOfThisExperimentalFeature();
+} catch (ex) {
+  console.log("Failed to initialize experimental feature foo", ex);
+}
+```
 
 Experimental features are identified by a name, and a version number (usually `YYYYMMDDnn`, where 'nn' increments if there are multiple revisions within a day); they must be explicitly enabled.
 
