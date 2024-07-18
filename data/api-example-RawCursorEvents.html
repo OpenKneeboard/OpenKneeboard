@@ -91,7 +91,7 @@
                     { name: 'SetCursorEventsMode', version: 2024071801 },
                 ]);
             } catch (error) {
-                let errorP = document.getElementById('error');
+                let errorP = document.getElementById('apiError');
                 errorP.textContent = "Initializing the RawCursorEvents API failed: " + error;
                 errorP.classList.remove('hidden');
             }
