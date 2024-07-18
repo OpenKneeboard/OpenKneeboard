@@ -29,6 +29,7 @@
 #include <winrt/Microsoft.Web.WebView2.Core.h>
 #include <winrt/Windows.UI.Composition.h>
 
+#include <expected>
 #include <mutex>
 #include <queue>
 
@@ -133,6 +134,10 @@ class WebView2PageSource final : public WGCPageSource,
 
   winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(
     std::filesystem::path path);
+
+  using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
+
+  concurrency::task<OKBPromiseResult> OnResizeMessage(nlohmann::json args);
 
   static LRESULT CALLBACK WindowProc(
     HWND const window,

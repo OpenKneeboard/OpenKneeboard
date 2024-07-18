@@ -193,30 +193,58 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2WebMessageReceivedEventArgs
     args) {
   const auto weak = weak_from_this();
-  const auto uiThread = mUIThread;
 
   const auto json = to_string(args.WebMessageAsJson());
   const auto parsed = nlohmann::json::parse(json);
 
-  if (!parsed.contains("message")) {
+  if (!parsed.contains("messageName")) {
     co_return;
   }
 
-  const std::string message = parsed.at("message");
+  const std::string message = parsed.at("messageName");
+  const uint64_t callID = parsed.at("callID");
 
-  if (
-    message != "OpenKneeboard/SimHub/DashboardLoaded"
-    && message != "OpenKneeboard/SetPreferredPixelSize") {
+  const auto respond = std::bind_front(
+    [](auto thread, auto weak, auto callID, OKBPromiseResult result)
+      -> winrt::fire_and_forget {
+      co_await thread;
+      auto self = std::static_pointer_cast<WebView2PageSource>(weak.lock());
+      if (!self) {
+        co_return;
+      }
+      nlohmann::json response {
+        {"callID", callID},
+      };
+      if (result.has_value()) {
+        response.emplace("result", result.value());
+      } else {
+        response.emplace("error", result.error());
+        dprintf("WebView2 API error: {}", result.error());
+      }
+
+      self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
+    },
+    mWorkerThread,
+    weak,
+    callID);
+
+  if (message == "OpenKneeboard/SetPreferredPixelSize") {
+    respond(co_await this->OnResizeMessage(parsed.at("messageData")));
     co_return;
   }
+}
+
+concurrency::task<WebView2PageSource::OKBPromiseResult>
+WebView2PageSource::OnResizeMessage(nlohmann::json args) {
+  auto weak = weak_from_this();
+  const auto uiThread = mUIThread;
 
   PixelSize size = {
-    parsed.at("data").at("width"),
-    parsed.at("data").at("height"),
+    args.at("width"),
+    args.at("height"),
   };
   if (size.mWidth < 1 || size.mHeight < 1) {
-    dprint("WebView2 requested 0px area, ignoring");
-    co_return;
+    co_return std::unexpected {"WebView2 requested 0px area, ignoring"};
   }
   if (
     size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
@@ -232,12 +260,27 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
       },
       Geometry2D::ScaleToFitMode::ShrinkOnly);
     if (size.mWidth < 1 || size.mHeight < 1) {
-      co_return;
+      co_return std::unexpected {
+        "Requested size scales down to < 1px in at least 1 dimension"};
     }
     dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
+
+  const auto success = [&size](auto result) {
+    return nlohmann::json {
+      {"result", result},
+      {
+        "details",
+        {
+          {"width", size.mWidth},
+          {"height", size.mHeight},
+        },
+      },
+    };
+  };
+
   if (mSize == size) {
-    co_return;
+    co_return success("no change");
   }
   mSize = size;
 
@@ -247,17 +290,19 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   mWebViewVisual.Size(wfSize);
   mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
   mController.RasterizationScale(1.0);
-  WGCPageSource::ForceResize(size);
 
   co_await uiThread;
 
   auto self = weak.lock();
   if (!self) {
-    co_return;
+    co_return std::unexpected {"WebView2 no longer exists"};
   }
+  WGCPageSource::ForceResize(size);
 
   evContentChangedEvent.Emit();
   evNeedsRepaintEvent.Emit();
+
+  co_return success("resized");
 }
 
 void WebView2PageSource::InitializeComposition() noexcept {
