@@ -38,7 +38,7 @@ All APIs are methods on the `window.OpenKneeboard` object; it is best practice t
 
 ```js
 if (window.OpenKneeboard?.SetPreferredPixelSize) {
-    OpenKneeboard.SetPreferredPixelSize(width, height);
+    window.OpenKneeboard.SetPreferredPixelSize(width, height);
 }
 ```
 
