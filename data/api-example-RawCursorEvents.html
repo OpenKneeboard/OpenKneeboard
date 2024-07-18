@@ -64,7 +64,7 @@
             OpenKneeboard.addEventListener('cursor', OnCursorEvent);
 
             try {
-                OpenKneeboard.EnableExperimentalFeature('RawCursorEvents', 2024071801);
+                await OpenKneeboard.EnableExperimentalFeature('RawCursorEvents', 2024071801);
             } catch (error) {
                 let errorP = document.getElementById('error');
                 errorP.textContent = "Initializing the RawCursorEvents API failed: " + error;
