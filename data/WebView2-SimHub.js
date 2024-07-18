@@ -1,62 +1,75 @@
 class OpenKneeboardSimHubHooks {
   constructor() {
     console.log("OpenKneeboardSimHubHooks::Constructor()");
-    this.hookWindowSimhub();
+    this.#hookWindowSimhub();
   }
 
-  hookWindowSimhub() {
+  #simhub;
+  #simhub_server;
+  #simhub_server_notify;
+
+  #hookWindowSimhub() {
     Object.defineProperty(
       window,
       'simhub',
       {
         get: () => {
-          return this.simhub;
+          return this.#simhub;
         },
         set: (value) => {
-          this.simhub = value;
-          this.hookSimhubServer();
+          this.#simhub = value;
+          this.#hookSimhubServer();
         }
       });
   }
 
-  hookSimhubServer() {
+  #hookSimhubServer() {
     Object.defineProperty(
-      this.simhub,
+      this.#simhub,
       'server',
       {
         get: () => {
-          return this.simhub_server;
+          return this.#simhub_server;
         },
         set: (value) => {
-          this.simhub_server = value;
-          this.hookSimHubServerNotifyMainTemplateLoaded();
+          this.#simhub_server = value;
+          this.#hookSimHubServerNotifyMainTemplateLoaded();
         },
       });
   }
 
-  hookSimHubServerNotifyMainTemplateLoaded() {
+  #hookSimHubServerNotifyMainTemplateLoaded() {
     Object.defineProperty(
-      this.simhub_server,
+      this.#simhub_server,
       'notifyMainTemplateLoaded',
       {
         get: () => {
-          if (this.simhub_server_notify) {
-            return this.simhubNotifyMainTemplateLoaded.bind(this);
+          if (this.#simhub_server_notify) {
+            return this.#simhubNotifyMainTemplateLoaded.bind(this);
           }
           return undefined;
         },
         set: (value) => {
-          this.simhub_server_notify = value;
+          this.#simhub_server_notify = value;
         },
       });
   }
 
-  simhubNotifyMainTemplateLoaded() {
-    this.simhub_server_notify();
+  #simhubNotifyMainTemplateLoaded() {
+    this.#onNotifyMainTemplateLoaded();
+    return this.#simhub_server_notify();
+  }
+
+  async #onNotifyMainTemplateLoaded() {
     console.log("OpenKneeboard: SimHub notifyMainTemplateLoaded hook");
     const width = $(".maincontainer").width();
     const height = $(".maincontainer").height();
 
-    window.OpenKneeboard.SetPreferredPixelSize(width, height);
+    try {
+      const result = await window.OpenKneeboard.SetPreferredPixelSize(width, height);
+      console.log("OpenKneeboard: resized to fit SimHub template", result);
+    } catch (error) {
+      console.log("OpenKneeboard: failed to resize", error);
+    }
   }
 }
