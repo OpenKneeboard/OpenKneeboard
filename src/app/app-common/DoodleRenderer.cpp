@@ -223,4 +223,17 @@ void DoodleRenderer::Render(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
+void DoodleRenderer::Render(
+  RenderTarget* rt,
+  PageID pageID,
+  const PixelRect& rect) {
+  FlushCursorEvents();
+
+  if (!HaveDoodles(pageID)) {
+    return;
+  }
+
+  this->Render(rt->d2d(), pageID, rect);
+}
+
 }// namespace OpenKneeboard

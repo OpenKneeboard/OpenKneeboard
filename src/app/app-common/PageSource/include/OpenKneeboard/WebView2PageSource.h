@@ -37,6 +37,8 @@
 
 namespace OpenKneeboard {
 
+class DoodleRenderer;
+
 /** A browser using WebView2
  *
  * Okay, this is nasty. WebView2 does not support indirect rendering,
@@ -77,6 +79,8 @@ class WebView2PageSource final : public WGCPageSource,
 
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override;
+  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
+    override;
 
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
@@ -102,6 +106,9 @@ class WebView2PageSource final : public WGCPageSource,
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Settings&);
+
+  audited_ptr<DXResources> mDXResources;
+  KneeboardState* mKneeboard {nullptr};
 
   winrt::apartment_context mUIThread;
   winrt::apartment_context mWorkerThread {nullptr};
@@ -135,6 +142,7 @@ class WebView2PageSource final : public WGCPageSource,
   enum class CursorEventsMode {
     MouseEmulation,
     Raw,
+    DoodlesOnly,
   };
   CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
 
@@ -167,5 +175,7 @@ class WebView2PageSource final : public WGCPageSource,
     LPARAM const lparam) noexcept;
 
   std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
+
+  std::unique_ptr<DoodleRenderer> mDoodles;
 };
 }// namespace OpenKneeboard

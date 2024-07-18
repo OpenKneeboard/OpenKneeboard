@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/config.h>
 
+#include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/WebView2PageSource.h>
 
@@ -49,9 +50,11 @@ using ExFeature = WebView2PageSource::ExperimentalFeature;
 
 namespace {
 const ExFeature RawCursorEventsFeature {"RawCursorEvents", 2024071801};
+const ExFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071801};
 
 std::array SupportedExperimentalFeatures {
   RawCursorEventsFeature,
+  DoodlesOnlyFeature,
 };
 
 };// namespace
@@ -73,6 +76,8 @@ WebView2PageSource::WebView2PageSource(
   KneeboardState* kbs,
   const Settings& settings)
   : WGCPageSource(dxr, kbs, {}),
+    mDXResources(dxr),
+    mKneeboard(kbs),
     mSettings(settings),
     mSize(mSettings.mInitialSize) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::WebView2PageSource()");
@@ -382,7 +387,27 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
     }
 
     if (feature == RawCursorEventsFeature) {
+      if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
+        co_return std::unexpected(std::format(
+          "Can not enable `{}`, as the cursor mode has already been changed by "
+          "this page.",
+          name));
+      }
       mCursorEventsMode = CursorEventsMode::Raw;
+      mEnabledExperimentalFeatures.push_back(feature);
+      enabledFeatures.push_back(feature);
+      continue;
+    }
+
+    if (feature == DoodlesOnlyFeature) {
+      if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
+        co_return std::unexpected(std::format(
+          "Can not enable `{}`, as the cursor mode has already been changed by "
+          "this page.",
+          name));
+      }
+
+      mCursorEventsMode = CursorEventsMode::DoodlesOnly;
       mEnabledExperimentalFeatures.push_back(feature);
       enabledFeatures.push_back(feature);
       continue;
@@ -544,34 +569,46 @@ void WebView2PageSource::PostFrame() {
 }
 
 void WebView2PageSource::PostCursorEvent(
-  EventContext,
+  EventContext ctx,
   const CursorEvent& event,
-  PageID) {
+  PageID pageID) {
   if (!mController) {
     return;
   }
 
-  if (mCursorEventsMode == CursorEventsMode::MouseEmulation) {
-    std::unique_lock lock(mCursorEventsMutex);
-    mCursorEvents.push(event);
-    return;
+  switch (mCursorEventsMode) {
+    case CursorEventsMode::MouseEmulation: {
+      std::unique_lock lock(mCursorEventsMutex);
+      mCursorEvents.push(event);
+      return;
+    }
+    case CursorEventsMode::Raw:
+      this->SendJSEvent(
+        "cursor",
+        {
+          {"detail",
+           {
+             {"touchState", event.mTouchState},
+             {"buttons", event.mButtons},
+             {"position",
+              {
+                {"x", event.mX},
+                {"y", event.mY},
+              }},
+           }},
+        });
+      return;
+    case CursorEventsMode::DoodlesOnly:
+      if (!mDoodles) {
+        mDoodles = std::make_unique<DoodleRenderer>(mDXResources, mKneeboard);
+        AddEventListener(
+          mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+        AddEventListener(
+          mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
+      }
+      mDoodles->PostCursorEvent(ctx, event, pageID, mSize);
+      return;
   }
-
-  assert(mCursorEventsMode == CursorEventsMode::Raw);
-  this->SendJSEvent(
-    "cursor",
-    {
-      {"detail",
-       {
-         {"touchState", event.mTouchState},
-         {"buttons", event.mButtons},
-         {"position",
-          {
-            {"x", event.mX},
-            {"y", event.mY},
-          }},
-       }},
-    });
 }
 
 winrt::fire_and_forget WebView2PageSource::SendJSEvent(
@@ -674,18 +711,26 @@ winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
   }
 }
 
-bool WebView2PageSource::CanClearUserInput(PageID) const {
-  return false;
+bool WebView2PageSource::CanClearUserInput(PageID pageID) const {
+  return mDoodles && mDoodles->HaveDoodles(pageID);
 }
 
 bool WebView2PageSource::CanClearUserInput() const {
-  return false;
+  return mDoodles && mDoodles->HaveDoodles();
 }
 
-void WebView2PageSource::ClearUserInput(PageID) {
+void WebView2PageSource::ClearUserInput(PageID pageID) {
+  if (!mDoodles) {
+    return;
+  }
+  mDoodles->ClearPage(pageID);
 }
 
 void WebView2PageSource::ClearUserInput() {
+  if (!mDoodles) {
+    return;
+  }
+  mDoodles->Clear();
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -697,6 +742,18 @@ WebView2PageSource::ImportJavascriptFile(std::filesystem::path path) {
 
   co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
     winrt::to_hstring(js));
+}
+
+void WebView2PageSource::RenderPage(
+  RenderTarget* rt,
+  PageID page,
+  const PixelRect& rect) {
+  WGCPageSource::RenderPage(rt, page, rect);
+
+  if (!mDoodles) {
+    return;
+  }
+  mDoodles->Render(rt, page, rect);
 }
 
 LRESULT CALLBACK WebView2PageSource::WindowProc(

@@ -22,6 +22,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/RenderTarget.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -39,6 +40,8 @@ class DoodleRenderer final {
   ~DoodleRenderer();
 
   void Render(ID2D1DeviceContext*, PageID, const PixelRect& destRect);
+  void Render(RenderTarget*, PageID, const PixelRect& destRect);
+
   void PostCursorEvent(
     EventContext,
     const CursorEvent&,

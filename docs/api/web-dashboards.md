@@ -143,6 +143,8 @@ This feature requires:
 - OpenKneeboard v1.9 or above
 - experimental feature: `RawCursorEvents` version `2024071801`
 
+This feature is incompatible with the 'DoodlesOnly' experimental feature.
+
 This event provides access to OpenKneeboard's raw cursor events, bypassing browser mouse emulation.
 
 Enabling this experimental feature will disable the mouse emulation, and start these events being emitted.
@@ -172,3 +174,20 @@ These events are used for both tablet and mouse events.
   - for tablets, this is self-descriptive
   - for mice, `NotNearSurface` means "outside of the web page's area", and `TouchingSurface` means 'clicking'
   - you should usually hide any cursors you may be showing if the state changes to `NotNearSurface`
+
+ ### DoodlesOnly
+
+This feature requires:
+- OpenKneeboard v1.9 or above
+- experimental feature: `DoodlesOnly` version `2024071801`
+
+This feature is incompatible with the 'RawCursorEvents' experimental feature.
+
+Enabling this feature disables the standard mouse emulation, and instead uses OpenKneeboard's standard "draw on top" behavior, letting users take notes or sketch on top of your content.
+
+As the mouse emulation is disabled, after enabling this feature, it is no longer possible for the user to interact with your web page, including the scroll bars; it should only be used for single-screen content.
+
+```js
+// Example:
+await OpenKneeboard.EnableExperimentalFeature("DoodlesOnly", 2024071801);
+```

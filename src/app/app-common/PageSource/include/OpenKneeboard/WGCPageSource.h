@@ -56,7 +56,7 @@ class WGCPageSource : public virtual IPageSource,
   virtual PreferredSize GetPreferredSize(PageID) final override;
 
   virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
-    final override;
+    override;
 
   struct Options {
     bool mCaptureCursor {false};
