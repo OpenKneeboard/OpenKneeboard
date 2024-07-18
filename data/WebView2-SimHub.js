@@ -58,12 +58,6 @@ class OpenKneeboard_SimHub extends OpenKneeboard {
     const width = $(".maincontainer").width();
     const height = $(".maincontainer").height();
 
-    window.chrome.webview.postMessage({
-      message: "OpenKneeboard/SimHub/DashboardLoaded",
-      data: {
-        width: width,
-        height: height,
-      },
-    });
+    this.SetPreferredPixelSize(width, height);
   }
 }
