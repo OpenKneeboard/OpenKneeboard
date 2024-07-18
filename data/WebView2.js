@@ -28,10 +28,6 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#runtimeData.Version;
     }
 
-    SetCursorEventsMode(mode) {
-        return this.#AsyncRequest("OpenKneeboard/SetCursorEventsMode", { mode });
-    }
-
     EnableExperimentalFeature(name, version) {
         return this.EnableExperimentalFeatures([{ name, version }]);
     }
@@ -62,6 +58,18 @@ class OpenKneeboardAPI extends EventTarget {
         });
     }
 
+    #SetCursorEventsMode(mode) {
+        return this.#AsyncRequest("OpenKneeboard/SetCursorEventsMode", { mode });
+    }
+
+    #ActivateAPI(api) {
+        switch (api) {
+            case "SetCursorEventsMode":
+                this.SetCursorEventsMode = this.#SetCursorEventsMode;
+                return;
+        }
+    }
+
     #OnNativeMessage(event) {
         const message = event.data;
         if (!("OpenKneeboard_WebView2_MessageType" in message)) {
@@ -71,6 +79,9 @@ class OpenKneeboardAPI extends EventTarget {
         switch (message.OpenKneeboard_WebView2_MessageType) {
             case "console.log":
                 console.log(...message.logArgs);
+                return;
+            case "ActivateAPI":
+                this.#ActivateAPI(message.api);
                 return;
             case "Event":
                 this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));

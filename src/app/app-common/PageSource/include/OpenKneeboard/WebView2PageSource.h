@@ -189,6 +189,8 @@ class WebView2PageSource final : public WGCPageSource,
     std::string_view eventType,
     nlohmann::json eventOptions);
 
+  winrt::fire_and_forget ActivateJSAPI(std::string_view api);
+
   static LRESULT CALLBACK WindowProc(
     HWND const window,
     UINT const message,

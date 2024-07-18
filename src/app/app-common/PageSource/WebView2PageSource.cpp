@@ -456,9 +456,13 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
 
     if (
       feature == RawCursorEventsToggleableFeature
-      || feature == DoodlesOnlyToggleableFeature
-      || feature == SetCursorEventsModeFeature) {
+      || feature == DoodlesOnlyToggleableFeature) {
       // Nothing to do except enable these
+      continue;
+    }
+
+    if (feature == SetCursorEventsModeFeature) {
+      this->ActivateJSAPI("SetCursorEventsMode");
       continue;
     }
 
@@ -711,6 +715,23 @@ winrt::fire_and_forget WebView2PageSource::SendJSEvent(
     {"OpenKneeboard_WebView2_MessageType", "Event"},
     {"eventType", eventType},
     {"eventOptions", eventOptions},
+  };
+
+  mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
+}
+
+winrt::fire_and_forget WebView2PageSource::ActivateJSAPI(std::string_view api) {
+  auto weak = weak_from_this();
+  auto thread = mWorkerThread;
+  co_await thread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+
+  const nlohmann::json message {
+    {"OpenKneeboard_WebView2_MessageType", "ActivateAPI"},
+    {"api", api},
   };
 
   mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
