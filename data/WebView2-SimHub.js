@@ -3,6 +3,7 @@ class OpenKneeboard_SimHub extends OpenKneeboard {
     console.log("OpenKneeboard_SimHub::Constructor()");
     super();
     document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
+    this.hookWindowSimhub();
   }
 
   hookWindowSimhub() {
