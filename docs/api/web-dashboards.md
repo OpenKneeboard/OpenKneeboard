@@ -157,8 +157,6 @@ This feature requires:
 
 This event provides access to OpenKneeboard's raw cursor events, bypassing browser mouse emulation.
 
-Enabling this experimental feature will disable the mouse emulation, and start these events being emitted.
-
 ```js
 // Example:
 OpenKneeboard.addEventListener('cursor', (ev) => { console.log(ev.detail); });
@@ -203,8 +201,6 @@ An example/debugging tool - `api-example-RawCursorEvents.html` is included in th
 This feature requires:
 - OpenKneeboard v1.9 or above
 - experimental feature: `DoodlesOnly` version `2024071802`
-
-This feature is incompatible with the 'RawCursorEvents' experimental feature.
 
 Enabling this feature disables the standard mouse emulation, and instead uses OpenKneeboard's standard "draw on top" behavior, letting users take notes or sketch on top of your content.
 
