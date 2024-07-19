@@ -92,11 +92,14 @@
             try {
                 await OpenKneeboard.EnableExperimentalFeatures([
                     { name: 'PageBasedContent', version: 2024071801 },
+                    { name: 'SetCursorEventsMode', version: 2024071801 },
+                    { name: 'DoodlesOnly', version: 2024071802 },
                 ]);
                 await GetOrCreatePageIDs();
                 CreatePageDOMElements();
                 var activePage = document.getElementById(pages[0].guid);
                 activePage.classList.remove("hidden");
+                await OpenKneeboard.SetCursorEventsMode('DoodlesOnly');
             } catch (error) {
                 let errorP = document.getElementById('apiError');
                 errorP.textContent = "Initializing experimental features failed: " + error;
