@@ -1,0 +1,107 @@
+<html>
+
+<head>
+    <title>
+        RawCursorEvents API Example
+    </title>
+    <style>
+        body {
+            background-color: white;
+            font-family: sans-serif;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #thisPageURI {
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <p id="apiRequired">
+        OpenKneeboard's API is not detected; add this page as a web dashboard tab at <a id="thisPageURI"></a>.
+    </p>
+    <p id="apiError"></p>
+    <div id="okbClient" class="hidden">
+    </div>
+    <script>
+        const pages = [
+            {
+                guid: crypto.randomUUID(),
+                pixelSize: { width: 1024, height: 768 },
+            },
+            {
+                guid: crypto.randomUUID(),
+                pixelSize: { width: 768, height: 1024 },
+            },
+        ];
+        for (const index in pages) {
+            const page = pages[index];
+
+            var div = document.createElement('div');
+            document.getElementById('okbClient').appendChild(div);
+            div.id = page.guid;
+            div.className = "page hidden";
+
+            var h1 = document.createElement('h1');
+            div.appendChild(h1);
+            h1.innerText = "Page " + (Number(index) + 1);
+
+            var ul = document.createElement('ul');
+            div.appendChild(ul);
+
+            var guid = document.createElement('li');
+            ul.appendChild(guid);
+            guid.innerText = "GUID: " + page.guid;
+
+            var size = document.createElement('li');
+            ul.appendChild(size);
+            size.innerText = "Size: " + page.pixelSize.width + "x" + page.pixelSize.height;
+        }
+
+        async function OnPageChanged(ev) {
+            const guid = ev.detail.guid;
+            for (const page of document.getElementsByClassName('page')) {
+                page.classList.add('hidden');
+            }
+            const page = document.getElementById(guid);
+            page.classList.remove('hidden');
+        }
+
+        async function InitializePage() {
+            document.getElementById('apiRequired').classList.add('hidden');
+            document.getElementById('okbClient').classList.remove('hidden');
+
+            await OpenKneeboard.SetPreferredPixelSize(512, 512);
+            OpenKneeboard.addEventListener('pageChanged', OnPageChanged);
+
+            try {
+                await OpenKneeboard.EnableExperimentalFeatures([
+                    { name: 'PageBasedContent', version: 2024071801 },
+                ]);
+                const result = await OpenKneeboard.SetPages(pages);
+                var activePage = document.getElementById(result.selectedPageID);
+                activePage.classList.remove("hidden");
+            } catch (error) {
+                let errorP = document.getElementById('apiError');
+                errorP.textContent = "Initializing experimental features failed: " + error;
+                errorP.classList.remove('hidden');
+                return;
+            }
+        }
+
+        let link = document.getElementById('thisPageURI');
+        link.href = window.location.href;
+        link.textContent = window.location.href;
+
+        if (window.OpenKneeboard) {
+            InitializePage();
+        }
+    </script>
+</body>
+
+
+</html>

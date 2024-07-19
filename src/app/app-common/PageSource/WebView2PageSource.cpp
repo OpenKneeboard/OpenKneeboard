@@ -29,6 +29,8 @@
 #include <OpenKneeboard/json_format.h>
 #include <OpenKneeboard/version.h>
 
+#include <shims/winrt/base.h>
+
 #include <Windows.h>
 
 #include <fstream>
@@ -37,6 +39,19 @@
 
 #include <WebView2.h>
 #include <wrl.h>
+
+template <>
+struct std::
+  formatter<OpenKneeboard::WebView2PageSource::ExperimentalFeature, char>
+  : std::formatter<std::string, char> {
+  auto format(
+    const OpenKneeboard::WebView2PageSource::ExperimentalFeature& feature,
+    auto& formatContext) const {
+    return std::formatter<std::string, char>::format(
+      std::format("`{}` version `{}`", feature.mName, feature.mVersion),
+      formatContext);
+  }
+};
 
 namespace OpenKneeboard {
 
@@ -58,12 +73,15 @@ const ExFeature DoodlesOnlyToggleableFeature {"DoodlesOnly", 2024071802};
 
 const ExFeature SetCursorEventsModeFeature {"SetCursorEventsMode", 2024071801};
 
+const ExFeature PageBasedContentFeature {"PageBasedContent", 2024071801};
+
 std::array SupportedExperimentalFeatures {
   RawCursorEventsFeature,
   RawCursorEventsToggleableFeature,
   DoodlesOnlyFeature,
   DoodlesOnlyToggleableFeature,
   SetCursorEventsModeFeature,
+  PageBasedContentFeature,
 };
 
 };// namespace
@@ -298,6 +316,11 @@ winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
     co_return;
   }
 
+  if (message == "OpenKneeboard/SetPages") {
+    respond(co_await this->OnSetPagesMessage(parsed.at("messageData")));
+    co_return;
+  }
+
   OPENKNEEBOARD_BREAK;
   respond(std::unexpected(std::format("Invalid JS API request: {}", message)));
 }
@@ -421,6 +444,52 @@ WebView2PageSource::OnSetCursorEventsModeMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2PageSource::OKBPromiseResult>
+WebView2PageSource::OnSetPagesMessage(nlohmann::json args) {
+  auto weak = weak_from_this();
+  auto thread = mUIThread;
+
+  auto& pageApi = mPageAPIResources;
+  if (!std::ranges::contains(
+        pageApi.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
+    co_return std::unexpected {std::format(
+      "The experimental feature {} is required.", PageBasedContentFeature)};
+  }
+
+  std::vector<APIPage> pages;
+  for (const auto& it: args.at("pages")) {
+    APIPage page {it.at("guid"), mSize};
+    if (it.contains("pixelSize")) {
+      const auto ps = it.at("pixelSize");
+      page.mPixelSize = PixelSize {
+        ps.at("width"),
+        ps.at("height"),
+      };
+    }
+    pages.push_back(page);
+  }
+
+  if (pages.empty()) {
+    co_return std::unexpected("Must provide at least one page definition");
+  }
+
+  pageApi.mPages = std::move(pages);
+  pageApi.mContentMode = ContentMode::PageBased;
+
+  co_await thread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return std::unexpected {std::format("WebView2 lifetime exceeded.")};
+  }
+  evContentChangedEvent.Emit();
+  co_return nlohmann::json {
+    {
+      "selectedPageID",
+      std::format("{:nobraces}", pageApi.mPages.front().mGuid),
+    },
+  };
+}
+
+concurrency::task<WebView2PageSource::OKBPromiseResult>
 WebView2PageSource::OnGetAvailableExperimentalFeaturesMessage(
   nlohmann::json args) {
   if constexpr (Version::IsTaggedVersion) {
@@ -486,6 +555,11 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
       continue;
     }
 
+    if (feature == PageBasedContentFeature) {
+      this->ActivateJSAPI("SetPages");
+      continue;
+    }
+
     auto warnObsolete = [this](const auto& feature) {
       const auto warning = std::format(
         "WARNING: enabling an obsolete experimental feature: `{}` "
@@ -516,9 +590,7 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
       if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
           "Can not enable `{}`, as the cursor mode has already been "
-          "changed "
-          "by "
-          "this page.",
+          "changed by this page.",
           name));
       }
       pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
@@ -527,8 +599,7 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
 
     const auto message = std::format(
       "OpenKneeboard internal error: `{}` v{} is a recognized but "
-      "unhandled "
-      "experimental feature",
+      "unhandled experimental feature",
       name,
       version);
     dprint(message);
@@ -870,6 +941,39 @@ void WebView2PageSource::ClearUserInput() {
   doodles->Clear();
 }
 
+PageIndex WebView2PageSource::GetPageCount() const {
+  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
+    return WGCPageSource::GetPageCount();
+  }
+
+  return mPageAPIResources.mPages.size();
+}
+
+std::vector<PageID> WebView2PageSource::GetPageIDs() const {
+  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
+    return WGCPageSource::GetPageIDs();
+  }
+
+  return mPageAPIResources.mPages | std::views::transform(&APIPage::mPageID)
+    | std::ranges::to<std::vector>();
+}
+
+PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
+  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
+    return WGCPageSource::GetPreferredSize(pageID);
+  }
+
+  auto it
+    = std::ranges::find(mPageAPIResources.mPages, pageID, &APIPage::mPageID);
+  if (it == mPageAPIResources.mPages.end()) {
+    return {};
+  }
+  return {
+    it->mPixelSize,
+    ScalingKind::Bitmap,
+  };
+}
+
 winrt::Windows::Foundation::IAsyncAction
 WebView2PageSource::ImportJavascriptFile(std::filesystem::path path) {
   std::ifstream f(path);
@@ -885,7 +989,21 @@ void WebView2PageSource::RenderPage(
   RenderTarget* rt,
   PageID page,
   const PixelRect& rect) {
-  WGCPageSource::RenderPage(rt, page, rect);
+  auto& par = mPageAPIResources;
+  if (
+    par.mContentMode == ContentMode::PageBased && par.mMostRecentPage != page) {
+    auto it = std::ranges::find(par.mPages, page, &APIPage::mPageID);
+    constexpr winrt::guid guid {};
+    if (it != par.mPages.end()) {
+      par.mMostRecentPage = page;
+      this->SendJSEvent(
+        "pageChanged",
+        {{"detail", {{"guid", std::format("{:nobraces}", it->mGuid)}}}});
+    }
+  }
+
+  const auto realPageID = WGCPageSource::GetPageIDs().front();
+  WGCPageSource::RenderPage(rt, realPageID, rect);
 
   auto& doodles = mPageAPIResources.mDoodles;
   if (!doodles) {

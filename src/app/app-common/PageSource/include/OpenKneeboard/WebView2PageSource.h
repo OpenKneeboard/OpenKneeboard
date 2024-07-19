@@ -87,6 +87,10 @@ class WebView2PageSource final : public WGCPageSource,
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
+  virtual PageIndex GetPageCount() const override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual PreferredSize GetPreferredSize(PageID) override;
+
  protected:
   virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
@@ -158,6 +162,7 @@ class WebView2PageSource final : public WGCPageSource,
     nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
     nlohmann::json args);
+  concurrency::task<OKBPromiseResult> OnSetPagesMessage(nlohmann::json args);
 
   winrt::fire_and_forget SendJSLog(auto&&... args) {
     const auto jsArgs
@@ -196,11 +201,28 @@ class WebView2PageSource final : public WGCPageSource,
     DoodlesOnly,
   };
 
+  struct APIPage {
+    winrt::guid mGuid;
+    PixelSize mPixelSize;
+    PageID mPageID;
+  };
+
+  enum class ContentMode {
+    Scrollable,
+    PageBased,
+  };
+
   // Modified by API; should be reset to defaults when navigation starts.
   struct PageAPIResources {
     CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
     std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
     std::unique_ptr<DoodleRenderer> mDoodles;
+
+    ContentMode mContentMode {ContentMode::Scrollable};
+
+    std::vector<APIPage> mPages;
+
+    PageID mMostRecentPage;
   };
   PageAPIResources mPageAPIResources;
 };

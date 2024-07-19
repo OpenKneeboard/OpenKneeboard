@@ -51,9 +51,9 @@ class WGCPageSource : public virtual IPageSource,
   virtual ~WGCPageSource();
   static winrt::fire_and_forget final_release(std::unique_ptr<WGCPageSource>);
 
-  virtual PageIndex GetPageCount() const final override;
-  virtual std::vector<PageID> GetPageIDs() const final override;
-  virtual PreferredSize GetPreferredSize(PageID) final override;
+  virtual PageIndex GetPageCount() const override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual PreferredSize GetPreferredSize(PageID) override;
 
   virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
     override;
