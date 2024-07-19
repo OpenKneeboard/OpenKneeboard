@@ -67,7 +67,7 @@ class WebView2Renderer final : public WGCRenderer {
 
     winrt::guid mGuid;
     PixelSize mPixelSize;
-    // TODO: nlohmann::json mCustomData;
+    nlohmann::json mExtraData;
 
     ///// Internals /////
 

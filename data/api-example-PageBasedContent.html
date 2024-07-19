@@ -56,6 +56,7 @@
         }
 
         async function OnPageChanged(ev) {
+            console.log("Page change - extra data", ev.detail.page.extraData);
             const guid = ev.detail.page.guid;
             for (const page of document.getElementsByClassName('page')) {
                 page.classList.add('hidden');
@@ -74,10 +75,12 @@
                 {
                     guid: crypto.randomUUID(),
                     pixelSize: { width: 1024, height: 768 },
+                    extraData: "arbitrary string",
                 },
                 {
                     guid: crypto.randomUUID(),
                     pixelSize: { width: 768, height: 1024 },
+                    extraData: { what: "arbitrary json-encodable value" },
                 },
             ];
             await OpenKneeboard.SetPages(pages);

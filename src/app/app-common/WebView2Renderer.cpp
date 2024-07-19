@@ -42,7 +42,22 @@ void to_json(nlohmann::json& j, const WebView2Renderer::APIPage& v) {
        {"width", v.mPixelSize.mWidth},
        {"height", v.mPixelSize.mHeight},
      }},
+    {"extraData", v.mExtraData},
   });
+}
+
+void from_json(const nlohmann::json& j, WebView2Renderer::APIPage& v) {
+  v.mGuid = j.at("guid");
+  if (j.contains("extraData")) {
+    v.mExtraData = j.at("extraData");
+  }
+  if (j.contains("pixelSize")) {
+    const auto ps = j.at("pixelSize");
+    v.mPixelSize = PixelSize {
+      ps.at("width"),
+      ps.at("height"),
+    };
+  }
 }
 
 #define IT(x) {CursorTouchState::x, #x},
@@ -704,13 +719,9 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
 
   std::vector<APIPage> pages;
   for (const auto& it: args.at("pages")) {
-    APIPage page {it.at("guid"), mSize};
-    if (it.contains("pixelSize")) {
-      const auto ps = it.at("pixelSize");
-      page.mPixelSize = PixelSize {
-        ps.at("width"),
-        ps.at("height"),
-      };
+    auto page = it.get<APIPage>();
+    if (page.mPixelSize.IsEmpty()) {
+      page.mPixelSize = mSize;
     }
     pages.push_back(page);
   }
