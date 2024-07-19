@@ -14,8 +14,8 @@ OpenKneeboard does not modify or replace DCS's kneeboard; it provides an additio
 See troubleshooting pages for:
 
 - [OpenXR](steamvr-or-openxr.md)
-- [Non-VR](oculus-or-nonvr.md)
-- [Legacy Oculus API (LibOVR)](oculus-or-nonvr.md)
+- [Non-VR](oculus-or-non-vr.md)
+- [Legacy Oculus API (LibOVR)](oculus-or-non-vr.md)
 - [Legacy SteamVR API (OpenVR)](steamvr-or-openxr.md)
 
 ## None of the tabs ever show anything
