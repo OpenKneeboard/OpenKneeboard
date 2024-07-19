@@ -113,12 +113,48 @@ struct std::formatter<winrt::hstring, CharT>
   }
 };
 
-template <class CharT>
-struct std::formatter<winrt::guid, CharT>
-  : std::formatter<winrt::hstring, CharT> {
+template <>
+struct std::formatter<winrt::guid, wchar_t>
+  : std::formatter<winrt::hstring, wchar_t> {
   auto format(const winrt::guid& guid, auto& formatContext) const {
     auto string = winrt::to_hstring(guid);
-    return std::formatter<winrt::hstring, CharT>::format(
+    return std::formatter<winrt::hstring, wchar_t>::format(
       winrt::to_hstring(guid), formatContext);
   }
+};
+
+template <>
+struct std::formatter<winrt::guid, char> {
+  auto format(const winrt::guid& guid, auto& ctx) const {
+    auto string = winrt::to_string(winrt::to_hstring(guid));
+    std::string_view view {string};
+    if (!mWithBraces) {
+      view.remove_prefix(1);
+      view.remove_suffix(1);
+    }
+    return std::ranges::copy(string, ctx.out()).out;
+  }
+
+  constexpr auto parse(auto& ctx) {
+    auto it = ctx.begin();
+    if (it == ctx.end()) {
+      return it;
+    }
+
+    constexpr std::string_view nobraces = "nobraces";
+
+    if (std::string_view {it, ctx.end()}.starts_with(nobraces)) {
+      mWithBraces = false;
+      it += nobraces.size();
+    }
+
+    if (it != ctx.end() && *it != '}') {
+      throw std::format_error("Invalid format args for winrt::guid");
+    }
+
+    return it;
+  }
+
+ private:
+  bool mWithBraces = true;
 };
