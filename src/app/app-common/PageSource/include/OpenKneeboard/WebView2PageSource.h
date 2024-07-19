@@ -139,13 +139,6 @@ class WebView2PageSource final : public WGCPageSource,
   std::queue<CursorEvent> mCursorEvents;
   uint32_t mMouseButtons {};
 
-  enum class CursorEventsMode {
-    MouseEmulation,
-    Raw,
-    DoodlesOnly,
-  };
-  CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
-
   winrt::fire_and_forget FlushCursorEvents();
 
   winrt::fire_and_forget OnWebMessageReceived(
@@ -197,8 +190,18 @@ class WebView2PageSource final : public WGCPageSource,
     WPARAM const wparam,
     LPARAM const lparam) noexcept;
 
-  std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
+  enum class CursorEventsMode {
+    MouseEmulation,
+    Raw,
+    DoodlesOnly,
+  };
 
-  std::unique_ptr<DoodleRenderer> mDoodles;
+  // Modified by API; should be reset to defaults when navigation starts.
+  struct PageAPIResources {
+    CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
+    std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
+    std::unique_ptr<DoodleRenderer> mDoodles;
+  };
+  PageAPIResources mPageAPIResources;
 };
 }// namespace OpenKneeboard

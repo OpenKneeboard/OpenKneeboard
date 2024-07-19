@@ -162,6 +162,17 @@ WebView2PageSource::InitializeContentToCapture() {
   settings.IsWebMessageEnabled(true);
   mWebView.WebMessageReceived(
     std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
+  mWebView.NavigationStarting(std::bind_front(
+    [](auto weak, auto thread, auto, auto) -> winrt::fire_and_forget {
+      co_await thread;
+      auto self = std::static_pointer_cast<WebView2PageSource>(weak.lock());
+      if (!self) {
+        co_return;
+      }
+      self->mPageAPIResources = {};
+    },
+    weak_from_this(),
+    mUIThread));
 
   co_await this->ImportJavascriptFile(
     Filesystem::GetImmutableDataDirectory() / "WebView2.js");
@@ -194,7 +205,8 @@ WebView2PageSource::InitializeContentToCapture() {
     co_await this->ImportJavascriptFile(
       Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
     co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      L"window.OpenKneeboard.SimHubHooks = new OpenKneeboardSimHubHooks();");
+      L"window.OpenKneeboard.SimHubHooks = new "
+      L"OpenKneeboardSimHubHooks();");
   }
 
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
@@ -363,15 +375,18 @@ WebView2PageSource::OnResizeMessage(nlohmann::json args) {
 
 concurrency::task<WebView2PageSource::OKBPromiseResult>
 WebView2PageSource::OnSetCursorEventsModeMessage(nlohmann::json args) {
+  auto& pageApi = mPageAPIResources;
+
   auto missingFeature = [](auto feature) {
     return std::unexpected {std::format(
-      "SetCursorEventMode() failed - the experimental feature `{}` version "
+      "SetCursorEventMode() failed - the experimental feature `{}` "
+      "version "
       "`{}` is required.",
       feature.mName,
       feature.mVersion)};
   };
   if (!std::ranges::contains(
-        mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
+        pageApi.mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
     co_return missingFeature(SetCursorEventsModeFeature);
   }
   const std::string mode = args.at("mode");
@@ -379,25 +394,26 @@ WebView2PageSource::OnSetCursorEventsModeMessage(nlohmann::json args) {
   auto success = []() { return nlohmann::json {{"result", "success"}}; };
 
   if (mode == "MouseEmulation") {
-    mCursorEventsMode = CursorEventsMode::MouseEmulation;
+    pageApi.mCursorEventsMode = CursorEventsMode::MouseEmulation;
     co_return success();
   }
 
   if (mode == "DoodlesOnly") {
     if (!std::ranges::contains(
-          mEnabledExperimentalFeatures, DoodlesOnlyToggleableFeature)) {
+          pageApi.mEnabledExperimentalFeatures, DoodlesOnlyToggleableFeature)) {
       co_return missingFeature(DoodlesOnlyToggleableFeature);
     }
-    mCursorEventsMode = CursorEventsMode::DoodlesOnly;
+    pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
     co_return success();
   }
 
   if (mode == "Raw") {
     if (!std::ranges::contains(
-          mEnabledExperimentalFeatures, RawCursorEventsToggleableFeature)) {
+          pageApi.mEnabledExperimentalFeatures,
+          RawCursorEventsToggleableFeature)) {
       co_return missingFeature(RawCursorEventsFeature);
     }
-    mCursorEventsMode = CursorEventsMode::Raw;
+    pageApi.mCursorEventsMode = CursorEventsMode::Raw;
     co_return success();
   }
 
@@ -420,12 +436,16 @@ concurrency::task<WebView2PageSource::OKBPromiseResult>
 WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
   std::vector<ExperimentalFeature> enabledFeatures;
 
+  auto& pageApi = mPageAPIResources;
+
   for (const auto& featureSpec: args.at("features")) {
     const std::string name = featureSpec.at("name");
     const uint64_t version = featureSpec.at("version");
 
     if (std::ranges::contains(
-          mEnabledExperimentalFeatures, name, &ExperimentalFeature::mName)) {
+          pageApi.mEnabledExperimentalFeatures,
+          name,
+          &ExperimentalFeature::mName)) {
       co_return std::unexpected(
         std::format("Experimental feature `{}` is already enabled", name));
     }
@@ -451,7 +471,7 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
       name,
       version);
 
-    mEnabledExperimentalFeatures.push_back(feature);
+    pageApi.mEnabledExperimentalFeatures.push_back(feature);
     enabledFeatures.push_back(feature);
 
     if (
@@ -468,7 +488,8 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
 
     auto warnObsolete = [this](const auto& feature) {
       const auto warning = std::format(
-        "WARNING: enabling an obsolete experimental feature: `{}` version "
+        "WARNING: enabling an obsolete experimental feature: `{}` "
+        "version "
         "`{}`",
         feature.mName,
         feature.mVersion);
@@ -478,32 +499,35 @@ WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
 
     if (feature == RawCursorEventsFeature) {
       warnObsolete(feature);
-      if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
+      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been changed "
+          "Can not enable `{}`, as the cursor mode has already been "
+          "changed "
           "by "
           "this page.",
           name));
       }
-      mCursorEventsMode = CursorEventsMode::Raw;
+      pageApi.mCursorEventsMode = CursorEventsMode::Raw;
       continue;
     }
 
     if (feature == DoodlesOnlyFeature) {
       warnObsolete(feature);
-      if (mCursorEventsMode != CursorEventsMode::MouseEmulation) {
+      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
         co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been changed "
+          "Can not enable `{}`, as the cursor mode has already been "
+          "changed "
           "by "
           "this page.",
           name));
       }
-      mCursorEventsMode = CursorEventsMode::DoodlesOnly;
+      pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
       continue;
     }
 
     const auto message = std::format(
-      "OpenKneeboard internal error: `{}` v{} is a recognized but unhandled "
+      "OpenKneeboard internal error: `{}` v{} is a recognized but "
+      "unhandled "
       "experimental feature",
       name,
       version);
@@ -665,7 +689,7 @@ void WebView2PageSource::PostCursorEvent(
     return;
   }
 
-  switch (mCursorEventsMode) {
+  switch (mPageAPIResources.mCursorEventsMode) {
     case CursorEventsMode::MouseEmulation: {
       std::unique_lock lock(mCursorEventsMutex);
       mCursorEvents.push(event);
@@ -687,16 +711,18 @@ void WebView2PageSource::PostCursorEvent(
            }},
         });
       return;
-    case CursorEventsMode::DoodlesOnly:
-      if (!mDoodles) {
-        mDoodles = std::make_unique<DoodleRenderer>(mDXResources, mKneeboard);
+    case CursorEventsMode::DoodlesOnly: {
+      auto& doodles = mPageAPIResources.mDoodles;
+      if (!doodles) {
+        doodles = std::make_unique<DoodleRenderer>(mDXResources, mKneeboard);
         AddEventListener(
-          mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+          doodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
         AddEventListener(
-          mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
+          doodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
       }
-      mDoodles->PostCursorEvent(ctx, event, pageID, mSize);
+      doodles->PostCursorEvent(ctx, event, pageID, mSize);
       return;
+    }
   }
 }
 
@@ -819,25 +845,29 @@ winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
 }
 
 bool WebView2PageSource::CanClearUserInput(PageID pageID) const {
-  return mDoodles && mDoodles->HaveDoodles(pageID);
+  const auto& doodles = mPageAPIResources.mDoodles;
+  return doodles && doodles->HaveDoodles(pageID);
 }
 
 bool WebView2PageSource::CanClearUserInput() const {
-  return mDoodles && mDoodles->HaveDoodles();
+  const auto& doodles = mPageAPIResources.mDoodles;
+  return doodles && doodles->HaveDoodles();
 }
 
 void WebView2PageSource::ClearUserInput(PageID pageID) {
-  if (!mDoodles) {
+  auto& doodles = mPageAPIResources.mDoodles;
+  if (!doodles) {
     return;
   }
-  mDoodles->ClearPage(pageID);
+  doodles->ClearPage(pageID);
 }
 
 void WebView2PageSource::ClearUserInput() {
-  if (!mDoodles) {
+  auto& doodles = mPageAPIResources.mDoodles;
+  if (!doodles) {
     return;
   }
-  mDoodles->Clear();
+  doodles->Clear();
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -857,10 +887,11 @@ void WebView2PageSource::RenderPage(
   const PixelRect& rect) {
   WGCPageSource::RenderPage(rt, page, rect);
 
-  if (!mDoodles) {
+  auto& doodles = mPageAPIResources.mDoodles;
+  if (!doodles) {
     return;
   }
-  mDoodles->Render(rt, page, rect);
+  doodles->Render(rt, page, rect);
 }
 
 LRESULT CALLBACK WebView2PageSource::WindowProc(
