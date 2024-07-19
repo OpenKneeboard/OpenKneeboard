@@ -29,7 +29,7 @@ Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 
 ## Common Games
 
-| Game | Non-VR | Native OpenXR | Oculus SDK | OpenVR (SteamVR) |
+| Game | Non-VR | Native OpenXR | Legacy Oculus SDK (OVR) | Legacy SteamVR API (OpenVR) |
 |------|--------|---------------|------------|--------|
 | DCS World | ✅ | ✅ | ✅ | ✅ |
 | Falcon BMS | ✅ | n/a | n/a | ✅ |
@@ -39,9 +39,13 @@ Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 
 **BeamNG.drive:** as of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
 
+## OpenComposite
+
+OpenKneeboard is not tested with OpenComposite, and issues will not be investigated.
+
 ## Advice
 
-- For VR: use OpenXR if possible - otherwise use OpenVR (SteamVR). OpenXR will give you the best performance and reliability
+- For VR: use OpenXR if natively supported by the game - otherwise use OpenVR (SteamVR). OpenXR will give you the best performance and reliability
 - OpenVR is the least likely mode to have compatibility issues, followed shortly by OpenXR. Non-VR and Oculus have significantly higher chances of issues
 - Setting WinTab to 'invasive' in input settings also raises the chance of issues
 
@@ -52,7 +56,3 @@ While OpenKneeboard is not a cheat, it does hook into the games rendering and in
 As of March 19th, 2024, the developers have not received any reports of any users receiving any bans in any games, but this remains a theoretical possibility in the future.
 
 Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/LICENSE) and [full text of the GPLv2](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/gpl-2.0.txt) for details.
-
-## OpenComposite
-
-OpenKneeboard is not tested with OpenComposite, and issues will not be investigated.
