@@ -158,6 +158,11 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
 
   OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::InitializeCanvas()");
 
+  if (size.IsEmpty()) [[unlikely]] {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
   D3D11_TEXTURE2D_DESC desc {
     .Width = static_cast<UINT>(size.mWidth),
     .Height = static_cast<UINT>(size.mHeight),

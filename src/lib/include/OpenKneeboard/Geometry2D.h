@@ -45,8 +45,16 @@ struct Size {
   T mWidth {};
   T mHeight {};
 
-  constexpr operator bool() const noexcept {
-    return mWidth >= 1 && mHeight >= 1;
+  constexpr operator bool() const noexcept
+    requires std::integral<T>
+  {
+    return !IsEmpty();
+  }
+
+  constexpr bool IsEmpty() const noexcept
+    requires std::integral<T>
+  {
+    return mWidth == 0 || mHeight == 0;
   }
 
   constexpr Size<T> operator/(const T divisor) const noexcept {

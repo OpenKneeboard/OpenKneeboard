@@ -174,6 +174,11 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
   }
 
   const auto surfaceSize = contentPixels.ScaledToFit(MaxViewRenderSize);
+  if (surfaceSize.IsEmpty()) [[unlikely]] {
+    OPENKNEEBOARD_BREAK;
+    return nullptr;
+  }
+
   page.mScale = surfaceSize.Height<float>() / contentPixels.Height();
 
   D3D11_TEXTURE2D_DESC textureDesc {

@@ -45,6 +45,11 @@ void CachedLayer::Render(
   const PixelSize cacheDimensions
     = providedCacheDimensions ? *providedCacheDimensions : destRect.mSize;
 
+  if (cacheDimensions.IsEmpty()) [[unlikely]] {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
   if (mCacheDimensions != cacheDimensions || !mCache) {
     mKey = ~Key {0};
     mCache = nullptr;
