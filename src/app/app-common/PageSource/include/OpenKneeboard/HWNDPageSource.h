@@ -23,7 +23,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
-#include <OpenKneeboard/WGCPageSource.h>
+#include <OpenKneeboard/WGCRenderer.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -46,7 +46,7 @@ namespace D3D11 {
 class SpriteBatch;
 }
 
-class HWNDPageSource final : public WGCPageSource,
+class HWNDPageSource final : private WGCRenderer,
                              public virtual IPageSourceWithCursorEvents,
                              public virtual EventReceiver {
  public:
@@ -54,7 +54,7 @@ class HWNDPageSource final : public WGCPageSource,
     FullWindow,
     ClientArea,
   };
-  struct Options : WGCPageSource::Options {
+  struct Options : WGCRenderer::Options {
     CaptureArea mCaptureArea {CaptureArea::FullWindow};
 
     constexpr bool operator==(const Options&) const noexcept = default;
@@ -79,6 +79,12 @@ class HWNDPageSource final : public WGCPageSource,
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
+  virtual PageIndex GetPageCount() const override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual PreferredSize GetPreferredSize(PageID) override;
+  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
+    override;
+
   Event<> evWindowClosedEvent;
 
  protected:
@@ -87,9 +93,9 @@ class HWNDPageSource final : public WGCPageSource,
     const override;
   virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
   CreateWGCaptureItem() override;
-  virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
+  virtual PixelRect GetContentRect(const PixelSize& captureSize) const override;
   virtual PixelSize GetSwapchainDimensions(
-    const PixelSize& captureSize) override;
+    const PixelSize& captureSize) const override;
   virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
     override;
 
@@ -123,11 +129,13 @@ class HWNDPageSource final : public WGCPageSource,
   std::unordered_map<HWND, HookHandles> mHooks;
 
   uint32_t mMouseButtons {};
-  size_t mRecreations = 0;
+  mutable size_t mRecreations = 0;
 
   FLOAT mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
   bool mIsHDR {false};
   winrt::Windows::Graphics::DirectX::DirectXPixelFormat mPixelFormat;
+
+  PageID mPageID;
 };
 
 }// namespace OpenKneeboard

@@ -97,7 +97,7 @@ HWNDPageSource::GetPixelFormat() const {
 }
 
 winrt::fire_and_forget HWNDPageSource::Init() noexcept {
-  WGCPageSource::Init();
+  WGCRenderer::Init();
   co_return;
 }
 
@@ -250,7 +250,7 @@ HWNDPageSource::HWNDPageSource(
   KneeboardState* kneeboard,
   HWND window,
   const Options& options)
-  : WGCPageSource(dxr, kneeboard, options),
+  : WGCRenderer(dxr, kneeboard, options),
     mDXR(dxr),
     mCaptureWindow(window),
     mOptions(options) {
@@ -281,11 +281,12 @@ winrt::fire_and_forget HWNDPageSource::final_release(
     }
   }
 
-  WGCPageSource::final_release(std::move(p));
+  auto wgcSelf = std::unique_ptr<WGCRenderer> {p.release()};
+  WGCRenderer::final_release(std::move(wgcSelf));
   co_return;
 }
 
-PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) {
+PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) const {
   if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
     if (mOptions.mCaptureArea != CaptureArea::FullWindow) {
       dprint("Invalid capture area specified, defaulting to full window");
@@ -308,7 +309,8 @@ HWNDPageSource::InitializeContentToCapture() {
   co_return;
 }
 
-PixelSize HWNDPageSource::GetSwapchainDimensions(const PixelSize& contentSize) {
+PixelSize HWNDPageSource::GetSwapchainDimensions(
+  const PixelSize& contentSize) const {
   // Don't create massive buffers if it just moves between a few fixed
   // sizes, but create full-screen buffers for smoothness if it's being
   // resized a bunch
@@ -553,6 +555,25 @@ void HWNDPageSource::InstallWindowHooks(HWND target) {
   winrt::check_bool(ShellExecuteExW(&shellExecuteInfo));
 
   mHooks[target].mHook32Subprocess.attach(shellExecuteInfo.hProcess);
+}
+
+PageIndex HWNDPageSource::GetPageCount() const {
+  return WGCRenderer::HaveCaptureItem() ? 1 : 0;
+}
+
+std::vector<PageID> HWNDPageSource::GetPageIDs() const {
+  return {mPageID};
+}
+
+PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
+  return WGCRenderer::GetPreferredSize();
+}
+
+void HWNDPageSource::RenderPage(
+  RenderTarget* rt,
+  PageID,
+  const PixelRect& rect) {
+  WGCRenderer::Render(rt, rect);
 }
 
 }// namespace OpenKneeboard

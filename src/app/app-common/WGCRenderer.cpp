@@ -22,7 +22,7 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/WGCPageSource.h>
+#include <OpenKneeboard/WGCRenderer.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -58,7 +58,7 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-winrt::fire_and_forget WGCPageSource::Init() noexcept {
+winrt::fire_and_forget WGCRenderer::Init() noexcept {
   const auto keepAlive = shared_from_this();
 
   // Requires Windows 11
@@ -96,6 +96,12 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       co_return;
     }
 
+    const auto size = item.Size();
+    if (size.Width < 1 || size.Height < 1) {
+      OPENKNEEBOARD_BREAK;
+      co_return;
+    }
+
     winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
       mDXR->mDXGIDevice.get(),
       reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
@@ -104,8 +110,8 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
     mFramePool = WGC::Direct3D11CaptureFramePool::CreateFreeThreaded(
       mWinRTD3DDevice,
       this->GetPixelFormat(),
-      WGCPageSource::SwapchainLength,
-      item.Size());
+      WGCRenderer::SwapchainLength,
+      size);
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
@@ -118,12 +124,9 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
   }
 
   co_await mUIThread;
-  this->evContentChangedEvent.Emit();
-  this->evAvailableFeaturesChangedEvent.Emit();
-  this->evNeedsRepaintEvent.Emit();
 }
 
-WGCPageSource::WGCPageSource(
+WGCRenderer::WGCRenderer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const Options& options)
@@ -137,10 +140,10 @@ WGCPageSource::WGCPageSource(
 }
 
 // Destruction is handled in final_release instead
-WGCPageSource::~WGCPageSource() = default;
+WGCRenderer::~WGCRenderer() = default;
 
-winrt::fire_and_forget WGCPageSource::final_release(
-  std::unique_ptr<WGCPageSource> p) {
+winrt::fire_and_forget WGCRenderer::final_release(
+  std::unique_ptr<WGCRenderer> p) {
   p->RemoveAllEventListeners();
   co_await p->mUIThread;
 
@@ -160,21 +163,11 @@ winrt::fire_and_forget WGCPageSource::final_release(
   p->mTexture = nullptr;
 }
 
-PageIndex WGCPageSource::GetPageCount() const {
-  if (mCaptureItem) {
-    return 1;
-  }
-  return 0;
+bool WGCRenderer::HaveCaptureItem() const {
+  return !!mCaptureItem;
 }
 
-std::vector<PageID> WGCPageSource::GetPageIDs() const {
-  if (mCaptureItem) {
-    return {mPageID};
-  }
-  return {};
-}
-
-PreferredSize WGCPageSource::GetPreferredSize(PageID) {
+PreferredSize WGCRenderer::GetPreferredSize() const {
   if (!mTexture) {
     return {};
   }
@@ -185,10 +178,7 @@ PreferredSize WGCPageSource::GetPreferredSize(PageID) {
   };
 }
 
-void WGCPageSource::RenderPage(
-  RenderTarget* rt,
-  PageID,
-  const PixelRect& rect) {
+void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
   if (!mCaptureItem) {
     return;
   }
@@ -218,9 +208,9 @@ void WGCPageSource::RenderPage(
   mNeedsRepaint = false;
 }
 
-void WGCPageSource::OnWGCFrame() {
+void WGCRenderer::OnWGCFrame() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "WGCPageSource::OnWGCFrame()");
+    activity, "WGCRenderer::OnWGCFrame()");
 
   const auto keepAlive = shared_from_this();
 
@@ -230,7 +220,7 @@ void WGCPageSource::OnWGCFrame() {
     activity.StopWithResult("No Frame");
     return;
   }
-  TraceLoggingWriteTagged(activity, "WGCPageSource::OnWGCFrame()/HaveFrame");
+  TraceLoggingWriteTagged(activity, "WGCRenderer::OnWGCFrame()/HaveFrame");
 
   auto wgdxSurface = frame.Surface();
   auto interopSurface = wgdxSurface.as<
@@ -254,7 +244,7 @@ void WGCPageSource::OnWGCFrame() {
 
   if (swapchainDimensions != mSwapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope(
-      "WGCPageSource::OnWGCFrame()/RecreatePool",
+      "WGCRenderer::OnWGCFrame()/RecreatePool",
       TraceLoggingValue(swapchainDimensions.mWidth, "Width"),
       TraceLoggingValue(swapchainDimensions.mHeight, "Height"));
     std::unique_lock lock(*mDXR);
@@ -279,14 +269,13 @@ void WGCPageSource::OnWGCFrame() {
     mTexture->GetDesc(&desc);
     if (surfaceDesc.Width != desc.Width || surfaceDesc.Height != desc.Height) {
       TraceLoggingWriteTagged(
-        activity, "WGCPageSource::OnWGCFrame()/ResettingTexture");
+        activity, "WGCRenderer::OnWGCFrame()/ResettingTexture");
       mTexture = nullptr;
     }
   }
 
   if (!mTexture) {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "WGCPageSource::OnWGCFrame()/CreateTexture");
+    OPENKNEEBOARD_TraceLoggingScope("WGCRenderer::OnWGCFrame()/CreateTexture");
     std::unique_lock lock(*mDXR);
     auto desc = surfaceDesc;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -306,7 +295,7 @@ void WGCPageSource::OnWGCFrame() {
 
   TraceLoggingWriteTagged(
     activity,
-    "WGCPageSource::OnFrame()/CaptureSize",
+    "WGCRenderer::OnFrame()/CaptureSize",
     TraceLoggingValue(captureSize.Width, "Width"),
     TraceLoggingValue(captureSize.Height, "Height"));
 
@@ -329,12 +318,12 @@ void WGCPageSource::OnWGCFrame() {
   activity.Stop();
   {
     OPENKNEEBOARD_TraceLoggingScope(
-      "WGCPageSource::OnWGCFrame()/CallingPostFrame");
+      "WGCRenderer::OnWGCFrame()/CallingPostFrame");
     this->PostFrame();
   }
 }
 
-void WGCPageSource::PreOKBFrame() {
+void WGCRenderer::PreOKBFrame() {
   if (!mFramePool) {
     return;
   }
@@ -344,19 +333,19 @@ void WGCPageSource::PreOKBFrame() {
   }
 }
 
-void WGCPageSource::PostFrame() {
+void WGCRenderer::PostFrame() {
 }
 
-winrt::fire_and_forget WGCPageSource::ForceResize(PixelSize size) {
+winrt::fire_and_forget WGCRenderer::ForceResize(PixelSize size) {
   OPENKNEEBOARD_TraceLoggingScope(
-    "WGCPageSource::ForceResize()",
+    "WGCRenderer::ForceResize()",
     TraceLoggingValue(size.mWidth, "Width"),
     TraceLoggingValue(size.mHeight, "Height"));
   mThreadGuard.CheckThread();
   mFramePool.Recreate(
     mWinRTD3DDevice,
     this->GetPixelFormat(),
-    WGCPageSource::SwapchainLength,
+    WGCRenderer::SwapchainLength,
     size.StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
   co_return;
 }

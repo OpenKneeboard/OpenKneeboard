@@ -21,8 +21,9 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IPageSource.h>
-#include <OpenKneeboard/IPageSourceWithInternalCaching.h>
+#include <OpenKneeboard/PreferredSize.h>
+#include <OpenKneeboard/RenderTarget.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/handles.h>
@@ -43,20 +44,16 @@ class SpriteBatch;
 }
 
 // A page source using Windows::Graphics::Capture
-class WGCPageSource : public virtual IPageSource,
-                      public virtual IPageSourceWithInternalCaching,
-                      public virtual EventReceiver,
-                      public std::enable_shared_from_this<WGCPageSource> {
+class WGCRenderer : public virtual EventReceiver,
+                    public std::enable_shared_from_this<WGCRenderer> {
  public:
-  virtual ~WGCPageSource();
-  static winrt::fire_and_forget final_release(std::unique_ptr<WGCPageSource>);
+  virtual ~WGCRenderer();
+  static winrt::fire_and_forget final_release(std::unique_ptr<WGCRenderer>);
 
-  virtual PageIndex GetPageCount() const override;
-  virtual std::vector<PageID> GetPageIDs() const override;
-  virtual PreferredSize GetPreferredSize(PageID) override;
+  PreferredSize GetPreferredSize() const;
 
-  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
-    override;
+  bool HaveCaptureItem() const;
+  void Render(RenderTarget*, const PixelRect& rect);
 
   struct Options {
     bool mCaptureCursor {false};
@@ -64,8 +61,13 @@ class WGCPageSource : public virtual IPageSource,
     constexpr bool operator==(const Options&) const noexcept = default;
   };
 
+  Event<> evNeedsRepaintEvent;
+  Event<> evContentChangedEvent;
+
+  winrt::fire_and_forget ForceResize(PixelSize);
+
  protected:
-  WGCPageSource(
+  WGCRenderer(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Options& options);
@@ -80,19 +82,19 @@ class WGCPageSource : public virtual IPageSource,
   virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
   CreateWGCaptureItem()
     = 0;
-  virtual PixelRect GetContentRect(const PixelSize& captureSize) = 0;
-  virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) = 0;
+  virtual PixelRect GetContentRect(const PixelSize& captureSize) const = 0;
+  virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) const
+    = 0;
   virtual void PostFrame();
-
-  winrt::fire_and_forget ForceResize(PixelSize);
 
  private:
   static constexpr int32_t SwapchainLength = 3;
-  WGCPageSource() = delete;
+  WGCRenderer() = delete;
 
   void PreOKBFrame();
   void OnWGCFrame();
 
+  ThreadGuard mThreadGuard;
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
   Options mOptions;

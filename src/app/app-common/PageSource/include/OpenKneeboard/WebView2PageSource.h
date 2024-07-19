@@ -20,9 +20,9 @@
 #pragma once
 
 #include "IPageSourceWithCursorEvents.h"
-#include "WGCPageSource.h"
 
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/WebView2Renderer.h>
 
 #include <OpenKneeboard/handles.h>
 
@@ -37,8 +37,6 @@
 
 namespace OpenKneeboard {
 
-class DoodleRenderer;
-
 /** A browser using WebView2
  *
  * Okay, this is nasty. WebView2 does not support indirect rendering,
@@ -47,30 +45,19 @@ class DoodleRenderer;
  *
  * It'll be fun, they said.
  */
-class WebView2PageSource final : public WGCPageSource,
-                                 public IPageSourceWithCursorEvents {
+class WebView2PageSource final
+  : public virtual IPageSourceWithInternalCaching,
+    public virtual IPageSourceWithCursorEvents,
+    public EventReceiver,
+    public std::enable_shared_from_this<WebView2PageSource> {
  public:
-  struct ExperimentalFeature {
-    std::string mName;
-    uint64_t mVersion;
-
-    bool operator==(const ExperimentalFeature&) const noexcept = default;
-  };
+  using Settings = WebView2Renderer::Settings;
 
   WebView2PageSource() = delete;
   virtual ~WebView2PageSource();
 
   static bool IsAvailable();
   static std::string GetVersion();
-
-  struct Settings {
-    PixelSize mInitialSize {1024, 768};
-    bool mIntegrateWithSimHub {true};
-    std::string mURI;
-    bool mOpenDeveloperToolsWindow {false};
-    bool mTransparentBackground {true};
-    constexpr bool operator==(const Settings&) const noexcept = default;
-  };
 
   static std::shared_ptr<WebView2PageSource>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
@@ -91,139 +78,41 @@ class WebView2PageSource final : public WGCPageSource,
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
 
- protected:
-  virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
-  virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
-    const override;
-  virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
-  CreateWGCaptureItem() override;
-  virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
-  virtual PixelSize GetSwapchainDimensions(
-    const PixelSize& captureSize) override;
-  virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
-    override;
-
-  virtual void PostFrame() override;
-
  private:
+  using APIPage = WebView2Renderer::APIPage;
+  using ContentMode = WebView2Renderer::ContentMode;
+
   WebView2PageSource(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Settings&);
 
+  winrt::fire_and_forget Init();
+
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
+  Settings mSettings;
 
+  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
   winrt::apartment_context mUIThread;
   winrt::apartment_context mWorkerThread {nullptr};
 
-  Settings mSettings;
-  PixelSize mSize;
-
-  static void RegisterWindowClass();
-  /** Not just 'CreateWindow()' because Windows.h's macros interfere */
-  void CreateBrowserWindow();
-  void InitializeComposition() noexcept;
-
-  unique_hwnd mBrowserWindow;
-
-  winrt::Windows::UI::Composition::Compositor mCompositor {nullptr};
-  winrt::Windows::UI::Composition::ContainerVisual mRootVisual {nullptr};
-  winrt::Windows::UI::Composition::ContainerVisual mWebViewVisual {nullptr};
-
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment mEnvironment {
     nullptr};
-  winrt::Microsoft::Web::WebView2::Core::CoreWebView2CompositionController
-    mController {nullptr};
-  winrt::Microsoft::Web::WebView2::Core::CoreWebView2 mWebView {nullptr};
 
-  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
-
-  std::mutex mCursorEventsMutex;
-  std::queue<CursorEvent> mCursorEvents;
-  uint32_t mMouseButtons {};
-
-  winrt::fire_and_forget FlushCursorEvents();
-
-  winrt::fire_and_forget OnWebMessageReceived(
-    winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
-    winrt::Microsoft::Web::WebView2::Core::
-      CoreWebView2WebMessageReceivedEventArgs);
-
-  winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(
-    std::filesystem::path path);
-
-  using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
-
-  concurrency::task<OKBPromiseResult> OnResizeMessage(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnEnableExperimentalFeaturesMessage(
-    nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnGetAvailableExperimentalFeaturesMessage(
-    nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
-    nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnSetPagesMessage(nlohmann::json args);
-
-  winrt::fire_and_forget SendJSLog(auto&&... args) {
-    const auto jsArgs
-      = nlohmann::json::array({std::forward<decltype(args)>(args)...});
-    auto weak = weak_from_this();
-    auto thread = mWorkerThread;
-    co_await thread;
-    auto self = weak.lock();
-    if (!self) {
-      co_return;
-    }
-
-    const nlohmann::json message {
-      {"OpenKneeboard_WebView2_MessageType", "console.log"},
-      {"logArgs", jsArgs},
-    };
-
-    mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
-  }
-
-  winrt::fire_and_forget SendJSEvent(
-    std::string_view eventType,
-    nlohmann::json eventOptions);
-
-  winrt::fire_and_forget ActivateJSAPI(std::string_view api);
-
-  static LRESULT CALLBACK WindowProc(
-    HWND const window,
-    UINT const message,
-    WPARAM const wparam,
-    LPARAM const lparam) noexcept;
-
-  enum class CursorEventsMode {
-    MouseEmulation,
-    Raw,
-    DoodlesOnly,
-  };
-
-  struct APIPage {
-    winrt::guid mGuid;
-    PixelSize mPixelSize;
-    PageID mPageID;
-  };
-
-  enum class ContentMode {
-    Scrollable,
-    PageBased,
-  };
-
-  // Modified by API; should be reset to defaults when navigation starts.
-  struct PageAPIResources {
-    CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
-    std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
-    std::unique_ptr<DoodleRenderer> mDoodles;
-
-    ContentMode mContentMode {ContentMode::Scrollable};
-
+  struct DocumentResources {
     std::vector<APIPage> mPages;
+    ContentMode mContentMode {ContentMode::Scrollable};
+    std::shared_ptr<DoodleRenderer> mDoodles;
 
-    PageID mMostRecentPage;
+    std::unordered_map<RenderTargetID, std::shared_ptr<WebView2Renderer>>
+      mRenderers;
   };
-  PageAPIResources mPageAPIResources;
+
+  DocumentResources mDocumentResources {};
+  RenderTargetID mScrollableContentRendererKey;
+  PageID mScrollableContentPageID;
+
+  void OnPagesChanged(const std::vector<APIPage>& pages);
 };
 }// namespace OpenKneeboard

@@ -40,53 +40,7 @@
 #include <WebView2.h>
 #include <wrl.h>
 
-template <>
-struct std::
-  formatter<OpenKneeboard::WebView2PageSource::ExperimentalFeature, char>
-  : std::formatter<std::string, char> {
-  auto format(
-    const OpenKneeboard::WebView2PageSource::ExperimentalFeature& feature,
-    auto& formatContext) const {
-    return std::formatter<std::string, char>::format(
-      std::format("`{}` version `{}`", feature.mName, feature.mVersion),
-      formatContext);
-  }
-};
-
 namespace OpenKneeboard {
-
-#define IT(x) {CursorTouchState::x, #x},
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  CursorTouchState,
-  {OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES});
-#undef IT
-
-using ExFeature = WebView2PageSource::ExperimentalFeature;
-
-namespace {
-const ExFeature RawCursorEventsFeature {"RawCursorEvents", 2024071801};
-const ExFeature RawCursorEventsToggleableFeature {
-  "RawCursorEvents",
-  2024071802};
-const ExFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071801};
-const ExFeature DoodlesOnlyToggleableFeature {"DoodlesOnly", 2024071802};
-
-const ExFeature SetCursorEventsModeFeature {"SetCursorEventsMode", 2024071801};
-
-const ExFeature PageBasedContentFeature {"PageBasedContent", 2024071801};
-
-std::array SupportedExperimentalFeatures {
-  RawCursorEventsFeature,
-  RawCursorEventsToggleableFeature,
-  DoodlesOnlyFeature,
-  DoodlesOnlyToggleableFeature,
-  SetCursorEventsModeFeature,
-  PageBasedContentFeature,
-};
-
-};// namespace
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExFeature, mName, mVersion);
 
 std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
@@ -98,55 +52,26 @@ std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   return ret;
 }
 
-WebView2PageSource::WebView2PageSource(
-  const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs,
-  const Settings& settings)
-  : WGCPageSource(dxr, kbs, {}),
-    mDXResources(dxr),
-    mKneeboard(kbs),
-    mSettings(settings),
-    mSize(mSettings.mInitialSize) {
-  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::WebView2PageSource()");
+winrt::fire_and_forget WebView2PageSource::Init() {
   if (!IsAvailable()) {
-    return;
+    co_return;
   }
-  mDQC = winrt::Windows::System::DispatcherQueueController::
-    CreateOnDedicatedThread();
-}
-
-winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::InitializeContentToCapture() {
-  TraceLoggingActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
-    activity, "WebView2PageSource::InitializeContentToCapture");
-  if (!IsAvailable()) {
-    TraceLoggingWriteStop(
-      activity,
-      "WebView2PageSource::InitializeContentToCapture",
-      TraceLoggingValue("WebView2 is not available", "Result"));
+  auto uiThread = mUIThread;
+  auto weak = weak_from_this();
+  auto dq = mDQC.DispatcherQueue();
+  co_await winrt::resume_foreground(dq);
+  auto self = weak.lock();
+  if (!self) {
     co_return;
   }
 
-  co_await winrt::resume_foreground(mDQC.DispatcherQueue());
-
   mWorkerThread = {};
   SetThreadDescription(GetCurrentThread(), L"OKB WebView2 Worker");
-
-  this->CreateBrowserWindow();
-
-  auto dq = winrt::Windows::System::DispatcherQueue::GetForCurrentThread();
-
-  this->InitializeComposition();
 
   using namespace winrt::Microsoft::Web::WebView2::Core;
 
   const auto userData = Filesystem::GetLocalAppDataDirectory() / "WebView2";
   std::filesystem::create_directories(userData);
-
-  const auto windowRef
-    = CoreWebView2ControllerWindowReference::CreateFromWindowHandle(
-      reinterpret_cast<uint64_t>(mBrowserWindow.get()));
 
   const auto edgeArgs
     = std::format(L"--disable-gpu-vsync --max-gum-fps={}", FramesPerSecond);
@@ -156,481 +81,31 @@ WebView2PageSource::InitializeContentToCapture() {
   mEnvironment = co_await CoreWebView2Environment::CreateWithOptionsAsync(
     {}, userData.wstring(), options);
 
-  mController
-    = co_await mEnvironment.CreateCoreWebView2CompositionControllerAsync(
-      windowRef);
-
-  if (mSettings.mTransparentBackground) {
-    mController.DefaultBackgroundColor(
-      winrt::Windows::UI::Colors::Transparent());
-  }
-
-  mWebView = mController.CoreWebView2();
-
-  auto settings = mWebView.Settings();
-  const auto userAgent = std::format(
-    L"{} OpenKneeboard/{}.{}.{}.{}",
-    std::wstring_view {settings.UserAgent()},
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build);
-  settings.UserAgent(userAgent);
-
-  settings.IsWebMessageEnabled(true);
-  mWebView.WebMessageReceived(
-    std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
-  mWebView.NavigationStarting(std::bind_front(
-    [](auto weak, auto thread, auto, auto) -> winrt::fire_and_forget {
-      co_await thread;
-      auto self = std::static_pointer_cast<WebView2PageSource>(weak.lock());
-      if (!self) {
-        co_return;
-      }
-      self->mPageAPIResources = {};
-    },
-    weak_from_this(),
-    mUIThread));
-
-  co_await this->ImportJavascriptFile(
-    Filesystem::GetImmutableDataDirectory() / "WebView2.js");
-
-  const nlohmann::json initData {
-    {
-      "Version",
-      {
-        {
-          "Components",
-          {
-            {"Major", Version::Major},
-            {"Minor", Version::Minor},
-            {"Patch", Version::Patch},
-            {"Build", Version::Build},
-          },
-        },
-        {"HumanReadable", Version::ReleaseName},
-        {"IsGitHubActionBuild", Version::IsGithubActionsBuild},
-        {"IsTaggedVersion", Version::IsTaggedVersion},
-        {"IsStableRelease", Version::IsStableRelease},
-      },
-    },
-  };
-
-  co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-    std::format(L"window.OpenKneeboard = new OpenKneeboardAPI({});", initData));
-
-  if (mSettings.mIntegrateWithSimHub) {
-    co_await this->ImportJavascriptFile(
-      Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
-    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      L"window.OpenKneeboard.SimHubHooks = new "
-      L"OpenKneeboardSimHubHooks();");
-  }
-
-  mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
-  mController.RasterizationScale(1.0);
-  mController.ShouldDetectMonitorScaleChanges(false);
-  mController.Bounds({
-    0,
-    0,
-    mSize.Width<float>(),
-    mSize.Height<float>(),
-  });
-
-  mController.RootVisualTarget(mWebViewVisual);
-  mController.IsVisible(true);
-
-  if (mSettings.mOpenDeveloperToolsWindow) {
-    mWebView.OpenDevToolsWindow();
-  }
-
-  mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
-
-  TraceLoggingWriteStop(
-    activity,
-    "WebView2PageSource::InitializeContentToCapture",
-    TraceLoggingValue("Finished", "Result"));
-}
-
-winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
-  winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
-  winrt::Microsoft::Web::WebView2::Core::CoreWebView2WebMessageReceivedEventArgs
-    args) {
-  const auto weak = weak_from_this();
-
-  const auto json = to_string(args.WebMessageAsJson());
-  const auto parsed = nlohmann::json::parse(json);
-
-  if (!parsed.contains("messageName")) {
-    co_return;
-  }
-
-  const std::string message = parsed.at("messageName");
-  const uint64_t callID = parsed.at("callID");
-
-  const auto respond = std::bind_front(
-    [](auto thread, auto weak, auto callID, OKBPromiseResult result)
-      -> winrt::fire_and_forget {
-      co_await thread;
-      auto self = std::static_pointer_cast<WebView2PageSource>(weak.lock());
-      if (!self) {
-        co_return;
-      }
-      nlohmann::json response {
-        {"OpenKneeboard_WebView2_MessageType", "AsyncResponse"},
-        {"callID", callID},
-      };
-      if (result.has_value()) {
-        response.emplace("result", result.value());
-      } else {
-        response.emplace("error", result.error());
-        dprintf("WARNING: WebView2 API error: {}", result.error());
-      }
-
-      self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
-    },
-    mWorkerThread,
-    weak,
-    callID);
-
-  if (message == "OpenKneeboard/SetPreferredPixelSize") {
-    respond(co_await this->OnResizeMessage(parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard/EnableExperimentalFeatures") {
-    respond(co_await this->OnEnableExperimentalFeaturesMessage(
-      parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard/GetAvailableExperimentalFeatures") {
-    respond(co_await this->OnGetAvailableExperimentalFeaturesMessage(
-      parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard/SetCursorEventsMode") {
-    respond(
-      co_await this->OnSetCursorEventsModeMessage(parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard/SetPages") {
-    respond(co_await this->OnSetPagesMessage(parsed.at("messageData")));
-    co_return;
-  }
-
-  OPENKNEEBOARD_BREAK;
-  respond(std::unexpected(std::format("Invalid JS API request: {}", message)));
-}
-
-concurrency::task<WebView2PageSource::OKBPromiseResult>
-WebView2PageSource::OnResizeMessage(nlohmann::json args) {
-  auto weak = weak_from_this();
-  const auto uiThread = mUIThread;
-
-  PixelSize size = {
-    args.at("width"),
-    args.at("height"),
-  };
-  if (size.mWidth < 1 || size.mHeight < 1) {
-    co_return std::unexpected {"WebView2 requested 0px area, ignoring"};
-  }
-  if (
-    size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-    || size.mHeight > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
-    dprintf(
-      "WebView2 requested size {}x{} is outside of D3D11 limits",
-      size.mWidth,
-      size.mHeight);
-    size = size.ScaledToFit(
-      {
-        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
-        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
-      },
-      Geometry2D::ScaleToFitMode::ShrinkOnly);
-    if (size.mWidth < 1 || size.mHeight < 1) {
-      co_return std::unexpected {
-        "Requested size scales down to < 1px in at least 1 dimension"};
-    }
-    dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
-  }
-
-  const auto success = [&size](auto result) {
-    return nlohmann::json {
-      {"result", result},
-      {
-        "details",
-        {
-          {"width", size.mWidth},
-          {"height", size.mHeight},
-        },
-      },
-    };
-  };
-
-  if (mSize == size) {
-    co_return success("no change");
-  }
-  mSize = size;
-
-  const auto wfSize
-    = mSize.StaticCast<float, winrt::Windows::Foundation::Numerics::float2>();
-  mRootVisual.Size(wfSize);
-  mWebViewVisual.Size(wfSize);
-  mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
-  mController.RasterizationScale(1.0);
-
   co_await uiThread;
 
-  auto self = weak.lock();
-  if (!self) {
-    co_return std::unexpected {"WebView2 no longer exists"};
-  }
-  WGCPageSource::ForceResize(size);
+  auto doodles = std::make_shared<DoodleRenderer>(mDXResources, mKneeboard);
 
-  evContentChangedEvent.Emit();
-  evNeedsRepaintEvent.Emit();
-
-  co_return success("resized");
-}
-
-concurrency::task<WebView2PageSource::OKBPromiseResult>
-WebView2PageSource::OnSetCursorEventsModeMessage(nlohmann::json args) {
-  auto& pageApi = mPageAPIResources;
-
-  auto missingFeature = [](auto feature) {
-    return std::unexpected {std::format(
-      "SetCursorEventMode() failed - the experimental feature `{}` "
-      "version "
-      "`{}` is required.",
-      feature.mName,
-      feature.mVersion)};
+  APIPage apiPage {
+    .mGuid = random_guid(),
+    .mPixelSize = mSettings.mInitialSize,
   };
-  if (!std::ranges::contains(
-        pageApi.mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
-    co_return missingFeature(SetCursorEventsModeFeature);
-  }
-  const std::string mode = args.at("mode");
-
-  auto success = []() { return nlohmann::json {{"result", "success"}}; };
-
-  if (mode == "MouseEmulation") {
-    pageApi.mCursorEventsMode = CursorEventsMode::MouseEmulation;
-    co_return success();
-  }
-
-  if (mode == "DoodlesOnly") {
-    if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures, DoodlesOnlyToggleableFeature)) {
-      co_return missingFeature(DoodlesOnlyToggleableFeature);
-    }
-    pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
-    co_return success();
-  }
-
-  if (mode == "Raw") {
-    if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures,
-          RawCursorEventsToggleableFeature)) {
-      co_return missingFeature(RawCursorEventsFeature);
-    }
-    pageApi.mCursorEventsMode = CursorEventsMode::Raw;
-    co_return success();
-  }
-
-  co_return std::unexpected(std::format("Unrecognized mode '{}'", mode));
-}
-
-concurrency::task<WebView2PageSource::OKBPromiseResult>
-WebView2PageSource::OnSetPagesMessage(nlohmann::json args) {
-  auto weak = weak_from_this();
-  auto thread = mUIThread;
-
-  auto& pageApi = mPageAPIResources;
-  if (!std::ranges::contains(
-        pageApi.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return std::unexpected {std::format(
-      "The experimental feature {} is required.", PageBasedContentFeature)};
-  }
-
-  std::vector<APIPage> pages;
-  for (const auto& it: args.at("pages")) {
-    APIPage page {it.at("guid"), mSize};
-    if (it.contains("pixelSize")) {
-      const auto ps = it.at("pixelSize");
-      page.mPixelSize = PixelSize {
-        ps.at("width"),
-        ps.at("height"),
-      };
-    }
-    pages.push_back(page);
-  }
-
-  if (pages.empty()) {
-    co_return std::unexpected("Must provide at least one page definition");
-  }
-
-  pageApi.mPages = std::move(pages);
-  pageApi.mContentMode = ContentMode::PageBased;
-
-  co_await thread;
-  auto self = weak.lock();
-  if (!self) {
-    co_return std::unexpected {std::format("WebView2 lifetime exceeded.")};
-  }
-  evContentChangedEvent.Emit();
-  co_return nlohmann::json {
-    {
-      "selectedPageID",
-      std::format("{:nobraces}", pageApi.mPages.front().mGuid),
-    },
+  mDocumentResources = {
+    .mPages = {apiPage},
+    .mDoodles = doodles,
   };
 }
 
-concurrency::task<WebView2PageSource::OKBPromiseResult>
-WebView2PageSource::OnGetAvailableExperimentalFeaturesMessage(
-  nlohmann::json args) {
-  if constexpr (Version::IsTaggedVersion) {
-    co_return std::unexpected(
-      "Listing experimental features is not enabled in tagged "
-      "releases of OpenKneeboard");
-  }
-
-  co_return nlohmann::json {SupportedExperimentalFeatures};
-}
-
-concurrency::task<WebView2PageSource::OKBPromiseResult>
-WebView2PageSource::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
-  std::vector<ExperimentalFeature> enabledFeatures;
-
-  auto& pageApi = mPageAPIResources;
-
-  for (const auto& featureSpec: args.at("features")) {
-    const std::string name = featureSpec.at("name");
-    const uint64_t version = featureSpec.at("version");
-
-    if (std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures,
-          name,
-          &ExperimentalFeature::mName)) {
-      co_return std::unexpected(
-        std::format("Experimental feature `{}` is already enabled", name));
-    }
-
-    const ExperimentalFeature feature {name, version};
-
-    if (!std::ranges::contains(SupportedExperimentalFeatures, feature)) {
-      if (!std::ranges::contains(
-            SupportedExperimentalFeatures, name, &ExperimentalFeature::mName)) {
-        co_return std::unexpected(
-          std::format("`{}` is not a recognized experimental feature", name));
-      }
-
-      co_return std::unexpected(std::format(
-        "`{}` is a recognized experimental feature, but `{}` is not a "
-        "supported version",
-        name,
-        version));
-    }
-
-    dprintf(
-      "WARNING: JS enabled experimental feature `{}` version `{}`",
-      name,
-      version);
-
-    pageApi.mEnabledExperimentalFeatures.push_back(feature);
-    enabledFeatures.push_back(feature);
-
-    if (
-      feature == RawCursorEventsToggleableFeature
-      || feature == DoodlesOnlyToggleableFeature) {
-      // Nothing to do except enable these
-      continue;
-    }
-
-    if (feature == SetCursorEventsModeFeature) {
-      this->ActivateJSAPI("SetCursorEventsMode");
-      continue;
-    }
-
-    if (feature == PageBasedContentFeature) {
-      this->ActivateJSAPI("SetPages");
-      continue;
-    }
-
-    auto warnObsolete = [this](const auto& feature) {
-      const auto warning = std::format(
-        "WARNING: enabling an obsolete experimental feature: `{}` "
-        "version "
-        "`{}`",
-        feature.mName,
-        feature.mVersion);
-      dprint(warning);
-      this->SendJSLog(warning);
-    };
-
-    if (feature == RawCursorEventsFeature) {
-      warnObsolete(feature);
-      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been "
-          "changed "
-          "by "
-          "this page.",
-          name));
-      }
-      pageApi.mCursorEventsMode = CursorEventsMode::Raw;
-      continue;
-    }
-
-    if (feature == DoodlesOnlyFeature) {
-      warnObsolete(feature);
-      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return std::unexpected(std::format(
-          "Can not enable `{}`, as the cursor mode has already been "
-          "changed by this page.",
-          name));
-      }
-      pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
-      continue;
-    }
-
-    const auto message = std::format(
-      "OpenKneeboard internal error: `{}` v{} is a recognized but "
-      "unhandled experimental feature",
-      name,
-      version);
-    dprint(message);
-    OPENKNEEBOARD_BREAK;
-    co_return std::unexpected(message);
-  }
-
-  co_return nlohmann::json {
-    {"result", std::format("enabled {} features", enabledFeatures.size())},
-    {"details",
-     {
-       {"features", enabledFeatures},
-     }},
-  };
-}
-
-void WebView2PageSource::InitializeComposition() noexcept {
-  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::InitializeComposition");
-  if (mCompositor) {
-    OPENKNEEBOARD_BREAK;
+WebView2PageSource::WebView2PageSource(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const Settings& settings)
+  : mDXResources(dxr), mKneeboard(kbs), mSettings(settings) {
+  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::WebView2PageSource()");
+  if (!IsAvailable()) {
     return;
   }
-  mCompositor = {};
-  mRootVisual = mCompositor.CreateContainerVisual();
-  mRootVisual.Size(
-    mSize.StaticCast<float, winrt::Windows::Foundation::Numerics::float2>());
-  mRootVisual.IsVisible(true);
-
-  mWebViewVisual = mCompositor.CreateContainerVisual();
-  mRootVisual.Children().InsertAtTop(mWebViewVisual);
-  mWebViewVisual.RelativeSizeAdjustment({1, 1});
+  mDQC = winrt::Windows::System::DispatcherQueueController::
+    CreateOnDedicatedThread();
 }
 
 std::string WebView2PageSource::GetVersion() {
@@ -654,50 +129,6 @@ bool WebView2PageSource::IsAvailable() {
   return !GetVersion().empty();
 }
 
-static wchar_t WindowClassName[] {L"OpenKneeboard/WebView2Host"};
-
-void WebView2PageSource::RegisterWindowClass() {
-  WNDCLASSW windowClass {
-    .style = CS_HREDRAW | CS_VREDRAW,
-    .lpfnWndProc = &WebView2PageSource::WindowProc,
-    .hInstance = GetModuleHandle(nullptr),
-    .lpszClassName = WindowClassName,
-  };
-  ::RegisterClassW(&windowClass);
-}
-
-void WebView2PageSource::CreateBrowserWindow() {
-  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::CreateBrowserWindow()");
-
-  {
-    static std::once_flag sFlag;
-    std::call_once(sFlag, &WebView2PageSource::RegisterWindowClass);
-  }
-
-  mBrowserWindow = unique_hwnd {CreateWindowExW(
-    WS_EX_NOACTIVATE,
-    WindowClassName,
-    L"OpenKneeboard WebView2 Host",
-    0,
-    CW_DEFAULT,
-    CW_DEFAULT,
-    0,
-    0,
-    HWND_MESSAGE,
-    NULL,
-    GetModuleHandle(nullptr),
-    nullptr)};
-  if (!mBrowserWindow) {
-    const auto code = GetLastError();
-    auto e = std::system_category().default_error_condition(code);
-    dprintf(
-      "Failed to create browser window: {:#x} - {}",
-      std::bit_cast<uint32_t>(code),
-      e.message());
-    OPENKNEEBOARD_BREAK;
-  }
-}
-
 WebView2PageSource::~WebView2PageSource() = default;
 
 winrt::fire_and_forget WebView2PageSource::final_release(
@@ -705,228 +136,34 @@ winrt::fire_and_forget WebView2PageSource::final_release(
   if (self->mWorkerThread) {
     co_await self->mWorkerThread;
 
-    self->mWebView = nullptr;
-    self->mController = nullptr;
     self->mEnvironment = nullptr;
-    self->mWebViewVisual = nullptr;
-    self->mRootVisual = nullptr;
-    self->mCompositor = nullptr;
-    self->mBrowserWindow.reset();
-
     self->mWorkerThread = {nullptr};
-
-    co_await self->mUIThread;
   }
+  co_await self->mUIThread;
   co_await self->mDQC.ShutdownQueueAsync();
   co_await self->mUIThread;
-  WGCPageSource::final_release(std::move(self));
   co_return;
-}
-
-std::optional<float> WebView2PageSource::GetHDRWhiteLevelInNits() const {
-  return {};
-}
-
-winrt::Windows::Graphics::DirectX::DirectXPixelFormat
-WebView2PageSource::GetPixelFormat() const {
-  return winrt::Windows::Graphics::DirectX::DirectXPixelFormat::
-    B8G8R8A8UIntNormalized;
-}
-
-winrt::Windows::Graphics::Capture::GraphicsCaptureItem
-WebView2PageSource::CreateWGCaptureItem() {
-  return winrt::Windows::Graphics::Capture::GraphicsCaptureItem::
-    CreateFromVisual(mRootVisual);
-}
-
-PixelRect WebView2PageSource::GetContentRect(const PixelSize& captureSize) {
-  return {{0, 0}, mSize};
-}
-
-PixelSize WebView2PageSource::GetSwapchainDimensions(
-  const PixelSize& captureSize) {
-  return captureSize;
-}
-
-void WebView2PageSource::PostFrame() {
-  this->FlushCursorEvents();
 }
 
 void WebView2PageSource::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& event,
   PageID pageID) {
-  if (!mController) {
-    return;
-  }
-
-  switch (mPageAPIResources.mCursorEventsMode) {
-    case CursorEventsMode::MouseEmulation: {
-      std::unique_lock lock(mCursorEventsMutex);
-      mCursorEvents.push(event);
-      return;
-    }
-    case CursorEventsMode::Raw:
-      this->SendJSEvent(
-        "cursor",
-        {
-          {"detail",
-           {
-             {"touchState", event.mTouchState},
-             {"buttons", event.mButtons},
-             {"position",
-              {
-                {"x", event.mX},
-                {"y", event.mY},
-              }},
-           }},
-        });
-      return;
-    case CursorEventsMode::DoodlesOnly: {
-      auto& doodles = mPageAPIResources.mDoodles;
-      if (!doodles) {
-        doodles = std::make_unique<DoodleRenderer>(mDXResources, mKneeboard);
-        AddEventListener(
-          doodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
-        AddEventListener(
-          doodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
-      }
-      doodles->PostCursorEvent(ctx, event, pageID, mSize);
-      return;
-    }
-  }
-}
-
-winrt::fire_and_forget WebView2PageSource::SendJSEvent(
-  std::string_view eventType,
-  nlohmann::json eventOptions) {
-  auto weak = weak_from_this();
-  auto thread = mWorkerThread;
-  co_await thread;
-  auto self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-
-  const nlohmann::json message {
-    {"OpenKneeboard_WebView2_MessageType", "Event"},
-    {"eventType", eventType},
-    {"eventOptions", eventOptions},
-  };
-
-  mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
-}
-
-winrt::fire_and_forget WebView2PageSource::ActivateJSAPI(std::string_view api) {
-  auto weak = weak_from_this();
-  auto thread = mWorkerThread;
-  co_await thread;
-  auto self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-
-  const nlohmann::json message {
-    {"OpenKneeboard_WebView2_MessageType", "ActivateAPI"},
-    {"api", api},
-  };
-
-  mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
-}
-
-winrt::fire_and_forget WebView2PageSource::FlushCursorEvents() {
-  if (!mWorkerThread) {
-    co_return;
-  }
-  if (mCursorEvents.empty()) {
-    co_return;
-  }
-  auto weakThis = weak_from_this();
-  co_await mWorkerThread;
-  auto self = weakThis.lock();
-  if (!self) {
-    co_return;
-  }
-
-  std::queue<CursorEvent> events;
-  {
-    std::unique_lock lock(mCursorEventsMutex);
-    events = std::move(mCursorEvents);
-    mCursorEvents = {};
-  }
-
-  while (!events.empty()) {
-    const auto event = events.front();
-    events.pop();
-
-    // TODO: button tracking
-    using namespace winrt::Microsoft::Web::WebView2::Core;
-
-    using EVKind = CoreWebView2MouseEventKind;
-    using VKey = CoreWebView2MouseEventVirtualKeys;
-
-    VKey keys {};
-    if ((event.mButtons & 1)) {
-      keys |= VKey::LeftButton;
-    }
-    if ((event.mButtons & (1 << 1))) {
-      keys |= VKey::RightButton;
-    }
-
-    if (event.mTouchState == CursorTouchState::NotNearSurface) {
-      if (mMouseButtons & 1) {
-        mController.SendMouseInput(EVKind::LeftButtonUp, keys, 0, {});
-      }
-      if (mMouseButtons & (1 << 1)) {
-        mController.SendMouseInput(EVKind::RightButtonUp, keys, 0, {});
-      }
-      mMouseButtons = {};
-      mController.SendMouseInput(EVKind::Leave, keys, 0, {});
-      continue;
-    }
-
-    // We only pay attention to left/right buttons
-    const auto buttons = event.mButtons & 3;
-    if (buttons == mMouseButtons) {
-      mController.SendMouseInput(EVKind::Move, keys, 0, {event.mX, event.mY});
-      continue;
-    }
-
-    const auto down = event.mButtons & ~mMouseButtons;
-    const auto up = mMouseButtons & ~event.mButtons;
-    mMouseButtons = buttons;
-
-    if (down & 1) {
-      mController.SendMouseInput(
-        EVKind::LeftButtonDown, keys, 0, {event.mX, event.mY});
-    }
-    if (up & 1) {
-      mController.SendMouseInput(
-        EVKind::LeftButtonUp, keys, 0, {event.mX, event.mY});
-    }
-    if (down & (1 << 1)) {
-      mController.SendMouseInput(
-        EVKind::RightButtonDown, keys, 0, {event.mX, event.mY});
-    }
-    if (up & (1 << 1)) {
-      mController.SendMouseInput(
-        EVKind::RightButtonUp, keys, 0, {event.mX, event.mY});
-    }
-  }
+  // FIXME: delegate to correct WebView2Renderer
 }
 
 bool WebView2PageSource::CanClearUserInput(PageID pageID) const {
-  const auto& doodles = mPageAPIResources.mDoodles;
+  const auto& doodles = mDocumentResources.mDoodles;
   return doodles && doodles->HaveDoodles(pageID);
 }
 
 bool WebView2PageSource::CanClearUserInput() const {
-  const auto& doodles = mPageAPIResources.mDoodles;
+  const auto& doodles = mDocumentResources.mDoodles;
   return doodles && doodles->HaveDoodles();
 }
 
 void WebView2PageSource::ClearUserInput(PageID pageID) {
-  auto& doodles = mPageAPIResources.mDoodles;
+  auto& doodles = mDocumentResources.mDoodles;
   if (!doodles) {
     return;
   }
@@ -934,7 +171,7 @@ void WebView2PageSource::ClearUserInput(PageID pageID) {
 }
 
 void WebView2PageSource::ClearUserInput() {
-  auto& doodles = mPageAPIResources.mDoodles;
+  auto& doodles = mDocumentResources.mDoodles;
   if (!doodles) {
     return;
   }
@@ -942,82 +179,78 @@ void WebView2PageSource::ClearUserInput() {
 }
 
 PageIndex WebView2PageSource::GetPageCount() const {
-  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
-    return WGCPageSource::GetPageCount();
-  }
-
-  return mPageAPIResources.mPages.size();
+  return this->GetPageIDs().size();
 }
 
 std::vector<PageID> WebView2PageSource::GetPageIDs() const {
-  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
-    return WGCPageSource::GetPageIDs();
+  switch (mDocumentResources.mContentMode) {
+    case ContentMode::PageBased:
+      return mDocumentResources.mPages
+        | std::views::transform(&APIPage::mPageID)
+        | std::ranges::to<std::vector>();
+    case ContentMode::Scrollable:
+      return {mScrollableContentPageID};
   }
-
-  return mPageAPIResources.mPages | std::views::transform(&APIPage::mPageID)
-    | std::ranges::to<std::vector>();
+  OPENKNEEBOARD_LOG_AND_FATAL(
+    "Invalid content mode in WebView2PageSource::GetPageIDs()");
 }
 
 PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
-  if (mPageAPIResources.mContentMode == ContentMode::Scrollable) {
-    return WGCPageSource::GetPreferredSize(pageID);
-  }
-
   auto it
-    = std::ranges::find(mPageAPIResources.mPages, pageID, &APIPage::mPageID);
-  if (it == mPageAPIResources.mPages.end()) {
-    return {};
+    = std::ranges::find(mDocumentResources.mPages, pageID, &APIPage::mPageID);
+  if (it != mDocumentResources.mPages.end()) {
+    return {
+      it->mPixelSize,
+      ScalingKind::Bitmap,
+    };
   }
-  return {
-    it->mPixelSize,
-    ScalingKind::Bitmap,
-  };
-}
-
-winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::ImportJavascriptFile(std::filesystem::path path) {
-  std::ifstream f(path);
-  std::stringstream ss;
-  ss << f.rdbuf();
-  const auto js = ss.str();
-
-  co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-    winrt::to_hstring(js));
+  return {};
 }
 
 void WebView2PageSource::RenderPage(
   RenderTarget* rt,
-  PageID page,
+  PageID pageID,
   const PixelRect& rect) {
-  auto& par = mPageAPIResources;
-  if (
-    par.mContentMode == ContentMode::PageBased && par.mMostRecentPage != page) {
-    auto it = std::ranges::find(par.mPages, page, &APIPage::mPageID);
-    constexpr winrt::guid guid {};
-    if (it != par.mPages.end()) {
-      par.mMostRecentPage = page;
-      this->SendJSEvent(
-        "pageChanged",
-        {{"detail", {{"guid", std::format("{:nobraces}", it->mGuid)}}}});
-    }
-  }
+  const auto isPageMode
+    = (mDocumentResources.mContentMode == ContentMode::PageBased);
+  const auto key = isPageMode ? rt->GetID() : mScrollableContentRendererKey;
+  if (!mDocumentResources.mRenderers.contains(key)) {
+    auto renderer = WebView2Renderer::Create(
+      mDXResources,
+      mKneeboard,
+      mSettings,
+      mDocumentResources.mDoodles,
+      mDQC,
+      mEnvironment,
+      (isPageMode ? mDocumentResources.mPages
+                  : decltype(mDocumentResources.mPages) {}));
+    AddEventListener(
+      renderer->evContentChangedEvent, this->evContentChangedEvent);
+    AddEventListener(
+      renderer->evPagesChangedEvent,
+      {weak_from_this(), &WebView2PageSource::OnPagesChanged});
+    AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 
-  const auto realPageID = WGCPageSource::GetPageIDs().front();
-  WGCPageSource::RenderPage(rt, realPageID, rect);
-
-  auto& doodles = mPageAPIResources.mDoodles;
-  if (!doodles) {
-    return;
+    mDocumentResources.mRenderers.emplace(key, std::move(renderer));
   }
-  doodles->Render(rt, page, rect);
+  auto renderer = mDocumentResources.mRenderers.at(key);
+  renderer->RenderPage(rt, pageID, rect);
 }
 
-LRESULT CALLBACK WebView2PageSource::WindowProc(
-  HWND const window,
-  UINT const message,
-  WPARAM const wparam,
-  LPARAM const lparam) noexcept {
-  return DefWindowProc(window, message, wparam, lparam);
+void WebView2PageSource::OnPagesChanged(const std::vector<APIPage>& pages) {
+  mDocumentResources.mPages = pages;
+
+  for (const auto& [rtid, renderer]: mDocumentResources.mRenderers) {
+    renderer->OnPagesChangedViaAPI(pages);
+  }
+
+  if (mDocumentResources.mContentMode != ContentMode::PageBased) {
+    mDocumentResources.mContentMode = ContentMode::PageBased;
+    mDocumentResources.mRenderers.erase(mScrollableContentRendererKey);
+  }
+
+  evContentChangedEvent.Emit();
+  evAvailableFeaturesChangedEvent.Emit();
 }
 
 }// namespace OpenKneeboard

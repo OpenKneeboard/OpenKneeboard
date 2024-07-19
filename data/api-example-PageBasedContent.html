@@ -28,38 +28,31 @@
     <div id="okbClient" class="hidden">
     </div>
     <script>
-        const pages = [
-            {
-                guid: crypto.randomUUID(),
-                pixelSize: { width: 1024, height: 768 },
-            },
-            {
-                guid: crypto.randomUUID(),
-                pixelSize: { width: 768, height: 1024 },
-            },
-        ];
-        for (const index in pages) {
-            const page = pages[index];
+        var pages;
+        function CreatePageDOMElements() {
+            for (const index in pages) {
+                const page = pages[index];
 
-            var div = document.createElement('div');
-            document.getElementById('okbClient').appendChild(div);
-            div.id = page.guid;
-            div.className = "page hidden";
+                var div = document.createElement('div');
+                document.getElementById('okbClient').appendChild(div);
+                div.id = page.guid;
+                div.className = "page hidden";
 
-            var h1 = document.createElement('h1');
-            div.appendChild(h1);
-            h1.innerText = "Page " + (Number(index) + 1);
+                var h1 = document.createElement('h1');
+                div.appendChild(h1);
+                h1.innerText = "Page " + (Number(index) + 1);
 
-            var ul = document.createElement('ul');
-            div.appendChild(ul);
+                var ul = document.createElement('ul');
+                div.appendChild(ul);
 
-            var guid = document.createElement('li');
-            ul.appendChild(guid);
-            guid.innerText = "GUID: " + page.guid;
+                var guid = document.createElement('li');
+                ul.appendChild(guid);
+                guid.innerText = "GUID: " + page.guid;
 
-            var size = document.createElement('li');
-            ul.appendChild(size);
-            size.innerText = "Size: " + page.pixelSize.width + "x" + page.pixelSize.height;
+                var size = document.createElement('li');
+                ul.appendChild(size);
+                size.innerText = "Size: " + page.pixelSize.width + "x" + page.pixelSize.height;
+            }
         }
 
         async function OnPageChanged(ev) {
@@ -71,19 +64,38 @@
             page.classList.remove('hidden');
         }
 
+        async function GetOrCreatePageIDs() {
+            const getResult = await OpenKneeboard.GetPages();
+            if (getResult.havePages) {
+                pages = getResult.pages;
+                return;
+            }
+            pages = [
+                {
+                    guid: crypto.randomUUID(),
+                    pixelSize: { width: 1024, height: 768 },
+                },
+                {
+                    guid: crypto.randomUUID(),
+                    pixelSize: { width: 768, height: 1024 },
+                },
+            ];
+            await OpenKneeboard.SetPages(pages);
+        }
+
         async function InitializePage() {
             document.getElementById('apiRequired').classList.add('hidden');
             document.getElementById('okbClient').classList.remove('hidden');
 
-            await OpenKneeboard.SetPreferredPixelSize(512, 512);
             OpenKneeboard.addEventListener('pageChanged', OnPageChanged);
 
             try {
                 await OpenKneeboard.EnableExperimentalFeatures([
                     { name: 'PageBasedContent', version: 2024071801 },
                 ]);
-                const result = await OpenKneeboard.SetPages(pages);
-                var activePage = document.getElementById(result.selectedPageID);
+                await GetOrCreatePageIDs();
+                CreatePageDOMElements();
+                var activePage = document.getElementById(pages[0].guid);
                 activePage.classList.remove("hidden");
             } catch (error) {
                 let errorP = document.getElementById('apiError');
