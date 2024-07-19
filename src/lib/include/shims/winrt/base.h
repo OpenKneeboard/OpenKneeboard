@@ -143,7 +143,7 @@ struct std::formatter<winrt::guid, char> {
 
     constexpr std::string_view nobraces = "nobraces";
 
-    if (std::string_view {it, ctx.end()}.starts_with(nobraces)) {
+    if (std::string_view(it, ctx.end()).starts_with(nobraces)) {
       mWithBraces = false;
       it += nobraces.size();
     }
