@@ -604,7 +604,7 @@ void WebView2PageSource::CreateBrowserWindow() {
   }
 
   mBrowserWindow = unique_hwnd {CreateWindowExW(
-    0,
+    WS_EX_NOACTIVATE,
     WindowClassName,
     L"OpenKneeboard WebView2 Host",
     0,
