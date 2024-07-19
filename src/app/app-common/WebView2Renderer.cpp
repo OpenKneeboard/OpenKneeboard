@@ -720,6 +720,13 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   std::vector<APIPage> pages;
   for (const auto& it: args.at("pages")) {
     auto page = it.get<APIPage>();
+    const auto old
+      = std::ranges::find(pageApi.mPages, page.mGuid, &APIPage::mGuid);
+    if (old != pageApi.mPages.end()) {
+      // Use the new pixelsize and data, but keep existing internal ID
+      page.mPageID = old->mPageID;
+    }
+
     if (page.mPixelSize.IsEmpty()) {
       page.mPixelSize = mSize;
     }
