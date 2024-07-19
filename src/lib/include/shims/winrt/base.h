@@ -132,7 +132,7 @@ struct std::formatter<winrt::guid, char> {
       view.remove_prefix(1);
       view.remove_suffix(1);
     }
-    return std::ranges::copy(string, ctx.out()).out;
+    return std::ranges::copy(view, ctx.out()).out;
   }
 
   constexpr auto parse(auto& ctx) {
