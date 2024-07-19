@@ -226,10 +226,9 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer(
       // Another workaround for
       // https://github.com/microsoft/WindowsAppSDK/issues/3506
       if (doc->mPDFDocument) {
-        ([dq = mUIThreadDispatcherQueue](
-           auto deleteLater) -> winrt::fire_and_forget {
+        ([](auto dq, auto deleteLater) -> winrt::fire_and_forget {
           co_await wil::resume_foreground(dq);
-        })(std::move(doc->mPDFDocument));
+        })(mUIThreadDispatcherQueue, std::move(doc->mPDFDocument));
       }
       doc->mPDFDocument = std::move(document);
       doc->mPageIDs.resize(doc->mPDFDocument.PageCount());
