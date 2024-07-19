@@ -155,6 +155,8 @@ class WebView2Renderer final : public WGCRenderer {
   uint32_t mMouseButtons {};
   winrt::fire_and_forget FlushCursorEvents();
 
+  winrt::Windows::Foundation::IAsyncAction Resize(PixelSize);
+
   winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(
     std::filesystem::path path);
 

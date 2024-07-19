@@ -374,9 +374,8 @@ void WebView2Renderer::RenderPage(
     auto it = std::ranges::find(dr.mPages, page, &APIPage::mPageID);
     if (it != dr.mPages.end()) {
       dr.mCurrentPage = page;
-      this->SendJSEvent(
-        "pageChanged",
-        {{"detail", {{"guid", std::format("{:nobraces}", it->mGuid)}}}});
+      this->Resize(it->mPixelSize);
+      this->SendJSEvent("pageChanged", {{"detail", {{"page", *it}}}});
     }
   }
 
@@ -550,9 +549,6 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::OnResizeMessage(nlohmann::json args) {
-  auto weak = weak_from_this();
-  const auto uiThread = mUIThread;
-
   PixelSize size = {
     args.at("width"),
     args.at("height"),
@@ -596,6 +592,18 @@ WebView2Renderer::OnResizeMessage(nlohmann::json args) {
   if (mSize == size) {
     co_return success("no change");
   }
+
+  co_await this->Resize(size);
+}
+
+winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
+  PixelSize size) {
+  if (mSize == size) {
+    co_return;
+  }
+  auto weak = weak_from_this();
+  const auto uiThread = mUIThread;
+
   mSize = size;
 
   const auto wfSize
@@ -609,13 +617,11 @@ WebView2Renderer::OnResizeMessage(nlohmann::json args) {
 
   auto self = weak.lock();
   if (!self) {
-    co_return std::unexpected {"WebView2 no longer exists"};
+    co_return;
   }
   WGCRenderer::ForceResize(size);
 
   evNeedsRepaintEvent.Emit();
-
-  co_return success("resized");
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>

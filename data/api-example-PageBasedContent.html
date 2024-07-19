@@ -56,7 +56,7 @@
         }
 
         async function OnPageChanged(ev) {
-            const guid = ev.detail.guid;
+            const guid = ev.detail.page.guid;
             for (const page of document.getElementsByClassName('page')) {
                 page.classList.add('hidden');
             }
