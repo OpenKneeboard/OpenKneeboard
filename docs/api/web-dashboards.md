@@ -42,6 +42,27 @@ if (window.OpenKneeboard?.SetPreferredPixelSize) {
 }
 ```
 
+### A note on `await`
+
+Several OpenKneeboard API functions return a `Promise`; the examples will use the `await` syntac for these, e.g.:
+
+```js
+try {
+  await OpenKneeboard.DoSomething();
+  DoSomethingElse();
+} catch (ex) {
+  HandleError(ex);
+}
+```
+
+As these are standard `Promise` objects, if you prefer, you can use the traditional syntax instead:
+
+```js
+OpenKneeboard.DoSomething()
+  .then(function(result) { DoSomethingElse(); })
+  .catch(function(ex) {HandleError(ex); });
+```
+
 ### SetPreferredPixelSize
 
 Set the preferred pixel size and aspect ratio for this page.
@@ -231,3 +252,9 @@ await OpenKneeboard.SetCursorEventsMode("Raw");
 - setting the mode to `"DoodlesOnly"` requires `DoodlesOnly` version `2024071802`
 
 An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
+
+### Page-Based Content
+
+This allows creating a web page that works like a native OpenKneeboard tab type with multiple pages, instead of a potentially-scrollable web view.
+
+This functionality is documented [on a separate page](web-dashboards/page-based-content.md).
