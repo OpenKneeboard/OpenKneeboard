@@ -19,6 +19,7 @@ set(DATA_SOURCES "${DATA_SOURCES}" PARENT_SCOPE)
 install(
     FILES
     api-example-RawCursorEvents.html
+    api-example-PageBasedContent.html
     DESTINATION
     "share/doc"
 )
