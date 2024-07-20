@@ -255,7 +255,7 @@ An example/debugging tool - `api-example-RawCursorEvents.html` is included in:
 - [the `data` folder of the OpenKneeboard source tree](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/data/api-example-RawCursorEvents.html)
 - the `share\doc\` subfolder of an OpenKneeboard installation.
 
-### Page-Based Content
+### Page-Based Web Applications
 
 This allows creating a web page that works like a native OpenKneeboard tab type with multiple pages, instead of a potentially-scrollable web view.
 

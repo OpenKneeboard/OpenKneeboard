@@ -2,7 +2,7 @@
 parent: Web Dashboard APIs
 ---
 
-# Page-Based Content
+# Page-Based Web Applications
 {: .no_toc }
 
 **THIS IS AN EXPERIMENTAL FEATURE** and may change between any two versions without notice; feedback and questions are very welcome in `#code-talk` [on Discord](https://go.openkneeboard.com/Discord).
@@ -23,7 +23,7 @@ This feature requires:
 
 ## Model
 
-Page-based HTML content in OpenKneeboard is essentially a [Single Page Application (SPA)](https://developer.mozilla.org/en-US/docs/Glossary/SPA), with several key differences:
+Page-based web applications in OpenKneeboard are essentially a [Single Page Application (SPA)](https://developer.mozilla.org/en-US/docs/Glossary/SPA), with several key differences:
 
 - like a PDF, the document is formed of multiple discrete pages, rather than a continuously-scrollable canvas in a standard web page
 - like a PDF, every page in the document can be a different size and aspect ratio, rather than fitting the size of the browser window
