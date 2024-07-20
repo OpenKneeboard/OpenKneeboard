@@ -86,6 +86,16 @@ class WebView2Renderer final : public WGCRenderer {
     const std::shared_ptr<DoodleRenderer>&,
     const winrt::Windows::System::DispatcherQueueController& workerDQC,
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&,
+    /** nullptr is expected here, unless in page-based mode.
+     *
+     * In scrollable mode (default), there is a single WebView2Renderer instance
+     * In page-based mode (JS API calls), there is a WebView2Renderer instance
+     * per view.
+     *
+     * This is currently (2024-07-20) used for putting helpful messages in the
+     * console log.
+     */
+    KneeboardView*,
     const std::vector<APIPage>&);
 
   static winrt::fire_and_forget final_release(
@@ -121,6 +131,7 @@ class WebView2Renderer final : public WGCRenderer {
     const std::shared_ptr<DoodleRenderer>&,
     const winrt::Windows::System::DispatcherQueueController& workerDQC,
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&,
+    KneeboardView*,
     const std::vector<APIPage>&);
 
   audited_ptr<DXResources> mDXResources;
@@ -202,6 +213,14 @@ class WebView2Renderer final : public WGCRenderer {
 
   winrt::fire_and_forget ActivateJSAPI(std::string_view api);
 
+  struct ViewInfo {
+    winrt::guid mGuid;
+    std::string mName;
+  };
+  std::optional<ViewInfo> mViewInfo {};
+
+  std::vector<APIPage> mInitialPages;
+
   // Modified by API; should be reset to defaults when navigation starts.
   struct DocumentResources {
     CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
@@ -212,7 +231,6 @@ class WebView2Renderer final : public WGCRenderer {
     std::vector<APIPage> mPages;
     PageID mCurrentPage;
   };
-  std::vector<APIPage> mInitialPages;
   DocumentResources mDocumentResources;
 
   static LRESULT CALLBACK WindowProc(

@@ -231,6 +231,7 @@ void WebView2PageSource::RenderPage(
       mDocumentResources.mDoodles,
       mDQC,
       mEnvironment,
+      (isPageMode ? view : nullptr),
       (isPageMode ? mDocumentResources.mPages
                   : decltype(mDocumentResources.mPages) {}));
     AddEventListener(

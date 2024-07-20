@@ -1,8 +1,6 @@
-console.log("OpenKneeboard integration attached");
-
 class OpenKneeboardAPI extends EventTarget {
     constructor(runtimeData) {
-        console.log("OpenKneeboardAPI::constructor()", runtimeData);
+        console.log(`Initializing OpenKneeboard API (${runtimeData.Version.HumanReadable})`);
         super();
 
         this.#runtimeData = runtimeData;
@@ -11,6 +9,15 @@ class OpenKneeboardAPI extends EventTarget {
 
         document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
         window.chrome.webview.addEventListener('message', this.#OnNativeMessage.bind(this));
+
+        if (runtimeData.PeerInfo) {
+            const info = runtimeData.PeerInfo.ThisInstance;
+            console.log(`OpenKneeboard: This browser instance is for view {${info.ViewGUID}} - "${info.ViewName}"`);
+        }
+
+        if (!this.GetVersion().IsGithubActionsBuild) {
+            console.log("OpenKneeboard RuntimeData", runtimeData);
+        }
     }
 
     OnDOMContentLoaded() {

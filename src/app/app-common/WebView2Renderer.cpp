@@ -21,6 +21,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/Filesystem.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Version.h>
 #include <OpenKneeboard/WebView2Renderer.h>
 
@@ -229,6 +230,18 @@ WebView2Renderer::InitializeContentToCapture() {
       },
     },
   };
+
+  if (mViewInfo) {
+    initData.emplace(
+      "PeerInfo",
+      nlohmann::json {
+        {"ThisInstance",
+         {
+           {"ViewGUID", std::format("{:nobraces}", mViewInfo->mGuid)},
+           {"ViewName", mViewInfo->mName},
+         }},
+      });
+  }
 
   co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
     std::format(L"window.OpenKneeboard = new OpenKneeboardAPI({});", initData));
@@ -926,9 +939,10 @@ std::shared_ptr<WebView2Renderer> WebView2Renderer::Create(
   const winrt::Windows::System::DispatcherQueueController& workerDQC,
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&
     environment,
+  KneeboardView* view,
   const std::vector<APIPage>& apiPages) {
   auto ret = shared_with_final_release(new WebView2Renderer(
-    dxr, kbs, settings, doodles, workerDQC, environment, apiPages));
+    dxr, kbs, settings, doodles, workerDQC, environment, view, apiPages));
   ret->Init();
   return ret;
 }
@@ -941,6 +955,7 @@ WebView2Renderer::WebView2Renderer(
   const winrt::Windows::System::DispatcherQueueController& workerDQC,
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&
     environment,
+  KneeboardView* view,
   const std::vector<APIPage>& apiPages)
   : WGCRenderer(dxr, kbs, {}),
     mDXResources(dxr),
@@ -951,6 +966,10 @@ WebView2Renderer::WebView2Renderer(
     mDQC(workerDQC),
     mEnvironment(environment),
     mInitialPages(apiPages) {
+  if (view) {
+    mViewInfo
+      = ViewInfo {view->GetPersistentGUID(), std::string {view->GetName()}};
+  }
 }
 
 void WebView2Renderer::OnPagesChangedViaAPI(const std::vector<APIPage>& pages) {
