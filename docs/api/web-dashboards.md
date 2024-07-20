@@ -251,7 +251,9 @@ await OpenKneeboard.SetCursorEventsMode("Raw");
 - setting the mode to `"Raw"` requires `RawCursorEvents` version `2024071802`
 - setting the mode to `"DoodlesOnly"` requires `DoodlesOnly` version `2024071802`
 
-An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
+An example/debugging tool - `api-example-RawCursorEvents.html` is included in:
+- [the `data` folder of the OpenKneeboard source tree](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/data/api-example-RawCursorEvents.html)
+- the `share\doc\` subfolder of an OpenKneeboard installation.
 
 ### Page-Based Content
 

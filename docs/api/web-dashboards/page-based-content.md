@@ -206,7 +206,7 @@ OpenKneeboard.addEventListener(
 
 ## A full example
 
-`api-example-PageBasedContent.html` is included:
+`api-example-PageBasedContent.html` is included in:
 
-- in the `data` subfolder of the OpenKneeboard source tree
-- in the `share\doc\` subfolder of an OpenKneeboard installation
+- [the `data` subfolder of the OpenKneeboard source tree](https://openkneeboard.com/api/web-dashboards/page-based-content.html#communicating-between-peer-instances)
+- the `share\doc\` subfolder of an OpenKneeboard installation
