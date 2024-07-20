@@ -176,7 +176,7 @@ OpenKneeboard does not provide any implicit synchronization between peer instanc
 
 Some possible approaches include:
 - standard web technologies like websockets and local storage
-- [`OpenKneeboard.SendMessageToPeers()`](#sendmessagetopeers) combined with [the `peerMessage` event](#the-peermessage-event
+- [`OpenKneeboard.SendMessageToPeers()`](#sendmessagetopeers) combined with [the `peerMessage` event](#the-peermessage-event)
 
 ### SendMessageToPeers
 
