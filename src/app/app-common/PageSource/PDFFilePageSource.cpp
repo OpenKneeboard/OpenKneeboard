@@ -634,9 +634,10 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 }
 
 void PDFFilePageSource::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
+  auto rt = rc.GetRenderTarget();
   const auto rtid = rt->GetID();
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");
   if (!mDocumentResources->mCache.contains(rtid)) {

@@ -48,7 +48,7 @@ class ConfirmationUILayer final
     const CursorEvent&) override;
 
   virtual void Render(
-    RenderTarget*,
+    const RenderContext&,
     const NextList&,
     const Context&,
     const PixelRect&) override;

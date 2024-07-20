@@ -570,10 +570,10 @@ PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
 }
 
 void HWNDPageSource::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID,
   const PixelRect& rect) {
-  WGCRenderer::Render(rt, rect);
+  WGCRenderer::Render(rc.GetRenderTarget(), rect);
 }
 
 }// namespace OpenKneeboard

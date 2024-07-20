@@ -654,11 +654,18 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
     tab->RenderPage(
-      mRenderTarget.get(), mTabView->GetPageID(), metrics.mRenderRect);
+      RenderContext {
+        mRenderTarget.get(),
+        mKneeboardView.get(),
+      },
+      mTabView->GetPageID(),
+      metrics.mRenderRect);
   } else {
-    auto d2d = mRenderTarget->d2d();
     mErrorRenderer->Render(
-      d2d, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
+      mRenderTarget->d2d(),
+      _("No Pages"),
+      metrics.mRenderRect,
+      mForegroundBrush.get());
   }
 
   if (!mDrawCursor) {

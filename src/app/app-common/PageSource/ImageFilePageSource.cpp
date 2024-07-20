@@ -150,7 +150,7 @@ PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
 }
 
 void ImageFilePageSource::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   auto bitmap = GetPageBitmap(pageID);
@@ -167,7 +167,7 @@ void ImageFilePageSource::RenderPage(
   const auto renderTop
     = rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
 
-  auto ctx = rt->d2d();
+  auto ctx = rc.d2d();
   ctx->DrawBitmap(
     bitmap.get(),
     PixelRect {{renderLeft, renderTop}, renderSize},

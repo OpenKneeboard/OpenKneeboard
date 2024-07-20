@@ -136,7 +136,7 @@ class RenderTarget::D2D final {
  public:
   D2D() = delete;
   D2D(const D2D&) = delete;
-  D2D(D2D&&) = delete;
+  D2D(D2D&&);
   D2D& operator=(const D2D&) = delete;
   D2D& operator=(D2D&&) = delete;
 
@@ -150,10 +150,10 @@ class RenderTarget::D2D final {
   void Reacquire();
 
  private:
+  bool mReleased {false};
   std::shared_ptr<RenderTarget> mParent;
   std::source_location mSourceLocation;
   RenderTarget* mUnsafeParent {nullptr};
-  bool mReleased {false};
   bool mHDR {false};
 
   void Acquire();
@@ -183,6 +183,46 @@ class RenderTarget::D3D final {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     mTraceLoggingActivity,
     "RenderTarget::D3D");
+};
+
+class KneeboardView;
+
+class RenderContext {
+ public:
+  RenderContext() = delete;
+  constexpr RenderContext(RenderTarget* rt, KneeboardView* view)
+    : mRenderTarget(rt), mKneeboardView(view) {
+  }
+
+  inline auto d2d(
+    const std::source_location& caller
+    = std::source_location::current()) const noexcept {
+    return mRenderTarget->d2d(caller);
+  }
+
+  inline auto d3d(
+    const std::source_location& caller
+    = std::source_location::current()) const noexcept {
+    return mRenderTarget->d3d(caller);
+  }
+
+  constexpr auto GetRenderTarget() const noexcept {
+    return mRenderTarget;
+  }
+
+  /// WARNING: may be nullptr for renders that aren't tied to a particular view,
+  /// e.g. caches or navigation preview
+  constexpr auto GetKneeboardView() const noexcept {
+    return mKneeboardView;
+  }
+
+ private:
+  // Represents the GPU texture that is being rendered to
+  RenderTarget* mRenderTarget {nullptr};
+
+  // Mostly for debugging, e.g. for page-based web dashboards, this shows up in
+  // the logs to explain the multiple instances
+  KneeboardView* mKneeboardView {nullptr};
 };
 
 }// namespace OpenKneeboard

@@ -77,7 +77,7 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
+  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
     override;
 
  private:

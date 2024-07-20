@@ -137,7 +137,19 @@ RenderTarget::D2D::D2D(
   this->Acquire();
 }
 
+RenderTarget::D2D::D2D(D2D&& other) {
+  mReleased = other.mReleased;
+  mParent = std::move(other.mParent);
+  mUnsafeParent = other.mUnsafeParent;
+  mSourceLocation = std::move(other.mSourceLocation);
+  mHDR = other.mHDR;
+
+  other.mUnsafeParent = nullptr;
+  other.mReleased = true;
+}
+
 void RenderTarget::D2D::Acquire() {
+  using RTState = RenderTarget::State;
   mParent->mState.Transition<State::Unattached, State::D2D>();
 
   (*this)->SetTarget(mUnsafeParent->mD2DBitmap.get());

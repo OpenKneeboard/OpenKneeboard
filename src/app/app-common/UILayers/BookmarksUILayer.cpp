@@ -139,7 +139,7 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
 }
 
 void BookmarksUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
   const PixelRect& rect) {
@@ -147,7 +147,7 @@ void BookmarksUILayer::Render(
   auto [first, rest] = Split(next);
 
   if (!this->IsEnabled()) {
-    first->Render(rt, rest, context, rect);
+    first->Render(rc, rest, context, rect);
     return;
   }
 
@@ -155,7 +155,7 @@ void BookmarksUILayer::Render(
   const auto scale
     = rect.Width<float>() / metrics.mPreferredSize.mPixelSize.mWidth;
 
-  auto d2d = rt->d2d();
+  auto d2d = rc.d2d();
   d2d->FillRectangle(
     PixelRect {
       rect.mOffset,
@@ -232,7 +232,7 @@ void BookmarksUILayer::Render(
   auto nextArea
     = (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
   nextArea.mOffset += rect.mOffset;
-  first->Render(rt, rest, context, nextArea);
+  first->Render(rc, rest, context, nextArea);
   d2d.Reacquire();
 
   d2d->DrawLine(

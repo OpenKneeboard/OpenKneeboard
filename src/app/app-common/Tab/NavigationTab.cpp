@@ -202,11 +202,11 @@ void NavigationTab::ClearUserInput() {
 }
 
 void NavigationTab::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& canvasRect) {
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPage()");
-  auto ctx = rt->d2d();
+  auto ctx = rc.d2d();
 
   const auto scale = canvasRect.Height<float>() / mPreferredSize.mHeight;
 
@@ -237,16 +237,17 @@ void NavigationTab::RenderPage(
 
   ctx.Release();
 
-  if (!mPreviewCache.contains(rt->GetID())) {
-    mPreviewCache.emplace(rt->GetID(), std::make_unique<CachedLayer>(mDXR));
+  const auto rtid = rc.GetRenderTarget()->GetID();
+
+  if (!mPreviewCache.contains(rtid)) {
+    mPreviewCache.emplace(rtid, std::make_unique<CachedLayer>(mDXR));
   }
 
-  mPreviewCache.at(rt->GetID())
-    ->Render(
-      canvasRect,
-      pageID.GetTemporaryValue(),
-      rt,
-      std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
+  mPreviewCache.at(rtid)->Render(
+    canvasRect,
+    pageID.GetTemporaryValue(),
+    rc.GetRenderTarget(),
+    std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
 
   ctx.Reacquire();
 
@@ -350,11 +351,13 @@ void NavigationTab::RenderPreviewLayer(
   const auto scale
     = size.Height<float>() / this->GetPreferredSize(pageID).mPixelSize.mHeight;
 
+  const RenderContext rc {rt, nullptr};
+
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
     const auto& rect = m.mRects.at(i);
     const auto scaled = rect.StaticCast<float>() * scale;
-    mRootTab->RenderPage(rt, button.mPageID, scaled.Rounded<uint32_t>());
+    mRootTab->RenderPage(rc, button.mPageID, scaled.Rounded<uint32_t>());
   }
 }
 

@@ -55,7 +55,7 @@ class ImageFilePageSource final
     const audited_ptr<DXResources>& dxr,
     const std::filesystem::path&);
 
-  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
+  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
     final override;
 
   virtual bool IsNavigationAvailable() const override;

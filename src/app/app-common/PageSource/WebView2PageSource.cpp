@@ -208,12 +208,21 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
 }
 
 void WebView2PageSource::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   const auto isPageMode
     = (mDocumentResources.mContentMode == ContentMode::PageBased);
-  const auto key = isPageMode ? rt->GetID() : mScrollableContentRendererKey;
+
+  const auto view = rc.GetKneeboardView();
+  if (!view) {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "WebView2PageSource::Render() should always have a view");
+  }
+
+  const auto key
+    = isPageMode ? view->GetRuntimeID() : mScrollableContentRendererKey;
+
   if (!mDocumentResources.mRenderers.contains(key)) {
     auto renderer = WebView2Renderer::Create(
       mDXResources,
@@ -234,7 +243,7 @@ void WebView2PageSource::RenderPage(
     mDocumentResources.mRenderers.emplace(key, std::move(renderer));
   }
   auto renderer = mDocumentResources.mRenderers.at(key);
-  renderer->RenderPage(rt, pageID, rect);
+  renderer->RenderPage(rc, pageID, rect);
 }
 
 void WebView2PageSource::OnPagesChanged(const std::vector<APIPage>& pages) {

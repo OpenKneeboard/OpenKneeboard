@@ -80,7 +80,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
 }
 
 void TabViewUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const IUILayer::NextList&,
   const Context& context,
   const PixelRect& rect) {
@@ -88,7 +88,8 @@ void TabViewUILayer::Render(
 
   OPENKNEEBOARD_TraceLoggingScope(
     "TabViewUILayer::Render()",
-    TraceLoggingHexUInt64(rt->GetID().GetTemporaryValue(), "RenderTargetID"),
+    TraceLoggingHexUInt64(
+      rc.GetRenderTarget()->GetID().GetTemporaryValue(), "RenderTargetID"),
     TraceLoggingGuid(
       (tabView && tabView->GetTab()) ? tabView->GetTab()->GetPersistentID()
                                      : winrt::guid {},
@@ -97,24 +98,21 @@ void TabViewUILayer::Render(
       tabView ? tabView->GetPageID().GetTemporaryValue() : 0ui64, "PageID"));
 
   if (!tabView) {
-    auto d2d = rt->d2d();
-    this->RenderError(d2d, _("No Tab View"), rect);
+    this->RenderError(rc.d2d(), _("No Tab View"), rect);
     return;
   }
   auto tab = tabView->GetTab();
   if (!tab) {
-    auto d2d = rt->d2d();
-    this->RenderError(d2d, _("No Tab"), rect);
+    this->RenderError(rc.d2d(), _("No Tab"), rect);
     return;
   }
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    auto d2d = rt->d2d();
-    this->RenderError(d2d, _("No Pages"), rect);
+    this->RenderError(rc.d2d(), _("No Pages"), rect);
     return;
   }
 
-  tab->RenderPage(rt, tabView->GetPageID(), rect);
+  tab->RenderPage(rc, tabView->GetPageID(), rect);
 }
 
 void TabViewUILayer::RenderError(

@@ -93,7 +93,7 @@ class WebView2Renderer final : public WGCRenderer {
 
   void PostCursorEvent(EventContext, const CursorEvent&);
 
-  void RenderPage(RenderTarget* rt, PageID page, const PixelRect& rect);
+  void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
 
   void OnPagesChangedViaAPI(const std::vector<APIPage>& pages);
 

@@ -381,7 +381,7 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::ImportJavascriptFile(
 }
 
 void WebView2Renderer::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID page,
   const PixelRect& rect) {
   auto& dr = mDocumentResources;
@@ -393,6 +393,8 @@ void WebView2Renderer::RenderPage(
       this->SendJSEvent("pageChanged", {{"detail", {{"page", *it}}}});
     }
   }
+
+  auto rt = rc.GetRenderTarget();
 
   WGCRenderer::Render(rt, rect);
 

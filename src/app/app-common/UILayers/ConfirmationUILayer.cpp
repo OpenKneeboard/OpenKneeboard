@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
-
-#include <OpenKneeboard/config.h>
 
 namespace OpenKneeboard {
 
@@ -82,12 +82,12 @@ void ConfirmationUILayer::PostCursorEvent(
 }
 
 void ConfirmationUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const NextList& next,
   const Context& context,
   const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("ConfirmationUILayer::Render()");
-  next.front()->Render(rt, next.subspan(1), context, rect);
+  next.front()->Render(rc, next.subspan(1), context, rect);
 
   if (rect != mCanvasRect) {
     UpdateLayout(rect);
@@ -104,7 +104,7 @@ void ConfirmationUILayer::Render(
     return;
   }
 
-  auto d2d = rt->d2d();
+  auto d2d = rc.d2d();
   d2d->FillRectangle(rect, mOverpaintBrush.get());
   d2d->FillRoundedRectangle(
     D2D1::RoundedRect(dialog.mBoundingBox, dialog.mMargin, dialog.mMargin),

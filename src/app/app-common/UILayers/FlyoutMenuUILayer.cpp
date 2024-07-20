@@ -118,7 +118,7 @@ IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
 }
 
 void FlyoutMenuUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const NextList& next,
   const Context& context,
   const PixelRect& rect) {
@@ -132,13 +132,12 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    previous->Render(rt, submenuNext, context, rect);
+    previous->Render(rc, submenuNext, context, rect);
     return;
   }
 
   if ((!mLastRenderRect) || rect != mLastRenderRect) {
-    auto d2d = rt->d2d();
-    this->UpdateLayout(d2d, rect);
+    this->UpdateLayout(rc.d2d(), rect);
     if (!mMenu) {
       OPENKNEEBOARD_BREAK;
       return;
@@ -146,7 +145,7 @@ void FlyoutMenuUILayer::Render(
   }
 
   if (!next.empty()) {
-    next.front()->Render(rt, next.subspan(1), context, rect);
+    next.front()->Render(rc, next.subspan(1), context, rect);
   }
 
   Menu menu {};
@@ -156,7 +155,7 @@ void FlyoutMenuUILayer::Render(
     return;
   }
 
-  auto d2d = rt->d2d();
+  auto d2d = rc.d2d();
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
   const scope_exit popClip([&d2d]() { d2d->PopAxisAlignedClip(); });
 

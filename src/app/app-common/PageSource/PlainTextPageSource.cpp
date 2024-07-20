@@ -159,7 +159,7 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
 }
 
 void PlainTextPageSource::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   std::unique_lock lock(mMutex);
@@ -174,7 +174,7 @@ void PlainTextPageSource::RenderPage(
 
   const auto scale = renderSize.Height<float>() / virtualSize.Height();
 
-  auto ctx = rt->d2d();
+  auto ctx = rc.d2d();
   ctx->SetTransform(
     D2D1::Matrix3x2F::Scale(scale, scale)
     * D2D1::Matrix3x2F::Translation(renderLeft, renderTop));

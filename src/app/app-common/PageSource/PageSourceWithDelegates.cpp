@@ -143,7 +143,7 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
 }
 
 void PageSourceWithDelegates::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   auto delegate = this->FindDelegate(pageID);
@@ -155,16 +155,17 @@ void PageSourceWithDelegates::RenderPage(
   auto withInternalCaching
     = std::dynamic_pointer_cast<IPageSourceWithInternalCaching>(delegate);
   if (withInternalCaching) {
-    delegate->RenderPage(rt, pageID, rect);
+    delegate->RenderPage(rc, pageID, rect);
   } else {
-    this->RenderPageWithCache(delegate.get(), rt, pageID, rect);
+    this->RenderPageWithCache(
+      delegate.get(), rc.GetRenderTarget(), pageID, rect);
   }
 
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
 
   if (!withCursorEvents) {
-    mDoodles->Render(rt->d2d(), pageID, rect);
+    mDoodles->Render(rc.GetRenderTarget(), pageID, rect);
   }
 }
 
@@ -183,7 +184,7 @@ void PageSourceWithDelegates::RenderPageWithCache(
     pageID.GetTemporaryValue(),
     rt,
     [delegate, pageID](RenderTarget* rt, const PixelSize& size) {
-      delegate->RenderPage(rt, pageID, {{0, 0}, size});
+      delegate->RenderPage(RenderContext {rt, nullptr}, pageID, {{0, 0}, size});
     });
 }
 

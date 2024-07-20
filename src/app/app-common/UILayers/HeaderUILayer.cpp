@@ -156,7 +156,7 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
 }
 
 void HeaderUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
   const PixelRect& rect) {
@@ -181,7 +181,7 @@ void HeaderUILayer::Render(
   mLastRenderSize = rect.mSize;
 
   {
-    auto d2d = rt->d2d();
+    auto d2d = rc.d2d();
     d2d->SetTransform(D2D1::Matrix3x2F::Identity());
     d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
     auto headerTextRect = headerRect;
@@ -190,7 +190,7 @@ void HeaderUILayer::Render(
   }
 
   next.front()->Render(
-    rt,
+    rc,
     next.subspan(1),
     context,
     {
@@ -200,7 +200,7 @@ void HeaderUILayer::Render(
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
-    secondaryMenu->Render(rt, {}, context, rect);
+    secondaryMenu->Render(rc, {}, context, rect);
   }
 }
 

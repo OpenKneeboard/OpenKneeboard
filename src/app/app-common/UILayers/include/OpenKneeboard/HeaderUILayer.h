@@ -54,7 +54,7 @@ class HeaderUILayer final : public UILayerBase,
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
-    RenderTarget*,
+    const RenderContext&,
     const NextList&,
     const Context&,
     const PixelRect&) override;

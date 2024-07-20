@@ -53,8 +53,11 @@ class IUILayer {
     const CursorEvent&)
     = 0;
 
-  virtual void
-  Render(RenderTarget*, const NextList&, const Context&, const PixelRect&)
+  virtual void Render(
+    const RenderContext&,
+    const NextList&,
+    const Context&,
+    const PixelRect&)
     = 0;
 
   struct Metrics {

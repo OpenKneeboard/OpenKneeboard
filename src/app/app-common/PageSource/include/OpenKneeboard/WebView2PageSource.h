@@ -22,6 +22,7 @@
 #include "IPageSourceWithCursorEvents.h"
 
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/WebView2Renderer.h>
 
 #include <OpenKneeboard/handles.h>
@@ -66,7 +67,7 @@ class WebView2PageSource final
 
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override;
-  virtual void RenderPage(RenderTarget*, PageID, const PixelRect& rect)
+  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
     override;
 
   virtual bool CanClearUserInput(PageID) const override;
@@ -81,6 +82,7 @@ class WebView2PageSource final
  private:
   using APIPage = WebView2Renderer::APIPage;
   using ContentMode = WebView2Renderer::ContentMode;
+  using RendererKey = KneeboardViewID;
 
   WebView2PageSource(
     const audited_ptr<DXResources>&,
@@ -105,12 +107,12 @@ class WebView2PageSource final
     ContentMode mContentMode {ContentMode::Scrollable};
     std::shared_ptr<DoodleRenderer> mDoodles;
 
-    std::unordered_map<RenderTargetID, std::shared_ptr<WebView2Renderer>>
+    std::unordered_map<RendererKey, std::shared_ptr<WebView2Renderer>>
       mRenderers;
   };
 
   DocumentResources mDocumentResources {};
-  RenderTargetID mScrollableContentRendererKey;
+  RendererKey mScrollableContentRendererKey;
   PageID mScrollableContentPageID;
 
   void OnPagesChanged(const std::vector<APIPage>& pages);

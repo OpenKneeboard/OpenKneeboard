@@ -406,6 +406,7 @@ void KneeboardView::RenderWithChrome(
   OPENKNEEBOARD_TraceLoggingScope(
     "KneeboardView::RenderWithChrome()",
     TraceLoggingHexUInt64(rt->GetID().GetTemporaryValue(), "RenderTargetID"));
+  const RenderContext rc {rt, this};
   if (!mCurrentTabView) {
     auto d2d = rt->d2d();
     d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
@@ -417,7 +418,7 @@ void KneeboardView::RenderWithChrome(
   {
     OPENKNEEBOARD_TraceLoggingScope("RenderWithChrome/RenderUILayers");
     first->Render(
-      rt,
+      rc,
       rest,
       {
         .mTabView = mCurrentTabView,

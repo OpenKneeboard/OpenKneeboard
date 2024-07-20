@@ -113,7 +113,7 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
 }
 
 void FooterUILayer::Render(
-  RenderTarget* rt,
+  const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
   const PixelRect& rect) {
@@ -137,7 +137,7 @@ void FooterUILayer::Render(
   };
 
   next.front()->Render(
-    rt,
+    rc,
     next.subspan(1),
     context,
     {
@@ -145,7 +145,7 @@ void FooterUILayer::Render(
       (metrics.mNextArea.mSize.StaticCast<float>() * scale).Rounded<uint32_t>(),
     });
 
-  auto d2d = rt->d2d();
+  auto d2d = rc.d2d();
   d2d->FillRectangle(footerRect, mBackgroundBrush.get());
 
   FLOAT dpix {}, dpiy {};

@@ -165,18 +165,15 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
 }
 
 void EndlessNotebookTab::RenderPage(
-  RenderTarget* rt,
+  const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   if (!mSource) {
     return;
   }
 
-  mSource->RenderPage(rt, mSourcePageID, rect);
-  {
-    auto d2d = rt->d2d();
-    mDoodles->Render(d2d, pageID, rect);
-  }
+  mSource->RenderPage(rc, mSourcePageID, rect);
+  mDoodles->Render(rc.GetRenderTarget(), pageID, rect);
 }
 
 void EndlessNotebookTab::PostCursorEvent(
