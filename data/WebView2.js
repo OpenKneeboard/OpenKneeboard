@@ -15,6 +15,14 @@ class OpenKneeboardAPI extends EventTarget {
             console.log(`OpenKneeboard: This browser instance is for view {${info.ViewGUID}} - "${info.ViewName}"`);
         }
 
+        if (runtimeData.AvailableExperimentalFeatures) {
+            var message = "OpenKneeboard: the following experimental features are available in this build:"
+            for (const feature of runtimeData.AvailableExperimentalFeatures) {
+                message += `\n- '${feature.Name}' version ${feature.Version}`
+            }
+            console.log(message);
+        }
+
         if (!this.GetVersion().IsGithubActionsBuild) {
             console.log("OpenKneeboard RuntimeData", runtimeData);
         }

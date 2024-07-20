@@ -109,18 +109,6 @@ try {
 
 Experimental features are identified by a name, and a version number (usually `YYYYMMDDnn`, where 'nn' increments if there are multiple revisions within a day); they must be explicitly enabled.
 
-### GetAvailableExperimentalFeatures
-
-This function will fail with an exception in tagged releases of OpenKneeboard; it is *only* an interactive introspection tool to aid development. This functions requires OpenKneeboard v1.9 or above.
-
-It will return a `Promise`; example usage:
-
-```js
-await OpenKneeboard.GetAvailableExperimentalFeatures()
-```
-
-The resulting value will contain the names and versions of all available experimental features, but the format is intentionally undefined, as it is *only* intended for interactive use, e.g. in a developer tools window.
-
 ### EnableExperimentalFeature
 
 ```js

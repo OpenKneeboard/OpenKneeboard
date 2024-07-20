@@ -181,8 +181,6 @@ class WebView2Renderer final : public WGCRenderer {
   concurrency::task<OKBPromiseResult> OnResizeMessage(nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnEnableExperimentalFeaturesMessage(
     nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnGetAvailableExperimentalFeaturesMessage(
-    nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
     nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnSetPagesMessage(nlohmann::json args);

@@ -98,7 +98,7 @@ std::array SupportedExperimentalFeatures {
 
 };// namespace
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExperimentalFeature, mName, mVersion);
+OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 
 WebView2Renderer::~WebView2Renderer() = default;
 
@@ -229,6 +229,7 @@ WebView2Renderer::InitializeContentToCapture() {
         {"IsStableRelease", Version::IsStableRelease},
       },
     },
+    {"AvailableExperimentalFeatures", SupportedExperimentalFeatures},
   };
 
   if (mViewInfo) {
@@ -551,12 +552,6 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     co_return;
   }
 
-  if (message == "OpenKneeboard/GetAvailableExperimentalFeatures") {
-    respond(co_await this->OnGetAvailableExperimentalFeaturesMessage(
-      parsed.at("messageData")));
-    co_return;
-  }
-
   if (message == "OpenKneeboard/SetCursorEventsMode") {
     respond(
       co_await this->OnSetCursorEventsModeMessage(parsed.at("messageData")));
@@ -763,18 +758,6 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   evPagesChangedEvent.Emit(pageApi.mPages);
 
   co_return nlohmann::json {};
-}
-
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnGetAvailableExperimentalFeaturesMessage(
-  nlohmann::json args) {
-  if constexpr (Version::IsTaggedVersion) {
-    co_return std::unexpected(
-      "Listing experimental features is not enabled in tagged "
-      "releases of OpenKneeboard");
-  }
-
-  co_return nlohmann::json {SupportedExperimentalFeatures};
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
