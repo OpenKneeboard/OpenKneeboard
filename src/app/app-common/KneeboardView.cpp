@@ -45,8 +45,9 @@ namespace OpenKneeboard {
 KneeboardView::KneeboardView(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
-  const winrt::guid& guid)
-  : mDXR(dxr), mKneeboard(kneeboard), mGUID(guid) {
+  const winrt::guid& guid,
+  std::string_view name)
+  : mDXR(dxr), mKneeboard(kneeboard), mGuid(guid), mName(name) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
 
@@ -81,9 +82,10 @@ std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
 std::shared_ptr<KneeboardView> KneeboardView::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
-  const winrt::guid& guid) {
+  const winrt::guid& guid,
+  std::string_view name) {
   return std::shared_ptr<KneeboardView>(
-    new KneeboardView(dxr, kneeboard, guid));
+    new KneeboardView(dxr, kneeboard, guid, name));
 }
 
 void KneeboardView::UpdateUILayers() {
@@ -108,12 +110,16 @@ KneeboardView::~KneeboardView() {
   this->RemoveAllEventListeners();
 }
 
-winrt::guid KneeboardView::GetPersistentGUID() const {
-  return mGUID;
+winrt::guid KneeboardView::GetPersistentGUID() const noexcept {
+  return mGuid;
 }
 
-KneeboardViewID KneeboardView::GetRuntimeID() const {
+KneeboardViewID KneeboardView::GetRuntimeID() const noexcept {
   return mID;
+}
+
+std::string_view KneeboardView::GetName() const noexcept {
+  return mName;
 }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
@@ -322,7 +328,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     && (now - consumers.mViewer) < std::chrono::milliseconds(500);
   if (haveNonVR) {
     const auto views = mKneeboard->GetViewsSettings().mViews;
-    const auto view = std::ranges::find(views, mGUID, &ViewConfig::mGuid);
+    const auto view = std::ranges::find(views, mGuid, &ViewConfig::mGuid);
     if (view != views.end()) [[likely]] {
       const auto pos = view->mNonVR.Resolve(
         metrics.mPreferredSize,
@@ -344,7 +350,7 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
       TraceLoggingWrite(
         gTraceProvider,
         "KneeboardView::GetIPCRenderLayout()/ViewNotFound",
-        TraceLoggingValue(to_string(to_hstring(mGUID)).c_str(), "GUID"));
+        TraceLoggingValue(to_string(to_hstring(mGuid)).c_str(), "GUID"));
       OPENKNEEBOARD_BREAK;
     }
   }

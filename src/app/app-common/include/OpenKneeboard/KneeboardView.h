@@ -52,11 +52,15 @@ class KneeboardView final : private EventReceiver,
   KneeboardView() = delete;
   ~KneeboardView();
 
-  [[nodiscard]] static std::shared_ptr<KneeboardView>
-  Create(const audited_ptr<DXResources>&, KneeboardState*, const winrt::guid&);
+  [[nodiscard]] static std::shared_ptr<KneeboardView> Create(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid&,
+    std::string_view name);
 
-  winrt::guid GetPersistentGUID() const;
-  KneeboardViewID GetRuntimeID() const;
+  winrt::guid GetPersistentGUID() const noexcept;
+  KneeboardViewID GetRuntimeID() const noexcept;
+  std::string_view GetName() const noexcept;
 
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
   void PostUserAction(UserAction);
@@ -132,7 +136,8 @@ class KneeboardView final : private EventReceiver,
   KneeboardView(
     const audited_ptr<DXResources>&,
     KneeboardState*,
-    const winrt::guid&);
+    const winrt::guid&,
+    std::string_view name);
   winrt::apartment_context mUIThread;
   KneeboardViewID mID;
   audited_ptr<DXResources> mDXR;
@@ -160,7 +165,8 @@ class KneeboardView final : private EventReceiver,
 
   ThreadGuard mThreadGuard;
 
-  winrt::guid mGUID;
+  winrt::guid mGuid;
+  std::string mName;
 };
 
 }// namespace OpenKneeboard

@@ -851,7 +851,8 @@ void KneeboardState::InitializeViews() {
     if (it != oldViews.end()) {
       mViews.push_back(*it);
     } else {
-      mViews.push_back(KneeboardView::Create(mDXResources, this, config.mGuid));
+      mViews.push_back(
+        KneeboardView::Create(mDXResources, this, config.mGuid, config.mName));
     }
 
     auto& view = mViews.back();
@@ -897,7 +898,11 @@ void KneeboardState::InitializeViews() {
     case AppWindowViewMode::Independent:
       if (!mAppWindowView) {
         viewChanged = true;
-        mAppWindowView = KneeboardView::Create(mDXResources, this, {});
+        mAppWindowView = KneeboardView::Create(
+          mDXResources,
+          this,
+          {},
+          "OKB internal independent app window view ('sim racing mode')");
         mAppWindowView->SetTabs(this->GetTabsList()->GetTabs());
         AddEventListener(
           mAppWindowView->evNeedsRepaintEvent,
