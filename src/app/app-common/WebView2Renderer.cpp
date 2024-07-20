@@ -223,7 +223,7 @@ WebView2Renderer::InitializeContentToCapture() {
           },
         },
         {"HumanReadable", Version::ReleaseName},
-        {"IsGitHubActionBuild", Version::IsGithubActionsBuild},
+        {"IsGitHubActionsBuild", Version::IsGithubActionsBuild},
         {"IsTaggedVersion", Version::IsTaggedVersion},
         {"IsStableRelease", Version::IsStableRelease},
       },

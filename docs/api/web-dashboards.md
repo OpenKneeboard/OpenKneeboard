@@ -76,7 +76,7 @@ This function returns an object like the following:
     "Build": 0
   },
   "HumanReadable": "v1.9.0+local",
-  "IsGitHubActionBuild": false,
+  "IsGitHubActionsBuild": false,
   "IsStableRelease": false,
   "IsTaggedVersion": false
 }
