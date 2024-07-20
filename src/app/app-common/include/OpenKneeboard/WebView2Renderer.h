@@ -183,14 +183,14 @@ class WebView2Renderer final : public WGCRenderer {
 
   using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
 
-  concurrency::task<OKBPromiseResult> OnResizeMessage(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnEnableExperimentalFeaturesMessage(
+  concurrency::task<OKBPromiseResult> JSAPI_Resize(nlohmann::json args);
+  concurrency::task<OKBPromiseResult> JSAPI_EnableExperimentalFeatures(
     nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnSetCursorEventsModeMessage(
+  concurrency::task<OKBPromiseResult> JSAPI_SetCursorEventsMode(
     nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnSetPagesMessage(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnGetPagesMessage(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> OnSendMessageToPeersMessage(
+  concurrency::task<OKBPromiseResult> JSAPI_SetPages(nlohmann::json args);
+  concurrency::task<OKBPromiseResult> JSAPI_GetPages(nlohmann::json args);
+  concurrency::task<OKBPromiseResult> JSAPI_SendMessageToPeers(
     nlohmann::json args);
 
   winrt::fire_and_forget SendJSLog(auto&&... args) {

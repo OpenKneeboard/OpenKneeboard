@@ -577,35 +577,33 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     callID);
 
   if (message == "OpenKneeboard/SetPreferredPixelSize") {
-    respond(co_await this->OnResizeMessage(parsed.at("messageData")));
+    respond(co_await this->JSAPI_Resize(parsed.at("messageData")));
     co_return;
   }
 
   if (message == "OpenKneeboard/EnableExperimentalFeatures") {
-    respond(co_await this->OnEnableExperimentalFeaturesMessage(
+    respond(co_await this->JSAPI_EnableExperimentalFeatures(
       parsed.at("messageData")));
     co_return;
   }
 
   if (message == "OpenKneeboard/SetCursorEventsMode") {
-    respond(
-      co_await this->OnSetCursorEventsModeMessage(parsed.at("messageData")));
+    respond(co_await this->JSAPI_SetCursorEventsMode(parsed.at("messageData")));
     co_return;
   }
 
   if (message == "OpenKneeboard/SetPages") {
-    respond(co_await this->OnSetPagesMessage(parsed.at("messageData")));
+    respond(co_await this->JSAPI_SetPages(parsed.at("messageData")));
     co_return;
   }
 
   if (message == "OpenKneeboard/GetPages") {
-    respond(co_await this->OnGetPagesMessage(parsed.at("messageData")));
+    respond(co_await this->JSAPI_GetPages(parsed.at("messageData")));
     co_return;
   }
 
   if (message == "OpenKneeboard/SendMessageToPeers") {
-    respond(
-      co_await this->OnSendMessageToPeersMessage(parsed.at("messageData")));
+    respond(co_await this->JSAPI_SendMessageToPeers(parsed.at("messageData")));
     co_return;
   }
 
@@ -614,7 +612,7 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnResizeMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_Resize(nlohmann::json args) {
   PixelSize size = {
     args.at("width"),
     args.at("height"),
@@ -691,7 +689,7 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnSetCursorEventsModeMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
   auto& pageApi = mDocumentResources;
 
   auto missingFeature = [](auto feature) {
@@ -738,7 +736,7 @@ WebView2Renderer::OnSetCursorEventsModeMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnGetPagesMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
   auto& dr = mDocumentResources;
   if (!std::ranges::contains(
         dr.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
@@ -757,7 +755,7 @@ WebView2Renderer::OnGetPagesMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnSendMessageToPeersMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
   auto& dr = mDocumentResources;
 
   if (!std::ranges::contains(
@@ -776,7 +774,7 @@ WebView2Renderer::OnSendMessageToPeersMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
   auto weak = weak_from_this();
   auto thread = mUIThread;
 
@@ -821,7 +819,7 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
+WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
   std::vector<ExperimentalFeature> enabledFeatures;
 
   auto& pageApi = mDocumentResources;
