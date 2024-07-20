@@ -85,7 +85,7 @@ const ExperimentalFeature SetCursorEventsModeFeature {
 
 const ExperimentalFeature PageBasedContentFeature {
   "PageBasedContent",
-  2024071801};
+  2024072001};
 
 std::array SupportedExperimentalFeatures {
   RawCursorEventsFeature,
