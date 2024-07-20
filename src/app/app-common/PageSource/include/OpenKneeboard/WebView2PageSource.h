@@ -81,6 +81,7 @@ class WebView2PageSource final
 
  private:
   using APIPage = WebView2Renderer::APIPage;
+  using InstanceID = WebView2Renderer::InstanceID;
   using ContentMode = WebView2Renderer::ContentMode;
   using RendererKey = KneeboardViewID;
 
@@ -115,6 +116,7 @@ class WebView2PageSource final
   RendererKey mScrollableContentRendererKey;
   PageID mScrollableContentPageID;
 
-  void OnPagesChanged(const std::vector<APIPage>& pages);
+  void OnJSAPI_SetPages(const std::vector<APIPage>& pages);
+  void OnJSAPI_SendMessageToPeers(const InstanceID&, const nlohmann::json&);
 };
 }// namespace OpenKneeboard

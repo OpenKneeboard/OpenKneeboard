@@ -96,6 +96,11 @@ std::array SupportedExperimentalFeatures {
   PageBasedContentFeature,
 };
 
+template <class... Args>
+auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
+  return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
+}
+
 };// namespace
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
@@ -307,6 +312,32 @@ PixelSize WebView2Renderer::GetSwapchainDimensions(
 
 void WebView2Renderer::PostFrame() {
   this->FlushCursorEvents();
+}
+
+void WebView2Renderer::OnJSAPI_Peer_SendMessageToPeers(
+  const WebView2Renderer::InstanceID& sender,
+  const nlohmann::json& message) {
+  if (!mViewInfo) {
+    return;
+  }
+
+  if (mViewInfo->mGuid == sender) {
+    return;
+  }
+
+  if (mDocumentResources.mContentMode != ContentMode::PageBased) {
+    // No 'peers'
+    return;
+  }
+
+  this->SendJSEvent(
+    "peerMessage",
+    {{
+      "detail",
+      {
+        {"message", message},
+      },
+    }});
 }
 
 void WebView2Renderer::PostCursorEvent(
@@ -529,7 +560,11 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
         {"callID", callID},
       };
       if (result.has_value()) {
-        response.emplace("result", result.value());
+        if (result->is_null()) {
+          response.emplace("result", "ok");
+        } else {
+          response.emplace("result", result.value());
+        }
       } else {
         response.emplace("error", result.error());
         dprintf("WARNING: WebView2 API error: {}", result.error());
@@ -568,8 +603,14 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     co_return;
   }
 
+  if (message == "OpenKneeboard/SendMessageToPeers") {
+    respond(
+      co_await this->OnSendMessageToPeersMessage(parsed.at("messageData")));
+    co_return;
+  }
+
   OPENKNEEBOARD_BREAK;
-  respond(std::unexpected(std::format("Invalid JS API request: {}", message)));
+  respond(jsapi_error("Invalid JS API request: {}", message));
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
@@ -579,7 +620,7 @@ WebView2Renderer::OnResizeMessage(nlohmann::json args) {
     args.at("height"),
   };
   if (size.mWidth < 1 || size.mHeight < 1) {
-    co_return std::unexpected {"WebView2 requested 0px area, ignoring"};
+    co_return jsapi_error("WebView2 requested 0px area, ignoring");
   }
   if (
     size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
@@ -595,8 +636,8 @@ WebView2Renderer::OnResizeMessage(nlohmann::json args) {
       },
       Geometry2D::ScaleToFitMode::ShrinkOnly);
     if (size.mWidth < 1 || size.mHeight < 1) {
-      co_return std::unexpected {
-        "Requested size scales down to < 1px in at least 1 dimension"};
+      co_return jsapi_error(
+        "Requested size scales down to < 1px in at least 1 dimension");
     }
     dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
@@ -654,12 +695,12 @@ WebView2Renderer::OnSetCursorEventsModeMessage(nlohmann::json args) {
   auto& pageApi = mDocumentResources;
 
   auto missingFeature = [](auto feature) {
-    return std::unexpected {std::format(
+    return jsapi_error(
       "SetCursorEventMode() failed - the experimental feature `{}` "
       "version "
       "`{}` is required.",
       feature.mName,
-      feature.mVersion)};
+      feature.mVersion);
   };
   if (!std::ranges::contains(
         pageApi.mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
@@ -693,7 +734,7 @@ WebView2Renderer::OnSetCursorEventsModeMessage(nlohmann::json args) {
     co_return success();
   }
 
-  co_return std::unexpected(std::format("Unrecognized mode '{}'", mode));
+  co_return jsapi_error("Unrecognized mode '{}'", mode);
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
@@ -701,8 +742,8 @@ WebView2Renderer::OnGetPagesMessage(nlohmann::json args) {
   auto& dr = mDocumentResources;
   if (!std::ranges::contains(
         dr.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return std::unexpected {std::format(
-      "The experimental feature {} is required.", PageBasedContentFeature)};
+    co_return jsapi_error(
+      "The experimental feature {} is required.", PageBasedContentFeature);
   }
 
   if ((!dr.mPages.empty()) && dr.mContentMode == ContentMode::Scrollable) {
@@ -716,6 +757,25 @@ WebView2Renderer::OnGetPagesMessage(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
+WebView2Renderer::OnSendMessageToPeersMessage(nlohmann::json args) {
+  auto& dr = mDocumentResources;
+
+  if (!std::ranges::contains(
+        dr.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
+    co_return jsapi_error(
+      "The experimental feature {} is required.", PageBasedContentFeature);
+  }
+
+  if (!mViewInfo) {
+    co_return jsapi_error("Pages have not been set; no peers exist");
+  }
+
+  evJSAPI_SendMessageToPeers.Emit(mViewInfo->mGuid, args.at("message"));
+
+  co_return nlohmann::json {};
+}
+
+concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   auto weak = weak_from_this();
   auto thread = mUIThread;
@@ -723,8 +783,8 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   auto& pageApi = mDocumentResources;
   if (!std::ranges::contains(
         pageApi.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return std::unexpected {std::format(
-      "The experimental feature {} is required.", PageBasedContentFeature)};
+    co_return jsapi_error(
+      "The experimental feature {} is required.", PageBasedContentFeature);
   }
 
   std::vector<APIPage> pages;
@@ -744,7 +804,7 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   }
 
   if (pages.empty()) {
-    co_return std::unexpected("Must provide at least one page definition");
+    co_return jsapi_error("Must provide at least one page definition");
   }
 
   pageApi.mPages = std::move(pages);
@@ -753,9 +813,9 @@ WebView2Renderer::OnSetPagesMessage(nlohmann::json args) {
   co_await thread;
   auto self = weak.lock();
   if (!self) {
-    co_return std::unexpected {std::format("WebView2 lifetime exceeded.")};
+    co_return jsapi_error("WebView2 lifetime exceeded.");
   }
-  evPagesChangedEvent.Emit(pageApi.mPages);
+  evJSAPI_SetPages.Emit(pageApi.mPages);
 
   co_return nlohmann::json {};
 }
@@ -774,8 +834,8 @@ WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
           pageApi.mEnabledExperimentalFeatures,
           name,
           &ExperimentalFeature::mName)) {
-      co_return std::unexpected(
-        std::format("Experimental feature `{}` is already enabled", name));
+      co_return jsapi_error(
+        "Experimental feature `{}` is already enabled", name);
     }
 
     const ExperimentalFeature feature {name, version};
@@ -783,15 +843,15 @@ WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
     if (!std::ranges::contains(SupportedExperimentalFeatures, feature)) {
       if (!std::ranges::contains(
             SupportedExperimentalFeatures, name, &ExperimentalFeature::mName)) {
-        co_return std::unexpected(
-          std::format("`{}` is not a recognized experimental feature", name));
+        co_return jsapi_error(
+          "`{}` is not a recognized experimental feature", name);
       }
 
-      co_return std::unexpected(std::format(
+      co_return jsapi_error(
         "`{}` is a recognized experimental feature, but `{}` is not a "
         "supported version",
         name,
-        version));
+        version);
     }
 
     dprintf(
@@ -833,12 +893,12 @@ WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
     if (feature == RawCursorEventsFeature) {
       warnObsolete(feature);
       if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return std::unexpected(std::format(
+        co_return jsapi_error(
           "Can not enable `{}`, as the cursor mode has already been "
           "changed "
           "by "
           "this page.",
-          name));
+          name);
       }
       pageApi.mCursorEventsMode = CursorEventsMode::Raw;
       continue;
@@ -847,10 +907,10 @@ WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
     if (feature == DoodlesOnlyFeature) {
       warnObsolete(feature);
       if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return std::unexpected(std::format(
+        co_return jsapi_error(
           "Can not enable `{}`, as the cursor mode has already been "
           "changed by this page.",
-          name));
+          name);
       }
       pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
       continue;
@@ -863,7 +923,7 @@ WebView2Renderer::OnEnableExperimentalFeaturesMessage(nlohmann::json args) {
       version);
     dprint(message);
     OPENKNEEBOARD_BREAK;
-    co_return std::unexpected(message);
+    co_return jsapi_error("{}", message);
   }
 
   co_return nlohmann::json {
@@ -955,7 +1015,8 @@ WebView2Renderer::WebView2Renderer(
   }
 }
 
-void WebView2Renderer::OnPagesChangedViaAPI(const std::vector<APIPage>& pages) {
+void WebView2Renderer::OnJSAPI_Peer_SetPages(
+  const std::vector<APIPage>& pages) {
   if (pages == mDocumentResources.mPages) {
     return;
   }

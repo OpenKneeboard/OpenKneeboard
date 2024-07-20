@@ -26,8 +26,20 @@
     </p>
     <p id="apiError"></p>
     <div id="okbClient" class="hidden">
+        <p id="peerMessage" class="hidden"></p>
     </div>
     <script>
+        async function OnPeerMessage(ev) {
+            const message = ev.detail.message;
+            var node = document.getElementById('peerMessage');
+            node.classList.remove('hidden');
+            node.innerText = "Received peer message: " + JSON.stringify(message);
+
+            if (message == "First!") {
+                await OpenKneeboard.SendMessageToPeers("Second!");
+            }
+        }
+
         var pages;
         function CreatePageDOMElements() {
             for (const index in pages) {
@@ -91,6 +103,7 @@
             document.getElementById('okbClient').classList.remove('hidden');
 
             OpenKneeboard.addEventListener('pageChanged', OnPageChanged);
+            OpenKneeboard.addEventListener('peerMessage', OnPeerMessage);
 
             try {
                 await OpenKneeboard.EnableExperimentalFeatures([
@@ -103,6 +116,7 @@
                 var activePage = document.getElementById(pages[0].guid);
                 activePage.classList.remove("hidden");
                 await OpenKneeboard.SetCursorEventsMode('DoodlesOnly');
+                await OpenKneeboard.SendMessageToPeers("First!");
             } catch (error) {
                 let errorP = document.getElementById('apiError');
                 errorP.textContent = "Initializing experimental features failed: " + error;

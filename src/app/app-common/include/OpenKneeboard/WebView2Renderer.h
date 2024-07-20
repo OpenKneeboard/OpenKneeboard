@@ -105,9 +105,14 @@ class WebView2Renderer final : public WGCRenderer {
 
   void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
 
-  void OnPagesChangedViaAPI(const std::vector<APIPage>& pages);
+  Event<std::vector<APIPage>> evJSAPI_SetPages;
+  void OnJSAPI_Peer_SetPages(const std::vector<APIPage>& pages);
 
-  Event<std::vector<APIPage>> evPagesChangedEvent;
+  using InstanceID = winrt::guid;
+  Event<InstanceID, nlohmann::json> evJSAPI_SendMessageToPeers;
+  void OnJSAPI_Peer_SendMessageToPeers(
+    const InstanceID&,
+    const nlohmann::json&);
 
  protected:
   virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
@@ -185,6 +190,8 @@ class WebView2Renderer final : public WGCRenderer {
     nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnSetPagesMessage(nlohmann::json args);
   concurrency::task<OKBPromiseResult> OnGetPagesMessage(nlohmann::json args);
+  concurrency::task<OKBPromiseResult> OnSendMessageToPeersMessage(
+    nlohmann::json args);
 
   winrt::fire_and_forget SendJSLog(auto&&... args) {
     const auto jsArgs

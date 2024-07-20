@@ -4,7 +4,7 @@ class OpenKneeboardAPI extends EventTarget {
         super();
 
         this.#runtimeData = runtimeData;
-        this.#inflightRequests = {};
+        this.#inFlightRequests = {};
         this.#nextAsyncCallID = 0;
 
         document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
@@ -62,13 +62,13 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #runtimeData;
-    #inflightRequests;
+    #inFlightRequests;
     #nextAsyncCallID;
 
     #AsyncRequest(messageName, messageData) {
         const callID = this.#nextAsyncCallID++;
         return new Promise((resolve, reject) => {
-            this.#inflightRequests[callID] = { resolve, reject };
+            this.#inFlightRequests[callID] = { resolve, reject, messageName };
             window.chrome.webview.postMessage({ callID, messageName, messageData });
         });
     }
@@ -85,6 +85,10 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#AsyncRequest("OpenKneeboard/SetPages", { pages });
     }
 
+    #SendMessageToPeers(message) {
+        return this.#AsyncRequest("OpenKneeboard/SendMessageToPeers", { message });
+    }
+
     #ActivateAPI(api) {
         switch (api) {
             case "SetCursorEventsMode":
@@ -93,6 +97,7 @@ class OpenKneeboardAPI extends EventTarget {
             case "PageBasedContent":
                 this.SetPages = this.#SetPages;
                 this.GetPages = this.#GetPages;
+                this.SendMessageToPeers = this.#SendMessageToPeers;
                 return;
         }
     }
@@ -118,15 +123,17 @@ class OpenKneeboardAPI extends EventTarget {
                     return;
                 }
                 const callID = message.callID;
-                if (callID in this.#inflightRequests) {
+                if (callID in this.#inFlightRequests) {
+                    const call = this.#inFlightRequests[callID];
                     try {
                         if (message.result) {
-                            this.#inflightRequests[callID].resolve(message.result);
+                            call.resolve(message.result);
                         } else {
-                            this.#inflightRequests[callID].reject(message.error);
+                            console.log(`⚠️ OpenKneeboard API error: '${call.messageName}' => '${message.error}'`);
+                            call.reject(message.error);
                         }
                     } finally {
-                        delete this.#inflightRequests[callID];
+                        delete this.#inFlightRequests[callID];
                     }
                 }
         }

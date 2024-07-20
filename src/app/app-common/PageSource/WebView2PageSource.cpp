@@ -237,8 +237,11 @@ void WebView2PageSource::RenderPage(
     AddEventListener(
       renderer->evContentChangedEvent, this->evContentChangedEvent);
     AddEventListener(
-      renderer->evPagesChangedEvent,
-      {weak_from_this(), &WebView2PageSource::OnPagesChanged});
+      renderer->evJSAPI_SetPages,
+      {weak_from_this(), &WebView2PageSource::OnJSAPI_SetPages});
+    AddEventListener(
+      renderer->evJSAPI_SendMessageToPeers,
+      {weak_from_this(), &WebView2PageSource::OnJSAPI_SendMessageToPeers});
     AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 
     mDocumentResources.mRenderers.emplace(key, std::move(renderer));
@@ -247,11 +250,11 @@ void WebView2PageSource::RenderPage(
   renderer->RenderPage(rc, pageID, rect);
 }
 
-void WebView2PageSource::OnPagesChanged(const std::vector<APIPage>& pages) {
+void WebView2PageSource::OnJSAPI_SetPages(const std::vector<APIPage>& pages) {
   mDocumentResources.mPages = pages;
 
   for (const auto& [rtid, renderer]: mDocumentResources.mRenderers) {
-    renderer->OnPagesChangedViaAPI(pages);
+    renderer->OnJSAPI_Peer_SetPages(pages);
   }
 
   if (mDocumentResources.mContentMode != ContentMode::PageBased) {
@@ -261,6 +264,14 @@ void WebView2PageSource::OnPagesChanged(const std::vector<APIPage>& pages) {
 
   evContentChangedEvent.Emit();
   evAvailableFeaturesChangedEvent.Emit();
+}
+
+void WebView2PageSource::OnJSAPI_SendMessageToPeers(
+  const InstanceID& sender,
+  const nlohmann::json& message) {
+  for (const auto& [rtid, renderer]: mDocumentResources.mRenderers) {
+    renderer->OnJSAPI_Peer_SendMessageToPeers(sender, message);
+  }
 }
 
 }// namespace OpenKneeboard
