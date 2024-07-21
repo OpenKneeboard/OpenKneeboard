@@ -73,3 +73,5 @@ class OpenKneeboardSimHubHooks {
     }
   }
 }
+
+window.OpenKneeboard.SimHubHooks = new OpenKneeboardSimHubHooks();

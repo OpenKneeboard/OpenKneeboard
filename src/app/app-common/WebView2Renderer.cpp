@@ -255,9 +255,6 @@ WebView2Renderer::InitializeContentToCapture() {
   if (mSettings.mIntegrateWithSimHub) {
     co_await this->ImportJavascriptFile(
       Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js");
-    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
-      L"window.OpenKneeboard.SimHubHooks = new "
-      L"OpenKneeboardSimHubHooks();");
   }
 
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
