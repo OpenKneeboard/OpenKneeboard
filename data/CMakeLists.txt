@@ -16,10 +16,16 @@ list(
 )
 set(DATA_SOURCES "${DATA_SOURCES}" PARENT_SCOPE)
 
+file(
+    GLOB
+    API_DEV_RESOURCES
+    api-example-*.html
+    OpenKneeboard-*.d.ts
+)
+
 install(
     FILES
-    api-example-RawCursorEvents.html
-    api-example-PageBasedContent.html
+    ${API_DEV_RESOURCES}
     DESTINATION
     "share/doc"
 )
