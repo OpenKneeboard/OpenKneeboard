@@ -32,7 +32,7 @@ class OpenKneeboardAPI extends EventTarget {
             console.log(message);
         }
 
-        if (!this.GetVersion().IsGithubActionsBuild) {
+        if (!runtimeData.Version.IsGitHubActionsBuild) {
             console.log("OpenKneeboard RuntimeData", runtimeData);
         }
     }
@@ -49,7 +49,8 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     GetVersion() {
-        return this.#runtimeData.Version;
+        return new Promise(
+            (resolve, reject) => { resolve(this.#runtimeData.Version); });
     }
 
     EnableExperimentalFeature(name, version) {

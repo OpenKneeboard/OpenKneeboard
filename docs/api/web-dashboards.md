@@ -121,10 +121,14 @@ In v1.9+, awaiting/resolving the promise is *optional*, but does provide a means
 *This requires OpenKneeboard v1.9 and above.*
 
 ```js
-const okbVersion = OpenKneeboard.GetVersion();
+// Syntax:
+OpenKneeboard.GetVersion(): Promise<Object>;
+
+// Example:
+const okbVersion = await OpenKneeboard.GetVersion();
 ```
 
-This function returns an object like the following:
+The promise resolves to an object like the following:
 
 ```json
 {
