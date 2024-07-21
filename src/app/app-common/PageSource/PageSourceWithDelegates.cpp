@@ -82,6 +82,7 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
+  mDelegates.clear();
   mDelegateEvents.clear();
 
   this->SetDelegatesFromEmpty(delegates);
