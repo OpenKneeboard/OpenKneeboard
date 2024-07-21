@@ -91,9 +91,9 @@ void FooterUILayer::Tick() {
 void FooterUILayer::PostCursorEvent(
   const IUILayer::NextList& next,
   const Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
-  this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+  this->PostNextCursorEvent(next, context, KneeboardViewID, cursorEvent);
 }
 
 IUILayer::Metrics FooterUILayer::GetMetrics(

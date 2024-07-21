@@ -70,11 +70,11 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
 }
 
 void WindowCaptureTab::PostCursorEvent(
-  EventContext ec,
+  KneeboardViewID ctx,
   const CursorEvent& ev,
   PageID pageID) {
   if (mSendInput) {
-    PageSourceWithDelegates::PostCursorEvent(ec, ev, pageID);
+    PageSourceWithDelegates::PostCursorEvent(ctx, ev, pageID);
   }
 }
 

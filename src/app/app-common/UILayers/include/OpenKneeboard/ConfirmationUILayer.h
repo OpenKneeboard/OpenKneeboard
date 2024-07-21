@@ -44,7 +44,7 @@ class ConfirmationUILayer final
   virtual void PostCursorEvent(
     const NextList&,
     const Context&,
-    const EventContext&,
+    KneeboardViewID,
     const CursorEvent&) override;
 
   virtual void Render(

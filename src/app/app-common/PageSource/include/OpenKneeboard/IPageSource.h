@@ -57,7 +57,7 @@ class IPageSource {
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;
   Event<> evContentChangedEvent;
-  Event<EventContext, PageID> evPageChangeRequestedEvent;
+  Event<KneeboardViewID, PageID> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
   ThreadGuard mThreadGuard;
 };

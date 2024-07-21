@@ -70,7 +70,7 @@ class PDFFilePageSource final
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
-  virtual void PostCursorEvent(EventContext ctx, const CursorEvent&, PageID)
+  virtual void PostCursorEvent(KneeboardViewID ctx, const CursorEvent&, PageID)
     override;
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;

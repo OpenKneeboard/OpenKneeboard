@@ -19,25 +19,10 @@
  */
 #pragma once
 
-#include <OpenKneeboard/IUILayer.h>
+#include <OpenKneeboard/UniqueID.h>
 
 namespace OpenKneeboard {
 
-class UILayerBase : public virtual IUILayer {
- public:
-  virtual ~UILayerBase();
-
- protected:
-  void PostNextCursorEvent(
-    const IUILayer::NextList& next,
-    const IUILayer::Context& context,
-    KneeboardViewID KneeboardViewID,
-    const CursorEvent& cursorEvent);
-
-  static constexpr inline std::tuple<IUILayer*, std::span<IUILayer*>> Split(
-    const IUILayer::NextList& next) {
-    return {next.front(), next.subspan(1)};
-  }
-};
+class KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
 
 }// namespace OpenKneeboard

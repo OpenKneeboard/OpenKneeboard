@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/KneeboardViewID.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -43,8 +44,6 @@ class KneeboardState;
 class TabViewUILayer;
 enum class UserAction;
 struct CursorEvent;
-
-struct KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
 
 class KneeboardView final : private EventReceiver,
                             public std::enable_shared_from_this<KneeboardView> {
@@ -138,11 +137,11 @@ class KneeboardView final : private EventReceiver,
     KneeboardState*,
     const winrt::guid&,
     std::string_view name);
+
   winrt::apartment_context mUIThread;
-  KneeboardViewID mID;
+  const KneeboardViewID mRuntimeID;
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
-  EventContext mEventContext;
   std::vector<std::shared_ptr<TabView>> mTabViews;
   std::shared_ptr<TabView> mCurrentTabView;
 

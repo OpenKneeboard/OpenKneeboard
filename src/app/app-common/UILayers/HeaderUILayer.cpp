@@ -96,10 +96,10 @@ void HeaderUILayer::OnTabChanged() {
 void HeaderUILayer::PostCursorEvent(
   const IUILayer::NextList& next,
   const Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
   if (cursorEvent.mSource == CursorSource::WindowPointer) {
-    this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+    this->PostNextCursorEvent(next, context, KneeboardViewID, cursorEvent);
     return;
   }
 
@@ -116,7 +116,7 @@ void HeaderUILayer::PostCursorEvent(
     std::ranges::copy(next, std::back_inserter(menuNext));
 
     secondaryMenu->PostCursorEvent(
-      menuNext, context, eventContext, cursorEvent);
+      menuNext, context, KneeboardViewID, cursorEvent);
     return;
   }
 
@@ -127,10 +127,10 @@ void HeaderUILayer::PostCursorEvent(
     CursorEvent toolbarEvent {cursorEvent};
     toolbarEvent.mX *= renderSize.mWidth;
     toolbarEvent.mY *= renderSize.mHeight;
-    toolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
+    toolbar->mButtons->PostCursorEvent(KneeboardViewID, toolbarEvent);
   }
 
-  this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+  this->PostNextCursorEvent(next, context, KneeboardViewID, cursorEvent);
 }
 
 IUILayer::Metrics HeaderUILayer::GetMetrics(

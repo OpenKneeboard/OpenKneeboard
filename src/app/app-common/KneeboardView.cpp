@@ -115,7 +115,7 @@ winrt::guid KneeboardView::GetPersistentGUID() const noexcept {
 }
 
 KneeboardViewID KneeboardView::GetRuntimeID() const noexcept {
-  return mID;
+  return mRuntimeID;
 }
 
 std::string_view KneeboardView::GetName() const noexcept {
@@ -133,7 +133,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     auto it = std::ranges::find(mTabViews, tab, &TabView::GetTab);
     const auto tabView = (it != mTabViews.end())
       ? (*it)
-      : std::make_shared<TabView>(mDXR, mKneeboard, tab, mEventContext);
+      : std::make_shared<TabView>(mDXR, mKneeboard, tab, mRuntimeID);
     tabViews.push_back(tabView);
   }
 
@@ -393,7 +393,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
       .mKneeboardView = this->shared_from_this(),
       .mIsActiveForInput = true,
     },
-    mEventContext,
+    mRuntimeID,
     ev);
 
   evCursorEvent.Emit(ev);

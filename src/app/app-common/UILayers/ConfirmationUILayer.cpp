@@ -61,11 +61,11 @@ ConfirmationUILayer::~ConfirmationUILayer() {
 void ConfirmationUILayer::PostCursorEvent(
   const NextList& next,
   const Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
   if (!(mCanvasRect && mDialog)) {
     next.front()->PostCursorEvent(
-      next.subspan(1), context, eventContext, cursorEvent);
+      next.subspan(1), context, KneeboardViewID, cursorEvent);
     return;
   }
 
@@ -78,7 +78,7 @@ void ConfirmationUILayer::PostCursorEvent(
   canvasEvent.mX += rect.Left();
   canvasEvent.mY += rect.Top();
 
-  dialog.mButtons->PostCursorEvent(eventContext, canvasEvent);
+  dialog.mButtons->PostCursorEvent(KneeboardViewID, canvasEvent);
 }
 
 void ConfirmationUILayer::Render(

@@ -339,7 +339,7 @@ void WebView2Renderer::OnJSAPI_Peer_SendMessageToPeers(
 }
 
 void WebView2Renderer::PostCursorEvent(
-  EventContext ctx,
+  KneeboardViewID ctx,
   const CursorEvent& event) {
   if (!mController) {
     return;

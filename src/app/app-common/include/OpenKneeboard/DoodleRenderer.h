@@ -43,7 +43,7 @@ class DoodleRenderer final {
   void Render(RenderTarget*, PageID, const PixelRect& destRect);
 
   void PostCursorEvent(
-    EventContext,
+    KneeboardViewID,
     const CursorEvent&,
     PageID,
     const PixelSize& nativePageSize);

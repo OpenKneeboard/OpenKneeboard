@@ -366,7 +366,7 @@ static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
 }
 
 void HWNDPageSource::PostCursorEvent(
-  EventContext,
+  KneeboardViewID,
   const CursorEvent& ev,
   PageID) {
   if (!mCaptureWindow) {

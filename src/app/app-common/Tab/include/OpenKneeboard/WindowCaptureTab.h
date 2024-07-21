@@ -103,7 +103,7 @@ class WindowCaptureTab final
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
 
-  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+  virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override final;
 
  private:

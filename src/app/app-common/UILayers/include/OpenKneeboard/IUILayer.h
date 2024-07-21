@@ -49,7 +49,7 @@ class IUILayer {
   virtual void PostCursorEvent(
     const NextList&,
     const Context&,
-    const EventContext&,
+    KneeboardViewID,
     const CursorEvent&)
     = 0;
 

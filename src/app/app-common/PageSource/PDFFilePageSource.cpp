@@ -304,7 +304,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
         weak,
         // Not a coroutine.
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
-        [](auto self, EventContext ctx, const PDFNavigation::Link& link) {
+        [](auto self, KneeboardViewID ctx, const PDFNavigation::Link& link) {
           const auto& dest = link.mDestination;
           switch (dest.mType) {
             case PDFNavigation::DestinationType::Page:
@@ -512,7 +512,7 @@ void PDFFilePageSource::RenderPageContent(
 }
 
 void PDFFilePageSource::PostCursorEvent(
-  EventContext ctx,
+  KneeboardViewID ctx,
   const CursorEvent& ev,
   PageID pageID) {
   const auto contentSize = this->GetPreferredSize(pageID).mPixelSize;

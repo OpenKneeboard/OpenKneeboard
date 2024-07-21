@@ -79,15 +79,15 @@ BookmarksUILayer::~BookmarksUILayer() {
 void BookmarksUILayer::PostCursorEvent(
   const IUILayer::NextList& next,
   const Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
   if (
     cursorEvent.mSource == CursorSource::WindowPointer || !this->IsEnabled()) {
-    this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+    this->PostNextCursorEvent(next, context, KneeboardViewID, cursorEvent);
     return;
   }
 
-  this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+  this->PostNextCursorEvent(next, context, KneeboardViewID, cursorEvent);
 
   auto buttons = mButtons;
   if (!buttons) {
@@ -100,7 +100,7 @@ void BookmarksUILayer::PostCursorEvent(
   buttonsEvent.mX *= metrics.mPreferredSize.mPixelSize.mWidth;
   buttonsEvent.mX /= metrics.mNextArea.Left();
 
-  buttons->PostCursorEvent(eventContext, buttonsEvent);
+  buttons->PostCursorEvent(KneeboardViewID, buttonsEvent);
 }
 
 IUILayer::Metrics BookmarksUILayer::GetMetrics(

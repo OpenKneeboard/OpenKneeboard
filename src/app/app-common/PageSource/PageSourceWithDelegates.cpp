@@ -251,7 +251,7 @@ bool PageSourceWithDelegates::CanClearUserInput(PageID pageID) const {
 }
 
 void PageSourceWithDelegates::PostCursorEvent(
-  EventContext ctx,
+  KneeboardViewID ctx,
   const CursorEvent& event,
   PageID pageID) {
   auto delegate = this->FindDelegate(pageID);

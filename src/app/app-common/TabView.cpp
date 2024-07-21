@@ -36,8 +36,8 @@ TabView::TabView(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const std::shared_ptr<ITab>& tab,
-  const EventContext& ec)
-  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mEventContext(ec) {
+  KneeboardViewID id)
+  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mKneeboardViewID(id) {
   const auto rootPageIDs = mRootTab->GetPageIDs();
   if (!rootPageIDs.empty()) {
     mRootTabPage = {rootPageIDs.front(), 0};
@@ -53,8 +53,8 @@ TabView::TabView(
   AddEventListener(
     this->evPageChangedEvent, this->evAvailableFeaturesChangedEvent);
   AddEventListener(
-    tab->evPageChangeRequestedEvent, [this](EventContext ctx, PageID id) {
-      if (ctx != mEventContext) {
+    tab->evPageChangeRequestedEvent, [this](KneeboardViewID ctx, PageID id) {
+      if (ctx != mKneeboardViewID) {
         return;
       }
       this->SetPageID(id);
@@ -111,7 +111,7 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
   CursorEvent tabEvent {ev};
   tabEvent.mX *= size.mWidth;
   tabEvent.mY *= size.mHeight;
-  receiver->PostCursorEvent(mEventContext, tabEvent, this->GetPageID());
+  receiver->PostCursorEvent(mKneeboardViewID, tabEvent, this->GetPageID());
 }
 
 void TabView::SetPageID(PageID page) {
@@ -233,7 +233,7 @@ bool TabView::SetTabMode(TabMode mode) {
   auto receiver
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent(mEventContext, {}, this->GetPageID());
+    receiver->PostCursorEvent(mKneeboardViewID, {}, this->GetPageID());
   }
 
   mTabMode = mode;
@@ -253,8 +253,8 @@ bool TabView::SetTabMode(TabMode mode) {
           ->GetNavigationEntries());
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
-        [this](EventContext ctx, PageID newPage) {
-          if (ctx != mEventContext) {
+        [this](KneeboardViewID ctx, PageID newPage) {
+          if (ctx != mKneeboardViewID) {
             return;
           }
           const auto ids = mRootTab->GetPageIDs();

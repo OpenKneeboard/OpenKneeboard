@@ -75,10 +75,10 @@ class CursorClickableRegions final
     return {mHoverButton, mButtons};
   }
 
-  Event<EventContext, const Button&> evClicked;
-  Event<EventContext> evClickedWithoutButton;
+  Event<KneeboardViewID, const Button&> evClicked;
+  Event<KneeboardViewID> evClickedWithoutButton;
 
-  void PostCursorEvent(EventContext ec, const CursorEvent& ev) {
+  void PostCursorEvent(KneeboardViewID ctx, const CursorEvent& ev) {
     const auto keepAlive = this->shared_from_this();
 
     const D2D1_POINT_2F cursor {ev.mX, ev.mY};
@@ -121,7 +121,7 @@ class CursorClickableRegions final
     // Touch end
     if (!mPressedButton) {
       if (!buttonUnderCursor) {
-        evClickedWithoutButton.Emit(ec);
+        evClickedWithoutButton.Emit(ctx);
       }
       return;
     }
@@ -132,7 +132,7 @@ class CursorClickableRegions final
       return;
     }
 
-    evClicked.Emit(ec, pressedButton);
+    evClicked.Emit(ctx, pressedButton);
   }
 
   CursorClickableRegions() = delete;

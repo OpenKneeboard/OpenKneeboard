@@ -187,7 +187,7 @@ void EndlessNotebookTab::RenderPage(
 }
 
 void EndlessNotebookTab::PostCursorEvent(
-  EventContext ec,
+  KneeboardViewID view,
   const CursorEvent& ce,
   PageID pageID) {
   if (!mSource) {
@@ -195,7 +195,7 @@ void EndlessNotebookTab::PostCursorEvent(
   }
 
   mDoodles->PostCursorEvent(
-    ec, ce, pageID, mSource->GetPreferredSize(mSourcePageID).mPixelSize);
+    view, ce, pageID, mSource->GetPreferredSize(mSourcePageID).mPixelSize);
   if (mDoodles->HaveDoodles(pageID) && pageID == mPageIDs.back()) {
     mPageIDs.push_back({});
     evPageAppendedEvent.Emit(SuggestedPageAppendAction::KeepOnCurrentPage);

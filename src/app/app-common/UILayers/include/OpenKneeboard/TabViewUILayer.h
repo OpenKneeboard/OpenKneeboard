@@ -39,7 +39,7 @@ class TabViewUILayer final : public IUILayer {
   virtual void PostCursorEvent(
     const NextList&,
     const Context&,
-    const EventContext&,
+    KneeboardViewID,
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(

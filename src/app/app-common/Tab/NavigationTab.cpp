@@ -175,7 +175,7 @@ std::vector<PageID> NavigationTab::GetPageIDs() const {
 }
 
 void NavigationTab::PostCursorEvent(
-  EventContext ctx,
+  KneeboardViewID ctx,
   const CursorEvent& ev,
   PageID pageID) {
   if (!mButtonTrackers.contains(pageID)) {

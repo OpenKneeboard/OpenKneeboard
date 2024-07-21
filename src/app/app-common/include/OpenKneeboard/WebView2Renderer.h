@@ -117,7 +117,7 @@ class WebView2Renderer final : public WGCRenderer, public IHasDisposeAsync {
   static winrt::fire_and_forget final_release(
     std::unique_ptr<WebView2Renderer>);
 
-  void PostCursorEvent(EventContext, const CursorEvent&);
+  void PostCursorEvent(KneeboardViewID, const CursorEvent&);
 
   void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
 

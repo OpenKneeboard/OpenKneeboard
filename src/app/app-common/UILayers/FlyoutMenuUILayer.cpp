@@ -87,17 +87,17 @@ FlyoutMenuUILayer::~FlyoutMenuUILayer() {
 void FlyoutMenuUILayer::PostCursorEvent(
   const NextList& next,
   const Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
   if (!(mMenu && mLastRenderRect)) {
     next.front()->PostCursorEvent(
-      next.subspan(1), context, eventContext, cursorEvent);
+      next.subspan(1), context, KneeboardViewID, cursorEvent);
     return;
   }
 
   auto previous = mPrevious;
   if (previous) {
-    previous->PostCursorEvent(next, context, eventContext, cursorEvent);
+    previous->PostCursorEvent(next, context, KneeboardViewID, cursorEvent);
     return;
   }
 
@@ -106,7 +106,7 @@ void FlyoutMenuUILayer::PostCursorEvent(
   menuEvent.mY *= mLastRenderRect->Height();
   menuEvent.mX += mLastRenderRect->Left();
   menuEvent.mY += mLastRenderRect->Top();
-  mMenu->mCursorImpl->PostCursorEvent(eventContext, menuEvent);
+  mMenu->mCursorImpl->PostCursorEvent(KneeboardViewID, menuEvent);
 
   evNeedsRepaintEvent.Emit();
 }

@@ -36,9 +36,10 @@ struct CursorEvent;
  *   markers for hyperlink over a separately cached content layer.
  * - it handles doodles itself, if desired
  */
-class IPageSourceWithCursorEvents : public virtual IPageSourceWithInternalCaching {
+class IPageSourceWithCursorEvents
+  : public virtual IPageSourceWithInternalCaching {
  public:
-  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID) = 0;
+  virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID) = 0;
 
   virtual bool CanClearUserInput(PageID) const = 0;
   virtual bool CanClearUserInput() const = 0;

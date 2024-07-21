@@ -182,7 +182,7 @@ WebView2PageSource::DisposeAsyncImpl() noexcept {
 }
 
 void WebView2PageSource::PostCursorEvent(
-  EventContext ctx,
+  KneeboardViewID ctx,
   const CursorEvent& event,
   PageID pageID) {
   // FIXME: delegate to correct WebView2Renderer

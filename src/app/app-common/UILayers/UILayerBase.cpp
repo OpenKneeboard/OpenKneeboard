@@ -27,12 +27,12 @@ UILayerBase::~UILayerBase() = default;
 void UILayerBase::PostNextCursorEvent(
   const IUILayer::NextList& next,
   const IUILayer::Context& context,
-  const EventContext& eventContext,
+  KneeboardViewID KneeboardViewID,
   const CursorEvent& cursorEvent) {
   const auto [first, rest] = Split(next);
 
   if (cursorEvent.mTouchState == CursorTouchState::NotNearSurface) {
-    first->PostCursorEvent(rest, context, eventContext, {});
+    first->PostCursorEvent(rest, context, KneeboardViewID, {});
     return;
   }
 
@@ -52,9 +52,9 @@ void UILayerBase::PostNextCursorEvent(
   if (
     nextEvent.mX < 0 || nextEvent.mX > 1 || nextEvent.mY < 0
     || nextEvent.mY > 1) {
-    first->PostCursorEvent(rest, context, eventContext, {});
+    first->PostCursorEvent(rest, context, KneeboardViewID, {});
   } else {
-    first->PostCursorEvent(rest, context, eventContext, nextEvent);
+    first->PostCursorEvent(rest, context, KneeboardViewID, nextEvent);
   }
 }
 

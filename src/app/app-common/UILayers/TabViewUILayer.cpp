@@ -42,7 +42,7 @@ TabViewUILayer::~TabViewUILayer() = default;
 void TabViewUILayer::PostCursorEvent(
   const IUILayer::NextList&,
   const Context& context,
-  const EventContext&,
+  KneeboardViewID,
   const CursorEvent& ev) {
   if (ev.mTouchState == CursorTouchState::NotNearSurface) {
     mCursorPoint.reset();

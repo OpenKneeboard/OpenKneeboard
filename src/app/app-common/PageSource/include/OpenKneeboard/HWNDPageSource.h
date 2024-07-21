@@ -72,7 +72,7 @@ class HWNDPageSource final : private WGCRenderer,
   bool HaveWindow() const;
   void InstallWindowHooks(HWND);
 
-  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+  virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override final;
   virtual bool CanClearUserInput() const override;
   virtual bool CanClearUserInput(PageID) const override;

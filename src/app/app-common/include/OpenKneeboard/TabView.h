@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
+#include <OpenKneeboard/KneeboardViewID.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -50,7 +51,7 @@ class TabView final : private EventReceiver {
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::shared_ptr<ITab>&,
-    const EventContext&);
+    KneeboardViewID);
   ~TabView();
 
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
@@ -89,7 +90,10 @@ class TabView final : private EventReceiver {
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   std::shared_ptr<ITab> mRootTab;
-  const EventContext mEventContext {nullptr};
+
+  // Each TabView should only be used by a single kneeboard view; keep track so
+  // we know which events affect us
+  const KneeboardViewID mKneeboardViewID {nullptr};
 
   struct PagePosition {
     PageID mID;

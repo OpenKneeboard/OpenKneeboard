@@ -80,7 +80,7 @@ bool DoodleRenderer::HaveDoodles(PageID pageID) const {
 }
 
 void DoodleRenderer::PostCursorEvent(
-  EventContext,
+  KneeboardViewID,
   const CursorEvent& event,
   PageID pageID,
   const PixelSize& nativePageSize) {

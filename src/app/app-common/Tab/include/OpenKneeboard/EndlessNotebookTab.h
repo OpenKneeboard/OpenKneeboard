@@ -75,7 +75,7 @@ class EndlessNotebookTab final
   virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
     override;
 
-  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+  virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;

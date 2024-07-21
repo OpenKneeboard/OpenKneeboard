@@ -21,6 +21,8 @@
 
 #include "UniqueID.h"
 
+#include <OpenKneeboard/KneeboardViewID.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/weak_refs.h>
@@ -40,7 +42,6 @@
 
 namespace OpenKneeboard {
 
-class EventContext final : public UniqueIDBase<EventContext> {};
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 
@@ -269,12 +270,12 @@ class Event final : public EventBase {
   }
 
   winrt::Windows::Foundation::IAsyncAction EmitFromContextAsync(
-    auto eventContext,
+    auto KneeboardViewID,
     Args... args,
     std::source_location location = std::source_location::current()) {
     auto weakImpl = std::weak_ptr(mImpl);
     winrt::apartment_context originalContext;
-    co_await eventContext;
+    co_await KneeboardViewID;
     if (auto impl = weakImpl.lock()) {
       impl->Emit(args..., location);
     }
