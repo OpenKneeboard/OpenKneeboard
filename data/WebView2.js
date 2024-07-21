@@ -57,16 +57,6 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#AsyncRequest("OpenKneeboard.EnableExperimentalFeatures", { features });
     }
 
-    /** WARNING: NOT AVAILABLE IN RELEASED BUILDS.
-     * 
-     * This function is only available as a tool during development; it **WILL** fail
-     * in release builds.
-     */
-    GetAvailableExperimentalFeatures() {
-        console.log("WARNING: OpenKneeboard.GetAvailableExperimentalFeatures() **WILL** fail in tagged releases. It is only for use during development, not to check feature availability.");
-        return this.#AsyncRequest("OpenKneeboard.GetAvailableExperimentalFeatures", {});
-    }
-
     #OnDOMContentLoaded() {
         document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
     }
