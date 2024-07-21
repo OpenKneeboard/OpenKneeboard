@@ -204,6 +204,22 @@ OpenKneeboard.addEventListener(
 );
 ```
 
+## Testing
+
+You should test your dashboard works correctly with multiple views; you can either do this in VR, or with [the test viewer application](../../how-to/OpenKneeboard-Viewer.md).
+
+To use the test viewer:
+- hit 'i' to show/hide information such as resolution and the current view
+- hit 'v' to switch between mirroring the VR and non-VR views
+- hit '1' - '9' to switch between views
+
+Keep in mind:
+
+- the reported resolution will usually not exactly match the pixel size you requested, as it will also include OpenKneeboard's in-game UI, such as the toolbar and footer
+- as of 2024-07-21, only the first view is available in non-VR, so you will usually want the viewer to be mirroring the VR views
+
+Testing multiple VR views via the test viewer does not require a VR headset or drivers.
+
 ## A full example
 
 `api-example-PageBasedContent.html` is included in:
