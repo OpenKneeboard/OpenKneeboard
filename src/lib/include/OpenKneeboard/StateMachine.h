@@ -67,8 +67,21 @@ class StateMachineBase {
   constexpr StateMachineBase() {
   }
 
-  State Get() const noexcept {
+  constexpr State Get() const noexcept {
     return mState;
+  }
+
+  template <State T>
+  void Assert(
+    const std::source_location& caller = std::source_location::current()) {
+    if (mState == T) [[likely]] {
+      return;
+    }
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      caller,
+      "Expected state `{}`, but state is `{}`",
+      std::to_underlying(T),
+      std::to_underlying(this->Get()));
   }
 
   StateMachineBase(const StateMachineBase&) = delete;
