@@ -42,7 +42,7 @@ std::shared_ptr<FolderPageSource> FolderPageSource::Create(
   const std::filesystem::path& path) {
   std::shared_ptr<FolderPageSource> ret {new FolderPageSource(dxr, kbs)};
   if (!path.empty()) {
-    ret->SetPath(path);
+    ret->SetPathFromEmpty(path);
   }
   return ret;
 }
@@ -51,7 +51,7 @@ FolderPageSource::~FolderPageSource() {
   this->RemoveAllEventListeners();
 }
 
-winrt::fire_and_forget FolderPageSource::Reload() noexcept {
+winrt::Windows::Foundation::IAsyncAction FolderPageSource::Reload() noexcept {
   const auto weakThis = this->weak_from_this();
   co_await mUIThread;
   const auto stayingAlive = this->shared_from_this();
@@ -61,10 +61,18 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
 
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     EventDelay eventDelay;
-    this->SetDelegates({});
+    co_await this->SetDelegates({});
     evContentChangedEvent.Emit();
     co_return;
   }
+
+  auto path = std::move(mPath);
+  this->SetPathFromEmpty(path);
+}
+
+void FolderPageSource::SetPathFromEmpty(const std::filesystem::path& path) {
+  assert(mPath.empty());
+  mPath = path;
 
   this->SubscribeToChanges();
   this->OnFileModified(mPath);
@@ -80,12 +88,13 @@ void FolderPageSource::SubscribeToChanges() {
     });
 }
 
-void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
+winrt::fire_and_forget FolderPageSource::OnFileModified(
+  std::filesystem::path directory) {
   if (directory != mPath) {
-    return;
+    co_return;
   }
   if (!std::filesystem::is_directory(directory)) {
-    return;
+    co_return;
   }
   decltype(mContents) newContents;
   bool modifiedOrNew = false;
@@ -114,7 +123,7 @@ void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
 
   if (newContents.size() == mContents.size() && !modifiedOrNew) {
     dprintf(L"No actual change to {}", mPath.wstring());
-    return;
+    co_return;
   }
   dprintf(L"Real change to {}", mPath.wstring());
 
@@ -125,20 +134,21 @@ void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
 
   EventDelay eventDelay;
   mContents = newContents;
-  this->SetDelegates(delegates);
+  co_await this->SetDelegates(delegates);
 }
 
 std::filesystem::path FolderPageSource::GetPath() const {
   return mPath;
 }
 
-void FolderPageSource::SetPath(const std::filesystem::path& path) {
+winrt::Windows::Foundation::IAsyncAction FolderPageSource::SetPath(
+  std::filesystem::path path) {
   if (path == mPath) {
-    return;
+    co_return;
   }
   mPath = path;
   mWatcher = {};
-  this->Reload();
+  co_await this->Reload();
 }
 
 }// namespace OpenKneeboard

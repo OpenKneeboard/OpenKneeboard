@@ -45,10 +45,10 @@ class DCSTab : public virtual ITab, public virtual EventReceiver {
     "or not it is meant to exist. Some crosses are expected, and not "
     "necessarily an error.\n");
 
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath)
+  virtual winrt::fire_and_forget OnGameEvent(
+    GameEvent,
+    std::filesystem::path installPath,
+    std::filesystem::path savedGamesPath)
     = 0;
 
   std::filesystem::path ToAbsolutePath(const std::filesystem::path&);

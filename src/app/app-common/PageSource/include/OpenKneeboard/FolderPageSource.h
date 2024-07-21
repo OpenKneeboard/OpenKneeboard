@@ -49,13 +49,16 @@ class FolderPageSource final
   virtual ~FolderPageSource();
 
   std::filesystem::path GetPath() const;
-  virtual void SetPath(const std::filesystem::path& path);
+  [[nodiscard]]
+  winrt::Windows::Foundation::IAsyncAction SetPath(std::filesystem::path path);
 
-  winrt::fire_and_forget Reload() noexcept;
+  [[nodiscard]]
+  winrt::Windows::Foundation::IAsyncAction Reload() noexcept;
 
  private:
   void SubscribeToChanges();
-  void OnFileModified(const std::filesystem::path&);
+  winrt::fire_and_forget OnFileModified(std::filesystem::path);
+  void SetPathFromEmpty(const std::filesystem::path& path);
 
   winrt::apartment_context mUIThread;
   std::shared_ptr<FilesystemWatcher> mWatcher;

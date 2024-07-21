@@ -36,7 +36,8 @@ class NextTabAction final : public ToolbarAction, private EventReceiver {
   ~NextTabAction();
 
   virtual bool IsEnabled() const override;
-  virtual void Execute() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
 
  private:
   KneeboardState* mKneeboardState;

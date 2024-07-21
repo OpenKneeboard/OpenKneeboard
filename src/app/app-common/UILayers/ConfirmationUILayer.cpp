@@ -315,15 +315,16 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
     },
   });
   AddEventListener(
-    buttons->evClicked, [weak = weak_from_this()](auto, auto button) {
+    buttons->evClicked,
+    [weak = weak_from_this()](auto, auto button) -> winrt::fire_and_forget {
       auto self = weak.lock();
       if (!self) {
-        return;
+        co_return;
       }
       if (button.mAction == ButtonAction::Confirm) {
         auto action = std::dynamic_pointer_cast<ToolbarAction>(self->mItem);
         if (action) {
-          action->Execute();
+          co_await action->Execute();
         }
       }
       self->evClosedEvent.Emit();

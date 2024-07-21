@@ -49,7 +49,8 @@ class BrowserTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
-  virtual void Reload() final override;
+  [[nodiscard]]
+  virtual IAsyncAction Reload() final override;
 
   struct Settings : WebView2PageSource::Settings {
     constexpr bool operator==(const Settings&) const noexcept = default;
@@ -58,13 +59,16 @@ class BrowserTab final : public TabBase,
   nlohmann::json GetSettings() const override;
 
   bool IsSimHubIntegrationEnabled() const;
-  void SetSimHubIntegrationEnabled(bool);
+  [[nodiscard]]
+  IAsyncAction SetSimHubIntegrationEnabled(bool);
 
   bool IsBackgroundTransparent() const;
-  void SetBackgroundTransparent(bool);
+  [[nodiscard]]
+  IAsyncAction SetBackgroundTransparent(bool);
 
   bool IsDeveloperToolsWindowEnabled() const;
-  void SetDeveloperToolsWindowEnabled(bool);
+  [[nodiscard]]
+  IAsyncAction SetDeveloperToolsWindowEnabled(bool);
 
  private:
   winrt::apartment_context mUIThread;

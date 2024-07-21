@@ -40,9 +40,13 @@ class TabsList final : private EventReceiver {
   ~TabsList();
 
   std::vector<std::shared_ptr<ITab>> GetTabs() const;
-  void RemoveTab(TabIndex index);
-  void InsertTab(TabIndex index, const std::shared_ptr<ITab>& tab);
-  void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
+
+  [[nodiscard]] IAsyncAction RemoveTab(TabIndex index);
+  [[nodiscard]] IAsyncAction InsertTab(
+    TabIndex index,
+    std::shared_ptr<ITab> tab);
+  [[nodiscard]]
+  IAsyncAction SetTabs(std::vector<std::shared_ptr<ITab>> tabs);
 
   nlohmann::json GetSettings() const;
   void LoadSettings(const nlohmann::json&);

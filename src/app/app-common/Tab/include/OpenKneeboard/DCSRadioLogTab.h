@@ -63,7 +63,8 @@ class DCSRadioLogTab final
   static std::string GetStaticGlyph();
 
   virtual PageIndex GetPageCount() const override;
-  virtual void Reload() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 
@@ -81,10 +82,10 @@ class DCSRadioLogTab final
     std::string_view title,
     const nlohmann::json& config);
 
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath) override;
+  virtual winrt::fire_and_forget OnGameEvent(
+    GameEvent,
+    std::filesystem::path installPath,
+    std::filesystem::path savedGamesPath) override;
 
  private:
   winrt::apartment_context mUIThread;
@@ -92,11 +93,6 @@ class DCSRadioLogTab final
   MissionStartBehavior mMissionStartBehavior {
     MissionStartBehavior::DrawHorizontalLine};
   bool mShowTimestamps = false;
-
-  winrt::fire_and_forget OnGameEventImpl(
-    GameEvent,
-    std::filesystem::path installPath,
-    std::filesystem::path savedGamesPath);
 
   void LoadSettings(const nlohmann::json&);
 };

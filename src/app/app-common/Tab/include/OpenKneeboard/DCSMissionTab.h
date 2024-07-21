@@ -23,8 +23,9 @@
 #include "TabBase.h"
 
 #include <OpenKneeboard/IHasDebugInformation.h>
-#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <OpenKneeboard/audited_ptr.h>
 
 namespace OpenKneeboard {
 
@@ -46,15 +47,16 @@ class DCSMissionTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
-  virtual void Reload() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path&,
-    const std::filesystem::path&) override;
+  virtual winrt::fire_and_forget OnGameEvent(
+    GameEvent,
+    std::filesystem::path,
+    std::filesystem::path) override;
 
  private:
   audited_ptr<DXResources> mDXR {};

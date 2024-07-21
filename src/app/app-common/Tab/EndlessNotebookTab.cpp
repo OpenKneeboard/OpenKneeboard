@@ -46,9 +46,9 @@ std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
-  std::shared_ptr<EndlessNotebookTab> ret(
+  auto ret = std::shared_ptr<EndlessNotebookTab>(
     new EndlessNotebookTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem())));
-  ret->SetPath(path);
+  ret->SetPathFromEmpty(path);
   return ret;
 }
 
@@ -58,9 +58,9 @@ std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
   const winrt::guid& persistentID,
   std::string_view title,
   const nlohmann::json& settings) {
-  std::shared_ptr<EndlessNotebookTab> ret(
+  auto ret = std::shared_ptr<EndlessNotebookTab>(
     new EndlessNotebookTab(dxr, kbs, persistentID, title));
-  ret->SetPath(settings.at("Path").get<std::filesystem::path>());
+  ret->SetPathFromEmpty(settings.at("Path"));
   return ret;
 }
 
@@ -84,26 +84,36 @@ std::filesystem::path EndlessNotebookTab::GetPath() const {
   return mPath;
 }
 
-void EndlessNotebookTab::SetPath(const std::filesystem::path& rawPath) {
+winrt::Windows::Foundation::IAsyncAction EndlessNotebookTab::SetPath(
+  std::filesystem::path rawPath) {
   auto path = rawPath;
   if (std::filesystem::exists(path)) {
     path = std::filesystem::canonical(path);
   }
   if (path == mPath) {
-    return;
+    co_return;
   }
   mPath = path;
 
-  this->Reload();
+  co_await this->Reload();
 }
 
-void EndlessNotebookTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction EndlessNotebookTab::Reload() {
   const scope_exit contentChanged([this]() { evContentChangedEvent.Emit(); });
 
   mPageIDs.clear();
   mSourcePageID = {nullptr};
   mSource = {};
   mDoodles->Clear();
+
+  auto path = mPath;
+  mPath.clear();
+  this->SetPathFromEmpty(path);
+  co_return;
+}
+
+void EndlessNotebookTab::SetPathFromEmpty(const std::filesystem::path& path) {
+  assert(mPath.empty());
 
   auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
   if (!delegate) {

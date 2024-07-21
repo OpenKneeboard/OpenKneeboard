@@ -42,6 +42,10 @@
 
 namespace OpenKneeboard {
 
+// FUTURE - C++?? (maybe?) - add [[nodiscard]]:
+// https://github.com/cplusplus/papers/issues/1888
+using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
+
 inline auto random_guid() {
   winrt::guid ret;
   winrt::check_hresult(CoCreateGuid(reinterpret_cast<GUID*>(&ret)));
@@ -95,6 +99,12 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
   std::source_location loc = std::source_location::current()) {
   return make_stoppable(
     token, [timeout]() { return winrt::resume_after(timeout); }, loc);
+}
+
+/// Used for intentionally await and discarding `[[nodiscard]]` IAsyncAction
+inline winrt::fire_and_forget fire_and_forget(
+  winrt::Windows::Foundation::IAsyncAction&& x) {
+  co_await x;
 }
 
 }// namespace OpenKneeboard

@@ -29,7 +29,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSMissionTab::DCSMissionTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSMissionTab::DCSMissionTab(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : DCSMissionTab(dxr, kbs, {}, _("Mission")) {
 }
 
@@ -58,14 +60,14 @@ std::string DCSMissionTab::GetStaticGlyph() {
   return "\uF0E3";
 }
 
-void DCSMissionTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction DCSMissionTab::Reload() {
   if (mMission.empty()) {
-    return;
+    co_return;
   }
 
   // Free the filesystem watchers etc before potentially
   // deleting the extracted mission
-  this->SetDelegates({});
+  co_await this->SetDelegates({});
 
   if ((!mExtracted) || mExtracted->GetZipPath() != mMission) {
     mExtracted = DCSExtractedMission::Get(mMission);
@@ -101,40 +103,40 @@ void DCSMissionTab::Reload() {
 
   dprint("Mission tab: " + mDebugInformation);
   evDebugInformationHasChanged.Emit(mDebugInformation);
-  this->SetDelegates(sources);
+  co_await this->SetDelegates(sources);
 }
 
 std::string DCSMissionTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-void DCSMissionTab::OnGameEvent(
-  const GameEvent& event,
-  const std::filesystem::path& _installPath,
-  const std::filesystem::path& _savedGamePath) {
+winrt::fire_and_forget DCSMissionTab::OnGameEvent(
+  GameEvent event,
+  [[maybe_unused]] std::filesystem::path installPath,
+  [[maybe_unused]] std::filesystem::path savedGamePath) {
   if (event.name == DCS::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
       dprintf("MissionTab: mission '{}' does not exist", event.value);
-      return;
+      co_return;
     }
 
     if (missionZip == mMission) {
-      return;
+      co_return;
     }
 
     mMission = missionZip;
-    this->Reload();
-    return;
+    co_await this->Reload();
+    co_return;
   }
 
   if (event.name == DCS::EVT_AIRCRAFT) {
     if (event.value == mAircraft) {
-      return;
+      co_return;
     }
     mAircraft = event.value;
-    this->Reload();
-    return;
+    co_await this->Reload();
+    co_return;
   }
 }
 

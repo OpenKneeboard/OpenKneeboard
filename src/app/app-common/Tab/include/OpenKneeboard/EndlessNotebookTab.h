@@ -59,12 +59,15 @@ class EndlessNotebookTab final
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
-  virtual void Reload() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 
   std::filesystem::path GetPath() const;
-  virtual void SetPath(const std::filesystem::path& path);
+
+  [[nodiscard]] virtual winrt::Windows::Foundation::IAsyncAction SetPath(
+    std::filesystem::path path);
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
@@ -91,6 +94,7 @@ class EndlessNotebookTab final
   KneeboardState* mKneeboard;
 
   std::filesystem::path mPath;
+  void SetPathFromEmpty(const std::filesystem::path& path);
 
   std::shared_ptr<IPageSource> mSource;
   PageID mSourcePageID;

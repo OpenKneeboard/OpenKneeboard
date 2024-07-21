@@ -115,7 +115,7 @@ class FlyoutMenuUILayer final
   std::optional<Menu> mMenu;
 
   void UpdateLayout(ID2D1DeviceContext*, const PixelRect&);
-  void OnClick(const MenuItem&);
+  winrt::fire_and_forget OnClick(const MenuItem&);
 
   bool mRecursiveCall = false;
 };

@@ -68,15 +68,15 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
-  void CreateTab(const IInspectable&, const RoutedEventArgs&) noexcept;
+  winrt::fire_and_forget CreateTab(IInspectable, RoutedEventArgs) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowTabSettings(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);
   void CopyDebugInfo(const IInspectable&, const RoutedEventArgs&);
 
-  void OnTabsChanged(
-    const IInspectable&,
-    const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
+  winrt::fire_and_forget OnTabsChanged(
+    IInspectable,
+    Windows::Foundation::Collections::IVectorChangedEventArgs) noexcept;
   void OnAddBrowserAddressTextChanged(
     const IInspectable&,
     const IInspectable&) noexcept;
@@ -85,14 +85,17 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
   void CreateAddTabMenu(const Button& button, FlyoutPlacementMode);
 
   template <class T>
-  void CreateFileTab(const std::string& pickerDialogTitle = {});
-  void CreateFolderTab();
+  winrt::fire_and_forget CreateFileTab(
+    const std::string& pickerDialogTitle = {});
+  winrt::fire_and_forget CreateFolderTab();
   winrt::fire_and_forget CreateWindowCaptureTab();
-  fire_and_forget CreateBrowserTab();
+  winrt::fire_and_forget CreateBrowserTab();
   winrt::fire_and_forget PromptToInstallWebView2();
   winrt::guid GetFilePickerPersistenceGuid();
 
-  void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
+  [[nodiscard]]
+  winrt::Windows::Foundation::IAsyncAction AddTabs(
+    const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   static OpenKneeboardApp::TabUIData CreateTabUIData(
     const std::shared_ptr<OpenKneeboard::ITab>&);
 
@@ -127,13 +130,13 @@ struct BrowserTabUIData : BrowserTabUIDataT<
   BrowserTabUIData() = default;
 
   bool IsSimHubIntegrationEnabled() const;
-  void IsSimHubIntegrationEnabled(bool);
+  winrt::fire_and_forget IsSimHubIntegrationEnabled(bool);
 
   bool IsBackgroundTransparent() const;
-  void IsBackgroundTransparent(bool);
+  winrt::fire_and_forget IsBackgroundTransparent(bool);
 
   bool IsDeveloperToolsWindowEnabled() const;
-  void IsDeveloperToolsWindowEnabled(bool);
+  winrt::fire_and_forget IsDeveloperToolsWindowEnabled(bool);
 
  private:
   std::shared_ptr<OpenKneeboard::BrowserTab> GetTab() const;

@@ -174,7 +174,7 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     reinterpret_cast<uint64_t>(GetParent(hwnd)),
     reinterpret_cast<uint64_t>(GetDesktopWindow()));
   mDelegate = source;
-  this->SetDelegates({source});
+  co_await this->SetDelegates({source});
   this->AddEventListener(
     source->evWindowClosedEvent,
     {weak_from_this(), &WindowCaptureTab::OnWindowClosed});
@@ -231,7 +231,7 @@ winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   if (!self) {
     co_return;
   }
-  this->Reload();
+  co_await this->Reload();
 }
 
 std::string WindowCaptureTab::GetGlyph() const {
@@ -243,10 +243,10 @@ std::string WindowCaptureTab::GetStaticGlyph() {
   return {"\ue7f4"};
 }
 
-void WindowCaptureTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction WindowCaptureTab::Reload() {
   mHwnd = {};
   mDelegate = {};
-  this->SetDelegates({});
+  co_await this->SetDelegates({});
   this->TryToStartCapture();
 }
 
@@ -374,7 +374,7 @@ void WindowCaptureTab::SetMatchSpecification(const MatchSpecification& spec) {
   mSpec = spec;
   this->evSettingsChangedEvent.Emit();
   if (!this->WindowMatches(mHwnd)) {
-    this->Reload();
+    fire_and_forget(this->Reload());
   }
 }
 
@@ -400,7 +400,7 @@ HWNDPageSource::CaptureArea WindowCaptureTab::GetCaptureArea() const {
 void WindowCaptureTab::SetCaptureArea(CaptureArea value) {
   mCaptureOptions.mCaptureArea = value;
   evSettingsChangedEvent.Emit();
-  this->Reload();
+  fire_and_forget(this->Reload());
 }
 
 bool WindowCaptureTab::IsCursorCaptureEnabled() const {
@@ -410,7 +410,7 @@ bool WindowCaptureTab::IsCursorCaptureEnabled() const {
 void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
   mCaptureOptions.mCaptureCursor = value;
   evSettingsChangedEvent.Emit();
-  this->Reload();
+  fire_and_forget(this->Reload());
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {

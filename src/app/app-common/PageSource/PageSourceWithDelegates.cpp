@@ -53,6 +53,7 @@ PageSourceWithDelegates::PageSourceWithDelegates(
 }
 
 PageSourceWithDelegates::~PageSourceWithDelegates() {
+  assert(mDisposed);
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
@@ -61,14 +62,49 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
   }
 }
 
-void PageSourceWithDelegates::SetDelegates(
-  const std::vector<std::shared_ptr<IPageSource>>& delegates) {
+winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
+  std::vector<std::shared_ptr<IPageSource>> delegates) {
+  winrt::apartment_context thread;
+
+  auto disposers = mDelegates | std::views::transform([](auto it) {
+                     return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
+                   })
+    | std::views::filter([](auto it) -> bool { return !!it; })
+    | std::views::transform([](auto it) { return it->DisposeAsync(); })
+    | std::ranges::to<std::vector>();
+  for (auto&& it: disposers) {
+    co_await it;
+  }
+
   mPageDelegates.clear();
+  co_await thread;
 
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
   mDelegateEvents.clear();
+
+  this->SetDelegatesFromEmpty(delegates);
+}
+
+IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
+  auto children = mDelegates | std::views::transform([](auto it) {
+                    return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
+                  })
+    | std::views::filter([](auto it) -> bool { return static_cast<bool>(it); })
+    | std::views::transform([](auto it) { return it->DisposeAsync(); })
+    | std::ranges::to<std::vector>();
+  for (auto&& child: children) {
+    co_await child;
+  }
+
+  mDisposed = true;
+}
+
+void PageSourceWithDelegates::SetDelegatesFromEmpty(
+  const std::vector<std::shared_ptr<IPageSource>>& delegates) {
+  assert(mDelegates.empty());
+  assert(mDelegateEvents.empty());
 
   mDelegates = delegates;
 

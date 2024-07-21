@@ -36,7 +36,8 @@ class TabPreviousPageAction final : public ToolbarAction,
   ~TabPreviousPageAction();
 
   virtual bool IsEnabled() const override;
-  virtual void Execute() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
 
  private:
   KneeboardState* mKneeboard;

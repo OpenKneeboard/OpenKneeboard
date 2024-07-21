@@ -51,10 +51,11 @@ bool SwitchTabAction::IsEnabled() const {
   return true;
 }
 
-void SwitchTabAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction SwitchTabAction::Execute() {
   if (auto kbv = mKneeboardView.lock()) {
     kbv->SetCurrentTabByRuntimeID(mTabID);
   }
+  co_return;
 }
 
 }// namespace OpenKneeboard

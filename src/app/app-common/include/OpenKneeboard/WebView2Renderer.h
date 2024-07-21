@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Geometry2D.h>
+#include <OpenKneeboard/IHasDisposeAsync.h>
 #include <OpenKneeboard/StateMachine.h>
 #include <OpenKneeboard/WGCRenderer.h>
 
@@ -52,7 +53,7 @@ struct ExperimentalFeature {
   IT(SetPages) \
   IT(SetPreferredPixelSize)
 
-class WebView2Renderer final : public WGCRenderer {
+class WebView2Renderer final : public WGCRenderer, public IHasDisposeAsync {
  public:
   struct Settings {
     PixelSize mInitialSize {1024, 768};
@@ -92,7 +93,7 @@ class WebView2Renderer final : public WGCRenderer {
   ~WebView2Renderer();
 
   // Call before destruction in order to safely release shared resources
-  winrt::Windows::Foundation::IAsyncAction Dispose() noexcept;
+  winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept override;
 
   static std::shared_ptr<WebView2Renderer> Create(
     const audited_ptr<DXResources>&,
@@ -153,7 +154,6 @@ class WebView2Renderer final : public WGCRenderer {
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&,
     KneeboardView*,
     const std::vector<APIPage>&);
-
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;

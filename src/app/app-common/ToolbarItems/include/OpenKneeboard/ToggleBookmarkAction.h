@@ -45,10 +45,12 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
   virtual bool IsActive() override;
   virtual bool IsEnabled() const override;
 
-  virtual void Activate() override;
-  virtual void Deactivate() override;
-
-  virtual void Execute() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Activate() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Deactivate() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
 
  private:
   KneeboardState* mKneeboardState = nullptr;

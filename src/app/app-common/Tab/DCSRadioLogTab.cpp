@@ -65,7 +65,7 @@ DCSRadioLogTab::DCSRadioLogTab(
       dxr,
       kbs,
       _("[waiting for radio messages]"))) {
-  this->SetDelegates({mPageSource});
+  this->SetDelegatesFromEmpty({mPageSource});
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
   LoadSettings(config);
 }
@@ -126,14 +126,7 @@ PageIndex DCSRadioLogTab::GetPageCount() const {
   return count == 0 ? 1 : count;
 }
 
-void DCSRadioLogTab::OnGameEvent(
-  const GameEvent& event,
-  const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath) {
-  this->OnGameEventImpl(event, installPath, savedGamesPath);
-}
-
-winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
+winrt::fire_and_forget DCSRadioLogTab::OnGameEvent(
   GameEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
@@ -202,9 +195,10 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
   mPageSource->PushMessage(formatted);
 }
 
-void DCSRadioLogTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction DCSRadioLogTab::Reload() {
   mPageSource->ClearText();
   this->evContentChangedEvent.Emit();
+  co_return;
 }
 
 }// namespace OpenKneeboard

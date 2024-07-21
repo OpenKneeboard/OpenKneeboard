@@ -50,16 +50,17 @@ class DCSBriefingTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
-  virtual void Reload() noexcept override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() noexcept override;
 
   bool IsNavigationAvailable() const override;
   std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  protected:
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path&,
-    const std::filesystem::path&) override;
+  virtual winrt::fire_and_forget OnGameEvent(
+    GameEvent,
+    std::filesystem::path,
+    std::filesystem::path) override;
 
  private:
   KneeboardState* mKneeboard {nullptr};

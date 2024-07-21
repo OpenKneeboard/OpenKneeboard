@@ -33,7 +33,9 @@ class UserActionHandler {
  public:
   virtual ~UserActionHandler();
   virtual bool IsEnabled() const = 0;
-  virtual void Execute() = 0;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute()
+    = 0;
 
   static std::unique_ptr<UserActionHandler> Create(
     KneeboardState* kneeboard,

@@ -24,7 +24,6 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/WebView2PageSource.h>
 
-#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/json_format.h>
 #include <OpenKneeboard/version.h>
@@ -46,8 +45,8 @@ std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const Settings& settings) {
-  auto ret
-    = shared_with_final_release(new WebView2PageSource(dxr, kbs, settings));
+  auto ret = std::shared_ptr<WebView2PageSource>(
+    new WebView2PageSource(dxr, kbs, settings));
   ret->Init();
   return ret;
 }
@@ -128,27 +127,42 @@ bool WebView2PageSource::IsAvailable() {
   return !GetVersion().empty();
 }
 
-WebView2PageSource::~WebView2PageSource() = default;
+WebView2PageSource::~WebView2PageSource() {
+  if (!mDisposed) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "In ~WebView2PageSource() without calling DisposeAsync() first");
+  }
+}
 
-winrt::fire_and_forget WebView2PageSource::final_release(
-  std::unique_ptr<WebView2PageSource> self) {
-  if (self->mWorkerDQ) {
+winrt::Windows::Foundation::IAsyncAction
+WebView2PageSource::DisposeAsync() noexcept {
+  std::call_once(
+    mDisposeOnce, [this]() { mDisposal = this->DisposeAsyncImpl(); });
+  return mDisposal;
+}
+
+winrt::Windows::Foundation::IAsyncAction
+WebView2PageSource::DisposeAsyncImpl() noexcept {
+  auto self = shared_from_this();
+  if (mWorkerDQ) {
     co_await wil::resume_foreground(self->mWorkerDQ);
 
     auto children = self->mDocumentResources.mRenderers | std::views::values
-      | std::views::transform([](auto it) { return it->Dispose(); })
+      | std::views::transform([](auto it) { return it->DisposeAsync(); })
       | std::ranges::to<std::vector>();
     for (auto&& child: children) {
       co_await child;
     }
 
-    self->mEnvironment = nullptr;
-    co_await self->mUIThread;
-    self->mWorkerDQ = {nullptr};
-    co_await self->mWorkerDQC.ShutdownQueueAsync();
+    mEnvironment = nullptr;
+    co_await mUIThread;
+    mWorkerDQ = {nullptr};
+    co_await mWorkerDQC.ShutdownQueueAsync();
   }
-  co_await self->mUIThread;
-  self->RemoveAllEventListeners();
+
+  co_await mUIThread;
+  this->RemoveAllEventListeners();
+  this->mDisposed = true;
   co_return;
 }
 

@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IHasDisposeAsync.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ProfileSettings.h>
 #include <OpenKneeboard/RunnerThread.h>
@@ -78,6 +79,7 @@ enum class FramePostEventKind {
 
 class KneeboardState final
   : private EventReceiver,
+    public IHasDisposeAsync,
     public std::enable_shared_from_this<KneeboardState> {
  public:
   KneeboardState() = delete;
@@ -85,6 +87,9 @@ class KneeboardState final
     HWND mainWindow,
     const audited_ptr<DXResources>&);
   ~KneeboardState() noexcept;
+  [[nodiscard]]
+  virtual IAsyncAction DisposeAsync() noexcept override;
+
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
@@ -158,6 +163,8 @@ class KneeboardState final
 
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
+
+  bool mDisposed {false};
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;

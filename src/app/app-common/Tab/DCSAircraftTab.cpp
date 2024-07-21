@@ -59,25 +59,25 @@ std::string DCSAircraftTab::GetStaticGlyph() {
   return "\uE709";
 }
 
-void DCSAircraftTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction DCSAircraftTab::Reload() {
   mPaths = {};
   mAircraft = {};
-  this->SetDelegates({});
+  co_await this->SetDelegates({});
 }
 
 std::string DCSAircraftTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-void DCSAircraftTab::OnGameEvent(
-  const GameEvent& event,
-  const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath) {
+winrt::fire_and_forget DCSAircraftTab::OnGameEvent(
+  GameEvent event,
+  std::filesystem::path installPath,
+  std::filesystem::path savedGamesPath) {
   if (event.name != DCS::EVT_AIRCRAFT) {
-    return;
+    co_return;
   }
   if (event.value == mAircraft) {
-    return;
+    co_return;
   }
 
   mAircraft = event.value;
@@ -108,7 +108,7 @@ void DCSAircraftTab::OnGameEvent(
   evDebugInformationHasChanged.Emit(mDebugInformation);
 
   if (mPaths == paths) {
-    return;
+    co_return;
   }
   mPaths = paths;
 
@@ -117,7 +117,7 @@ void DCSAircraftTab::OnGameEvent(
     delegates.push_back(std::static_pointer_cast<IPageSource>(
       FolderPageSource::Create(mDXR, mKneeboard, path)));
   }
-  this->SetDelegates(delegates);
+  co_await this->SetDelegates(delegates);
 }
 
 }// namespace OpenKneeboard

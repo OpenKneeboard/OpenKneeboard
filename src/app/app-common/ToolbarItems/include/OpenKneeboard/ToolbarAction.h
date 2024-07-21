@@ -24,6 +24,10 @@
 
 #include <OpenKneeboard/utf8.h>
 
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Foundation.h>
+
 namespace OpenKneeboard {
 
 class ToolbarAction : public virtual ISelectableToolbarItem {
@@ -32,7 +36,9 @@ class ToolbarAction : public virtual ISelectableToolbarItem {
   std::string_view GetGlyph() const override final;
   std::string_view GetLabel() const override final;
 
-  virtual void Execute() = 0;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute()
+    = 0;
 
  protected:
   ToolbarAction() = delete;

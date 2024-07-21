@@ -36,7 +36,7 @@ FolderTab::FolderTab(
     PageSourceWithDelegates(dxr, kbs),
     mPageSource(FolderPageSource::Create(dxr, kbs, path)),
     mPath {path} {
-  this->SetDelegates({mPageSource});
+  this->SetDelegatesFromEmpty({mPageSource});
 }
 
 FolderTab::FolderTab(
@@ -53,11 +53,11 @@ FolderTab::FolderTab(
   std::string_view title,
   const nlohmann::json& settings)
   : FolderTab(
-    dxr,
-    kbs,
-    persistentID,
-    title,
-    settings.at("Path").get<std::filesystem::path>()) {
+      dxr,
+      kbs,
+      persistentID,
+      title,
+      settings.at("Path").get<std::filesystem::path>()) {
 }
 
 FolderTab::~FolderTab() {
@@ -75,19 +75,20 @@ std::string FolderTab::GetStaticGlyph() {
   return "\uE838";
 }
 
-void FolderTab::Reload() {
-  mPageSource->Reload();
+winrt::Windows::Foundation::IAsyncAction FolderTab::Reload() {
+  return mPageSource->Reload();
 }
 
 std::filesystem::path FolderTab::GetPath() const {
   return mPath;
 }
 
-void FolderTab::SetPath(const std::filesystem::path& path) {
+winrt::Windows::Foundation::IAsyncAction FolderTab::SetPath(
+  std::filesystem::path path) {
   if (path == mPath) {
-    return;
+    co_return;
   }
-  mPageSource->SetPath(path);
+  co_await mPageSource->SetPath(path);
   mPath = path;
 }
 

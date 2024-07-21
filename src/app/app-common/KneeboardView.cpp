@@ -440,22 +440,22 @@ void KneeboardView::RenderWithChrome(
   }
 }
 
-void KneeboardView::PostUserAction(UserAction action) {
+winrt::fire_and_forget KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
       this->PreviousTab();
       dprintf("Previous tab to '{}'", this->GetCurrentTab()->GetTitle());
-      return;
+      co_return;
     case UserAction::NEXT_TAB:
       this->NextTab();
       dprintf("Next tab to '{}'", this->GetCurrentTab()->GetTitle());
-      return;
+      co_return;
     case UserAction::PREVIOUS_BOOKMARK:
       this->GoToPreviousBookmark();
-      return;
+      co_return;
     case UserAction::NEXT_BOOKMARK:
       this->GoToNextBookmark();
-      return;
+      co_return;
     case UserAction::NEXT_PAGE:
     case UserAction::TOGGLE_BOOKMARK:
     case UserAction::PREVIOUS_PAGE:
@@ -463,14 +463,14 @@ void KneeboardView::PostUserAction(UserAction action) {
       if (
         auto handler = UserActionHandler::Create(
           mKneeboard, shared_from_this(), this->GetCurrentTabView(), action)) {
-        handler->Execute();
-        return;
+        co_await handler->Execute();
+        co_return;
       }
       dprintf(
         "No KneeboardView action handler for action {}",
         static_cast<int>(action));
       OPENKNEEBOARD_BREAK;
-      return;
+      co_return;
     case UserAction::CYCLE_ACTIVE_VIEW:
     case UserAction::DECREASE_BRIGHTNESS:
     case UserAction::DISABLE_TINT:
@@ -487,7 +487,7 @@ void KneeboardView::PostUserAction(UserAction action) {
     case UserAction::NEXT_PROFILE:
     case UserAction::PREVIOUS_PROFILE:
       // Handled by KneeboardState
-      return;
+      co_return;
   }
   OPENKNEEBOARD_BREAK;
 }

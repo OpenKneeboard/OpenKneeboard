@@ -19,28 +19,18 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/StateMachine.h>
+
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Foundation.h>
 
 namespace OpenKneeboard {
-
-class KneeboardState;
-class KneeboardView;
-class KneeboardView;
-
-class PreviousTabAction final : public ToolbarAction, private EventReceiver {
+class IHasDisposeAsync {
  public:
-  PreviousTabAction() = delete;
-
-  PreviousTabAction(KneeboardState*, const std::shared_ptr<KneeboardView>&);
-  ~PreviousTabAction();
-
-  virtual bool IsEnabled() const override;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
-
- private:
-  KneeboardState* mKneeboardState;
-  std::weak_ptr<KneeboardView> mKneeboardView;
+  virtual winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept
+    = 0;
 };
 
 }// namespace OpenKneeboard

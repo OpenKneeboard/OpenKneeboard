@@ -34,7 +34,7 @@ BrowserTab::BrowserTab(
     mDXR(dxr),
     mKneeboard(kbs),
     mSettings(settings) {
-  this->Reload();
+  fire_and_forget(this->Reload());
 }
 
 BrowserTab::~BrowserTab() {
@@ -50,11 +50,11 @@ std::string BrowserTab::GetStaticGlyph() {
   return {"\ueb41"};
 }
 
-void BrowserTab::Reload() {
+IAsyncAction BrowserTab::Reload() {
   mDelegate = {};
-  this->SetDelegates({});
+  co_await this->SetDelegates({});
   mDelegate = WebView2PageSource::Create(mDXR, mKneeboard, mSettings);
-  this->SetDelegates({mDelegate});
+  co_await this->SetDelegates({mDelegate});
 }
 
 nlohmann::json BrowserTab::GetSettings() const {
@@ -65,12 +65,12 @@ bool BrowserTab::IsSimHubIntegrationEnabled() const {
   return mSettings.mIntegrateWithSimHub;
 }
 
-void BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
+IAsyncAction BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
   if (enabled == this->IsSimHubIntegrationEnabled()) {
-    return;
+    co_return;
   }
   mSettings.mIntegrateWithSimHub = enabled;
-  this->Reload();
+  co_await this->Reload();
   this->evSettingsChangedEvent.Emit();
 }
 
@@ -78,12 +78,12 @@ bool BrowserTab::IsBackgroundTransparent() const {
   return mSettings.mTransparentBackground;
 }
 
-void BrowserTab::SetBackgroundTransparent(bool transparent) {
+IAsyncAction BrowserTab::SetBackgroundTransparent(bool transparent) {
   if (transparent == this->IsBackgroundTransparent()) {
-    return;
+    co_return;
   }
   mSettings.mTransparentBackground = transparent;
-  this->Reload();
+  co_await this->Reload();
   this->evSettingsChangedEvent.Emit();
 }
 
@@ -91,12 +91,12 @@ bool BrowserTab::IsDeveloperToolsWindowEnabled() const {
   return mSettings.mOpenDeveloperToolsWindow;
 }
 
-void BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
+IAsyncAction BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
   if (enabled == this->IsDeveloperToolsWindowEnabled()) {
-    return;
+    co_return;
   }
   mSettings.mOpenDeveloperToolsWindow = enabled;
-  this->Reload();
+  co_await this->Reload();
   this->evSettingsChangedEvent.Emit();
 }
 

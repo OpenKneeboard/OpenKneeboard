@@ -114,6 +114,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
 KneeboardState::~KneeboardState() noexcept {
   OPENKNEEBOARD_TraceLoggingScope("KneeboardState::~KneeboardState()");
   dprint("~KneeboardState()");
+  assert(mDisposed);
 }
 
 winrt::fire_and_forget KneeboardState::final_release(
@@ -244,6 +245,22 @@ void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
     "KneeboardState::NotifyAppWindowIsForeground()",
     TraceLoggingValue(isForeground, "isForeground"));
   mAppWindowIsForeground = isForeground;
+}
+
+IAsyncAction KneeboardState::DisposeAsync() noexcept {
+  const auto keepAlive = shared_from_this();
+
+  auto children = mTabsList->GetTabs() | std::views::transform([](auto it) {
+                    return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
+                  })
+    | std::views::filter([](auto it) { return static_cast<bool>(it); })
+    | std::views::transform([](auto it) { return it->DisposeAsync(); })
+    | std::ranges::to<std::vector>();
+  for (auto&& child: children) {
+    co_await child;
+  }
+
+  mDisposed = true;
 }
 
 void KneeboardState::PostUserAction(UserAction action) {

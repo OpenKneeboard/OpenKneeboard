@@ -58,12 +58,15 @@ class SingleFileTab final : public TabBase,
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
-  virtual void Reload() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 
   std::filesystem::path GetPath() const;
-  virtual void SetPath(const std::filesystem::path& path);
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction SetPath(
+    std::filesystem::path);
 
  private:
   SingleFileTab(
@@ -74,6 +77,8 @@ class SingleFileTab final : public TabBase,
     const std::filesystem::path& path);
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
+
+  void SetPathFromEmpty(const std::filesystem::path& path);
 
   Kind mKind = Kind::Unknown;
   std::filesystem::path mPath;

@@ -63,7 +63,7 @@ class KneeboardView final : private EventReceiver,
   std::string_view GetName() const noexcept;
 
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
-  void PostUserAction(UserAction);
+  winrt::fire_and_forget PostUserAction(UserAction);
 
   std::shared_ptr<TabView> GetCurrentTabView() const;
   std::shared_ptr<ITab> GetCurrentTab() const;

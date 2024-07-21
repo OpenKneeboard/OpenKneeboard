@@ -48,7 +48,8 @@ class ClearUserInputAction final : public ToolbarAction,
   ~ClearUserInputAction();
 
   virtual bool IsEnabled() const override;
-  virtual void Execute() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
 
   virtual std::string_view GetConfirmationTitle() const override;
   virtual std::string_view GetConfirmationDescription() const override;

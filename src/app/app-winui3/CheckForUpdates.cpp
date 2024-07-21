@@ -76,7 +76,7 @@ static std::string ToSemVerString(std::string_view raw) {
   return ret;
 }
 
-static fire_and_forget ShowResultDialog(
+static winrt::fire_and_forget ShowResultDialog(
   std::string_view message,
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot);
@@ -428,7 +428,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
   co_return UpdateResult::NotInstallingUpdate;
 }
 
-static fire_and_forget ShowResultDialog(
+static winrt::fire_and_forget ShowResultDialog(
   std::string_view message,
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot) {

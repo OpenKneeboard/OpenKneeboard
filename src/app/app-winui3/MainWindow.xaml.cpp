@@ -719,6 +719,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
   auto self = get_strong();
   self->RemoveAllEventListeners();
+  co_await mKneeboard->DisposeAsync();
   mWinEventHook.reset();
   // TODO: a lot of this should be moved to the Application class.
   dprint("Removing instance data...");

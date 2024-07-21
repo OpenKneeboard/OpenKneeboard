@@ -37,9 +37,9 @@ class SwitchProfileAction final : public ToolbarAction,
   ~SwitchProfileAction();
 
   virtual bool IsEnabled() const override;
-  ;
   virtual bool IsChecked() const override;
-  virtual void Execute() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
 
   SwitchProfileAction() = delete;
 

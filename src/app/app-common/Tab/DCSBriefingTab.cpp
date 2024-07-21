@@ -52,7 +52,7 @@ DCSBriefingTab::DCSBriefingTab(
     mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(
       std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {
-  this->SetDelegates({
+  this->SetDelegatesFromEmpty({
     std::static_pointer_cast<IPageSource>(mTextPages),
     std::static_pointer_cast<IPageSource>(mImagePages),
   });
@@ -70,7 +70,7 @@ std::string DCSBriefingTab::GetStaticGlyph() {
   return "\uE95D";
 }
 
-void DCSBriefingTab::Reload() noexcept {
+winrt::Windows::Foundation::IAsyncAction DCSBriefingTab::Reload() noexcept {
   const scope_exit emitEvents([this]() {
     this->evContentChangedEvent.Emit();
     this->evAvailableFeaturesChangedEvent.Emit();
@@ -80,12 +80,12 @@ void DCSBriefingTab::Reload() noexcept {
   mTextPages->ClearText();
 
   if (!mMission) {
-    return;
+    co_return;
   }
 
   const auto root = mMission->GetExtractedPath();
   if (!std::filesystem::exists(root / "mission")) {
-    return;
+    co_return;
   }
 
   const auto localized = root / "l10n" / "DEFAULT";
@@ -154,20 +154,20 @@ void DCSBriefingTab::Reload() noexcept {
   this->evContentChangedEvent.Emit();
 }
 
-void DCSBriefingTab::OnGameEvent(
-  const GameEvent& event,
-  const std::filesystem::path& installPath,
-  const std::filesystem::path&) {
+winrt::fire_and_forget DCSBriefingTab::OnGameEvent(
+  GameEvent event,
+  std::filesystem::path installPath,
+  std::filesystem::path) {
   mInstallationPath = installPath;
   if (event.name == DCS::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
       dprintf("Briefing tab: mission '{}' does not exist", event.value);
-      return;
+      co_return;
     }
 
     if (mMission && mMission->GetZipPath() == missionZip) {
-      return;
+      co_return;
     }
 
     // Stop watching folders before potentially cleaning
@@ -175,8 +175,7 @@ void DCSBriefingTab::OnGameEvent(
     mImagePages->SetPaths({});
     mMission = DCSExtractedMission::Get(missionZip);
     dprintf("Briefing tab: loading {}", missionZip);
-    this->Reload();
-    return;
+    co_await this->Reload();
   }
 
   auto state = mDCSState;
@@ -192,12 +191,12 @@ void DCSBriefingTab::OnGameEvent(
       .mLong = raw["longitude"],
     };
   } else {
-    return;
+    co_return;
   }
 
   if (state != mDCSState) {
     mDCSState = state;
-    this->Reload();
+    co_await this->Reload();
   }
 }
 

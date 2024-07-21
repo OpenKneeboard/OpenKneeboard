@@ -295,16 +295,16 @@ fire_and_forget TabsSettingsPage::RemoveTab(
   const auto tabs = tabsList->GetTabs();
   auto it = std::ranges::find(tabs, tab);
   auto idx = static_cast<OpenKneeboard::TabIndex>(it - tabs.begin());
-  tabsList->RemoveTab(idx);
+  co_await tabsList->RemoveTab(idx);
   List()
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
     .RemoveAt(idx);
 }
 
-void TabsSettingsPage::CreateTab(
-  const IInspectable& sender,
-  const RoutedEventArgs&) noexcept {
+winrt::fire_and_forget TabsSettingsPage::CreateTab(
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
   auto tabType = static_cast<TabType>(
     unbox_value<uint64_t>(sender.as<MenuFlyoutItem>().Tag()));
 
@@ -322,19 +322,19 @@ void TabsSettingsPage::CreateTab(
   switch (tabType) {
     case TabType::Folder:
       CreateFolderTab();
-      return;
+      co_return;
     case TabType::SingleFile:
       CreateFileTab<SingleFileTab>();
-      return;
+      co_return;
     case TabType::EndlessNotebook:
       CreateFileTab<EndlessNotebookTab>(_("Open Template"));
-      return;
+      co_return;
     case TabType::WindowCapture:
       CreateWindowCaptureTab();
-      return;
+      co_return;
     case TabType::Browser:
       CreateBrowserTab();
-      return;
+      co_return;
   }
 #define IT(_, type) \
   if (tabType == TabType::type) { \
@@ -342,8 +342,8 @@ void TabsSettingsPage::CreateTab(
                     type##Tab, \
                     audited_ptr<DXResources>, \
                     KneeboardState*>) { \
-      AddTabs({std::make_shared<type##Tab>(mDXR, mKneeboard.get())}); \
-      return; \
+      co_await AddTabs({std::make_shared<type##Tab>(mDXR, mKneeboard.get())}); \
+      co_return; \
     } else { \
       throw std::logic_error( \
         std::format("Don't know how to construct {}Tab", #type)); \
@@ -385,7 +385,7 @@ winrt::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
   }
   settings.mURI = uri;
 
-  this->AddTabs({std::make_shared<BrowserTab>(
+  co_await this->AddTabs({std::make_shared<BrowserTab>(
     mDXR, mKneeboard.get(), random_guid(), _("Web Dashboard"), settings)});
 }
 
@@ -469,7 +469,8 @@ winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
       std::regex_constants::format_sed);
   }
 
-  this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
+  co_await this->AddTabs(
+    {WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
 }
 
 winrt::guid TabsSettingsPage::GetFilePickerPersistenceGuid() {
@@ -477,7 +478,8 @@ winrt::guid TabsSettingsPage::GetFilePickerPersistenceGuid() {
 }
 
 template <class T>
-void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
+winrt::fire_and_forget TabsSettingsPage::CreateFileTab(
+  const std::string& pickerDialogTitle) {
   FilePicker picker(gMainWindow);
   picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
   picker.SuggestedStartLocation(FOLDERID_Documents);
@@ -497,7 +499,7 @@ void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
 
   auto files = picker.PickMultipleFiles();
   if (files.empty()) {
-    return;
+    co_return;
   }
 
   std::vector<std::shared_ptr<OpenKneeboard::ITab>> newTabs;
@@ -508,23 +510,25 @@ void TabsSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
     newTabs.push_back(detail::make_shared<T>(mDXR, mKneeboard.get(), path));
   }
 
-  this->AddTabs(newTabs);
+  co_await this->AddTabs(newTabs);
 }
 
-void TabsSettingsPage::CreateFolderTab() {
+winrt::fire_and_forget TabsSettingsPage::CreateFolderTab() {
   FilePicker picker(gMainWindow);
   picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
   picker.SuggestedStartLocation(FOLDERID_Documents);
 
   auto folder = picker.PickSingleFolder();
   if (!folder) {
-    return;
+    co_return;
   }
 
-  this->AddTabs({std::make_shared<FolderTab>(mDXR, mKneeboard.get(), *folder)});
+  co_await this->AddTabs(
+    {std::make_shared<FolderTab>(mDXR, mKneeboard.get(), *folder)});
 }
 
-void TabsSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+winrt::Windows::Foundation::IAsyncAction TabsSettingsPage::AddTabs(
+  const std::vector<std::shared_ptr<ITab>>& tabs) {
   const std::shared_lock lock(*mKneeboard);
 
   mUIIsChangingTabs = true;
@@ -542,7 +546,7 @@ void TabsSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   for (const auto& tab: tabs) {
     allTabs.insert(allTabs.begin() + idx++, tab);
   }
-  tabsList->SetTabs(allTabs);
+  co_await tabsList->SetTabs(allTabs);
 
   idx = initialIndex;
   auto items = List()
@@ -553,9 +557,9 @@ void TabsSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   }
 }
 
-void TabsSettingsPage::OnTabsChanged(
-  const IInspectable&,
-  const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept {
+winrt::fire_and_forget TabsSettingsPage::OnTabsChanged(
+  IInspectable,
+  Windows::Foundation::Collections::IVectorChangedEventArgs) noexcept {
   const std::shared_lock lock(*mKneeboard);
   // For add/remove, the kneeboard state is updated first, but for reorder,
   // the ListView is the source of truth.
@@ -568,7 +572,7 @@ void TabsSettingsPage::OnTabsChanged(
   auto tabs = tabsList->GetTabs();
   if (items.Size() != tabs.size()) {
     // ignore the deletion ...
-    return;
+    co_return;
   }
   // ... but act on the insert :)
   mUIIsChangingTabs = true;
@@ -584,7 +588,7 @@ void TabsSettingsPage::OnTabsChanged(
     }
     reorderedTabs.push_back(*it);
   }
-  tabsList->SetTabs(reorderedTabs);
+  co_await tabsList->SetTabs(reorderedTabs);
 }
 
 TabUIData::~TabUIData() {
@@ -678,24 +682,26 @@ bool BrowserTabUIData::IsSimHubIntegrationEnabled() const {
   return GetTab()->IsSimHubIntegrationEnabled();
 }
 
-void BrowserTabUIData::IsSimHubIntegrationEnabled(bool value) {
-  GetTab()->SetSimHubIntegrationEnabled(value);
+winrt::fire_and_forget BrowserTabUIData::IsSimHubIntegrationEnabled(
+  bool value) {
+  co_await GetTab()->SetSimHubIntegrationEnabled(value);
 }
 
 bool BrowserTabUIData::IsBackgroundTransparent() const {
   return GetTab()->IsBackgroundTransparent();
 }
 
-void BrowserTabUIData::IsBackgroundTransparent(bool value) {
-  GetTab()->SetBackgroundTransparent(value);
+winrt::fire_and_forget BrowserTabUIData::IsBackgroundTransparent(bool value) {
+  co_await GetTab()->SetBackgroundTransparent(value);
 }
 
 bool BrowserTabUIData::IsDeveloperToolsWindowEnabled() const {
   return GetTab()->IsDeveloperToolsWindowEnabled();
 }
 
-void BrowserTabUIData::IsDeveloperToolsWindowEnabled(bool value) {
-  GetTab()->SetDeveloperToolsWindowEnabled(value);
+winrt::fire_and_forget BrowserTabUIData::IsDeveloperToolsWindowEnabled(
+  bool value) {
+  co_await GetTab()->SetDeveloperToolsWindowEnabled(value);
 }
 
 std::shared_ptr<BrowserTab> BrowserTabUIData::GetTab() const {

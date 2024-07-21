@@ -60,21 +60,21 @@ bool TabNextPageAction::IsEnabled() const {
   return tv->GetPageID() != pages.back();
 }
 
-void TabNextPageAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction TabNextPageAction::Execute() {
   auto tv = mTabView.lock();
   if (!tv) {
-    return;
+    co_return;
   }
 
   const auto pages = tv->GetPageIDs();
 
   if (pages.size() < 2) {
-    return;
+    co_return;
   }
 
   auto it = std::ranges::find(pages, tv->GetPageID());
   if (it == pages.end()) {
-    return;
+    co_return;
   }
 
   it++;
@@ -82,7 +82,7 @@ void TabNextPageAction::Execute() {
     if (mKneeboard->GetAppSettings().mLoopPages) {
       it = pages.begin();
     } else {
-      return;
+      co_return;
     }
   }
 

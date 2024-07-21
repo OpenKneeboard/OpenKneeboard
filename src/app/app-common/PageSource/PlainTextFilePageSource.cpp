@@ -36,7 +36,8 @@ PlainTextFilePageSource::PlainTextFilePageSource(
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(
       std::make_shared<PlainTextPageSource>(dxr, kbs, _("[empty file]"))) {
-  this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
+  this->SetDelegatesFromEmpty(
+    {std::static_pointer_cast<IPageSource>(mPageSource)});
 }
 
 PlainTextFilePageSource::~PlainTextFilePageSource() {

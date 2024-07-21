@@ -71,33 +71,33 @@ bool ToggleBookmarkAction::IsActive() {
   return view->CurrentPageHasBookmark();
 }
 
-void ToggleBookmarkAction::Activate() {
+winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Activate() {
   if (IsActive()) {
-    return;
+    co_return;
   }
 
   const auto view = mKneeboardView.lock();
   if (!view) {
-    return;
+    co_return;
   }
   view->AddBookmarkForCurrentPage();
 }
 
-void ToggleBookmarkAction::Deactivate() {
+winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Deactivate() {
   if (!IsActive()) {
-    return;
+    co_return;
   }
 
   const auto view = mKneeboardView.lock();
   if (!view) {
-    return;
+    co_return;
   }
   view->RemoveBookmarkForCurrentPage();
 }
 
-void ToggleBookmarkAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Execute() {
   // Re-implemented to put in UserActionHandler vtable
-  ToolbarToggleAction::Execute();
+  co_await ToolbarToggleAction::Execute();
 }
 
 }// namespace OpenKneeboard

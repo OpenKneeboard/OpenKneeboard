@@ -51,21 +51,21 @@ bool ReloadTabAction::IsEnabled() const {
   return true;
 }
 
-void ReloadTabAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction ReloadTabAction::Execute() {
   if (mMode == Mode::ThisTab) {
     auto tv = mTabView.lock();
     if (!tv) {
-      return;
+      co_return;
     }
     auto tab = tv->GetTab();
     if (tab) {
-      tab->Reload();
+      co_await tab->Reload();
     }
-    return;
+    co_return;
   }
 
   for (auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
-    tab->Reload();
+    co_await tab->Reload();
   }
 }
 

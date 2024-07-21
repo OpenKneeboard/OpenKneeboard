@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IHasDisposeAsync.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
@@ -42,11 +43,15 @@ class DoodleRenderer;
 class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual IPageSourceWithCursorEvents,
                                 public virtual IPageSourceWithNavigation,
+                                public IHasDisposeAsync,
                                 public virtual EventReceiver {
  public:
   PageSourceWithDelegates() = delete;
   PageSourceWithDelegates(const audited_ptr<DXResources>&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
+
+  [[nodiscard]]
+  virtual IAsyncAction DisposeAsync() noexcept override;
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
@@ -65,7 +70,14 @@ class PageSourceWithDelegates : public virtual IPageSource,
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  protected:
-  void SetDelegates(const std::vector<std::shared_ptr<IPageSource>>&);
+  bool mDisposed {false};
+  // This is optional, but can only be called when there are no delegates; it
+  // will fatal otherwise, as it is unable to clear up previous delegates
+  void SetDelegatesFromEmpty(const std::vector<std::shared_ptr<IPageSource>>&);
+
+  [[nodiscard]]
+  winrt::Windows::Foundation::IAsyncAction SetDelegates(
+    std::vector<std::shared_ptr<IPageSource>>);
 
  private:
   audited_ptr<DXResources> mDXResources;

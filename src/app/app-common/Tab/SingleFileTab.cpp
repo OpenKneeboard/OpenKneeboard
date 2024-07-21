@@ -39,7 +39,7 @@ SingleFileTab::SingleFileTab(
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {
-  this->SetPath(path);
+  this->SetPathFromEmpty(path);
 }
 
 SingleFileTab::SingleFileTab(
@@ -91,24 +91,33 @@ std::filesystem::path SingleFileTab::GetPath() const {
   return mPath;
 }
 
-void SingleFileTab::SetPath(const std::filesystem::path& rawPath) {
+winrt::Windows::Foundation::IAsyncAction SingleFileTab::SetPath(
+  std::filesystem::path rawPath) {
   auto path = rawPath;
   if (std::filesystem::exists(path)) {
     path = std::filesystem::canonical(path);
   }
   if (path == mPath) {
-    return;
+    co_return;
   }
   mPath = path;
 
-  this->Reload();
+  co_await this->Reload();
 }
 
-void SingleFileTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction SingleFileTab::Reload() {
   mKind = Kind::Unknown;
+  auto path = std::move(mPath);
+  co_await this->SetDelegates({});
+  this->SetPathFromEmpty(path);
+}
+
+void SingleFileTab::SetPathFromEmpty(const std::filesystem::path& path) {
+  assert(mPath.empty());
+  mPath = path;
+
   auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
   if (!delegate) {
-    this->SetDelegates({});
     return;
   }
 
@@ -120,7 +129,7 @@ void SingleFileTab::Reload() {
     mKind = Kind::ImageFile;
   }
 
-  this->SetDelegates({delegate});
+  this->SetDelegatesFromEmpty({delegate});
 }
 
 }// namespace OpenKneeboard

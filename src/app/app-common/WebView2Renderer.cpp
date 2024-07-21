@@ -904,10 +904,15 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
   };
 }
 
-winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Dispose() noexcept {
-  winrt::apartment_context thread;
+winrt::Windows::Foundation::IAsyncAction
+WebView2Renderer::DisposeAsync() noexcept {
+  if (mState.Get() == State::Disposed) {
+    co_return;
+  }
 
+  winrt::apartment_context thread;
   auto weak = weak_from_this();
+
   mState.Transition<State::InitializedComposition, State::Disposing>();
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
 
@@ -933,12 +938,12 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Dispose() noexcept {
 winrt::fire_and_forget WebView2Renderer::final_release(
   std::unique_ptr<WebView2Renderer> self) {
   self->mState.Transition<State::Disposed, State::Releasing>();
-
   co_await self->mUIThread;
 
-  auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
-
+  // Actually done during the next step, but can't do anything there :)
   self->mState.Transition<State::Releasing, State::Released>();
+
+  auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
 
   WGCRenderer::final_release(std::move(wgcSelf));
   co_return;

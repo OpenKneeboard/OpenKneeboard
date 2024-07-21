@@ -491,23 +491,23 @@ bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {
   return mAction == other.mAction;
 }
 
-void HeaderUILayer::OnClick(const Button& button) {
+winrt::fire_and_forget HeaderUILayer::OnClick(const Button& button) {
   auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
   if (action) {
-    action->Execute();
-    return;
+    co_await action->Execute();
+    co_return;
   }
 
   auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(button.mAction);
   if (!flyout) {
-    return;
+    co_return;
   }
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
     secondaryMenu.reset();
     evNeedsRepaintEvent.Emit();
-    return;
+    co_return;
   }
   secondaryMenu = FlyoutMenuUILayer::Create(
     mDXResources,

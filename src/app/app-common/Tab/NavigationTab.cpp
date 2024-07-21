@@ -361,7 +361,8 @@ void NavigationTab::RenderPreviewLayer(
   }
 }
 
-void NavigationTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction NavigationTab::Reload() {
+  co_return;
 }
 
 }// namespace OpenKneeboard

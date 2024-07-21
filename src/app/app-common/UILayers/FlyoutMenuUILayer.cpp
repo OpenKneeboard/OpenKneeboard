@@ -496,11 +496,11 @@ bool FlyoutMenuUILayer::MenuItem::operator==(
   return mItem == other.mItem;
 }
 
-void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
+winrt::fire_and_forget FlyoutMenuUILayer::OnClick(const MenuItem& item) {
   auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item.mItem);
   if (checkable && checkable->IsChecked()) {
     evCloseMenuRequestedEvent.Emit();
-    return;
+    co_return;
   }
 
   auto confirmable
@@ -516,19 +516,19 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
     });
     mPrevious = prev;
     evNeedsRepaintEvent.Emit();
-    return;
+    co_return;
   }
 
   auto action = std::dynamic_pointer_cast<ToolbarAction>(item.mItem);
   if (action) {
-    action->Execute();
+    co_await action->Execute();
     evCloseMenuRequestedEvent.Emit();
-    return;
+    co_return;
   }
 
   auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(item.mItem);
   if (!flyout) {
-    return;
+    co_return;
   }
 
   auto rect = item.mRect;

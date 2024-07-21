@@ -46,16 +46,18 @@ bool TabNavigationAction::IsActive() {
   return tv && tv->GetTabMode() == TabMode::Navigation;
 }
 
-void TabNavigationAction::Activate() {
+winrt::Windows::Foundation::IAsyncAction TabNavigationAction::Activate() {
   if (auto tv = mTabView.lock()) {
     tv->SetTabMode(TabMode::Navigation);
   }
+  co_return;
 }
 
-void TabNavigationAction::Deactivate() {
+winrt::Windows::Foundation::IAsyncAction TabNavigationAction::Deactivate() {
   if (auto tv = mTabView.lock()) {
     tv->SetTabMode(TabMode::Normal);
   }
+  co_return;
 }
 
 }// namespace OpenKneeboard

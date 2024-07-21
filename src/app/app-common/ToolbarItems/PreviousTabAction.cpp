@@ -18,8 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/TabsList.h>
 
@@ -58,10 +58,11 @@ bool PreviousTabAction::IsEnabled() const {
   return mKneeboardState->GetAppSettings().mLoopTabs;
 }
 
-void PreviousTabAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction PreviousTabAction::Execute() {
   if (auto kbv = mKneeboardView.lock()) {
     kbv->PreviousTab();
   }
+  co_return;
 }
 
 }// namespace OpenKneeboard

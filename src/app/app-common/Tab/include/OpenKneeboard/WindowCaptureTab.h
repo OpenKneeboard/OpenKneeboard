@@ -83,7 +83,8 @@ class WindowCaptureTab final
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
-  virtual void Reload() final override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() final override;
   virtual nlohmann::json GetSettings() const override;
 
   MatchSpecification GetMatchSpecification() const;

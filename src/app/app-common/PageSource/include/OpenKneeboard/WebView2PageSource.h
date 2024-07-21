@@ -49,6 +49,7 @@ namespace OpenKneeboard {
 class WebView2PageSource final
   : public virtual IPageSourceWithInternalCaching,
     public virtual IPageSourceWithCursorEvents,
+    public IHasDisposeAsync,
     public EventReceiver,
     public std::enable_shared_from_this<WebView2PageSource> {
  public:
@@ -57,13 +58,14 @@ class WebView2PageSource final
   WebView2PageSource() = delete;
   virtual ~WebView2PageSource();
 
+  virtual winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept
+    override;
+
   static bool IsAvailable();
   static std::string GetVersion();
 
   static std::shared_ptr<WebView2PageSource>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
-  static winrt::fire_and_forget final_release(
-    std::unique_ptr<WebView2PageSource>);
 
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override;
@@ -89,6 +91,11 @@ class WebView2PageSource final
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Settings&);
+
+  winrt::Windows::Foundation::IAsyncAction DisposeAsyncImpl() noexcept;
+  winrt::Windows::Foundation::IAsyncAction mDisposal {nullptr};
+  std::once_flag mDisposeOnce;
+  bool mDisposed {false};
 
   winrt::fire_and_forget Init();
 

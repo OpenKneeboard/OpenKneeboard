@@ -43,10 +43,11 @@ bool SwitchProfileAction::IsEnabled() const {
   return true;
 }
 
-void SwitchProfileAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction SwitchProfileAction::Execute() {
   auto profileSettings = mKneeboardState->GetProfileSettings();
   profileSettings.mActiveProfile = mProfileID;
   mKneeboardState->SetProfileSettings(profileSettings);
+  co_return;
 }
 
 }// namespace OpenKneeboard

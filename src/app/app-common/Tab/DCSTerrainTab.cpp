@@ -63,10 +63,10 @@ std::string DCSTerrainTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-void DCSTerrainTab::Reload() {
+winrt::Windows::Foundation::IAsyncAction DCSTerrainTab::Reload() {
   mPaths = {};
   mTerrain = {};
-  this->SetDelegates({});
+  co_await this->SetDelegates({});
 }
 
 static std::string_view NormalizeTerrain(std::string_view terrain) {
@@ -81,15 +81,15 @@ static std::string_view NormalizeTerrain(std::string_view terrain) {
   return terrain;
 }
 
-void DCSTerrainTab::OnGameEvent(
-  const GameEvent& event,
-  const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath) {
+winrt::fire_and_forget DCSTerrainTab::OnGameEvent(
+  GameEvent event,
+  std::filesystem::path installPath,
+  std::filesystem::path savedGamesPath) {
   if (event.name != DCS::EVT_TERRAIN) {
-    return;
+    co_return;
   }
   if (event.value == mTerrain) {
-    return;
+    co_return;
   }
   mTerrain = event.value;
   const auto normalized = NormalizeTerrain(event.value);
@@ -124,7 +124,7 @@ void DCSTerrainTab::OnGameEvent(
   evDebugInformationHasChanged.Emit(mDebugInformation);
 
   if (paths == mPaths) {
-    return;
+    co_return;
   }
   mPaths = paths;
 
@@ -133,7 +133,7 @@ void DCSTerrainTab::OnGameEvent(
     delegates.push_back(std::static_pointer_cast<IPageSource>(
       FolderPageSource::Create(mDXR, mKneeboard, path)));
   }
-  this->SetDelegates(delegates);
+  co_await this->SetDelegates(delegates);
 }
 
 }// namespace OpenKneeboard

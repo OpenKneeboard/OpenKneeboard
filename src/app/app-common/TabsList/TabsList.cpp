@@ -101,11 +101,11 @@ void TabsList::LoadSettings(const nlohmann::json& config) {
     dprintf("Couldn't load tab with type {}", rawType);
     OPENKNEEBOARD_BREAK;
   }
-  this->SetTabs(tabs);
+  fire_and_forget(this->SetTabs(tabs));
 }
 
 void TabsList::LoadDefaultSettings() {
-  this->SetTabs({
+  fire_and_forget(this->SetTabs({
     std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
@@ -115,7 +115,7 @@ void TabsList::LoadDefaultSettings() {
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),
     std::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
     std::make_shared<DCSTerrainTab>(mDXR, mKneeboard),
-  });
+  }));
 }
 
 nlohmann::json TabsList::GetSettings() const {
@@ -158,9 +158,23 @@ std::vector<std::shared_ptr<ITab>> TabsList::GetTabs() const {
   return mTabs;
 }
 
-void TabsList::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+IAsyncAction TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
   if (std::ranges::equal(tabs, mTabs)) {
-    return;
+    co_return;
+  }
+
+  std::vector<IAsyncAction> disposers;
+  for (auto tab: mTabs) {
+    if (!std::ranges::contains(tabs, tab->GetRuntimeID(), [](auto it) {
+          return it->GetRuntimeID();
+        })) {
+      if (auto p = std::dynamic_pointer_cast<IHasDisposeAsync>(tab)) {
+        disposers.push_back(p->DisposeAsync());
+      }
+    }
+  }
+  for (auto& it: disposers) {
+    co_await it;
   }
 
   mTabs = tabs;
@@ -177,20 +191,20 @@ void TabsList::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   evSettingsChangedEvent.Emit();
 }
 
-void TabsList::InsertTab(TabIndex index, const std::shared_ptr<ITab>& tab) {
+IAsyncAction TabsList::InsertTab(TabIndex index, std::shared_ptr<ITab> tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
-  this->SetTabs(tabs);
+  co_await this->SetTabs(tabs);
 }
 
-void TabsList::RemoveTab(TabIndex index) {
+IAsyncAction TabsList::RemoveTab(TabIndex index) {
   if (index >= mTabs.size()) {
-    return;
+    co_return;
   }
 
   auto tabs = mTabs;
   tabs.erase(tabs.begin() + index);
-  this->SetTabs(tabs);
+  co_await this->SetTabs(tabs);
 }
 
 }// namespace OpenKneeboard

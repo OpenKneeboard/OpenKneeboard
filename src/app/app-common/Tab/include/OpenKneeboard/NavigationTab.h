@@ -50,7 +50,9 @@ class NavigationTab final : public TabBase,
   ~NavigationTab();
 
   virtual std::string GetGlyph() const override;
-  virtual void Reload() override;
+
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;

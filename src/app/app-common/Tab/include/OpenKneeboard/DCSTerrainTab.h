@@ -45,7 +45,8 @@ class DCSTerrainTab final : public TabBase,
     std::string_view title);
   ~DCSTerrainTab();
 
-  virtual void Reload() override;
+  [[nodiscard]]
+  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
@@ -61,10 +62,10 @@ class DCSTerrainTab final : public TabBase,
   std::string mTerrain;
   std::vector<std::filesystem::path> mPaths;
 
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path&,
-    const std::filesystem::path&) override;
+  virtual winrt::fire_and_forget OnGameEvent(
+    GameEvent,
+    std::filesystem::path,
+    std::filesystem::path) override;
 };
 
 }// namespace OpenKneeboard

@@ -21,16 +21,16 @@
 
 namespace OpenKneeboard {
 
-void ToolbarToggleAction::Execute() {
+winrt::Windows::Foundation::IAsyncAction ToolbarToggleAction::Execute() {
   if (!this->IsEnabled()) {
-    return;
+    co_return;
   }
 
   if (this->IsActive()) {
-    this->Deactivate();
-    return;
+    co_await this->Deactivate();
+    co_return;
   }
-  this->Activate();
+  co_await this->Activate();
 }
 
 }// namespace OpenKneeboard
