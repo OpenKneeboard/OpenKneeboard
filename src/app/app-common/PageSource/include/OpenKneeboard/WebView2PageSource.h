@@ -96,13 +96,29 @@ class WebView2PageSource final
   winrt::Windows::Foundation::IAsyncAction mDisposal {nullptr};
   std::once_flag mDisposeOnce;
   bool mDisposed {false};
-  bool mInitialized {false};
 
   winrt::fire_and_forget Init();
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;
+
+  enum class RenderersState {
+    Constructed,
+    Initializing,
+    Ready,
+    ChangingModes,
+  };
+  StateMachine<
+    RenderersState,
+    RenderersState::Constructed,
+    std::array {
+      Transition {RenderersState::Constructed, RenderersState::Initializing},
+      Transition {RenderersState::Initializing, RenderersState::Ready},
+      Transition {RenderersState::Ready, RenderersState::ChangingModes},
+      Transition {RenderersState::ChangingModes, RenderersState::Ready},
+    }>
+    mRenderersState;
 
   winrt::Windows::System::DispatcherQueueController mWorkerDQC {nullptr};
   winrt::Windows::System::DispatcherQueue mWorkerDQ {nullptr};

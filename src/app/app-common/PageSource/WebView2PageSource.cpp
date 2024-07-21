@@ -57,6 +57,9 @@ winrt::fire_and_forget WebView2PageSource::Init() {
   }
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
+
+  mRenderersState
+    .Transition<RenderersState::Constructed, RenderersState::Initializing>();
   co_await winrt::resume_foreground(mWorkerDQ);
   auto self = weak.lock();
   if (!self) {
@@ -104,7 +107,9 @@ winrt::fire_and_forget WebView2PageSource::Init() {
   ConnectRenderer(renderer.get());
   mDocumentResources.mRenderers.emplace(
     mScrollableContentRendererKey, std::move(renderer));
-  mInitialized = true;
+
+  mRenderersState
+    .Transition<RenderersState::Initializing, RenderersState::Ready>();
 }
 
 WebView2PageSource::WebView2PageSource(
@@ -265,7 +270,7 @@ void WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
-  if (!mInitialized) {
+  if (mRenderersState.Get() != RenderersState::Ready) {
     return;
   }
   const auto isPageMode
@@ -281,7 +286,7 @@ void WebView2PageSource::RenderPage(
     = isPageMode ? view->GetRuntimeID() : mScrollableContentRendererKey;
 
   if (!mDocumentResources.mRenderers.contains(key)) {
-    assert(!isPageMode);
+    assert(isPageMode);
     auto renderer = WebView2Renderer::Create(
       mDXResources,
       mKneeboard,
@@ -313,6 +318,8 @@ void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {
 winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
   std::vector<APIPage> pages) {
   auto keepAlive = shared_from_this();
+  mRenderersState
+    .Transition<RenderersState::Ready, RenderersState::ChangingModes>();
 
   mDocumentResources.mPages = pages;
 
@@ -326,6 +333,8 @@ winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
       ->DisposeAsync();
     mDocumentResources.mRenderers.erase(mScrollableContentRendererKey);
   }
+  mRenderersState
+    .Transition<RenderersState::ChangingModes, RenderersState::Ready>();
 
   evContentChangedEvent.Emit();
   evAvailableFeaturesChangedEvent.Emit();

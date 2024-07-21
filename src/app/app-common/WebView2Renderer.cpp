@@ -717,8 +717,16 @@ WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
       "The experimental feature {} is required.", PageBasedContentFeature);
   }
 
-  if ((!dr.mPages.empty()) && dr.mContentMode == ContentMode::Scrollable) {
+  if (dr.mContentMode == ContentMode::Scrollable) {
     dr.mContentMode = ContentMode::PageBased;
+    if (!mViewInfo) {
+      // If we don't have a view, that means:
+      // 1. we have not yet switched to renderer-per-view
+      // 2. so this instance will be the first to call `SetPages()`
+      // 3. So our current pages are the 'placeholder' single page
+      assert(dr.mPages.size() == 1);
+      dr.mPages.clear();
+    }
   }
 
   co_return nlohmann::json {
