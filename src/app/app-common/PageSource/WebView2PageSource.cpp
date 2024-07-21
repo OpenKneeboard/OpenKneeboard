@@ -183,10 +183,17 @@ WebView2PageSource::DisposeAsyncImpl() noexcept {
 }
 
 void WebView2PageSource::PostCursorEvent(
-  KneeboardViewID ctx,
+  KneeboardViewID view,
   const CursorEvent& event,
-  PageID pageID) {
-  // FIXME: delegate to correct WebView2Renderer
+  PageID) {
+  const auto key = (mDocumentResources.mContentMode == ContentMode::PageBased)
+    ? view
+    : mScrollableContentRendererKey;
+  auto it = mDocumentResources.mRenderers.find(key);
+  if (it == mDocumentResources.mRenderers.end()) {
+    return;
+  }
+  it->second->PostCursorEvent(view, event);
 }
 
 bool WebView2PageSource::CanClearUserInput(PageID pageID) const {
@@ -258,6 +265,9 @@ void WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
+  if (!mInitialized) {
+    return;
+  }
   const auto isPageMode
     = (mDocumentResources.mContentMode == ContentMode::PageBased);
 
@@ -271,7 +281,7 @@ void WebView2PageSource::RenderPage(
     = isPageMode ? view->GetRuntimeID() : mScrollableContentRendererKey;
 
   if (!mDocumentResources.mRenderers.contains(key)) {
-    assert(isPageMode);
+    assert(!isPageMode);
     auto renderer = WebView2Renderer::Create(
       mDXResources,
       mKneeboard,
