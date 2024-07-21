@@ -156,6 +156,7 @@ WebView2PageSource::DisposeAsyncImpl() noexcept {
 
     mEnvironment = nullptr;
     co_await mUIThread;
+    mDocumentResources = {};
     mWorkerDQ = {nullptr};
     co_await mWorkerDQC.ShutdownQueueAsync();
   }
