@@ -51,14 +51,14 @@ using wformat_string = std::_Fmt_wstring<T...>;
 }// namespace detail
 
 template <typename... Args>
+  requires(sizeof...(Args) >= 1)
 void dprintf(detail::format_string<Args...> fmt, Args&&... args) {
-  static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
 template <typename... Args>
+  requires(sizeof...(Args) >= 1)
 void dprintf(detail::wformat_string<Args...> fmt, Args&&... args) {
-  static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 

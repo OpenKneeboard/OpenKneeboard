@@ -462,6 +462,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   TraceLoggingWrite(gTraceProvider, "ApplicationExit");
 
   if (gDXResources.use_count() != 1) {
+    dprint("----- POTENTIAL LEAK -----");
+    gDXResources.dump_refs("gDXResources");
     OPENKNEEBOARD_BREAK;
   }
   gDXResources = nullptr;

@@ -98,6 +98,19 @@ class audited_ptr {
     return mImpl.use_count();
   }
 
+  void dump_refs(std::string_view debugLabel) const {
+    const auto refs = mRefData->mRefs;
+    dprintf("DEBUG: {} references remaining to `{}`", refs.size(), debugLabel);
+    for (const auto& [id, loc]: refs) {
+      dprintf(
+        "- {} @ {}:{}:{}",
+        loc.function_name(),
+        loc.file_name(),
+        loc.line(),
+        loc.column());
+    }
+  }
+
   audited_ptr& copy_from(
     const audited_ptr& other,
     const std::source_location& loc = std::source_location::current()) {
