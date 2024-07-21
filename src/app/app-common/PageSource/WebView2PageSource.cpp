@@ -142,6 +142,7 @@ winrt::fire_and_forget WebView2PageSource::final_release(
   co_await self->mUIThread;
   co_await self->mDQC.ShutdownQueueAsync();
   co_await self->mUIThread;
+  self->RemoveAllEventListeners();
   co_return;
 }
 
