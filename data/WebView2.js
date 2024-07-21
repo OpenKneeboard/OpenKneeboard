@@ -129,7 +129,7 @@ class OpenKneeboardAPI extends EventTarget {
                         if (message.result) {
                             call.resolve(message.result);
                         } else {
-                            console.log(`⚠️ OpenKneeboard API error: '${call.messageName}' => '${message.error}'`);
+                            console.log(`⚠️ OpenKneeboard API error: '${call.messageName}()' => '${message.error}'`);
                             call.reject(new OpenKneeboardAPIError(message.error, call.messageName));
                         }
                     } finally {
