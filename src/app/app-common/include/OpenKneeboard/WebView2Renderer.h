@@ -40,6 +40,14 @@ struct ExperimentalFeature {
   bool operator==(const ExperimentalFeature&) const noexcept = default;
 };
 
+#define OPENKNEEBOARD_JSAPI_METHODS(IT) \
+  IT(EnableExperimentalFeatures) \
+  IT(GetPages) \
+  IT(SendMessageToPeers) \
+  IT(SetCursorEventsMode) \
+  IT(SetPages) \
+  IT(SetPreferredPixelSize)
+
 class WebView2Renderer final : public WGCRenderer {
  public:
   struct Settings {
@@ -183,15 +191,10 @@ class WebView2Renderer final : public WGCRenderer {
 
   using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
 
-  concurrency::task<OKBPromiseResult> JSAPI_Resize(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> JSAPI_EnableExperimentalFeatures(
-    nlohmann::json args);
-  concurrency::task<OKBPromiseResult> JSAPI_SetCursorEventsMode(
-    nlohmann::json args);
-  concurrency::task<OKBPromiseResult> JSAPI_SetPages(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> JSAPI_GetPages(nlohmann::json args);
-  concurrency::task<OKBPromiseResult> JSAPI_SendMessageToPeers(
-    nlohmann::json args);
+#define OKB_DECLARE_JSAPI(FUNC) \
+  concurrency::task<OKBPromiseResult> JSAPI_##FUNC(nlohmann::json args);
+  OPENKNEEBOARD_JSAPI_METHODS(OKB_DECLARE_JSAPI)
+#undef OKB_DECLARE_JSAPI
 
   winrt::fire_and_forget SendJSLog(auto&&... args) {
     const auto jsArgs

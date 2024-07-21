@@ -576,43 +576,20 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     weak,
     callID);
 
-  if (message == "OpenKneeboard.SetPreferredPixelSize") {
-    respond(co_await this->JSAPI_Resize(parsed.at("messageData")));
-    co_return;
+#define OKB_INVOKE_JSAPI(APIFUNC) \
+  if (message == "OpenKneeboard." #APIFUNC) { \
+    respond(co_await this->JSAPI_##APIFUNC(parsed.at("messageData"))); \
+    co_return; \
   }
-
-  if (message == "OpenKneeboard.EnableExperimentalFeatures") {
-    respond(co_await this->JSAPI_EnableExperimentalFeatures(
-      parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard.SetCursorEventsMode") {
-    respond(co_await this->JSAPI_SetCursorEventsMode(parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard.SetPages") {
-    respond(co_await this->JSAPI_SetPages(parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard.GetPages") {
-    respond(co_await this->JSAPI_GetPages(parsed.at("messageData")));
-    co_return;
-  }
-
-  if (message == "OpenKneeboard.SendMessageToPeers") {
-    respond(co_await this->JSAPI_SendMessageToPeers(parsed.at("messageData")));
-    co_return;
-  }
+  OPENKNEEBOARD_JSAPI_METHODS(OKB_INVOKE_JSAPI)
+#undef OKB_CALL_JSAPI
 
   OPENKNEEBOARD_BREAK;
   respond(jsapi_error("Invalid JS API request: {}", message));
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_Resize(nlohmann::json args) {
+WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
   PixelSize size = {
     args.at("width"),
     args.at("height"),
