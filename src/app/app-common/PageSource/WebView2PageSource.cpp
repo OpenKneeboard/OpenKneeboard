@@ -85,11 +85,25 @@ winrt::fire_and_forget WebView2PageSource::Init() {
   APIPage apiPage {
     .mGuid = random_guid(),
     .mPixelSize = mSettings.mInitialSize,
+    .mPageID = mScrollableContentPageID,
   };
   mDocumentResources = {
     .mPages = {apiPage},
     .mDoodles = doodles,
   };
+
+  auto renderer = WebView2Renderer::Create(
+    mDXResources,
+    mKneeboard,
+    mSettings,
+    mDocumentResources.mDoodles,
+    mWorkerDQC,
+    mEnvironment,
+    nullptr,
+    {apiPage});
+  ConnectRenderer(renderer.get());
+  mDocumentResources.mRenderers.emplace(
+    mScrollableContentRendererKey, std::move(renderer));
 }
 
 WebView2PageSource::WebView2PageSource(
@@ -256,6 +270,7 @@ void WebView2PageSource::RenderPage(
     = isPageMode ? view->GetRuntimeID() : mScrollableContentRendererKey;
 
   if (!mDocumentResources.mRenderers.contains(key)) {
+    assert(isPageMode);
     auto renderer = WebView2Renderer::Create(
       mDXResources,
       mKneeboard,
@@ -263,23 +278,25 @@ void WebView2PageSource::RenderPage(
       mDocumentResources.mDoodles,
       mWorkerDQC,
       mEnvironment,
-      (isPageMode ? view : nullptr),
-      (isPageMode ? mDocumentResources.mPages
-                  : decltype(mDocumentResources.mPages) {}));
-    AddEventListener(
-      renderer->evContentChangedEvent, this->evContentChangedEvent);
-    AddEventListener(
-      renderer->evJSAPI_SetPages,
-      {weak_from_this(), &WebView2PageSource::OnJSAPI_SetPages});
-    AddEventListener(
-      renderer->evJSAPI_SendMessageToPeers,
-      {weak_from_this(), &WebView2PageSource::OnJSAPI_SendMessageToPeers});
-    AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
-
+      view,
+      mDocumentResources.mPages);
+    ConnectRenderer(renderer.get());
     mDocumentResources.mRenderers.emplace(key, std::move(renderer));
   }
   auto renderer = mDocumentResources.mRenderers.at(key);
   renderer->RenderPage(rc, pageID, rect);
+}
+
+void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {
+  AddEventListener(
+    renderer->evContentChangedEvent, this->evContentChangedEvent);
+  AddEventListener(
+    renderer->evJSAPI_SetPages,
+    {weak_from_this(), &WebView2PageSource::OnJSAPI_SetPages});
+  AddEventListener(
+    renderer->evJSAPI_SendMessageToPeers,
+    {weak_from_this(), &WebView2PageSource::OnJSAPI_SendMessageToPeers});
+  AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 }
 
 winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
