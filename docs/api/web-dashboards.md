@@ -92,6 +92,15 @@ OpenKneeboard.DoSomething()
   .catch(function(error) {HandleError(error); });
 ```
 
+### TypeScript
+
+In v1.9 and above, TypeScript definitions are included both in `data` subfolder of the OpenKneeboard source tree, and in the `share\doc` subfolder of an OpenKneeboard installation.
+
+Unless you are intentionally using an experimental API, you should only include `OpenKneeboard.d.ts` in your project; the various `OpenKneeboard-Experimental-*.d.ts` files define additional features that are not usually available.
+
+If you are not familiar with TypeScript, you may still want to copy the `OpenKneeboard.d.ts` file into your project - some IDEs will automatically use it to provide better help while you are writing your JavaScript code.
+
+All of OpenKneeboard's stable APIs are defined in [`OpenKneeboard.d.ts`](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/data/OpenKneeboard.d.ts).
 
 ### SetPreferredPixelSize
 
