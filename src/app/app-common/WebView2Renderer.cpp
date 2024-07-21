@@ -635,6 +635,7 @@ WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
   }
 
   co_await this->Resize(size);
+  co_return success("resized");
 }
 
 winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
