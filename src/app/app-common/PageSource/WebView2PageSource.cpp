@@ -271,7 +271,10 @@ void WebView2PageSource::RenderPage(
   renderer->RenderPage(rc, pageID, rect);
 }
 
-void WebView2PageSource::OnJSAPI_SetPages(const std::vector<APIPage>& pages) {
+winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
+  std::vector<APIPage> pages) {
+  auto keepAlive = shared_from_this();
+
   mDocumentResources.mPages = pages;
 
   for (const auto& [rtid, renderer]: mDocumentResources.mRenderers) {
@@ -280,6 +283,8 @@ void WebView2PageSource::OnJSAPI_SetPages(const std::vector<APIPage>& pages) {
 
   if (mDocumentResources.mContentMode != ContentMode::PageBased) {
     mDocumentResources.mContentMode = ContentMode::PageBased;
+    co_await mDocumentResources.mRenderers.at(mScrollableContentRendererKey)
+      ->DisposeAsync();
     mDocumentResources.mRenderers.erase(mScrollableContentRendererKey);
   }
 

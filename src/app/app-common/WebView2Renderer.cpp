@@ -563,7 +563,9 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
         dprintf("WARNING: WebView2 API error: {}", result.error());
       }
 
-      self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
+      if (self->mWebView) {
+        self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
+      }
     },
     mDQC.DispatcherQueue(),
     weak,
@@ -1012,6 +1014,8 @@ void WebView2Renderer::OnJSAPI_Peer_SetPages(
   if (pages == mDocumentResources.mPages) {
     return;
   }
+
+  EventDelay delay;
 
   mDocumentResources.mPages = pages;
 
