@@ -105,7 +105,9 @@ auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 
-WebView2Renderer::~WebView2Renderer() = default;
+WebView2Renderer::~WebView2Renderer() {
+  mState.Assert<State::Released>();
+}
 
 static wchar_t WindowClassName[] {L"OpenKneeboard/WebView2Host"};
 
@@ -272,6 +274,8 @@ WebView2Renderer::InitializeContentToCapture() {
   }
 
   mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+
+  mState.Transition<State::Constructed, State::InitializedComposition>();
 
   TraceLoggingWriteStop(
     activity,
@@ -900,21 +904,42 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
   };
 }
 
+winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Dispose() noexcept {
+  winrt::apartment_context thread;
+
+  auto weak = weak_from_this();
+  mState.Transition<State::InitializedComposition, State::Disposing>();
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
+
+  auto self = weak.lock();
+  if (!self) {
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+
+  mDQC = nullptr;
+  mWebView = nullptr;
+  mController = nullptr;
+  mEnvironment = nullptr;
+  mWebViewVisual = nullptr;
+  mRootVisual = nullptr;
+  mCompositor = nullptr;
+  mBrowserWindow.reset();
+
+  mState.Transition<State::Disposing, State::Disposed>();
+  co_await thread;
+}
+
 winrt::fire_and_forget WebView2Renderer::final_release(
   std::unique_ptr<WebView2Renderer> self) {
-  co_await wil::resume_foreground(self->mDQC.DispatcherQueue());
-
-  self->mWebView = nullptr;
-  self->mController = nullptr;
-  self->mEnvironment = nullptr;
-  self->mWebViewVisual = nullptr;
-  self->mRootVisual = nullptr;
-  self->mCompositor = nullptr;
-  self->mBrowserWindow.reset();
+  self->mState.Transition<State::Disposed, State::Releasing>();
 
   co_await self->mUIThread;
 
   auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
+
+  self->mState.Transition<State::Releasing, State::Released>();
+
   WGCRenderer::final_release(std::move(wgcSelf));
   co_return;
 }

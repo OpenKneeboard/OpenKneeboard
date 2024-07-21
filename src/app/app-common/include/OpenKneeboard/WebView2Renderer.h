@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Geometry2D.h>
+#include <OpenKneeboard/StateMachine.h>
 #include <OpenKneeboard/WGCRenderer.h>
 
 #include <winrt/Microsoft.Web.WebView2.Core.h>
@@ -90,6 +91,9 @@ class WebView2Renderer final : public WGCRenderer {
   WebView2Renderer() = delete;
   ~WebView2Renderer();
 
+  // Call before destruction in order to safely release shared resources
+  winrt::Windows::Foundation::IAsyncAction Dispose() noexcept;
+
   static std::shared_ptr<WebView2Renderer> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
@@ -158,6 +162,26 @@ class WebView2Renderer final : public WGCRenderer {
 
   winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
   winrt::apartment_context mUIThread;
+
+  enum class State {
+    Constructed,
+    InitializedComposition,
+    Disposing,
+    Disposed,
+    Releasing,
+    Released,
+  };
+  AtomicStateMachine<
+    State,
+    State::Constructed,
+    std::array {
+      Transition {State::Constructed, State::InitializedComposition},
+      Transition {State::InitializedComposition, State::Disposing},
+      Transition {State::Disposing, State::Disposed},
+      Transition {State::Disposed, State::Releasing},
+      Transition {State::Releasing, State::Released},
+    }>
+    mState;
 
   unique_hwnd mBrowserWindow;
 

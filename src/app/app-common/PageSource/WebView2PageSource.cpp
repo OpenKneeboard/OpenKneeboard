@@ -135,6 +135,13 @@ winrt::fire_and_forget WebView2PageSource::final_release(
   if (self->mWorkerDQ) {
     co_await wil::resume_foreground(self->mWorkerDQ);
 
+    auto children = self->mDocumentResources.mRenderers | std::views::values
+      | std::views::transform([](auto it) { return it->Dispose(); })
+      | std::ranges::to<std::vector>();
+    for (auto&& child: children) {
+      co_await child;
+    }
+
     self->mEnvironment = nullptr;
     co_await self->mUIThread;
     self->mWorkerDQ = {nullptr};
