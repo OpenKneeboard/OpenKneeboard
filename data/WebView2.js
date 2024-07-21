@@ -44,9 +44,8 @@ class OpenKneeboardAPI extends EventTarget {
         );
     }
 
-    GetVersion() {
-        return new Promise(
-            (resolve, reject) => { resolve(this.#runtimeData.Version); });
+    async GetVersion() {
+        return this.#runtimeData.Version;
     }
 
     EnableExperimentalFeature(name, version) {
