@@ -1,3 +1,12 @@
+class OpenKneeboardAPIError extends Error {
+    constructor(message, apiFunctionName) {
+        super(message)
+        this.apiFunctionName = apiFunctionName;
+    }
+
+    apiFunctionName;
+}
+
 class OpenKneeboardAPI extends EventTarget {
     constructor(runtimeData) {
         console.log(`Initializing OpenKneeboard API (${runtimeData.Version.HumanReadable})`);
@@ -130,7 +139,7 @@ class OpenKneeboardAPI extends EventTarget {
                             call.resolve(message.result);
                         } else {
                             console.log(`⚠️ OpenKneeboard API error: '${call.messageName}' => '${message.error}'`);
-                            call.reject(message.error);
+                            call.reject(new OpenKneeboardAPIError(message.error, call.messageName));
                         }
                     } finally {
                         delete this.#inFlightRequests[callID];

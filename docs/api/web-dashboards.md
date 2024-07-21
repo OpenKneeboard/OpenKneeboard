@@ -38,7 +38,36 @@ All APIs are methods on the `window.OpenKneeboard` object; it is best practice t
 
 ```js
 if (window.OpenKneeboard?.SetPreferredPixelSize) {
-    window.OpenKneeboard.SetPreferredPixelSize(width, height);
+  window.OpenKneeboard.SetPreferredPixelSize(width, height);
+}
+```
+
+In v1.9 and above, `window.OpenKneeboard` can usually be accessed just as `OpenKneeboard`.
+
+### Conventions in v1.9+
+
+The JS API is extended and improved in v1.9 and above:
+
+Functions have consistent return behavior:
+- they return a `Promise`, which can be used with `await`, `promise.then()`, or other standard techniques
+- if the success value is undocumented or documented as `any`, it may contain additional information intended to inform you, but may change without warning between versions. Do not write code that depends on a particular value or type
+- on failure:
+  - the error will be logged to the developer tools console
+  - the `Promise` will be rejected with an `OpenKneeboardAPIError`
+
+The `OpenKneeboardAPIError` extends the standard JavaScript `Error` class, adding an `apiFunctionName` string property; for example:
+
+```js
+// In v1.9+:
+try {
+  /* ... some code here ... */
+  await OpenKneeboard.SomeAPI(/* ... */ );
+  /* ... some more code ... */
+} catch (error) {
+  if (error instanceof OpenKneeboardAPIError) {
+    // Logs "OpenKneeboard.SomeAPI()" and an explanation
+    console.log(error.apiFunctionName, error.message);
+  }
 }
 ```
 
@@ -50,8 +79,8 @@ Several OpenKneeboard API functions return a `Promise`; the examples will use th
 try {
   await OpenKneeboard.DoSomething();
   DoSomethingElse();
-} catch (ex) {
-  HandleError(ex);
+} catch (error) {
+  HandleError(error);
 }
 ```
 
@@ -60,15 +89,24 @@ As these are standard `Promise` objects, if you prefer, you can use the traditio
 ```js
 OpenKneeboard.DoSomething()
   .then(function(result) { DoSomethingElse(); })
-  .catch(function(ex) {HandleError(ex); });
+  .catch(function(error) {HandleError(error); });
 ```
+
 
 ### SetPreferredPixelSize
 
 Set the preferred pixel size and aspect ratio for this page.
 
 ```js
-OpenKneeboard.SetPreferredPixelSize(width, height);
+// Syntax (v1.8):
+window.OpenKneeboard.SetPreferredPixelSize(width: number, height: number): undefined;
+// Example (v1.8):
+window.OpenKneeboard.SetPreferredPixelSize(1024, 768);
+
+// Syntax (v1.9+):
+OpenKneeboard.SetPreferredPixelSize(width: number, height: number): Promise<any>;
+// Example (v1.9+):
+await OpenKneeboard.SetPreferredPixelSize(1024, 768);
 ```
 
 `width` and `height`:
@@ -76,7 +114,7 @@ OpenKneeboard.SetPreferredPixelSize(width, height);
 - must be greater than or equal to 1
 - must be less than or equal to `D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION` (16384 as of Direct3D 11.1).
 
-In version 1.9 and above, this will return a `Promise`; if it resolves, it will indicate the actual size used. If the operation fails, it will be rejected with a string indicating the error.
+In v1.9+, awaiting/resolving the promise is *optional*, but does provide a means to detect success or failure; for compatibility, it can also be accessed via the `window.OpenKneeboard`
 
 ### GetVersion
 
