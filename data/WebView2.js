@@ -16,7 +16,7 @@ class OpenKneeboardAPI extends EventTarget {
         this.#inFlightRequests = {};
         this.#nextAsyncCallID = 0;
 
-        document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
+        document.addEventListener('DOMContentLoaded', this.#OnDOMContentLoaded.bind(this));
         window.chrome.webview.addEventListener('message', this.#OnNativeMessage.bind(this));
 
         if (runtimeData.PeerInfo) {
@@ -35,10 +35,6 @@ class OpenKneeboardAPI extends EventTarget {
         if (!runtimeData.Version.IsGitHubActionsBuild) {
             console.log("OpenKneeboard RuntimeData", runtimeData);
         }
-    }
-
-    OnDOMContentLoaded() {
-        document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
     }
 
     SetPreferredPixelSize(width, height) {
@@ -70,6 +66,11 @@ class OpenKneeboardAPI extends EventTarget {
         console.log("WARNING: OpenKneeboard.GetAvailableExperimentalFeatures() **WILL** fail in tagged releases. It is only for use during development, not to check feature availability.");
         return this.#AsyncRequest("OpenKneeboard.GetAvailableExperimentalFeatures", {});
     }
+
+    #OnDOMContentLoaded() {
+        document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
+    }
+
 
     #runtimeData;
     #inFlightRequests;
