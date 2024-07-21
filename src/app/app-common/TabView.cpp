@@ -35,8 +35,9 @@ namespace OpenKneeboard {
 TabView::TabView(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
-  const std::shared_ptr<ITab>& tab)
-  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab) {
+  const std::shared_ptr<ITab>& tab,
+  const EventContext& ec)
+  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mEventContext(ec) {
   const auto rootPageIDs = mRootTab->GetPageIDs();
   if (!rootPageIDs.empty()) {
     mRootTabPage = {rootPageIDs.front(), 0};

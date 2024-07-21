@@ -49,7 +49,8 @@ class TabView final : private EventReceiver {
   TabView(
     const audited_ptr<DXResources>&,
     KneeboardState*,
-    const std::shared_ptr<ITab>&);
+    const std::shared_ptr<ITab>&,
+    const EventContext&);
   ~TabView();
 
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
@@ -83,13 +84,13 @@ class TabView final : private EventReceiver {
   Event<> evBookmarksChangedEvent;
 
  private:
-  RuntimeID mRuntimeID;
-  const EventContext mEventContext;
+  const RuntimeID mRuntimeID;
 
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
-
   std::shared_ptr<ITab> mRootTab;
+  const EventContext mEventContext {nullptr};
+
   struct PagePosition {
     PageID mID;
     // The ID is the source of truth (so e.g. bookmarks and doodles stay on the
