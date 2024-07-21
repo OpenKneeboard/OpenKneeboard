@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
+
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -26,7 +28,6 @@
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/audited_ptr.h>
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/final_release_deleter.h>
 
 #include <shims/winrt/base.h>
@@ -75,7 +76,6 @@ class InterprocessRenderer final
   std::unique_lock<std::mutex> mInstanceLock;
   winrt::apartment_context mOwnerThread;
 
-  EventContext mEventContext;
   audited_ptr<DXResources> mDXR;
   OpenKneeboard::SHM::Writer mSHM;
 

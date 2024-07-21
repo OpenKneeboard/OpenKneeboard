@@ -92,7 +92,6 @@ class HeaderUILayer final : public UILayerBase,
   winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
   winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
   winrt::com_ptr<ID2D1Brush> mActiveViewSeparatorBrush;
-  EventContext mEventContext;
 
   struct Button {
     D2D1_RECT_F mRect {};
