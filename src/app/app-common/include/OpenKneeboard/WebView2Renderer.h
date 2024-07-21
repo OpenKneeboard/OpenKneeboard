@@ -130,6 +130,8 @@ class WebView2Renderer final : public WGCRenderer, public IHasDisposeAsync {
     const InstanceID&,
     const nlohmann::json&);
 
+  PixelSize GetSize() const noexcept;
+
  protected:
   virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
     override;

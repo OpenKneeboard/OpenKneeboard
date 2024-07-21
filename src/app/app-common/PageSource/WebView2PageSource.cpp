@@ -217,6 +217,16 @@ std::vector<PageID> WebView2PageSource::GetPageIDs() const {
 }
 
 PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
+  if (mDocumentResources.mContentMode == ContentMode::Scrollable) {
+    auto it = mDocumentResources.mRenderers.find(mScrollableContentRendererKey);
+    if (it == mDocumentResources.mRenderers.end()) {
+      return {mSettings.mInitialSize, ScalingKind::Bitmap};
+    }
+    return it->second->GetPreferredSize();
+  }
+
+  assert(mDocumentResources.mContentMode == ContentMode::PageBased);
+
   auto it
     = std::ranges::find(mDocumentResources.mPages, pageID, &APIPage::mPageID);
   if (it != mDocumentResources.mPages.end()) {
