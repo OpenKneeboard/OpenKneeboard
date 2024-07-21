@@ -576,33 +576,33 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     weak,
     callID);
 
-  if (message == "OpenKneeboard/SetPreferredPixelSize") {
+  if (message == "OpenKneeboard.SetPreferredPixelSize") {
     respond(co_await this->JSAPI_Resize(parsed.at("messageData")));
     co_return;
   }
 
-  if (message == "OpenKneeboard/EnableExperimentalFeatures") {
+  if (message == "OpenKneeboard.EnableExperimentalFeatures") {
     respond(co_await this->JSAPI_EnableExperimentalFeatures(
       parsed.at("messageData")));
     co_return;
   }
 
-  if (message == "OpenKneeboard/SetCursorEventsMode") {
+  if (message == "OpenKneeboard.SetCursorEventsMode") {
     respond(co_await this->JSAPI_SetCursorEventsMode(parsed.at("messageData")));
     co_return;
   }
 
-  if (message == "OpenKneeboard/SetPages") {
+  if (message == "OpenKneeboard.SetPages") {
     respond(co_await this->JSAPI_SetPages(parsed.at("messageData")));
     co_return;
   }
 
-  if (message == "OpenKneeboard/GetPages") {
+  if (message == "OpenKneeboard.GetPages") {
     respond(co_await this->JSAPI_GetPages(parsed.at("messageData")));
     co_return;
   }
 
-  if (message == "OpenKneeboard/SendMessageToPeers") {
+  if (message == "OpenKneeboard.SendMessageToPeers") {
     respond(co_await this->JSAPI_SendMessageToPeers(parsed.at("messageData")));
     co_return;
   }

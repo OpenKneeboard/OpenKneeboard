@@ -55,7 +55,7 @@ Functions have consistent return behavior:
   - the error will be logged to the developer tools console
   - the `Promise` will be rejected with an `OpenKneeboardAPIError`
 
-The `OpenKneeboardAPIError` extends the standard JavaScript `Error` class, adding an `apiFunctionName` string property; for example:
+The `OpenKneeboardAPIError` extends the standard JavaScript `Error` class, adding an `apiMethodName` string property; for example:
 
 ```js
 // In v1.9+:
@@ -66,7 +66,7 @@ try {
 } catch (error) {
   if (error instanceof OpenKneeboardAPIError) {
     // Logs "OpenKneeboard.SomeAPI()" and an explanation
-    console.log(error.apiFunctionName, error.message);
+    console.log(error.apiMethodName, error.message);
   }
 }
 ```

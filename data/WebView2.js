@@ -1,10 +1,10 @@
 class OpenKneeboardAPIError extends Error {
-    constructor(message, apiFunctionName) {
+    constructor(message, apiMethodName) {
         super(message)
-        this.apiFunctionName = apiFunctionName;
+        this.apiMethodName = apiMethodName;
     }
 
-    apiFunctionName;
+    apiMethodName;
 }
 
 class OpenKneeboardAPI extends EventTarget {
@@ -43,7 +43,7 @@ class OpenKneeboardAPI extends EventTarget {
 
     SetPreferredPixelSize(width, height) {
         return this.#AsyncRequest(
-            "OpenKneeboard/SetPreferredPixelSize",
+            "OpenKneeboard.SetPreferredPixelSize",
             { width, height },
         );
     }
@@ -58,7 +58,7 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     EnableExperimentalFeatures(features) {
-        return this.#AsyncRequest("OpenKneeboard/EnableExperimentalFeatures", { features });
+        return this.#AsyncRequest("OpenKneeboard.EnableExperimentalFeatures", { features });
     }
 
     /** WARNING: NOT AVAILABLE IN RELEASED BUILDS.
@@ -68,7 +68,7 @@ class OpenKneeboardAPI extends EventTarget {
      */
     GetAvailableExperimentalFeatures() {
         console.log("WARNING: OpenKneeboard.GetAvailableExperimentalFeatures() **WILL** fail in tagged releases. It is only for use during development, not to check feature availability.");
-        return this.#AsyncRequest("OpenKneeboard/GetAvailableExperimentalFeatures", {});
+        return this.#AsyncRequest("OpenKneeboard.GetAvailableExperimentalFeatures", {});
     }
 
     #runtimeData;
@@ -84,19 +84,19 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #SetCursorEventsMode(mode) {
-        return this.#AsyncRequest("OpenKneeboard/SetCursorEventsMode", { mode });
+        return this.#AsyncRequest("OpenKneeboard.SetCursorEventsMode", { mode });
     }
 
     #GetPages() {
-        return this.#AsyncRequest("OpenKneeboard/GetPages", {});
+        return this.#AsyncRequest("OpenKneeboard.GetPages", {});
     }
 
     #SetPages(pages) {
-        return this.#AsyncRequest("OpenKneeboard/SetPages", { pages });
+        return this.#AsyncRequest("OpenKneeboard.SetPages", { pages });
     }
 
     #SendMessageToPeers(message) {
-        return this.#AsyncRequest("OpenKneeboard/SendMessageToPeers", { message });
+        return this.#AsyncRequest("OpenKneeboard.SendMessageToPeers", { message });
     }
 
     #ActivateAPI(api) {
