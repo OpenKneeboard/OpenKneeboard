@@ -35,30 +35,15 @@ namespace OpenKneeboard {
 void dprint(std::string_view s);
 void dprint(std::wstring_view s);
 
-// TODO: cleanup, once GitHub Actions updates their worker
-namespace detail {
-#if __cpp_lib_format >= 202207L
-template <class... T>
-using format_string = std::format_string<T...>;
-template <class... T>
-using wformat_string = std::wformat_string<T...>;
-#else
-template <class... T>
-using format_string = std::_Fmt_string<T...>;
-template <class... T>
-using wformat_string = std::_Fmt_wstring<T...>;
-#endif
-}// namespace detail
-
 template <typename... Args>
   requires(sizeof...(Args) >= 1)
-void dprintf(detail::format_string<Args...> fmt, Args&&... args) {
+void dprintf(std::format_string<Args...> fmt, Args&&... args) {
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
 template <typename... Args>
   requires(sizeof...(Args) >= 1)
-void dprintf(detail::wformat_string<Args...> fmt, Args&&... args) {
+void dprintf(std::wformat_string<Args...> fmt, Args&&... args) {
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
