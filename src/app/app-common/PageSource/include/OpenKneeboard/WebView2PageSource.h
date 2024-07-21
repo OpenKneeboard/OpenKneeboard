@@ -96,9 +96,9 @@ class WebView2PageSource final
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;
 
-  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
+  winrt::Windows::System::DispatcherQueueController mWorkerDQC {nullptr};
+  winrt::Windows::System::DispatcherQueue mWorkerDQ {nullptr};
   winrt::apartment_context mUIThread;
-  winrt::apartment_context mWorkerThread {nullptr};
 
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment mEnvironment {
     nullptr};

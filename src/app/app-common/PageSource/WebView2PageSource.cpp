@@ -58,14 +58,12 @@ winrt::fire_and_forget WebView2PageSource::Init() {
   }
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
-  auto dq = mDQC.DispatcherQueue();
-  co_await winrt::resume_foreground(dq);
+  co_await winrt::resume_foreground(mWorkerDQ);
   auto self = weak.lock();
   if (!self) {
     co_return;
   }
 
-  mWorkerThread = {};
   SetThreadDescription(GetCurrentThread(), L"OKB WebView2 Worker");
 
   using namespace winrt::Microsoft::Web::WebView2::Core;
@@ -104,8 +102,9 @@ WebView2PageSource::WebView2PageSource(
   if (!IsAvailable()) {
     return;
   }
-  mDQC = winrt::Windows::System::DispatcherQueueController::
+  mWorkerDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
+  mWorkerDQ = mWorkerDQC.DispatcherQueue();
 }
 
 std::string WebView2PageSource::GetVersion() {
@@ -133,14 +132,14 @@ WebView2PageSource::~WebView2PageSource() = default;
 
 winrt::fire_and_forget WebView2PageSource::final_release(
   std::unique_ptr<WebView2PageSource> self) {
-  if (self->mWorkerThread) {
-    co_await self->mWorkerThread;
+  if (self->mWorkerDQ) {
+    co_await wil::resume_foreground(self->mWorkerDQ);
 
     self->mEnvironment = nullptr;
-    self->mWorkerThread = {nullptr};
+    co_await self->mUIThread;
+    self->mWorkerDQ = {nullptr};
+    co_await self->mWorkerDQC.ShutdownQueueAsync();
   }
-  co_await self->mUIThread;
-  co_await self->mDQC.ShutdownQueueAsync();
   co_await self->mUIThread;
   self->RemoveAllEventListeners();
   co_return;
@@ -230,7 +229,7 @@ void WebView2PageSource::RenderPage(
       mKneeboard,
       mSettings,
       mDocumentResources.mDoodles,
-      mDQC,
+      mWorkerDQC,
       mEnvironment,
       (isPageMode ? view : nullptr),
       (isPageMode ? mDocumentResources.mPages

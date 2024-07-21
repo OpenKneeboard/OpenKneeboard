@@ -25,6 +25,9 @@
 #include <winrt/Microsoft.Web.WebView2.Core.h>
 #include <winrt/Windows.UI.Composition.h>
 
+#include <wil/cppwinrt.h>
+#include <wil/cppwinrt_helpers.h>
+
 #include <expected>
 #include <queue>
 
@@ -155,7 +158,6 @@ class WebView2Renderer final : public WGCRenderer {
 
   winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
   winrt::apartment_context mUIThread;
-  winrt::apartment_context mWorkerThread {nullptr};
 
   unique_hwnd mBrowserWindow;
 
@@ -200,8 +202,7 @@ class WebView2Renderer final : public WGCRenderer {
     const auto jsArgs
       = nlohmann::json::array({std::forward<decltype(args)>(args)...});
     auto weak = weak_from_this();
-    auto thread = mWorkerThread;
-    co_await thread;
+    co_await wil::resume_foreground(mDQC.DispatcherQueue());
     auto self = weak.lock();
     if (!self) {
       co_return;

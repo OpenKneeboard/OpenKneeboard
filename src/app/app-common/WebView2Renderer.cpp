@@ -158,9 +158,6 @@ WebView2Renderer::InitializeContentToCapture() {
     activity, "WebView2Renderer::InitializeContentToCapture");
   co_await winrt::resume_foreground(mDQC.DispatcherQueue());
 
-  mWorkerThread = {};
-  SetThreadDescription(GetCurrentThread(), L"OKB WebView2 Worker");
-
   this->CreateBrowserWindow();
 
   this->InitializeComposition();
@@ -378,8 +375,7 @@ winrt::fire_and_forget WebView2Renderer::SendJSEvent(
   std::string_view eventType,
   nlohmann::json eventOptions) {
   auto weak = weak_from_this();
-  auto thread = mWorkerThread;
-  co_await thread;
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
   auto self = weak.lock();
   if (!self) {
     co_return;
@@ -396,8 +392,7 @@ winrt::fire_and_forget WebView2Renderer::SendJSEvent(
 
 winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string_view api) {
   auto weak = weak_from_this();
-  auto thread = mWorkerThread;
-  co_await thread;
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
   auto self = weak.lock();
   if (!self) {
     co_return;
@@ -448,14 +443,11 @@ void WebView2Renderer::RenderPage(
 }
 
 winrt::fire_and_forget WebView2Renderer::FlushCursorEvents() {
-  if (!mWorkerThread) {
-    co_return;
-  }
   if (mCursorEvents.empty()) {
     co_return;
   }
   auto weakThis = weak_from_this();
-  co_await mWorkerThread;
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
   auto self = weakThis.lock();
   if (!self) {
     co_return;
@@ -545,9 +537,9 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   const uint64_t callID = parsed.at("callID");
 
   const auto respond = std::bind_front(
-    [](auto thread, auto weak, auto callID, OKBPromiseResult result)
+    [](auto dq, auto weak, auto callID, OKBPromiseResult result)
       -> winrt::fire_and_forget {
-      co_await thread;
+      co_await wil::resume_foreground(dq);
       auto self = std::static_pointer_cast<WebView2Renderer>(weak.lock());
       if (!self) {
         co_return;
@@ -569,7 +561,7 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
 
       self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
     },
-    mWorkerThread,
+    mDQC.DispatcherQueue(),
     weak,
     callID);
 
@@ -910,19 +902,16 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
 
 winrt::fire_and_forget WebView2Renderer::final_release(
   std::unique_ptr<WebView2Renderer> self) {
-  if (self->mWorkerThread) {
-    co_await self->mWorkerThread;
+  co_await wil::resume_foreground(self->mDQC.DispatcherQueue());
 
-    self->mWebView = nullptr;
-    self->mController = nullptr;
-    self->mEnvironment = nullptr;
-    self->mWebViewVisual = nullptr;
-    self->mRootVisual = nullptr;
-    self->mCompositor = nullptr;
-    self->mBrowserWindow.reset();
+  self->mWebView = nullptr;
+  self->mController = nullptr;
+  self->mEnvironment = nullptr;
+  self->mWebViewVisual = nullptr;
+  self->mRootVisual = nullptr;
+  self->mCompositor = nullptr;
+  self->mBrowserWindow.reset();
 
-    self->mWorkerThread = {nullptr};
-  }
   co_await self->mUIThread;
 
   auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
