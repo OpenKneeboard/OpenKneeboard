@@ -137,7 +137,7 @@ RenderTarget::D2D::D2D(
   this->Acquire();
 }
 
-RenderTarget::D2D::D2D(D2D&& other) {
+RenderTarget::D2D::D2D(D2D&& other) noexcept {
   mReleased = other.mReleased;
   mParent = std::move(other.mParent);
   mUnsafeParent = other.mUnsafeParent;

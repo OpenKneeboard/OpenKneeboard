@@ -136,7 +136,7 @@ class RenderTarget::D2D final {
  public:
   D2D() = delete;
   D2D(const D2D&) = delete;
-  D2D(D2D&&);
+  D2D(D2D&&) noexcept;
   D2D& operator=(const D2D&) = delete;
   D2D& operator=(D2D&&) = delete;
 
