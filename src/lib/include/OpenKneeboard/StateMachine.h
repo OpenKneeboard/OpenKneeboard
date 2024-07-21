@@ -103,18 +103,23 @@ class StateMachineBase {
   StateContainer mState {InitialState};
 };
 
-template <class State, State InitialState, auto Transitions>
-class StateMachine final : public StateMachineBase<
-                             State,
-                             State,
-                             InitialState,
-                             Transitions.size(),
-                             Transitions> {
+template <
+  class State,
+  State InitialState,
+  auto Transitions,
+  class Base = StateMachineBase<
+    State,
+    State,
+    InitialState,
+    Transitions.size(),
+    Transitions>>
+class StateMachine final : public Base {
  public:
   template <State in, State out>
   constexpr void Transition(
-    const std::source_location& loc = std::source_location::current()) {
-    static_assert(this->template IsValidTransition<in, out>());
+    const std::source_location& loc = std::source_location::current())
+    requires(Base::template IsValidTransition<in, out>())
+  {
     if (this->mState != in) [[unlikely]] {
       using namespace ADL;
       OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
@@ -128,18 +133,23 @@ class StateMachine final : public StateMachineBase<
   }
 };
 
-template <class State, State InitialState, auto Transitions>
-class AtomicStateMachine final : public StateMachineBase<
-                                   State,
-                                   std::atomic<State>,
-                                   InitialState,
-                                   Transitions.size(),
-                                   Transitions> {
+template <
+  class State,
+  State InitialState,
+  auto Transitions,
+  class Base = StateMachineBase<
+    State,
+    std::atomic<State>,
+    InitialState,
+    Transitions.size(),
+    Transitions>>
+class AtomicStateMachine final : public Base {
  public:
   template <State in, State out>
   constexpr void Transition(
-    const std::source_location& loc = std::source_location::current()) {
-    static_assert(this->template IsValidTransition<in, out>());
+    const std::source_location& loc = std::source_location::current())
+    requires(Base::template IsValidTransition<in, out>())
+  {
     auto current = in;
     if (!this->mState.compare_exchange_strong(current, out)) [[unlikely]] {
       using namespace ADL;
