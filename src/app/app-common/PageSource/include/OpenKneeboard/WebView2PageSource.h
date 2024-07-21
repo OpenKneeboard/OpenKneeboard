@@ -96,6 +96,7 @@ class WebView2PageSource final
   winrt::Windows::Foundation::IAsyncAction mDisposal {nullptr};
   std::once_flag mDisposeOnce;
   bool mDisposed {false};
+  bool mInitialized {false};
 
   winrt::fire_and_forget Init();
 

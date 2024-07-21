@@ -104,6 +104,7 @@ winrt::fire_and_forget WebView2PageSource::Init() {
   ConnectRenderer(renderer.get());
   mDocumentResources.mRenderers.emplace(
     mScrollableContentRendererKey, std::move(renderer));
+  mInitialized = true;
 }
 
 WebView2PageSource::WebView2PageSource(
