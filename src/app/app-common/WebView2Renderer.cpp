@@ -858,6 +858,8 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
       continue;
     }
 
+    // Not a coroutine.
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
     auto warnObsolete = [this](const auto& feature) {
       const auto warning = std::format(
         "WARNING: enabling an obsolete experimental feature: `{}` "
