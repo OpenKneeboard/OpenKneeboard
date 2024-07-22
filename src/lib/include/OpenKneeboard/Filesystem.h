@@ -42,7 +42,7 @@ auto GetKnownFolderPath() {
   static std::once_flag sOnce;
   static std::filesystem::path sPath;
   std::call_once(
-    sOnce, [&path = sPath]() { sPath = GetKnownFolderPath(knownFolderID); });
+    sOnce, [&path = sPath]() { path = GetKnownFolderPath(knownFolderID); });
   return sPath;
 }
 

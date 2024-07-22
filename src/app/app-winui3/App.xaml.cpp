@@ -258,7 +258,7 @@ static void LogSystemInformation() {
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
   dprintf(L"  Active code page: {}", codePageInfo.CodePageName);
 
-  DWORD codePage;
+  DWORD codePage {};
   GetLocaleInfoW(
     LOCALE_SYSTEM_DEFAULT,
     LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,

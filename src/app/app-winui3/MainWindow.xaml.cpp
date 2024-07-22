@@ -1136,7 +1136,7 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
 }
 
 void MainWindow::Show() {
-  int argc;
+  int argc {};
   auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
   bool minimized = false;

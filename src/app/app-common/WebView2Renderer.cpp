@@ -22,11 +22,11 @@
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/Version.h>
 #include <OpenKneeboard/WebView2Renderer.h>
 
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json_format.h>
+#include <OpenKneeboard/version.h>
 
 #include <shims/winrt/base.h>
 
