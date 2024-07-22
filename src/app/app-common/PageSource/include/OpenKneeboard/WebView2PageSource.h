@@ -67,6 +67,11 @@ class WebView2PageSource final
   static std::shared_ptr<WebView2PageSource>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
 
+  static std::shared_ptr<WebView2PageSource> Create(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const std::filesystem::path&);
+
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
   virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)

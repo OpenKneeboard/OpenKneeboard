@@ -43,6 +43,7 @@ class SingleFileTab final : public TabBase,
     PDFFile,
     PlainTextFile,
     ImageFile,
+    HTMLFile,
   };
   SingleFileTab(
     const audited_ptr<DXResources>&,

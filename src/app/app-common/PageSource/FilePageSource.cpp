@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/PDFFilePageSource.h>
 #include <OpenKneeboard/PlainTextFilePageSource.h>
+#include <OpenKneeboard/WebView2PageSource.h>
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_exit.h>
@@ -35,7 +36,7 @@ namespace OpenKneeboard {
 
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
   const audited_ptr<DXResources>& dxr) noexcept {
-  std::vector<std::string> extensions {".txt", ".pdf"};
+  std::vector<std::string> extensions {".txt", ".pdf", ".htm", ".html"};
 
   winrt::com_ptr<IEnumUnknown> enumerator;
   winrt::check_hresult(
@@ -83,12 +84,20 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
 
   const auto extension = path.extension().u16string();
 
-  if (u_strcasecmp(extension.c_str(), u".pdf", U_FOLD_CASE_DEFAULT) == 0) {
+  const auto hasExtension = [a = extension.c_str()](auto b) {
+    return u_strcasecmp(a, b, U_FOLD_CASE_DEFAULT) == 0;
+  };
+
+  if (hasExtension(u".pdf")) {
     return PDFFilePageSource::Create(dxr, kbs, path);
   }
 
-  if (u_strcasecmp(extension.c_str(), u".txt", U_FOLD_CASE_DEFAULT) == 0) {
+  if (hasExtension(u".txt")) {
     return PlainTextFilePageSource::Create(dxr, kbs, path);
+  }
+
+  if (hasExtension(u".htm") || hasExtension(u".html")) {
+    return WebView2PageSource::Create(dxr, kbs, path);
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {

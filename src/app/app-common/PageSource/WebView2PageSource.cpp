@@ -37,6 +37,8 @@
 #include <system_error>
 
 #include <WebView2.h>
+#include <shlwapi.h>
+#include <wininet.h>
 #include <wrl.h>
 
 namespace OpenKneeboard {
@@ -49,6 +51,24 @@ std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
     new WebView2PageSource(dxr, kbs, settings));
   ret->Init();
   return ret;
+}
+
+std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const std::filesystem::path& path) {
+  char buffer[INTERNET_MAX_URL_LENGTH];
+  DWORD charCount {std::size(buffer)};
+
+  winrt::check_hresult(
+    UrlCreateFromPathA(path.string().c_str(), buffer, &charCount, NULL));
+
+  const Settings settings {
+    .mIntegrateWithSimHub = false,
+    .mURI = {buffer, charCount},
+  };
+
+  return Create(dxr, kbs, settings);
 }
 
 winrt::fire_and_forget WebView2PageSource::Init() {

@@ -22,6 +22,7 @@
 #include <OpenKneeboard/PDFFilePageSource.h>
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/SingleFileTab.h>
+#include <OpenKneeboard/WebView2PageSource.h>
 
 #include <OpenKneeboard/scope_exit.h>
 
@@ -78,6 +79,8 @@ std::string SingleFileTab::GetGlyph() const {
       return "\uE91B";
     case Kind::PlainTextFile:
       return "\uE8A5";
+    case Kind::HTMLFile:
+      return "\ueb41";
     default:
       return "";
   }
@@ -127,6 +130,8 @@ void SingleFileTab::SetPathFromEmpty(const std::filesystem::path& path) {
     mKind = Kind::PlainTextFile;
   } else if (std::dynamic_pointer_cast<ImageFilePageSource>(delegate)) {
     mKind = Kind::ImageFile;
+  } else if (std::dynamic_pointer_cast<WebView2PageSource>(delegate)) {
+    mKind = Kind::HTMLFile;
   }
 
   this->SetDelegatesFromEmpty({delegate});
