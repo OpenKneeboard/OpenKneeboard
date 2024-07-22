@@ -111,7 +111,7 @@ class HeaderUILayer final : public UILayerBase,
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
   std::vector<EventHandlerToken> mTabEvents;
 
-  winrt::fire_and_forget OnClick(const Button&);
+  void OnClick(const Button&);
   void OnTabChanged();
 
   bool mRecursiveCall = false;
