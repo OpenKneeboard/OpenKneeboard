@@ -1,5 +1,5 @@
 /*
- * OpenKneeboard C API Header
+ * OpenKneeboard API - ISC License
  *
  * Copyright (C) 2022-2023 Fred Emmott <fred@fredemmott.com>
  *
