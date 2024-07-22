@@ -25,8 +25,7 @@ OpenXRNext::OpenXRNext(XrInstance instance, PFN_xrGetInstanceProcAddr getNext) {
   this->xrGetInstanceProcAddr = getNext;
 
 #define IT(func) \
-  getNext( \
-    instance, #func, reinterpret_cast<PFN_xrVoidFunction*>(&this->##func));
+  getNext(instance, #func, reinterpret_cast<PFN_xrVoidFunction*>(&this->func));
 
   OPENKNEEBOARD_NEXT_OPENXR_FUNCS
 #undef IT
