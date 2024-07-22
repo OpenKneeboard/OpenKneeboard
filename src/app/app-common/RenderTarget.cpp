@@ -149,7 +149,6 @@ RenderTarget::D2D::D2D(D2D&& other) noexcept {
 }
 
 void RenderTarget::D2D::Acquire() {
-  using RTState = RenderTarget::State;
   mParent->mState.Transition<State::Unattached, State::D2D>();
 
   (*this)->SetTarget(mUnsafeParent->mD2DBitmap.get());
