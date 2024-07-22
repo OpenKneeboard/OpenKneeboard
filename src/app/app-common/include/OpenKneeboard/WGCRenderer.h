@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/PreferredSize.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/RenderTarget.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
@@ -88,6 +89,7 @@ class WGCRenderer : public virtual EventReceiver,
   virtual void PostFrame();
 
  private:
+  ProcessShutdownBlock mBlockShutdownUntilDestroyed;
   static constexpr int32_t SwapchainLength = 3;
   WGCRenderer() = delete;
 
