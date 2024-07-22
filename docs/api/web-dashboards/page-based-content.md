@@ -7,7 +7,7 @@ parent: Web Dashboard APIs
 
 **THIS IS AN EXPERIMENTAL FEATURE** and may change between any two versions without notice; feedback and questions are very welcome in `#code-talk` [on Discord](https://go.openkneeboard.com/Discord).
 
-This experimental API allows a web page to work like a native OpenKneebaord tab type with multiple pages of varying sizes (like a PDF document), instead of a potentially-scrollable content that must fit a variable-sized browser.
+This experimental API allows a web page to work like a native OpenKneeboard tab type with multiple pages of varying sizes (like a PDF document), instead of a potentially-scrollable content that must fit a variable-sized browser.
 
 ## Table of Contents
 {: .no_toc, .text-delta }
