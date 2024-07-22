@@ -17,7 +17,7 @@ It is *strongly* recommended you use [the API](../api/index.md) instead.
 
 If you do write code that uses the remote controls, you should find them by following the [same process documented for the C API](../api/c.md#locating-the-dll); the remote controls are in `..\utilities\` relative to the DLL.
 
-## Basic Remtoe Controls
+## Basic Remote Controls
 
 Most remote controls are straightforward:
 
