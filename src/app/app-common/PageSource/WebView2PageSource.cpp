@@ -163,6 +163,7 @@ WebView2PageSource::DisposeAsync() noexcept {
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2PageSource::DisposeAsyncImpl() noexcept {
+  this->mDisposed = true;
   auto self = shared_from_this();
   if (mWorkerDQ) {
     co_await wil::resume_foreground(self->mWorkerDQ);
@@ -183,7 +184,6 @@ WebView2PageSource::DisposeAsyncImpl() noexcept {
 
   co_await mUIThread;
   this->RemoveAllEventListeners();
-  this->mDisposed = true;
   co_return;
 }
 
@@ -270,7 +270,10 @@ void WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
-  if (mRenderersState.Get() != RenderersState::Ready) {
+  if (mDisposed) [[unlikely]] {
+    return;
+  }
+  if (mRenderersState.Get() != RenderersState::Ready) [[unlikely]] {
     return;
   }
   const auto isPageMode
