@@ -46,7 +46,7 @@ namespace D3D11 {
 class SpriteBatch;
 }
 
-class HWNDPageSource final : private WGCRenderer,
+class HWNDPageSource final : public WGCRenderer,
                              public virtual IPageSourceWithCursorEvents,
                              public virtual EventReceiver {
  public:
@@ -100,6 +100,7 @@ class HWNDPageSource final : private WGCRenderer,
     override;
 
  private:
+  using WGCRenderer::Render;
   HWNDPageSource() = delete;
   HWNDPageSource(
     const audited_ptr<DXResources>&,
