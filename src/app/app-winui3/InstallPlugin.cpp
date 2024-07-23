@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/Plugin.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -225,8 +226,9 @@ static IAsyncAction InstallPluginFromPath(
   // later
   std::optional<std::string> error;
   try {
-    auto j = nlohmann::json::parse(buf);
+    const auto j = nlohmann::json::parse(buf);
     dprint(j.dump(2));
+    const Plugin plugin = j;
   } catch (const nlohmann::json::exception& e) {
     error
       = std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id);

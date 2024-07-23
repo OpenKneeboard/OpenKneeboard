@@ -185,6 +185,7 @@ add_subdirectory("scripts")
 add_subdirectory("third-party")
 add_subdirectory("data")
 add_subdirectory("src")
+add_subdirectory("plugin-example")
 
 install(
   FILES LICENSE

@@ -1,0 +1,30 @@
+{
+	"ID": "dcs-web-editor.github.io",
+	"Metadata": {
+		"PluginName": "DCS Web Editor",
+		"PluginReadableVersion": "Live",
+		"PluginSemanticVersion": "0.0.1",
+		"OKBMinimumVersion": "1.9",
+		"OKBMaximumTestedVersion": "1.9"
+	},
+	"TabTypes": [
+		{
+			"ID": "Viewer",
+			"Name": "DCS Web Viewer",
+			"Implementation": "WebBrowser",
+			"ImplementationArgs": {
+				"URI": "https://dcs-web-editor.github.io/dcs-web-viewer-deploy/"
+			},
+			"CustomActions": [
+				{
+					"ID": "ZoomIn",
+					"Name": "Zoom In"
+				},
+				{
+					"ID": "ZoomOut",
+					"Name": "Zoom Out"
+				}
+			]
+		}
+	]
+}
