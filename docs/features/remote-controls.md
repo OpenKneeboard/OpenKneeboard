@@ -15,7 +15,9 @@ These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be us
 
 It is *strongly* recommended you use [the API](../api/index.md) instead.
 
-If you do write code that uses the remote controls, you should find them by following the [same process documented for the C API](../api/c.md#locating-the-dll); the remote controls are in `..\utilities\` relative to the DLL.
+If you do write code that uses the remote controls:
+- If you must support v1.8.8 and below, you should find them by following the [same process documented for the C API](../api/c.md#locating-the-dll); the remote controls are in `..\utilities\` relative to the DLL.
+- If you only need to support v1.9 and above, find them using the `HKEY_CURRENT_USER\Software\Fred Emmott\OpenKneeboard\InstallationUtilitiesPath` registry value.
 
 ## Basic Remote Controls
 
