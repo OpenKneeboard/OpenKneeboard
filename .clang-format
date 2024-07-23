@@ -1,5 +1,3 @@
-
-
 BasedOnStyle: Google
 AlignEscapedNewlines: DontAlign
 AlignAfterOpenBracket: AlwaysBreak
@@ -67,6 +65,6 @@ SpaceBeforeCpp11BracedList: true
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeRangeBasedForLoopColon: false
 SpacesBeforeTrailingComments: 0
-Standard: c++23
+Standard: c++20
 TabWidth: '2'
 UseTab: Never
