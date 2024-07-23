@@ -1,4 +1,4 @@
-#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 namespace OpenKneeboard::RuntimeFiles {
 const std::filesystem::path QUICK_START_PDF("Quick Start.pdf");

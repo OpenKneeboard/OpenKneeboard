@@ -18,13 +18,13 @@
  * USA.
  */
 
-#include "viewer-vulkan.h"
+#include "viewer-vulkan.hpp"
 
-#include <OpenKneeboard/RenderDoc.h>
-#include <OpenKneeboard/Vulkan.h>
+#include <OpenKneeboard/RenderDoc.hpp>
+#include <OpenKneeboard/Vulkan.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
 
 #include <DirectXTex.h>
 

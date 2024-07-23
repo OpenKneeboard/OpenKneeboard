@@ -17,20 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSAircraftTab.h>
-#include <OpenKneeboard/DCSMissionTab.h>
-#include <OpenKneeboard/DCSRadioLogTab.h>
-#include <OpenKneeboard/DCSTerrainTab.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/TabTypes.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabsList.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/DCSAircraftTab.hpp>
+#include <OpenKneeboard/DCSMissionTab.hpp>
+#include <OpenKneeboard/DCSRadioLogTab.hpp>
+#include <OpenKneeboard/DCSTerrainTab.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/TabTypes.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabsList.hpp>
 
 #include <shims/nlohmann/json.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <algorithm>
 

@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/RunSubprocessAsync.h>
+#include <OpenKneeboard/RunSubprocessAsync.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 // clang-format off
 #include <shims/Windows.h>

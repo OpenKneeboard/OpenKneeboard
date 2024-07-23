@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "IDXGISwapChainHook.h"
+#include "IDXGISwapChainHook.hpp"
 
-#include "FindMainWindow.h"
-#include "detours-ext.h"
+#include "FindMainWindow.hpp"
+#include "detours-ext.hpp"
 #include "dxgi-offsets.h"
-#include "function-patterns.h"
-
-#include <OpenKneeboard/dprint.h>
+#include "function-patterns.hpp"
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <bit>
 #include <utility>

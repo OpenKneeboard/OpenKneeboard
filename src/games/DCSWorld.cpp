@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/Filesystem.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/DCSWorldInstance.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 #include <fstream>

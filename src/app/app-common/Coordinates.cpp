@@ -18,7 +18,7 @@
  * USA.
  */
 
-#include <OpenKneeboard/Coordinates.h>
+#include <OpenKneeboard/Coordinates.hpp>
 
 #include <GeographicLib/DMS.hpp>
 #include <GeographicLib/GeoCoords.hpp>

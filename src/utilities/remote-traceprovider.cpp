@@ -18,7 +18,7 @@
  * USA.
  */
 
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <cstdlib>
 

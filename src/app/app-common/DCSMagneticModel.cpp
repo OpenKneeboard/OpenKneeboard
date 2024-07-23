@@ -18,9 +18,10 @@
  * USA.
  */
 
-#include <OpenKneeboard/DCSMagneticModel.h>
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/DCSMagneticModel.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
 
 namespace OpenKneeboard {
 

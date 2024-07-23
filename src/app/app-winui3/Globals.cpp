@@ -23,8 +23,8 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TroubleshootingStore.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/TroubleshootingStore.hpp>
 
 namespace OpenKneeboard {
 

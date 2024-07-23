@@ -18,12 +18,11 @@
  * USA.
  */
 
-#include "viewer-d3d11.h"
+#include "viewer-d3d11.hpp"
 
-#include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/D3D11.hpp>
 
-#include <OpenKneeboard/hresult.h>
-
+#include <OpenKneeboard/hresult.hpp>
 #include <directxtk/ScreenGrab.h>
 
 namespace OpenKneeboard::Viewer {

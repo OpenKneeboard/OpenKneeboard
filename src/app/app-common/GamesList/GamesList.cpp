@@ -17,17 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/Game.h>
-#include <OpenKneeboard/GameInjector.h>
-#include <OpenKneeboard/GameInstance.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/GenericGame.h>
-#include <OpenKneeboard/KneeboardState.h>
-
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/Game.hpp>
+#include <OpenKneeboard/GameInjector.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
+#include <OpenKneeboard/GamesList.hpp>
+#include <OpenKneeboard/GenericGame.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 
 #include <windows.h>
+
+#include <OpenKneeboard/scope_exit.hpp>
 
 namespace OpenKneeboard {
 GamesList::GamesList(KneeboardState* state, const nlohmann::json& config)

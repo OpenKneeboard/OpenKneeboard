@@ -23,7 +23,7 @@
 #include "RenameTabDialog.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 

@@ -24,14 +24,14 @@
  * If done from the main process, the registry write will be app-specific.
  */
 
-#include <OpenKneeboard/RuntimeFiles.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <shims/filesystem>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <functional>
 #include <string>

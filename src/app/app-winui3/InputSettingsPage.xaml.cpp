@@ -25,12 +25,12 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TabletInputAdapter.h>
-#include <OpenKneeboard/TabletInputDevice.h>
-#include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
+#include <OpenKneeboard/TabletInputDevice.hpp>
+#include <OpenKneeboard/UserInputDevice.hpp>
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 using namespace OpenKneeboard;
 

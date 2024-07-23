@@ -17,11 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/Game.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/DCSWorldInstance.hpp>
+#include <OpenKneeboard/Game.hpp>
+
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/utf8.hpp>
 
 namespace OpenKneeboard {
 

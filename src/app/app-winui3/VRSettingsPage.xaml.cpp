@@ -25,13 +25,13 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/OpenXRMode.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/OpenXRMode.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <shims/filesystem>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <cmath>
 #include <numbers>

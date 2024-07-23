@@ -19,7 +19,7 @@
  */
 #include "FilePicker.h"
 
-#include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/handles.hpp>
 
 #include <algorithm>
 #include <ranges>

@@ -18,17 +18,17 @@
  * USA.
  */
 
-#include <OpenKneeboard/DCSBriefingTab.h>
-#include <OpenKneeboard/DCSExtractedMission.h>
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/ImageFilePageSource.h>
-#include <OpenKneeboard/Lua.h>
-#include <OpenKneeboard/NavigationTab.h>
-#include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/DCSBriefingTab.hpp>
+#include <OpenKneeboard/DCSExtractedMission.hpp>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/ImageFilePageSource.hpp>
+#include <OpenKneeboard/Lua.hpp>
+#include <OpenKneeboard/NavigationTab.hpp>
+#include <OpenKneeboard/PlainTextPageSource.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 using DCS = OpenKneeboard::DCSWorld;
 

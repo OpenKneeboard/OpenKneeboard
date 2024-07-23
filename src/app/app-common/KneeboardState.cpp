@@ -17,30 +17,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/DirectInputAdapter.hpp>
+#include <OpenKneeboard/GameEventServer.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
+#include <OpenKneeboard/GamesList.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/InterprocessRenderer.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/OpenXRMode.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/SteamVRKneeboard.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
+#include <OpenKneeboard/TabsList.hpp>
+#include <OpenKneeboard/TroubleshootingStore.hpp>
+#include <OpenKneeboard/UserAction.hpp>
 
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/DirectInputAdapter.h>
-#include <OpenKneeboard/GameEventServer.h>
-#include <OpenKneeboard/GameInstance.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/InterprocessRenderer.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/OpenXRMode.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/SteamVRKneeboard.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabletInputAdapter.h>
-#include <OpenKneeboard/TabsList.h>
-#include <OpenKneeboard/TroubleshootingStore.h>
-#include <OpenKneeboard/UserAction.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <algorithm>
 #include <string>

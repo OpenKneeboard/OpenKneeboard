@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/ConsoleLoopCondition.h>
-#include <OpenKneeboard/Win32.h>
+#include <OpenKneeboard/ConsoleLoopCondition.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <Windows.h>
 

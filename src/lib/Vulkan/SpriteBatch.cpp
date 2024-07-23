@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.h>
-#include <OpenKneeboard/Vulkan.h>
+#include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.hpp>
+#include <OpenKneeboard/Vulkan.hpp>
 
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/tracing.hpp>
 
 namespace OpenKneeboard::Vulkan {
 

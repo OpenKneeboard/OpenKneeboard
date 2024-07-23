@@ -17,18 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
+#include <OpenKneeboard/IPageSourceWithNavigation.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/NavigationTab.hpp>
+#include <OpenKneeboard/TabView.hpp>
 
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
-#include <OpenKneeboard/IPageSourceWithNavigation.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/NavigationTab.h>
-#include <OpenKneeboard/TabView.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 namespace OpenKneeboard {
 

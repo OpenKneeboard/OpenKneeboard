@@ -27,17 +27,17 @@
 #include <WtsApi32.h>
 // clang-format on
 
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/GameInjector.h>
-#include <OpenKneeboard/GameInstance.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/TabletInputAdapter.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/GameInjector.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <chrono>
 #include <mutex>

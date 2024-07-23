@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "InjectedDLLMain.h"
-#include "OculusD3D12Kneeboard.h"
+#include "InjectedDLLMain.hpp"
+#include "OculusD3D12Kneeboard.hpp"
 
 using namespace OpenKneeboard;
 

@@ -18,11 +18,11 @@
  * USA.
  */
 
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/RenderTarget.h>
-#include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/D3D11.hpp>
+#include <OpenKneeboard/RenderTarget.hpp>
+#include <OpenKneeboard/SHM.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <d2d1_3.h>
 

@@ -21,10 +21,10 @@
 #define OPENKNEEBOARD_CAPI_IMPL
 #include "OpenKneeboard_CAPI.h"
 
-#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/GameEvent.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 static void init() {
   OpenKneeboard::DPrintSettings::Set({

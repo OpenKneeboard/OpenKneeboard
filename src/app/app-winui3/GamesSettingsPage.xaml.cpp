@@ -33,13 +33,13 @@
 #include "FilePicker.h"
 #include "Globals.h"
 
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/KneeboardState.h>
-
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DCSWorldInstance.hpp>
+#include <OpenKneeboard/GamesList.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
 #include <format>

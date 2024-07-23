@@ -25,14 +25,14 @@
 #include <Unknwn.h>
 // clang-format on
 
-#include <OpenKneeboard/tracing.h>
-
 #include <shims/source_location>
 
 #include <pplawait.h>
 #include <ppltasks.h>
 
 #include <winrt/Windows.Foundation.h>
+
+#include <OpenKneeboard/tracing.hpp>
 #pragma warning(push)
 #pragma warning(disable : 26820)// Potentially expensive copy operation
 #include <winrt/base.h>

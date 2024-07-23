@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/TabNavigationAction.h>
-#include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/TabNavigationAction.hpp>
+#include <OpenKneeboard/TabView.hpp>
 
 namespace OpenKneeboard {
 

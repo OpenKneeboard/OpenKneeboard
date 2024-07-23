@@ -17,18 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "OculusKneeboard.h"
+#include "OculusKneeboard.hpp"
 
-#include <OpenKneeboard/Spriting.h>
+#include <OpenKneeboard/Spriting.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 // clang-format off
 #include <windows.h>
 #include <detours.h>
 // clang-format on
 
-#include "OVRProxy.h"
+#include "OVRProxy.hpp"
 
 using namespace DirectX::SimpleMath;
 

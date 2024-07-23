@@ -24,9 +24,12 @@
  * If done from the main process, the registry write will be app-specific.
  */
 
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/Elevation.hpp>
+
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+
 #include <shellapi.h>
 
 using namespace OpenKneeboard;
@@ -39,9 +42,7 @@ namespace OpenKneeboard {
 TRACELOGGING_DEFINE_PROVIDER(
   gTraceProvider,
   "OpenKneeboard.Elevation.Helper",
-  (
-    0x4cd19abb, 0x3b31, 0x5e4e, 0xca, 0x98, 0x75, 0xe4, 0x03, 0x06, 0x12, 0x14
-  ));
+  (0x4cd19abb, 0x3b31, 0x5e4e, 0xca, 0x98, 0x75, 0xe4, 0x03, 0x06, 0x12, 0x14));
 }// namespace OpenKneeboard
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {

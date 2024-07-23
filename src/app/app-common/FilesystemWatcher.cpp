@@ -18,10 +18,10 @@
  * USA.
  */
 
-#include <OpenKneeboard/FilesystemWatcher.h>
-#include <OpenKneeboard/Win32.h>
+#include <OpenKneeboard/FilesystemWatcher.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/scope_exit.hpp>
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::Storage::Search;

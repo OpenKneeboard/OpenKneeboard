@@ -33,9 +33,9 @@
 
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Events.hpp>
 
-#include <OpenKneeboard/audited_ptr.h>
+#include <OpenKneeboard/audited_ptr.hpp>
 
 #include <string>
 

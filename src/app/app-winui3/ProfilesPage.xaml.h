@@ -25,7 +25,7 @@
 #include "ProfilesPage.g.h"
 // clang-format on
 
-#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Events.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;

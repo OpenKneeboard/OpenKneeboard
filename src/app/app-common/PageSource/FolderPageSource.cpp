@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FilePageSource.h>
-#include <OpenKneeboard/FolderPageSource.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/FilePageSource.hpp>
+#include <OpenKneeboard/FolderPageSource.hpp>
 
 #include <shims/nlohmann/json.hpp>
 
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 

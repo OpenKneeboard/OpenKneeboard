@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "function-patterns.h"
+#include "function-patterns.hpp"
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 // clang-format off
 #include <Windows.h>

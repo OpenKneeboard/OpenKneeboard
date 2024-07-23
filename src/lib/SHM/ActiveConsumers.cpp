@@ -17,15 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <algorithm>
 #include <format>

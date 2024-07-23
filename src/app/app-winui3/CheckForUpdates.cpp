@@ -23,18 +23,11 @@
 #include "CheckForUpdates.h"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "Globals.h"
 
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/LaunchURI.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
 
 #include <shims/filesystem>
 
@@ -42,6 +35,12 @@
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Web.Http.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <format>
 #include <fstream>

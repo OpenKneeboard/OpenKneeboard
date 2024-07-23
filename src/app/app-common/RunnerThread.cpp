@@ -18,12 +18,12 @@
  * USA.
  */
 
-#include <OpenKneeboard/ProcessShutdownBlock.h>
-#include <OpenKneeboard/RunnerThread.h>
-#include <OpenKneeboard/ThreadGuard.h>
+#include <OpenKneeboard/ProcessShutdownBlock.hpp>
+#include <OpenKneeboard/RunnerThread.hpp>
+#include <OpenKneeboard/ThreadGuard.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <source_location>
 

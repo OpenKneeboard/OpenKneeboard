@@ -18,16 +18,15 @@
  * USA.
  */
 
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/PlainTextPageSource.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/PlainTextPageSource.hpp>
 
 #include <Unknwn.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <algorithm>
 #include <format>

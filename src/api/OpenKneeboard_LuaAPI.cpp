@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/GameEvent.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <cinttypes>
 #include <cstdlib>
@@ -68,9 +68,9 @@ static int SendToOpenKneeboard(lua_State* state) {
 
 extern "C" int __declspec(dllexport)
 #if UINTPTR_MAX == UINT64_MAX
-  luaopen_OpenKneeboard_LuaAPI64(lua_State* state) {
+luaopen_OpenKneeboard_LuaAPI64(lua_State* state) {
 #elif UINTPTR_MAX == UINT32_MAX
-  luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
+luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
 #endif
   OpenKneeboard::DPrintSettings::Set({
     .prefix = "OpenKneeboard-LuaAPI",

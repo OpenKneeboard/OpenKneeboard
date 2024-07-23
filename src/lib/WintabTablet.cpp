@@ -18,17 +18,17 @@
  * USA.
  */
 
-#include <OpenKneeboard/WintabTablet.h>
+#include <OpenKneeboard/WintabTablet.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <stdexcept>
 #include <thread>
 
 // clang-format off
-#include <wintab/WINTAB.H>
+#include <wintab/WINTAB.h>
 #define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE | PK_CHANGED)
 #define PACKETMODE 0
 #define PACKETEXPKEYS PKEXT_ABSOLUTE

@@ -18,25 +18,24 @@
  * USA.
  */
 
-#include "OpenXRKneeboard.h"
+#include "OpenXRKneeboard.hpp"
 
-#include <OpenKneeboard/config.h>
+#include "OpenXRD3D11Kneeboard.hpp"
+#include "OpenXRD3D12Kneeboard.hpp"
+#include "OpenXRNext.hpp"
+#include "OpenXRVulkanKneeboard.hpp"
 
-#include "OpenXRD3D11Kneeboard.h"
-#include "OpenXRD3D12Kneeboard.h"
-#include "OpenXRNext.h"
-#include "OpenXRVulkanKneeboard.h"
-
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/Spriting.h>
-#include <OpenKneeboard/StateMachine.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/Spriting.hpp>
+#include <OpenKneeboard/StateMachine.hpp>
 
 #include <shims/vulkan/vulkan.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <memory>
 #include <string>

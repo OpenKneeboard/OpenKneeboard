@@ -17,23 +17,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include "SHM/ReaderState.hpp"
+#include "SHM/WriterState.hpp"
 
-#include "SHM/ReaderState.h"
-#include "SHM/WriterState.h"
-
-#include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/StateMachine.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/bitflags.h>
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/SHM.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/StateMachine.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/bitflags.hpp>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <bit>
 #include <concepts>

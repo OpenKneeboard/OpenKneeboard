@@ -18,18 +18,18 @@
  * USA.
  */
 
-#include <OpenKneeboard/Coordinates.h>
-#include <OpenKneeboard/DCSBriefingTab.h>
-#include <OpenKneeboard/DCSExtractedMission.h>
-#include <OpenKneeboard/DCSGrid.h>
-#include <OpenKneeboard/DCSMagneticModel.h>
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/ImageFilePageSource.h>
-#include <OpenKneeboard/Lua.h>
-#include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/Coordinates.hpp>
+#include <OpenKneeboard/DCSBriefingTab.hpp>
+#include <OpenKneeboard/DCSExtractedMission.hpp>
+#include <OpenKneeboard/DCSGrid.hpp>
+#include <OpenKneeboard/DCSMagneticModel.hpp>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/ImageFilePageSource.hpp>
+#include <OpenKneeboard/Lua.hpp>
+#include <OpenKneeboard/PlainTextPageSource.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <chrono>
 #include <cmath>

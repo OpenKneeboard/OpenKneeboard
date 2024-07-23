@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Game.h>
-#include <OpenKneeboard/GameInstance.h>
+#include <OpenKneeboard/Game.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
 
 namespace OpenKneeboard {
 

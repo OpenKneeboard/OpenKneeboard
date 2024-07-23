@@ -18,12 +18,12 @@
  * USA.
  */
 
-#include <OpenKneeboard/RenderDoc.h>
-#include <OpenKneeboard/SHM/Vulkan.h>
-#include <OpenKneeboard/Vulkan.h>
+#include <OpenKneeboard/RenderDoc.hpp>
+#include <OpenKneeboard/SHM/Vulkan.hpp>
+#include <OpenKneeboard/Vulkan.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 namespace OpenKneeboard::SHM::Vulkan {
 

@@ -18,14 +18,14 @@
  * USA.
  */
 
-#include <OpenKneeboard/OTDIPCClient.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/OTDIPCClient.hpp>
 
 #include <wil/cppwinrt.h>
 #include <wil/cppwinrt_helpers.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <ranges>
 

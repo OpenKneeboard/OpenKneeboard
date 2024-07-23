@@ -23,27 +23,23 @@
 #include "TabPage.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "Globals.h"
 
-#include <OpenKneeboard/CreateTabActions.h>
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/CursorRenderer.h>
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/ICheckableToolbarItem.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/IToolbarFlyout.h>
-#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
-#include <OpenKneeboard/IToolbarItemWithVisibility.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/ToolbarSeparator.h>
-#include <OpenKneeboard/ToolbarToggleAction.h>
-
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/CreateTabActions.hpp>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/CursorRenderer.hpp>
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
+#include <OpenKneeboard/ICheckableToolbarItem.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/IToolbarFlyout.hpp>
+#include <OpenKneeboard/IToolbarItemWithConfirmation.hpp>
+#include <OpenKneeboard/IToolbarItemWithVisibility.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/ToolbarSeparator.hpp>
+#include <OpenKneeboard/ToolbarToggleAction.hpp>
 
 #include <shims/source_location>
 
@@ -51,6 +47,9 @@
 #include <winrt/Windows.Foundation.Collections.h>
 
 #include <microsoft.ui.xaml.media.dxinterop.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <mutex>
 #include <ranges>

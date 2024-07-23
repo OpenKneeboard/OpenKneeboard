@@ -18,19 +18,18 @@
  * USA.
  */
 
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/DoodleRenderer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/WebView2PageSource.h>
-
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/json_format.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/DoodleRenderer.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/WebView2PageSource.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/json_format.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <fstream>
 #include <sstream>

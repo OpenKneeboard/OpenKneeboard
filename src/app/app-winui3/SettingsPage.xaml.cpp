@@ -24,9 +24,8 @@
 #include "SettingsSubpageData.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/version.hpp>
 
 namespace winrt::OpenKneeboardApp::implementation {
 

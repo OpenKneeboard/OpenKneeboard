@@ -23,7 +23,7 @@
 #include "IndependentVRViewUIKind.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 using namespace OpenKneeboard;
 

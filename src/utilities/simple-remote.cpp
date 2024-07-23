@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/GameEvent.hpp>
 
 using OpenKneeboard::GameEvent;
 
 #define STRINGIFY_INNER(x) #x
 #define STRINGIFY(x) STRINGIFY_INNER(x)
 
-#include <OpenKneeboard/dprint.h>
-
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <filesystem>
 

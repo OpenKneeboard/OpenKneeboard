@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/SHM/D3D11.hpp>
 
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 namespace OpenKneeboard::SHM::D3D11 {
 

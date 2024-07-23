@@ -23,8 +23,8 @@
 #include "pch.h"
 // clang-format on
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 
 #include <shims/winrt/base.h>
 

@@ -17,20 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "DllLoadWatcher.h"
+#include "DllLoadWatcher.hpp"
 
-#include "detours-ext.h"
+#include "detours-ext.hpp"
 
 // clang-format off
 #include <Windows.h>
 #include <SubAuth.h>
 // clang-format on
 
-#include "detours-ext.h"
-
-#include <OpenKneeboard/dprint.h>
+#include "detours-ext.hpp"
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 // There's a header for this, but only in the DDK
 typedef const UNICODE_STRING* PCUNICODE_STRING;

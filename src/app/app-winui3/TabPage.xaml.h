@@ -20,12 +20,12 @@
 #pragma once
 #include "TabPage.g.h"
 
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Pixels.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/ThreadGuard.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/Pixels.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/ThreadGuard.hpp>
 
 #include <memory>
 #include <mutex>

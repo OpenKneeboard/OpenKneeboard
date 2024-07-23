@@ -26,7 +26,7 @@
 #include "AdvancedSettingsPage.g.h"
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Events.hpp>
 
 using namespace winrt::Microsoft::UI::Xaml;
 

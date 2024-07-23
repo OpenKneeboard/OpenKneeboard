@@ -17,24 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/CreateTabActions.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/HeaderUILayer.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/IToolbarItemWithVisibility.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/ToolbarFlyout.hpp>
+#include <OpenKneeboard/ToolbarSeparator.hpp>
+#include <OpenKneeboard/ToolbarToggleAction.hpp>
 
-#include <OpenKneeboard/CreateTabActions.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/HeaderUILayer.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/IToolbarItemWithVisibility.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabletInputAdapter.h>
-#include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/ToolbarFlyout.h>
-#include <OpenKneeboard/ToolbarSeparator.h>
-#include <OpenKneeboard/ToolbarToggleAction.h>
-
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
 

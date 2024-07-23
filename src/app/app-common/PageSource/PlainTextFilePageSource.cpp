@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/PlainTextFilePageSource.h>
-#include <OpenKneeboard/PlainTextPageSource.h>
-
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/PlainTextFilePageSource.hpp>
+#include <OpenKneeboard/PlainTextPageSource.hpp>
 
 #include <shims/nlohmann/json.hpp>
 
 #include <winrt/Windows.Foundation.h>
+
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <fstream>
 

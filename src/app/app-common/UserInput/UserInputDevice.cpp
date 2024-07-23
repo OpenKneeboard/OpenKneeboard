@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/UserInputButtonBinding.h>
-#include <OpenKneeboard/UserInputButtonEvent.h>
-#include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
+#include <OpenKneeboard/UserInputButtonEvent.hpp>
+#include <OpenKneeboard/UserInputDevice.hpp>
 
 namespace OpenKneeboard {
 

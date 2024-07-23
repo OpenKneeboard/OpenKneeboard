@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 namespace OpenKneeboard::RuntimeFiles {
 

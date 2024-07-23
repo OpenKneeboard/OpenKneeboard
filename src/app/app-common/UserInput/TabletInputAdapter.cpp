@@ -18,23 +18,22 @@
  * USA.
  */
 
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/OTDIPCClient.h>
-#include <OpenKneeboard/TabletInputAdapter.h>
-#include <OpenKneeboard/TabletInputDevice.h>
-#include <OpenKneeboard/UserAction.h>
-#include <OpenKneeboard/UserInputButtonBinding.h>
-#include <OpenKneeboard/UserInputButtonEvent.h>
-#include <OpenKneeboard/WintabTablet.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/OTDIPCClient.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
+#include <OpenKneeboard/TabletInputDevice.hpp>
+#include <OpenKneeboard/UserAction.hpp>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
+#include <OpenKneeboard/UserInputButtonEvent.hpp>
+#include <OpenKneeboard/WintabTablet.hpp>
 
 #include <shims/nlohmann/json.hpp>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
 
 #include <atomic>
 #include <bit>

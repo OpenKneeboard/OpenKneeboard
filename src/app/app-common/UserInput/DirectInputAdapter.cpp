@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DirectInputAdapter.h>
-#include <OpenKneeboard/DirectInputDevice.h>
-#include <OpenKneeboard/DirectInputListener.h>
-#include <OpenKneeboard/GetDirectInputDevices.h>
-#include <OpenKneeboard/UserInputButtonBinding.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/DirectInputAdapter.hpp>
+#include <OpenKneeboard/DirectInputDevice.hpp>
+#include <OpenKneeboard/DirectInputListener.hpp>
+#include <OpenKneeboard/GetDirectInputDevices.hpp>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <thread>
 #include <unordered_map>

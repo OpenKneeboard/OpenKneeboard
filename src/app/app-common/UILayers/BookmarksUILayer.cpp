@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/BookmarksUILayer.hpp>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 
-#include <OpenKneeboard/BookmarksUILayer.h>
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/config.hpp>
 
 namespace OpenKneeboard {
 

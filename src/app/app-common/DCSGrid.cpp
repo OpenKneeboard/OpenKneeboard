@@ -18,11 +18,10 @@
  * USA.
  */
 
-#include <OpenKneeboard/DCSGrid.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/DCSGrid.hpp>
 
 #include <GeographicLib/UTMUPS.hpp>
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 

@@ -18,9 +18,9 @@
  * USA.
  */
 
-#include <OpenKneeboard/D3D12/Renderer.h>
+#include <OpenKneeboard/D3D12/Renderer.hpp>
 
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/hresult.hpp>
 
 namespace OpenKneeboard::D3D12 {
 

@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/DXResources.h>
-
-#include <OpenKneeboard/audited_ptr.h>
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
+#include <OpenKneeboard/DXResources.hpp>
 
 #include <Unknwn.h>
+
+#include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/hresult.hpp>
 
 #include <dwrite.h>
 

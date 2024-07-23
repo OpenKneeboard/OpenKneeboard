@@ -23,22 +23,15 @@
 #include "HelpPage.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "CheckForUpdates.h"
 #include "FilePicker.h"
 
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/Settings.h>
-#include <OpenKneeboard/TroubleshootingStore.h>
-
-#include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/Settings.hpp>
+#include <OpenKneeboard/TroubleshootingStore.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -47,6 +40,12 @@
 #include <wil/registry.h>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <format>
 #include <fstream>

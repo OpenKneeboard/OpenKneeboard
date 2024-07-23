@@ -17,25 +17,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/BookmarksUILayer.hpp>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/CursorRenderer.hpp>
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
+#include <OpenKneeboard/FooterUILayer.hpp>
+#include <OpenKneeboard/HeaderUILayer.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabViewUILayer.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/UserAction.hpp>
+#include <OpenKneeboard/UserActionHandler.hpp>
 
-#include <OpenKneeboard/BookmarksUILayer.h>
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/CursorRenderer.h>
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/FooterUILayer.h>
-#include <OpenKneeboard/HeaderUILayer.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabViewUILayer.h>
-#include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/UserAction.h>
-#include <OpenKneeboard/UserActionHandler.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <algorithm>
 #include <ranges>

@@ -17,19 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/ConfirmationUILayer.hpp>
+#include <OpenKneeboard/FlyoutMenuUILayer.hpp>
+#include <OpenKneeboard/ICheckableToolbarItem.hpp>
+#include <OpenKneeboard/ISelectableToolbarItem.hpp>
+#include <OpenKneeboard/IToolbarFlyout.hpp>
+#include <OpenKneeboard/IToolbarItemWithConfirmation.hpp>
+#include <OpenKneeboard/IToolbarItemWithVisibility.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/ToolbarSeparator.hpp>
 
-#include <OpenKneeboard/ConfirmationUILayer.h>
-#include <OpenKneeboard/FlyoutMenuUILayer.h>
-#include <OpenKneeboard/ICheckableToolbarItem.h>
-#include <OpenKneeboard/ISelectableToolbarItem.h>
-#include <OpenKneeboard/IToolbarFlyout.h>
-#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
-#include <OpenKneeboard/IToolbarItemWithVisibility.h>
-#include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/ToolbarSeparator.h>
-
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <dwrite.h>
 

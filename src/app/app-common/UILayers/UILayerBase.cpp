@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/UILayerBase.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/UILayerBase.hpp>
 
 namespace OpenKneeboard {
 

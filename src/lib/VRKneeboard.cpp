@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/RayIntersectsRect.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/VRKneeboard.h>
+#include <OpenKneeboard/RayIntersectsRect.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/VRKneeboard.hpp>
 
 #include <ranges>
 

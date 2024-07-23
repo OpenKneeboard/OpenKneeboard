@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D12.h>
-#include <OpenKneeboard/RenderDoc.h>
-#include <OpenKneeboard/SHM/D3D12.h>
-
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/D3D12.hpp>
+#include <OpenKneeboard/RenderDoc.hpp>
+#include <OpenKneeboard/SHM/D3D12.hpp>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <DirectXColors.h>
 

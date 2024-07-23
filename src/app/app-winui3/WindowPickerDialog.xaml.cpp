@@ -26,7 +26,7 @@
 
 #include "ExecutableIconFactory.h"
 
-#include <OpenKneeboard/WindowCaptureTab.h>
+#include <OpenKneeboard/WindowCaptureTab.hpp>
 
 #include <string_view>
 

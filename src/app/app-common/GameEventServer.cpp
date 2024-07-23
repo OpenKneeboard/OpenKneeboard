@@ -17,18 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/GameEventServer.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/json.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/GameEventServer.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <thread>
 

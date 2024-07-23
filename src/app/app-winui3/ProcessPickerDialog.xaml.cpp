@@ -25,9 +25,9 @@
 
 #include "ExecutableIconFactory.h"
 
-#include <OpenKneeboard/utf8.h>
-
 #include <shims/filesystem>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
 #include <set>

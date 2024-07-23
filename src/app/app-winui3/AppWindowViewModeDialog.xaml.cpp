@@ -23,9 +23,9 @@
 #include "AppWindowViewModeDialog.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/ViewsConfig.h>
+#include <OpenKneeboard/ViewsConfig.hpp>
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 

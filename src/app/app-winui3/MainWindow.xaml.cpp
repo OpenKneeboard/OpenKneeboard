@@ -25,33 +25,25 @@
 #endif
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "App.xaml.h"
 #include "CheckDCSHooks.h"
 #include "CheckForUpdates.h"
 #include "Globals.h"
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/GetMainHWND.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabsList.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/json.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/GamesList.hpp>
+#include <OpenKneeboard/GetMainHWND.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabsList.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <shims/winrt/Microsoft.UI.Interop.h>
 
@@ -63,6 +55,13 @@
 #include <winrt/Windows.UI.Xaml.h>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <fstream>
 #include <mutex>

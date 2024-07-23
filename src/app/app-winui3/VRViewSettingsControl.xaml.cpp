@@ -25,12 +25,12 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/TabsList.h>
-#include <OpenKneeboard/ViewsConfig.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/TabsList.hpp>
+#include <OpenKneeboard/ViewsConfig.hpp>
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;

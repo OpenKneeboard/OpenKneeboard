@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/RenderDoc.h>
+#include <OpenKneeboard/RenderDoc.hpp>
 
 #include <Windows.h>
 
@@ -50,8 +50,8 @@ NestedFrameCapture::NestedFrameCapture(
   const VkInstance_T* instance,
   const char* title)
   : NestedFrameCapture(
-    RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance),
-    title) {
+      RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance),
+      title) {
 }
 
 NestedFrameCapture::NestedFrameCapture(ID3D12Device* device, const char* title)

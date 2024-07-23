@@ -13,7 +13,8 @@
 // conflict with Storyboard::GetCurrentTime
 #undef GetCurrentTime
 
-#include <wil/cppwinrt_helpers.h>
+#include "Globals.h"
+
 #include <winrt/Microsoft.UI.Composition.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Input.h>
@@ -32,4 +33,4 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
-#include "Globals.h"
+#include <wil/cppwinrt_helpers.h>

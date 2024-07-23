@@ -17,25 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
-
-#include <OpenKneeboard/CachedLayer.h>
-#include <OpenKneeboard/CursorClickableRegions.h>
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/DoodleRenderer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/FilesystemWatcher.h>
-#include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/NavigationTab.h>
-#include <OpenKneeboard/PDFFilePageSource.h>
-#include <OpenKneeboard/PDFNavigation.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/CachedLayer.hpp>
+#include <OpenKneeboard/CursorClickableRegions.hpp>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/DoodleRenderer.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/FilesystemWatcher.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/NavigationTab.hpp>
+#include <OpenKneeboard/PDFFilePageSource.hpp>
+#include <OpenKneeboard/PDFNavigation.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <shims/nlohmann/json.hpp>
 #include <shims/winrt/base.h>
@@ -49,6 +42,12 @@
 #include <wil/cppwinrt_helpers.h>
 
 #include <windows.data.pdf.interop.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
 #include <cstring>

@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FilesDiffer.h>
-#include <OpenKneeboard/Win32.h>
+#include <OpenKneeboard/FilesDiffer.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>

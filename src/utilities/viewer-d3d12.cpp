@@ -18,12 +18,12 @@
  * USA.
  */
 
-#include "viewer-d3d12.h"
+#include "viewer-d3d12.hpp"
 
-#include <OpenKneeboard/D3D12.h>
-#include <OpenKneeboard/RenderDoc.h>
+#include <OpenKneeboard/D3D12.hpp>
+#include <OpenKneeboard/RenderDoc.hpp>
 
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/hresult.hpp>
 
 #include <directxtk12/ScreenGrab.h>
 

@@ -25,18 +25,18 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/FilesDiffer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DCSWorldInstance.hpp>
+#include <OpenKneeboard/FilesDiffer.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GamesList.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <winrt/microsoft.ui.xaml.controls.h>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 #include <set>

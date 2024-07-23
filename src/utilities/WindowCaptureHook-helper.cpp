@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/ConsoleLoopCondition.h>
-#include <OpenKneeboard/WindowCaptureControl.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/ConsoleLoopCondition.hpp>
+#include <OpenKneeboard/WindowCaptureControl.hpp>
 
 #include <shims/Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <cstdlib>
 

@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "detours-ext.h"
+#include "detours-ext.hpp"
 
-#include <OpenKneeboard/WindowCaptureControl.h>
-
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/WindowCaptureControl.hpp>
 
 #include <shims/Windows.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <atomic>
 #include <cstdlib>
@@ -237,7 +237,7 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 extern "C" __declspec(dllexport) LRESULT CALLBACK
-  GetMsgProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
+GetMsgProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PMSG>(lParam);
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
@@ -261,7 +261,7 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
 }
 
 extern "C" __declspec(dllexport) LRESULT CALLBACK
-  CallWndProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
+CallWndProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PCWPSTRUCT>(lParam);
 
   TraceLoggingThreadActivity<gTraceProvider> activity;

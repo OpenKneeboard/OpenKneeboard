@@ -18,17 +18,17 @@
  * USA.
  */
 
-#include <OpenKneeboard/DebugTimer.h>
-#include <OpenKneeboard/PDFNavigation.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DebugTimer.hpp>
+#include <OpenKneeboard/PDFNavigation.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <fstream>
 #include <map>

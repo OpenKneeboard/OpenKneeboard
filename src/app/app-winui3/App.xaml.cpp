@@ -22,32 +22,31 @@
 #include "App.xaml.h"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
-#include <OpenKneeboard/DebugPrivileges.h>
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/GetMainHWND.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/OpenXRMode.h>
-#include <OpenKneeboard/ProcessShutdownBlock.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/TroubleshootingStore.h>
-#include <OpenKneeboard/WebView2PageSource.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/DebugPrivileges.hpp>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GetMainHWND.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/OpenXRMode.hpp>
+#include <OpenKneeboard/ProcessShutdownBlock.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/SHM.hpp>
+#include <OpenKneeboard/TroubleshootingStore.hpp>
+#include <OpenKneeboard/WebView2PageSource.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <shims/filesystem>
 
 #include <wil/registry.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <chrono>
 #include <exception>

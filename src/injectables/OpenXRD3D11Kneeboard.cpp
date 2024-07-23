@@ -18,20 +18,18 @@
  * USA.
  */
 
-#include "OpenXRD3D11Kneeboard.h"
+#include "OpenXRD3D11Kneeboard.hpp"
 
-#include <OpenKneeboard/config.h>
+#include "OpenXRNext.hpp"
 
-#include "OpenXRNext.h"
-
-#include <OpenKneeboard/D3D11.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/D3D11.hpp>
 
 #include <shims/winrt/base.h>
 
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
 #include <directxtk/SpriteBatch.h>
 
 #include <d3d11.h>

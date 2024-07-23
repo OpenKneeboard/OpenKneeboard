@@ -2,14 +2,14 @@ ok_add_library(_libheaders INTERFACE)
 target_include_directories(_libheaders INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.in.hpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.hpp"
   @ONLY
 )
 file(
   GENERATE
   OUTPUT
-  "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include/OpenKneeboard/detail/config.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include/OpenKneeboard/detail/config.hpp"
   CONTENT "\
 namespace OpenKneeboard::detail::Config {
   constexpr auto BuildType = \"$<CONFIG>\";
@@ -354,7 +354,7 @@ target_link_libraries(
   OpenKneeboard-SHM
 )
 
-set(VERSION_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h")
+set(VERSION_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.hpp")
 add_custom_target(
   OpenKneeboard-version-sources
   COMMAND
@@ -365,12 +365,12 @@ add_custom_target(
   -DVERSION_BUILD=${CMAKE_PROJECT_VERSION_TWEAK}
   -DRELEASE_NAME=${RELEASE_NAME}
   -DOPENXR_API_LAYER_IMPLEMENTATION_VERSION=${OPENXR_API_LAYER_IMPLEMENTATION_VERSION}
-  "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.in.h"
+  "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.in.hpp"
   "-DOUTPUT_CPP_FILE=${VERSION_CPP_FILE}"
   "-P${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
   DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
-  "version.cpp.in"
+  "version.hpp.in"
   BYPRODUCTS
   "${VERSION_CPP_FILE}"
   WORKING_DIRECTORY

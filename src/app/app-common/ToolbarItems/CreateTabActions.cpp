@@ -17,23 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/ClearUserInputAction.h>
-#include <OpenKneeboard/CreateTabActions.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/NextTabAction.h>
-#include <OpenKneeboard/PreviousTabAction.h>
-#include <OpenKneeboard/ReloadTabAction.h>
-#include <OpenKneeboard/SwitchProfileFlyout.h>
-#include <OpenKneeboard/SwitchTabFlyout.h>
-#include <OpenKneeboard/TabFirstPageAction.h>
-#include <OpenKneeboard/TabNavigationAction.h>
-#include <OpenKneeboard/TabNextPageAction.h>
-#include <OpenKneeboard/TabPreviousPageAction.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/ToggleBookmarkAction.h>
-#include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/ToolbarFlyout.h>
-#include <OpenKneeboard/ToolbarSeparator.h>
+#include <OpenKneeboard/ClearUserInputAction.hpp>
+#include <OpenKneeboard/CreateTabActions.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/NextTabAction.hpp>
+#include <OpenKneeboard/PreviousTabAction.hpp>
+#include <OpenKneeboard/ReloadTabAction.hpp>
+#include <OpenKneeboard/SwitchProfileFlyout.hpp>
+#include <OpenKneeboard/SwitchTabFlyout.hpp>
+#include <OpenKneeboard/TabFirstPageAction.hpp>
+#include <OpenKneeboard/TabNavigationAction.hpp>
+#include <OpenKneeboard/TabNextPageAction.hpp>
+#include <OpenKneeboard/TabPreviousPageAction.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/ToggleBookmarkAction.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/ToolbarFlyout.hpp>
+#include <OpenKneeboard/ToolbarSeparator.hpp>
 
 #include <ranges>
 

@@ -4,7 +4,7 @@ make_directory("${GENERATED_HEADER_DIR}")
 
 
 macro(add_shader_with_ms_compiler COMPILER TARGET ENTRYPOINT SOURCE)
-    set(SHADER_OUTPUT "${GENERATED_HEADER_DIR}/${TARGET}.h")
+    set(SHADER_OUTPUT "${GENERATED_HEADER_DIR}/${TARGET}.hpp")
     add_custom_command(
         OUTPUT "${SHADER_OUTPUT}"
         DEPENDS "${SOURCE}"

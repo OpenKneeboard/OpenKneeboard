@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DebugPrivileges.h>
+#include <OpenKneeboard/DebugPrivileges.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 static bool sHaveInstance = false;

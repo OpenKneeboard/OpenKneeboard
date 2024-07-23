@@ -19,12 +19,12 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/RenderTargetID.h>
-
-#include <OpenKneeboard/audited_ptr.h>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/RenderTargetID.hpp>
 
 #include <winrt/OpenKneeboardApp.h>
+
+#include <OpenKneeboard/audited_ptr.hpp>
 
 #include <memory>
 #include <vector>

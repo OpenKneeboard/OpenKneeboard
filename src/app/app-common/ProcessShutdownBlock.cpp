@@ -18,11 +18,11 @@
  * USA.
  */
 
-#include <OpenKneeboard/ProcessShutdownBlock.h>
-
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/ProcessShutdownBlock.hpp>
 
 #include <shims/source_location>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <atomic>
 #include <unordered_map>

@@ -18,7 +18,7 @@
  * USA.
  */
 
-#include <OpenKneeboard/Vulkan.h>
+#include <OpenKneeboard/Vulkan.hpp>
 
 namespace OpenKneeboard::Vulkan {
 

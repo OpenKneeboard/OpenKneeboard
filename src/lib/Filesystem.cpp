@@ -17,18 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/StateMachine.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/StateMachine.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
 
 #include <wil/resource.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <format>
 #include <mutex>

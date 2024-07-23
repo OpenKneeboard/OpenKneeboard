@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D11/Renderer.h>
+#include <OpenKneeboard/D3D11/Renderer.hpp>
 
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/hresult.hpp>
 
 namespace OpenKneeboard::D3D11 {
 
@@ -28,7 +28,7 @@ SwapchainBufferResources::SwapchainBufferResources(
   ID3D11Texture2D* texture,
   DXGI_FORMAT renderTargetViewFormat)
   : mTexture(texture) {
-    D3D11_TEXTURE2D_DESC textureDesc;
+  D3D11_TEXTURE2D_DESC textureDesc;
   texture->GetDesc(&textureDesc);
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {

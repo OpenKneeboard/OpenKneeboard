@@ -18,9 +18,9 @@
  * USA.
  */
 
-#include <OpenKneeboard/utf8.h>
-
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <regex>
 

@@ -18,12 +18,11 @@
  * USA.
  */
 
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/NavigationTab.hpp>
 
-#include <OpenKneeboard/NavigationTab.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <cstring>
 

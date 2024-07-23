@@ -18,10 +18,10 @@
  * USA.
  */
 
-#include <OpenKneeboard/DirectInputDevice.h>
-#include <OpenKneeboard/DirectInputMouseListener.h>
+#include <OpenKneeboard/DirectInputDevice.hpp>
+#include <OpenKneeboard/DirectInputMouseListener.hpp>
 
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/scope_exit.hpp>
 
 namespace OpenKneeboard {
 

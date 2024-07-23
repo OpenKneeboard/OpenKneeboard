@@ -26,10 +26,10 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/ProfileSettings.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/ProfileSettings.hpp>
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
 

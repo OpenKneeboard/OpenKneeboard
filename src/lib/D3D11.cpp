@@ -17,13 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D11.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/D3D11.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <d3d11_3.h>
 

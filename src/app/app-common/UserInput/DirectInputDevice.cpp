@@ -18,13 +18,13 @@
  * USA.
  */
 
-#include <OpenKneeboard/DirectInputDevice.h>
-#include <OpenKneeboard/UserInputButtonBinding.h>
-#include <OpenKneeboard/UserInputButtonEvent.h>
-
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/DirectInputDevice.hpp>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
+#include <OpenKneeboard/UserInputButtonEvent.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 

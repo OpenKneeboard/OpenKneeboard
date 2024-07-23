@@ -17,12 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "OVRProxy.h"
+#include "OVRProxy.hpp"
 
-#include "OVRRuntimeDLLNames.h"
-#include "detours-ext.h"
+#include "OVRRuntimeDLLNames.hpp"
+#include "detours-ext.hpp"
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <mutex>
 #include <stdexcept>

@@ -17,21 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/RayIntersectsRect.h>
-#include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/SteamVRKneeboard.h>
-
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
+#include <OpenKneeboard/D3D11.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/RayIntersectsRect.hpp>
+#include <OpenKneeboard/SHM.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/SteamVRKneeboard.hpp>
 
 #include <shims/filesystem>
 #include <shims/source_location>
 #include <shims/winrt/base.h>
 
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
 #include <directxtk/SimpleMath.h>
 
 #include <thread>

@@ -23,26 +23,25 @@
 #include "AdvancedSettingsPage.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "Globals.h"
 
-#include <OpenKneeboard/AppSettings.h>
-#include <OpenKneeboard/Elevation.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/RunSubprocessAsync.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/TroubleshootingStore.h>
-#include <OpenKneeboard/VRConfig.h>
-#include <OpenKneeboard/ViewsConfig.h>
-#include <OpenKneeboard/Win32.h>
-
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/AppSettings.hpp>
+#include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/RunSubprocessAsync.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/TroubleshootingStore.hpp>
+#include <OpenKneeboard/VRConfig.hpp>
+#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml;

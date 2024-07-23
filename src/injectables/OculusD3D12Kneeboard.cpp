@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "OculusD3D12Kneeboard.h"
+#include "OculusD3D12Kneeboard.hpp"
 
-#include "OVRProxy.h"
-
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
+#include "OVRProxy.hpp"
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <d3d11_1.h>
 #include <dxgi.h>

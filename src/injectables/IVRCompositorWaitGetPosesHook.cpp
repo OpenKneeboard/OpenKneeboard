@@ -17,13 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "IVRCompositorWaitGetPosesHook.h"
+#include "IVRCompositorWaitGetPosesHook.hpp"
 
-#include "DllLoadWatcher.h"
-#include "ScopedRWX.h"
-#include "detours-ext.h"
+#include "DllLoadWatcher.hpp"
+#include "ScopedRWX.hpp"
+#include "detours-ext.hpp"
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <bit>
 #include <mutex>

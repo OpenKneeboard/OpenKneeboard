@@ -18,15 +18,15 @@
  * USA.
  */
 
-#include "OpenXRVulkanKneeboard.h"
+#include "OpenXRVulkanKneeboard.hpp"
 
-#include "OpenXRNext.h"
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
+#include "OpenXRNext.hpp"
 
 #include <shims/vulkan/vulkan.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <d3d11_4.h>
 #include <dxgi1_6.h>

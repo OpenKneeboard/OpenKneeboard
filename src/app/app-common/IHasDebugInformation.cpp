@@ -18,7 +18,7 @@
  * USA.
  */
 
-#include <OpenKneeboard/IHasDebugInformation.h>
+#include <OpenKneeboard/IHasDebugInformation.hpp>
 
 namespace OpenKneeboard {
 

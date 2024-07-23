@@ -28,8 +28,8 @@
 
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/GameInstance.h>
+#include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
 
 #include <shims/filesystem>
 

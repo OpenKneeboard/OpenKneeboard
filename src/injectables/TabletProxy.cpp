@@ -17,17 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "FindMainWindow.h"
-#include "InjectedDLLMain.h"
+#include "FindMainWindow.hpp"
+#include "InjectedDLLMain.hpp"
 
-#include <OpenKneeboard/GetMainHWND.h>
-#include <OpenKneeboard/WintabTablet.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/GetMainHWND.hpp>
+#include <OpenKneeboard/WintabTablet.hpp>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <functional>
 #include <stop_token>

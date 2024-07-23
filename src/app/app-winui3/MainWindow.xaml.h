@@ -22,12 +22,12 @@
 #include "MainWindow.g.h"
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/Bookmark.h>
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Handles.h>
-#include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/Bookmark.hpp>
+#include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/Handles.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
 
-#include <OpenKneeboard/audited_ptr.h>
+#include <OpenKneeboard/audited_ptr.hpp>
 
 #include <memory>
 #include <thread>

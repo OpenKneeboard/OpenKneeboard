@@ -17,8 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DebugTimer.h>
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/DebugTimer.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <format>
 

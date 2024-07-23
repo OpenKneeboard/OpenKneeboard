@@ -17,19 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "NonVRD3D11Kneeboard.h"
+#include "NonVRD3D11Kneeboard.hpp"
 
-#include <OpenKneeboard/config.h>
+#include "InjectedDLLMain.hpp"
 
-#include "InjectedDLLMain.h"
-
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/D3D11.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <d3d11.h>
 #include <dxgi.h>

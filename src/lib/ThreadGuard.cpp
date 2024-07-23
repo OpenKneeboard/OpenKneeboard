@@ -18,9 +18,9 @@
  * USA.
  */
 
-#include <OpenKneeboard/ThreadGuard.h>
+#include <OpenKneeboard/ThreadGuard.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 

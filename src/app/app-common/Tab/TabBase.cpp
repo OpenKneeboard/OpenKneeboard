@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/TabBase.h>
+#include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/TabBase.hpp>
 
 #include <unordered_set>
 

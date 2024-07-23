@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/FilePageSource.h>
-#include <OpenKneeboard/ImageFilePageSource.h>
-#include <OpenKneeboard/PDFFilePageSource.h>
-#include <OpenKneeboard/PlainTextFilePageSource.h>
-#include <OpenKneeboard/WebView2PageSource.h>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/FilePageSource.hpp>
+#include <OpenKneeboard/ImageFilePageSource.hpp>
+#include <OpenKneeboard/PDFFilePageSource.hpp>
+#include <OpenKneeboard/PlainTextFilePageSource.hpp>
+#include <OpenKneeboard/WebView2PageSource.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <ranges>
 

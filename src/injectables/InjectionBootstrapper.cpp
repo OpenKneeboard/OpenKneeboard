@@ -26,15 +26,15 @@
 #include <d3d12.h>
 // clang-format on
 
-#include "IDXGISwapChainHook.h"
-#include "IVRCompositorWaitGetPosesHook.h"
-#include "InjectedDLLMain.h"
-#include "OculusEndFrameHook.h"
-#include "detours-ext.h"
+#include "IDXGISwapChainHook.hpp"
+#include "IVRCompositorWaitGetPosesHook.hpp"
+#include "InjectedDLLMain.hpp"
+#include "OculusEndFrameHook.hpp"
+#include "detours-ext.hpp"
 
-#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/RuntimeFiles.hpp>
 
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/dprint.hpp>
 
 #include <thread>
 

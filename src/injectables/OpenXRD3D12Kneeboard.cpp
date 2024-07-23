@@ -18,16 +18,16 @@
  * USA.
  */
 
-#include "OpenXRD3D12Kneeboard.h"
+#include "OpenXRD3D12Kneeboard.hpp"
 
-#include "OpenXRD3D11Kneeboard.h"
-#include "OpenXRNext.h"
-
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/tracing.h>
+#include "OpenXRD3D11Kneeboard.hpp"
+#include "OpenXRNext.hpp"
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <string>
 

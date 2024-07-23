@@ -17,32 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "viewer.h"
+#include "viewer.hpp"
 
-#include <OpenKneeboard/config.h>
+#include "viewer-d3d11.hpp"
+#include "viewer-d3d12.hpp"
+#include "viewer-vulkan.hpp"
 
-#include "viewer-d3d11.h"
-#include "viewer-d3d12.h"
-#include "viewer-vulkan.h"
-
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/GetSystemColor.h>
-#include <OpenKneeboard/RenderDoc.h>
-#include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/SHM/D3D11.h>
-#include <OpenKneeboard/Shaders/D3D/Viewer.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
-#include <OpenKneeboard/version.h>
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/GetSystemColor.hpp>
+#include <OpenKneeboard/RenderDoc.hpp>
+#include <OpenKneeboard/SHM.hpp>
+#include <OpenKneeboard/SHM/ActiveConsumers.hpp>
+#include <OpenKneeboard/SHM/D3D11.hpp>
+#include <OpenKneeboard/Shaders/D3D/Viewer.hpp>
 
 #include <shims/winrt/base.h>
+
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <format>
 #include <memory>

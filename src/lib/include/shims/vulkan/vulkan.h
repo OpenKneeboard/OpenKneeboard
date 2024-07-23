@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/config.hpp>
 
 #ifdef OPENKNEEBOARD_32BIT_BUILD
 
-#include <OpenKneeboard/Opaque64BitHandle.h>
+#include <OpenKneeboard/Opaque64BitHandle.hpp>
 
 namespace OpenKneeboard::Vulkan::Detail {
 

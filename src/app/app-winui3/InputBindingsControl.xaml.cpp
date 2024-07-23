@@ -26,15 +26,15 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/UserInputButtonBinding.h>
-#include <OpenKneeboard/UserInputButtonEvent.h>
-#include <OpenKneeboard/UserInputDevice.h>
-
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
+#include <OpenKneeboard/UserInputButtonEvent.hpp>
+#include <OpenKneeboard/UserInputDevice.hpp>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <dinput.h>
 #include <shobjidl.h>

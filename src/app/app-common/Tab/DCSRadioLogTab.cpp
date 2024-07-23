@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSRadioLogTab.h>
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/DCSRadioLogTab.hpp>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/PlainTextPageSource.hpp>
 
 #include <chrono>
 

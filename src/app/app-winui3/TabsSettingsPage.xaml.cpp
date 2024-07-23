@@ -33,24 +33,24 @@
 #include "FilePicker.h"
 #include "Globals.h"
 
-#include <OpenKneeboard/BrowserTab.h>
-#include <OpenKneeboard/DCSRadioLogTab.h>
-#include <OpenKneeboard/FilePageSource.h>
-#include <OpenKneeboard/IHasDebugInformation.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/TabTypes.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabsList.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/inttypes.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/BrowserTab.hpp>
+#include <OpenKneeboard/DCSRadioLogTab.hpp>
+#include <OpenKneeboard/FilePageSource.hpp>
+#include <OpenKneeboard/IHasDebugInformation.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/TabTypes.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/TabsList.hpp>
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/inttypes.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <ranges>
 #include <regex>

@@ -17,10 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/WindowCaptureControl.h>
-#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/WindowCaptureControl.hpp>
+
 #include <shims/Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard::WindowCaptureControl {
 

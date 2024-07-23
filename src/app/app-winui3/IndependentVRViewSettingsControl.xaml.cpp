@@ -25,9 +25,9 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardState.hpp>
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <cmath>
 #include <numbers>

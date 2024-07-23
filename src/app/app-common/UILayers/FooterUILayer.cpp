@@ -17,16 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/FooterUILayer.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/FooterUILayer.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/KneeboardState.h>
-
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <algorithm>
 

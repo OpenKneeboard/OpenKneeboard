@@ -18,13 +18,13 @@
  * USA.
  */
 
-#include <OpenKneeboard/DCSExtractedMission.h>
-#include <OpenKneeboard/Filesystem.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/DCSExtractedMission.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
 
 #include <Windows.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
 
 #include <array>
 #include <fstream>

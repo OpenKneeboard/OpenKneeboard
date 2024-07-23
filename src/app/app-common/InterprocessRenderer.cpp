@@ -17,25 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/CreateTabActions.h>
-#include <OpenKneeboard/CursorClickableRegions.h>
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/CursorRenderer.h>
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/GameInstance.h>
-#include <OpenKneeboard/GetSystemColor.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/InterprocessRenderer.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/Spriting.h>
-#include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/CreateTabActions.hpp>
+#include <OpenKneeboard/CursorClickableRegions.hpp>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/CursorRenderer.hpp>
+#include <OpenKneeboard/D3D11.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
+#include <OpenKneeboard/GetSystemColor.hpp>
+#include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/InterprocessRenderer.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/Spriting.hpp>
+#include <OpenKneeboard/TabView.hpp>
+#include <OpenKneeboard/ToolbarAction.hpp>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/hresult.h>
-#include <OpenKneeboard/scope_exit.h>
-#include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <mutex>
 #include <ranges>

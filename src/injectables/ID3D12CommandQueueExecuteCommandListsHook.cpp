@@ -17,13 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "ID3D12CommandQueueExecuteCommandListsHook.h"
-
-#include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
+#include "ID3D12CommandQueueExecuteCommandListsHook.hpp"
 
 #include "d3d12-offsets.h"
-#include "detours-ext.h"
+#include "detours-ext.hpp"
+
+#include <shims/winrt/base.h>
+
+#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 

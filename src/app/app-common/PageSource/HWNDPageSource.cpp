@@ -17,18 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/HWNDPageSource.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/WindowCaptureControl.h>
-
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/final_release_deleter.h>
-#include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_exit.h>
+#include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/D3D11.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/HWNDPageSource.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/WindowCaptureControl.hpp>
 
 #include <shims/winrt/Microsoft.UI.Interop.h>
 
@@ -45,6 +40,11 @@
 
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <mutex>
 

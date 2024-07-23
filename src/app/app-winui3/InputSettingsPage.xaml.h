@@ -26,7 +26,7 @@
 
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Events.hpp>
 
 #include <string>
 
