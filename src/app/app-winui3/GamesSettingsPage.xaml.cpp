@@ -20,10 +20,10 @@
 // clang-format off
 #include "pch.h"
 
-#include "GameSettingsPage.xaml.h"
+#include "GamesSettingsPage.xaml.h"
 
 #include "GameInstanceUIData.g.cpp"
-#include "GameSettingsPage.g.cpp"
+#include "GamesSettingsPage.g.cpp"
 #include "DCSWorldInstanceUIData.g.cpp"
 #include "GameInstanceUIDataTemplateSelector.g.cpp"
 // clang-format on
@@ -52,7 +52,7 @@ using namespace winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-GameSettingsPage::GameSettingsPage() {
+GamesSettingsPage::GamesSettingsPage() {
   InitializeComponent();
   mKneeboard = gKneeboard.lock();
   mIconFactory = std::make_unique<ExecutableIconFactory>();
@@ -63,7 +63,7 @@ GameSettingsPage::GameSettingsPage() {
     [this]() { this->UpdateGames(); });
 }
 
-fire_and_forget GameSettingsPage::RestoreDefaults(
+fire_and_forget GamesSettingsPage::RestoreDefaults(
   IInspectable,
   RoutedEventArgs) noexcept {
   ContentDialog dialog;
@@ -83,11 +83,11 @@ fire_and_forget GameSettingsPage::RestoreDefaults(
   mKneeboard->ResetGamesSettings();
 }
 
-void GameSettingsPage::UpdateGames() {
+void GamesSettingsPage::UpdateGames() {
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Games"));
 }
 
-IVector<IInspectable> GameSettingsPage::Games() noexcept {
+IVector<IInspectable> GamesSettingsPage::Games() noexcept {
   auto games = mKneeboard->GetGamesList()->GetGameInstances();
   std::ranges::sort(
     games, [](auto& a, auto& b) { return a->mName < b->mName; });
@@ -117,11 +117,11 @@ IVector<IInspectable> GameSettingsPage::Games() noexcept {
   return winrtGames;
 }
 
-GameSettingsPage::~GameSettingsPage() noexcept {
+GamesSettingsPage::~GamesSettingsPage() noexcept {
   this->RemoveAllEventListeners();
 }
 
-winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
+winrt::fire_and_forget GamesSettingsPage::AddRunningProcess(
   IInspectable,
   RoutedEventArgs) noexcept {
   ::winrt::OpenKneeboardApp::ProcessPickerDialog picker;
@@ -140,7 +140,7 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   this->AddPath(std::wstring_view {path});
 }
 
-winrt::fire_and_forget GameSettingsPage::AddExe(
+winrt::fire_and_forget GamesSettingsPage::AddExe(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   constexpr winrt::guid thisCall {
@@ -179,7 +179,7 @@ static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
   return *it;
 }
 
-void GameSettingsPage::OnOverlayAPIChanged(
+void GamesSettingsPage::OnOverlayAPIChanged(
   const IInspectable& sender,
   const SelectionChangedEventArgs&) noexcept {
   const auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
@@ -198,7 +198,7 @@ void GameSettingsPage::OnOverlayAPIChanged(
   mKneeboard->SaveSettings();
 }
 
-winrt::fire_and_forget GameSettingsPage::RemoveGame(
+winrt::fire_and_forget GamesSettingsPage::RemoveGame(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
@@ -230,7 +230,7 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   UpdateGames();
 }
 
-winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
+winrt::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
@@ -253,7 +253,7 @@ winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
   UpdateGames();
 }
 
-winrt::fire_and_forget GameSettingsPage::AddPath(
+winrt::fire_and_forget GamesSettingsPage::AddPath(
   const std::filesystem::path& rawPath) {
   if (rawPath.empty()) {
     co_return;

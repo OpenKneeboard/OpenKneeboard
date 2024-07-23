@@ -1093,7 +1093,7 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
   co_await mUIThread;
 
   if (path == L"Settings/Games") {
-    Frame().Navigate(xaml_typename<GameSettingsPage>());
+    Frame().Navigate(xaml_typename<GamesSettingsPage>());
     co_return;
   }
   if (path == L"Settings/Input") {

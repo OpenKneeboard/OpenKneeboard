@@ -20,7 +20,7 @@
 #pragma once
 // clang-format off
 #include "pch.h"
-#include "GameSettingsPage.g.h"
+#include "GamesSettingsPage.g.h"
 #include "GameInstanceUIData.g.h"
 #include "DCSWorldInstanceUIData.g.h"
 #include "GameInstanceUIDataTemplateSelector.g.h"
@@ -47,11 +47,11 @@ using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct GameSettingsPage
-  : GameSettingsPageT<GameSettingsPage>,
-    OpenKneeboard::WithPropertyChangedEventOnProfileChange<GameSettingsPage> {
-  GameSettingsPage();
-  ~GameSettingsPage() noexcept;
+struct GamesSettingsPage
+  : GamesSettingsPageT<GamesSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<GamesSettingsPage> {
+  GamesSettingsPage();
+  ~GamesSettingsPage() noexcept;
 
   winrt::fire_and_forget RestoreDefaults(
     IInspectable,
@@ -152,8 +152,8 @@ struct GameInstanceUIDataTemplateSelector
 
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct GameSettingsPage
-  : GameSettingsPageT<GameSettingsPage, implementation::GameSettingsPage> {};
+struct GamesSettingsPage
+  : GamesSettingsPageT<GamesSettingsPage, implementation::GamesSettingsPage> {};
 
 struct GameInstanceUIData : GameInstanceUIDataT<
                               GameInstanceUIData,

@@ -19,7 +19,7 @@ ok_add_executable(
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
   ExecutableIconFactory.cpp ExecutableIconFactory.h
   FilePicker.cpp FilePicker.h
-  GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
+  GamesSettingsPage.idl GamesSettingsPage.xaml GamesSettingsPage.xaml.cpp GamesSettingsPage.xaml.h
   Globals.cpp Globals.h
   HorizontalMirrorVRViewUIKind.cpp HorizontalMirrorVRViewUIKind.h
   IndependentVRViewUIKind.cpp IndependentVRViewUIKind.h

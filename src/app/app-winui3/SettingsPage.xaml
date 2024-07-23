@@ -78,7 +78,7 @@
           </local:SettingsSubpageData>
           <!-- E7FC Game -->
           <local:SettingsSubpageData
-            x:Name="GameItem"
+            x:Name="GamesItem"
             Glyph="&#xE7FC;"
             Title="Games">
             Use OpenKneeboard with non-VR or legacy Oculus games, or some tablets. Games do not need to be added
