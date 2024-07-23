@@ -8,4 +8,18 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}"
   Foreground="{ThemeResource TextFillColorPrimary}">
+  <StackPanel Orientation="Vertical"
+              Margin="12"
+              Spacing="12">
+    <TextBlock
+      Style="{ThemeResource TitleTextBlockStyle}">
+        Developer Tools
+    </TextBlock>
+    <Button Click="OnCopyDebugMessagesClick">
+      Copy debug messages
+    </Button>
+    <Button Click="OnCopyGameEventsClick">
+      Copy game events
+    </Button>
+  </StackPanel>
 </Page>

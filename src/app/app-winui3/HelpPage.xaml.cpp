@@ -171,12 +171,6 @@ void HelpPage::OnCopyVersionDataClick(
   SetClipboardText(mVersionClipboardData);
 }
 
-void HelpPage::OnCopyGameEventsClick(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  SetClipboardText(GetGameEventsAsString());
-}
-
 template <class C, class T>
 auto ReadableTime(const std::chrono::time_point<C, T>& time) {
   return std::chrono::zoned_time(
@@ -315,12 +309,6 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     }
     AddFile("crash-dumps.txt", buffer);
   }
-}
-
-void HelpPage::OnCopyDPrintClick(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  SetClipboardText(GetDPrintMessagesAsWString());
 }
 
 std::string HelpPage::GetGameEventsAsString() noexcept {

@@ -24,6 +24,13 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct OKBDeveloperToolsPage : OKBDeveloperToolsPageT<OKBDeveloperToolsPage> {
   OKBDeveloperToolsPage();
   ~OKBDeveloperToolsPage();
+
+  void OnCopyGameEventsClick(
+    const IInspectable&,
+    const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
+  void OnCopyDebugMessagesClick(
+    const IInspectable&,
+    const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

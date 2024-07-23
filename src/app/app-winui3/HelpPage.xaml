@@ -8,7 +8,9 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer>
-    <StackPanel Orientation="Vertical" Margin="12" Spacing="12">
+    <StackPanel Orientation="Vertical"
+                Margin="12"
+                Spacing="12">
       <TextBlock
         Style="{ThemeResource TitleTextBlockStyle}">
         Help and Support
@@ -47,7 +49,7 @@
           useful; I’m not able to commit to support, bug fixes, or feature development. While 
           I try to be active, please do not @mention, email, or DM me for individual help - if
           the troubleshooting guides don't solve a problem, use GitHub Discussions or the Help
-          channel in Discord instead. 
+          channel in Discord instead.
         </TextBlock>
         <TextBlock
           Foreground="{ThemeResource TextFillColorSecondary}"
@@ -72,30 +74,28 @@
               Glyph="&#xE74C;"
               FontFamily="{StaticResource SymbolThemeFontFamily}"
               Margin="0,0,12,0"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
             <TextBlock
               Grid.Column="1"
               Text="Version and Build"
               Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
             <Button
               Grid.Column="2"
               Content="Check for Updates"
               Click="OnCheckForUpdatesClick"
               VerticalAlignment="Center"
-              Margin="0,0,12,0"
-            />
+              Margin="0,0,12,0"/>
             <Button
               Grid.Column="3"
               Content="Copy"
               Click="OnCopyVersionDataClick"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
           </Grid>
         </Expander.Header>
-        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="VersionText" IsTextSelectionEnabled="true" />
+        <TextBlock Style="{ThemeResource BodyTextBlockStyle}"
+                   x:Name="VersionText"
+                   IsTextSelectionEnabled="true"/>
       </Expander>
       <Expander
         HorizontalAlignment="Stretch"
@@ -107,14 +107,12 @@
               Glyph="&#xEB51;"
               FontFamily="{StaticResource SymbolThemeFontFamily}"
               Margin="0,0,12,0"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
             <TextBlock
               Grid.Column="1"
               Text="Acknowledgements and Licenses"
               Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
           </Grid>
         </Expander.Header>
         <StackPanel
@@ -137,17 +135,16 @@
               Glyph="&#xE81C;"
               FontFamily="{StaticResource SymbolThemeFontFamily}"
               Margin="0,0,12,0"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
             <TextBlock
               Grid.Column="1"
               Text="Debugging Information"
               Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
+              VerticalAlignment="Center"/>
           </Grid>
         </Expander.Header>
-        <StackPanel Orientation="Vertical" Spacing="8">
+        <StackPanel Orientation="Vertical"
+                    Spacing="8">
           <TextBlock
             Foreground="{ThemeResource TextFillColorPrimary}"
             Style="{ThemeResource BodyTextBlockStyle}">
@@ -162,8 +159,7 @@
             Click="OnAgreeClick"
             Content="I understand and agree"
             Style="{StaticResource AccentButtonStyle}"
-            IsEnabled="{x:Bind AgreeButtonIsEnabled, Mode=OneWay}"
-          />
+            IsEnabled="{x:Bind AgreeButtonIsEnabled, Mode=OneWay}"/>
           <Button
             Click="OnExportClick"
             IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}">
@@ -171,26 +167,14 @@
               <FontIcon
                 Grid.Column="0"
                 Glyph="&#xE792;"
-                FontFamily="{StaticResource SymbolThemeFontFamily}"
-              />
+                FontFamily="{StaticResource SymbolThemeFontFamily}"/>
               <TextBlock
                 Margin="4,0,0,0"
-                Grid.Column="1"
-              >
-                Save all as...
+                Grid.Column="1">
+                Save as...
               </TextBlock>
             </Grid>
           </Button>
-          <HyperlinkButton
-            Content="Copy API events"
-            Click="OnCopyGameEventsClick"
-            IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}"
-          />
-          <HyperlinkButton
-            Content="Copy debug messages"
-            Click="OnCopyDPrintClick"
-            IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}"
-          />
         </StackPanel>
       </Expander>
     </StackPanel>

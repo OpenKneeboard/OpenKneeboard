@@ -44,10 +44,6 @@ struct HelpPage : HelpPageT<HelpPage>,
   void OnCopyVersionDataClick(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
-  void OnCopyGameEventsClick(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
   void OnAgreeClick(const IInspectable&, const RoutedEventArgs&) noexcept;
   winrt::fire_and_forget OnExportClick(IInspectable, RoutedEventArgs) noexcept;
 
@@ -58,14 +54,15 @@ struct HelpPage : HelpPageT<HelpPage>,
   bool AgreedToPrivacyWarning() noexcept;
   bool AgreeButtonIsEnabled() noexcept;
 
+  static std::string GetGameEventsAsString() noexcept;
+  static std::wstring GetDPrintMessagesAsWString() noexcept;
+
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
 
   void PopulateVersion();
   void PopulateLicenses() noexcept;
-  std::string GetGameEventsAsString() noexcept;
-  std::wstring GetDPrintMessagesAsWString() noexcept;
 
   static std::string GetUpdateLog() noexcept;
   static std::string GetOpenXRInfo() noexcept;
