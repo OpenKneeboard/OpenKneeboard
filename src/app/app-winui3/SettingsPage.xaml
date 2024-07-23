@@ -1,4 +1,4 @@
-﻿<Page
+<Page
   x:Class="OpenKneeboardApp.SettingsPage"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -64,21 +64,21 @@
           <!-- Glyph reference: https://docs.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font -->
           <!-- F119 HMD -->
           <local:SettingsSubpageData
-            ID="VRConfig"
+            x:Name="VRItem"
             Glyph="&#xF119;"
             Title="Virtual Reality">
             Adjust how OpenKneeboard appears in games and applications when using a virtual reality headset.
           </local:SettingsSubpageData>
           <!-- E7F4 ThisPC -->
           <local:SettingsSubpageData
-            ID="NonVRConfig"
+            x:Name="NonVRItem"
             Glyph="&#xEC4E;"
             Title="Non VR">
             Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
           </local:SettingsSubpageData>
           <!-- E7FC Game -->
           <local:SettingsSubpageData
-            ID="Games"
+            x:Name="GameItem"
             Glyph="&#xE7FC;"
             Title="Games">
             Use OpenKneeboard with non-VR or legacy Oculus games, or some tablets. Games do not need to be added
@@ -86,21 +86,21 @@
           </local:SettingsSubpageData>
           <!-- F571 PrintAllPages -->
           <local:SettingsSubpageData
-            ID="Tabs"
+            x:Name="TabsItem"
             Glyph="&#xF571;"
             Title="Tabs">
             Add, remove, and re-order sections in your kneeboard.
           </local:SettingsSubpageData>
           <!-- E961 Input -->
           <local:SettingsSubpageData
-            ID="Input"
+            x:Name="InputItem"
             Glyph="&#xE961;"
             Title="Input">
             Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
           </local:SettingsSubpageData>
           <!-- E9E9 Equalizer-->
           <local:SettingsSubpageData
-            ID="Advanced"
+            x:Name="AdvancedItem"
             Glyph="&#xE9E9;"
             Title="Advanced">
             Advanced features and behavior tweaks.

@@ -40,9 +40,6 @@ struct SettingsPage : SettingsPageT<SettingsPage> {
 struct SettingsSubpageData : SettingsSubpageDataT<SettingsSubpageData> {
   SettingsSubpageData() = default;
 
-  SettingsSubpageID ID();
-  void ID(SettingsSubpageID value);
-
   hstring Glyph();
   void Glyph(hstring const& value);
 
@@ -56,7 +53,6 @@ struct SettingsSubpageData : SettingsSubpageDataT<SettingsSubpageData> {
   hstring mGlyph;
   hstring mTitle;
   hstring mDescription;
-  SettingsSubpageID mID;
 };
 
 }// namespace winrt::OpenKneeboardApp::implementation

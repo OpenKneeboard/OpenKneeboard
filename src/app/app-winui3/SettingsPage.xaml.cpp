@@ -37,28 +37,22 @@ void SettingsPage::OnItemClick(
   if (!item) {
     return;
   }
-  const auto subpage = item.as<OpenKneeboardApp::SettingsSubpageData>().ID();
-  switch (subpage) {
-    case SettingsSubpageID::Tabs:
-      Frame().Navigate(xaml_typename<TabsSettingsPage>());
-      return;
-    case SettingsSubpageID::Games:
-      Frame().Navigate(xaml_typename<GameSettingsPage>());
-      return;
-    case SettingsSubpageID::Input:
-      Frame().Navigate(xaml_typename<InputSettingsPage>());
-      return;
-    case SettingsSubpageID::NonVRConfig:
-      Frame().Navigate(xaml_typename<NonVRSettingsPage>());
-      return;
-    case SettingsSubpageID::VRConfig:
-      Frame().Navigate(xaml_typename<VRSettingsPage>());
-      return;
-    case SettingsSubpageID::Advanced:
-      Frame().Navigate(xaml_typename<AdvancedSettingsPage>());
-      return;
+
+#define IT(X) \
+  if (item == X##Item()) { \
+    Frame().Navigate(xaml_typename<X##SettingsPage>()); \
+    return; \
   }
-}
+  IT(VR)
+  IT(NonVR)
+  IT(Game)
+  IT(Tabs)
+  IT(Input)
+  IT(Advanced)
+#undef IT
+
+  OPENKNEEBOARD_BREAK;
+}// namespace winrt::OpenKneeboardApp::implementation
 
 hstring SettingsSubpageData::Title() {
   return mTitle;
@@ -82,14 +76,6 @@ hstring SettingsSubpageData::Description() {
 
 void SettingsSubpageData::Description(hstring const& value) {
   mDescription = value;
-}
-
-SettingsSubpageID SettingsSubpageData::ID() {
-  return mID;
-}
-
-void SettingsSubpageData::ID(SettingsSubpageID value) {
-  mID = value;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

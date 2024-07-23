@@ -6,21 +6,11 @@ namespace OpenKneeboardApp
         SettingsPage();
     }
 
-    enum SettingsSubpageID {
-        Games,
-        Tabs,
-        Input,
-        VRConfig,
-        NonVRConfig,
-        Advanced,
-    };
-
     [default_interface]
     [contentproperty("Description")]
     runtimeclass SettingsSubpageData
     {
         SettingsSubpageData();
-        SettingsSubpageID ID;
         String Glyph;
         String Title;
         String Description;
