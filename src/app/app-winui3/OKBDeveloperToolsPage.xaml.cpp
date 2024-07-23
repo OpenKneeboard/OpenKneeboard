@@ -33,6 +33,8 @@ using namespace ::OpenKneeboard;
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
+#include <wil/registry.h>
+
 #include <mutex>
 
 using namespace OpenKneeboard;
@@ -62,59 +64,44 @@ static constexpr wchar_t PluginHandlerName[] {L"OpenKneeboard.Plugin.Dev"};
 
 static void RegisterFileTypeInHKCU() {
   // App registration, and handler for the 'open' action
-  const auto commandLine = GetOpenPluginCommandLine();
-  RegSetKeyValueW(
+  wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(
       L"Software\\Classes\\{}\\shell\\open\\command", PluginHandlerName)
       .c_str(),
     /* default value */ nullptr,
-    REG_SZ,
-    commandLine.c_str(),
-    static_cast<DWORD>(commandLine.size() * sizeof(commandLine[0])));
+    GetOpenPluginCommandLine().c_str());
 
   // Also register an icon
-  const auto icon
-    = std::format(L"{},0", Filesystem::GetCurrentExecutablePath());
-  RegSetKeyValueW(
+  wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(L"Software\\Classes\\{}\\DefaultIcon", PluginHandlerName)
       .c_str(),
     /* default value */ nullptr,
-    REG_SZ,
-    icon.c_str(),
-    static_cast<DWORD>(icon.size() * sizeof(icon[0])));
+    // Reference the first icon from the exe resources
+    std::format(L"{},0", Filesystem::GetCurrentExecutablePath()).c_str());
 
   // ... and let's not just leave it saying 'OPENKNEEBOARDPLUGIN File'
-  const std::wstring fileTypeName {L"OpenKneeboard Plugin"};
-  RegSetKeyValueW(
+  wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(L"Software\\Classes\\{}", PluginHandlerName).c_str(),
     L"FriendlyTypeName",
-    REG_SZ,
-    fileTypeName.c_str(),
-    static_cast<DWORD>(fileTypeName.size() * sizeof(fileTypeName[0])));
+    L"OpenKneeboard Plugin");
 
   // ... or 'Open With' -> 'OpenKneeboardApp'
-  const std::wstring appName {L"OpenKneeboard - Dev"};
-  RegSetKeyValueW(
+  wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(L"Software\\Classes\\{}\\shell\\open", PluginHandlerName)
       .c_str(),
     L"FriendlyAppName",
-    REG_SZ,
-    appName.c_str(),
-    static_cast<DWORD>(appName.size() * sizeof(appName[0])));
+    L"OpenKneeboard - Dev");
 
   // Register the extension, and tie it to that handler
-  RegSetKeyValueW(
+  wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     L"Software\\Classes\\.OpenKneeboardPlugin",
     /* default value */ nullptr,
-    REG_SZ,
-    PluginHandlerName,
-    static_cast<DWORD>(
-      (std::size(PluginHandlerName) - 1) * sizeof(PluginHandlerName[0])));
+    PluginHandlerName);
 }
 
 static void UnregisterFileTypeInHKCU() {
@@ -127,52 +114,20 @@ static void UnregisterFileTypeInHKCU() {
 }
 
 bool OKBDeveloperToolsPage::PluginFileTypeInHKCU() const noexcept {
-  wchar_t buf[MAX_PATH];
-  constexpr auto bufByteSize = static_cast<DWORD>(sizeof(buf) * sizeof(buf[0]));
-  DWORD byteCount = bufByteSize;
-
-  if (
-    RegGetValueW(
-      HKEY_CURRENT_USER,
-      std::format(
-        L"Software\\Classes\\{}\\shell\\open\\command", PluginHandlerName)
-        .c_str(),
-      nullptr,
-      RRF_RT_REG_SZ,
-      nullptr,
-      buf,
-      &byteCount)
-    != ERROR_SUCCESS) {
+  const auto commandLine = wil::reg::try_get_value_string(
+    HKEY_CURRENT_USER,
+    std::format(
+      L"Software\\Classes\\{}\\shell\\open\\command", PluginHandlerName)
+      .c_str(),
+    nullptr);
+  if (commandLine != GetOpenPluginCommandLine()) {
     return false;
   }
 
-  {
-    const std::wstring_view registryCommandLine {
-      buf, (byteCount / sizeof(wchar_t)) - 1};
-    if (registryCommandLine != GetOpenPluginCommandLine()) {
-      return false;
-    }
-  }
-
-  byteCount = bufByteSize;
-  if (
-    RegGetValueW(
-      HKEY_CURRENT_USER,
-      L"Software\\Classes\\.OpenKneeboardPlugin",
-      nullptr,
-      RRF_RT_REG_SZ,
-      nullptr,
-      buf,
-      &byteCount)
-    != ERROR_SUCCESS) {
+  const auto handlerName = wil::reg::try_get_value_string(
+    HKEY_CURRENT_USER, L"Software\\Classes\\.OpenKneeboardPlugin", nullptr);
+  if (handlerName != PluginHandlerName) {
     return false;
-  }
-  {
-    const std::wstring_view handlerName {
-      buf, (byteCount / sizeof(wchar_t)) - 1};
-    if (handlerName != PluginHandlerName) {
-      return false;
-    }
   }
 
   return true;
