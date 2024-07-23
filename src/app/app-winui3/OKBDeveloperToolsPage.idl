@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass OKBDeveloperToolsPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        OKBDeveloperToolsPage();
+    }
+}

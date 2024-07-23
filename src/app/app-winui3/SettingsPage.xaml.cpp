@@ -24,10 +24,34 @@
 #include "SettingsSubpageData.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/config.h>
+
+#include <OpenKneeboard/version.h>
+
 namespace winrt::OpenKneeboardApp::implementation {
+
+using namespace OpenKneeboard;
 
 SettingsPage::SettingsPage() {
   InitializeComponent();
+
+  DWORD showDeveloperTools {Version::IsGithubActionsBuild ? 0 : 1};
+  DWORD sizeOfDword {sizeof(DWORD)};
+  RegGetValueW(
+    HKEY_CURRENT_USER,
+    Config::RegistrySubKey,
+    L"ShowOKBDeveloperTools",
+    RRF_RT_DWORD,
+    nullptr,
+    &showDeveloperTools,
+    &sizeOfDword);
+  if (!showDeveloperTools) {
+    auto items = Grid().Items();
+    uint32_t index {};
+    if (items.IndexOf(OKBDeveloperToolsItem(), index)) {
+      items.RemoveAt(index);
+    }
+  }
 }
 
 void SettingsPage::OnItemClick(
@@ -45,11 +69,16 @@ void SettingsPage::OnItemClick(
   }
   IT(VR)
   IT(NonVR)
-  IT(Game)
+  IT(Games)
   IT(Tabs)
   IT(Input)
   IT(Advanced)
 #undef IT
+
+  if (item == OKBDeveloperToolsItem()) {
+    Frame().Navigate(xaml_typename<OKBDeveloperToolsPage>());
+    return;
+  }
 
   OPENKNEEBOARD_BREAK;
 }// namespace winrt::OpenKneeboardApp::implementation

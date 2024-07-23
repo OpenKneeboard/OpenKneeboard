@@ -1,4 +1,4 @@
-<Page
+﻿<Page
   x:Class="OpenKneeboardApp.SettingsPage"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -14,6 +14,7 @@
         Text="Settings"
         Margin="0,0,0,8"/>
       <GridView
+        x:Name="Grid"
         Grid.Row="1"
         IsItemClickEnabled="True"
         ItemClick="OnItemClick">
@@ -104,6 +105,13 @@
             Glyph="&#xE9E9;"
             Title="Advanced">
             Advanced features and behavior tweaks.
+          </local:SettingsSubpageData>
+          <!-- EC7A DeveloperTools -->
+          <local:SettingsSubpageData
+            x:Name="OKBDeveloperToolsItem"
+            Glyph="&#xEC7A;"
+            Title="Developer Tools">
+            Tools for OpenKneeboard Developers.
           </local:SettingsSubpageData>
         </GridView.Items>
       </GridView>
