@@ -284,6 +284,45 @@ static void LogSystemInformation() {
   dprint("----------");
 }
 
+static void SetRegistryValues() {
+  auto savePath = [](auto name, auto path) {
+    const auto pathStr = path.wstring();
+    RegSetKeyValueW(
+      HKEY_CURRENT_USER,
+      Config::RegistrySubKey,
+      name,
+      REG_SZ,
+      pathStr.c_str(),
+      static_cast<DWORD>((pathStr.size() + 1) * sizeof(wchar_t)));
+  };
+
+  const auto binPath = Filesystem::GetRuntimeDirectory();
+  savePath(L"InstallationBinPath", binPath);
+
+  auto utilitiesPath = binPath.parent_path() / "utilities";
+  if (!std::filesystem::exists(utilitiesPath)) {
+    if constexpr (!OpenKneeboard::Version::IsGithubActionsBuild) {
+      utilitiesPath = binPath;
+      while (utilitiesPath.has_parent_path()) {
+        const auto parent = utilitiesPath.parent_path();
+        const auto subdir = parent / "utilities" / Config::BuildType;
+        if (std::filesystem::exists(subdir)) {
+          dprintf("Found utilities path: {}", subdir);
+          utilitiesPath = subdir;
+          break;
+        }
+        utilitiesPath = parent;
+      }
+    }
+  }
+  if (std::filesystem::exists(utilitiesPath)) {
+    savePath(
+      L"InstallationUtilitiesPath", std::filesystem::canonical(utilitiesPath));
+  } else {
+    dprint("WARNING: failed to find utilities path");
+  }
+}
+
 static void LogInstallationInformation() {
   {
     const auto dir = Filesystem::GetSettingsDirectory();
@@ -298,19 +337,10 @@ static void LogInstallationInformation() {
       static_cast<DWORD>((dirStr.size() + 1) * sizeof(wchar_t)));
   }
 
-  const auto dir = Filesystem::GetRuntimeDirectory();
-  const auto dirStr = dir.wstring();
-  dprintf(L"Runtime directory: {}", dirStr);
+  auto binDir = Filesystem::GetRuntimeDirectory();
+  dprintf(L"Runtime directory: {}", binDir);
 
-  RegSetKeyValueW(
-    HKEY_CURRENT_USER,
-    Config::RegistrySubKey,
-    L"InstallationBinPath",
-    REG_SZ,
-    dirStr.c_str(),
-    static_cast<DWORD>((dirStr.size() + 1) * sizeof(wchar_t)));
-
-  for (const auto& entry: std::filesystem::directory_iterator(dir)) {
+  for (const auto& entry: std::filesystem::directory_iterator(binDir)) {
     if (!entry.is_regular_file()) {
       continue;
     }
@@ -446,6 +476,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   LogSystemInformation();
   LogInstallationInformation();
+  SetRegistryValues();
 
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();

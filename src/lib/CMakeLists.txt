@@ -6,11 +6,21 @@ configure_file(
   "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.h"
   @ONLY
 )
+file(
+  GENERATE
+  OUTPUT
+  "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include/OpenKneeboard/detail/config.h"
+  CONTENT "\
+namespace OpenKneeboard::detail::Config {
+  constexpr auto BuildType = \"$<CONFIG>\";
+}"
+)
 ok_add_library(OpenKneeboard-config INTERFACE)
 target_include_directories(
   OpenKneeboard-config
   INTERFACE
-  ${CMAKE_CURRENT_BINARY_DIR}/include
+  "${CMAKE_CURRENT_BINARY_DIR}/include"
+  "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include"
 )
 
 ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)

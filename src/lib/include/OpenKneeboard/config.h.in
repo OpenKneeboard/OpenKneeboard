@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/Pixels.h>
 
+#include <OpenKneeboard/detail/config.h>
+
 #include <string>
 
 #include <intrin.h>
@@ -48,6 +50,8 @@ constexpr float CursorStrokeDivisor = CursorRadiusDivisor;
 constexpr unsigned int HeaderPercent = 5;
 constexpr unsigned int FooterPercent = HeaderPercent;
 constexpr unsigned int BookmarksBarPercent = HeaderPercent;
+
+constexpr const std::string_view BuildType {detail::Config::BuildType};
 
 constexpr const char ProjectReverseDomainA[] {"@PROJECT_REVERSE_DOMAIN@"};
 constexpr const wchar_t ProjectReverseDomainW[] {L"@PROJECT_REVERSE_DOMAIN@"};
