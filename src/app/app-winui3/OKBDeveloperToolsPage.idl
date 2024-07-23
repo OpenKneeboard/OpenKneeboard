@@ -4,5 +4,7 @@ namespace OpenKneeboardApp
     runtimeclass OKBDeveloperToolsPage: Microsoft.UI.Xaml.Controls.Page
     {
         OKBDeveloperToolsPage();
+
+        Boolean PluginFileTypeInHKCU;
     }
 }

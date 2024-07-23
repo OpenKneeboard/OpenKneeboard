@@ -8,12 +8,14 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}"
   Foreground="{ThemeResource TextFillColorPrimary}">
-  <StackPanel Orientation="Vertical"
-              Margin="12"
-              Spacing="12">
+  <StackPanel
+    Orientation="Vertical"
+    Margin="12"
+    Spacing="12"
+    x:DefaultBindMode="TwoWay">
     <TextBlock
       Style="{ThemeResource TitleTextBlockStyle}">
-        Developer Tools
+      Developer Tools
     </TextBlock>
     <Button Click="OnCopyDebugMessagesClick">
       Copy debug messages
@@ -21,5 +23,17 @@
     <Button Click="OnCopyGameEventsClick">
       Copy game events
     </Button>
+    <ToggleSwitch
+      Header="Register this executable for .OpenKneeboardPlugin files in HKCU"
+      OffContent="Not registered in HKCU"
+      OnContent="Registered in HKCU, overriding system-wide installation"
+      IsOn="{x:Bind PluginFileTypeInHKCU}"/>
+    <TextBlock
+      Style="{ThemeResource CaptionTextBlockStyle}"
+      Foreground="{ThemeResource TextFillColorSecondary}">
+      If set, this installation will be used for this Windows user; if not set,
+      Windows will use HKEY_CLASSES_ROOT, where OpenKneeboard's MSI installer
+      should register the file type.
+    </TextBlock>
   </StackPanel>
 </Page>

@@ -121,20 +121,25 @@ void CleanupTemporaryDirectories() {
   dprintf("New temporary directory: {}", Filesystem::GetTemporaryDirectory());
 }
 
+std::filesystem::path GetCurrentExecutablePath() {
+  static std::once_flag sOnce;
+  static std::filesystem::path sPath;
+  std::call_once(sOnce, [&path = sPath]() {
+    wchar_t exePathStr[MAX_PATH];
+    const auto exePathStrLen = GetModuleFileNameW(NULL, exePathStr, MAX_PATH);
+    path = std::filesystem::canonical(
+      std::wstring_view {exePathStr, exePathStrLen});
+  });
+  return sPath;
+}
+
 std::filesystem::path GetRuntimeDirectory() {
-  static std::filesystem::path sCache;
-  if (!sCache.empty()) {
-    return sCache;
-  }
-
-  wchar_t exePathStr[MAX_PATH];
-  const auto exePathStrLen = GetModuleFileNameW(NULL, exePathStr, MAX_PATH);
-
-  const std::filesystem::path exePath
-    = std::filesystem::canonical(std::wstring_view {exePathStr, exePathStrLen});
-
-  sCache = exePath.parent_path();
-  return sCache;
+  static std::once_flag sOnce;
+  static std::filesystem::path sPath;
+  std::call_once(sOnce, [&path = sPath]() {
+    path = GetCurrentExecutablePath().parent_path();
+  });
+  return sPath;
 }
 
 std::filesystem::path GetImmutableDataDirectory() {

@@ -34,6 +34,7 @@ std::filesystem::path GetLocalAppDataDirectory();
 std::filesystem::path GetRuntimeDirectory();
 std::filesystem::path GetImmutableDataDirectory();
 std::filesystem::path GetSettingsDirectory();
+std::filesystem::path GetCurrentExecutablePath();
 
 std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID);
 
