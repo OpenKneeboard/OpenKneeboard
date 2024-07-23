@@ -34,7 +34,7 @@ using namespace OpenKneeboard;
 SettingsPage::SettingsPage() {
   InitializeComponent();
 
-  DWORD showDeveloperTools {Version::IsGithubActionsBuild ? 0 : 1};
+  DWORD showDeveloperTools {Version::IsTaggedVersion ? 0 : 1};
   DWORD sizeOfDword {sizeof(DWORD)};
   RegGetValueW(
     HKEY_CURRENT_USER,
