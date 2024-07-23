@@ -12,14 +12,14 @@
       <TextBlock
         Style="{StaticResource TitleTextBlockStyle}"
         Text="Settings"
-        Margin="0,0,0,8"
-      />
+        Margin="0,0,0,8"/>
       <GridView
         Grid.Row="1"
         IsItemClickEnabled="True"
         ItemClick="OnItemClick">
         <GridView.ItemTemplate>
-          <DataTemplate x:Key="SettingsSubpageTemplate" x:DataType="local:SettingsSubpageData">
+          <DataTemplate x:Key="SettingsSubpageTemplate"
+                        x:DataType="local:SettingsSubpageData">
             <Grid
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -39,24 +39,23 @@
                   Glyph="{x:Bind Glyph}"
                   FontSize="40"
                   VerticalAlignment="Center"
-                  HorizontalAlignment="Center"
-                />
+                  HorizontalAlignment="Center"/>
               </Grid>
-              <Grid RowDefinitions="Auto,*" Grid.Column="1" Margin="8,0,0,0">
+              <Grid RowDefinitions="Auto,*"
+                    Grid.Column="1"
+                    Margin="8,0,0,0">
                 <TextBlock
                   Grid.Row="0"
                   Text="{x:Bind Title}"
                   Style="{StaticResource BodyStrongTextBlockStyle}"
-                  TextWrapping="NoWrap"
-                />
+                  TextWrapping="NoWrap"/>
                 <TextBlock
                   Margin="8,0,0,0"
                   Grid.Row="1"
                   Text="{x:Bind Description}"
                   Style="{StaticResource CaptionTextBlockStyle}"
                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                  VerticalAlignment="Stretch"
-                />
+                  VerticalAlignment="Stretch"/>
               </Grid>
             </Grid>
           </DataTemplate>
@@ -64,28 +63,46 @@
         <GridView.Items>
           <!-- Glyph reference: https://docs.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font -->
           <!-- F119 HMD -->
-          <local:SettingsSubpageData ID="VRConfig" Glyph="&#xF119;" Title="Virtual Reality">
+          <local:SettingsSubpageData
+            ID="VRConfig"
+            Glyph="&#xF119;"
+            Title="Virtual Reality">
             Adjust how OpenKneeboard appears in games and applications when using a virtual reality headset.
           </local:SettingsSubpageData>
           <!-- E7F4 ThisPC -->
-          <local:SettingsSubpageData ID="NonVRConfig" Glyph="&#xEC4E;" Title="Non VR">
+          <local:SettingsSubpageData
+            ID="NonVRConfig"
+            Glyph="&#xEC4E;"
+            Title="Non VR">
             Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
           </local:SettingsSubpageData>
           <!-- E7FC Game -->
-          <local:SettingsSubpageData ID="Games" Glyph="&#xE7FC;" Title="Games">
+          <local:SettingsSubpageData
+            ID="Games"
+            Glyph="&#xE7FC;"
+            Title="Games">
             Use OpenKneeboard with non-VR or legacy Oculus games, or some tablets. Games do not need to be added
             if you are using SteamVR or OpenXR with no tablet, a Wacom tablet, or OpenTabletDriver.
           </local:SettingsSubpageData>
           <!-- F571 PrintAllPages -->
-          <local:SettingsSubpageData ID="Tabs" Glyph="&#xF571;" Title="Tabs">
+          <local:SettingsSubpageData
+            ID="Tabs"
+            Glyph="&#xF571;"
+            Title="Tabs">
             Add, remove, and re-order sections in your kneeboard.
           </local:SettingsSubpageData>
           <!-- E961 Input -->
-          <local:SettingsSubpageData ID="Input" Glyph="&#xE961;" Title="Input">
+          <local:SettingsSubpageData
+            ID="Input"
+            Glyph="&#xE961;"
+            Title="Input">
             Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
           </local:SettingsSubpageData>
           <!-- E9E9 Equalizer-->
-          <local:SettingsSubpageData ID="Advanced" Glyph="&#xE9E9;" Title="Advanced">
+          <local:SettingsSubpageData
+            ID="Advanced"
+            Glyph="&#xE9E9;"
+            Title="Advanced">
             Advanced features and behavior tweaks.
           </local:SettingsSubpageData>
         </GridView.Items>
