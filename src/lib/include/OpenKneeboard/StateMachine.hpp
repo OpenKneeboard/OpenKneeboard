@@ -24,6 +24,7 @@
 #include <array>
 #include <atomic>
 #include <concepts>
+#include <expected>
 #include <format>
 #include <memory>
 #include <source_location>
@@ -64,6 +65,8 @@ namespace OpenKneeboard {
  * - you can replace `StateMachine` with `AtomicStateMachine` if you require
  *   `std::atomic`'s usual behavior
  * - you can omit the final state parameter, or provide `std::nullopt`
+ * - `AtomicStateMachine` also defines `TryTransition()`, which does an atomic
+ *    test-and-transition
  */
 
 namespace ADL {
@@ -235,6 +238,21 @@ class AtomicStateMachine final : public Base {
         formattable_state(in),
         formattable_state(out));
     }
+  }
+
+  /** Attempt to transition, and fail with the current state if it is not the
+   * expected state */
+  template <State in, State out>
+  [[nodiscard]]
+  std::expected<void, State> TryTransition(
+    const std::source_location& loc = std::source_location::current())
+    requires(Base::template IsValidTransition<in, out>())
+  {
+    auto current = in;
+    if (!this->mState.compare_exchange_strong(current, out)) {
+      return std::unexpected {current};
+    }
+    return {};
   }
 };
 
