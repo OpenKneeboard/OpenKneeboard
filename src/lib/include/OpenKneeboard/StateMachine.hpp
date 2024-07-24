@@ -57,7 +57,15 @@ namespace OpenKneeboard {
  * >;
  *
  * MyStateMachine sm;
+ *
+ * // Fail if current state is not `Foo`:
  * sm.Transition<MyStates::Foo, MyStates::Bar>();
+ *
+ * // alternatively, get an `std::expected<void, State>` - error is the current
+ * // state if not `Foo`:
+ *
+ * const auto result = sm.TryTransition<MyStates::Foo, MyStates::Bar>()`
+ *
  * auto state = sm.Get();
  * sm.Assert(MyStates::Bar);
  * ```
@@ -65,8 +73,6 @@ namespace OpenKneeboard {
  * - you can replace `StateMachine` with `AtomicStateMachine` if you require
  *   `std::atomic`'s usual behavior
  * - you can omit the final state parameter, or provide `std::nullopt`
- * - `AtomicStateMachine` also defines `TryTransition()`, which does an atomic
- *    test-and-transition
  */
 
 namespace ADL {
@@ -151,6 +157,24 @@ class StateMachineBase {
   StateMachineBase& operator=(StateMachineBase&&) = delete;
 
   template <State in, State out>
+  constexpr void Transition(
+    this auto&& self,
+    const std::source_location& loc = std::source_location::current()) {
+    const auto result = self.template TryTransition<in, out>();
+    if (result) [[likely]] {
+      return;
+    }
+
+    using namespace ADL;
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc,
+      "Unexpected state `{}`; expected (`{}` -> `{}`)",
+      formattable_state(result.error()),
+      formattable_state(in),
+      formattable_state(out));
+  }
+
+  template <State in, State out>
   static consteval bool IsValidTransition() {
     for (const auto& it: Transitions) {
       if (it.mIn == in && it.mOut == out) {
@@ -187,20 +211,15 @@ class StateMachine final : public Base {
   }
 
   template <State in, State out>
-  constexpr void Transition(
-    const std::source_location& loc = std::source_location::current())
+  [[nodiscard]]
+  constexpr std::expected<void, State> TryTransition()
     requires(Base::template IsValidTransition<in, out>())
   {
     if (this->mState != in) [[unlikely]] {
-      using namespace ADL;
-      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-        loc,
-        "Unexpected state `{}`; expected (`{}` -> `{}`)",
-        formattable_state(this->mState),
-        formattable_state(in),
-        formattable_state(out));
+      return std::unexpected {this->mState};
     }
     this->mState = out;
+    return {};
   }
 };
 
@@ -223,29 +242,11 @@ class AtomicStateMachine final : public Base {
     : Base(caller) {
   }
 
-  template <State in, State out>
-  constexpr void Transition(
-    const std::source_location& loc = std::source_location::current())
-    requires(Base::template IsValidTransition<in, out>())
-  {
-    auto current = in;
-    if (!this->mState.compare_exchange_strong(current, out)) [[unlikely]] {
-      using namespace ADL;
-      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-        loc,
-        "Unexpected state `{}`; expected (`{}` -> `{}`)",
-        formattable_state(current),
-        formattable_state(in),
-        formattable_state(out));
-    }
-  }
-
   /** Attempt to transition, and fail with the current state if it is not the
    * expected state */
   template <State in, State out>
   [[nodiscard]]
-  std::expected<void, State> TryTransition(
-    const std::source_location& loc = std::source_location::current())
+  constexpr std::expected<void, State> TryTransition()
     requires(Base::template IsValidTransition<in, out>())
   {
     auto current = in;
