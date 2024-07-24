@@ -61,7 +61,7 @@ AtomicStateMachine<
   gTemporaryDirectoryState {};
 }// namespace
 
-std::filesystem::path GetKnownFolderPath(const GUID& knownFolderID) {
+std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID) {
   wil::unique_cotaskmem_ptr<wchar_t> buffer;
   winrt::check_hresult(SHGetKnownFolderPath(
     knownFolderID, KF_FLAG_CREATE, NULL, std::out_ptr(buffer)));
