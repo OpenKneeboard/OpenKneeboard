@@ -39,6 +39,25 @@ namespace OpenKneeboard::Filesystem {
 
 namespace {
 
+template <class T>
+class LazyOnceValue {
+ public:
+  LazyOnceValue() = delete;
+  LazyOnceValue(std::function<T()> f) : mFunc(f) {
+  }
+
+  operator T() noexcept {
+    std::call_once(mOnce, [this]() { mValue = mFunc(); });
+    return mValue;
+  }
+
+ private:
+  std::function<T()> mFunc;
+  std::once_flag mOnce;
+  T mValue;
+};
+using LazyPath = LazyOnceValue<std::filesystem::path>;
+
 enum class TemporaryDirectoryState {
   Uninitialized,
   Cleaned,
@@ -69,10 +88,13 @@ std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID) {
 }
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
-  wchar_t tempDirBuf[MAX_PATH];
-  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
-  return std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}}
-  / L"OpenKneeboard";
+  static LazyPath sPath {[]() {
+    wchar_t tempDirBuf[MAX_PATH];
+    auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
+    return std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}}
+    / L"OpenKneeboard";
+  }};
+  return sPath;
 }
 
 static std::filesystem::path GetTemporaryDirectoryImpl() {
@@ -95,11 +117,7 @@ static std::filesystem::path GetTemporaryDirectoryImpl() {
 }
 
 std::filesystem::path GetTemporaryDirectory() {
-  static std::filesystem::path sPath;
-  static std::once_flag sFlag;
-
-  std::call_once(
-    sFlag, [&path = sPath]() { path = GetTemporaryDirectoryImpl(); });
+  static LazyPath sPath {[]() { return GetTemporaryDirectoryImpl(); }};
   return sPath;
 }
 
@@ -122,63 +140,52 @@ void CleanupTemporaryDirectories() {
 }
 
 std::filesystem::path GetCurrentExecutablePath() {
-  static std::once_flag sOnce;
-  static std::filesystem::path sPath;
-  std::call_once(sOnce, [&path = sPath]() {
+  static LazyPath sPath {[]() {
     wchar_t exePathStr[MAX_PATH];
     const auto exePathStrLen = GetModuleFileNameW(NULL, exePathStr, MAX_PATH);
-    path = std::filesystem::canonical(
+    return std::filesystem::canonical(
       std::wstring_view {exePathStr, exePathStrLen});
-  });
+  }};
   return sPath;
 }
 
 std::filesystem::path GetRuntimeDirectory() {
-  static std::once_flag sOnce;
-  static std::filesystem::path sPath;
-  std::call_once(sOnce, [&path = sPath]() {
-    path = GetCurrentExecutablePath().parent_path();
-  });
+  static LazyPath sPath {
+    []() { return GetCurrentExecutablePath().parent_path(); }};
   return sPath;
 }
 
 std::filesystem::path GetImmutableDataDirectory() {
-  static std::filesystem::path sCache;
-  if (sCache.empty()) {
-    sCache = std::filesystem::canonical(GetRuntimeDirectory() / "../share");
-  }
-  return sCache;
+  static LazyPath sPath {[]() {
+    return std::filesystem::canonical(GetRuntimeDirectory() / "../share");
+  }};
+  return sPath;
 }
 
 std::filesystem::path GetSettingsDirectory() {
-  static std::filesystem::path sPath;
-  static std::once_flag sFlag;
-
-  std::call_once(sFlag, [p = &sPath]() {
+  static LazyPath sPath {[]() -> std::filesystem::path {
     const auto base = GetKnownFolderPath<FOLDERID_SavedGames>();
     if (base.empty()) {
-      return;
+      return {};
     }
-    *p = base / "OpenKneeboard";
-    std::filesystem::create_directories(*p);
-  });
+    const auto ret = base / "OpenKneeboard";
+    std::filesystem::create_directories(ret);
+    return ret;
+  }};
 
   return sPath;
 }
 
 std::filesystem::path GetLocalAppDataDirectory() {
-  static std::filesystem::path sPath;
-  static std::once_flag sFlag;
-
-  std::call_once(sFlag, [p = &sPath]() {
+  static LazyPath sPath {[]() -> std::filesystem::path {
     const auto base = GetKnownFolderPath<FOLDERID_LocalAppData>();
     if (base.empty()) {
-      return;
+      return {};
     }
-    *p = base / "OpenKneeboard";
-    std::filesystem::create_directories(*p);
-  });
-
+    const auto ret = base / "OpenKneeboard";
+    std::filesystem::create_directories(ret);
+    return ret;
+  }};
   return sPath;
 }
 
