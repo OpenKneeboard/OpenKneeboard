@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/DCSMissionTab.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
@@ -110,8 +110,8 @@ std::string DCSMissionTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-winrt::fire_and_forget DCSMissionTab::OnGameEvent(
-  GameEvent event,
+winrt::fire_and_forget DCSMissionTab::OnAPIEvent(
+  APIEvent event,
   [[maybe_unused]] std::filesystem::path installPath,
   [[maybe_unused]] std::filesystem::path savedGamePath) {
   if (event.name == DCS::EVT_MISSION) {

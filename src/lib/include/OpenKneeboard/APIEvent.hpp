@@ -29,7 +29,7 @@
 #include <vector>
 
 namespace OpenKneeboard {
-struct GameEvent final {
+struct APIEvent final {
   // These are both required to be UTF-8
   std::string name;
   std::string value;
@@ -57,7 +57,7 @@ struct GameEvent final {
   }
 
   template <class T>
-  static GameEvent FromStruct(const T& v) {
+  static APIEvent FromStruct(const T& v) {
     nlohmann::json j;
     j = v;
     return {T::ID, j.dump()};
@@ -65,7 +65,7 @@ struct GameEvent final {
 
   operator bool() const;
 
-  static GameEvent Unserialize(std::string_view packet);
+  static APIEvent Unserialize(std::string_view packet);
   std::vector<std::byte> Serialize() const;
   void Send() const;
 
@@ -96,7 +96,7 @@ struct GameEvent final {
   // to UTF-8
   static constexpr char EVT_OKB_EXECUTABLE_LAUNCHED[] = "OKBExecutableLaunched";
 
-  inline static void Send(const GameEvent& ev) {
+  inline static void Send(const APIEvent& ev) {
     ev.Send();
   }
 };
@@ -109,31 +109,31 @@ struct BaseSetTabEvent {
 };
 
 struct SetTabByIDEvent : public BaseSetTabEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_ID};
+  static constexpr auto ID {APIEvent::EVT_SET_TAB_BY_ID};
   std::string mID;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIDEvent);
 
 struct SetTabByNameEvent : public BaseSetTabEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_NAME};
+  static constexpr auto ID {APIEvent::EVT_SET_TAB_BY_NAME};
   std::string mName;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByNameEvent);
 
 struct SetTabByIndexEvent : public BaseSetTabEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_INDEX};
+  static constexpr auto ID {APIEvent::EVT_SET_TAB_BY_INDEX};
   uint64_t mIndex {};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIndexEvent);
 
 struct SetProfileByIDEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_PROFILE_BY_ID};
+  static constexpr auto ID {APIEvent::EVT_SET_PROFILE_BY_ID};
   std::string mID;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetProfileByIDEvent);
 
 struct SetProfileByNameEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_PROFILE_BY_NAME};
+  static constexpr auto ID {APIEvent::EVT_SET_PROFILE_BY_NAME};
   std::string mName;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetProfileByNameEvent);
@@ -143,7 +143,7 @@ struct SetBrightnessEvent {
     Absolute,
     Relative,
   };
-  static constexpr auto ID {GameEvent::EVT_SET_BRIGHTNESS};
+  static constexpr auto ID {APIEvent::EVT_SET_BRIGHTNESS};
   float mBrightness {};
   Mode mMode = Mode::Absolute;
 };

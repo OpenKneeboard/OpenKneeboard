@@ -25,10 +25,10 @@
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DebugPrivileges.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/OpenXRMode.hpp>
@@ -450,8 +450,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     }
     ShowWindow(*hwnd, SW_SHOWNORMAL);
     if (SetForegroundWindow(*hwnd)) {
-      GameEvent::Send({
-        .name = GameEvent::EVT_OKB_EXECUTABLE_LAUNCHED,
+      APIEvent::Send({
+        .name = APIEvent::EVT_OKB_EXECUTABLE_LAUNCHED,
         .value = winrt::to_string(GetCommandLineW()),
       });
     } else {

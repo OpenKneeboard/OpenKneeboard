@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSRadioLogTab.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
 #include <chrono>
@@ -126,8 +126,8 @@ PageIndex DCSRadioLogTab::GetPageCount() const {
   return count == 0 ? 1 : count;
 }
 
-winrt::fire_and_forget DCSRadioLogTab::OnGameEvent(
-  GameEvent event,
+winrt::fire_and_forget DCSRadioLogTab::OnAPIEvent(
+  APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
   auto weak = weak_from_this();

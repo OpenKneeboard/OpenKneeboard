@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/ConsoleLoopCondition.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 
 #include <Windows.h>
 
@@ -30,23 +30,23 @@ using namespace OpenKneeboard;
 using DCS = OpenKneeboard::DCSWorld;
 
 int main() {
-  printf("Feeding GameEvents to OpenKneeboard - hit Ctrl-C to exit.\n");
+  printf("Feeding APIEvents to OpenKneeboard - hit Ctrl-C to exit.\n");
   ConsoleLoopCondition cliLoop;
   const auto pid = GetCurrentProcessId();
   do {
-    (GameEvent {
+    (APIEvent {
        .name = DCS::EVT_SAVED_GAMES_PATH,
        .value = to_utf8(DCS::GetSavedGamesPath(DCS::Version::OPEN_BETA)),
      })
       .Send();
-    (GameEvent {
+    (APIEvent {
        .name = DCS::EVT_INSTALL_PATH,
        .value = to_utf8(DCS::GetInstalledPath(DCS::Version::OPEN_BETA)),
      })
       .Send();
 
     const auto now = std::chrono::system_clock::now();
-    (GameEvent {
+    (APIEvent {
        .name = DCS::EVT_MESSAGE,
        .value
        = (nlohmann::json(DCSWorld::MessageEvent {

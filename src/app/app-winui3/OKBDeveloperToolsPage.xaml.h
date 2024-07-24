@@ -28,7 +28,7 @@ struct OKBDeveloperToolsPage : OKBDeveloperToolsPageT<OKBDeveloperToolsPage> {
   inline bool PluginFileTypeInHKCU() const noexcept;
   void PluginFileTypeInHKCU(bool value) noexcept;
 
-  void OnCopyGameEventsClick(
+  void OnCopyAPIEventsClick(
     const IInspectable&,
     const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
   void OnCopyDebugMessagesClick(

@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSAircraftTab.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
@@ -69,8 +69,8 @@ std::string DCSAircraftTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-winrt::fire_and_forget DCSAircraftTab::OnGameEvent(
-  GameEvent event,
+winrt::fire_and_forget DCSAircraftTab::OnAPIEvent(
+  APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
   if (event.name != DCS::EVT_AIRCRAFT) {

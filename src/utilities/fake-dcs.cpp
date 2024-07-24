@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 
 #include <Windows.h>
 
@@ -36,11 +36,11 @@ int main() {
   printf(
     "DCS: %S\nSaved Games: %S\n", installPath.c_str(), savedGamePath.c_str());
 
-  (GameEvent {DCS::EVT_INSTALL_PATH, to_utf8(installPath)}).Send();
-  (GameEvent {DCS::EVT_SAVED_GAMES_PATH, to_utf8(savedGamePath)}).Send();
-  (GameEvent {DCS::EVT_AIRCRAFT, "A-10C_2"}).Send();
-  (GameEvent {DCS::EVT_TERRAIN, "Caucasus"}).Send();
-  (GameEvent {
+  (APIEvent {DCS::EVT_INSTALL_PATH, to_utf8(installPath)}).Send();
+  (APIEvent {DCS::EVT_SAVED_GAMES_PATH, to_utf8(savedGamePath)}).Send();
+  (APIEvent {DCS::EVT_AIRCRAFT, "A-10C_2"}).Send();
+  (APIEvent {DCS::EVT_TERRAIN, "Caucasus"}).Send();
+  (APIEvent {
      DCS::EVT_MISSION,
      "C:\\Program Files\\Eagle Dynamics\\DCS World "
      "OpenBeta\\Mods\\aircraft\\Ka-50\\Missions\\Campaigns\\ATO-A-P2.2.miz",
@@ -73,7 +73,7 @@ int main() {
         .missionTime = 0,
       };
       nlohmann::json j = payload;
-      (GameEvent {DCS::EVT_MESSAGE, j.dump()}).Send();
+      (APIEvent {DCS::EVT_MESSAGE, j.dump()}).Send();
     }
   }
 

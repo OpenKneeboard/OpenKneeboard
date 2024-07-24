@@ -19,8 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Events.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
@@ -32,18 +32,18 @@
 
 namespace OpenKneeboard {
 
-class GameEventServer final
-  : public std::enable_shared_from_this<GameEventServer> {
+class APIEventServer final
+  : public std::enable_shared_from_this<APIEventServer> {
  public:
-  static std::shared_ptr<GameEventServer> Create();
-  static winrt::fire_and_forget final_release(std::unique_ptr<GameEventServer>);
-  ~GameEventServer();
+  static std::shared_ptr<APIEventServer> Create();
+  static winrt::fire_and_forget final_release(std::unique_ptr<APIEventServer>);
+  ~APIEventServer();
 
-  Event<GameEvent> evGameEvent;
+  Event<APIEvent> evAPIEvent;
 
  private:
   ProcessShutdownBlock mShutdownBlock;
-  GameEventServer();
+  APIEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
   std::stop_source mStop;
   winrt::apartment_context mUIThread;
@@ -54,7 +54,7 @@ class GameEventServer final
 
   winrt::Windows::Foundation::IAsyncAction Run();
   static winrt::Windows::Foundation::IAsyncOperation<bool>
-  RunSingle(std::weak_ptr<GameEventServer>, HANDLE event, HANDLE mailslot);
+  RunSingle(std::weak_ptr<APIEventServer>, HANDLE event, HANDLE mailslot);
   winrt::fire_and_forget DispatchEvent(std::string_view);
 };
 

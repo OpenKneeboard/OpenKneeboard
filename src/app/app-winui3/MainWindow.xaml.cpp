@@ -31,10 +31,10 @@
 #include "Globals.h"
 #include "InstallPlugin.h"
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/ITab.hpp>
@@ -134,7 +134,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     std::bind_front(&MainWindow::OnTabsChanged, this));
 
   AddEventListener(
-    mKneeboard->evGameEvent, std::bind_front(&MainWindow::OnGameEvent, this));
+    mKneeboard->evAPIEvent, std::bind_front(&MainWindow::OnAPIEvent, this));
 
   RootGrid().Loaded([this](const auto&, const auto&) { this->OnLoaded(); });
 
@@ -485,7 +485,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
     "Elevated\t{}\n",
     GetCurrentProcessId(),
     reinterpret_cast<uint64_t>(mHwnd),
-    to_utf8(GameEvent::GetMailslotPath()),
+    to_utf8(APIEvent::GetMailslotPath()),
     std::chrono::system_clock::now(),
     IsElevated())
     << std::endl;
@@ -870,8 +870,8 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   mTabSwitchReason = TabSwitchReason::Other;
 }
 
-winrt::fire_and_forget MainWindow::OnGameEvent(GameEvent ev) {
-  if (ev.name != GameEvent::EVT_OKB_EXECUTABLE_LAUNCHED) {
+winrt::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
+  if (ev.name != APIEvent::EVT_OKB_EXECUTABLE_LAUNCHED) {
     co_return;
   }
   co_await mUIThread;

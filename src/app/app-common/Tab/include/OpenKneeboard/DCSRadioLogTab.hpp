@@ -82,8 +82,8 @@ class DCSRadioLogTab final
     std::string_view title,
     const nlohmann::json& config);
 
-  virtual winrt::fire_and_forget OnGameEvent(
-    GameEvent,
+  virtual winrt::fire_and_forget OnAPIEvent(
+    APIEvent,
     std::filesystem::path installPath,
     std::filesystem::path savedGamesPath) override;
 

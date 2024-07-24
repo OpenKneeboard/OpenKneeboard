@@ -21,7 +21,7 @@
 #define OPENKNEEBOARD_CAPI_IMPL
 #include "OpenKneeboard_CAPI.h"
 
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
@@ -48,7 +48,7 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_utf8(
   size_t eventNameByteCount,
   const char* eventValue,
   size_t eventValueByteCount) {
-  const OpenKneeboard::GameEvent ge {
+  const OpenKneeboard::APIEvent ge {
     {eventName, eventNameByteCount},
     {eventValue, eventValueByteCount},
   };
@@ -60,7 +60,7 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
   size_t eventNameCharCount,
   const wchar_t* eventValue,
   size_t eventValueCharCount) {
-  const OpenKneeboard::GameEvent ge {
+  const OpenKneeboard::APIEvent ge {
     winrt::to_string(std::wstring_view {eventName, eventNameCharCount}),
     winrt::to_string(std::wstring_view {eventValue, eventValueCharCount}),
   };

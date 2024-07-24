@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSTerrainTab.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
@@ -81,8 +81,8 @@ static std::string_view NormalizeTerrain(std::string_view terrain) {
   return terrain;
 }
 
-winrt::fire_and_forget DCSTerrainTab::OnGameEvent(
-  GameEvent event,
+winrt::fire_and_forget DCSTerrainTab::OnAPIEvent(
+  APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
   if (event.name != DCS::EVT_TERRAIN) {

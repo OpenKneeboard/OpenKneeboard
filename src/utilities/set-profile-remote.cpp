@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
@@ -52,12 +52,12 @@ int WINAPI wWinMain(
   const auto identifier = winrt::to_string(std::wstring_view(argv[1]));
 
   if (kind == L"id") {
-    GameEvent::FromStruct(SetProfileByIDEvent {identifier}).Send();
+    APIEvent::FromStruct(SetProfileByIDEvent {identifier}).Send();
     return 0;
   }
 
   if (kind == L"name") {
-    GameEvent::FromStruct(SetProfileByNameEvent {identifier}).Send();
+    APIEvent::FromStruct(SetProfileByNameEvent {identifier}).Send();
     return 0;
   }
 

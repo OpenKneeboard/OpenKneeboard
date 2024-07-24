@@ -31,14 +31,14 @@
 
 namespace OpenKneeboard {
 
-struct GameEvent;
+struct APIEvent;
 
 class TroubleshootingStore final : private EventReceiver {
  public:
   static std::shared_ptr<TroubleshootingStore> Get();
   ~TroubleshootingStore();
 
-  struct GameEventEntry {
+  struct APIEventEntry {
     std::chrono::system_clock::time_point mFirstSeen;
     std::chrono::system_clock::time_point mLastSeen;
 
@@ -57,19 +57,19 @@ class TroubleshootingStore final : private EventReceiver {
     std::wstring mMessage;
   };
 
-  void OnGameEvent(const GameEvent&);
+  void OnAPIEvent(const APIEvent&);
 
-  std::vector<GameEventEntry> GetGameEvents() const;
+  std::vector<APIEventEntry> GetAPIEvents() const;
   std::vector<DPrintEntry> GetDPrintMessages() const;
 
-  Event<GameEventEntry> evGameEventReceived;
+  Event<APIEventEntry> evAPIEventReceived;
   Event<DPrintEntry> evDPrintMessageReceived;
 
  private:
   class DPrintReceiver;
   std::unique_ptr<DPrintReceiver> mDPrint;
   std::jthread mDPrintThread;
-  std::map<std::string, GameEventEntry> mGameEvents;
+  std::map<std::string, APIEventEntry> mAPIEvents;
   std::optional<std::ofstream> mLogFile;
 
   void InitializeLogFile();

@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/Settings.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
@@ -162,14 +162,14 @@ void TroubleshootingStore::WriteDPrintMessageToLogFile(
             << std::endl;
 }
 
-void TroubleshootingStore::OnGameEvent(const GameEvent& ev) {
-  if (!mGameEvents.contains(ev.name)) {
-    mGameEvents[ev.name] = {
+void TroubleshootingStore::OnAPIEvent(const APIEvent& ev) {
+  if (!mAPIEvents.contains(ev.name)) {
+    mAPIEvents[ev.name] = {
       .mFirstSeen = std::chrono::system_clock::now(),
       .mName = ev.name,
     };
   }
-  auto& entry = mGameEvents.at(ev.name);
+  auto& entry = mAPIEvents.at(ev.name);
 
   entry.mLastSeen = std::chrono::system_clock::now();
   entry.mReceiveCount++;
@@ -178,14 +178,14 @@ void TroubleshootingStore::OnGameEvent(const GameEvent& ev) {
     entry.mValue = ev.value;
   }
 
-  evGameEventReceived.Emit(entry);
+  evAPIEventReceived.Emit(entry);
 }
 
-std::vector<TroubleshootingStore::GameEventEntry>
-TroubleshootingStore::GetGameEvents() const {
-  std::vector<GameEventEntry> events;
-  events.reserve(mGameEvents.size());
-  for (const auto& [name, event]: mGameEvents) {
+std::vector<TroubleshootingStore::APIEventEntry>
+TroubleshootingStore::GetAPIEvents() const {
+  std::vector<APIEventEntry> events;
+  events.reserve(mAPIEvents.size());
+  for (const auto& [name, event]: mAPIEvents) {
     events.push_back(event);
   }
   return events;

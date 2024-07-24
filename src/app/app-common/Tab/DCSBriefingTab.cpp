@@ -18,10 +18,10 @@
  * USA.
  */
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSBriefingTab.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/Lua.hpp>
 #include <OpenKneeboard/NavigationTab.hpp>
@@ -154,8 +154,8 @@ winrt::Windows::Foundation::IAsyncAction DCSBriefingTab::Reload() noexcept {
   this->evContentChangedEvent.Emit();
 }
 
-winrt::fire_and_forget DCSBriefingTab::OnGameEvent(
-  GameEvent event,
+winrt::fire_and_forget DCSBriefingTab::OnAPIEvent(
+  APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path) {
   mInstallationPath = installPath;

@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <shims/winrt/base.h>
@@ -58,7 +58,7 @@ static bool OpenMailslotHandle() {
   sLastAttempt = now;
 
   gMailslotHandle = OpenKneeboard::Win32::CreateFileW(
-    OpenKneeboard::GameEvent::GetMailslotPath(),
+    OpenKneeboard::APIEvent::GetMailslotPath(),
     GENERIC_WRITE,
     FILE_SHARE_READ,
     nullptr,
@@ -77,11 +77,11 @@ namespace OpenKneeboard {
     return {}; \
   }
 
-GameEvent::operator bool() const {
+APIEvent::operator bool() const {
   return !(name.empty() || value.empty());
 }
 
-GameEvent GameEvent::Unserialize(std::string_view packet) {
+APIEvent APIEvent::Unserialize(std::string_view packet) {
   // "{:08x}!{}!{:08x}!{}!", name size, name, value size, value
   CHECK_PACKET(packet.ends_with("!"));
   CHECK_PACKET(packet.size() >= sizeof("12345678!!12345678!!") - 1);
@@ -101,25 +101,25 @@ GameEvent GameEvent::Unserialize(std::string_view packet) {
   return {name, value};
 }
 
-std::vector<std::byte> GameEvent::Serialize() const {
+std::vector<std::byte> APIEvent::Serialize() const {
   const auto str = std::format(
     "{:08x}!{}!{:08x}!{}!", name.size(), name, value.size(), value);
   const auto first = reinterpret_cast<const std::byte*>(str.data());
   return {first, first + str.size()};
 }
 
-void GameEvent::Send() const {
+void APIEvent::Send() const {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity,
-    "GameEvent::Send()",
+    "APIEvent::Send()",
     TraceLoggingValue(this->name.c_str(), "Name"),
     TraceLoggingBinary(this->value.c_str(), this->value.size(), "Value"));
 
   if (!OpenMailslotHandle()) {
     TraceLoggingWriteStop(
       activity,
-      "GameEvent::Send()",
+      "APIEvent::Send()",
       TraceLoggingValue("Couldn't open mailslot", "Result"));
     return;
   }
@@ -132,7 +132,7 @@ void GameEvent::Send() const {
         nullptr,
         nullptr)) {
     TraceLoggingWriteStop(
-      activity, "GameEvent::Send()", TraceLoggingValue("Success", "Result"));
+      activity, "APIEvent::Send()", TraceLoggingValue("Success", "Result"));
     return;
   }
 
@@ -143,7 +143,7 @@ void GameEvent::Send() const {
   if (!OpenMailslotHandle()) {
     TraceLoggingWriteStop(
       activity,
-      "GameEvent::Send()",
+      "APIEvent::Send()",
       TraceLoggingValue("Couldn't reopen handle", "Result"));
     return;
   }
@@ -155,17 +155,17 @@ void GameEvent::Send() const {
         nullptr,
         nullptr)) {
     TraceLoggingWriteStop(
-      activity, "GameEvent::Send()", TraceLoggingValue("Success", "Result"));
+      activity, "APIEvent::Send()", TraceLoggingValue("Success", "Result"));
   } else {
     TraceLoggingWriteStop(
       activity,
-      "GameEvent::Send()",
+      "APIEvent::Send()",
       TraceLoggingValue("Error", "Result"),
       TraceLoggingValue(GetLastError(), "Error"));
   }
 }
 
-const wchar_t* GameEvent::GetMailslotPath() {
+const wchar_t* APIEvent::GetMailslotPath() {
   static std::wstring sPath;
   if (sPath.empty()) {
     sPath = std::format(

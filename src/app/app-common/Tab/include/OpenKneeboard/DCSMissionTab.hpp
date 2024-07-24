@@ -53,10 +53,8 @@ class DCSMissionTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  virtual winrt::fire_and_forget OnGameEvent(
-    GameEvent,
-    std::filesystem::path,
-    std::filesystem::path) override;
+  virtual winrt::fire_and_forget
+    OnAPIEvent(APIEvent, std::filesystem::path, std::filesystem::path) override;
 
  private:
   audited_ptr<DXResources> mDXR {};

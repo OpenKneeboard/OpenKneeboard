@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/FooterUILayer.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -39,7 +39,7 @@ FooterUILayer::FooterUILayer(
     kneeboard->evFrameTimerPreEvent,
     std::bind_front(&FooterUILayer::Tick, this));
   AddEventListener(
-    kneeboard->evGameEvent, std::bind_front(&FooterUILayer::OnGameEvent, this));
+    kneeboard->evAPIEvent, std::bind_front(&FooterUILayer::OnAPIEvent, this));
   AddEventListener(
     kneeboard->evGameChangedEvent,
     std::bind_front(&FooterUILayer::OnGameChanged, this));
@@ -216,7 +216,7 @@ void FooterUILayer::Render(
     DWRITE_TEXT_ALIGNMENT_TRAILING);
 }
 
-void FooterUILayer::OnGameEvent(const GameEvent& ev) {
+void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
   if (ev.name == DCSWorld::EVT_SIMULATION_START) {
     const auto mission = ev.ParsedValue<DCSWorld::SimulationStartEvent>();
 

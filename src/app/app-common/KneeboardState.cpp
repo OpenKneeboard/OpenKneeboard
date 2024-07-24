@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEventServer.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/DirectInputAdapter.hpp>
-#include <OpenKneeboard/GameEventServer.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/ITab.hpp>
@@ -375,16 +375,16 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
+void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");
     OPENKNEEBOARD_BREAK;
   }
-  TroubleshootingStore::Get()->OnGameEvent(ev);
+  TroubleshootingStore::Get()->OnAPIEvent(ev);
 
   const auto tabs = mTabsList->GetTabs();
 
-  if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
+  if (ev.name == APIEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
   if (ev.value == #ACTION) { \
     PostUserAction(UserAction::ACTION); \
@@ -394,7 +394,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
 #undef IT
   }
 
-  if (ev.name == GameEvent::EVT_SET_TAB_BY_ID) {
+  if (ev.name == APIEvent::EVT_SET_TAB_BY_ID) {
     const auto parsed = ev.ParsedValue<SetTabByIDEvent>();
     winrt::guid guid;
     try {
@@ -414,7 +414,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  if (ev.name == GameEvent::EVT_SET_TAB_BY_NAME) {
+  if (ev.name == APIEvent::EVT_SET_TAB_BY_NAME) {
     const auto parsed = ev.ParsedValue<SetTabByNameEvent>();
     const auto tab = std::ranges::find_if(tabs, [parsed](const auto& tab) {
       return parsed.mName == tab->GetTitle();
@@ -429,7 +429,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  if (ev.name == GameEvent::EVT_SET_TAB_BY_INDEX) {
+  if (ev.name == APIEvent::EVT_SET_TAB_BY_INDEX) {
     const auto parsed = ev.ParsedValue<SetTabByIndexEvent>();
     if (parsed.mIndex >= tabs.size()) {
       dprintf(
@@ -441,7 +441,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  if (ev.name == GameEvent::EVT_SET_PROFILE_BY_ID) {
+  if (ev.name == APIEvent::EVT_SET_PROFILE_BY_ID) {
     const auto parsed = ev.ParsedValue<SetProfileByIDEvent>();
     if (!mProfiles.mEnabled) {
       dprint("Asked to switch profiles, but profiles are disabled");
@@ -458,7 +458,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  if (ev.name == GameEvent::EVT_SET_PROFILE_BY_NAME) {
+  if (ev.name == APIEvent::EVT_SET_PROFILE_BY_NAME) {
     const auto parsed = ev.ParsedValue<SetProfileByNameEvent>();
     if (!mProfiles.mEnabled) {
       dprint("Asked to switch profiles, but profiles are disabled");
@@ -478,7 +478,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  if (ev.name == GameEvent::EVT_SET_BRIGHTNESS) {
+  if (ev.name == APIEvent::EVT_SET_BRIGHTNESS) {
     const auto parsed = ev.ParsedValue<SetBrightnessEvent>();
     auto& tint = this->mSettings.mApp.mTint;
     tint.mEnabled = true;
@@ -507,7 +507,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  this->evGameEvent.Emit(ev);
+  this->evAPIEvent.Emit(ev);
 }
 
 void KneeboardState::SetCurrentTab(
@@ -763,7 +763,7 @@ KneeboardState::ReleaseExclusiveResources() {
   mOpenVRThread = {};
   mInterprocessRenderer = {};
   mTabletInput = {};
-  mGameEventServer = {};
+  mAPIEventServer = {};
   co_return;
 }
 
@@ -775,10 +775,10 @@ void KneeboardState::AcquireExclusiveResources() {
 
   StartTabletInput();
 
-  mGameEventServer = GameEventServer::Create();
+  mAPIEventServer = APIEventServer::Create();
   AddEventListener(
-    mGameEventServer->evGameEvent,
-    std::bind_front(&KneeboardState::OnGameEvent, this));
+    mAPIEventServer->evAPIEvent,
+    std::bind_front(&KneeboardState::OnAPIEvent, this));
 }
 
 void KneeboardState::SwitchProfile(Direction direction) {

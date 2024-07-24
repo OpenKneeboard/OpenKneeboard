@@ -54,7 +54,7 @@ struct HelpPage : HelpPageT<HelpPage>,
   bool AgreedToPrivacyWarning() noexcept;
   bool AgreeButtonIsEnabled() noexcept;
 
-  static std::string GetGameEventsAsString() noexcept;
+  static std::string GetAPIEventsAsString() noexcept;
   static std::wstring GetDPrintMessagesAsWString() noexcept;
 
  private:

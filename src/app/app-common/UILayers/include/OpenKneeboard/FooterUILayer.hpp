@@ -33,7 +33,7 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-struct GameEvent;
+struct APIEvent;
 struct GameInstance;
 
 class FooterUILayer final : public UILayerBase, private EventReceiver {
@@ -55,7 +55,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
 
  private:
   void Tick();
-  void OnGameEvent(const GameEvent&);
+  void OnAPIEvent(const APIEvent&);
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 
   audited_ptr<DXResources> mDXResources;

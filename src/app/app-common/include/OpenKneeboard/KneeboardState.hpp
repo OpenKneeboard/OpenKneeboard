@@ -53,9 +53,9 @@ class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
 struct BaseSetTabEvent;
-struct GameEvent;
+struct APIEvent;
 struct GameInstance;
-class GameEventServer;
+class APIEventServer;
 
 struct ViewRenderInfo {
   std::shared_ptr<KneeboardView> mView;
@@ -109,7 +109,7 @@ class KneeboardState final
   Event<> evActiveViewChangedEvent;
   Event<> evInputDevicesChangedEvent;
   Event<UserAction> evUserActionEvent;
-  Event<GameEvent> evGameEvent;
+  Event<APIEvent> evAPIEvent;
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
@@ -191,7 +191,7 @@ class KneeboardState final
   std::shared_ptr<DirectInputAdapter> mDirectInput;
   std::shared_ptr<TabletInputAdapter> mTabletInput;
 
-  std::shared_ptr<GameEventServer> mGameEventServer;
+  std::shared_ptr<APIEventServer> mAPIEventServer;
   RunnerThread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
 
@@ -200,7 +200,7 @@ class KneeboardState final
   void OnGameChangedEvent(
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
-  void OnGameEvent(const GameEvent& ev) noexcept;
+  void OnAPIEvent(const APIEvent& ev) noexcept;
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);

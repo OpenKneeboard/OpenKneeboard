@@ -7,7 +7,7 @@ parent: Internals
 ## Before Release
 
 * Update `Quick Start.pdf`
-* Update the `GameEvent` path if the format of existing messages has changed in a backwards-incompatible way
+* Update the `APIEvent` path if the format of existing messages has changed in a backwards-incompatible way
 * Check version number in CMakeLists.txt
 
 ## Testing
@@ -51,7 +51,7 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
 * expected default tabs with quick start guide on fresh install
 * adding, removing games
 * finding DCS from empty games list
-* DCS integration test utilities: `fake-dcs.exe` and `test-gameevent-feeder.exe`
+* DCS integration test utilities: `fake-dcs.exe` and `test-apievent-feeder.exe`
 * DCS: play full single-player mission in Caucasus or NTTR
   * Briefing tab
     * Text

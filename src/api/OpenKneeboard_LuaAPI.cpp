@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -57,7 +57,7 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  const OpenKneeboard::GameEvent ge {
+  const OpenKneeboard::APIEvent ge {
     lua_tostring(state, 1),
     lua_tostring(state, 2),
   };

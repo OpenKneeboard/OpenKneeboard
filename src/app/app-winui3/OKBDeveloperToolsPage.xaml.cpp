@@ -141,10 +141,10 @@ void OKBDeveloperToolsPage::PluginFileTypeInHKCU(bool enabled) noexcept {
   }
 }
 
-void OKBDeveloperToolsPage::OnCopyGameEventsClick(
+void OKBDeveloperToolsPage::OnCopyAPIEventsClick(
   const IInspectable&,
   const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
-  SetClipboardText(HelpPage::GetGameEventsAsString());
+  SetClipboardText(HelpPage::GetAPIEventsAsString());
 }
 
 void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(

@@ -238,7 +238,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   }
 
   AddFile("debug-log.txt", winrt::to_string(GetDPrintMessagesAsWString()));
-  AddFile("api-events.txt", GetGameEventsAsString());
+  AddFile("api-events.txt", GetAPIEventsAsString());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("renderers.txt", GetActiveConsumers());
@@ -310,8 +310,8 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   }
 }
 
-std::string HelpPage::GetGameEventsAsString() noexcept {
-  auto events = TroubleshootingStore::Get()->GetGameEvents();
+std::string HelpPage::GetAPIEventsAsString() noexcept {
+  auto events = TroubleshootingStore::Get()->GetAPIEvents();
 
   std::string ret;
 

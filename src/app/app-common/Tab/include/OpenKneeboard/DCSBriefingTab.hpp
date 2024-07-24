@@ -57,10 +57,8 @@ class DCSBriefingTab final : public TabBase,
   std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  protected:
-  virtual winrt::fire_and_forget OnGameEvent(
-    GameEvent,
-    std::filesystem::path,
-    std::filesystem::path) override;
+  virtual winrt::fire_and_forget
+    OnAPIEvent(APIEvent, std::filesystem::path, std::filesystem::path) override;
 
  private:
   KneeboardState* mKneeboard {nullptr};

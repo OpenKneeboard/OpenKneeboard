@@ -18,7 +18,7 @@ target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-OpenXRMode
   OpenKneeboard-PDFNavigation

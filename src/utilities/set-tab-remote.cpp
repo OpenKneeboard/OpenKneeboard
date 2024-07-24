@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
@@ -61,12 +61,12 @@ int WINAPI wWinMain(
   }
 
   if (kind == L"id") {
-    GameEvent::FromStruct(SetTabByIDEvent {base, identifier}).Send();
+    APIEvent::FromStruct(SetTabByIDEvent {base, identifier}).Send();
     return 0;
   }
 
   if (kind == L"name") {
-    GameEvent::FromStruct(SetTabByNameEvent {base, identifier}).Send();
+    APIEvent::FromStruct(SetTabByNameEvent {base, identifier}).Send();
     return 0;
   }
 
@@ -76,7 +76,7 @@ int WINAPI wWinMain(
       dprint("Error: position must start at 1");
       return 0;
     }
-    GameEvent::FromStruct(SetTabByIndexEvent {base, position - 1}).Send();
+    APIEvent::FromStruct(SetTabByIndexEvent {base, position - 1}).Send();
     return 0;
   }
 

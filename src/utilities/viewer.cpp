@@ -23,10 +23,10 @@
 #include "viewer-d3d12.hpp"
 #include "viewer-vulkan.hpp"
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/D2DErrorRenderer.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/GetSystemColor.hpp>
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/SHM.hpp>

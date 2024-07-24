@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameEvent.hpp>
+#include <OpenKneeboard/APIEvent.hpp>
 
-using OpenKneeboard::GameEvent;
+using OpenKneeboard::APIEvent;
 
 #define STRINGIFY_INNER(x) #x
 #define STRINGIFY(x) STRINGIFY_INNER(x)
@@ -57,8 +57,8 @@ int WINAPI wWinMain(
   }
 
   if (repeat == 1) {
-    const GameEvent ge {
-      GameEvent::EVT_REMOTE_USER_ACTION,
+    const APIEvent ge {
+      APIEvent::EVT_REMOTE_USER_ACTION,
       STRINGIFY(REMOTE_ACTION),
     };
     ge.Send();
@@ -68,10 +68,10 @@ int WINAPI wWinMain(
   auto payload = nlohmann::json::array();
   for (int i = 0; i < repeat; ++i) {
     payload.push_back(nlohmann::json::array(
-      {GameEvent::EVT_REMOTE_USER_ACTION, STRINGIFY(REMOTE_ACTION)}));
+      {APIEvent::EVT_REMOTE_USER_ACTION, STRINGIFY(REMOTE_ACTION)}));
   }
-  const GameEvent me {
-    GameEvent::EVT_MULTI_EVENT,
+  const APIEvent me {
+    APIEvent::EVT_MULTI_EVENT,
     payload.dump(),
   };
   me.Send();

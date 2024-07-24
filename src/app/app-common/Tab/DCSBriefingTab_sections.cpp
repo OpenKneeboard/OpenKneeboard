@@ -18,13 +18,13 @@
  * USA.
  */
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Coordinates.hpp>
 #include <OpenKneeboard/DCSBriefingTab.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/DCSGrid.hpp>
 #include <OpenKneeboard/DCSMagneticModel.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/Lua.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>

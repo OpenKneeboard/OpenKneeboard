@@ -11,14 +11,14 @@ function(add_utility_executable TARGET)
 endfunction()
 
 ok_add_executable(
-  test-gameevent-feeder
-  test-gameevent-feeder.cpp
+  test-apievent-feeder
+  test-apievent-feeder.cpp
   remote-traceprovider.cpp
 )
 target_link_libraries(
-  test-gameevent-feeder
+  test-apievent-feeder
   PRIVATE
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-consolelib
   OpenKneeboard-games
   OpenKneeboard-tracing
@@ -34,7 +34,7 @@ target_link_libraries(
   OpenKneeboard-RemoteControl-SET_TAB
   PRIVATE
   OpenKneeboard-dprint
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-tracing
 )
 
@@ -47,7 +47,7 @@ add_utility_executable(
 target_link_libraries(
   OpenKneeboard-RemoteControl-SET_PROFILE
   PRIVATE
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-dprint
   OpenKneeboard-tracing
 )
@@ -72,7 +72,7 @@ target_link_libraries(
   OpenKneeboard-Vulkan
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-RenderDoc
   OpenKneeboard-SHM
@@ -97,7 +97,7 @@ ok_add_executable(
 target_link_libraries(
   fake-dcs
   PRIVATE
-  OpenKneeboard-GameEvent
+  OpenKneeboard-APIEvent
   OpenKneeboard-games
   OpenKneeboard-tracing
 )
@@ -149,7 +149,7 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   target_link_libraries(
     "${TARGET}"
     PRIVATE
-    OpenKneeboard-GameEvent
+    OpenKneeboard-APIEvent
     OpenKneeboard-dprint
     OpenKneeboard-tracing
   )

@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSTab.hpp>
 #include <OpenKneeboard/DCSWorld.hpp>
-#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -29,15 +29,15 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSTab::DCSTab(KneeboardState* kbs) {
-  mGameEventToken = AddEventListener(
-    kbs->evGameEvent, [this](const GameEvent& ev) { this->OnGameEvent(ev); });
+  mAPIEventToken = AddEventListener(
+    kbs->evAPIEvent, [this](const APIEvent& ev) { this->OnAPIEvent(ev); });
 }
 
 DCSTab::~DCSTab() {
-  this->RemoveEventListener(mGameEventToken);
+  this->RemoveEventListener(mAPIEventToken);
 }
 
-void DCSTab::OnGameEvent(const GameEvent& event) {
+void DCSTab::OnAPIEvent(const APIEvent& event) {
   if (event.name == DCS::EVT_INSTALL_PATH) {
     mInstallPath = std::filesystem::canonical(event.value);
   }
@@ -47,7 +47,7 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
   }
 
   if (!(mInstallPath.empty() || mSavedGamesPath.empty())) {
-    OnGameEvent(event, mInstallPath, mSavedGamesPath);
+    OnAPIEvent(event, mInstallPath, mSavedGamesPath);
   }
 }
 

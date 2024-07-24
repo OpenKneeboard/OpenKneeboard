@@ -299,9 +299,9 @@ target_link_libraries(OpenKneeboard-dprint
 ok_add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
 target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
 
-ok_add_library(OpenKneeboard-GameEvent STATIC GameEvent.cpp)
-target_link_libraries(OpenKneeboard-GameEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
-target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders OpenKneeboard-UTF8 OpenKneeboard-json)
+ok_add_library(OpenKneeboard-APIEvent STATIC APIEvent.cpp)
+target_link_libraries(OpenKneeboard-APIEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
+target_link_libraries(OpenKneeboard-APIEvent PUBLIC _libheaders OpenKneeboard-UTF8 OpenKneeboard-json)
 
 ok_add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(

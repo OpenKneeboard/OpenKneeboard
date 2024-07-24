@@ -75,8 +75,8 @@ For details, see:
 This is used for events like "mission loaded", passing data like mission file,
 current aircraft, and current theater.
 
-The `OpenKneeboard::GameEvent` class should be used for this. Internally, the
-`OpenKneeboard::GameEvent` class uses
+The `OpenKneeboard::APIEvent` class should be used for this. Internally, the
+`OpenKneeboard::APIEvent` class uses
 [Mailslots](https://docs.microsoft.com/en-us/windows/win32/ipc/mailslots), which can be thought of as similar to UDP, or POSIX or System V message queues.
 
 Unlike socket-based approaches, there is no need to obtain an unused port, communicate that port number to the game, or set firewall rules. Essentially,
@@ -146,7 +146,7 @@ See [injectables.md](injectables.md) for details.
 ## DCS Hook: `src/dcs-hook`
 
 A C++ DLL Lua extension (`OpenKneeboard_LuaAPI.cpp`/`.dll`) is used to give
-DCS Lua scripts the ability to send `OpenKneeboard::GameEvent`s via the
+DCS Lua scripts the ability to send `OpenKneeboard::APIEvent`s via the
 mailslot. `OpenKneeboardDCSExt.lua` loads the DLL, and uses the usual DCS
 Lua APIs to observe events, and passes them to the DLL which in turn passes
 them on to `OpenKneeboard`.
@@ -165,17 +165,17 @@ Automatic configuration information for known games.
 ## Libraries: `src/lib`
 
 This is generally stuff that is needed by both the main app, and by injectables
-or utilitites. This includes `OpenKneeboard::GameEvent`, `OpenKneeboard::SHM`,
+or utilitites. This includes `OpenKneeboard::APIEvent`, `OpenKneeboard::SHM`,
 and various smaller components.
 
 ## Utilities: `src/utilities`
 
 These are tools intended to help develop or debug OpenKneeboard:
 
-* `fake-dcs`: send DCS game events to the main OpenKneeboard app, populating
+* `fake-dcs`: send DCS API events to the main OpenKneeboard app, populating
   the radio log, theater, and aircraft kneeboard tabs.
-* `test-gameevent-feeder`: feed fake radio log messages to OpenKneeboard once
-  a second. Useful to test the GameEvent code, and that it handles the app
+* `test-apievent-feeder`: feed fake radio log messages to OpenKneeboard once
+  a second. Useful to test the APIEvent code, and that it handles the app
   not running, or being closed, or being restarted.
 * `test-feeder`: populate the shared memory and textures with a cycling test
   pattern, without the OpenKneeboard app running.

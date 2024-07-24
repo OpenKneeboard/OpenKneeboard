@@ -20,8 +20,8 @@
     <Button Click="OnCopyDebugMessagesClick">
       Copy debug messages
     </Button>
-    <Button Click="OnCopyGameEventsClick">
-      Copy game events
+    <Button Click="OnCopyAPIEventsClick">
+      Copy API events
     </Button>
     <ToggleSwitch
       Header="Register this executable for .OpenKneeboardPlugin files in HKCU"
