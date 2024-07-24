@@ -106,7 +106,10 @@ inline void fatal [[noreturn]] () {
  * some multi-threaded environments.
  */
 #define OPENKNEEBOARD_FATAL \
-  { OpenKneeboard::Detail::fatal(); }
+  { \
+    OPENKNEEBOARD_BREAK; \
+    OpenKneeboard::Detail::fatal(); \
+  }
 
 // clang-format off
 #define OPENKNEEBOARD_BUILD_BITNESS @BUILD_BITNESS@
