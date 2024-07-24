@@ -67,7 +67,7 @@ class HWNDPageSource final : public WGCRenderer,
     const Options& options) noexcept;
 
   virtual ~HWNDPageSource();
-  static winrt::fire_and_forget final_release(std::unique_ptr<HWNDPageSource>);
+  virtual IAsyncAction DisposeAsync() noexcept override;
 
   bool HaveWindow() const;
   void InstallWindowHooks(HWND);
@@ -107,6 +107,7 @@ class HWNDPageSource final : public WGCRenderer,
     KneeboardState*,
     HWND window,
     const Options&);
+  std::atomic_flag mDisposed;
   winrt::fire_and_forget Init() noexcept;
   winrt::fire_and_forget InitializeInputHook() noexcept;
 

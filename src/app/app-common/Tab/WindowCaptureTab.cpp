@@ -173,6 +173,9 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     reinterpret_cast<uint64_t>(hwnd),
     reinterpret_cast<uint64_t>(GetParent(hwnd)),
     reinterpret_cast<uint64_t>(GetDesktopWindow()));
+  if (mDelegate) {
+    co_await mDelegate->DisposeAsync();
+  }
   mDelegate = source;
   co_await this->SetDelegates({source});
   this->AddEventListener(
@@ -245,6 +248,9 @@ std::string WindowCaptureTab::GetStaticGlyph() {
 
 winrt::Windows::Foundation::IAsyncAction WindowCaptureTab::Reload() {
   mHwnd = {};
+  if (mDelegate) {
+    co_await mDelegate->DisposeAsync();
+  }
   mDelegate = {};
   co_await this->SetDelegates({});
   this->TryToStartCapture();
@@ -260,6 +266,9 @@ nlohmann::json WindowCaptureTab::GetSettings() const {
 
 winrt::fire_and_forget WindowCaptureTab::final_release(
   std::unique_ptr<WindowCaptureTab> self) {
+  if (self->mDelegate) {
+    co_await self->mDelegate->DisposeAsync();
+  }
   co_await self->mUIThread;
 }
 

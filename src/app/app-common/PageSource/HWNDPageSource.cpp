@@ -42,7 +42,6 @@
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -67,7 +66,6 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   KneeboardState* kneeboard,
   HWND window,
   const Options& options) noexcept {
-  static_assert(with_final_release<HWNDPageSource>);
   if (!gControlMessage) {
     gControlMessage
       = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
@@ -75,8 +73,8 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
       dprintf("Failed to Register a window message: {}", GetLastError());
     }
   }
-  auto ret = shared_with_final_release(
-    new HWNDPageSource(dxr, kneeboard, window, options));
+  std::shared_ptr<HWNDPageSource> ret {
+    new HWNDPageSource(dxr, kneeboard, window, options)};
   if (!ret->HaveWindow()) {
     return nullptr;
   }
@@ -269,21 +267,30 @@ bool HWNDPageSource::HaveWindow() const {
 }
 
 // Destruction is handled in final_release instead
-HWNDPageSource::~HWNDPageSource() = default;
+HWNDPageSource::~HWNDPageSource() {
+  if (!mDisposed.test()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "In ~HWNDPageSource() without calling DisposeAsync() first");
+  }
+}
 
-winrt::fire_and_forget HWNDPageSource::final_release(
-  std::unique_ptr<HWNDPageSource> p) {
-  p->RemoveAllEventListeners();
-  for (auto& [hwnd, handles]: p->mHooks) {
+IAsyncAction HWNDPageSource::DisposeAsync() noexcept {
+  if (mDisposed.test_and_set()) {
+    co_return;
+  }
+  auto self = shared_from_this();
+  auto thread = mUIThread;
+
+  this->RemoveAllEventListeners();
+  for (auto& [hwnd, handles]: mHooks) {
     if (handles.mHook32Subprocess) {
       TerminateProcess(handles.mHook32Subprocess.get(), 0);
       handles.mHook32Subprocess = {};
     }
   }
 
-  auto wgcSelf = std::unique_ptr<WGCRenderer> {p.release()};
-  co_await wgcSelf->DisposeAsync();
-  co_return;
+  co_await WGCRenderer::DisposeAsync();
+  co_await thread;
 }
 
 PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) const {
