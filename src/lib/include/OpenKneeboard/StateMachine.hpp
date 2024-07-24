@@ -53,18 +53,39 @@ struct Transition final {
 template <class T, size_t N>
 using Transitions = std::array<Transition<T>, N>;
 
+template <class T, auto V>
+constexpr bool is_optional_value_v
+  = std::same_as<std::nullopt_t, decltype(V)> || std::same_as<T, decltype(V)>;
+
+/// Use either StateMachine or AtomicStateMachine instead
 template <
   class State,
   class StateContainer,
-  State InitialState,
+  State TInitialState,
   size_t TransitionCount,
-  std::array<Transition<State>, TransitionCount> Transitions>
-  requires(TransitionCount >= 1) && std::is_enum_v<State>
+  std::array<Transition<State>, TransitionCount> Transitions,
+  auto TFinalState>
+  requires(TransitionCount >= 1)
+  && std::is_enum_v<State> && is_optional_value_v<State, TFinalState>
 class StateMachineBase {
  public:
   using Values = State;
+  static constexpr auto InitialState = TInitialState;
+  static constexpr auto FinalState = TFinalState;
+  static constexpr auto HaveFinalState
+    = std::same_as<State, std::decay_t<decltype(FinalState)>>;
 
-  constexpr StateMachineBase() {
+  StateMachineBase() = delete;
+  constexpr StateMachineBase(
+    const std::source_location& creator = std::source_location::current())
+    : mCreator(creator) {
+  }
+
+  ~StateMachineBase() {
+    using FinalState_t = decltype(FinalState);
+    if constexpr (HaveFinalState) {
+      this->Assert<FinalState>("Unexpected final state", mCreator);
+    }
   }
 
   constexpr State Get() const noexcept {
@@ -73,13 +94,15 @@ class StateMachineBase {
 
   template <State T>
   void Assert(
+    std::string_view message = "Assertion failure",
     const std::source_location& caller = std::source_location::current()) {
     if (mState == T) [[likely]] {
       return;
     }
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       caller,
-      "Expected state `{}`, but state is `{}`",
+      "{}: Expected state `{}`, but state is `{}`",
+      message,
       std::to_underlying(T),
       std::to_underlying(this->Get()));
   }
@@ -101,20 +124,30 @@ class StateMachineBase {
 
  protected:
   StateContainer mState {InitialState};
+
+ private:
+  std::source_location mCreator;
 };
 
 template <
   class State,
   State InitialState,
   auto Transitions,
+  auto FinalState = std::nullopt,
   class Base = StateMachineBase<
     State,
     State,
     InitialState,
     Transitions.size(),
-    Transitions>>
+    Transitions,
+    FinalState>>
 class StateMachine final : public Base {
  public:
+  constexpr StateMachine(
+    const std::source_location& caller = std::source_location::current())
+    : Base(caller) {
+  }
+
   template <State in, State out>
   constexpr void Transition(
     const std::source_location& loc = std::source_location::current())
@@ -137,14 +170,21 @@ template <
   class State,
   State InitialState,
   auto Transitions,
+  auto FinalState = std::nullopt,
   class Base = StateMachineBase<
     State,
     std::atomic<State>,
     InitialState,
     Transitions.size(),
-    Transitions>>
+    Transitions,
+    FinalState>>
 class AtomicStateMachine final : public Base {
  public:
+  constexpr AtomicStateMachine(
+    const std::source_location& caller = std::source_location::current())
+    : Base(caller) {
+  }
+
   template <State in, State out>
   constexpr void Transition(
     const std::source_location& loc = std::source_location::current())

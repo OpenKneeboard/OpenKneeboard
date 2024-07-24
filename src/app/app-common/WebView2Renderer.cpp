@@ -104,9 +104,7 @@ auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 
-WebView2Renderer::~WebView2Renderer() {
-  mState.Assert<State::Disposed>();
-}
+WebView2Renderer::~WebView2Renderer() = default;
 
 static wchar_t WindowClassName[] {L"OpenKneeboard/WebView2Host"};
 
@@ -930,14 +928,11 @@ WebView2Renderer::DisposeAsync() noexcept {
   if (mState.Get() == State::Disposed) {
     co_return;
   }
-
-  winrt::apartment_context thread;
-  auto weak = weak_from_this();
+  auto self = shared_from_this();
 
   mState.Transition<State::InitializedComposition, State::Disposing>();
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
 
-  auto self = weak.lock();
   if (!self) {
     OPENKNEEBOARD_BREAK;
     co_return;
@@ -955,7 +950,7 @@ WebView2Renderer::DisposeAsync() noexcept {
   co_await WGCRenderer::DisposeAsync();
 
   mState.Transition<State::Disposing, State::Disposed>();
-  co_await thread;
+  co_await mUIThread;
 }
 
 void WebView2Renderer::InitializeComposition() noexcept {

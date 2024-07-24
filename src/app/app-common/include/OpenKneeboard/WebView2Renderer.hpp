@@ -174,7 +174,8 @@ class WebView2Renderer final : public WGCRenderer {
       Transition {State::Constructed, State::InitializedComposition},
       Transition {State::InitializedComposition, State::Disposing},
       Transition {State::Disposing, State::Disposed},
-    }>
+    },
+    State::Disposed>
     mState;
 
   unique_hwnd mBrowserWindow;
