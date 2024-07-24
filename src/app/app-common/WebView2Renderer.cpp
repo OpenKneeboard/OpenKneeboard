@@ -571,13 +571,23 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     weak,
     callID);
 
+  try {
 #define OKB_INVOKE_JSAPI(APIFUNC) \
   if (message == "OpenKneeboard." #APIFUNC) { \
     respond(co_await this->JSAPI_##APIFUNC(parsed.at("messageData"))); \
     co_return; \
   }
-  OPENKNEEBOARD_JSAPI_METHODS(OKB_INVOKE_JSAPI)
+    OPENKNEEBOARD_JSAPI_METHODS(OKB_INVOKE_JSAPI)
 #undef OKB_CALL_JSAPI
+  } catch (const nlohmann::json::exception& e) {
+    dprintf("JSAPI ERROR: JSON error: {} ({})", e.what(), e.id);
+    respond(jsapi_error("JSON error: {} ({})", e.what(), e.id));
+    co_return;
+  } catch (const std::exception& e) {
+    dprintf("JSAPI ERROR - std::exception: {}", e.what());
+    respond(jsapi_error("C++ exception: {}", e.what()));
+    co_return;
+  }
 
   OPENKNEEBOARD_BREAK;
   respond(jsapi_error("Invalid JS API request: {}", message));
