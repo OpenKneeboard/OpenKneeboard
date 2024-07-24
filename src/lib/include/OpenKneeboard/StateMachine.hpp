@@ -58,11 +58,16 @@ namespace OpenKneeboard {
  *
  * MyStateMachine sm;
  *
- * // Fail if current state is not `Foo`:
+ * // - Compile-time failure if Foo -> Bar is not in the list of valid
+ * transitions
+ * // - Runtime-failure if current state is not `Foo`:
  * sm.Transition<MyStates::Foo, MyStates::Bar>();
  *
- * // alternatively, get an `std::expected<void, State>` - error is the current
- * // state if not `Foo`:
+ * // alternatively:
+ * // - compile-time failure if Foo -> Bar is not in the list of valid
+ * //   transitions
+ * // - get an `std::expected<void, State>` - error is the current state if not
+ * //   `Foo`:
  *
  * const auto result = sm.TryTransition<MyStates::Foo, MyStates::Bar>()`
  *
