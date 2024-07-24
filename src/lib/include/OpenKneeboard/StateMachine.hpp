@@ -32,6 +32,39 @@
 #include <utility>
 namespace OpenKneeboard {
 
+/** This file provides a state machine implementation with
+ * statically-verified transitions.
+ *
+ * The main classes are:
+ * - `Transition`: a source -> destination pair
+ * - `StateMachine`: probably what you want
+ * - `AtomicStateMachine`: a state machine using `std::atomic<>` for storage
+ * - `StateMachineBase`: shared implementation detail of `StateMachine` and
+ *   `AtomicStateMachine`; you probably don't want to use this directly.
+ *
+ * Usage:
+ *
+ * ```
+ * enum class MyStates { Foo, Bar, ... };
+ * using MyStateMachine = StateMachine<
+ *   MyStates,
+ *   MyStates::Foo, // initial state
+ *   std::array {
+ *     Transition { MyStates::Foo, MyStates::Bar },
+ *   },
+ *   MyStates::Bar // final state
+ * >;
+ *
+ * MyStateMachine sm;
+ * sm.Transition<MyStates::Foo, MyStates::Bar>();
+ * sm.Assert<MyStates::Bar>();
+ * ```
+ *
+ * - you can replace `StateMachine` with `AtomicStateMachine` if you require
+ *   `std::atomic`'s usual behavior
+ * - you can omit the final state parameter, or provide `std::nullopt`
+ */
+
 namespace ADL {
 template <class State>
 constexpr auto formattable_state(State state) noexcept {
@@ -40,7 +73,7 @@ constexpr auto formattable_state(State state) noexcept {
 }// namespace ADL
 
 template <class State>
-  requires std::is_enum_v<State>
+  requires std::is_scoped_enum_v<State>
 struct Transition final {
   Transition() = delete;
   consteval Transition(State in, State out) : mIn(in), mOut(out) {
@@ -66,7 +99,7 @@ template <
   std::array<Transition<State>, TransitionCount> Transitions,
   auto TFinalState>
   requires(TransitionCount >= 1)
-  && std::is_enum_v<State> && is_optional_value_v<State, TFinalState>
+  && std::is_scoped_enum_v<State> && is_optional_value_v<State, TFinalState>
 class StateMachineBase {
  public:
   using Values = State;
