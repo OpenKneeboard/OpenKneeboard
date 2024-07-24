@@ -50,13 +50,13 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   auto zipPathString = zipPath.string();
 
   using unique_zip_ptr = std::unique_ptr<zip_t, CPtrDeleter<zip_t, &zip_close>>;
-  unique_zip_ptr zip {zip_open(zipPathString.c_str(), 0, &err)};
+  unique_zip_ptr zip {zip_open(zipPathString.c_str(), ZIP_RDONLY, &err)};
   if (err) {
     dprintf("Failed to open zip '{}': {}", zipPathString, err);
     return;
   }
 
-  // 4k limit for all stack variables
+  // Use the heap because there's 4k limit for all stack variables
   auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
   for (auto i = 0; i < zip_get_num_entries(zip.get(), 0); i++) {
     zip_stat_t zstat;

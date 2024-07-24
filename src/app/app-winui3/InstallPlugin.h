@@ -31,7 +31,6 @@
 
 namespace OpenKneeboard {
 
-IAsyncAction InstallPlugin(winrt::Microsoft::UI::Xaml::XamlRoot);
 IAsyncAction InstallPlugin(
   winrt::Microsoft::UI::Xaml::XamlRoot,
   const wchar_t* const commandLine);
