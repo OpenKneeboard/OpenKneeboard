@@ -106,7 +106,7 @@ class StateMachineBase {
   using Values = State;
   static constexpr auto InitialState = TInitialState;
   static constexpr auto FinalState = TFinalState;
-  static constexpr auto HaveFinalState
+  static constexpr auto HasFinalState
     = std::same_as<State, std::decay_t<decltype(FinalState)>>;
 
   StateMachineBase() = delete;
@@ -117,7 +117,7 @@ class StateMachineBase {
 
   ~StateMachineBase() {
     using FinalState_t = decltype(FinalState);
-    if constexpr (HaveFinalState) {
+    if constexpr (HasFinalState) {
       this->Assert(FinalState, "Unexpected final state", mCreator);
     }
   }

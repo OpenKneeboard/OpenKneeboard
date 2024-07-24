@@ -65,8 +65,8 @@ using WriterStateMachine = StateMachine<
       Transition {WriterState::SubmittingEmptyFrame, WriterState::Locked},
       Transition {WriterState::Locked, WriterState::Detaching},
       Transition {WriterState::Detaching, WriterState::Locked},
-    })>;
-#undef IT
+    }),
+  WriterState::Unlocked>;
 
 static_assert(lockable_state_machine<SHM::WriterStateMachine>);
 

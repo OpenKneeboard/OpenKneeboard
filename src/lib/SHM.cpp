@@ -298,7 +298,11 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   return &mHeader->mLayers[layerIndex];
 }
 
-template <lockable_state_machine TStateMachine>
+template <class T>
+concept shm_state_machine = lockable_state_machine<T> && (T::HasFinalState)
+  && (T::FinalState == T::Values::Unlocked);
+
+template <shm_state_machine TStateMachine>
 class Impl {
  public:
   using State = TStateMachine::Values;
@@ -366,13 +370,6 @@ class Impl {
 
   ~Impl() {
     UnmapViewOfFile(mMapping);
-    if (mState.Get() != State::Unlocked) {
-      using namespace OpenKneeboard::ADL;
-      dprintf(
-        "Closing SHM with invalid state: {}", formattable_state(mState.Get()));
-      OPENKNEEBOARD_BREAK;
-      std::terminate();
-    }
   }
 
   bool IsValid() const {

@@ -57,7 +57,8 @@ using ReaderStateMachine = StateMachine<
     std::array {
       Transition {ReaderState::Locked, ReaderState::CreatingSnapshot},
       Transition {ReaderState::CreatingSnapshot, ReaderState::Locked},
-    })>;
+    }),
+  ReaderState::Unlocked>;
 
 static_assert(lockable_state_machine<SHM::ReaderStateMachine>);
 
