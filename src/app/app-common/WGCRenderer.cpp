@@ -42,7 +42,6 @@
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -140,27 +139,36 @@ WGCRenderer::WGCRenderer(
 }
 
 // Destruction is handled in final_release instead
-WGCRenderer::~WGCRenderer() = default;
+WGCRenderer::~WGCRenderer() {
+  if (!mDisposed) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "In ~WGCRenderer() without calling DisposeAsync() first");
+  }
+}
 
-winrt::fire_and_forget WGCRenderer::final_release(
-  std::unique_ptr<WGCRenderer> p) {
-  p->RemoveAllEventListeners();
-  co_await p->mUIThread;
+IAsyncAction WGCRenderer::DisposeAsync() noexcept {
+  if (mDisposed) {
+    co_return;
+  }
+  mDisposed = true;
+  auto self = shared_from_this();
+  this->RemoveAllEventListeners();
+  co_await mUIThread;
 
-  if (p->mCaptureSession) {
-    p->mCaptureSession.Close();
+  if (mCaptureSession) {
+    mCaptureSession.Close();
     // Closing queues up some events in the main loop without keeping a strong
     // reference :( Give them some time to clean up
     co_await winrt::resume_after(std::chrono::milliseconds(100));
-    co_await p->mUIThread;
+    co_await mUIThread;
   }
 
-  p->mNextFrame = {nullptr};
-  p->mCaptureSession = {nullptr};
-  p->mCaptureItem = {nullptr};
-  p->mFramePool = {nullptr};
+  mCaptureItem = {nullptr};
+  mNextFrame = {nullptr};
+  mCaptureSession = {nullptr};
+  mFramePool = {nullptr};
 
-  p->mTexture = nullptr;
+  mTexture = nullptr;
 }
 
 bool WGCRenderer::HaveCaptureItem() const {

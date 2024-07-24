@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/PreferredSize.hpp>
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/RenderTarget.hpp>
@@ -46,10 +47,11 @@ class SpriteBatch;
 
 // A page source using Windows::Graphics::Capture
 class WGCRenderer : public virtual EventReceiver,
+                    public IHasDisposeAsync,
                     public std::enable_shared_from_this<WGCRenderer> {
  public:
   virtual ~WGCRenderer();
-  static winrt::fire_and_forget final_release(std::unique_ptr<WGCRenderer>);
+  virtual IAsyncAction DisposeAsync() noexcept override;
 
   PreferredSize GetPreferredSize() const;
 
@@ -96,6 +98,7 @@ class WGCRenderer : public virtual EventReceiver,
   void PreOKBFrame();
   void OnWGCFrame();
 
+  bool mDisposed {false};
   ThreadGuard mThreadGuard;
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;

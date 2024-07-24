@@ -20,7 +20,6 @@
 #pragma once
 
 #include <OpenKneeboard/Geometry2D.hpp>
-#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/WGCRenderer.hpp>
 
@@ -53,7 +52,7 @@ struct ExperimentalFeature {
   IT(SetPages) \
   IT(SetPreferredPixelSize)
 
-class WebView2Renderer final : public WGCRenderer, public IHasDisposeAsync {
+class WebView2Renderer final : public WGCRenderer {
  public:
   struct Settings {
     PixelSize mInitialSize {1024, 768};

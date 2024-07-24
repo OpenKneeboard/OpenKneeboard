@@ -282,7 +282,7 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   }
 
   auto wgcSelf = std::unique_ptr<WGCRenderer> {p.release()};
-  WGCRenderer::final_release(std::move(wgcSelf));
+  co_await wgcSelf->DisposeAsync();
   co_return;
 }
 

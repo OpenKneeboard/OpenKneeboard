@@ -953,6 +953,8 @@ WebView2Renderer::DisposeAsync() noexcept {
   mCompositor = nullptr;
   mBrowserWindow.reset();
 
+  co_await WGCRenderer::DisposeAsync();
+
   mState.Transition<State::Disposing, State::Disposed>();
   co_await thread;
 }
@@ -966,8 +968,6 @@ winrt::fire_and_forget WebView2Renderer::final_release(
   self->mState.Transition<State::Releasing, State::Released>();
 
   auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
-
-  WGCRenderer::final_release(std::move(wgcSelf));
   co_return;
 }
 
