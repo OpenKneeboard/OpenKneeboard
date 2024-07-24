@@ -24,6 +24,7 @@
 
 #include <OpenKneeboard/Bookmark.hpp>
 #include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/Handles.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 
@@ -110,6 +111,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
+  winrt::fire_and_forget OnGameEvent(GameEvent);
   winrt::fire_and_forget OnLoaded();
   winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
   winrt::Windows::Foundation::IAsyncAction PromptForViewMode();

@@ -28,6 +28,7 @@
 #include <OpenKneeboard/DebugPrivileges.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GameEvent.hpp>
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/OpenXRMode.hpp>
@@ -448,7 +449,12 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       return 0;
     }
     ShowWindow(*hwnd, SW_SHOWNORMAL);
-    if (!SetForegroundWindow(*hwnd)) {
+    if (SetForegroundWindow(*hwnd)) {
+      GameEvent::Send({
+        .name = GameEvent::EVT_OKB_EXECUTABLE_LAUNCHED,
+        .value = winrt::to_string(GetCommandLineW()),
+      });
+    } else {
       // error codes are not set, so no details :(
       MessageBoxW(
         NULL,

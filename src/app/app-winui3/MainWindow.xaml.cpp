@@ -29,6 +29,7 @@
 #include "CheckDCSHooks.h"
 #include "CheckForUpdates.h"
 #include "Globals.h"
+#include "InstallPlugin.h"
 
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Elevation.hpp>
@@ -54,6 +55,8 @@
 #include <winrt/Windows.UI.Xaml.Interop.h>
 #include <winrt/Windows.UI.Xaml.h>
 
+#include <wil/resource.h>
+
 #include <microsoft.ui.xaml.window.h>
 
 #include <OpenKneeboard/config.hpp>
@@ -69,7 +72,7 @@
 #include <Shellapi.h>
 
 using namespace winrt;
-using namespace Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml;
 using namespace ::OpenKneeboard;
 
 namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
@@ -129,6 +132,9 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   AddEventListener(
     mKneeboard->GetTabsList()->evTabsChangedEvent,
     std::bind_front(&MainWindow::OnTabsChanged, this));
+
+  AddEventListener(
+    mKneeboard->evGameEvent, std::bind_front(&MainWindow::OnGameEvent, this));
 
   RootGrid().Loaded([this](const auto&, const auto&) { this->OnLoaded(); });
 
@@ -380,6 +386,7 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   if (updateResult == UpdateResult::InstallingUpdate) {
     co_return;
   }
+  co_await InstallPlugin(xamlRoot, GetCommandLineW());
   if (mKneeboard) {
     mKneeboard->GetGamesList()->StartInjector();
   }
@@ -863,6 +870,16 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   mTabSwitchReason = TabSwitchReason::Other;
 }
 
+winrt::fire_and_forget MainWindow::OnGameEvent(GameEvent ev) {
+  if (ev.name != GameEvent::EVT_OKB_EXECUTABLE_LAUNCHED) {
+    co_return;
+  }
+  co_await mUIThread;
+
+  const std::wstring commandLine {winrt::to_hstring(ev.value)};
+  co_await InstallPlugin(Navigation().XamlRoot(), commandLine.c_str());
+}
+
 winrt::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabsChanged()");
@@ -1136,7 +1153,8 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
 
 void MainWindow::Show() {
   int argc {};
-  auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  const wil::unique_hlocal_ptr<PWSTR[]> argv {
+    CommandLineToArgvW(GetCommandLineW(), &argc)};
 
   bool minimized = false;
 

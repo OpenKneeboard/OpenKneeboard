@@ -90,6 +90,15 @@ struct GameEvent final {
 
   /// JSON: "[ [name, value], [name, value], ... ]"
   static constexpr char EVT_MULTI_EVENT[] = "MultiEvent";
+
+  // Triggered if a second OpenKneeboard process is launched
+  // Value is a string containing a copy of `GetCommandLineW()`, converted
+  // to UTF-8
+  static constexpr char EVT_OKB_EXECUTABLE_LAUNCHED[] = "OKBExecutableLaunched";
+
+  inline static void Send(const GameEvent& ev) {
+    ev.Send();
+  }
 };
 
 struct BaseSetTabEvent {

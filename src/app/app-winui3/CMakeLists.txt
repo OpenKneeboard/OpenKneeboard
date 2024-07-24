@@ -27,6 +27,7 @@ ok_add_executable(
   InputBindingsControl.idl InputBindingsControl.xaml InputBindingsControl.xaml.cpp InputBindingsControl.xaml.h
   InputDeviceUIData.cpp InputDeviceUIData.h
   InputSettingsPage.idl InputSettingsPage.xaml InputSettingsPage.xaml.cpp InputSettingsPage.xaml.h
+  InstallPlugin.cpp InstallPlugin.h
   MainWindow.idl MainWindow.xaml MainWindow.xaml.cpp MainWindow.xaml.h
   MetersNumberFormatter.cpp MetersNumberFormatter.h MetersNumberFormatter.idl
   MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
