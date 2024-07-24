@@ -28,6 +28,8 @@
 namespace OpenKneeboard {
 class IHasDisposeAsync {
  public:
+  // This is an alternative to `final_release()`, where consumers (or
+  // subclasses) may need to be able to wait for async cleanup
   [[nodiscard]]
   virtual winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept
     = 0;
