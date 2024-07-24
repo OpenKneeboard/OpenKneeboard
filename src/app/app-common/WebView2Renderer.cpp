@@ -26,7 +26,6 @@
 
 #include <shims/winrt/base.h>
 
-#include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json_format.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -106,7 +105,7 @@ auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 
 WebView2Renderer::~WebView2Renderer() {
-  mState.Assert<State::Released>();
+  mState.Assert<State::Disposed>();
 }
 
 static wchar_t WindowClassName[] {L"OpenKneeboard/WebView2Host"};
@@ -959,18 +958,6 @@ WebView2Renderer::DisposeAsync() noexcept {
   co_await thread;
 }
 
-winrt::fire_and_forget WebView2Renderer::final_release(
-  std::unique_ptr<WebView2Renderer> self) {
-  self->mState.Transition<State::Disposed, State::Releasing>();
-  co_await self->mUIThread;
-
-  // Actually done during the next step, but can't do anything there :)
-  self->mState.Transition<State::Releasing, State::Released>();
-
-  auto wgcSelf = std::unique_ptr<WGCRenderer> {self.release()};
-  co_return;
-}
-
 void WebView2Renderer::InitializeComposition() noexcept {
   OPENKNEEBOARD_TraceLoggingScope("WebView2Renderer::InitializeComposition");
   if (mCompositor) {
@@ -998,8 +985,8 @@ std::shared_ptr<WebView2Renderer> WebView2Renderer::Create(
     environment,
   KneeboardView* view,
   const std::vector<APIPage>& apiPages) {
-  auto ret = shared_with_final_release(new WebView2Renderer(
-    dxr, kbs, settings, doodles, workerDQC, environment, view, apiPages));
+  std::shared_ptr<WebView2Renderer> ret {new WebView2Renderer(
+    dxr, kbs, settings, doodles, workerDQC, environment, view, apiPages)};
   ret->Init();
   return ret;
 }

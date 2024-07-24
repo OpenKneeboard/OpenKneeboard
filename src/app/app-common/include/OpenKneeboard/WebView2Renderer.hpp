@@ -113,9 +113,6 @@ class WebView2Renderer final : public WGCRenderer {
     KneeboardView*,
     const std::vector<APIPage>&);
 
-  static winrt::fire_and_forget final_release(
-    std::unique_ptr<WebView2Renderer>);
-
   void PostCursorEvent(KneeboardViewID, const CursorEvent&);
 
   void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
@@ -169,8 +166,6 @@ class WebView2Renderer final : public WGCRenderer {
     InitializedComposition,
     Disposing,
     Disposed,
-    Releasing,
-    Released,
   };
   AtomicStateMachine<
     State,
@@ -179,8 +174,6 @@ class WebView2Renderer final : public WGCRenderer {
       Transition {State::Constructed, State::InitializedComposition},
       Transition {State::InitializedComposition, State::Disposing},
       Transition {State::Disposing, State::Disposed},
-      Transition {State::Disposed, State::Releasing},
-      Transition {State::Releasing, State::Released},
     }>
     mState;
 
