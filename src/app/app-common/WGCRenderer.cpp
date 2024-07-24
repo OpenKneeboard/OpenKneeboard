@@ -138,19 +138,13 @@ WGCRenderer::WGCRenderer(
     kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
 }
 
-// Destruction is handled in final_release instead
-WGCRenderer::~WGCRenderer() {
-  if (!mDisposed) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "In ~WGCRenderer() without calling DisposeAsync() first");
-  }
-}
+WGCRenderer::~WGCRenderer() = default;
 
 IAsyncAction WGCRenderer::DisposeAsync() noexcept {
-  if (mDisposed) {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
     co_return;
   }
-  mDisposed = true;
   auto self = shared_from_this();
   this->RemoveAllEventListeners();
   co_await mUIThread;

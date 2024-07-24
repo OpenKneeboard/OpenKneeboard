@@ -98,7 +98,7 @@ class WGCRenderer : public virtual EventReceiver,
   void PreOKBFrame();
   void OnWGCFrame();
 
-  bool mDisposed {false};
+  DisposalState mDisposal;
   ThreadGuard mThreadGuard;
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;

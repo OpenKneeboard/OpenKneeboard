@@ -164,7 +164,7 @@ class KneeboardState final
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
 
-  bool mDisposed {false};
+  DisposalState mDisposal;
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;

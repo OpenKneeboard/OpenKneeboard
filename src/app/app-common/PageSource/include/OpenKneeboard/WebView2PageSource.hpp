@@ -97,10 +97,7 @@ class WebView2PageSource final
     KneeboardState*,
     const Settings&);
 
-  winrt::Windows::Foundation::IAsyncAction DisposeAsyncImpl() noexcept;
-  winrt::Windows::Foundation::IAsyncAction mDisposal {nullptr};
-  std::once_flag mDisposeOnce;
-  bool mDisposed {false};
+  DisposalState mDisposal;
 
   winrt::fire_and_forget Init();
 

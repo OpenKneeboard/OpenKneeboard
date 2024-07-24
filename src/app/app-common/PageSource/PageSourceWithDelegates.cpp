@@ -52,7 +52,6 @@ PageSourceWithDelegates::PageSourceWithDelegates(
 }
 
 PageSourceWithDelegates::~PageSourceWithDelegates() {
-  assert(mDisposed);
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
@@ -88,6 +87,11 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
 }
 
 IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
+
   auto children = mDelegates | std::views::transform([](auto it) {
                     return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
                   })
@@ -97,8 +101,6 @@ IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
   for (auto&& child: children) {
     co_await child;
   }
-
-  mDisposed = true;
 }
 
 void PageSourceWithDelegates::SetDelegatesFromEmpty(

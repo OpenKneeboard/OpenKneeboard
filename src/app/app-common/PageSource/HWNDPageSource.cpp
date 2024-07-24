@@ -266,18 +266,14 @@ bool HWNDPageSource::HaveWindow() const {
   return static_cast<bool>(mCaptureWindow);
 }
 
-// Destruction is handled in final_release instead
-HWNDPageSource::~HWNDPageSource() {
-  if (!mDisposed.test()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "In ~HWNDPageSource() without calling DisposeAsync() first");
-  }
-}
+HWNDPageSource::~HWNDPageSource() = default;
 
 IAsyncAction HWNDPageSource::DisposeAsync() noexcept {
-  if (mDisposed.test_and_set()) {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
     co_return;
   }
+
   auto self = shared_from_this();
   auto thread = mUIThread;
 

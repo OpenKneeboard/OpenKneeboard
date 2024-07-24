@@ -166,23 +166,15 @@ bool WebView2PageSource::IsAvailable() {
   return !GetVersion().empty();
 }
 
-WebView2PageSource::~WebView2PageSource() {
-  if (!mDisposed) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "In ~WebView2PageSource() without calling DisposeAsync() first");
-  }
-}
+WebView2PageSource::~WebView2PageSource() = default;
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2PageSource::DisposeAsync() noexcept {
-  std::call_once(
-    mDisposeOnce, [this]() { mDisposal = this->DisposeAsyncImpl(); });
-  return mDisposal;
-}
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
 
-winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::DisposeAsyncImpl() noexcept {
-  this->mDisposed = true;
   auto self = shared_from_this();
   if (mWorkerDQ) {
     co_await wil::resume_foreground(self->mWorkerDQ);
@@ -289,7 +281,7 @@ void WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
-  if (mDisposed) [[unlikely]] {
+  if (mDisposal.HasStarted()) [[unlikely]] {
     return;
   }
   if (mRenderersState.Get() != RenderersState::Ready) [[unlikely]] {

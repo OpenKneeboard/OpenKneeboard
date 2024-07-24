@@ -107,7 +107,7 @@ class HWNDPageSource final : public WGCRenderer,
     KneeboardState*,
     HWND window,
     const Options&);
-  std::atomic_flag mDisposed;
+  DisposalState mDisposal;
   winrt::fire_and_forget Init() noexcept;
   winrt::fire_and_forget InitializeInputHook() noexcept;
 

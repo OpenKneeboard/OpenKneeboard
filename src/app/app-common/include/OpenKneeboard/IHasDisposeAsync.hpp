@@ -35,4 +35,96 @@ class IHasDisposeAsync {
     = 0;
 };
 
+/** Helper for tracking disposal states.
+ *
+ * Usage:
+ *
+ * ```
+ * DisposalState mDisposal;
+ *
+ * ...
+ * IAsyncAction DisposeAsync() noexcept {
+ *   const auto disposing = mDisposal.Start();
+ *   if (!disposing) {
+ *     co_return;
+ *   }
+ *   ...
+ * }
+ *
+ * ...
+ *
+ * void DoThing() noexcept {
+ *   if (mDisposal.HaveStarted()) {
+ *     throw new Exception("Can't DoThing() after disposal()");
+ *   }
+ *   // ...
+ * }
+ * ```
+ */
+class DisposalState final {
+ private:
+  enum class State {
+    Live,
+    Disposing,
+    Disposed,
+  };
+  using StateMachine = AtomicStateMachine<
+    State,
+    State::Live,
+    std::array {
+      Transition {State::Live, State::Disposing},
+      Transition {State::Disposing, State::Disposed},
+    },
+    State::Disposed>;
+  friend class UniqueDisposal;
+
+  class UniqueDisposal {
+   public:
+    UniqueDisposal() = delete;
+    UniqueDisposal(const UniqueDisposal&) = delete;
+    UniqueDisposal(UniqueDisposal&&) = delete;
+
+    UniqueDisposal& operator=(const UniqueDisposal&) = delete;
+    UniqueDisposal& operator=(UniqueDisposal&&) = delete;
+
+    constexpr UniqueDisposal(StateMachine* impl) : mStateMachine(impl) {
+    }
+
+    inline ~UniqueDisposal() {
+      if (mStateMachine) {
+        mStateMachine->Transition<State::Disposing, State::Disposed>();
+      }
+    }
+
+    constexpr operator bool() const noexcept {
+      return mStateMachine;
+    }
+
+   private:
+    StateMachine* mStateMachine {nullptr};
+  };
+
+ public:
+  constexpr DisposalState(
+    const std::source_location& caller = std::source_location::current())
+    : mStateMachine(caller) {
+  }
+
+  [[nodiscard]]
+  inline UniqueDisposal Start() noexcept {
+    if (mStateMachine.TryTransition<State::Live, State::Disposing>()) {
+      return {&mStateMachine};
+    } else {
+      return {nullptr};
+    }
+  }
+
+  constexpr bool HasStarted() const noexcept {
+    return mStateMachine.Get() != State::Live;
+  }
+
+ private:
+  StateMachine mStateMachine;
+};
+
 }// namespace OpenKneeboard

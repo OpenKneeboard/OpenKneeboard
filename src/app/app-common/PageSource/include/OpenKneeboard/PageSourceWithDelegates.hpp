@@ -70,7 +70,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  protected:
-  bool mDisposed {false};
+  DisposalState mDisposal;
   // This is optional, but can only be called when there are no delegates; it
   // will fatal otherwise, as it is unable to clear up previous delegates
   void SetDelegatesFromEmpty(const std::vector<std::shared_ptr<IPageSource>>&);
