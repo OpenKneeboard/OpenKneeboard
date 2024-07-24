@@ -57,7 +57,8 @@ namespace OpenKneeboard {
  *
  * MyStateMachine sm;
  * sm.Transition<MyStates::Foo, MyStates::Bar>();
- * sm.Assert<MyStates::Bar>();
+ * auto state = sm.Get();
+ * sm.Assert(MyStates::Bar);
  * ```
  *
  * - you can replace `StateMachine` with `AtomicStateMachine` if you require
@@ -117,7 +118,7 @@ class StateMachineBase {
   ~StateMachineBase() {
     using FinalState_t = decltype(FinalState);
     if constexpr (HaveFinalState) {
-      this->Assert<FinalState>("Unexpected final state", mCreator);
+      this->Assert(FinalState, "Unexpected final state", mCreator);
     }
   }
 
@@ -125,19 +126,20 @@ class StateMachineBase {
     return mState;
   }
 
-  template <State T>
-  void Assert(
+  constexpr void Assert(
+    State state,
     std::string_view message = "Assertion failure",
     const std::source_location& caller = std::source_location::current()) {
-    if (mState == T) [[likely]] {
+    if (mState == state) [[likely]] {
       return;
     }
+    using namespace ADL;
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       caller,
       "{}: Expected state `{}`, but state is `{}`",
       message,
-      std::to_underlying(T),
-      std::to_underlying(this->Get()));
+      formattable_state(state),
+      formattable_state(this->Get()));
   }
 
   StateMachineBase(const StateMachineBase&) = delete;
