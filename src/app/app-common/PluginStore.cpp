@@ -111,8 +111,15 @@ PluginStore::~PluginStore() {
 void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
   dprintf("Loading plugin from `{}`", jsonPath);
   try {
-    this->Append(
-      nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary}));
+    const auto plugin
+      = nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
+          .get<Plugin>();
+    dprintf(
+      "Parsed plugin ID `{}` (`{}`), version `{}`",
+      plugin.mID,
+      plugin.mMetadata.mPluginName,
+      plugin.mMetadata.mPluginReadableVersion);
+    this->Append(plugin);
   } catch (const nlohmann::json::exception& e) {
     dprintf("ERROR: error {} when parsing plugin: {}", e.id, e.what());
   } catch (const std::exception& e) {

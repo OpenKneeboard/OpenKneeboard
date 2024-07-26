@@ -28,6 +28,7 @@
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Plugin.hpp>
+#include <OpenKneeboard/PluginStore.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -134,6 +135,7 @@ static std::string sha256_hex(std::string_view data) {
 }
 
 static IAsyncAction InstallPlugin(
+  std::weak_ptr<PluginStore> pluginStore,
   XamlRoot xamlRoot,
   const std::filesystem::path& path,
   const Plugin& plugin) {
@@ -177,12 +179,20 @@ static IAsyncAction InstallPlugin(
     _("Do you want to install the plugin '{}'?"),
     plugin.mMetadata.mPluginName))));
   dialog.PrimaryButtonText(_(L"Install"));
-  dialog.CloseButtonText(_(L"Close"));
+  dialog.CloseButtonText(_(L"Cancel"));
   dialog.DefaultButton(ContentDialogButton::Close);
 
   if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
     co_return;
   }
+
+  auto store = pluginStore.lock();
+  if (!store) {
+    dprint("ERROR: plugin store has gone away");
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+  store->Append(plugin);
 
   const auto copyPath = Filesystem::GetInstalledPluginsDirectory()
     / sha256_hex(plugin.mID) / "v1.json";
@@ -196,6 +206,7 @@ static IAsyncAction InstallPlugin(
 }
 
 static IAsyncAction InstallPluginFromPath(
+  std::weak_ptr<PluginStore> pluginStore,
   XamlRoot xamlRoot,
   std::filesystem::path path) {
   dprintf("Attempting to install plugin `{}`", path);
@@ -334,7 +345,7 @@ static IAsyncAction InstallPluginFromPath(
       std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id)};
   }
   if (parseResult.has_value()) {
-    co_await InstallPlugin(xamlRoot, path, *parseResult);
+    co_await InstallPlugin(pluginStore, xamlRoot, path, *parseResult);
   } else {
     co_await ShowPluginInstallationError(xamlRoot, path, parseResult.error());
     co_return;
@@ -342,6 +353,7 @@ static IAsyncAction InstallPluginFromPath(
 }
 
 IAsyncAction InstallPlugin(
+  std::weak_ptr<PluginStore> pluginStore,
   XamlRoot xamlRoot,
   const wchar_t* const commandLine) {
   int argc {};
@@ -358,7 +370,7 @@ IAsyncAction InstallPlugin(
       OPENKNEEBOARD_BREAK;
       co_return;
     }
-    co_await InstallPluginFromPath(xamlRoot, argv[i + 1]);
+    co_await InstallPluginFromPath(pluginStore, xamlRoot, argv[i + 1]);
     co_return;
   }
 

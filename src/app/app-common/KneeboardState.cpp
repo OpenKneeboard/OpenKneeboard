@@ -28,6 +28,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/OpenXRMode.hpp>
+#include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/SteamVRKneeboard.hpp>
 #include <OpenKneeboard/TabView.hpp>
@@ -59,6 +60,10 @@ KneeboardState::ReleaseHwndResources() {
   co_return;
 }
 
+std::shared_ptr<PluginStore> KneeboardState::GetPluginStore() const {
+  return mPluginStore;
+}
+
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_exit saveMigratedSettings([this]() { this->SaveSettings(); });
@@ -71,6 +76,8 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     std::bind_front(&KneeboardState::AfterFrame, this));
 
   mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
+  mPluginStore = std::make_shared<PluginStore>();
+
   AddEventListener(
     mGamesList->evSettingsChangedEvent,
     std::bind_front(&KneeboardState::SaveSettings, this));

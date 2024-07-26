@@ -28,10 +28,14 @@
 #include <winrt/microsoft.ui.xaml.h>
 
 #include <future>
+#include <memory>
 
 namespace OpenKneeboard {
 
+class PluginStore;
+
 IAsyncAction InstallPlugin(
+  std::weak_ptr<PluginStore> pluginStore,
   winrt::Microsoft::UI::Xaml::XamlRoot,
   const wchar_t* const commandLine);
 

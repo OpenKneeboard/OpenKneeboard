@@ -45,6 +45,7 @@ namespace OpenKneeboard {
 enum class UserAction;
 class DirectInputAdapter;
 class GamesList;
+class PluginStore;
 class KneeboardView;
 class InterprocessRenderer;
 class KneeboardView;
@@ -116,6 +117,8 @@ class KneeboardState final
 
   GamesList* GetGamesList() const;
   std::optional<RunningGame> GetCurrentGame() const;
+
+  std::shared_ptr<PluginStore> GetPluginStore() const;
 
   std::shared_ptr<TabletInputAdapter> GetTabletInputAdapter() const;
 
@@ -190,6 +193,8 @@ class KneeboardState final
   // SetWindowLongPtr
   std::shared_ptr<DirectInputAdapter> mDirectInput;
   std::shared_ptr<TabletInputAdapter> mTabletInput;
+
+  std::shared_ptr<PluginStore> mPluginStore;
 
   std::shared_ptr<APIEventServer> mAPIEventServer;
   RunnerThread mOpenVRThread;
