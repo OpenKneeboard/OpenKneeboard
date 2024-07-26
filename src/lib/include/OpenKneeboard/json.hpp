@@ -189,11 +189,15 @@ consteval StringWrapper<Len - 1> ConstStrSkipFirstLowerNext(
 };// namespace detail::SparseJson
 
 template <class T>
-void to_json_postprocess(nlohmann::json& j, const T& parent_v, const T& v) {
+void to_json_postprocess(nlohmann::json& j, const T& v) {
 }
 
 template <class T>
-void to_json_postprocess(nlohmann::json& j, const T& v) {
+void to_json_postprocess(
+  nlohmann::json& j,
+  [[maybe_unused]] const T& parent_v,
+  const T& v) {
+  to_json_postprocess<T>(j, v);
 }
 
 template <class T>
