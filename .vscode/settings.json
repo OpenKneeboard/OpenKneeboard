@@ -99,7 +99,8 @@
     "span": "cpp",
     "cinttypes": "cpp",
     "*.idl": "idl",
-    "source_location": "cpp"
+    "source_location": "cpp",
+    "expected": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++23",
