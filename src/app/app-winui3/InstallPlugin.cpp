@@ -32,6 +32,8 @@
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Windows.Security.Cryptography.Core.h>
+#include <winrt/Windows.Storage.Streams.h>
 
 #include <wil/resource.h>
 
@@ -39,7 +41,9 @@
 #include <OpenKneeboard/utf8.hpp>
 #include <nlohmann/json.hpp>
 
+#include <expected>
 #include <filesystem>
+#include <fstream>
 
 #include <processenv.h>
 #include <shellapi.h>
@@ -52,7 +56,7 @@ using namespace winrt;
 namespace OpenKneeboard {
 
 static IAsyncAction ShowPluginInstallationError(
-  XamlRoot& xamlRoot,
+  XamlRoot xamlRoot,
   std::filesystem::path path,
   std::string_view error) {
   dprintf("ERROR: Plugin installation error for `{}`: {}", path, error);
@@ -85,15 +89,114 @@ static IAsyncAction ShowPluginInstallationError(
   co_return;
 }
 
-static IAsyncAction InstallPluginFromJSON(
-  XamlRoot& xamlRoot,
+template <class... Args>
+  requires(sizeof...(Args) >= 1)
+static IAsyncAction ShowPluginInstallationError(
+  XamlRoot xamlRoot,
   std::filesystem::path path,
-  std::string json) {
-  co_return;
+  std::format_string<Args...> errorFmt,
+  Args&&... args) {
+  return ShowPluginInstallationError(
+    xamlRoot, path, std::format(errorFmt, std::forward<Args>(args)...));
+}
+
+static concurrency::task<bool> FieldIsNonEmpty(
+  XamlRoot xamlRoot,
+  const auto path,
+  const auto fieldName,
+  auto value) {
+  if (value == decltype(value) {}) {
+    co_await ShowPluginInstallationError(
+      xamlRoot,
+      path,
+      std::format(
+        _("Field `{}` is required, and must not non-empty."), fieldName));
+    co_return false;
+  }
+  co_return true;
+}
+
+static std::string sha256_hex(std::string_view data) {
+  using namespace winrt::Windows::Security::Cryptography::Core;
+  using namespace winrt::Windows::Security::Cryptography;
+  const auto size = static_cast<uint32_t>(data.size());
+  winrt::Windows::Storage::Streams::Buffer buffer {size};
+  buffer.Length(size);
+  memcpy(buffer.data(), data.data(), data.size());
+
+  const auto hashProvider
+    = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Sha256());
+  auto hashObj = hashProvider.CreateHash();
+  hashObj.Append(buffer);
+  return winrt::to_string(
+    winrt::Windows::Security::Cryptography::CryptographicBuffer::
+      EncodeToHexString(hashObj.GetValueAndReset()));
+}
+
+static IAsyncAction InstallPlugin(
+  XamlRoot xamlRoot,
+  const std::filesystem::path& path,
+  const Plugin& plugin) {
+  if (!co_await FieldIsNonEmpty(xamlRoot, path, "ID", plugin.mID)) {
+    co_return;
+  }
+
+#define CHECK(FIELD) \
+  if (!co_await FieldIsNonEmpty( \
+        xamlRoot, path, #FIELD, plugin.mMetadata.m##FIELD)) { \
+    co_return; \
+  }
+  CHECK(PluginName)
+  CHECK(PluginReadableVersion)
+  CHECK(PluginSemanticVersion)
+  CHECK(OKBMinimumVersion)
+#undef CHECK
+  if (plugin.mTabTypes.empty()) {
+    co_await ShowPluginInstallationError(
+      xamlRoot, path, "It contains no tab types, so does nothing");
+    co_return;
+  }
+
+  const auto idPrefix = plugin.mID + "/";
+  for (const auto& tab: plugin.mTabTypes) {
+    if (!tab.mID.starts_with(idPrefix)) {
+      co_await ShowPluginInstallationError(
+        xamlRoot,
+        path,
+        "TabType ID `{}` must start with `{}` and doesn't",
+        tab.mID,
+        idPrefix);
+      co_return;
+    }
+  }
+
+  ContentDialog dialog;
+  dialog.XamlRoot(xamlRoot);
+  dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
+  dialog.Content(winrt::box_value(to_hstring(std::format(
+    _("Do you want to install the plugin '{}'?"),
+    plugin.mMetadata.mPluginName))));
+  dialog.PrimaryButtonText(_(L"Install"));
+  dialog.CloseButtonText(_(L"Close"));
+  dialog.DefaultButton(ContentDialogButton::Close);
+
+  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  const auto copyPath = Filesystem::GetInstalledPluginsDirectory()
+    / sha256_hex(plugin.mID) / "v1.json";
+  dprintf("Copying metadata from `{}` to {}`", path, copyPath);
+  std::filesystem::create_directories(copyPath.parent_path());
+  {
+    std::ofstream f(copyPath, std::ios::binary);
+    nlohmann::json j = plugin;
+    f << std::setw(2) << j;
+  }
 }
 
 static IAsyncAction InstallPluginFromPath(
-  XamlRoot& xamlRoot,
+  XamlRoot xamlRoot,
   std::filesystem::path path) {
   dprintf("Attempting to install plugin `{}`", path);
   if (!std::filesystem::exists(path)) {
@@ -132,10 +235,9 @@ static IAsyncAction InstallPluginFromPath(
     co_await ShowPluginInstallationError(
       xamlRoot,
       path,
-      std::format(
-        _("Failed to open the file: \"{}\" ({}) "),
-        zip_error_strerror(&zerror),
-        zipErrorCode));
+      _("Failed to open the file: \"{}\" ({}) "),
+      zip_error_strerror(&zerror),
+      zipErrorCode);
     co_return;
   }
 
@@ -159,10 +261,9 @@ static IAsyncAction InstallPluginFromPath(
     co_await ShowPluginInstallationError(
       xamlRoot,
       path,
-      std::format(
-        _("Metadata file `v1.json` has an uncompressed size of {} bytes, which "
-          "is larger than the maximum of 1MB"),
-        zstat.size));
+      _("Metadata file `v1.json` has an uncompressed size of {} bytes, which "
+        "is larger than the maximum of 1MB"),
+      zstat.size);
     co_return;
   }
 
@@ -224,17 +325,18 @@ static IAsyncAction InstallPluginFromPath(
 
   // We can't `co_await` to show a dialog in a catch block, so keep it until
   // later
-  std::optional<std::string> error;
+  std::expected<Plugin, std::string> parseResult;
   try {
     const auto j = nlohmann::json::parse(buf);
-    dprint(j.dump(2));
-    const Plugin plugin = j;
+    parseResult = j.get<Plugin>();
   } catch (const nlohmann::json::exception& e) {
-    error
-      = std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id);
+    parseResult = std::unexpected {
+      std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id)};
   }
-  if (error) {
-    co_await ShowPluginInstallationError(xamlRoot, path, *error);
+  if (parseResult.has_value()) {
+    co_await InstallPlugin(xamlRoot, path, *parseResult);
+  } else {
+    co_await ShowPluginInstallationError(xamlRoot, path, parseResult.error());
     co_return;
   }
 }

@@ -189,6 +189,15 @@ std::filesystem::path GetLocalAppDataDirectory() {
   return sPath;
 }
 
+std::filesystem::path GetInstalledPluginsDirectory() {
+  static LazyPath sPath {[]() {
+    const auto ret = GetLocalAppDataDirectory() / "Plugins" / "v1";
+    std::filesystem::create_directories(ret);
+    return ret;
+  }};
+  return sPath;
+}
+
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
   if (!std::filesystem::exists(path)) {
     dprintf("{} - path '{}' does not exist (yet?)", __FUNCTION__, path);

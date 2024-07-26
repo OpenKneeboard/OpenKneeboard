@@ -34,7 +34,7 @@ struct Plugin {
     std::string mPluginName;
     std::string mPluginReadableVersion;
     std::string mPluginSemanticVersion;
-    std::string mOKBMinimumVersion;
+    std::string mOKBMinimumVersion {"1.9"};
     std::string mOKBMaximumTestedVersion;
 
     std::string mAuthor;

@@ -24,7 +24,7 @@
 
 namespace OpenKneeboard {
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+OPENKNEEBOARD_DEFINE_JSON(
   Plugin::Metadata,
   mPluginName,
   mPluginReadableVersion,

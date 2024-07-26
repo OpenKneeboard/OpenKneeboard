@@ -9,7 +9,7 @@
 	},
 	"TabTypes": [
 		{
-			"ID": "Viewer",
+			"ID": "dcs-web-editor.github.io/Viewer",
 			"Name": "DCS Web Viewer",
 			"Implementation": "WebBrowser",
 			"ImplementationArgs": {
