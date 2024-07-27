@@ -42,6 +42,12 @@ declare namespace OpenKneeboard {
         detail: Message;
     }
 
+    interface APIEventsMap {
+        pageChanged: PageChangedEvent,
+        pagesChanged: PagesChangedEvent,
+        peerMessage: PeerMessageEvent<any>,
+    }
+
     export interface API {
         GetPages(): Promise<{
             havePages: boolean,

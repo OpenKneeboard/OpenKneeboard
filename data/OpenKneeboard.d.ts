@@ -43,7 +43,19 @@ declare namespace OpenKneeboard {
         IsStableRelease: boolean;
     }
 
+    interface APIEventsMap {
+    }
+
+    interface APIEventHandler<T extends keyof APIEventsMap> {
+        (event: APIEventsMap[T]): any;
+    }
+
+    interface APIVoidHandler {
+        (): any;
+    }
+
     export interface API extends EventTarget {
+
         GetVersion(): Promise<Version>;
 
         OpenDeveloperToolsWindow(): Promise<any>;
@@ -51,6 +63,9 @@ declare namespace OpenKneeboard {
 
         EnableExperimentalFeature(name: string, version: number): Promise<any>;
         EnableExperimentalFeatures(features: [{ name: string, version: number }]): Promise<any>;
+
+        addEventListener<E extends keyof APIEventsMap>(e: E, listener: APIEventHandler<E> | APIVoidHandler, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<E extends keyof APIEventsMap>(e: E, listener: APIEventHandler<E> | APIVoidHandler, options?: boolean | EventListenerOptions): void;
     }
 }
 

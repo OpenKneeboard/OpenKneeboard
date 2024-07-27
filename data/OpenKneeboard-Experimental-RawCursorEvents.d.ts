@@ -35,4 +35,9 @@ declare namespace OpenKneeboard {
             touchState: "NearSurface" | "NotNearSurface" | "TouchingSurface";
         };
     }
+
+    interface APIEventsMap {
+        cursor: RawCursorEvent,
+    }
+
 }
