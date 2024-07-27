@@ -41,6 +41,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
+#include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/TabTypes.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
@@ -325,7 +326,19 @@ winrt::fire_and_forget TabsSettingsPage::CreatePluginTab(
   RoutedEventArgs) noexcept {
   const auto id
     = to_string(unbox_value<winrt::hstring>(sender.as<MenuFlyoutItem>().Tag()));
-  OPENKNEEBOARD_BREAK;
+  const auto tabTypes = mKneeboard->GetPluginStore()->GetTabTypes();
+  const auto it = std::ranges::find(tabTypes, id, &Plugin::TabType::mID);
+  if (it == tabTypes.end()) {
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+  const auto tab = std::make_shared<PluginTab>(
+    mDXR,
+    mKneeboard.get(),
+    random_guid(),
+    it->mName,
+    PluginTab::Settings {.mPluginTabTypeID = id});
+  co_await this->AddTabs({tab});
   co_return;
 }
 

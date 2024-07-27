@@ -27,6 +27,7 @@ namespace OpenKneeboard {
 
 class TabBase : public virtual ITab, public virtual EventReceiver {
  public:
+  TabBase() = delete;
   ~TabBase();
 
   virtual RuntimeID GetRuntimeID() const override final;
