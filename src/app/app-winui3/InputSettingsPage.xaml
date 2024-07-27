@@ -9,31 +9,32 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
     <!-- Generic Device Settings -->
-    <DataTemplate x:Key="GenericDeviceTemplate" x:DataType="local:InputDeviceUIData">
+    <DataTemplate x:Key="GenericDeviceTemplate"
+                  x:DataType="local:InputDeviceUIData">
       <StackPanel Orientation="Vertical">
         <TextBlock
           Text="{x:Bind Name}"
           Style="{StaticResource SubtitleTextBlockStyle}"
-          Margin="0,0,0,16"
-        />
+          Margin="0,0,0,16"/>
         <Grid
           Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
           CornerRadius="4"
           BorderThickness="1"
           Padding="8">
-          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
+          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}"/>
         </Grid>
       </StackPanel>
     </DataTemplate>
     <!-- Tablet Device Settings -->
-    <DataTemplate x:Key="TabletDeviceTemplate" x:DataType="local:TabletInputDeviceUIData">
-      <StackPanel Orientation="Vertical" Spacing="8">
+    <DataTemplate x:Key="TabletDeviceTemplate"
+                  x:DataType="local:TabletInputDeviceUIData">
+      <StackPanel Orientation="Vertical"
+                  Spacing="8">
         <TextBlock
           Text="{x:Bind Name}"
           Style="{StaticResource SubtitleTextBlockStyle}"
-          Margin="0,0,0,16"
-        />
+          Margin="0,0,0,16"/>
         <Grid
           Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -58,14 +59,16 @@
           CornerRadius="4"
           BorderThickness="1"
           Padding="8">
-          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
+          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}"/>
         </Grid>
       </StackPanel>
     </DataTemplate>
   </Page.Resources>
   <!-- Content Starts Here -->
-  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
-    <StackPanel Orientation="Vertical" Spacing="12">
+  <ScrollViewer VerticalScrollMode="Auto"
+                Padding="24">
+    <StackPanel Orientation="Vertical"
+                Spacing="12">
       <Grid
         ColumnDefinitions="*, Auto"
         Margin="0,0,0,8">
@@ -73,41 +76,16 @@
           Grid.Column="0"
           Style="{StaticResource TitleTextBlockStyle}"
           Text="Input Settings"
-          Margin="0,0,0,8"
-        />
+          Margin="0,0,0,8"/>
         <Button
           Grid.Column="1"
           Content="Restore defaults"
-          Click="RestoreDefaults"
-        />
+          Click="RestoreDefaults"/>
       </Grid>
       <TextBlock
         Text="Tablet Support"
         Style="{StaticResource SubtitleTextBlockStyle}"
-        Margin="0,0,0,16"
-      />
-      <StackPanel
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Spacing="8"
-        Padding="8">
-        <ComboBox
-          Header="Wintab"
-          SelectedIndex="{x:Bind WintabMode, Mode=TwoWay}">
-          <x:String>Disabled</x:String>
-          <x:String>Standard</x:String>
-          <x:String>Invasive</x:String>
-        </ComboBox>
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
-          If your tablet only works when OpenKneeboard is the active window,
-          try invasive mode, or OpenTabletDriver. Invasive mode can cause game
-          issues, but may be required by buggy drivers.
-				</TextBlock>
-      </StackPanel>
+        Margin="0,0,0,16"/>
       <StackPanel
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -119,26 +97,50 @@
           Header="OpenTabletDriver IPC"
           IsOn="{x:Bind IsOpenTabletDriverEnabled, Mode=TwoWay}"
           OffContent="Disabled"
-          OnContent="Enabled"
-        />
+          OnContent="Enabled"/>
         <HyperlinkButton
           Content="Get OpenTabletDriver"
-          NavigateUri="https://opentabletdriver.net/"
-        />
+          NavigateUri="https://opentabletdriver.net/"/>
         <HyperlinkButton
           Content="Get the IPC Plugin"
-          NavigateUri="https://go.openkneeboard.com/otd-ipc"
-        />
+          NavigateUri="https://go.openkneeboard.com/otd-ipc"/>
+      </StackPanel>
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Spacing="8"
+        Padding="8">
+        <ComboBox
+          IsEnabled="{x:Bind IsWinTabAvailable, Mode=OneWay}"
+          Header="Wintab"
+          SelectedIndex="{x:Bind WintabMode, Mode=TwoWay}">
+          <x:String>Disabled</x:String>
+          <x:String>Standard</x:String>
+          <x:String>Invasive</x:String>
+        </ComboBox>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
+          If your tablet only works when OpenKneeboard is the active window,
+          try invasive mode, or OpenTabletDriver. Invasive mode can cause game
+          issues, but may be required by buggy drivers.
+        </TextBlock>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}"
+          Text="{x:Bind WinTabAvailability, Mode=OneWay}"/>
       </StackPanel>
       <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
-          <StackLayout Orientation="Vertical" Spacing="24" />
+          <StackLayout Orientation="Vertical"
+                       Spacing="24"/>
         </ItemsRepeater.Layout>
         <ItemsRepeater.ItemTemplate>
           <local:InputDeviceUIDataTemplateSelector
             GenericDevice="{StaticResource GenericDeviceTemplate}"
-            TabletDevice="{StaticResource TabletDeviceTemplate}"
-          />
+            TabletDevice="{StaticResource TabletDeviceTemplate}"/>
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
     </StackPanel>

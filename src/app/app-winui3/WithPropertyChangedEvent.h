@@ -41,6 +41,12 @@ struct WithPropertyChangedEvent {
  protected:
   winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
     mPropertyChangedEvent;
+
+  void EmitPropertyChangedEvent(this auto& self, auto property) {
+    self.mPropertyChangedEvent(
+      self,
+      winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(property));
+  }
 };
 
 template <class T>
@@ -54,9 +60,7 @@ struct WithPropertyChangedEventOnProfileChange
        weak = static_cast<T*>(this)->get_weak()]() -> winrt::fire_and_forget {
         co_await uiThread;
         if (auto self = weak.get()) {
-          self->mPropertyChangedEvent(
-            *self,
-            winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
+          self->EmitPropertyChangedEvent(L"");
         }
       });
   }

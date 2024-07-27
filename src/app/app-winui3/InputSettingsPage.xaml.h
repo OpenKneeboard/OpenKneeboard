@@ -51,6 +51,9 @@ struct InputSettingsPage
   bool IsOpenTabletDriverEnabled() const;
   void IsOpenTabletDriverEnabled(bool);
 
+  bool IsWinTabAvailable() const;
+  winrt::hstring WinTabAvailability() const;
+
   winrt::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;
