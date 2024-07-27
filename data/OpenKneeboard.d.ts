@@ -44,6 +44,8 @@ declare namespace OpenKneeboard {
     }
 
     interface APIEventsMap {
+        /* This is empty in the base interface, but extended by experimental
+        * features. */
     }
 
     interface APIEventHandler<T extends keyof APIEventsMap> {
