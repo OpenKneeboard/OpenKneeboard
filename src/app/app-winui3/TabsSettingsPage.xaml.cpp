@@ -40,6 +40,7 @@
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
+#include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/TabTypes.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
@@ -140,6 +141,23 @@ void TabsSettingsPage::CreateAddTabMenu(
   }
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
+  const auto pluginTabTypes = mKneeboard->GetPluginStore()->GetTabTypes();
+  if (!pluginTabTypes.empty()) {
+    tabTypes.Append(MenuFlyoutSeparator {});
+    for (const auto& it: pluginTabTypes) {
+      MenuFlyoutItem item;
+      item.Text(to_hstring(it.mName));
+      item.Tag(box_value(to_hstring(it.mID)));
+      item.Click({this, &TabsSettingsPage::CreatePluginTab});
+
+      FontIcon fontIcon;
+      fontIcon.Glyph(L"\uea86");// puzzle
+      item.Icon(fontIcon);
+
+      tabTypes.Append(item);
+    }
+  }
+
   flyout.Placement(placement);
   button.Flyout(flyout);
 }
@@ -300,6 +318,15 @@ fire_and_forget TabsSettingsPage::RemoveTab(
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
     .RemoveAt(idx);
+}
+
+winrt::fire_and_forget TabsSettingsPage::CreatePluginTab(
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
+  const auto id
+    = to_string(unbox_value<winrt::hstring>(sender.as<MenuFlyoutItem>().Tag()));
+  OPENKNEEBOARD_BREAK;
+  co_return;
 }
 
 winrt::fire_and_forget TabsSettingsPage::CreateTab(

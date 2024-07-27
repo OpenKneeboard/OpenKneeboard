@@ -42,9 +42,11 @@
 #include <OpenKneeboard/utf8.hpp>
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <expected>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 
 #include <processenv.h>
 #include <shellapi.h>
@@ -172,18 +174,20 @@ static IAsyncAction InstallPlugin(
     }
   }
 
-  ContentDialog dialog;
-  dialog.XamlRoot(xamlRoot);
-  dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
-  dialog.Content(winrt::box_value(to_hstring(std::format(
-    _("Do you want to install the plugin '{}'?"),
-    plugin.mMetadata.mPluginName))));
-  dialog.PrimaryButtonText(_(L"Install"));
-  dialog.CloseButtonText(_(L"Cancel"));
-  dialog.DefaultButton(ContentDialogButton::Close);
+  {
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
+    dialog.Content(winrt::box_value(to_hstring(std::format(
+      _("Do you want to install the plugin '{}'?"),
+      plugin.mMetadata.mPluginName))));
+    dialog.PrimaryButtonText(_(L"Install"));
+    dialog.CloseButtonText(_(L"Cancel"));
+    dialog.DefaultButton(ContentDialogButton::Close);
 
-  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-    co_return;
+    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+      co_return;
+    }
   }
 
   auto store = pluginStore.lock();
@@ -199,9 +203,30 @@ static IAsyncAction InstallPlugin(
   dprintf("Copying metadata from `{}` to {}`", path, copyPath);
   std::filesystem::create_directories(copyPath.parent_path());
   {
+    const nlohmann::json j = plugin;
     std::ofstream f(copyPath, std::ios::binary);
-    nlohmann::json j = plugin;
     f << std::setw(2) << j;
+  }
+
+  {
+    const auto tabTypes = plugin.mTabTypes | std::views::transform([](auto it) {
+                            return std::format("- {}", it.mName);
+                          })
+      | std::views::join_with(std::string {"\n"})
+      | std::ranges::to<std::string>();
+
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(winrt::box_value(to_hstring(_(L"Plugin Installed"))));
+    dialog.Content(winrt::box_value(to_hstring(std::format(
+      _("The plugin '{}' is now installed; some new tab types are now "
+        "available:\n\n{}"),
+      plugin.mMetadata.mPluginName,
+      tabTypes))));
+    dialog.CloseButtonText(_(L"OK"));
+    dialog.DefaultButton(ContentDialogButton::Close);
+
+    co_await dialog.ShowAsync();
   }
 }
 
@@ -340,6 +365,18 @@ static IAsyncAction InstallPluginFromPath(
   try {
     const auto j = nlohmann::json::parse(buf);
     parseResult = j.get<Plugin>();
+
+    const nlohmann::json roundTripJSON = *parseResult;
+    const auto roundTripPlugin = roundTripJSON.get<Plugin>();
+    if (roundTripPlugin != *parseResult) {
+      dprintf(
+        "Plugin JSON round-trip mismatch\nOriginal JSON: {}\nRound-trip JSON: "
+        "{}",
+        j.dump(2),
+        roundTripJSON.dump(2));
+      OPENKNEEBOARD_BREAK;
+      parseResult = std::unexpected {"JSON <=> Plugin had lossy round-trip."};
+    }
   } catch (const nlohmann::json::exception& e) {
     parseResult = std::unexpected {
       std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id)};

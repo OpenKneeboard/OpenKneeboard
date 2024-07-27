@@ -69,6 +69,7 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
     const RoutedEventArgs&) noexcept;
 
   winrt::fire_and_forget CreateTab(IInspectable, RoutedEventArgs) noexcept;
+  winrt::fire_and_forget CreatePluginTab(IInspectable, RoutedEventArgs) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowTabSettings(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);

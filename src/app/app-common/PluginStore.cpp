@@ -122,8 +122,10 @@ void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
     this->Append(plugin);
   } catch (const nlohmann::json::exception& e) {
     dprintf("ERROR: error {} when parsing plugin: {}", e.id, e.what());
+    OPENKNEEBOARD_BREAK;
   } catch (const std::exception& e) {
     dprintf("ERROR: C++ exception loading plugin: {}", e.what());
+    OPENKNEEBOARD_BREAK;
   }
 }
 
