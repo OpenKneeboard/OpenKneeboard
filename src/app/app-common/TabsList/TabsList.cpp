@@ -23,6 +23,7 @@
 #include <OpenKneeboard/DCSTerrainTab.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/TabTypes.hpp>
 #include <OpenKneeboard/TabView.hpp>
@@ -98,6 +99,12 @@ void TabsList::LoadSettings(const nlohmann::json& config) {
   }
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
+    if (type == "Plugin") {
+      auto instance = std::make_shared<PluginTab>(
+        mDXR, mKneeboard, persistentID, title, settings);
+      tabs.push_back(instance);
+      continue;
+    }
     dprintf("Couldn't load tab with type {}", rawType);
     OPENKNEEBOARD_BREAK;
   }
@@ -129,8 +136,12 @@ nlohmann::json TabsList::GetSettings() const {
   }
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
+    if (type.empty() && std::dynamic_pointer_cast<PluginTab>(tab)) {
+      type = "Plugin";
+    }
     if (type.empty()) {
       dprintf("Unknown type for tab {}", tab->GetTitle());
+      OPENKNEEBOARD_BREAK;
       continue;
     }
 
