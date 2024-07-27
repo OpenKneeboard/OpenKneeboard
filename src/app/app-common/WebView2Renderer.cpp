@@ -762,6 +762,13 @@ WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
+WebView2Renderer::JSAPI_OpenDeveloperToolsWindow(
+  [[maybe_unused]] nlohmann::json args) {
+  mWebView.OpenDevToolsWindow();
+  co_return nlohmann::json {};
+}
+
+concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
   auto weak = weak_from_this();
   auto thread = mUIThread;

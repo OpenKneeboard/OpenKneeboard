@@ -68,6 +68,10 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#runtimeData.Version;
     }
 
+    OpenDeveloperToolsWindow() {
+        return this.#AsyncRequest("OpenKneeboard.OpenDeveloperToolsWindow", {});
+    }
+
     EnableExperimentalFeature(name, version) {
         return this.EnableExperimentalFeatures([{ name, version }]);
     }

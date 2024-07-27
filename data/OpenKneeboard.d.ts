@@ -46,6 +46,7 @@ declare namespace OpenKneeboard {
     export interface API extends EventTarget {
         GetVersion(): Promise<Version>;
 
+        OpenDeveloperToolsWindow(): Promise<any>;
         SetPreferredPixelSize(width: number, height: number): Promise<any>;
 
         EnableExperimentalFeature(name: string, version: number): Promise<any>;

@@ -50,7 +50,8 @@ struct ExperimentalFeature {
   IT(SendMessageToPeers) \
   IT(SetCursorEventsMode) \
   IT(SetPages) \
-  IT(SetPreferredPixelSize)
+  IT(SetPreferredPixelSize) \
+  IT(OpenDeveloperToolsWindow)
 
 class WebView2Renderer final : public WGCRenderer {
  public:
