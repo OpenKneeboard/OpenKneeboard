@@ -20,15 +20,13 @@
 #include <OpenKneeboard/ImageFilePageSource.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
-#include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
-
-#include <optional>
 #include <mutex>
+#include <optional>
 #include <ranges>
 
 #include <icu.h>
@@ -95,6 +93,14 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       *author,
       *extensions);
 
+    // CreateDecoderFromFilename() re-enters the windows event loop
+    constexpr winrt::guid microsoftWebP {
+      "7693e886-51c9-4070-8419-9f70738ec8fa"};
+    if (winrt::guid {clsID} == microsoftWebP) {
+      dprintf(L"WARNING: Skipping buggy WebP codec '{}'", *name);
+      continue;
+    }
+
     GUID containerGUID;
     GUID vendorGUID;
     winrt::check_hresult(info->GetContainerFormat(&containerGUID));
@@ -116,15 +122,23 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       continue;
     }
 
+    const auto to_vector = [](auto&& range) {
+      std::vector<decltype(*range.begin())> ret;
+      for (auto&& it: range) {
+        ret.push_back(it);
+      }
+      return ret;
+    };
+
     const ImageFilePageSource::FileFormatProvider provider {
       .mGuid = {clsID},
       .mContainerGuid = containerGUID,
       .mVendorGuid = vendorGUID,
-      .mExtensions = (std::views::split(*extensions, L',')
+      .mExtensions = to_vector(
+        std::views::split(*extensions, L',')
         | std::views::transform([](auto range) {
-                       return winrt::to_string({range.begin(), range.end()});
-                     })
-        | std::ranges::to<std::vector>()),
+            return winrt::to_string({range.begin(), range.end()});
+          })),
     };
     ret.push_back(provider);
   }

@@ -26,11 +26,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
-#include <shims/winrt/base.h>
 
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-#include <OpenKneeboard/utf8.hpp>
+#include <shims/winrt/base.h>
 
 #include <ranges>
 
@@ -45,8 +42,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
   auto images = ImageFilePageSource::GetFileFormatProviders(dxr->mWIC.get())
     | std::views::transform(
                   &ImageFilePageSource::FileFormatProvider::mExtensions)
-    | std::views::join | std::ranges::to<std::vector>();
-
+    | std::views::join;
 
   std::ranges::unique_copy(images, std::back_inserter(ret));
 
