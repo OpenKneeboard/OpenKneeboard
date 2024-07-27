@@ -212,6 +212,23 @@ void WebView2PageSource::PostCursorEvent(
   it->second->PostCursorEvent(view, event);
 }
 
+void WebView2PageSource::PostCustomAction(
+  KneeboardViewID viewID,
+  std::string_view actionID,
+  const nlohmann::json& arg) {
+  static_assert(std::same_as<KneeboardViewID, RendererKey>);
+
+  const auto key = (mDocumentResources.mContentMode == ContentMode::Scrollable)
+    ? mScrollableContentRendererKey
+    : viewID;
+
+  if (!mDocumentResources.mRenderers.contains(key)) {
+    return;
+  }
+
+  mDocumentResources.mRenderers.at(key)->PostCustomAction(actionID, arg);
+}
+
 bool WebView2PageSource::CanClearUserInput(PageID pageID) const {
   const auto& doodles = mDocumentResources.mDoodles;
   return doodles && doodles->HaveDoodles(pageID);

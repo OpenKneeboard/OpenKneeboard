@@ -188,4 +188,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   });
 OPENKNEEBOARD_DEFINE_JSON(SetBrightnessEvent, mBrightness, mMode);
 
+OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mCustomData);
+
 }// namespace OpenKneeboard

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/ITabWithSettings.hpp>
+#include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 #include <OpenKneeboard/Plugin.hpp>
 #include <OpenKneeboard/TabBase.hpp>
@@ -56,6 +57,11 @@ class PluginTab final : public TabBase,
   virtual IAsyncAction Reload() final override;
 
   nlohmann::json GetSettings() const override;
+
+  void PostCustomAction(
+    KneeboardViewID,
+    std::string_view id,
+    const nlohmann::json& arg);
 
  private:
   audited_ptr<DXResources> mDXResources;

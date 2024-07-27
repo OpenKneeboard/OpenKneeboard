@@ -373,7 +373,7 @@ void WebView2Renderer::PostCursorEvent(
 }
 
 winrt::fire_and_forget WebView2Renderer::SendJSEvent(
-  std::string_view eventType,
+  std::string eventType,
   nlohmann::json eventOptions) {
   auto weak = weak_from_this();
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
@@ -391,7 +391,7 @@ winrt::fire_and_forget WebView2Renderer::SendJSEvent(
   mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
 }
 
-winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string_view api) {
+winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string api) {
   auto weak = weak_from_this();
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   auto self = weak.lock();
@@ -405,6 +405,12 @@ winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string_view api) {
   };
 
   mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
+}
+
+void WebView2Renderer::PostCustomAction(
+  std::string_view id,
+  const nlohmann::json& arg) {
+  this->SendJSEvent(std::string {id}, {{"detail", {{"customData", arg}}}});
 }
 
 winrt::Windows::Foundation::IAsyncAction WebView2Renderer::ImportJavascriptFile(

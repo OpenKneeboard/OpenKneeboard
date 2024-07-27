@@ -108,6 +108,36 @@ void PluginTab::LoadFromEmpty() {
   }
 }
 
+void PluginTab::PostCustomAction(
+  KneeboardViewID viewID,
+  std::string_view id,
+  const nlohmann::json& arg) {
+  if (!mTabType) {
+    return;
+  }
+
+  if (!id.starts_with(mTabType->mID + ";")) {
+    return;
+  }
+
+  const auto actions = mTabType->mCustomActions;
+  const auto it = std::ranges::find(actions, id, &Plugin::CustomAction::mID);
+  if (it == actions.end()) {
+    dprintf(
+      "Action ID `{}` seems to be for tab `{}`, but action ID is not "
+      "recognized",
+      mTabType->mID,
+      id);
+    return;
+  }
+
+  const auto postable
+    = std::dynamic_pointer_cast<WebView2PageSource>(mDelegate);
+  if (postable) {
+    postable->PostCustomAction(viewID, id, arg);
+  }
+}
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(PluginTab::Settings, mPluginTabTypeID);
 
 }// namespace OpenKneeboard

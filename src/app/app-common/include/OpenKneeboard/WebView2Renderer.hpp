@@ -118,6 +118,8 @@ class WebView2Renderer final : public WGCRenderer {
 
   void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
 
+  void PostCustomAction(std::string_view id, const nlohmann::json& arg);
+
   Event<std::vector<APIPage>> evJSAPI_SetPages;
   void OnJSAPI_Peer_SetPages(const std::vector<APIPage>& pages);
 
@@ -126,8 +128,6 @@ class WebView2Renderer final : public WGCRenderer {
   void OnJSAPI_Peer_SendMessageToPeers(
     const InstanceID&,
     const nlohmann::json&);
-
-  PixelSize GetSize() const noexcept;
 
  protected:
   virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
@@ -237,10 +237,10 @@ class WebView2Renderer final : public WGCRenderer {
   }
 
   winrt::fire_and_forget SendJSEvent(
-    std::string_view eventType,
+    std::string eventType,
     nlohmann::json eventOptions);
 
-  winrt::fire_and_forget ActivateJSAPI(std::string_view api);
+  winrt::fire_and_forget ActivateJSAPI(std::string api);
 
   struct ViewInfo {
     winrt::guid mGuid;

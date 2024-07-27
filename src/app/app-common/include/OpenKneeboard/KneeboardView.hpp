@@ -109,6 +109,8 @@ class KneeboardView final : private EventReceiver,
   void GoToPreviousBookmark();
   void GoToNextBookmark();
 
+  void PostCustomAction(std::string_view id, const nlohmann::json& arg);
+
   // Not just overloading std::swap because this intentionally does not swap IDs
   void SwapState(KneeboardView& other);
 

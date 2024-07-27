@@ -88,6 +88,10 @@ struct APIEvent final {
   // struct SetBrightnessEvent
   static constexpr char EVT_SET_BRIGHTNESS[] = "SetBrightness";
 
+  // struct PluginTabCustomActionEvent
+  static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[]
+    = "Plugin/Tab/CustomAction";
+
   /// JSON: "[ [name, value], [name, value], ... ]"
   static constexpr char EVT_MULTI_EVENT[] = "MultiEvent";
 
@@ -139,14 +143,24 @@ struct SetProfileByNameEvent {
 OPENKNEEBOARD_DECLARE_JSON(SetProfileByNameEvent);
 
 struct SetBrightnessEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_BRIGHTNESS};
+
   enum class Mode {
     Absolute,
     Relative,
   };
-  static constexpr auto ID {APIEvent::EVT_SET_BRIGHTNESS};
+
   float mBrightness {};
   Mode mMode = Mode::Absolute;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetBrightnessEvent);
+
+struct PluginTabCustomActionEvent {
+  static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};
+
+  std::string mActionID;
+  nlohmann::json mCustomData;
+};
+OPENKNEEBOARD_DECLARE_JSON(PluginTabCustomActionEvent);
 
 }// namespace OpenKneeboard

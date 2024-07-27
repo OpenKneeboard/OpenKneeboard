@@ -26,6 +26,7 @@
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabViewUILayer.hpp>
@@ -797,6 +798,17 @@ void KneeboardView::SetTabViews(
     mCurrentTabView = currentView;
     evCurrentTabChangedEvent.Emit(this->GetTabIndex());
   }
+}
+
+void KneeboardView::PostCustomAction(
+  std::string_view id,
+  const nlohmann::json& arg) {
+  const auto it
+    = std::dynamic_pointer_cast<PluginTab>(mCurrentTabView->GetRootTab());
+  if (!it) {
+    return;
+  }
+  it->PostCustomAction(mRuntimeID, id, arg);
 }
 
 std::vector<winrt::guid> KneeboardView::GetTabIDs() const noexcept {

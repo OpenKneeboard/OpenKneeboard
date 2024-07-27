@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
+#include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/WebView2Renderer.hpp>
 
 #include <winrt/Microsoft.Web.WebView2.Core.h>
@@ -81,6 +82,11 @@ class WebView2PageSource final
   virtual bool CanClearUserInput() const override;
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
+
+  void PostCustomAction(
+    KneeboardViewID,
+    std::string_view id,
+    const nlohmann::json& arg);
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;

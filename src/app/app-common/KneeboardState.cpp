@@ -403,6 +403,15 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
 #undef IT
   }
 
+  if (ev.name == APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION) {
+    const auto parsed = ev.ParsedValue<PluginTabCustomActionEvent>();
+    const auto receiver = this->GetActiveViewForGlobalInput();
+    if (receiver) {
+      receiver->PostCustomAction(parsed.mActionID, parsed.mCustomData);
+    }
+    return;
+  }
+
   if (ev.name == APIEvent::EVT_SET_TAB_BY_ID) {
     const auto parsed = ev.ParsedValue<SetTabByIDEvent>();
     winrt::guid guid;

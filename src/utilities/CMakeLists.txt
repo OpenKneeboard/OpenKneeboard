@@ -25,6 +25,19 @@ target_link_libraries(
 )
 
 add_utility_executable(
+  OpenKneeboard-Plugin-Tab-Action
+  WIN32
+  plugin-tab-action.cpp
+)
+target_link_libraries(
+  OpenKneeboard-Plugin-Tab-Action
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-APIEvent
+  OpenKneeboard-tracing
+)
+
+add_utility_executable(
   OpenKneeboard-RemoteControl-SET_TAB
   WIN32
   set-tab-remote.cpp
