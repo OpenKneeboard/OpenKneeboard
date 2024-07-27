@@ -9,7 +9,7 @@
 	},
 	"TabTypes": [
 		{
-			"ID": "dcs-web-editor.github.io/Viewer",
+			"ID": "dcs-web-editor.github.io;Viewer",
 			"Name": "DCS Web Viewer",
 			"Implementation": "WebBrowser",
 			"ImplementationArgs": {
@@ -17,11 +17,11 @@
 			},
 			"CustomActions": [
 				{
-					"ID": "dcs-web-editor.github.io/Viewer/ZoomIn",
+					"ID": "dcs-web-editor.github.io;Viewer;ZoomIn",
 					"Name": "Zoom In"
 				},
 				{
-					"ID": "dcs-web-editor.github.io/Viewer/ZoomOut",
+					"ID": "dcs-web-editor.github.io;Viewer;ZoomOut",
 					"Name": "Zoom Out"
 				}
 			]

@@ -161,7 +161,7 @@ static IAsyncAction InstallPlugin(
     co_return;
   }
 
-  const auto pluginIdPrefix = plugin.mID + "/";
+  const auto pluginIdPrefix = plugin.mID + ";";
   for (const auto& tab: plugin.mTabTypes) {
     if (!tab.mID.starts_with(pluginIdPrefix)) {
       co_await ShowPluginInstallationError(
@@ -172,7 +172,7 @@ static IAsyncAction InstallPlugin(
         pluginIdPrefix);
       co_return;
     }
-    const auto tabIdPrefix = tab.mID + "/";
+    const auto tabIdPrefix = tab.mID + ";";
     for (const auto& action: tab.mCustomActions) {
       if (!action.mID.starts_with(tabIdPrefix)) {
         co_await ShowPluginInstallationError(
