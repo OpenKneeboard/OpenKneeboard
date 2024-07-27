@@ -33,7 +33,10 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 
+#include <wil/resource.h>
+
 #include <nlohmann/json.hpp>
+#include <ztd/out_ptr.hpp>
 
 #include <atomic>
 #include <bit>
@@ -42,6 +45,13 @@
 #include <unordered_set>
 
 #include <CommCtrl.h>
+#include <KnownFolders.h>
+#include <ShlObj.h>
+
+// clang-format off
+#include <WinTrust.h>
+#include <SoftPub.h>
+// clang-format on
 
 namespace OpenKneeboard {
 
@@ -146,6 +156,24 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
     co_return;
   }
 
+  const auto availability = this->GetWinTabAvailability();
+  if (availability != WinTabAvailability::Available) {
+    switch (availability) {
+      case WinTabAvailability::NotInstalled:
+        dprint("WinTab: not installed");
+        break;
+      case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
+        dprint("WinTab: skipping, OpenTabletDriver enabled");
+        break;
+      case WinTabAvailability::Skipping_NoTrustedSignature:
+        dprint("WinTab: skipping, unsigned");
+        break;
+      case WinTabAvailability::Available:
+        OPENKNEEBOARD_UNREACHABLE;
+    }
+    co_return;
+  }
+
   // Check that we can actually load Wintab before we save it; some drivers
   // - especially XP-Pen - will crash as soon as they're loaded
   if (!mWintabTablet) {
@@ -180,6 +208,7 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
 }
 
 void TabletInputAdapter::StartWintab() {
+  GetWinTabAvailability();
   if (mSettings.mWintab == WintabMode::Disabled) {
     return;
   }
@@ -484,6 +513,47 @@ winrt::fire_and_forget TabletInputAdapter::OnOTDInput(
   }
 
   this->OnTabletInput(*tablet, state, device);
+}
+
+WinTabAvailability TabletInputAdapter::GetWinTabAvailability() {
+  if (mSettings.mOTDIPC) {
+    return WinTabAvailability::Skipping_OpenTabletDriverEnabled;
+  }
+
+  wil::unique_cotaskmem_ptr<wchar_t> systemPath;
+  winrt::check_hresult(SHGetKnownFolderPath(
+    FOLDERID_System, KF_FLAG_CREATE, NULL, ztd::out_ptr::out_ptr(systemPath)));
+
+  const auto path = std::filesystem::path(systemPath.get()) / "wintab32.dll";
+  if (!std::filesystem::exists(path)) {
+    return WinTabAvailability::NotInstalled;
+  }
+
+  const auto pathStr = path.wstring();
+
+  WINTRUST_FILE_INFO fileInfo {
+    .cbStruct = sizeof(WINTRUST_FILE_INFO),
+    .pcwszFilePath = pathStr.c_str(),
+  };
+  WINTRUST_DATA wintrustData {
+    .cbStruct = sizeof(WINTRUST_DATA),
+    .dwUIChoice = WTD_UI_NONE,
+    .fdwRevocationChecks = WTD_REVOCATION_CHECK_NONE,
+    .dwUnionChoice = WTD_CHOICE_FILE,
+    .pFile = &fileInfo,
+    .dwStateAction = WTD_STATEACTION_VERIFY,
+  };
+
+  GUID policyGuid = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+  if (
+    WinVerifyTrust(
+      static_cast<HWND>(INVALID_HANDLE_VALUE), &policyGuid, &wintrustData)
+    != 0) {
+    return WinTabAvailability::Skipping_NoTrustedSignature;
+  }
+
+  return WinTabAvailability::Available;
 }
 
 }// namespace OpenKneeboard

@@ -132,8 +132,44 @@ bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
   return mKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
 }
 
+bool InputSettingsPage::IsWinTabAvailable() const {
+  return mKneeboard->GetTabletInputAdapter()->GetWinTabAvailability()
+    == WinTabAvailability::Available;
+}
+
+winrt::hstring InputSettingsPage::WinTabAvailability() const {
+  switch (mKneeboard->GetTabletInputAdapter()->GetWinTabAvailability()) {
+    case WinTabAvailability::NotInstalled:
+      return _(
+        L"No 64-bit WinTab-capable tablet driver is installed on your "
+        L"system.");
+    case WinTabAvailability::Available:
+      return _(L"WinTab is available on your system.");
+    case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
+      return _(
+        L"WinTab is disabled because you have enabled OpenTabletDriver.");
+    case WinTabAvailability::Skipping_NoTrustedSignature:
+      return _(
+        L"WinTab is disabled because your manufacturer's WinTab driver is "
+        L"not signed by a manufacturer that Windows recognizes and trusts; "
+        L"historically, these drivers frequently cause OpenKneeboard and "
+        L"game crashes. If there is not a more recent driver available, "
+        L"use OpenTabletDriver instead.");
+  }
+  OPENKNEEBOARD_UNREACHABLE;
+}
+
 void InputSettingsPage::IsOpenTabletDriverEnabled(bool value) {
   mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
+
+  this->mPropertyChangedEvent(
+    *this,
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(
+      L"IsWinTabAvailable"));
+  this->mPropertyChangedEvent(
+    *this,
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(
+      L"WinTabAvailability"));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

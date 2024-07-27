@@ -42,6 +42,13 @@ struct CursorEvent;
 struct TabletInfo;
 struct TabletState;
 
+enum class WinTabAvailability {
+  NotInstalled,
+  Available,
+  Skipping_OpenTabletDriverEnabled,
+  Skipping_NoTrustedSignature,
+};
+
 class TabletInputAdapter final
   : private EventReceiver,
     public std::enable_shared_from_this<TabletInputAdapter> {
@@ -61,6 +68,8 @@ class TabletInputAdapter final
 
   bool IsOTDIPCEnabled() const;
   void SetIsOTDIPCEnabled(bool);
+
+  WinTabAvailability GetWinTabAvailability();
 
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
