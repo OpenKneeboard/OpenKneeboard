@@ -7,9 +7,19 @@ parent: How-To
 
 Huion tablets can either be used with Huion's drivers, or [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc).
 
+OpenTabletDriver is *STRONGLY* recommended; Huion's driver is only still supported by OpenKneeboard in case you need it for other software.
+
+## Using OpenTabletDriver
+
+1. Uninstall your manufacturer's tablet drivers
+2. [Install OpenTabletDriver and OTD-IPC](https://go.openkneeboard.com/otd-ipc)
+3. Enable OpenTabletDriver in OpenKneeboard's input settings
+
 ## Using Huion's drivers
 
-You need to enable the tablet by:
+OpenTabletDriver is *STRONGLY* recommended; Huion's driver is only still supported by OpenKneeboard in case you need it for other software.
+
+To use Huion's drivers, you need to enable the tablet by:
 
 1. Open OpenKneeboard's settings page (bottom left)
 2. Go to the input settings page

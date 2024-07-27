@@ -32,7 +32,4 @@ Graphics tablets are supported, *but not required*; OpenKneeboard supports most 
 - Wacom tablets seem to have the most trouble-free drivers; the small Intuos S is the most popular
 - Huion tablets are also popular and well-tested, especially the H640P; the drivers do have noteable issues leading to more complicated setup instructions
 
-Other manufacturers have varying qualities of drivers; try:
-- enabling Wintab -> Standard in Settings -> Input; particularly buggy drivers may crash OpenKneeboard
-- if that works, but only while OpenKneeboard is the active window, try enabling Wintab -> Invasive
-- otherwise, [try OpenTabletDriver](https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md)
+[OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) is *STRONGLY* recommended instead of your tablet manufacturer's drivers.
