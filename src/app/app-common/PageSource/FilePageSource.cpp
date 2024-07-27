@@ -26,6 +26,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
+#include <shims/winrt/base.h>
 
 #include <ranges>
 
@@ -33,9 +34,29 @@
 
 namespace OpenKneeboard {
 
+static std::optional<std::wstring> variable_sized_string_mem_fn(
+  auto self,
+  auto impl) {
+  UINT bufSize = 0;
+  const auto fn = std::bind_front(impl, self);
+  HRESULT result = fn(0, nullptr, &bufSize);
+  if (result != S_OK) {
+    return std::nullopt;
+  }
+
+  std::wstring buf;
+  buf.resize(bufSize, L'\0');
+  result = fn(bufSize, buf.data(), &bufSize);
+  if (result != S_OK) {
+    return std::nullopt;
+  }
+  buf.pop_back();// trailing null
+  return buf;
+}
+
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
   const audited_ptr<DXResources>& dxr) noexcept {
-  std::vector<std::string> extensions {".txt", ".pdf"};
+  std::vector<std::string> ret {".txt", ".pdf"};
 
   winrt::com_ptr<IEnumUnknown> enumerator;
   winrt::check_hresult(
@@ -46,21 +67,49 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
   while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
     const scope_guard clearIt([&]() { it = {nullptr}; });
     const auto info = it.as<IWICBitmapCodecInfo>();
-    UINT neededBufferSize = 0;
-    winrt::check_hresult(
-      info->GetFileExtensions(0, nullptr, &neededBufferSize));
-    std::wstring buffer(neededBufferSize, 0);
-    winrt::check_hresult(info->GetFileExtensions(
-      neededBufferSize, buffer.data(), &neededBufferSize));
-    buffer.pop_back();// remove trailing null
 
-    for (const auto& range: std::ranges::views::split(buffer, L',')) {
-      extensions.push_back(
+    CLSID clsID {};
+    winrt::check_hresult(info->GetCLSID(&clsID));
+
+    const auto name = variable_sized_string_mem_fn(
+      info, &IWICBitmapCodecInfo::GetFriendlyName);
+    const auto author
+      = variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
+    const auto extensions = variable_sized_string_mem_fn(
+      info, &IWICBitmapCodecInfo::GetFileExtensions);
+
+    if (!(name && author && extensions)) {
+      dprintf(
+        "WARNING: Failed to get necessary information for WIC component {}",
+        winrt::guid {clsID});
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
+
+    dprintf(
+      L"Found WIC codec '{}' ({}) by '{}'; extensions: {}",
+      *name,
+      winrt::guid {clsID},
+      *author,
+      *extensions);
+
+    DWORD status {};
+    winrt::check_hresult(info->GetSigningStatus(&status));
+    if (
+      ((status & WICComponentSigned) == 0)
+      && ((status & WICComponentSafe) == 0)) {
+      dprintf(
+        "WARNING: Skipping codec - unsafe status {:#018x}",
+        std::bit_cast<uint32_t>(status));
+      continue;
+    }
+    for (const auto& range: std::views::split(*extensions, L',')) {
+      ret.push_back(
         winrt::to_string(std::wstring_view(range.begin(), range.end())));
     }
   }
 
-  return extensions;
+  return ret;
 }
 
 std::shared_ptr<IPageSource> FilePageSource::Create(
