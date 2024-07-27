@@ -37,6 +37,7 @@ list(
   "${CMAKE_CURRENT_SOURCE_DIR}/LaunchAfterInstall.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/OpenXRAPILayerRegistration.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/OpenKneeboardPluginFileType.wxs"
 )
 list(
   APPEND

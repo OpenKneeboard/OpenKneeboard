@@ -2,5 +2,14 @@
   <CPackWiXFragment Id="CM_C_Default">
     <ComponentRef Id="OpenXRAPILayerRegistration" />
     <ComponentRef Id="OpenXRAPILayerRegistration32Bit" />
+    <ComponentRef Id="OpenKneeboardPlugin_FileType" />
+  </CPackWiXFragment>
+  <CPackWiXFragment Id="#PRODUCT">
+    <InstallExecuteSequence>
+      <!-- after RemoveRegistryValues -->
+      <UnregisterProgIdInfo Sequence="2601" />
+      <!-- before WriteRegistryValues -->
+      <RegisterProgIdInfo Sequence="4999" />
+    </InstallExecuteSequence>  
   </CPackWiXFragment>
 </CPackWiXPatch>

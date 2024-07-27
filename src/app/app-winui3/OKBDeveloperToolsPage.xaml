@@ -32,7 +32,7 @@
       Style="{ThemeResource CaptionTextBlockStyle}"
       Foreground="{ThemeResource TextFillColorSecondary}">
       If set, this installation will be used for this Windows user; if not set,
-      Windows will use HKEY_CLASSES_ROOT, where OpenKneeboard's MSI installer
+      Windows will use HKEY_LOCAL_MACHINE, where OpenKneeboard's MSI installer
       should register the file type.
     </TextBlock>
   </StackPanel>
