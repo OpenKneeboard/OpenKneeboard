@@ -159,7 +159,7 @@ struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};
 
   std::string mActionID;
-  nlohmann::json mCustomData;
+  nlohmann::json mExtraData;
 };
 OPENKNEEBOARD_DECLARE_JSON(PluginTabCustomActionEvent);
 

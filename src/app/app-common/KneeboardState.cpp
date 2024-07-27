@@ -407,7 +407,7 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
     const auto parsed = ev.ParsedValue<PluginTabCustomActionEvent>();
     const auto receiver = this->GetActiveViewForGlobalInput();
     if (receiver) {
-      receiver->PostCustomAction(parsed.mActionID, parsed.mCustomData);
+      receiver->PostCustomAction(parsed.mActionID, parsed.mExtraData);
     }
     return;
   }

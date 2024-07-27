@@ -410,7 +410,13 @@ winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string api) {
 void WebView2Renderer::PostCustomAction(
   std::string_view id,
   const nlohmann::json& arg) {
-  this->SendJSEvent(std::string {id}, {{"detail", {{"customData", arg}}}});
+  this->SendJSEvent(
+    "plugin/tab/customAction",
+    {{"detail",
+      {
+        {"id", id},
+        {"extraData", arg},
+      }}});
 }
 
 winrt::Windows::Foundation::IAsyncAction WebView2Renderer::ImportJavascriptFile(

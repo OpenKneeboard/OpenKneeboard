@@ -77,7 +77,7 @@ int WINAPI wWinMain(
 
   if (argc >= 2) {
     try {
-      ev.mCustomData = nlohmann::json::parse(winrt::to_string(argv[1]));
+      ev.mExtraData = nlohmann::json::parse(winrt::to_string(argv[1]));
     } catch (const nlohmann::json::exception& e) {
       dprintf("Failed to parse JSON customData: {}", e.what());
       return 1;
