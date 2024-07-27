@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
 #include <shims/winrt/base.h>
@@ -38,24 +39,6 @@
 namespace OpenKneeboard::Filesystem {
 
 namespace {
-
-template <class T>
-class LazyOnceValue {
- public:
-  LazyOnceValue() = delete;
-  LazyOnceValue(std::function<T()> f) : mFunc(f) {
-  }
-
-  operator T() noexcept {
-    std::call_once(mOnce, [this]() { mValue = mFunc(); });
-    return mValue;
-  }
-
- private:
-  std::function<T()> mFunc;
-  std::once_flag mOnce;
-  T mValue;
-};
 using LazyPath = LazyOnceValue<std::filesystem::path>;
 
 enum class TemporaryDirectoryState {
