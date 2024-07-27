@@ -651,6 +651,22 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
   }
 
   auto metrics = GetPageMetrics();
+  if (!metrics.mRenderSize) {
+    auto ctx = mRenderTarget->d2d();
+    D3D11_TEXTURE2D_DESC desc;
+    mCanvas->GetDesc(&desc);
+    mErrorRenderer->Render(
+      ctx,
+      _("Render width or height is 0"),
+      {
+        0,
+        0,
+        static_cast<FLOAT>(desc.Width),
+        static_cast<FLOAT>(desc.Height),
+      });
+    activity.StopWithResult("Render width or height is 0");
+    return;
+  }
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
