@@ -97,7 +97,7 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     constexpr winrt::guid microsoftWebP {
       "7693e886-51c9-4070-8419-9f70738ec8fa"};
     if (winrt::guid {clsID} == microsoftWebP) {
-      dprintf("WARNING: Skipping buggy WebP codec '{}'", *name);
+      dprintf(L"WARNING: Skipping buggy WebP codec '{}'", *name);
       continue;
     }
 
