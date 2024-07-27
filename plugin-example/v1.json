@@ -17,11 +17,11 @@
 			},
 			"CustomActions": [
 				{
-					"ID": "ZoomIn",
+					"ID": "dcs-web-editor.github.io/Viewer/ZoomIn",
 					"Name": "Zoom In"
 				},
 				{
-					"ID": "ZoomOut",
+					"ID": "dcs-web-editor.github.io/Viewer/ZoomOut",
 					"Name": "Zoom Out"
 				}
 			]

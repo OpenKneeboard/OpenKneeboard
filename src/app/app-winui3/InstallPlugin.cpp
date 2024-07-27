@@ -161,16 +161,28 @@ static IAsyncAction InstallPlugin(
     co_return;
   }
 
-  const auto idPrefix = plugin.mID + "/";
+  const auto pluginIdPrefix = plugin.mID + "/";
   for (const auto& tab: plugin.mTabTypes) {
-    if (!tab.mID.starts_with(idPrefix)) {
+    if (!tab.mID.starts_with(pluginIdPrefix)) {
       co_await ShowPluginInstallationError(
         xamlRoot,
         path,
         "TabType ID `{}` must start with `{}` and doesn't",
         tab.mID,
-        idPrefix);
+        pluginIdPrefix);
       co_return;
+    }
+    const auto tabIdPrefix = tab.mID + "/";
+    for (const auto& action: tab.mCustomActions) {
+      if (!action.mID.starts_with(tabIdPrefix)) {
+        co_await ShowPluginInstallationError(
+          xamlRoot,
+          path,
+          "Custom action ID `{}` must start with `{}` and doesn't",
+          action.mID,
+          tabIdPrefix);
+        co_return;
+      }
     }
   }
 
