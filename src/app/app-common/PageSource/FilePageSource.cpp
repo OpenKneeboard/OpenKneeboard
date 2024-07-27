@@ -30,87 +30,23 @@
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
-#include <expected>
+#include <algorithm>
 #include <ranges>
 
 #include <icu.h>
 
 namespace OpenKneeboard {
 
-static std::expected<std::wstring, HRESULT> variable_sized_string_mem_fn(
-  auto self,
-  auto impl) {
-  UINT bufSize = 0;
-  const auto fn = std::bind_front(impl, self);
-  HRESULT result = fn(0, nullptr, &bufSize);
-  if (result != S_OK) {
-    return std::unexpected {result};
-  }
-
-  std::wstring buf;
-  buf.resize(bufSize, L'\0');
-  result = fn(bufSize, buf.data(), &bufSize);
-  if (result != S_OK) {
-    return std::unexpected {result};
-  }
-  buf.pop_back();// trailing null
-  return buf;
-}
-
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
   const audited_ptr<DXResources>& dxr) noexcept {
   std::vector<std::string> ret {".txt", ".pdf", ".htm", ".html"};
 
-  winrt::com_ptr<IEnumUnknown> enumerator;
-  winrt::check_hresult(
-    dxr->mWIC->CreateComponentEnumerator(WICDecoder, 0, enumerator.put()));
+  auto images = ImageFilePageSource::GetFileFormatProviders(dxr->mWIC.get())
+    | std::views::transform(
+                  &ImageFilePageSource::FileFormatProvider::mExtensions)
+    | std::views::join | std::ranges::to<std::vector>();
 
-  winrt::com_ptr<IUnknown> it;
-  ULONG fetched {};
-  while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
-    const scope_exit clearIt([&]() { it = {nullptr}; });
-    const auto info = it.as<IWICBitmapCodecInfo>();
-
-    CLSID clsID {};
-    winrt::check_hresult(info->GetCLSID(&clsID));
-
-    const auto name = variable_sized_string_mem_fn(
-      info, &IWICBitmapCodecInfo::GetFriendlyName);
-    const auto author
-      = variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
-    const auto extensions = variable_sized_string_mem_fn(
-      info, &IWICBitmapCodecInfo::GetFileExtensions);
-
-    if (!(name && author && extensions)) {
-      dprintf(
-        "WARNING: Failed to get necessary information for WIC component {}",
-        winrt::guid {clsID});
-      OPENKNEEBOARD_BREAK;
-      continue;
-    }
-
-    dprintf(
-      L"Found WIC codec '{}' ({}) by '{}'; extensions: {}",
-      *name,
-      winrt::guid {clsID},
-      *author,
-      *extensions);
-
-    DWORD status {};
-    winrt::check_hresult(info->GetSigningStatus(&status));
-    if (
-      ((status & WICComponentSigned) == 0)
-      && ((status & WICComponentSafe) == 0)) {
-      dprintf(
-        "WARNING: Skipping codec - unsafe status {:#018x}",
-        std::bit_cast<uint32_t>(status));
-      continue;
-    }
-    for (const auto& range: std::views::split(*extensions, L',')) {
-      ret.push_back(
-        winrt::to_string(std::wstring_view(range.begin(), range.end())));
-    }
-  }
+  std::ranges::unique_copy(images, std::back_inserter(ret));
 
   return ret;
 }

@@ -23,12 +23,123 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
+#include <expected>
+#include <mutex>
 #include <ranges>
 
+#include <icu.h>
 #include <wincodec.h>
 
 namespace OpenKneeboard {
+
+static std::expected<std::wstring, HRESULT> variable_sized_string_mem_fn(
+  auto self,
+  auto impl) {
+  UINT bufSize = 0;
+  const auto fn = std::bind_front(impl, self);
+  HRESULT result = fn(0, nullptr, &bufSize);
+  if (result != S_OK) {
+    return std::unexpected {result};
+  }
+
+  std::wstring buf;
+  buf.resize(bufSize, L'\0');
+  result = fn(bufSize, buf.data(), &bufSize);
+  if (result != S_OK) {
+    return std::unexpected {result};
+  }
+  buf.pop_back();// trailing null
+  return buf;
+}
+
+static std::vector<ImageFilePageSource::FileFormatProvider>
+GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
+  std::vector<ImageFilePageSource::FileFormatProvider> ret;
+
+  winrt::com_ptr<IEnumUnknown> enumerator;
+  winrt::check_hresult(
+    wic->CreateComponentEnumerator(WICDecoder, 0, enumerator.put()));
+
+  winrt::com_ptr<IUnknown> it;
+  ULONG fetched {};
+  while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
+    const scope_exit clearIt([&]() { it = {nullptr}; });
+    const auto info = it.as<IWICBitmapCodecInfo>();
+
+    CLSID clsID {};
+    winrt::check_hresult(info->GetCLSID(&clsID));
+
+    const auto name = variable_sized_string_mem_fn(
+      info, &IWICBitmapCodecInfo::GetFriendlyName);
+    const auto author
+      = variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
+    const auto extensions = variable_sized_string_mem_fn(
+      info, &IWICBitmapCodecInfo::GetFileExtensions);
+
+    if (!(name && author && extensions)) {
+      dprintf(
+        "WARNING: Failed to get necessary information for WIC component {}",
+        winrt::guid {clsID});
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
+
+    dprintf(
+      L"Found WIC codec '{}' ({}) by '{}'; extensions: {}",
+      *name,
+      winrt::guid {clsID},
+      *author,
+      *extensions);
+
+    GUID containerGUID;
+    GUID vendorGUID;
+    winrt::check_hresult(info->GetContainerFormat(&containerGUID));
+    winrt::check_hresult(info->GetVendorGUID(&vendorGUID));
+    dprintf(
+      "WIC codec {} has container GUID {} and vendor GUID {}",
+      winrt::guid {clsID},
+      winrt::guid {containerGUID},
+      winrt::guid {vendorGUID});
+
+    DWORD status {};
+    winrt::check_hresult(info->GetSigningStatus(&status));
+    if (
+      ((status & WICComponentSigned) == 0)
+      && ((status & WICComponentSafe) == 0)) {
+      dprintf(
+        "WARNING: Skipping codec - unsafe status {:#018x}",
+        std::bit_cast<uint32_t>(status));
+      continue;
+    }
+
+    const ImageFilePageSource::FileFormatProvider provider {
+      .mGuid = {clsID},
+      .mContainerGuid = containerGUID,
+      .mVendorGuid = vendorGUID,
+      .mExtensions = (std::views::split(*extensions, L',')
+        | std::views::transform([](auto range) {
+                       return winrt::to_string({range.begin(), range.end()});
+                     })
+        | std::ranges::to<std::vector>()),
+    };
+    ret.push_back(provider);
+  }
+
+  return ret;
+}
+
+std::vector<ImageFilePageSource::FileFormatProvider>
+ImageFilePageSource::GetFileFormatProviders(IWICImagingFactory* wic) {
+  static std::once_flag sOnce;
+  static std::vector<ImageFilePageSource::FileFormatProvider> sRet;
+
+  std::call_once(
+    sOnce, [wic, &ret = sRet] { ret = GetFileFormatProvidersUncached(wic); });
+
+  return sRet;
+}
 
 std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
   const audited_ptr<DXResources>& dxr,
@@ -103,9 +214,25 @@ bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
 bool ImageFilePageSource::CanOpenFile(
   const audited_ptr<DXResources>& dxr,
   const std::filesystem::path& path) {
+  auto decoder
+    = ImageFilePageSource::GetDecoderFromFileName(dxr->mWIC.get(), path);
+  if (!decoder) {
+    return false;
+  }
+  UINT frameCount {0};
+  if (decoder->GetFrameCount(&frameCount) != S_OK) {
+    return false;
+  }
+
+  return frameCount >= 1;
+}
+
+winrt::com_ptr<IWICBitmapDecoder> ImageFilePageSource::GetDecoderFromFileName(
+  IWICImagingFactory* wic,
+  const std::filesystem::path& path) {
   try {
     if (!std::filesystem::is_regular_file(path)) {
-      return false;
+      return nullptr;
     }
   } catch (const std::filesystem::filesystem_error& e) {
     dprintf(
@@ -113,17 +240,40 @@ bool ImageFilePageSource::CanOpenFile(
       path,
       e.what(),
       e.code().value());
-    return false;
+    return nullptr;
   }
-  auto wsPath = path.wstring();
+  if (!path.has_extension()) {
+    return nullptr;
+  }
+  const auto extension = path.extension().u16string();
+  const auto hasExtension = [a = extension.c_str()](const std::string& b) {
+    const std::wstring wide {winrt::to_hstring(b)};
+    return u_strcasecmp(
+             a,
+             reinterpret_cast<const UChar*>(wide.c_str()),
+             U_FOLD_CASE_DEFAULT)
+      == 0;
+  };
+
+  const auto providers = ImageFilePageSource::GetFileFormatProviders(wic);
+  const auto provider
+    = std::ranges::find_if(providers, [&](const auto& provider) {
+        return std::ranges::any_of(provider.mExtensions, hasExtension);
+      });
+  if (provider == providers.end()) {
+    return nullptr;
+  }
+
   winrt::com_ptr<IWICBitmapDecoder> decoder;
-  dxr->mWIC->CreateDecoderFromFilename(
-    wsPath.c_str(),
-    nullptr,
+  const GUID vendor = provider->mVendorGuid;
+  wic->CreateDecoderFromFilename(
+    path.wstring().c_str(),
+    &vendor,
     GENERIC_READ,
     WICDecodeMetadataCacheOnLoad,
     decoder.put());
-  return static_cast<bool>(decoder);
+
+  return decoder;
 }
 
 PageIndex ImageFilePageSource::GetPageCount() const {
@@ -188,17 +338,9 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
     return page.mBitmap;
   }
 
-  winrt::com_ptr<IWICBitmapDecoder> decoder;
+  auto wic = mDXR->mWIC.get();
+  auto decoder = ImageFilePageSource::GetDecoderFromFileName(wic, page.mPath);
 
-  const auto wic = mDXR->mWIC.get();
-
-  auto path = page.mPath.wstring();
-  wic->CreateDecoderFromFilename(
-    path.c_str(),
-    nullptr,
-    GENERIC_READ,
-    WICDecodeMetadataCacheOnLoad,
-    decoder.put());
   if (!decoder) {
     return {};
   }
@@ -250,8 +392,8 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
     return {};
   }
 
-  // For WIC, this MUST be B8G8R8A8_UNORM, not _UNORM_SRGB, or the copy silently
-  // fails.
+  // For WIC, this MUST be B8G8R8A8_UNORM, not _UNORM_SRGB, or the copy
+  // silently fails.
   winrt::check_hresult(ctx->CreateBitmap(
     sharedBitmap->GetPixelSize(),
     D2D1_BITMAP_PROPERTIES {
