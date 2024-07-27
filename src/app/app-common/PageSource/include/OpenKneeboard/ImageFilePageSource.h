@@ -63,6 +63,15 @@ class ImageFilePageSource final
 
   ImageFilePageSource() = delete;
 
+  struct FileFormatProvider {
+    winrt::guid mGuid;
+    winrt::guid mContainerGuid;
+    winrt::guid mVendorGuid;
+    std::vector<std::string> mExtensions;
+  };
+  static std::vector<FileFormatProvider> GetFileFormatProviders(
+    IWICImagingFactory*);
+
  private:
   ImageFilePageSource(const audited_ptr<DXResources>&);
 
@@ -81,6 +90,10 @@ class ImageFilePageSource final
   std::vector<Page> mPages = {};
 
   winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(PageID);
+
+  static winrt::com_ptr<IWICBitmapDecoder> GetDecoderFromFileName(
+    IWICImagingFactory*,
+    const std::filesystem::path&);
 };
 
 }// namespace OpenKneeboard
