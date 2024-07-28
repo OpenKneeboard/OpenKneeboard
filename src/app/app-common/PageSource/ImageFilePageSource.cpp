@@ -93,14 +93,6 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       *author,
       *extensions);
 
-    // CreateDecoderFromFilename() re-enters the windows event loop
-    constexpr winrt::guid microsoftWebP {
-      "7693e886-51c9-4070-8419-9f70738ec8fa"};
-    if (winrt::guid {clsID} == microsoftWebP) {
-      dprintf(L"WARNING: Skipping buggy WebP codec '{}'", *name);
-      continue;
-    }
-
     GUID containerGUID;
     GUID vendorGUID;
     winrt::check_hresult(info->GetContainerFormat(&containerGUID));
