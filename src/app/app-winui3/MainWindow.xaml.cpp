@@ -387,8 +387,7 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
     co_return;
   }
   if (mKneeboard) {
-    co_await InstallPlugin(
-      mKneeboard->GetPluginStore(), xamlRoot, GetCommandLineW());
+    co_await InstallPlugin(mKneeboard, xamlRoot, GetCommandLineW());
     mKneeboard->GetGamesList()->StartInjector();
   }
   co_await mUIThread;
@@ -879,7 +878,7 @@ winrt::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
 
   const std::wstring commandLine {winrt::to_hstring(ev.value)};
   co_await InstallPlugin(
-    mKneeboard->GetPluginStore(), Navigation().XamlRoot(), commandLine.c_str());
+    mKneeboard, Navigation().XamlRoot(), commandLine.c_str());
 }
 
 winrt::fire_and_forget MainWindow::OnTabsChanged() {

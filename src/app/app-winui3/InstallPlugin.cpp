@@ -27,8 +27,11 @@
 
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/Plugin.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
+#include <OpenKneeboard/PluginTab.hpp>
+#include <OpenKneeboard/TabsList.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -137,7 +140,7 @@ static std::string sha256_hex(std::string_view data) {
 }
 
 static IAsyncAction InstallPlugin(
-  std::weak_ptr<PluginStore> pluginStore,
+  std::weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
   const std::filesystem::path& path,
   const Plugin& plugin) {
@@ -202,7 +205,13 @@ static IAsyncAction InstallPlugin(
     }
   }
 
-  auto store = pluginStore.lock();
+  auto kneeboard = weakKneeboard.lock();
+  if (!kneeboard) {
+    dprint("ERROR: plugin store has gone away");
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+  auto store = kneeboard->GetPluginStore();
   if (!store) {
     dprint("ERROR: plugin store has gone away");
     OPENKNEEBOARD_BREAK;
@@ -221,29 +230,73 @@ static IAsyncAction InstallPlugin(
   }
 
   {
-    const auto tabTypes = plugin.mTabTypes | std::views::transform([](auto it) {
-                            return std::format("- {}", it.mName);
-                          })
-      | std::views::join_with(std::string {"\n"})
-      | std::ranges::to<std::string>();
-
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
     dialog.Title(winrt::box_value(to_hstring(_(L"Plugin Installed"))));
-    dialog.Content(winrt::box_value(to_hstring(std::format(
-      _("The plugin '{}' is now installed; some new tab types are now "
-        "available:\n\n{}"),
-      plugin.mMetadata.mPluginName,
-      tabTypes))));
-    dialog.CloseButtonText(_(L"OK"));
-    dialog.DefaultButton(ContentDialogButton::Close);
 
-    co_await dialog.ShowAsync();
+    StackPanel layout;
+    dialog.Content(layout);
+
+    layout.Spacing(8);
+    layout.Orientation(Orientation::Vertical);
+
+    TextBlock caption;
+    layout.Children().Append(caption);
+    caption.Text(to_hstring(std::format(
+      _("The plugin '{}' is now installed; would you like to add tabs from "
+        "this plugin?"),
+      plugin.mMetadata.mPluginName)));
+    caption.TextWrapping(TextWrapping::WrapWholeWords);
+
+    auto tabsToAppend = plugin.mTabTypes
+      | std::views::transform(&Plugin::TabType::mID)
+      | std::ranges::to<std::vector>();
+
+    for (const auto& tabType: plugin.mTabTypes) {
+      CheckBox checkBox;
+      layout.Children().Append(checkBox);
+
+      checkBox.IsChecked(true);
+      checkBox.Content(
+        box_value(to_hstring(std::format(_("Add a '{}' tab"), tabType.mName))));
+      checkBox.Checked([&tabsToAppend, id = tabType.mID, dialog](auto&&...) {
+        tabsToAppend.push_back(id);
+        dialog.IsPrimaryButtonEnabled(!tabsToAppend.empty());
+      });
+      checkBox.Unchecked([&tabsToAppend, id = tabType.mID, dialog](auto&&...) {
+        auto it = std::ranges::find(tabsToAppend, id);
+        if (it != tabsToAppend.end()) {
+          tabsToAppend.erase(it);
+          dialog.IsPrimaryButtonEnabled(!tabsToAppend.empty());
+        }
+      });
+    }
+
+    dialog.PrimaryButtonText(_(L"Add tabs"));
+    dialog.CloseButtonText(_(L"Close"));
+    dialog.DefaultButton(ContentDialogButton::Primary);
+
+    const auto result = co_await dialog.ShowAsync();
+    if (result != ContentDialogResult::Primary) {
+      co_return;
+    }
+
+    auto tabsStore = kneeboard->GetTabsList();
+    auto tabs = tabsStore->GetTabs();
+    for (const auto& id: tabsToAppend) {
+      tabs.push_back(std::shared_ptr<PluginTab>(new PluginTab(
+        kneeboard->GetDXResources(),
+        kneeboard.get(),
+        {},
+        std::ranges::find(plugin.mTabTypes, id, &Plugin::TabType::mID)->mName,
+        {.mPluginTabTypeID = id})));
+    }
+    co_await tabsStore->SetTabs(tabs);
   }
 }
 
 static IAsyncAction InstallPluginFromPath(
-  std::weak_ptr<PluginStore> pluginStore,
+  std::weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   std::filesystem::path path) {
   dprintf("Attempting to install plugin `{}`", path);
@@ -394,7 +447,7 @@ static IAsyncAction InstallPluginFromPath(
       std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id)};
   }
   if (parseResult.has_value()) {
-    co_await InstallPlugin(pluginStore, xamlRoot, path, *parseResult);
+    co_await InstallPlugin(kneeboard, xamlRoot, path, *parseResult);
   } else {
     co_await ShowPluginInstallationError(xamlRoot, path, parseResult.error());
     co_return;
@@ -402,7 +455,7 @@ static IAsyncAction InstallPluginFromPath(
 }
 
 IAsyncAction InstallPlugin(
-  std::weak_ptr<PluginStore> pluginStore,
+  std::weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   const wchar_t* const commandLine) {
   int argc {};
@@ -419,7 +472,7 @@ IAsyncAction InstallPlugin(
       OPENKNEEBOARD_BREAK;
       co_return;
     }
-    co_await InstallPluginFromPath(pluginStore, xamlRoot, argv[i + 1]);
+    co_await InstallPluginFromPath(kneeboard, xamlRoot, argv[i + 1]);
     co_return;
   }
 

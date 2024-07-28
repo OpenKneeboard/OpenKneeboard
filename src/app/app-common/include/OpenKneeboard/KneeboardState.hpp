@@ -164,6 +164,10 @@ class KneeboardState final
   bool try_lock_shared();
   void unlock_shared();
 
+  auto GetDXResources() const noexcept {
+    return mDXResources;
+  }
+
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
 

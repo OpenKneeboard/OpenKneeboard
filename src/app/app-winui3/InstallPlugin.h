@@ -32,10 +32,10 @@
 
 namespace OpenKneeboard {
 
-class PluginStore;
+class KneeboardState;
 
 IAsyncAction InstallPlugin(
-  std::weak_ptr<PluginStore> pluginStore,
+  std::weak_ptr<KneeboardState>,
   winrt::Microsoft::UI::Xaml::XamlRoot,
   const wchar_t* const commandLine);
 
