@@ -320,6 +320,22 @@ void MainWindow::FrameTick() {
   // Including the build number just to make sure it's in every trace
   TraceLoggingWriteStart(
     activity, "FrameTick", TraceLoggingValue(Version::Build, "BuildNumber"));
+  // Some Microsoft components have a habit of re-entering the Windows message
+  // loop from unreasonable places, e.g.:
+  // - Webp Image Extensions re-enters the loop from
+  //   IWICImagingFactory::CreateDecoder() and friends
+  // - Windows.Data.Pdf.PdfDocument re-enters the loop from its' destructor
+  const std::unique_lock recursiveFrameLock(mFrameInProgress, std::try_to_lock);
+  if (!recursiveFrameLock) {
+    dprint(
+      "WARNING: recursive frame loop entry detected; this is likely a bug in a "
+      "Windows component.");
+    OPENKNEEBOARD_BREAK;
+    TraceLoggingWriteStop(
+      activity, "FrameTick", TraceLoggingValue("Result", "NestedFrame"));
+    return;
+  }
+
   this->CheckForElevatedConsumer();
   {
     std::shared_lock kbLock(*mKneeboard);
@@ -1196,8 +1212,8 @@ LRESULT MainWindow::SubclassProc(
       break;
     case WM_ENDSESSION:
       dprint("Processing WM_QUERYENDSESSION");
-      // This won't complete as the window message loop is never re-entered, but
-      // we want to do as much as we can, especially clearing the 'unsafe
+      // This won't complete as the window message loop is never re-entered,
+      // but we want to do as much as we can, especially clearing the 'unsafe
       // shutdown' marker
       self->Shutdown();
       break;

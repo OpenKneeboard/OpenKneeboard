@@ -29,6 +29,7 @@
 #include <OpenKneeboard/KneeboardView.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/single_threaded_lockable.hpp>
 
 #include <memory>
 #include <thread>
@@ -106,6 +107,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   // events.
   winrt::Windows::Foundation::IAsyncAction FrameLoop();
   void FrameTick();
+  single_threaded_lockable mFrameInProgress;
   winrt::handle mFrameLoopCompletionEvent;
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
