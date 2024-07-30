@@ -672,21 +672,50 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
   evNeedsRepaintEvent.Emit();
 }
 
+WebView2Renderer::OKBPromiseResult
+WebView2Renderer::GetJSAPIMissingRequiredFeatureResponse(
+  const ExperimentalFeature& feature,
+  const std::source_location& caller) {
+  constexpr std::string_view prefix {"JSAPI_"};
+  std::string_view func {caller.function_name()};
+  {
+    const auto idx = func.find_last_of("::");
+    if (idx != func.npos) {
+      func.remove_prefix(idx);
+    }
+  }
+  {
+    const auto idx = func.find_first_of("(");
+    if (idx != func.npos) {
+      func = func.substr(0, idx);
+    }
+  }
+
+  assert(func.starts_with(prefix));
+  func.remove_prefix(prefix.size());
+  const auto message = std::format(
+    "⚠️ JS ERROR: OpenKneeboard.{}() failed because it requires the "
+    "experimental feature {}, "
+    "which has not been enabled.",
+    func,
+    feature);
+  dprint(message);
+  return jsapi_error("{}", message);
+}
+
+bool WebView2Renderer::IsJSAPIFeatureEnabled(
+  const ExperimentalFeature& feature) const {
+  return std::ranges::contains(
+    mDocumentResources.mEnabledExperimentalFeatures, feature);
+}
+
 concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
   auto& pageApi = mDocumentResources;
 
-  auto missingFeature = [](auto feature) {
-    return jsapi_error(
-      "SetCursorEventMode() failed - the experimental feature `{}` "
-      "version "
-      "`{}` is required.",
-      feature.mName,
-      feature.mVersion);
-  };
-  if (!std::ranges::contains(
-        pageApi.mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
-    co_return missingFeature(SetCursorEventsModeFeature);
+  if (!this->IsJSAPIFeatureEnabled(SetCursorEventsModeFeature)) {
+    co_return this->GetJSAPIMissingRequiredFeatureResponse(
+      SetCursorEventsModeFeature);
   }
   const std::string mode = args.at("mode");
 
@@ -698,18 +727,18 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
   }
 
   if (mode == "DoodlesOnly") {
-    if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures, DoodlesOnlyFeature)) {
-      co_return missingFeature(DoodlesOnlyFeature);
+    if (!this->IsJSAPIFeatureEnabled(DoodlesOnlyFeature)) {
+      co_return this->GetJSAPIMissingRequiredFeatureResponse(
+        DoodlesOnlyFeature);
     }
     pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
     co_return success();
   }
 
   if (mode == "Raw") {
-    if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures, RawCursorEventsFeature)) {
-      co_return missingFeature(RawCursorEventsFeature);
+    if (!this->IsJSAPIFeatureEnabled(RawCursorEventsFeature)) {
+      co_return this->GetJSAPIMissingRequiredFeatureResponse(
+        RawCursorEventsFeature);
     }
     pageApi.mCursorEventsMode = CursorEventsMode::Raw;
     co_return success();
@@ -721,10 +750,9 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
 concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
   auto& dr = mDocumentResources;
-  if (!std::ranges::contains(
-        dr.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return jsapi_error(
-      "The experimental feature {} is required.", PageBasedContentFeature);
+  if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
+    co_return this->GetJSAPIMissingRequiredFeatureResponse(
+      PageBasedContentFeature);
   }
 
   if (dr.mContentMode == ContentMode::Scrollable) {
@@ -749,10 +777,9 @@ concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
   auto& dr = mDocumentResources;
 
-  if (!std::ranges::contains(
-        dr.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return jsapi_error(
-      "The experimental feature {} is required.", PageBasedContentFeature);
+  if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
+    co_return this->GetJSAPIMissingRequiredFeatureResponse(
+      PageBasedContentFeature);
   }
 
   if (!mViewInfo) {
@@ -777,10 +804,9 @@ WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
   auto thread = mUIThread;
 
   auto& pageApi = mDocumentResources;
-  if (!std::ranges::contains(
-        pageApi.mEnabledExperimentalFeatures, PageBasedContentFeature)) {
-    co_return jsapi_error(
-      "The experimental feature {} is required.", PageBasedContentFeature);
+  if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
+    co_return this->GetJSAPIMissingRequiredFeatureResponse(
+      PageBasedContentFeature);
   }
 
   std::vector<APIPage> pages;

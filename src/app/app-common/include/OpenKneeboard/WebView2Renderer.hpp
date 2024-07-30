@@ -240,6 +240,12 @@ class WebView2Renderer final : public WGCRenderer {
     std::string eventType,
     nlohmann::json eventOptions);
 
+  bool IsJSAPIFeatureEnabled(const ExperimentalFeature&) const;
+
+  OKBPromiseResult GetJSAPIMissingRequiredFeatureResponse(
+    const ExperimentalFeature&,
+    const std::source_location& caller = std::source_location::current());
+
   winrt::fire_and_forget ActivateJSAPI(std::string api);
 
   struct ViewInfo {
