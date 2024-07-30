@@ -67,12 +67,10 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 #undef IT
 
 namespace {
-const ExperimentalFeature RawCursorEventsToggleableFeature {
+const ExperimentalFeature RawCursorEventsFeature {
   "RawCursorEvents",
   2024071802};
-const ExperimentalFeature DoodlesOnlyToggleableFeature {
-  "DoodlesOnly",
-  2024071802};
+const ExperimentalFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071802};
 
 const ExperimentalFeature SetCursorEventsModeFeature {
   "SetCursorEventsMode",
@@ -83,8 +81,8 @@ const ExperimentalFeature PageBasedContentFeature {
   2024072001};
 
 std::array SupportedExperimentalFeatures {
-  RawCursorEventsToggleableFeature,
-  DoodlesOnlyToggleableFeature,
+  RawCursorEventsFeature,
+  DoodlesOnlyFeature,
   SetCursorEventsModeFeature,
   PageBasedContentFeature,
 };
@@ -701,8 +699,8 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
 
   if (mode == "DoodlesOnly") {
     if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures, DoodlesOnlyToggleableFeature)) {
-      co_return missingFeature(DoodlesOnlyToggleableFeature);
+          pageApi.mEnabledExperimentalFeatures, DoodlesOnlyFeature)) {
+      co_return missingFeature(DoodlesOnlyFeature);
     }
     pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
     co_return success();
@@ -710,9 +708,8 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
 
   if (mode == "Raw") {
     if (!std::ranges::contains(
-          pageApi.mEnabledExperimentalFeatures,
-          RawCursorEventsToggleableFeature)) {
-      co_return missingFeature(RawCursorEventsToggleableFeature);
+          pageApi.mEnabledExperimentalFeatures, RawCursorEventsFeature)) {
+      co_return missingFeature(RawCursorEventsFeature);
     }
     pageApi.mCursorEventsMode = CursorEventsMode::Raw;
     co_return success();
@@ -861,9 +858,7 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
     pageApi.mEnabledExperimentalFeatures.push_back(feature);
     enabledFeatures.push_back(feature);
 
-    if (
-      feature == RawCursorEventsToggleableFeature
-      || feature == DoodlesOnlyToggleableFeature) {
+    if (feature == RawCursorEventsFeature || feature == DoodlesOnlyFeature) {
       // Nothing to do except enable these
       continue;
     }
