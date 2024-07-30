@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/166364255",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/166364255/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/166364255/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.8",
-    "id": 166364255,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/167491433",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/167491433/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/167491433/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.10",
+    "id": 167491433,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84J6oRf",
-    "tag_name": "v1.8.8",
+    "node_id": "RE_kwDOGk0DR84J-7dp",
+    "tag_name": "v1.8.10",
     "target_commitish": "master",
-    "name": "v1.8.8 - bugfixes",
+    "name": "v1.8.10: crash workarounds",
     "draft": false,
     "prerelease": false,
-    "created_at": "2024-07-20T17:42:58Z",
-    "published_at": "2024-07-20T18:12:46Z",
+    "created_at": "2024-07-27T21:13:00Z",
+    "published_at": "2024-07-27T22:00:19Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/180796876",
-        "id": 180796876,
-        "node_id": "RA_kwDOGk0DR84Kxr3M",
-        "name": "OpenKneeboard-v1.8.8-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/182241277",
+        "id": 182241277,
+        "node_id": "RA_kwDOGk0DR84K3Mf9",
+        "name": "OpenKneeboard-v1.8.10-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 171813796,
+        "size": 171876093,
         "download_count": 0,
-        "created_at": "2024-07-20T18:07:03Z",
-        "updated_at": "2024-07-20T18:07:07Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.8/OpenKneeboard-v1.8.8-DebugSymbols.zip"
+        "created_at": "2024-07-27T21:34:28Z",
+        "updated_at": "2024-07-27T21:34:33Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.10/OpenKneeboard-v1.8.10-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/180796875",
-        "id": 180796875,
-        "node_id": "RA_kwDOGk0DR84Kxr3L",
-        "name": "OpenKneeboard-v1.8.8.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/182241276",
+        "id": 182241276,
+        "node_id": "RA_kwDOGk0DR84K3Mf8",
+        "name": "OpenKneeboard-v1.8.10.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 40394752,
+        "size": 40407040,
         "download_count": 0,
-        "created_at": "2024-07-20T18:07:03Z",
-        "updated_at": "2024-07-20T18:07:04Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.8/OpenKneeboard-v1.8.8.msi"
+        "created_at": "2024-07-27T21:34:28Z",
+        "updated_at": "2024-07-27T21:34:30Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.10/OpenKneeboard-v1.8.10.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.8",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.8",
-    "body": "Start by downloading [OpenKneeboard-v1.8.8.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.8/OpenKneeboard-v1.8.8.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes in v1.8.8\r\n\r\n- Fixed bug that could lead to SimHub integration not functioning\r\n- Fixed a bug in a workaround for a Microsoft PDV viewer bug which could lead to crashes when closing/reloading a PDF\r\n\r\n# Changes in v1.8.6 \r\n\r\n## Bug fixes\r\n\r\n- Added additional workarounds for [bug in the Windows App SDK's PDF library](https://github.com/microsoft/WindowsAppSDK/issues/3506); this fixes some crashes when closing or reloading PDFs\r\n- Fix some additional rarer issues if PDFs are  *rapidly* opened and closed\r\n- Fixed crash if web dashboards that use OpenKneeboard's web API are closed while loading\r\n\r\n## Other Improvements\r\n\r\n- The `F-5E` folder is now searched for DCS kneeboard images, in addition to `F-5E-3`\r\n- The active settings path is now written into HKCU, allowing integrations to *read* OpenKneeboard settings. OpenKneeboard does not read this registry value, and external programs should not modify settings."
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.10",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.10",
+    "body": "Start by downloading [OpenKneeboard-v1.8.10.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.10/OpenKneeboard-v1.8.10.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes\r\n\r\nThis release unfortunately disables functionality where known bugs in other software causes crashes that can not be fixed in OpenKneeboard:\r\n\r\n## webp images\r\n\r\nMicrosoft's \"Webp Image Extensions\" component is no longer used if installed, due to a bug in it that can crash OpenKneeboard. On most systems, this will mean that OpenKneeboard no longer supports webp images.\r\n\r\n**Workaround**: unfortunately, you need to convert any webp images you use with OpenKneeboard to another format, such as png images.\r\n\r\n## Tablets\r\n\r\n### `Untrusted` WinTab drivers\r\n\r\nWinTab can no longer be enabled if `wintab32.dll` does not have a signature that Windows trusts.\r\n\r\n- Gaomon, Huion, and Wacom **ARE NOT** affected\r\n- XP-Pen tablets **ARE** affected\r\n\r\nThis is for several reasons:\r\n\r\n- unsigned DLLs can cause game crashes in games with anti-cheat if WinTab mode is set to 'invasive'\r\n- XP-Pen's `wintab32.dll` does not provide a way to identify it, and causes intermittent crashes both in games and OpenKneeboard\r\n\r\nFuture versions of OpenKneeboard *may* ignore specific drivers known to cause crashes, but this change is still needed, and is sufficient to block XP-Pen's drivers.\r\n\r\n**Workaround**: use OpenTabletDriver instead if you have an affected tablet. OpenTabletDriver is *recommended* but not *required* for other tablets.\r\n\r\nIf you are switching to OpenTabletDriver, you must uninstall your manufacturer's drivers; [TabletDriverCleanup](https://github.com/X9VoiD/TabletDriverCleanup) can be a useful tool.\r\n\r\nIt is **NOT** possible to resolve this issue by:\r\n\r\n- telling WIndows to trust XP-Pen's `wintab32.dll`; this requires a code signing certificate, and would not fix the underlying crash-causing bugs\r\n- using a different manufacturer's `wintab32.dll`\r\n\r\n### WinTab and OpenTabletDriver\r\n\r\nWinTab support can no longer be enabled at the same time as OpenTabletDriver. While there are known bugs caused by having both enabled, if OpenTabletDriver is enabled, there is no need for WinTab, so it is no longer possible to load both at the same time. Loading less code means less chance for bugs."
   }
 ]
