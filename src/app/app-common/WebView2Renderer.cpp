@@ -652,6 +652,15 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
   auto weak = weak_from_this();
   const auto uiThread = mUIThread;
 
+  const auto dq = mDQC.DispatcherQueue();
+  co_await wil::resume_foreground(dq);
+
+  {
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+
   mSize = size;
 
   const auto wfSize
@@ -660,6 +669,7 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
   mWebViewVisual.Size(wfSize);
   mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
   mController.RasterizationScale(1.0);
+  }
 
   co_await uiThread;
 
