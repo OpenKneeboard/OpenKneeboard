@@ -76,6 +76,70 @@ class EventHandler final {
     };
   }
 
+  template <class... Binds>
+    requires(sizeof...(Binds) >= 1)
+  constexpr EventHandler(
+    std::regular_invocable<Binds..., Args...> auto f,
+    Binds&&... binds) {
+    mImpl = std::bind_front(f, std::forward<Binds>(binds)...);
+  }
+
+  template <class... Binds>
+    requires(sizeof...(Binds) >= 1)
+  constexpr EventHandler(
+    auto_weak_ref_t,
+    std::regular_invocable<Binds..., Args...> auto f,
+    Binds&&... binds) {
+    const auto makeWeak = [](auto&& arg) {
+      if constexpr (OpenKneeboard::strong_ref<std::decay_t<decltype(arg)>>) {
+        return OpenKneeboard::weak_ref(arg);
+      } else {
+        return std::forward<decltype(arg)>(arg);
+      }
+    };
+
+    auto weakBinds = std::tuple(makeWeak(std::forward<Binds>(binds))...);
+
+    mImpl = std::bind_front(
+      [](auto f, auto weakBinds, Args&&... args) {
+        const auto makeStrong = [](auto&& arg) {
+          if constexpr (OpenKneeboard::weak_ref_or_ptr<
+                          std::decay_t<decltype(arg)>>) {
+            return OpenKneeboard::lock_weak(arg);
+          } else {
+            return std::forward<decltype(arg)>(arg);
+          }
+        };
+        const auto makeStrongs = [makeStrong](auto&&... args) {
+          return std::make_tuple(
+            makeStrong(std::forward<decltype(args)>(args))...);
+        };
+        const auto strongBinds = std::apply(makeStrongs, weakBinds);
+        const auto isLive = [](auto&& arg) {
+          if constexpr (OpenKneeboard::strong_ref<
+                          std::decay_t<decltype(arg)>>) {
+            return static_cast<bool>(arg);
+          } else {
+            return true;
+          }
+        };
+        const auto allLive = std::apply(
+          [isLive](auto&&... args) {
+            return (isLive(std::forward<decltype(args)>(args)) && ...);
+          },
+          strongBinds);
+        if (!allLive) {
+          return;
+        }
+        std::apply(
+          f,
+          std::tuple_cat(
+            strongBinds, std::make_tuple(std::forward<Args>(args)...)));
+      },
+      f,
+      weakBinds);
+  }
+
   template <
     weak_ref_or_ptr TWeak,
     class TRaw = decltype(lock_weak(std::declval<TWeak>()).get())>

@@ -270,17 +270,17 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   AddEventListener(
     action->evStateChangedEvent,
-    [uiThread = mUIThread,
-     weakAction = std::weak_ptr(action),
-     weakButton
-     = winrt::make_weak(button)]() noexcept -> winrt::fire_and_forget {
-      co_await uiThread;
-      auto action = weakAction.lock();
-      auto button = weakButton.get();
-      if (action && button) {
+    {
+      auto_weak_ref,
+      [](auto uiThread, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await uiThread;
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
-      }
+      },
+      mUIThread,
+      action,
+      button,
     });
 
   return button;
@@ -301,16 +301,16 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    [uiThread = mUIThread,
-     weakAction = std::weak_ptr(action),
-     weakButton
-     = winrt::make_weak(button)]() noexcept -> winrt::fire_and_forget {
-      co_await uiThread;
-      auto action = weakAction.lock();
-      auto button = weakButton.get();
-      if (action && button) {
+    {
+      auto_weak_ref,
+      [](auto uiThread, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await uiThread;
         button.IsEnabled(action->IsEnabled());
-      }
+      },
+      mUIThread,
+      action,
+      button,
     });
 
   return button;
@@ -487,16 +487,18 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    [uiThread = mUIThread,
-     weak = weak_refs(control, visibility)]() -> winrt::fire_and_forget {
-      co_await uiThread;
-      auto strong = lock_weaks(weak);
-      if (!strong) {
-        co_return;
-      }
-      auto [control, visibility] = *strong;
-      control.Visibility(
-        visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
+    {
+      auto_weak_ref,
+      [](auto uiThread, auto control, auto visibility)
+        -> winrt::fire_and_forget {
+        co_await uiThread;
+        control.Visibility(
+          visibility->IsVisible() ? Visibility::Visible
+                                  : Visibility::Collapsed);
+      },
+      mUIThread,
+      control,
+      visibility,
     });
 }
 

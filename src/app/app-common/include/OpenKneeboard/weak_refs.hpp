@@ -49,6 +49,11 @@
 
 namespace OpenKneeboard {
 
+// Marker for functions to automatically convert strong to weak and back again,
+// e.g. for EventHandlers
+class auto_weak_ref_t final {};
+constexpr auto_weak_ref_t auto_weak_ref {};
+
 namespace detail {
 
 template <class T>
