@@ -334,12 +334,12 @@ class Event final : public EventBase {
   }
 
   winrt::Windows::Foundation::IAsyncAction EmitFromContextAsync(
-    auto KneeboardViewID,
+    auto context,
     Args... args,
     std::source_location location = std::source_location::current()) {
     auto weakImpl = std::weak_ptr(mImpl);
     winrt::apartment_context originalContext;
-    co_await KneeboardViewID;
+    co_await context;
     if (auto impl = weakImpl.lock()) {
       impl->Emit(args..., location);
     }

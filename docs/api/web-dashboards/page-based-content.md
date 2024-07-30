@@ -19,7 +19,13 @@ This experimental API allows a web page to work like a native OpenKneeboard tab 
 
 This feature requires:
 - OpenKneeboard v1.9 or above
-- the experimental feature `PageBasedContent` version `2024072001`
+- the experimental feature `PageBasedContent` version `2024073001`
+
+## Change History
+
+### 204072001 -> 2024073001
+
+- Added `OpenKneeboard.RequestPageChange()`
 
 ## Model
 
@@ -65,7 +71,7 @@ As this is an experimental feature, it may change without notice, and it must be
 ```js
 try {
     await OpenKneeboard.EnableExperimentalFeatures([
-        { name: 'PageBasedContent', version: 2024072001 },
+        { name: 'PageBasedContent', version: 2024073001 },
     ]);
 } catch (ex) {
     FallbackWithoutUsingThisFeature();
@@ -191,6 +197,19 @@ await OpenKneeboard.SendMesageToPeers("hello, world");
 
 - The `message` parameter is any JSON-encodable value.
 - This is a 'fire-and-forget' function; no indication is given whether or not peers received the message, or encountered any issues
+
+### RequestPageChange
+
+This function *requests* a page change; OpenKneeboard might or might not honor the request, depending on the current state, and user preferences. If it is honored, the [`pageChanged` event](#the-pagechanged-event) will be triggered.
+
+```ts
+// Syntax:
+OpenKneeboard.RequestPageChange(guid: string): Promise<any>;
+
+// Example:
+pages = (await OpenKneeboard.GetPages()).pages;
+await OpenKneeboard.RequestPageChange(pages[1].guid);
+```
 
 ### The peerMessage event
 

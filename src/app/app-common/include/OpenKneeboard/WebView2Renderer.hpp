@@ -50,6 +50,7 @@ struct ExperimentalFeature {
   IT(SendMessageToPeers) \
   IT(SetCursorEventsMode) \
   IT(SetPages) \
+  IT(RequestPageChange) \
   IT(SetPreferredPixelSize) \
   IT(OpenDeveloperToolsWindow)
 
@@ -125,6 +126,7 @@ class WebView2Renderer final : public WGCRenderer {
 
   using InstanceID = winrt::guid;
   Event<InstanceID, nlohmann::json> evJSAPI_SendMessageToPeers;
+  Event<KneeboardViewID, PageID> evJSAPI_PageChangeRequested;
   void OnJSAPI_Peer_SendMessageToPeers(
     const InstanceID&,
     const nlohmann::json&);
@@ -251,6 +253,7 @@ class WebView2Renderer final : public WGCRenderer {
   struct ViewInfo {
     winrt::guid mGuid;
     std::string mName;
+    KneeboardViewID mRuntimeID {nullptr};
   };
   std::optional<ViewInfo> mViewInfo {};
 

@@ -79,12 +79,16 @@ const ExperimentalFeature SetCursorEventsModeFeature {
 const ExperimentalFeature PageBasedContentFeature {
   "PageBasedContent",
   2024072001};
+const ExperimentalFeature PageBasedContentWithRequestPageChangeFeature {
+  "PageBasedContent",
+  2024073001};
 
 std::array SupportedExperimentalFeatures {
   RawCursorEventsFeature,
   DoodlesOnlyFeature,
   SetCursorEventsModeFeature,
   PageBasedContentFeature,
+  PageBasedContentWithRequestPageChangeFeature,
 };
 
 template <class... Args>
@@ -661,14 +665,14 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
       co_return;
     }
 
-  mSize = size;
+    mSize = size;
 
-  const auto wfSize
-    = mSize.StaticCast<float, winrt::Windows::Foundation::Numerics::float2>();
-  mRootVisual.Size(wfSize);
-  mWebViewVisual.Size(wfSize);
-  mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
-  mController.RasterizationScale(1.0);
+    const auto wfSize
+      = mSize.StaticCast<float, winrt::Windows::Foundation::Numerics::float2>();
+    mRootVisual.Size(wfSize);
+    mWebViewVisual.Size(wfSize);
+    mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
+    mController.RasterizationScale(1.0);
   }
 
   co_await uiThread;
@@ -689,15 +693,15 @@ WebView2Renderer::GetJSAPIMissingRequiredFeatureResponse(
   constexpr std::string_view prefix {"JSAPI_"};
   std::string_view func {caller.function_name()};
   {
-    const auto idx = func.find_last_of("::");
-    if (idx != func.npos) {
-      func.remove_prefix(idx);
-    }
-  }
-  {
     const auto idx = func.find_first_of("(");
     if (idx != func.npos) {
       func = func.substr(0, idx);
+    }
+  }
+  {
+    const auto idx = func.find_last_of("::");
+    if (idx != func.npos) {
+      func.remove_prefix(idx + 1);
     }
   }
 
@@ -853,6 +857,35 @@ WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
 }
 
 concurrency::task<WebView2Renderer::OKBPromiseResult>
+WebView2Renderer::JSAPI_RequestPageChange(nlohmann::json args) {
+  if (!this->IsJSAPIFeatureEnabled(
+        PageBasedContentWithRequestPageChangeFeature)) {
+    co_return this->GetJSAPIMissingRequiredFeatureResponse(
+      PageBasedContentWithRequestPageChangeFeature);
+  }
+
+  if (mDocumentResources.mContentMode != ContentMode::PageBased) {
+    co_return jsapi_error(
+      "Content mode is not page-based; call GetPages() and SetPages() first");
+  }
+
+  const auto guid = args.get<winrt::guid>();
+  const auto& pages = mDocumentResources.mPages;
+  const auto it = std::ranges::find(pages, guid, &APIPage::mGuid);
+  if (it == pages.end()) {
+    co_return jsapi_error("Couldn't find page with GUID {}", guid);
+  }
+  if (!mViewInfo) {
+    OPENKNEEBOARD_BREAK;
+    co_return jsapi_error("OKB internal error: don't have an active view");
+  }
+
+  this->evJSAPI_PageChangeRequested.EnqueueForContext(
+    mUIThread, mViewInfo->mRuntimeID, it->mPageID);
+  co_return nlohmann::json {};
+}
+
+concurrency::task<WebView2Renderer::OKBPromiseResult>
 WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
   std::vector<ExperimentalFeature> enabledFeatures;
 
@@ -891,8 +924,12 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
       name,
       version);
 
-    pageApi.mEnabledExperimentalFeatures.push_back(feature);
-    enabledFeatures.push_back(feature);
+    const auto EnableFeature = [&](const ExperimentalFeature& feature) {
+      pageApi.mEnabledExperimentalFeatures.push_back(feature);
+      enabledFeatures.push_back(feature);
+    };
+
+    EnableFeature(feature);
 
     if (feature == RawCursorEventsFeature || feature == DoodlesOnlyFeature) {
       // Nothing to do except enable these
@@ -906,6 +943,17 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
 
     if (feature == PageBasedContentFeature) {
       this->ActivateJSAPI("PageBasedContent");
+      const auto message = std::format(
+        "⚠️ WARNING: enabling obsolete experimental feature {}", feature);
+      dprint(message);
+      this->SendJSLog(message);
+      continue;
+    }
+
+    if (feature == PageBasedContentWithRequestPageChangeFeature) {
+      EnableFeature(PageBasedContentFeature);
+      this->ActivateJSAPI("PageBasedContentWithRequestPageChange");
+      // Enable the original too, as this is a strict superset
       continue;
     }
 
@@ -1011,8 +1059,11 @@ WebView2Renderer::WebView2Renderer(
     mEnvironment(environment),
     mInitialPages(apiPages) {
   if (view) {
-    mViewInfo
-      = ViewInfo {view->GetPersistentGUID(), std::string {view->GetName()}};
+    mViewInfo = ViewInfo {
+      .mGuid = view->GetPersistentGUID(),
+      .mName = std::string {view->GetName()},
+      .mRuntimeID = view->GetRuntimeID(),
+    };
   }
 }
 

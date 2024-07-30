@@ -344,6 +344,8 @@ void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {
     renderer->evJSAPI_SendMessageToPeers,
     {weak_from_this(), &WebView2PageSource::OnJSAPI_SendMessageToPeers});
   AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  AddEventListener(
+    renderer->evJSAPI_PageChangeRequested, this->evPageChangeRequestedEvent);
 }
 
 winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(

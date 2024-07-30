@@ -109,6 +109,10 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#AsyncRequest("OpenKneeboard.SetPages", { pages });
     }
 
+    #RequestPageChange(guid) {
+        return this.#AsyncRequest("OpenKneeboard.RequestPageChange", guid);
+    }
+
     #SendMessageToPeers(message) {
         return this.#AsyncRequest("OpenKneeboard.SendMessageToPeers", { message });
     }
@@ -118,6 +122,9 @@ class OpenKneeboardAPI extends EventTarget {
             case "SetCursorEventsMode":
                 this.SetCursorEventsMode = this.#SetCursorEventsMode;
                 return;
+            case "PageBasedContentWithRequestPageChange":
+                this.RequestPageChange = this.#RequestPageChange;
+            // fallthrough
             case "PageBasedContent":
                 this.SetPages = this.#SetPages;
                 this.GetPages = this.#GetPages;

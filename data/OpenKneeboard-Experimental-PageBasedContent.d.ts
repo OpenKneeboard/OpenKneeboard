@@ -57,5 +57,7 @@ declare namespace OpenKneeboard {
         SetPages(pages: [Page]): Promise<any>;
 
         SendMessageToPeers(message: any): Promise<any>;
+
+        RequestPageChange(guid: string): Promise<any>
     }
 }
