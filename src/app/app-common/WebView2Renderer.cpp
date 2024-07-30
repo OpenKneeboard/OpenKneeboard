@@ -67,13 +67,9 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 #undef IT
 
 namespace {
-const ExperimentalFeature RawCursorEventsFeature {
-  "RawCursorEvents",
-  2024071801};
 const ExperimentalFeature RawCursorEventsToggleableFeature {
   "RawCursorEvents",
   2024071802};
-const ExperimentalFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071801};
 const ExperimentalFeature DoodlesOnlyToggleableFeature {
   "DoodlesOnly",
   2024071802};
@@ -87,9 +83,7 @@ const ExperimentalFeature PageBasedContentFeature {
   2024072001};
 
 std::array SupportedExperimentalFeatures {
-  RawCursorEventsFeature,
   RawCursorEventsToggleableFeature,
-  DoodlesOnlyFeature,
   DoodlesOnlyToggleableFeature,
   SetCursorEventsModeFeature,
   PageBasedContentFeature,
@@ -718,7 +712,7 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
     if (!std::ranges::contains(
           pageApi.mEnabledExperimentalFeatures,
           RawCursorEventsToggleableFeature)) {
-      co_return missingFeature(RawCursorEventsFeature);
+      co_return missingFeature(RawCursorEventsToggleableFeature);
     }
     pageApi.mCursorEventsMode = CursorEventsMode::Raw;
     co_return success();
@@ -881,45 +875,6 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
 
     if (feature == PageBasedContentFeature) {
       this->ActivateJSAPI("PageBasedContent");
-      continue;
-    }
-
-    // Not a coroutine.
-    // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
-    auto warnObsolete = [this](const auto& feature) {
-      const auto warning = std::format(
-        "WARNING: enabling an obsolete experimental feature: `{}` "
-        "version "
-        "`{}`",
-        feature.mName,
-        feature.mVersion);
-      dprint(warning);
-      this->SendJSLog(warning);
-    };
-
-    if (feature == RawCursorEventsFeature) {
-      warnObsolete(feature);
-      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return jsapi_error(
-          "Can not enable `{}`, as the cursor mode has already been "
-          "changed "
-          "by "
-          "this page.",
-          name);
-      }
-      pageApi.mCursorEventsMode = CursorEventsMode::Raw;
-      continue;
-    }
-
-    if (feature == DoodlesOnlyFeature) {
-      warnObsolete(feature);
-      if (pageApi.mCursorEventsMode != CursorEventsMode::MouseEmulation) {
-        co_return jsapi_error(
-          "Can not enable `{}`, as the cursor mode has already been "
-          "changed by this page.",
-          name);
-      }
-      pageApi.mCursorEventsMode = CursorEventsMode::DoodlesOnly;
       continue;
     }
 
