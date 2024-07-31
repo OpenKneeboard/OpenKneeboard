@@ -55,10 +55,10 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
     TraceLoggingValue(pr.Top(), name "/Top"), \
     OPENKNEEBOARD_TraceLoggingSize2D(pr, name)
 
-#ifdef CLANG_TIDY
+#if defined(CLANG_TIDY) || defined(__CLANG__) || defined(CLANG_CL)
 // We should be able to switch to the real definitions once
 // we're using `/Zc:preprocessor` and OPENKNEEBOARD_VA_OPT_SUPPORTED is true
-namespace ClangTidy {
+namespace ClangStubs {
 class TraceLoggingScopedActivity
   : public TraceLoggingThreadActivity<gTraceProvider> {
  public:
@@ -72,10 +72,10 @@ class TraceLoggingScopedActivity
 constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
   return first;
 }
-}// namespace ClangTidy
+}// namespace ClangStubs
 #define OPENKNEEBOARD_TraceLoggingScope(...)
 #define OPENKNEEBOARD_TraceLoggingScopedActivity(activity, ...) \
-  ClangTidy::TraceLoggingScopedActivity activity;
+  ClangStubs::TraceLoggingScopedActivity activity;
 #define OPENKNEEBOARD_TraceLoggingWrite(...)
 
 #undef TraceLoggingProviderEnabled
@@ -93,20 +93,32 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
 #undef TraceLoggingWriteStop
 #undef TraceLoggingWriteTagged
 
-#define TraceLoggingProviderEnabled(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingProviderEnabled(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 
-#define TraceLoggingValue(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingCountedWideString(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingString(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingBinary(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingGuid(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingHexUInt64(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingHexUInt64Array(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingValue(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingCountedWideString(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingString(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingBinary(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingGuid(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingHexUInt64(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingHexUInt64Array(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 
-#define TraceLoggingWrite(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteStart(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteStop(...) ClangTidy::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteTagged(...) ClangTidy::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWrite(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteStart(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteStop(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingWriteTagged(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 
 #else
 
@@ -225,5 +237,5 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 }// namespace OpenKneeboard
 
 #ifdef CLANG_TIDY
-namespace ClangTidy = OpenKneeboard::ClangTidy;
+namespace ClangStubs = OpenKneeboard::ClangStubs;
 #endif
