@@ -5,17 +5,22 @@ ExternalProject_Add(
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
-
+  BUILD_COMMAND
+  "${CMAKE_COMMAND}"
+  --build .
+  --config "$<CONFIG>"
+  --target zlibstatic
+  INSTALL_COMMAND ""
   EXCLUDE_FROM_ALL
   DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
-ExternalProject_Get_property(zlibBuild INSTALL_DIR)
+ExternalProject_Get_property(zlibBuild BINARY_DIR SOURCE_DIR)
 
 add_library(zlib INTERFACE)
 add_dependencies(zlib zlibBuild)
-target_link_libraries(zlib INTERFACE "${INSTALL_DIR}/lib/zlibstatic$<$<CONFIG:Debug>:d>.lib")
-target_include_directories(zlib INTERFACE "${INSTALL_DIR}/include")
+target_link_libraries(zlib INTERFACE "${BINARY_DIR}/$<CONFIG>/zlibstatic$<$<CONFIG:Debug>:d>.lib")
+target_include_directories(zlib INTERFACE "${SOURCE_DIR}" "${BINARY_DIR}")
 
 add_library(ThirdParty::ZLib ALIAS zlib)
 

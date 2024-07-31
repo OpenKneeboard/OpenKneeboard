@@ -17,6 +17,13 @@ macro(disable_clang_tidy TARGET)
   )
 endmacro()
 
+set(THIRD_PARTY_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS})
+if(MSVC)
+  list(APPEND THIRD_PARTY_COMPILE_OPTIONS "/WX-")
+else()
+  list(APPEND THID_PARTY_COMPILE_OPTIONS "-Wno-error")
+endif()
+
 set(
   THIRDPARTY_TOOLCHAIN_FILE
   "${CMAKE_CURRENT_BINARY_DIR}/toolchain.cmake"
