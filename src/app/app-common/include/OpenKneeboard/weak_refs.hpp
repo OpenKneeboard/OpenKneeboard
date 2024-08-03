@@ -60,6 +60,10 @@
 #define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK \
   OPENKNEEBOARD_WEAK_REFS_CPPWINRT
 #endif
+#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT
+#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT \
+  (OPENKNEEBOARD_WEAK_REFS_CPPWINRT && (__has_include(<wil/cppwinrt_helpers.h>)))
+#endif
 
 #ifndef OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
 #define OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR true
@@ -76,8 +80,11 @@
 #if OPENKNEEBOARD_WEAK_REFS_CPPWINRT
 #include "weak_refs/cppwinrt.hpp"
 #if OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK
-#include "weak_refs/cppwinrt_get_weak.hpp"
+#include "weak_refs/cppwinrt/get_weak.hpp"
 #endif
+#endif
+#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT
+#include "weak_refs/cppwinrt/bind_context.hpp"
 #endif
 
 #if OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
@@ -90,6 +97,7 @@
 namespace OpenKneeboard {
 using namespace weak_refs;
 using namespace weak_refs::bind_front_adl;
+using namespace weak_refs::cppwinrt;
 }// namespace OpenKneeboard
 
 namespace TestNS {

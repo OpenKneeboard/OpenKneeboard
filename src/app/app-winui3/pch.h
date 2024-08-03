@@ -34,3 +34,5 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <wil/cppwinrt_helpers.h>
+
+#include <OpenKneeboard/weak_refs.hpp>

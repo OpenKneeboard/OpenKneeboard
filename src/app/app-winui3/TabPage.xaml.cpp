@@ -270,15 +270,13 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
+    bind_front_with_context(
+      mUIThread,
       auto_weak_refs,
-      [](auto uiThread, auto action, auto button) noexcept
-      -> winrt::fire_and_forget {
-        co_await uiThread;
+      [](auto action, auto button) noexcept {
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
       },
-      mUIThread,
       action,
       button));
 
@@ -300,14 +298,12 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
+    bind_front_with_context(
+      mUIThread,
       auto_weak_refs,
-      [](auto uiThread, auto action, auto button) noexcept
-      -> winrt::fire_and_forget {
-        co_await uiThread;
+      [](auto action, auto button) noexcept {
         button.IsEnabled(action->IsEnabled());
       },
-      mUIThread,
       action,
       button));
 
@@ -369,18 +365,14 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     tmfi.IsChecked(checkable->IsChecked());
     AddEventListener(
       checkable->evStateChangedEvent,
-      bind_front(
-        [](auto uiThread, auto weak) -> winrt::fire_and_forget {
-          co_await uiThread;
-          auto strong = lock_weak_refs(weak);
-          if (!strong) {
-            co_return;
-          }
-          auto [tmfi, checkable] = *strong;
+      bind_front_with_context(
+        mUIThread,
+        auto_weak_refs,
+        [](auto tmfi, auto checkable) {
           tmfi.IsChecked(checkable->IsChecked());
         },
-        mUIThread,
-        make_weak_refs(tmfi, checkable)));
+        tmfi,
+        checkable));
   } else {
     ret = {};
   }
@@ -396,18 +388,13 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
-      [](auto uiThread, auto weak) noexcept -> winrt::fire_and_forget {
-        co_await uiThread;
-        auto strong = lock_weak_refs(weak);
-        if (!strong) {
-          co_return;
-        }
-        auto [action, item] = *strong;
+    bind_front_with_context(
+      mUIThread,
+      [](auto action, auto item) noexcept {
         item.IsEnabled(action->IsEnabled());
       },
-      mUIThread,
-      make_weak_refs(action, ret)));
+      action,
+      ret));
   return ret;
 }
 
@@ -488,16 +475,13 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    bind_front(
-      auto_weak_refs,
-      [](auto uiThread, auto control, auto visibility)
-        -> winrt::fire_and_forget {
-        co_await uiThread;
+    bind_front_with_context(
+      mUIThread,
+      [](auto control, auto visibility) {
         control.Visibility(
           visibility->IsVisible() ? Visibility::Visible
                                   : Visibility::Collapsed);
       },
-      mUIThread,
       control,
       visibility));
 }

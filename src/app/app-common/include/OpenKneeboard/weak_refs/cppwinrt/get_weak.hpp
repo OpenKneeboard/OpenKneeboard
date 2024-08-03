@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "cppwinrt.hpp"
+#include "../cppwinrt.hpp"
 
 namespace OpenKneeboard::weak_refs_adl_detail {
 template <class T>
