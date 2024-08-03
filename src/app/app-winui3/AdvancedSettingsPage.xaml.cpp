@@ -55,13 +55,14 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
 
   AddEventListener(
     mKneeboard->evSettingsChangedEvent,
-    [uiThread = mUIThread, weak = get_weak()]() -> winrt::fire_and_forget {
-      co_await uiThread;
-      if (auto self = weak.get()) {
+    bind_front_with_context(
+      mUIThread,
+      auto_weak_refs,
+      [](auto self) {
         self->mPropertyChangedEvent(
           *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
-      }
-    });
+      },
+      this));
 }
 
 AdvancedSettingsPage::~AdvancedSettingsPage() {
@@ -347,14 +348,14 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
     co_return;
   }
 
-  const scope_exit propertyChanged(
-    [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
-      co_await uiThread;
-      if (auto self = weak.get()) {
-        self->mPropertyChangedEvent(
-          *self, PropertyChangedEventArgs(L"DesiredElevation"));
-      }
-    });
+  const scope_exit propertyChanged(bind_front_with_context(
+    mUIThread,
+    auto_weak_refs,
+    [](auto self) {
+      self->mPropertyChangedEvent(
+        *self, PropertyChangedEventArgs(L"DesiredElevation"));
+    },
+    this));
 
   // Always use the helper; while it's not needed, it never hurts, and gives us
   // a single path to act

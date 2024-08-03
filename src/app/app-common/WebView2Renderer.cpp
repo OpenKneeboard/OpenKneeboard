@@ -187,13 +187,10 @@ WebView2Renderer::InitializeContentToCapture() {
   settings.IsWebMessageEnabled(true);
   mWebView.WebMessageReceived(
     std::bind_front(&WebView2Renderer::OnWebMessageReceived, this));
-  mWebView.NavigationStarting(std::bind_front(
-    [](auto weak, auto thread, auto, auto args) -> winrt::fire_and_forget {
-      co_await thread;
-      auto self = weak.lock();
-      if (!self) {
-        co_return;
-      }
+  mWebView.NavigationStarting(bind_front_with_context(
+    mUIThread,
+    auto_weak_refs,
+    [](auto self, auto, auto args) {
       self->mDocumentResources = {};
       const auto originalURI = self->mSettings.mURI;
       const auto newURI = winrt::to_string(args.Uri());
@@ -201,8 +198,7 @@ WebView2Renderer::InitializeContentToCapture() {
         self->mDocumentResources.mPages = self->mInitialPages;
       }
     },
-    weak_from_this(),
-    mUIThread));
+    this));
 
   co_await this->ImportJavascriptFile(
     Filesystem::GetImmutableDataDirectory() / "WebView2.js");
@@ -545,14 +541,10 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   const std::string message = parsed.at("messageName");
   const uint64_t callID = parsed.at("callID");
 
-  const auto respond = std::bind_front(
-    [](auto dq, auto weak, auto callID, OKBPromiseResult result)
-      -> winrt::fire_and_forget {
-      co_await wil::resume_foreground(dq);
-      auto self = weak.lock();
-      if (!self) {
-        co_return;
-      }
+  const auto respond = bind_front_with_context(
+    mDQC.DispatcherQueue(),
+    auto_weak_refs,
+    [](auto self, auto callID, OKBPromiseResult result) {
       nlohmann::json response {
         {"OpenKneeboard_WebView2_MessageType", "AsyncResponse"},
         {"callID", callID},
@@ -572,8 +564,7 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
         self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
       }
     },
-    mDQC.DispatcherQueue(),
-    weak,
+    this,
     callID);
 
   try {

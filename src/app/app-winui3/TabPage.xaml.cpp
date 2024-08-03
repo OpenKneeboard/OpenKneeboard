@@ -255,18 +255,18 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
   button.IsEnabled(action->IsEnabled());
 
   button.IsChecked(action->IsActive());
-  button.Checked(
-    [weak = std::weak_ptr(action)](auto, auto) -> winrt::fire_and_forget {
-      if (auto action = weak.lock()) {
-        co_await action->Activate();
-      }
-    });
-  button.Unchecked(
-    [weak = std::weak_ptr(action)](auto, auto) -> winrt::fire_and_forget {
-      if (auto action = weak.lock()) {
-        co_await action->Deactivate();
-      }
-    });
+  button.Checked(bind_front(
+    auto_weak_refs,
+    [](auto action, auto, auto) -> winrt::fire_and_forget {
+      co_await action->Activate();
+    },
+    action));
+  button.Unchecked(bind_front(
+    auto_weak_refs,
+    [](auto action, auto, auto) -> winrt::fire_and_forget {
+      co_await action->Deactivate();
+    },
+    action));
 
   AddEventListener(
     action->evStateChangedEvent,
