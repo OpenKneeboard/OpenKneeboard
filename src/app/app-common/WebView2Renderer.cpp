@@ -541,31 +541,8 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   const std::string message = parsed.at("messageName");
   const uint64_t callID = parsed.at("callID");
 
-  const auto respond = bind_front_with_context(
-    mDQC.DispatcherQueue(),
-    auto_weak_refs,
-    [](auto self, auto callID, OKBPromiseResult result) {
-      nlohmann::json response {
-        {"OpenKneeboard_WebView2_MessageType", "AsyncResponse"},
-        {"callID", callID},
-      };
-      if (result.has_value()) {
-        if (result->is_null()) {
-          response.emplace("result", "ok");
-        } else {
-          response.emplace("result", result.value());
-        }
-      } else {
-        response.emplace("error", result.error());
-        dprintf("WARNING: WebView2 API error: {}", result.error());
-      }
-
-      if (self->mWebView) {
-        self->mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
-      }
-    },
-    this,
-    callID);
+  const auto respond = bind_front(
+    auto_weak_refs, &WebView2Renderer::SendJSResponse, this, callID);
 
   try {
 #define OKB_INVOKE_JSAPI(APIFUNC) \
@@ -1069,6 +1046,37 @@ void WebView2Renderer::OnJSAPI_Peer_SetPages(
   mDocumentResources.mPages = pages;
 
   this->SendJSEvent("pagesChanged", {{"detail", {{"pages", pages}}}});
+}
+
+winrt::fire_and_forget WebView2Renderer::SendJSResponse(
+  uint64_t callID,
+  OKBPromiseResult result) {
+  auto weak = weak_from_this();
+  auto dq = mDQC.DispatcherQueue();
+  co_await wil::resume_foreground(dq);
+
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+  nlohmann::json response {
+    {"OpenKneeboard_WebView2_MessageType", "AsyncResponse"},
+    {"callID", callID},
+  };
+  if (result.has_value()) {
+    if (result->is_null()) {
+      response.emplace("result", "ok");
+    } else {
+      response.emplace("result", result.value());
+    }
+  } else {
+    response.emplace("error", result.error());
+    dprintf("WARNING: WebView2 API error: {}", result.error());
+  }
+
+  if (mWebView) {
+    mWebView.PostWebMessageAsJson(winrt::to_hstring(response.dump()));
+  }
 }
 
 LRESULT CALLBACK WebView2Renderer::WindowProc(

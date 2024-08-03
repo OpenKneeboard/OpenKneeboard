@@ -238,6 +238,8 @@ class WebView2Renderer final : public WGCRenderer {
     mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
   }
 
+  winrt::fire_and_forget SendJSResponse(uint64_t callID, OKBPromiseResult);
+
   winrt::fire_and_forget SendJSEvent(
     std::string eventType,
     nlohmann::json eventOptions);
