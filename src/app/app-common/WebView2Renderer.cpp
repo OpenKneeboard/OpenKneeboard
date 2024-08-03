@@ -190,7 +190,7 @@ WebView2Renderer::InitializeContentToCapture() {
   mWebView.NavigationStarting(std::bind_front(
     [](auto weak, auto thread, auto, auto args) -> winrt::fire_and_forget {
       co_await thread;
-      auto self = std::static_pointer_cast<WebView2Renderer>(weak.lock());
+      auto self = weak.lock();
       if (!self) {
         co_return;
       }
@@ -549,7 +549,7 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     [](auto dq, auto weak, auto callID, OKBPromiseResult result)
       -> winrt::fire_and_forget {
       co_await wil::resume_foreground(dq);
-      auto self = std::static_pointer_cast<WebView2Renderer>(weak.lock());
+      auto self = weak.lock();
       if (!self) {
         co_return;
       }

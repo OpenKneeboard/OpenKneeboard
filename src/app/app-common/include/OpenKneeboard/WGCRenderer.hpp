@@ -33,6 +33,7 @@
 #include <winrt/Windows.System.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/enable_shared_from_this.hpp>
 #include <OpenKneeboard/handles.hpp>
 
 #include <memory>
@@ -48,7 +49,7 @@ class SpriteBatch;
 // A page source using Windows::Graphics::Capture
 class WGCRenderer : public virtual EventReceiver,
                     public IHasDisposeAsync,
-                    public std::enable_shared_from_this<WGCRenderer> {
+                    public enable_shared_from_this<WGCRenderer> {
  public:
   virtual ~WGCRenderer();
   virtual IAsyncAction DisposeAsync() noexcept override;
