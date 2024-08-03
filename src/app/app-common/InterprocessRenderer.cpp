@@ -298,9 +298,6 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
 
   mKneeboard = kneeboard;
 
-  EventHandler<DWORD, std::shared_ptr<GameInstance>> testHandler {
-    weak_from_this(), &InterprocessRenderer::OnGameChanged};
-
   AddEventListener(
     kneeboard->evGameChangedEvent,
     {weak_from_this(), &InterprocessRenderer::OnGameChanged});
