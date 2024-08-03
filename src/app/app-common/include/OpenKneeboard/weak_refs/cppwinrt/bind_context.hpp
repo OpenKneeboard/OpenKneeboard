@@ -41,16 +41,18 @@ struct context_binder {
       mFn(std::forward<InitFn>(fn)) {
   }
 
+  // Not using perfect forwarding for the arguments as this is a coroutine - so
+  // we **MUST** copy the arguments.
   template <class... UnboundArgs>
     requires std::invocable<TFn, UnboundArgs...>
-  winrt::fire_and_forget operator()(UnboundArgs&&... unboundArgs) const {
+  winrt::fire_and_forget operator()(UnboundArgs... unboundArgs) const {
     if constexpr (std::
                     same_as<std::decay_t<TContext>, winrt::apartment_context>) {
       co_await mContext;
     } else {
       co_await wil::resume_foreground(mContext);
     }
-    std::invoke(mFn, std::forward<UnboundArgs>(unboundArgs)...);
+    std::invoke(mFn, unboundArgs...);
   }
 
  private:
