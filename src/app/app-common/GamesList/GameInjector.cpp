@@ -31,6 +31,7 @@
 #include <OpenKneeboard/GameInjector.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/TabletInputAdapter.hpp>
 
@@ -81,20 +82,19 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
     }
     mTabletSettingsChangeToken = AddEventListener(
       tablet->evSettingsChangedEvent,
-      // not a coroutine
-      // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
-      [weak = weak_refs(this, tablet)]() {
-        auto strong = lock_weaks(weak);
-        if (!strong) {
-          return;
-        }
-        auto [self, tablet] = *strong;
-        if (tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
-          self->mWintabMode = tablet->GetWintabMode();
-        } else {
-          self->mWintabMode = WintabMode::Disabled;
-        }
-      });
+      bind_front(
+        auto_weak_refs,
+        [](auto self, auto tablet) {
+          static_assert(strong_ref<decltype(self)>);
+          if (
+            tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
+            self->mWintabMode = tablet->GetWintabMode();
+          } else {
+            self->mWintabMode = WintabMode::Disabled;
+          }
+        },
+        weak_from_this(),
+        tablet));
   }
 
   dprint("Watching for game processes");
@@ -186,7 +186,8 @@ void GameInjector::CheckProcess(
     }
     if (!processHandle) {
       dprintf(
-        L"Failed to OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) for PID {} "
+        L"Failed to OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) for PID "
+        L"{} "
         L"({}): {:#x}",
         processID,
         exeBaseName,

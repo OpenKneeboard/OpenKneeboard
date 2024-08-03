@@ -51,125 +51,30 @@ class Event;
 template <class... Args>
 class EventHandler final {
  public:
+  using Callback = std::function<void(Args...)>;
+
   constexpr EventHandler() = default;
 
-  template <std::convertible_to<std::function<void(Args...)>> T>
-  constexpr EventHandler(const T& impl) : mImpl(impl) {
+  template <std::convertible_to<Callback> T>
+    requires(!std::same_as<std::decay_t<decltype(*this)>, std::decay_t<T>>)
+  constexpr EventHandler(T&& impl) : mImpl(std::forward<T>(impl)) {
   }
 
-  template <std::invocable<> T>
-  constexpr EventHandler(const T& impl)
+  template <std::convertible_to<std::function<void()>> T>
+    requires(!std::same_as<std::decay_t<decltype(*this)>, std::decay_t<T>>)
+  constexpr EventHandler(T&& impl)
     requires(sizeof...(Args) > 0)
   {
     mImpl = [impl](Args...) { impl(); };
   }
 
-  constexpr EventHandler(
-    const weak_ref_or_ptr auto& weak,
-    const std::type_identity_t<EventHandler<Args...>>& impl) {
-    mImpl = [weak, impl](Args&&... args) {
-      auto strong = lock_weak(weak);
-      if (!strong) {
-        return;
-      }
-      impl(std::forward<Args>(args)...);
-    };
-  }
-
-  template <class... Binds>
-    requires(sizeof...(Binds) >= 1)
-  constexpr EventHandler(
-    std::regular_invocable<Binds..., Args...> auto f,
-    Binds&&... binds) {
-    mImpl = std::bind_front(f, std::forward<Binds>(binds)...);
-  }
-
-  template <class... Binds>
-    requires(sizeof...(Binds) >= 1)
-  constexpr EventHandler(
-    auto_weak_ref_t,
-    std::regular_invocable<Binds..., Args...> auto f,
-    Binds&&... binds) {
-    const auto makeWeak = [](auto&& arg) {
-      if constexpr (OpenKneeboard::strong_ref<std::decay_t<decltype(arg)>>) {
-        return OpenKneeboard::weak_ref(arg);
-      } else {
-        return std::forward<decltype(arg)>(arg);
-      }
-    };
-
-    auto weakBinds = std::tuple(makeWeak(std::forward<Binds>(binds))...);
-
-    mImpl = std::bind_front(
-      [](auto f, auto weakBinds, Args&&... args) {
-        const auto makeStrong = [](auto&& arg) {
-          if constexpr (OpenKneeboard::weak_ref_or_ptr<
-                          std::decay_t<decltype(arg)>>) {
-            return OpenKneeboard::lock_weak(arg);
-          } else {
-            return std::forward<decltype(arg)>(arg);
-          }
-        };
-        const auto makeStrongs = [makeStrong](auto&&... args) {
-          return std::make_tuple(
-            makeStrong(std::forward<decltype(args)>(args))...);
-        };
-        const auto strongBinds = std::apply(makeStrongs, weakBinds);
-        const auto isLive = [](auto&& arg) {
-          if constexpr (OpenKneeboard::strong_ref<
-                          std::decay_t<decltype(arg)>>) {
-            return static_cast<bool>(arg);
-          } else {
-            return true;
-          }
-        };
-        const auto allLive = std::apply(
-          [isLive](auto&&... args) {
-            return (isLive(std::forward<decltype(args)>(args)) && ...);
-          },
-          strongBinds);
-        if (!allLive) {
-          return;
-        }
-        std::apply(
-          f,
-          std::tuple_cat(
-            strongBinds, std::make_tuple(std::forward<Args>(args)...)));
-      },
-      f,
-      weakBinds);
-  }
-
-  template <
-    weak_ref_or_ptr TWeak,
-    class TRaw = decltype(lock_weak(std::declval<TWeak>()).get())>
-  constexpr EventHandler(
-    const TWeak& weak,
-    const std::invocable<TRaw, Args...> auto& impl) {
-    mImpl = [weak, impl](Args&&... args) {
-      auto strong = lock_weak(weak);
-      if (!strong) {
-        return;
-      }
-      std::invoke(impl, strong.get(), std::forward<Args>(args)...);
-    };
-  }
-
-  template <
-    weak_ref_or_ptr TWeak,
-    class TRaw = decltype(lock_weak(std::declval<TWeak>()).get())>
-  constexpr EventHandler(
-    const TWeak& weak,
-    const std::invocable<TRaw> auto& impl)
-    requires(sizeof...(Args) > 0)
-  {
-    mImpl = [weak, impl](Args&&... args) {
-      auto strong = lock_weak(weak);
-      if (!strong) {
-        return;
-      }
-      std::invoke(impl, strong.get());
-    };
+  /// Convenience wrapper for `{this, &MyClass::myMethod}`
+  template <class F, convertible_to_weak_ref Bind>
+  constexpr EventHandler(Bind&& bind, F&& f)
+    : EventHandler(bind_front(
+        auto_weak_refs,
+        std::forward<F>(f),
+        std::forward<Bind>(bind))) {
   }
 
   explicit constexpr operator bool() const noexcept {
@@ -181,7 +86,7 @@ class EventHandler final {
   }
 
  private:
-  std::function<void(Args...)> mImpl;
+  Callback mImpl;
 };
 
 class EventReceiver;
@@ -274,8 +179,8 @@ class EventConnection final
     auto stayingAlive = this->shared_from_this();
     auto handler = mHandler;
     if (handler) {
-      // In release builds, ignore but drop unhandled exceptions from handlers.
-      // In debug builds, break (or crash)
+      // In release builds, ignore but drop unhandled exceptions from
+      // handlers. In debug builds, break (or crash)
       try {
         handler(args...);
       } catch (const std::exception& e) {
@@ -310,6 +215,7 @@ class Event final : public EventBase {
 
  public:
   using Hook = std::function<HookResult(Args...)>;
+  using Handler = EventHandler<Args...>;
 
   Event() {
     mImpl = std::shared_ptr<Impl>(new Impl());

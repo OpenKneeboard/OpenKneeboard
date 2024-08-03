@@ -92,7 +92,7 @@ TabsSettingsPage::TabsSettingsPage() {
     mKneeboard->GetTabsList()->evTabsChangedEvent,
     {
       get_weak(),
-      [](TabsSettingsPage* self) {
+      [](auto self) {
         if (self->mUIIsChangingTabs) {
           return;
         }

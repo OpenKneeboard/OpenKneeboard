@@ -19,157 +19,147 @@
  */
 #pragma once
 
+#include <shims/winrt/base.h>
+
 /*
  * Helpers for writing templates that deal with both
  * std::weak_ptr and winrt::weak_ref.
  *
  * # Concepts
  *
- * - weak_ref_or_ptr: either std::weak_ptr or winrt::weak_ref
- * - strong_ref: the result of locking either
+ * See `weak_refs/concepts.hpp` for details:
+ *
+ * - `strong_ref<T>`: e.g. `std::shared_ptr<T>`
+ * - `weak_ref<T>`: e.g. `std::weak_ptr<T>`
+ * - `convertible_to_weak_ref<T>`: either a `weak_ref<T>`, or something else
+ *   that can be converted to one, e.g. a `strong_ref<T>`, or `this` when
+ *   extending `std::enable_shared_from_this<T>`
  *
  * # Types
  *
- * - strong_t<weak>: tnhe corresponding strong type
+ * - strong_ref_t<TWeak>: the corresponding strong type
+ * - weak_ref_t<TStrong>: the corresponding weak type
  *
  * # Functions
  *
- * - lock_weak(): locks a weak_ref_or_ptr
- * - weak_ref(): creates a weak_ref_or_ptr
- * - weak_refs(): creates a tuple of weak_ref_or_ptr
- * - lock_weaks(): creates an std::optional of strong references
+ * - `make_weak_ref()`: creates a `weak_ref`
+ * - `lock_weak_ref()`: upgrades a `weak_ref` to a `strong_ref`
+ * - `make_weak_refs()`: creates a tuple of `weak_ref`
+ * - `lock_weak_refs()`: creates an std::optional of strong references
+ * - `bind_auto_weak_refs_front()`: like `std::bind_front()`, but automatically
+ *    converts `convertible_to_weak_ref()` parameters to weak, then back to
+ *    strong
+ * - `bind_front(auto_weak_refs, ...)`: tag-based ADL alias for
+ *   `bind_auto_weak_refs_front()`
  */
 
-#include <shims/winrt/base.h>
+#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT
+#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT (__has_include(<winrt/base.h>))
+#endif
+#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK
+#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK \
+  OPENKNEEBOARD_WEAK_REFS_CPPWINRT
+#endif
 
-#include <winrt/Windows.Foundation.h>
+#ifndef OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
+#define OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR true
+#endif
+#ifndef OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS
+#define OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS \
+  OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
+#endif
 
-#include <memory>
-#include <optional>
+#include "weak_refs/base.hpp"
+#include "weak_refs/bind_auto_weak_refs_front.hpp"
+#include "weak_refs/bind_front_adl.hpp"
+
+#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT
+#include "weak_refs/cppwinrt.hpp"
+#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK
+#include "weak_refs/cppwinrt_get_weak.hpp"
+#endif
+#endif
+
+#if OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
+#include "weak_refs/std_shared_ptr.hpp"
+#endif
+#if OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS
+#include "weak_refs/weak_from_this.hpp"
+#endif
 
 namespace OpenKneeboard {
-
-// Marker for functions to automatically convert strong to weak and back again,
-// e.g. for EventHandlers
-class auto_weak_ref_t final {};
-constexpr auto_weak_ref_t auto_weak_ref {};
-
-namespace detail {
-
-template <class T>
-struct weak_ref_traits;
-
-template <class T>
-struct weak_ref_traits<std::weak_ptr<T>> {
-  static auto lock(std::weak_ptr<T> weak) {
-    return weak.lock();
-  }
-
-  using strong_type = std::shared_ptr<T>;
-};
-
-template <class T>
-struct weak_ref_traits<winrt::weak_ref<T>> {
-  static auto lock(winrt::weak_ref<T> weak) {
-    return weak.get();
-  }
-
-  using strong_type = decltype(lock(std::declval<winrt::weak_ref<T>>()));
-};
-
-}// namespace detail
-
-template <class T>
-concept weak_ref_or_ptr = requires(T a) {
-  {
-    detail::weak_ref_traits<T>::lock(a)
-  } -> std::convertible_to<typename detail::weak_ref_traits<T>::strong_type>;
-};
-
-static_assert(weak_ref_or_ptr<std::weak_ptr<int>>);
-static_assert(!weak_ref_or_ptr<std::shared_ptr<int>>);
-static_assert(!weak_ref_or_ptr<int*>);
-
-template <weak_ref_or_ptr Weak>
-auto lock_weak(Weak weak) {
-  return detail::weak_ref_traits<Weak>::lock(weak);
-}
-
-template <weak_ref_or_ptr T>
-using strong_t = typename detail::weak_ref_traits<T>::strong_type;
-namespace detail {
-
-template <class T>
-auto convert_to_weak(const std::shared_ptr<T>& p) {
-  return std::weak_ptr(p);
-}
-
-template <class T>
-auto convert_to_weak(std::enable_shared_from_this<T>* p) {
-  return p->weak_from_this();
-}
-
-template <class T>
-concept cpp_winrt_this_ptr = requires(T a) {
-  { a->get_weak() } -> weak_ref_or_ptr;
-};
-
-template <cpp_winrt_this_ptr T>
-auto convert_to_weak(T p) {
-  return p->get_weak();
-}
-
-template <std::derived_from<winrt::Windows::Foundation::IInspectable> T>
-auto convert_to_weak(const T& o) {
-  return winrt::make_weak(o);
-}
-
-}// namespace detail
-
-template <class T>
-concept strong_ref = requires(T a) {
-  { detail::convert_to_weak(a) } -> weak_ref_or_ptr;
-};
-
-template <strong_ref T>
-auto weak_ref(T a) {
-  return detail::convert_to_weak(a);
-}
-
-template <strong_ref First, strong_ref... Rest>
-auto weak_refs(First first, Rest... rest) {
-  if constexpr (sizeof...(rest) == 0) {
-    return std::make_tuple(weak_ref(first));
-  } else {
-    return std::tuple_cat(std::make_tuple(weak_ref(first)), weak_refs(rest...));
-  }
-}
-
-template <weak_ref_or_ptr First, weak_ref_or_ptr... Rest>
-auto lock_weaks(First first, Rest... rest) {
-  if constexpr (sizeof...(rest) == 0) {
-    auto strong = lock_weak(first);
-    if (strong) {
-      return std::optional(std::make_tuple(strong));
-    }
-    return std::optional<std::tuple<strong_t<First>>>(std::nullopt);
-  } else {
-    auto head = lock_weaks(first);
-    if (head) {
-      auto tail = lock_weaks(rest...);
-      if (tail) {
-        return std::optional(std::tuple_cat(*head, *tail));
-      }
-    }
-    return std::optional<std::tuple<strong_t<First>, strong_t<Rest>...>>(
-      std::nullopt);
-  }
-}
-
-template <weak_ref_or_ptr... Args>
-auto lock_weaks(std::tuple<Args...> tuple) {
-  auto impl = [](Args... args) { return lock_weaks(args...); };
-  return std::apply(impl, tuple);
-}
-
+using namespace weak_refs;
+using namespace weak_refs::bind_front_adl;
 }// namespace OpenKneeboard
+
+namespace TestNS {
+namespace {
+
+struct TestBindFront : public std::enable_shared_from_this<TestBindFront> {
+  void byval(int, std::shared_ptr<int>);
+  void bycr(int, const std::shared_ptr<int>&);
+};
+
+void takes_convertible_callback(
+  std::convertible_to<std::function<void(int, std::shared_ptr<int>)>> auto);
+void takes_convertible_callback_extra_arg(
+  std::convertible_to<
+    std::function<void(int, std::shared_ptr<int>, int)>> auto);
+void takes_regular_invocable_callback(
+  std::regular_invocable<int, std::shared_ptr<int>> auto);
+void takes_regular_invocable_callback_extra_arg(
+  std::regular_invocable<int, std::shared_ptr<int>, int> auto);
+
+void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
+  namespace weak_refs = OpenKneeboard::weak_refs;
+  using namespace weak_refs::bind_front_adl;
+
+  auto std_byval = std::bind_front(&TestBindFront::byval, t);
+  auto byval = weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t);
+  auto bycr = weak_refs::bind_auto_weak_refs_front(&TestBindFront::bycr, t);
+
+  static_assert(std::invocable<decltype(std_byval), int, std::shared_ptr<int>>);
+  static_assert(std::invocable<decltype(byval), int, std::shared_ptr<int>>);
+  static_assert(std::invocable<decltype(bycr), int, std::shared_ptr<int>>);
+
+  // Test ADL
+  static_assert(
+    std::same_as<
+      decltype(weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t)),
+      decltype(bind_front(auto_weak_refs, &TestBindFront::byval, t))>);
+  static_assert(
+    !std::same_as<
+      decltype(weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t)),
+      decltype(std::bind_front(auto_weak_refs, &TestBindFront::byval, t))>);
+  static_assert(std::same_as<
+                decltype(std::bind_front(&TestBindFront::byval, t)),
+                decltype(bind_front(&TestBindFront::byval, t))>);
+
+  takes_convertible_callback(bind_front(&TestBindFront::byval, t));
+  takes_convertible_callback(bind_front(&TestBindFront::bycr, t));
+
+  takes_convertible_callback(
+    bind_front(auto_weak_refs, &TestBindFront::byval, t));
+  takes_convertible_callback(
+    bind_front(auto_weak_refs, &TestBindFront::bycr, t));
+
+  takes_regular_invocable_callback(bind_front(&TestBindFront::byval, t));
+  takes_regular_invocable_callback(bind_front(&TestBindFront::bycr, t));
+
+  takes_regular_invocable_callback(
+    bind_front(auto_weak_refs, &TestBindFront::byval, t));
+  takes_regular_invocable_callback(
+    bind_front(auto_weak_refs, &TestBindFront::bycr, t));
+
+  static_assert(not std::invocable<decltype(std_byval), int>);
+  static_assert(std::invocable<
+                decltype(byval)::function_t,
+                decltype(t),
+                int,
+                std::shared_ptr<int>>);
+  static_assert(
+    not std::invocable<decltype(byval)::function_t, decltype(t), int>);
+  static_assert(not std::invocable<decltype(byval), int>);
+}
+}// namespace
+}// namespace TestNS
