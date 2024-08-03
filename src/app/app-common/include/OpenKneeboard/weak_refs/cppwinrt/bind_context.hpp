@@ -28,25 +28,44 @@
 #include <concepts>
 #include <functional>
 
+namespace OpenKneeboard::weak_refs::cppwinrt_detail {
+template <class TContext, class TFn>
+struct context_binder {
+ public:
+  using function_t = TFn;
+
+  context_binder() = delete;
+  template <class InitContext, class InitFn>
+  context_binder(InitContext&& context, InitFn&& fn)
+    : mContext(std::forward<InitContext>(context)),
+      mFn(std::forward<InitFn>(fn)) {
+  }
+
+  template <class... UnboundArgs>
+    requires std::invocable<TFn, UnboundArgs...>
+  winrt::fire_and_forget operator()(UnboundArgs&&... unboundArgs) const {
+    if constexpr (std::
+                    same_as<std::decay_t<TContext>, winrt::apartment_context>) {
+      co_await mContext;
+    } else {
+      co_await wil::resume_foreground(mContext);
+    }
+    std::invoke(mFn, std::forward<UnboundArgs>(unboundArgs)...);
+  }
+
+ private:
+  TContext mContext;
+  TFn mFn;
+};
+}// namespace OpenKneeboard::weak_refs::cppwinrt_detail
+
 namespace OpenKneeboard::weak_refs::cppwinrt {
 
 template <class Context, class F>
 auto bind_context(Context&& context, F&& f) {
-  return std::bind_front(
-    []<class... Args>(auto context, auto f, Args&&... args)
-
-      -> winrt::fire_and_forget {
-      if constexpr (std::same_as<
-                      std::decay_t<Context>,
-                      winrt::apartment_context>) {
-        co_await context;
-      } else {
-        co_await wil::resume_foreground(context);
-      }
-      std::invoke(f, std::forward<Args>(args)...);
-    },
-    std::forward<Context>(context),
-    std::forward<F>(f));
+  return cppwinrt_detail::
+    context_binder<std::decay_t<Context>, std::decay_t<F>> {
+      std::forward<Context>(context), std::forward<F>(f)};
 }
 
 template <class Context, class... Args>
