@@ -1,4 +1,14 @@
-file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
+ok_add_library(OpenKneeboard-Events STATIC Events.cpp)
+target_link_libraries(
+  OpenKneeboard-Events
+  PUBLIC
+  OpenKneeboard-config
+)
+target_include_directories(OpenKneeboard-Events PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.hpp")
+list(FILTER APP_COMMON_SOURCES EXCLUDE REGEX "\\bEvents\\.[ch]pp$")
+
 ok_add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
 target_compile_definitions(
   OpenKneeboard-App-Common
@@ -10,6 +20,7 @@ target_link_libraries(
   OpenKneeboard-App-Common
   PUBLIC
   ThirdParty::JSON
+  OpenKneeboard-Events
 )
 target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(

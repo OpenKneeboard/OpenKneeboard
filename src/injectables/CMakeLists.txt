@@ -205,7 +205,6 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-tracing
-  _libheaders
   detours-ext
 )
 set_target_properties(

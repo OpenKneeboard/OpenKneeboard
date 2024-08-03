@@ -1,5 +1,5 @@
-ok_add_library(_libheaders INTERFACE)
-target_include_directories(_libheaders INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ok_add_library(OpenKneeboard-Lib-Headers INTERFACE)
+target_include_directories(OpenKneeboard-Lib-Headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.in.hpp"
@@ -22,16 +22,17 @@ target_include_directories(
   "${CMAKE_CURRENT_BINARY_DIR}/include"
   "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include"
 )
+target_link_libraries(OpenKneeboard-config INTERFACE OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)
-target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC OpenKneeboard-Lib-Headers)
 target_link_libraries(OpenKneeboard-ThreadGuard PRIVATE OpenKneeboard-dprint)
 
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)
 target_link_libraries(
   OpenKneeboard-GetMainHWND
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 target_link_libraries(
   OpenKneeboard-GetMainHWND
@@ -56,26 +57,26 @@ ok_add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
 target_link_libraries(
   OpenKneeboard-GetSystemColor
   PUBLIC
-  _libheaders)
+  OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-FilesDiffer STATIC FilesDiffer.cpp)
 target_link_libraries(
   OpenKneeboard-FilesDiffer
   PUBLIC
-  _libheaders)
+  OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-handles INTERFACE)
 target_link_libraries(
   OpenKneeboard-handles
   INTERFACE
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(OpenKneeboard-Elevation STATIC Elevation.cpp)
 target_link_libraries(
   OpenKneeboard-Elevation
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 target_link_libraries(
   OpenKneeboard-Elevation
@@ -92,14 +93,14 @@ target_link_libraries(
   OpenKneeboard-UTF8
   PUBLIC
   ThirdParty::JSON
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(OpenKneeboard-PDFNavigation STATIC PDFNavigation.cpp)
 target_link_libraries(
   OpenKneeboard-PDFNavigation
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   OpenKneeboard-shims
 )
 target_link_libraries(
@@ -120,7 +121,7 @@ target_link_libraries(
 target_link_libraries(
   OpenKneeboard-DebugTimer
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(OpenKneeboard-tracing STATIC tracing.cpp)
@@ -133,7 +134,7 @@ target_link_libraries(
 target_link_libraries(
   OpenKneeboard-tracing
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(
@@ -149,7 +150,7 @@ target_link_libraries(
   OpenKneeboard-shims
   ThirdParty::DirectXTK
   ThirdParty::CppWinRT
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-dprint
   System::Dxguid
@@ -168,7 +169,7 @@ target_link_libraries(
   OpenKneeboard-shims
   ThirdParty::DirectXTK12
   ThirdParty::CppWinRT
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-RenderDoc
@@ -185,7 +186,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-dprint
   ThirdParty::VulkanHeaders
-  _libheaders
+  OpenKneeboard-Lib-Headers
   OpenKneeboard-SpriteBatch-SPIRV
 )
 
@@ -193,7 +194,7 @@ ok_add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(
   OpenKneeboard-DXResources
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   OpenKneeboard-D3D11
   PRIVATE
   OpenKneeboard-dprint
@@ -211,7 +212,7 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-RuntimeFiles
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-Filesystem
@@ -228,7 +229,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   PUBLIC
   OpenKneeboard-dprint
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-Elevation
   OpenKneeboard-config
@@ -288,7 +289,7 @@ ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
 target_link_libraries(
   OpenKneeboard-dprint
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   OpenKneeboard-config
 )
 target_link_libraries(OpenKneeboard-dprint
@@ -297,11 +298,11 @@ target_link_libraries(OpenKneeboard-dprint
 )
 
 ok_add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
-target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-consolelib PUBLIC OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-APIEvent STATIC APIEvent.cpp)
 target_link_libraries(OpenKneeboard-APIEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
-target_link_libraries(OpenKneeboard-APIEvent PUBLIC _libheaders OpenKneeboard-UTF8 OpenKneeboard-json)
+target_link_libraries(OpenKneeboard-APIEvent PUBLIC OpenKneeboard-Lib-Headers OpenKneeboard-UTF8 OpenKneeboard-json)
 
 ok_add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(
@@ -312,13 +313,13 @@ target_link_libraries(
   OpenKneeboard-config
   System::D2d1
   System::Dwrite
-  _libheaders)
+  OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-RayIntersectsRect STATIC RayIntersectsRect.cpp)
 target_link_libraries(
   OpenKneeboard-RayIntersectsRect
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   ThirdParty::DirectXTK)
 target_link_libraries(
   OpenKneeboard-RayIntersectsRect
@@ -329,7 +330,7 @@ ok_add_library(OpenKneeboard-scope_exit STATIC scope_exit.cpp)
 target_link_libraries(
   OpenKneeboard-scope_exit
   PUBLIC
-  _libheaders)
+  OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-Wintab
   STATIC
@@ -338,7 +339,7 @@ ok_add_library(OpenKneeboard-Wintab
 target_link_libraries(
   OpenKneeboard-Wintab
   PRIVATE
-  _libheaders
+  OpenKneeboard-Lib-Headers
   ThirdParty::Wintab
   OpenKneeboard-dprint
   OpenKneeboard-UTF8
@@ -348,7 +349,7 @@ ok_add_library(OpenKneeboard-VRKneeboard STATIC VRKneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-VRKneeboard
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   ThirdParty::DirectXTK
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
@@ -401,7 +402,7 @@ target_link_libraries(
   OpenKneeboard-OpenXRMode
   PUBLIC
   ThirdParty::JSON
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 target_link_libraries(
   OpenKneeboard-OpenXRMode
@@ -418,7 +419,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-dprint
   ThirdParty::JSON
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(
@@ -436,7 +437,7 @@ target_link_libraries(
   OpenKneeboard-config
   ThirdParty::DirectXTK
   ThirdParty::OpenVR
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 target_link_libraries(
   OpenKneeboard-SteamVRKneeboard
@@ -450,7 +451,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-shims
   OpenKneeboard-config
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-UTF8
@@ -471,7 +472,7 @@ target_link_libraries(
   OpenKneeboard-WindowCaptureControl
   PUBLIC
   OpenKneeboard-handles
-  _libheaders
+  OpenKneeboard-Lib-Headers
 )
 
 ok_add_library(
@@ -482,7 +483,7 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-RenderDoc
   PUBLIC
-  _libheaders
+  OpenKneeboard-Lib-Headers
   PRIVATE
   ThirdParty::RenderDoc
 )
