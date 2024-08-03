@@ -1051,12 +1051,15 @@ void WebView2Renderer::OnJSAPI_Peer_SetPages(
 winrt::fire_and_forget WebView2Renderer::SendJSResponse(
   uint64_t callID,
   OKBPromiseResult result) {
+  if (!this->IsLiveForContent()) {
+    co_return;
+  }
   auto weak = weak_from_this();
   auto dq = mDQC.DispatcherQueue();
   co_await wil::resume_foreground(dq);
 
   auto self = weak.lock();
-  if (!self) {
+  if (!(self && self->IsLiveForContent())) {
     co_return;
   }
   nlohmann::json response {

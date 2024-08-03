@@ -180,6 +180,10 @@ class WebView2Renderer final : public WGCRenderer {
     },
     State::Disposed>
     mState;
+    
+  inline bool IsLiveForContent() const {
+    return mState.Get() == State::InitializedComposition;
+  }
 
   unique_hwnd mBrowserWindow;
 
