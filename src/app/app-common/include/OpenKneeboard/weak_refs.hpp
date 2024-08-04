@@ -109,10 +109,10 @@ constexpr auto adl_bind_front(
   auto bound = bind_front(std::forward<Args>(args)...);
   return [bound]<class... Extras>(
            Extras&&... extras,
-           [[maybe_unused]] const weak_refs_adl_definitions::cppwinrt_type auto&
-             sender,
-           [[maybe_unused]] const weak_refs_adl_definitions::cppwinrt_type auto&
-             args) { return bound(std::forward<Extras>(extras)...); };
+           [[maybe_unused]] const cppwinrt::cppwinrt_type auto& sender,
+           [[maybe_unused]] const cppwinrt::cppwinrt_type auto& args) {
+    return bound(std::forward<Extras>(extras)...);
+  };
 }
 }// namespace OpenKneeboard::weak_refs::bind_front_adl
 

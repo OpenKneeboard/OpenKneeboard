@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include "../cppwinrt/concepts.hpp"
 #include "base.hpp"
 
 #include <winrt/Windows.Foundation.h>
@@ -26,45 +27,8 @@
 #include <memory>
 
 namespace OpenKneeboard::weak_refs_adl_definitions {
-template <class T>
-concept cppwinrt_type = std::
-  convertible_to<std::decay_t<T>, winrt::Windows::Foundation::IInspectable>;
 
-template <class T>
-concept cppwinrt_ptr = cppwinrt_type<std::decay_t<std::remove_pointer_t<T>>>;
-
-template <class T>
-concept cppwinrt_com_ptr
-  = cppwinrt_ptr<std::decay_t<decltype(std::declval<T>().get())>>
-  && std::same_as<
-      std::decay_t<T>,
-      winrt::com_ptr<std::decay_t<decltype(*std::declval<T>().get())>>>;
-
-template <
-  cppwinrt_type T,
-  class = decltype(winrt::make_weak(std::declval<T>()))>
-consteval std::true_type is_cppwinrt_strong_ref_fn(T&&);
-consteval std::false_type is_cppwinrt_strong_ref_fn(...);
-
-template <class T>
-concept cppwinrt_strong_ref
-  = (cppwinrt_type<T>
-     && decltype(is_cppwinrt_strong_ref_fn(std::declval<T>()))::value)
-  || cppwinrt_com_ptr<T>;
-
-static_assert(cppwinrt_strong_ref<winrt::Windows::Foundation::IInspectable>);
-static_assert(cppwinrt_strong_ref<winrt::Windows::Foundation::IStringable>);
-
-template <class T>
-concept cppwinrt_weak_ref
-  = (cppwinrt_strong_ref<decltype(std::declval<T>().get())>
-     || cppwinrt_com_ptr<decltype(std::declval<T>().get())>)
-  && weak_refs_adl_detail::
-    decays_to_same_as<T, decltype(winrt::make_weak(std::declval<T>().get()))>;
-
-static_assert(!cppwinrt_strong_ref<int>);
-static_assert(!cppwinrt_strong_ref<std::shared_ptr<int>>);
-static_assert(!cppwinrt_weak_ref<std::weak_ptr<int>>);
+using namespace OpenKneeboard::cppwinrt::concepts;
 
 template <cppwinrt_strong_ref T>
 struct adl_make_weak_ref<T> {
@@ -80,13 +44,6 @@ struct adl_lock_weak_ref<T> {
     return value.get();
   }
 };
-
-static_assert(cppwinrt_strong_ref<winrt::Windows::Foundation::IInspectable>);
-static_assert(cppwinrt_strong_ref<winrt::Windows::Foundation::IStringable>);
-static_assert(!cppwinrt_strong_ref<
-              winrt::weak_ref<winrt::Windows::Foundation::IStringable>>);
-static_assert(
-  cppwinrt_weak_ref<winrt::weak_ref<winrt::Windows::Foundation::IStringable>>);
 
 }// namespace OpenKneeboard::weak_refs_adl_definitions
 
