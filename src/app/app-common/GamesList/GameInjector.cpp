@@ -83,7 +83,6 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
     mTabletSettingsChangeToken = AddEventListener(
       tablet->evSettingsChangedEvent,
       bind_front(
-        only_refs,
         [](auto self, auto tablet) {
           static_assert(strong_ref<decltype(self)>);
           if (
@@ -93,6 +92,7 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
             self->mWintabMode = WintabMode::Disabled;
           }
         },
+        only_refs,
         weak_from_this(),
         tablet));
   }

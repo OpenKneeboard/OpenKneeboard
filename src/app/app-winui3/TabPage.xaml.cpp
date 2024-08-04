@@ -256,27 +256,27 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   button.IsChecked(action->IsActive());
   button.Checked(bind_front(
-    only_refs,
     [](auto action, auto, auto) -> winrt::fire_and_forget {
       co_await action->Activate();
     },
+    only_refs,
     action));
   button.Unchecked(bind_front(
-    only_refs,
     [](auto action, auto, auto) -> winrt::fire_and_forget {
       co_await action->Deactivate();
     },
+    only_refs,
     action));
 
   AddEventListener(
     action->evStateChangedEvent,
     bind_front_with_context(
       mUIThread,
-      only_refs,
       [](auto action, auto button) noexcept {
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
       },
+      only_refs,
       action,
       button));
 
@@ -300,10 +300,10 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
     action->evStateChangedEvent,
     bind_front_with_context(
       mUIThread,
-      only_refs,
       [](auto action, auto button) noexcept {
         button.IsEnabled(action->IsEnabled());
       },
+      only_refs,
       action,
       button));
 
@@ -367,10 +367,10 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
       checkable->evStateChangedEvent,
       bind_front_with_context(
         mUIThread,
-        only_refs,
         [](auto tmfi, auto checkable) {
           tmfi.IsChecked(checkable->IsChecked());
         },
+        only_refs,
         tmfi,
         checkable));
   } else {
@@ -379,10 +379,10 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
   ret.Click(bind_front(
-    only_refs,
     [](auto self, auto action, const auto&...) {
       self->OnToolbarActionClick(action);
     },
+    only_refs,
     this,
     action));
 

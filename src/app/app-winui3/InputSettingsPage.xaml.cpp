@@ -44,8 +44,8 @@ InputSettingsPage::InputSettingsPage() {
     mKneeboard->evInputDevicesChangedEvent,
     bind_front_with_context(
       mUIThread,
-      only_refs,
       [](auto self) { self->EmitPropertyChangedEvent(L"Devices"); },
+      only_refs,
       this));
 }
 

@@ -72,7 +72,7 @@ class EventHandler final {
   template <class F, convertible_to_weak_ref Bind>
   constexpr EventHandler(Bind&& bind, F&& f)
     : EventHandler(
-        bind_front(only_refs, std::forward<F>(f), std::forward<Bind>(bind))) {
+        bind_front(std::forward<F>(f), only_refs, std::forward<Bind>(bind))) {
   }
 
   explicit constexpr operator bool() const noexcept {

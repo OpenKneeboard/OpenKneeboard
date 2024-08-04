@@ -135,11 +135,11 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   static_assert(
     std::same_as<
       decltype(weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t)),
-      decltype(bind_front(maybe_refs, &TestBindFront::byval, t))>);
+      decltype(bind_front(&TestBindFront::byval, maybe_refs, t))>);
   static_assert(
     !std::same_as<
       decltype(weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t)),
-      decltype(std::bind_front(maybe_refs, &TestBindFront::byval, t))>);
+      decltype(std::bind_front(&TestBindFront::byval, maybe_refs, t))>);
   static_assert(std::same_as<
                 decltype(std::bind_front(&TestBindFront::byval, t)),
                 decltype(bind_front(&TestBindFront::byval, t))>);
@@ -147,16 +147,16 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   takes_convertible_callback(bind_front(&TestBindFront::byval, t));
   takes_convertible_callback(bind_front(&TestBindFront::bycr, t));
 
-  takes_convertible_callback(bind_front(maybe_refs, &TestBindFront::byval, t));
-  takes_convertible_callback(bind_front(maybe_refs, &TestBindFront::bycr, t));
+  takes_convertible_callback(bind_front(&TestBindFront::byval, maybe_refs, t));
+  takes_convertible_callback(bind_front(&TestBindFront::bycr, maybe_refs, t));
 
   takes_regular_invocable_callback(bind_front(&TestBindFront::byval, t));
   takes_regular_invocable_callback(bind_front(&TestBindFront::bycr, t));
 
   takes_regular_invocable_callback(
-    bind_front(maybe_refs, &TestBindFront::byval, t));
+    bind_front(&TestBindFront::byval, maybe_refs, t));
   takes_regular_invocable_callback(
-    bind_front(maybe_refs, &TestBindFront::bycr, t));
+    bind_front(&TestBindFront::bycr, maybe_refs, t));
 
   static_assert(not std::invocable<decltype(std_byval), int>);
   static_assert(std::invocable<

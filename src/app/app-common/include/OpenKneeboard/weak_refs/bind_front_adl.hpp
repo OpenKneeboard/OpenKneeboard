@@ -42,21 +42,25 @@ constexpr bool is_adl_tag_v<bind_front_adl::maybe_refs_t> = true;
 template <>
 constexpr bool is_adl_tag_v<bind_front_adl::only_refs_t> = true;
 
-template <class First, class... Rest>
+template <class Fn, class First, class... Rest>
   requires(!is_adl_tag_v<std::decay_t<First>>)
-auto adl_bind_front(First&& first, Rest&&... rest) {
+auto adl_bind_front(Fn&& fn, First&& first, Rest&&... rest) {
   using namespace std;
-  return bind_front(std::forward<First>(first), std::forward<Rest>(rest)...);
+  return bind_front(
+    std::forward<Fn>(fn),
+    std::forward<First>(first),
+    std::forward<Rest>(rest)...);
 }
 
-template <class... Args>
-auto adl_bind_front(bind_front_adl::maybe_refs_t, Args&&... args) {
-  return bind_maybe_refs_front(std::forward<Args>(args)...);
+template <class Fn, class... Args>
+auto adl_bind_front(Fn&& fn, bind_front_adl::maybe_refs_t, Args&&... args) {
+  return bind_maybe_refs_front(
+    std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
 
-template <class... Args>
-auto adl_bind_front(bind_front_adl::only_refs_t, Args&&... args) {
-  return bind_refs_front(std::forward<Args>(args)...);
+template <class Fn, class... Args>
+auto adl_bind_front(Fn&& fn, bind_front_adl::only_refs_t, Args&&... args) {
+  return bind_refs_front(std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
 
 }// namespace OpenKneeboard::weak_refs::bind_front_adl_definitions

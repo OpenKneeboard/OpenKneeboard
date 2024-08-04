@@ -57,11 +57,11 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
     mKneeboard->evSettingsChangedEvent,
     bind_front_with_context(
       mUIThread,
-      only_refs,
       [](auto self) {
         self->mPropertyChangedEvent(
           *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
       },
+      only_refs,
       this));
 }
 
@@ -350,11 +350,11 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
 
   const scope_exit propertyChanged(bind_front_with_context(
     mUIThread,
-    only_refs,
     [](auto self) {
       self->mPropertyChangedEvent(
         *self, PropertyChangedEventArgs(L"DesiredElevation"));
     },
+    only_refs,
     this));
 
   // Always use the helper; while it's not needed, it never hurts, and gives us
