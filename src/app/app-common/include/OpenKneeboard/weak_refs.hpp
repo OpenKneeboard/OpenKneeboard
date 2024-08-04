@@ -60,10 +60,6 @@
 #define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK \
   OPENKNEEBOARD_WEAK_REFS_CPPWINRT
 #endif
-#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT
-#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT \
-  (OPENKNEEBOARD_WEAK_REFS_CPPWINRT && (__has_include(<wil/cppwinrt_helpers.h>)))
-#endif
 
 #ifndef OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
 #define OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR true
@@ -84,9 +80,6 @@
 #include "weak_refs/cppwinrt/get_weak.hpp"
 #endif
 #endif
-#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT_BIND_CONTEXT
-#include "weak_refs/cppwinrt/bind_context.hpp"
-#endif
 
 #if OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
 #include "weak_refs/std_shared_ptr.hpp"
@@ -103,15 +96,15 @@ constexpr discard_winrt_event_args_t discard_winrt_event_args {};
 
 template <class... Args>
   requires(sizeof...(Args) >= 1)
-constexpr auto adl_bind_front(
-  bind_front_adl::discard_winrt_event_args_t,
-  Args&&... args) {
-  auto bound = bind_front(std::forward<Args>(args)...);
-  return [bound]<class... Extras>(
+constexpr auto adl_bind_front(discard_winrt_event_args_t, Args&&... args) {
+  const auto next = bind_front(std::forward<Args>(args)...);
+
+  using namespace OpenKneeboard::cppwinrt::concepts;
+  return [next]<class... Extras>(
            Extras&&... extras,
-           [[maybe_unused]] const cppwinrt::cppwinrt_type auto& sender,
-           [[maybe_unused]] const cppwinrt::cppwinrt_type auto& args) {
-    return bound(std::forward<Extras>(extras)...);
+           [[maybe_unused]] const cppwinrt_type auto& sender,
+           [[maybe_unused]] const cppwinrt_type auto& args) {
+    return next(std::forward<Extras>(extras)...);
   };
 }
 }// namespace OpenKneeboard::weak_refs::bind_front_adl

@@ -268,12 +268,13 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front_with_context(
-      mUIThread,
+    bind_front(
       [](auto action, auto button) noexcept {
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
       },
+      bind_cppwinrt_context,
+      mUIThread,
       only_refs,
       action,
       button));
@@ -296,11 +297,12 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front_with_context(
-      mUIThread,
+    bind_front(
       [](auto action, auto button) noexcept {
         button.IsEnabled(action->IsEnabled());
       },
+      bind_cppwinrt_context,
+      mUIThread,
       only_refs,
       action,
       button));
@@ -361,11 +363,12 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     tmfi.IsChecked(checkable->IsChecked());
     AddEventListener(
       checkable->evStateChangedEvent,
-      bind_front_with_context(
-        mUIThread,
+      bind_front(
         [](auto tmfi, auto checkable) {
           tmfi.IsChecked(checkable->IsChecked());
         },
+        bind_cppwinrt_context,
+        mUIThread,
         only_refs,
         tmfi,
         checkable));
@@ -384,11 +387,13 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front_with_context(
-      mUIThread,
+    bind_front(
       [](auto action, auto item) noexcept {
         item.IsEnabled(action->IsEnabled());
       },
+      bind_cppwinrt_context,
+      mUIThread,
+      only_refs,
       action,
       ret));
   return ret;
@@ -471,13 +476,15 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    bind_front_with_context(
-      mUIThread,
+    bind_front(
       [](auto control, auto visibility) {
         control.Visibility(
           visibility->IsVisible() ? Visibility::Visible
                                   : Visibility::Collapsed);
       },
+      bind_cppwinrt_context,
+      mUIThread,
+      only_refs,
       control,
       visibility));
 }

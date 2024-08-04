@@ -19,16 +19,24 @@
  */
 #pragma once
 
-#include <shims/winrt/base.h>
+#ifndef OPENKNEEBOARD_CPPWINRT_USE_WIL
+#define OPENKNEEBOARD_CPPWINRT_USE_WIL (__has_include(<wil/cppwinrt_helpers.h>))
+#endif
 
+#include <winrt/base.h>
+
+#if OPENKNEEBOARD_CPPWINRT_USE_WIL
 #include <wil/cppwinrt_helpers.h>
+#endif
 
-#include <OpenKneeboard/weak_refs/bind_front_adl.hpp>
+#include <memory>
 
-#include <concepts>
-#include <functional>
+namespace OpenKneeboard::cppwinrt_detail {
+#if OPENKNEEBOARD_CPPWINRT_USE_WIL
+template <class T>
+concept wil_thread = requires(T v) { wil::resume_foreground(v); };
+#endif
 
-namespace OpenKneeboard::weak_refs::cppwinrt_detail {
 template <class TContext, class TFn>
 struct context_binder_inner
   : std::enable_shared_from_this<context_binder_inner<TContext, TFn>> {
@@ -49,18 +57,23 @@ struct context_binder_inner
   winrt::fire_and_forget operator()(UnboundArgs... unboundArgs) const {
     auto weak = this->weak_from_this();
     auto ctx = mContext;
-    if constexpr (std::
-                    same_as<std::decay_t<TContext>, winrt::apartment_context>) {
-      co_await ctx;
-    } else {
-      co_await wil::resume_foreground(ctx);
-    }
+    co_await switch_context(ctx);
     if (auto self = weak.lock()) {
       std::invoke(mFn, unboundArgs...);
     }
   }
 
  private:
+  static auto switch_context(const winrt::apartment_context& ctx) {
+    return ctx;
+  }
+#if OPENKNEEBOARD_CPPWINRT_USE_WIL
+  template <wil_thread Context>
+  static auto switch_context(Context&& ctx) {
+    return wil::resume_foreground(std::forward<Context>(ctx));
+  }
+#endif
+
   TContext mContext;
   TFn mFn;
 };
@@ -85,9 +98,9 @@ struct context_binder_outer {
   std::shared_ptr<context_binder_inner<TContext, TFn>> mInner;
 };
 
-}// namespace OpenKneeboard::weak_refs::cppwinrt_detail
+}// namespace OpenKneeboard::cppwinrt_detail
 
-namespace OpenKneeboard::weak_refs::cppwinrt {
+namespace OpenKneeboard::cppwinrt {
 
 template <class Context, class F>
 auto bind_context(Context&& context, F&& f) {
@@ -96,11 +109,4 @@ auto bind_context(Context&& context, F&& f) {
       std::forward<Context>(context), std::forward<F>(f)};
 }
 
-template <class Context, class... Args>
-auto bind_front_with_context(Context&& context, Args&&... args) {
-  using namespace weak_refs::bind_front_adl;
-  return bind_context(
-    std::forward<Context>(context), bind_front(std::forward<Args>(args)...));
-}
-
-}// namespace OpenKneeboard::weak_refs::cppwinrt
+}// namespace OpenKneeboard::cppwinrt

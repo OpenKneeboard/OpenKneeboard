@@ -197,8 +197,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    bind_front_with_context(
-      mUIThread,
+    bind_front(
       [](auto self) {
         self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
         self->ResetKneeboardView();
@@ -214,6 +213,8 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
         backStack.ReplaceAll(newBackStack);
         self->PromptForViewMode();
       },
+      bind_cppwinrt_context,
+      mUIThread,
       only_refs,
       this));
 }

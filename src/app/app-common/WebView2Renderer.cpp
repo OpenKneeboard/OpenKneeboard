@@ -187,8 +187,7 @@ WebView2Renderer::InitializeContentToCapture() {
   settings.IsWebMessageEnabled(true);
   mWebView.WebMessageReceived(
     std::bind_front(&WebView2Renderer::OnWebMessageReceived, this));
-  mWebView.NavigationStarting(bind_front_with_context(
-    mUIThread,
+  mWebView.NavigationStarting(bind_front(
     [](auto self, auto, auto args) {
       self->mDocumentResources = {};
       const auto originalURI = self->mSettings.mURI;
@@ -197,6 +196,8 @@ WebView2Renderer::InitializeContentToCapture() {
         self->mDocumentResources.mPages = self->mInitialPages;
       }
     },
+    bind_cppwinrt_context,
+    mUIThread,
     only_refs,
     this));
 
