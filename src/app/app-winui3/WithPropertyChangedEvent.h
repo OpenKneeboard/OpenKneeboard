@@ -54,15 +54,13 @@ struct WithPropertyChangedEventOnProfileChange
   : virtual WithPropertyChangedEvent,
     virtual EventReceiver {
   WithPropertyChangedEventOnProfileChange() {
+    auto self = static_cast<T*>(this);
     mProfileChangedEvent = AddEventListener(
       gKneeboard.lock()->evCurrentProfileChangedEvent,
-      [uiThread = mUIThread,
-       weak = static_cast<T*>(this)->get_weak()]() -> winrt::fire_and_forget {
-        co_await uiThread;
-        if (auto self = weak.get()) {
-          self->EmitPropertyChangedEvent(L"");
-        }
-      });
+      bind_front_with_context(
+        mUIThread,
+        [](auto self) { self->EmitPropertyChangedEvent(L""); },
+        self));
   }
 
   ~WithPropertyChangedEventOnProfileChange() {

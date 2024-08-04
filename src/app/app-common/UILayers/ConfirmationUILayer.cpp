@@ -316,12 +316,9 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
   });
   AddEventListener(
     buttons->evClicked,
-    std::bind_front(
-      [](auto weak, auto, auto button) -> winrt::fire_and_forget {
-        auto self = weak.lock();
-        if (!self) {
-          co_return;
-        }
+    bind_front(
+      only_refs,
+      [](auto self, auto, auto button) -> winrt::fire_and_forget {
         if (button.mAction == ButtonAction::Confirm) {
           auto action = std::dynamic_pointer_cast<ToolbarAction>(self->mItem);
           if (action) {
@@ -330,7 +327,7 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
         }
         self->evClosedEvent.Emit();
       },
-      weak_from_this()));
+      this));
 
   mDialog = Dialog {
     .mMargin = margin,

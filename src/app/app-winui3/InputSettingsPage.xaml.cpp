@@ -42,12 +42,11 @@ InputSettingsPage::InputSettingsPage() {
 
   AddEventListener(
     mKneeboard->evInputDevicesChangedEvent,
-    [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
-      co_await uiThread;
-      if (auto self = weak.get()) {
-        self->EmitPropertyChangedEvent(L"Devices");
-      }
-    });
+    bind_front_with_context(
+      mUIThread,
+      only_refs,
+      [](auto self) { self->EmitPropertyChangedEvent(L"Devices"); },
+      this));
 }
 
 InputSettingsPage::~InputSettingsPage() {

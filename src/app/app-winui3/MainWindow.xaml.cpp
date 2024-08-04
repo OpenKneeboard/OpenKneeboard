@@ -197,26 +197,25 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    [weak = get_weak(), uiThread = mUIThread]() -> winrt::fire_and_forget {
-      co_await uiThread;
-      auto self = weak.get();
-      if (!self) {
-        co_return;
-      }
-      self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
-      self->ResetKneeboardView();
-      auto backStack = self->Frame().BackStack();
-      std::vector<PageStackEntry> newBackStack;
-      for (auto entry: backStack) {
-        if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
-          newBackStack.clear();
-          continue;
+    bind_front_with_context(
+      mUIThread,
+      only_refs,
+      [](auto self) {
+        self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
+        self->ResetKneeboardView();
+        auto backStack = self->Frame().BackStack();
+        std::vector<PageStackEntry> newBackStack;
+        for (auto entry: backStack) {
+          if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
+            newBackStack.clear();
+            continue;
+          }
+          newBackStack.push_back(entry);
         }
-        newBackStack.push_back(entry);
-      }
-      backStack.ReplaceAll(newBackStack);
-      self->PromptForViewMode();
-    });
+        backStack.ReplaceAll(newBackStack);
+        self->PromptForViewMode();
+      },
+      this));
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
