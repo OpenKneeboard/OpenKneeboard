@@ -68,13 +68,9 @@ namespace OpenKneeboard::weak_refs::bind_front_adl {
 struct maybe_refs_t {};
 struct only_refs_t {};
 
-namespace {
-constexpr auto& maybe_refs = weak_refs_detail::static_const<maybe_refs_t>;
-constexpr auto& only_refs = weak_refs_detail::static_const<only_refs_t>;
-}// namespace
-}// namespace OpenKneeboard::weak_refs::bind_front_adl
+constexpr maybe_refs_t maybe_refs {};
+constexpr only_refs_t only_refs {};
 
-namespace OpenKneeboard::weak_refs::bind_front_adl {
 template <class Fn, class... Args>
 constexpr auto
 adl_bind_front(bind_front_adl::maybe_refs_t, Fn&& fn, Args&&... args) {

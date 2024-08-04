@@ -95,6 +95,27 @@
 #include "weak_refs/weak_from_this.hpp"
 #endif
 
+namespace OpenKneeboard::weak_refs::bind_front_adl {
+
+// Marker for tag-based dispatch
+struct discard_winrt_event_args_t {};
+constexpr discard_winrt_event_args_t discard_winrt_event_args {};
+
+template <class... Args>
+  requires(sizeof...(Args) >= 1)
+constexpr auto adl_bind_front(
+  bind_front_adl::discard_winrt_event_args_t,
+  Args&&... args) {
+  auto bound = bind_front(std::forward<Args>(args)...);
+  return [bound]<class... Extras>(
+           Extras&&... extras,
+           [[maybe_unused]] const weak_refs_adl_definitions::cppwinrt_type auto&
+             sender,
+           [[maybe_unused]] const weak_refs_adl_definitions::cppwinrt_type auto&
+             args) { return bound(std::forward<Extras>(extras)...); };
+}
+}// namespace OpenKneeboard::weak_refs::bind_front_adl
+
 namespace OpenKneeboard {
 using namespace weak_refs;
 using namespace weak_refs::bind_front_adl;

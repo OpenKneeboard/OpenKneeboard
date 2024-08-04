@@ -957,16 +957,14 @@ MainWindow::NavigationItems() noexcept {
       muxc::FontIcon renameIcon;
       renameIcon.Glyph(L"\uE8AC");
       renameItem.Icon(renameIcon);
-      renameItem.Click([weak = get_weak(),
-                        weakTab = std::weak_ptr(tab),
-                        bookmark = *bookmark,
-                        title](const auto&, const auto&) {
-        auto self = weak.get();
-        auto tab = weakTab.lock();
-        if (self && tab) {
+      renameItem.Click(bind_front(
+        [bookmark = *bookmark, title](const auto& self, const auto& tab) {
           self->RenameBookmark(tab, bookmark, title);
-        }
-      });
+        },
+        discard_winrt_event_args,
+        maybe_refs,
+        this,
+        tab));
 
       muxc::MenuFlyout contextFlyout;
       contextFlyout.Items().Append(renameItem);
@@ -986,14 +984,12 @@ MainWindow::NavigationItems() noexcept {
       icon.Glyph(L"\uE8AC");
       renameItem.Icon(icon);
 
-      renameItem.Click(
-        [weak = get_weak(), weakTab = std::weak_ptr(tab)](auto, auto) {
-          auto self = weak.get();
-          auto tab = weakTab.lock();
-          if (self && tab) {
-            self->RenameTab(tab);
-          }
-        });
+      renameItem.Click(bind_front(
+        &MainWindow::RenameTab,
+        discard_winrt_event_args,
+        only_refs,
+        this,
+        tab));
       contextFlyout.Items().Append(renameItem);
     }
     item.ContextFlyout(contextFlyout);

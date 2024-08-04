@@ -256,15 +256,13 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   button.IsChecked(action->IsActive());
   button.Checked(bind_front(
-    [](auto action, auto, auto) -> winrt::fire_and_forget {
-      co_await action->Activate();
-    },
+    [](auto action) -> winrt::fire_and_forget { co_await action->Activate(); },
+    discard_winrt_event_args,
     only_refs,
     action));
   button.Unchecked(bind_front(
-    [](auto action, auto, auto) -> winrt::fire_and_forget {
-      co_await action->Deactivate();
-    },
+    &ToolbarToggleAction::Deactivate,
+    discard_winrt_event_args,
     only_refs,
     action));
 
@@ -338,14 +336,12 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-  button.Click(
-    [weak = get_weak(), weakAction = std::weak_ptr(action)](auto, auto) {
-      auto self = weak.get();
-      auto action = weakAction.lock();
-      if (self && action) {
-        self->OnToolbarActionClick(action);
-      }
-    });
+  button.Click(bind_front(
+    &TabPage::OnToolbarActionClick,
+    discard_winrt_event_args,
+    only_refs,
+    this,
+    action));
   return button;
 }
 
