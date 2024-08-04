@@ -22,6 +22,46 @@
 #include "bind_maybe_refs_front.hpp"
 #include "bind_refs_front.hpp"
 
+namespace OpenKneeboard::weak_refs::bind_front_adl_detail {
+
+template <class... TArgs>
+concept has_adl_bind_front
+  = requires(TArgs... args) { adl_bind_front(std::forward<TArgs>(args)...); };
+
+struct bind_front_fn {
+  template <class TFn>
+  constexpr auto operator()(TFn&& fn) const noexcept {
+    return std::forward<TFn>(fn);
+  }
+
+  template <class TFn, class TFirst, class... TRest>
+    requires has_adl_bind_front<TFirst, TFn, TRest...>
+  constexpr auto operator()(TFn&& fn, TFirst&& first, TRest&&... rest)
+    const noexcept {
+    return adl_bind_front(
+      std::forward<TFirst>(first),
+      std::forward<TFn>(fn),
+      std::forward<TRest>(rest)...);
+  }
+
+  template <class... TArgs>
+    requires(sizeof...(TArgs) >= 2 && !has_adl_bind_front<TArgs...>)
+  constexpr auto operator()(TArgs&&... args) const noexcept {
+    return std::bind_front(std::forward<TArgs>(args)...);
+  }
+};
+
+}// namespace OpenKneeboard::weak_refs::bind_front_adl_detail
+
+namespace OpenKneeboard::weak_refs::bind_front_adl {
+
+namespace {
+constexpr auto const& bind_front
+  = weak_refs_detail::static_const<bind_front_adl_detail::bind_front_fn>;
+}
+
+}// namespace OpenKneeboard::weak_refs::bind_front_adl
+
 namespace OpenKneeboard::weak_refs::bind_front_adl {
 
 // Marker for tag-based dispatch
@@ -34,50 +74,17 @@ constexpr auto& only_refs = weak_refs_detail::static_const<only_refs_t>;
 }// namespace
 }// namespace OpenKneeboard::weak_refs::bind_front_adl
 
-namespace OpenKneeboard::weak_refs::bind_front_adl_definitions {
-template <class T>
-constexpr bool is_adl_tag_v = false;
-template <>
-constexpr bool is_adl_tag_v<bind_front_adl::maybe_refs_t> = true;
-template <>
-constexpr bool is_adl_tag_v<bind_front_adl::only_refs_t> = true;
-
-template <class Fn, class First, class... Rest>
-  requires(!is_adl_tag_v<std::decay_t<First>>)
-auto adl_bind_front(Fn&& fn, First&& first, Rest&&... rest) {
-  using namespace std;
-  return bind_front(
-    std::forward<Fn>(fn),
-    std::forward<First>(first),
-    std::forward<Rest>(rest)...);
-}
-
+namespace OpenKneeboard::weak_refs::bind_front_adl {
 template <class Fn, class... Args>
-auto adl_bind_front(Fn&& fn, bind_front_adl::maybe_refs_t, Args&&... args) {
+constexpr auto
+adl_bind_front(bind_front_adl::maybe_refs_t, Fn&& fn, Args&&... args) {
   return bind_maybe_refs_front(
     std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
 
 template <class Fn, class... Args>
-auto adl_bind_front(Fn&& fn, bind_front_adl::only_refs_t, Args&&... args) {
+constexpr auto
+adl_bind_front(bind_front_adl::only_refs_t, Fn&& fn, Args&&... args) {
   return bind_refs_front(std::forward<Fn>(fn), std::forward<Args>(args)...);
 }
-
-}// namespace OpenKneeboard::weak_refs::bind_front_adl_definitions
-
-namespace OpenKneeboard::weak_refs::bind_front_adl_detail {
-struct bind_front_fn {
-  template <class... Args>
-  constexpr auto operator()(Args&&... args) const {
-    return bind_front_adl_definitions::adl_bind_front(
-      std::forward<Args>(args)...);
-  }
-};
-
-}// namespace OpenKneeboard::weak_refs::bind_front_adl_detail
-namespace OpenKneeboard::weak_refs::bind_front_adl {
-namespace {
-constexpr auto& bind_front
-  = weak_refs_detail::static_const<bind_front_adl_detail::bind_front_fn>;
-}// namespace
 }// namespace OpenKneeboard::weak_refs::bind_front_adl
