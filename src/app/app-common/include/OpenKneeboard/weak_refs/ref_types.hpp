@@ -21,7 +21,7 @@
 
 #include "adl.hpp"
 
-namespace OpenKneeboard::weak_refs {
+namespace OpenKneeboard::weak_refs::inline weak_refs_ref_types {
 
 /// e.g. `std::weak_ptr<T>`
 template <class TStrong>

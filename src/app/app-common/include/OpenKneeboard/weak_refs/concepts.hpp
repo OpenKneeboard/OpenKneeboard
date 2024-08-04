@@ -23,7 +23,7 @@
 
 #include <concepts>
 
-namespace OpenKneeboard::weak_refs {
+namespace OpenKneeboard::weak_refs::inline weak_refs_concepts {
 
 /** An object without keep-alive semantics, but can be 'locked' to produce one
  * with keep-alive semantics.

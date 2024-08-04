@@ -52,7 +52,7 @@ struct bind_front_fn {
 
 }// namespace OpenKneeboard::bind_detail
 
-namespace OpenKneeboard::bind::inline core {
+namespace OpenKneeboard::bind::inline bind_core {
 
 namespace {
 constexpr auto const& bind_front

@@ -21,7 +21,7 @@
 
 #include <winrt/Windows.Foundation.h>
 
-namespace OpenKneeboard::cppwinrt::inline concepts {
+namespace OpenKneeboard::cppwinrt::inline cppwinrt_concepts {
 template <class T>
 concept cppwinrt_type = std::
   convertible_to<std::decay_t<T>, winrt::Windows::Foundation::IInspectable>;
@@ -67,4 +67,4 @@ static_assert(!cppwinrt_strong_ref<
 static_assert(
   cppwinrt_weak_ref<winrt::weak_ref<winrt::Windows::Foundation::IStringable>>);
 
-}// namespace OpenKneeboard::cppwinrt::inline concepts
+}// namespace OpenKneeboard::cppwinrt::inline cppwinrt_concepts
