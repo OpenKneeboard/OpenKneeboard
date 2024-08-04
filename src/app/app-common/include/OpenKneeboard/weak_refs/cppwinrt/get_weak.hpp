@@ -21,20 +21,11 @@
 
 #include "../cppwinrt.hpp"
 
-namespace OpenKneeboard::weak_refs_adl_detail {
-template <class T>
-concept raw_pointer = std::is_pointer_v<T>;
-
-template <raw_pointer T, class TWeak = decltype(std::declval<T>()->get_weak())>
-consteval std::true_type is_cppwinrt_raw_pointer_fn(T&&);
-consteval std::false_type is_cppwinrt_raw_pointer_fn(...);
-}// namespace OpenKneeboard::weak_refs_adl_detail
-
 namespace OpenKneeboard::weak_refs_adl_definitions {
 template <class T>
-concept cppwinrt_raw_pointer
-  = decltype(weak_refs_adl_detail::is_cppwinrt_raw_pointer_fn(
-    std::declval<T>()))::value;
+concept cppwinrt_raw_pointer = std::is_pointer_v<T> && requires(T v) {
+  { v->get_weak() } -> weak_refs::weak_ref;
+};
 
 template <cppwinrt_raw_pointer T>
 struct adl_make_weak_ref<T> {

@@ -19,8 +19,6 @@
  */
 #pragma once
 
-#include "detail/adl.hpp"
-
 #include <concepts>
 
 namespace OpenKneeboard::weak_refs_adl_definitions {

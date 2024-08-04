@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include "detail/is_ref_fn.hpp"
 #include "ref_types.hpp"
 
 #include <concepts>
@@ -32,8 +31,11 @@ namespace OpenKneeboard::weak_refs {
  * e.g. `std::weak_ptr`
  */
 template <class T>
-concept weak_ref
-  = decltype(weak_refs_detail::is_weak_ref_fn(std::declval<T>()))::value;
+concept weak_ref = requires(T v) {
+  {
+    weak_refs_adl_definitions::adl_lock_weak_ref<std::decay_t<T>>::lock(v)
+  } -> std::copyable;
+};
 
 /** Either a weak_ref, or an object that can be converted to a `weak_ref`.
  *
@@ -41,9 +43,8 @@ concept weak_ref
  * `std::enable_shared_from_this`
  */
 template <class T>
-concept convertible_to_weak_ref = weak_ref<T>
-  || decltype(weak_refs_detail::can_convert_to_weak_ref_fn(
-    std::declval<T>()))::value;
+concept convertible_to_weak_ref
+  = weak_ref<T> || weak_ref<weak_ref_t<std::decay_t<T>>>;
 
 /** A pointer-like object with 'keep-alive' semantics.
  *

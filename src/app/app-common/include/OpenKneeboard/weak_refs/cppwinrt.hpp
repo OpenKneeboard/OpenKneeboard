@@ -48,6 +48,7 @@ struct adl_lock_weak_ref<T> {
 }// namespace OpenKneeboard::weak_refs_adl_definitions
 
 namespace OpenKneeboard::weak_refs {
+static_assert(convertible_to_weak_ref<winrt::Windows::Foundation::IStringable>);
 static_assert(strong_ref<winrt::Windows::Foundation::IStringable>);
 static_assert(!weak_ref<winrt::Windows::Foundation::IStringable>);
 
