@@ -76,6 +76,7 @@
 #include "weak_refs/base.hpp"
 #include "weak_refs/bind_front_adl.hpp"
 #include "weak_refs/bind_maybe_refs_front.hpp"
+#include "weak_refs/bind_refs_front.hpp"
 
 #if OPENKNEEBOARD_WEAK_REFS_CPPWINRT
 #include "weak_refs/cppwinrt.hpp"

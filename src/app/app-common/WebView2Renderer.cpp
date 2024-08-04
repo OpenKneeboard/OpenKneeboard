@@ -189,7 +189,7 @@ WebView2Renderer::InitializeContentToCapture() {
     std::bind_front(&WebView2Renderer::OnWebMessageReceived, this));
   mWebView.NavigationStarting(bind_front_with_context(
     mUIThread,
-    maybe_refs,
+    only_refs,
     [](auto self, auto, auto args) {
       self->mDocumentResources = {};
       const auto originalURI = self->mSettings.mURI;

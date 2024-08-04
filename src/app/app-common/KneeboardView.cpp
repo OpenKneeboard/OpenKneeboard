@@ -772,7 +772,7 @@ void KneeboardView::SetTabViews(
 
   for (const auto& tabView: mTabViews) {
     auto repaint = bind_front(
-      maybe_refs,
+      only_refs,
       [](auto self, auto tabView) {
         if (self->GetCurrentTabView() != tabView) {
           return;
