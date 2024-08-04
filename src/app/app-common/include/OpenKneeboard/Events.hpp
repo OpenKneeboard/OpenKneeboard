@@ -71,10 +71,8 @@ class EventHandler final {
   /// Convenience wrapper for `{this, &MyClass::myMethod}`
   template <class F, convertible_to_weak_ref Bind>
   constexpr EventHandler(Bind&& bind, F&& f)
-    : EventHandler(bind_front(
-        auto_weak_refs,
-        std::forward<F>(f),
-        std::forward<Bind>(bind))) {
+    : EventHandler(
+        bind_front(maybe_refs, std::forward<F>(f), std::forward<Bind>(bind))) {
   }
 
   explicit constexpr operator bool() const noexcept {

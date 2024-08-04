@@ -78,15 +78,12 @@ template <class T>
 using bound_arg_rest_t = strong_or_passthrough_t<weak_or_passthrough_t<T>>;
 
 template <class TFn, class TFirst, class... TRest>
-struct auto_weak_refs_front_binder {
+struct maybe_refs_front_binder {
   using function_t = TFn;
 
-  auto_weak_refs_front_binder() = delete;
+  maybe_refs_front_binder() = delete;
   template <class TInitFn, class TInitFirst, class... TInitRest>
-  auto_weak_refs_front_binder(
-    TInitFn&& fn,
-    TInitFirst&& first,
-    TInitRest&&... rest)
+  maybe_refs_front_binder(TInitFn&& fn, TInitFirst&& first, TInitRest&&... rest)
     : mFn(std::forward<TInitFn>(fn)),
       mFirst(weak_or_passthrough(std::forward<TInitFirst>(first))),
       mRest(std::make_tuple(
@@ -148,7 +145,7 @@ struct auto_weak_refs_front_binder {
 namespace OpenKneeboard::weak_refs {
 
 template <class F, class First, class... Rest>
-auto bind_auto_weak_refs_front(F&& f, First&& first, Rest&&... rest) {
+auto bind_maybe_refs_front(F&& f, First&& first, Rest&&... rest) {
   static_assert(
     convertible_to_weak_ref<std::decay_t<First>>
       || !std::is_member_function_pointer_v<std::decay_t<F>>,
@@ -157,7 +154,7 @@ auto bind_auto_weak_refs_front(F&& f, First&& first, Rest&&... rest) {
     "a "
     "weak ref");
   namespace detail = weak_refs_detail;
-  return detail::auto_weak_refs_front_binder<
+  return detail::maybe_refs_front_binder<
     std::decay_t<F>,
     std::decay_t<First>,
     std::decay_t<Rest>...>(

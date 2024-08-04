@@ -57,7 +57,7 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
     mKneeboard->evSettingsChangedEvent,
     bind_front_with_context(
       mUIThread,
-      auto_weak_refs,
+      maybe_refs,
       [](auto self) {
         self->mPropertyChangedEvent(
           *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
@@ -350,7 +350,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
 
   const scope_exit propertyChanged(bind_front_with_context(
     mUIThread,
-    auto_weak_refs,
+    maybe_refs,
     [](auto self) {
       self->mPropertyChangedEvent(
         *self, PropertyChangedEventArgs(L"DesiredElevation"));

@@ -46,11 +46,11 @@
  * - `lock_weak_ref()`: upgrades a `weak_ref` to a `strong_ref`
  * - `make_weak_refs()`: creates a tuple of `weak_ref`
  * - `lock_weak_refs()`: creates an std::optional of strong references
- * - `bind_auto_weak_refs_front()`: like `std::bind_front()`, but automatically
+ * - `bind_maybe_refs_front()`: like `std::bind_front()`, but automatically
  *    converts `convertible_to_weak_ref()` parameters to weak, then back to
  *    strong
- * - `bind_front(auto_weak_refs, ...)`: tag-based ADL alias for
- *   `bind_auto_weak_refs_front()`
+ * - `bind_front(maybe_refs, ...)`: tag-based ADL alias for
+ *   `bind_maybe_refs_front()`
  */
 
 #ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT
@@ -74,8 +74,8 @@
 #endif
 
 #include "weak_refs/base.hpp"
-#include "weak_refs/bind_auto_weak_refs_front.hpp"
 #include "weak_refs/bind_front_adl.hpp"
+#include "weak_refs/bind_maybe_refs_front.hpp"
 
 #if OPENKNEEBOARD_WEAK_REFS_CPPWINRT
 #include "weak_refs/cppwinrt.hpp"
@@ -123,8 +123,8 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   using namespace weak_refs::bind_front_adl;
 
   auto std_byval = std::bind_front(&TestBindFront::byval, t);
-  auto byval = weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t);
-  auto bycr = weak_refs::bind_auto_weak_refs_front(&TestBindFront::bycr, t);
+  auto byval = weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t);
+  auto bycr = weak_refs::bind_maybe_refs_front(&TestBindFront::bycr, t);
 
   static_assert(std::invocable<decltype(std_byval), int, std::shared_ptr<int>>);
   static_assert(std::invocable<decltype(byval), int, std::shared_ptr<int>>);
@@ -133,12 +133,12 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   // Test ADL
   static_assert(
     std::same_as<
-      decltype(weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t)),
-      decltype(bind_front(auto_weak_refs, &TestBindFront::byval, t))>);
+      decltype(weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t)),
+      decltype(bind_front(maybe_refs, &TestBindFront::byval, t))>);
   static_assert(
     !std::same_as<
-      decltype(weak_refs::bind_auto_weak_refs_front(&TestBindFront::byval, t)),
-      decltype(std::bind_front(auto_weak_refs, &TestBindFront::byval, t))>);
+      decltype(weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t)),
+      decltype(std::bind_front(maybe_refs, &TestBindFront::byval, t))>);
   static_assert(std::same_as<
                 decltype(std::bind_front(&TestBindFront::byval, t)),
                 decltype(bind_front(&TestBindFront::byval, t))>);
@@ -146,18 +146,16 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   takes_convertible_callback(bind_front(&TestBindFront::byval, t));
   takes_convertible_callback(bind_front(&TestBindFront::bycr, t));
 
-  takes_convertible_callback(
-    bind_front(auto_weak_refs, &TestBindFront::byval, t));
-  takes_convertible_callback(
-    bind_front(auto_weak_refs, &TestBindFront::bycr, t));
+  takes_convertible_callback(bind_front(maybe_refs, &TestBindFront::byval, t));
+  takes_convertible_callback(bind_front(maybe_refs, &TestBindFront::bycr, t));
 
   takes_regular_invocable_callback(bind_front(&TestBindFront::byval, t));
   takes_regular_invocable_callback(bind_front(&TestBindFront::bycr, t));
 
   takes_regular_invocable_callback(
-    bind_front(auto_weak_refs, &TestBindFront::byval, t));
+    bind_front(maybe_refs, &TestBindFront::byval, t));
   takes_regular_invocable_callback(
-    bind_front(auto_weak_refs, &TestBindFront::bycr, t));
+    bind_front(maybe_refs, &TestBindFront::bycr, t));
 
   static_assert(not std::invocable<decltype(std_byval), int>);
   static_assert(std::invocable<

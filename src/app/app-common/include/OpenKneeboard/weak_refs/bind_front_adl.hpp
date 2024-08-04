@@ -19,16 +19,15 @@
  */
 #pragma once
 
-#include "bind_auto_weak_refs_front.hpp"
+#include "bind_maybe_refs_front.hpp"
 
 namespace OpenKneeboard::weak_refs::bind_front_adl {
 
 // Marker for tag-based dispatch
-struct auto_weak_refs_t {};
+struct maybe_refs_t {};
 
 namespace {
-constexpr auto& auto_weak_refs
-  = weak_refs_detail::static_const<auto_weak_refs_t>;
+constexpr auto& maybe_refs = weak_refs_detail::static_const<maybe_refs_t>;
 }
 }// namespace OpenKneeboard::weak_refs::bind_front_adl
 
@@ -36,7 +35,7 @@ namespace OpenKneeboard::weak_refs::bind_front_adl_definitions {
 template <class T>
 constexpr bool is_adl_tag_v = false;
 template <>
-constexpr bool is_adl_tag_v<bind_front_adl::auto_weak_refs_t> = true;
+constexpr bool is_adl_tag_v<bind_front_adl::maybe_refs_t> = true;
 
 template <class First, class... Rest>
   requires(!is_adl_tag_v<std::decay_t<First>>)
@@ -46,8 +45,8 @@ auto adl_bind_front(First&& first, Rest&&... rest) {
 }
 
 template <class... Args>
-auto adl_bind_front(bind_front_adl::auto_weak_refs_t, Args&&... args) {
-  return bind_auto_weak_refs_front(std::forward<Args>(args)...);
+auto adl_bind_front(bind_front_adl::maybe_refs_t, Args&&... args) {
+  return bind_maybe_refs_front(std::forward<Args>(args)...);
 }
 
 }// namespace OpenKneeboard::weak_refs::bind_front_adl_definitions

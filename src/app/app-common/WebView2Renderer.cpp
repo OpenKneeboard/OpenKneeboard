@@ -189,7 +189,7 @@ WebView2Renderer::InitializeContentToCapture() {
     std::bind_front(&WebView2Renderer::OnWebMessageReceived, this));
   mWebView.NavigationStarting(bind_front_with_context(
     mUIThread,
-    auto_weak_refs,
+    maybe_refs,
     [](auto self, auto, auto args) {
       self->mDocumentResources = {};
       const auto originalURI = self->mSettings.mURI;
@@ -541,8 +541,8 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   const std::string message = parsed.at("messageName");
   const uint64_t callID = parsed.at("callID");
 
-  const auto respond = bind_front(
-    auto_weak_refs, &WebView2Renderer::SendJSResponse, this, callID);
+  const auto respond
+    = bind_front(maybe_refs, &WebView2Renderer::SendJSResponse, this, callID);
 
   try {
 #define OKB_INVOKE_JSAPI(APIFUNC) \

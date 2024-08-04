@@ -83,7 +83,7 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
     mTabletSettingsChangeToken = AddEventListener(
       tablet->evSettingsChangedEvent,
       bind_front(
-        auto_weak_refs,
+        maybe_refs,
         [](auto self, auto tablet) {
           static_assert(strong_ref<decltype(self)>);
           if (
