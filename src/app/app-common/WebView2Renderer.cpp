@@ -196,7 +196,7 @@ WebView2Renderer::InitializeContentToCapture() {
         self->mDocumentResources.mPages = self->mInitialPages;
       }
     },
-    bind_cppwinrt_context,
+    bind_winrt_context,
     mUIThread,
     only_refs,
     this));

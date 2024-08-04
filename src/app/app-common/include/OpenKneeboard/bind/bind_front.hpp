@@ -19,10 +19,9 @@
  */
 #pragma once
 
-#include "bind_maybe_refs_front.hpp"
-#include "bind_refs_front.hpp"
+#include "detail/static_const.hpp"
 
-namespace OpenKneeboard::weak_refs::bind_front_adl_detail {
+namespace OpenKneeboard::bind_detail {
 
 template <class... TArgs>
 concept has_adl_bind_front
@@ -51,36 +50,13 @@ struct bind_front_fn {
   }
 };
 
-}// namespace OpenKneeboard::weak_refs::bind_front_adl_detail
+}// namespace OpenKneeboard::bind_detail
 
-namespace OpenKneeboard::weak_refs::bind_front_adl {
+namespace OpenKneeboard::bind::inline core {
 
 namespace {
 constexpr auto const& bind_front
-  = weak_refs_detail::static_const<bind_front_adl_detail::bind_front_fn>;
+  = bind_detail::static_const<bind_detail::bind_front_fn>;
 }
 
-}// namespace OpenKneeboard::weak_refs::bind_front_adl
-
-namespace OpenKneeboard::weak_refs::bind_front_adl {
-
-// Marker for tag-based dispatch
-struct maybe_refs_t {};
-struct only_refs_t {};
-
-constexpr maybe_refs_t maybe_refs {};
-constexpr only_refs_t only_refs {};
-
-template <class Fn, class... Args>
-constexpr auto
-adl_bind_front(bind_front_adl::maybe_refs_t, Fn&& fn, Args&&... args) {
-  return bind_maybe_refs_front(
-    std::forward<Fn>(fn), std::forward<Args>(args)...);
-}
-
-template <class Fn, class... Args>
-constexpr auto
-adl_bind_front(bind_front_adl::only_refs_t, Fn&& fn, Args&&... args) {
-  return bind_refs_front(std::forward<Fn>(fn), std::forward<Args>(args)...);
-}
-}// namespace OpenKneeboard::weak_refs::bind_front_adl
+}// namespace OpenKneeboard::bind

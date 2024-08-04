@@ -94,10 +94,8 @@ struct front_binder {
         weak_or_passthrough(std::forward<TInitRest>(rest))...)) {
     if constexpr (refs_required_v) {
       static_assert(
-        weak_ref<weak_or_passthrough_t<TFirst>>,
-        "all bound arguments must be convertible to weak_refs");
-      static_assert(
-        (weak_ref<weak_or_passthrough_t<TRest>> && ...),
+        weak_ref<weak_or_passthrough_t<TFirst>>
+          && (weak_ref<weak_or_passthrough_t<TRest>> && ...),
         "all bound arguments must be convertible to weak_refs");
     } else {
       static_assert(

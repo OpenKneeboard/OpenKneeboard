@@ -59,7 +59,7 @@ struct WithPropertyChangedEventOnProfileChange
       gKneeboard.lock()->evCurrentProfileChangedEvent,
       bind_front(
         [](auto self) { self->EmitPropertyChangedEvent(L""); },
-        bind_cppwinrt_context,
+        bind_winrt_context,
         mUIThread,
         only_refs,
         self));

@@ -21,7 +21,6 @@
 
 #include "../cppwinrt/concepts.hpp"
 #include "base.hpp"
-#include "cppwinrt/bind_cppwinrt_context.hpp"
 
 #include <winrt/Windows.Foundation.h>
 

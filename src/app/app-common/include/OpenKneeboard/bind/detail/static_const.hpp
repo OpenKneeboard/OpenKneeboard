@@ -19,27 +19,7 @@
  */
 #pragma once
 
-#include "../../cppwinrt/bind_context.hpp"
-#include "../bind_front_adl.hpp"
-
-namespace OpenKneeboard::weak_refs::cppwinrt {
-
-struct bind_cppwinrt_context_t {};
-constexpr bind_cppwinrt_context_t bind_cppwinrt_context {};
-
-template <class Context, class Fn, class... Args>
-  requires(sizeof...(Args) >= 1)
-constexpr auto adl_bind_front(
-  bind_cppwinrt_context_t,
-  Fn&& fn,
-  Context&& context,
-  Args&&... args) {
-  using namespace OpenKneeboard::weak_refs::bind_front_adl;
-  const auto next
-    = bind_front(std::forward<Fn>(fn), std::forward<Args>(args)...);
-
-  return OpenKneeboard::cppwinrt::bind_context(
-    std::forward<Context>(context), next);
+namespace OpenKneeboard::bind_detail {
+template <class T>
+constexpr T static_const {};
 }
-
-}// namespace OpenKneeboard::weak_refs::cppwinrt

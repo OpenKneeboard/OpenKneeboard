@@ -39,7 +39,4 @@ consteval std::true_type is_adl_sweak_ref_fn(T);
 consteval std::false_type is_adl_weak_ref_fn(...);
 template <class T>
 concept adl_weak_ref = decltype(is_adl_weak_ref_fn(std::declval<T>()))::value;
-
-template <class A, class B>
-concept decays_to_same_as = std::same_as<std::decay_t<A>, std::decay_t<B>>;
 }// namespace OpenKneeboard::weak_refs_adl_detail

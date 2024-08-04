@@ -213,7 +213,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
         backStack.ReplaceAll(newBackStack);
         self->PromptForViewMode();
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       this));

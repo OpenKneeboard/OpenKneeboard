@@ -53,67 +53,42 @@
  *   `bind_maybe_refs_front()`
  */
 
-#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT
-#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT (__has_include(<winrt/base.h>))
+#ifndef OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT
+#define OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT (__has_include(<winrt/base.h>))
 #endif
-#ifndef OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK
-#define OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK \
-  OPENKNEEBOARD_WEAK_REFS_CPPWINRT
+#ifndef OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT_GET_WEAK
+#define OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT_GET_WEAK \
+  OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT
 #endif
 
-#ifndef OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
-#define OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR true
+#ifndef OPENKNEEBOARD_WEAK_REFS_ENABLE_STD_SHARED_PTR
+#define OPENKNEEBOARD_WEAK_REFS_ENABLE_STD_SHARED_PTR true
 #endif
-#ifndef OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS
-#define OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS \
-  OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
+#ifndef OPENKNEEBOARD_WEAK_REFS_ENABLE_WEAK_FROM_THIS
+#define OPENKNEEBOARD_WEAK_REFS_ENABLE_WEAK_FROM_THIS \
+  OPENKNEEBOARD_WEAK_REFS_ENABLE_STD_SHARED_PTR
 #endif
 
 #include "weak_refs/base.hpp"
-#include "weak_refs/bind_front_adl.hpp"
 #include "weak_refs/bind_maybe_refs_front.hpp"
 #include "weak_refs/bind_refs_front.hpp"
 
-#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT
+#if OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT
 #include "weak_refs/cppwinrt.hpp"
-#if OPENKNEEBOARD_WEAK_REFS_CPPWINRT_GET_WEAK
+#if OPENKNEEBOARD_WEAK_REFS_ENABLE_CPPWINRT_GET_WEAK
 #include "weak_refs/cppwinrt/get_weak.hpp"
 #endif
 #endif
 
-#if OPENKNEEBOARD_WEAK_REFS_STD_SHARED_PTR
+#if OPENKNEEBOARD_WEAK_REFS_ENABLE_STD_SHARED_PTR
 #include "weak_refs/std_shared_ptr.hpp"
 #endif
-#if OPENKNEEBOARD_WEAK_REFS_WEAK_FROM_THIS
+#if OPENKNEEBOARD_WEAK_REFS_ENABLE_WEAK_FROM_THIS
 #include "weak_refs/weak_from_this.hpp"
 #endif
 
-namespace OpenKneeboard::weak_refs::bind_front_adl {
-
-// Marker for tag-based dispatch
-struct discard_winrt_event_args_t {};
-constexpr discard_winrt_event_args_t discard_winrt_event_args {};
-
-template <class... Args>
-  requires(sizeof...(Args) >= 1)
-constexpr auto adl_bind_front(discard_winrt_event_args_t, Args&&... args) {
-  const auto next = bind_front(std::forward<Args>(args)...);
-
-  using namespace OpenKneeboard::cppwinrt::concepts;
-  return [next]<class... Extras>(
-           Extras&&... extras,
-           [[maybe_unused]] const cppwinrt_type auto& sender,
-           [[maybe_unused]] const cppwinrt_type auto& args) {
-    return next(std::forward<Extras>(extras)...);
-  };
-}
-}// namespace OpenKneeboard::weak_refs::bind_front_adl
-
-namespace OpenKneeboard {
-using namespace weak_refs;
-using namespace weak_refs::bind_front_adl;
-using namespace weak_refs::cppwinrt;
-}// namespace OpenKneeboard
+// Just for testing:
+#include "bind.hpp"
 
 namespace TestNS {
 namespace {
@@ -135,7 +110,8 @@ void takes_regular_invocable_callback_extra_arg(
 
 void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
   namespace weak_refs = OpenKneeboard::weak_refs;
-  using namespace weak_refs::bind_front_adl;
+  using namespace OpenKneeboard::bind;
+  using namespace weak_refs;
 
   auto std_byval = std::bind_front(&TestBindFront::byval, t);
   auto byval = weak_refs::bind_maybe_refs_front(&TestBindFront::byval, t);
@@ -184,3 +160,7 @@ void test_bind_front(TestBindFront* t, std::weak_ptr<int> weakInt) {
 }
 }// namespace
 }// namespace TestNS
+
+namespace OpenKneeboard {
+using namespace ::OpenKneeboard::weak_refs;
+}// namespace OpenKneeboard

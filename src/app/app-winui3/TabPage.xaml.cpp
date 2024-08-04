@@ -256,7 +256,7 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   button.IsChecked(action->IsActive());
   button.Checked(bind_front(
-    [](auto action) -> winrt::fire_and_forget { co_await action->Activate(); },
+    &ToolbarToggleAction::Activate,
     discard_winrt_event_args,
     only_refs,
     action));
@@ -273,7 +273,7 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
         button.IsChecked(action->IsActive());
         button.IsEnabled(action->IsEnabled());
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       action,
@@ -301,7 +301,7 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
       [](auto action, auto button) noexcept {
         button.IsEnabled(action->IsEnabled());
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       action,
@@ -367,7 +367,7 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
         [](auto tmfi, auto checkable) {
           tmfi.IsChecked(checkable->IsChecked());
         },
-        bind_cppwinrt_context,
+        bind_winrt_context,
         mUIThread,
         only_refs,
         tmfi,
@@ -391,7 +391,7 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
       [](auto action, auto item) noexcept {
         item.IsEnabled(action->IsEnabled());
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       action,
@@ -482,7 +482,7 @@ void TabPage::AttachVisibility(
           visibility->IsVisible() ? Visibility::Visible
                                   : Visibility::Collapsed);
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       control,

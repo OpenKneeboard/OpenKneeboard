@@ -60,7 +60,7 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
         self->mPropertyChangedEvent(
           *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
       },
-      bind_cppwinrt_context,
+      bind_winrt_context,
       mUIThread,
       only_refs,
       this));
@@ -354,7 +354,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
       self->mPropertyChangedEvent(
         *self, PropertyChangedEventArgs(L"DesiredElevation"));
     },
-    bind_cppwinrt_context,
+    bind_winrt_context,
     mUIThread,
     only_refs,
     this));

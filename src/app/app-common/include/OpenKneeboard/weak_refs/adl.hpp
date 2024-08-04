@@ -31,8 +31,9 @@ struct adl_make_weak_ref {
   // - keep SFINAE behavior if it is false
   // - keep the ability to specialize this class
   template <
-    weak_refs_adl_detail::decays_to_same_as<T> TValue,
+    class TValue,
     class = decltype(make_weak_ref(std::declval<std::decay_t<TValue>>()))>
+    requires std::same_as<std::decay_t<TValue>, std::decay_t<T>>
   static constexpr auto make(TValue&& value) {
     return make_weak_ref(std::forward<TValue>(value));
   }
@@ -42,8 +43,9 @@ struct adl_make_weak_ref {
 template <class T>
 struct adl_lock_weak_ref {
   template <
-    weak_refs_adl_detail::decays_to_same_as<T> TValue,
+    class TValue,
     class = decltype(lock_weak_ref(std::declval<std::decay_t<TValue>>()))>
+    requires std::same_as<std::decay_t<TValue>, std::decay_t<T>>
   static constexpr auto lock(TValue&& value) {
     return lock_weak_ref(std::forward<TValue>(value));
   }

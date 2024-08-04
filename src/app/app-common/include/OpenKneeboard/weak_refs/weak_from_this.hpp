@@ -24,6 +24,7 @@
 #include <memory>
 
 namespace OpenKneeboard::weak_refs_adl_definitions {
+namespace weak_refs = ::OpenKneeboard::weak_refs;
 
 template <class T>
 concept with_weak_from_this = std::is_pointer_v<T> && requires(T x) {
@@ -46,14 +47,14 @@ struct adl_make_weak_ref<T> {
 #include "std_shared_ptr.hpp"
 
 namespace OpenKneeboard::weak_refs_test {
+using namespace OpenKneeboard::weak_refs;
 struct TestWeakFromThis
   : public std::enable_shared_from_this<TestWeakFromThis> {};
 
-static_assert(std::same_as<
-              weak_refs::weak_ref_t<TestWeakFromThis*>,
-              std::weak_ptr<TestWeakFromThis>>);
+static_assert(
+  std::same_as<weak_ref_t<TestWeakFromThis*>, std::weak_ptr<TestWeakFromThis>>);
 
-static_assert(weak_refs::convertible_to_weak_ref<TestWeakFromThis*>);
-static_assert(!weak_refs::strong_ref<TestWeakFromThis*>);
+static_assert(convertible_to_weak_ref<TestWeakFromThis*>);
+static_assert(!strong_ref<TestWeakFromThis*>);
 
 }// namespace OpenKneeboard::weak_refs_test

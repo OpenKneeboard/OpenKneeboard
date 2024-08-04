@@ -47,8 +47,9 @@ template <class T>
 concept cppwinrt_weak_ref
   = (cppwinrt_strong_ref<decltype(std::declval<T>().get())>
      || cppwinrt_com_ptr<decltype(std::declval<T>().get())>)
-  && weak_refs_adl_detail::
-    decays_to_same_as<T, decltype(winrt::make_weak(std::declval<T>().get()))>;
+  && std::same_as<
+      std::decay_t<T>,
+      std::decay_t<decltype(winrt::make_weak(std::declval<T>().get()))>>;
 
 static_assert(!cppwinrt_strong_ref<int>);
 static_assert(!cppwinrt_strong_ref<std::shared_ptr<int>>);
@@ -61,4 +62,4 @@ static_assert(!cppwinrt_strong_ref<
 static_assert(
   cppwinrt_weak_ref<winrt::weak_ref<winrt::Windows::Foundation::IStringable>>);
 
-}
+}// namespace OpenKneeboard::cppwinrt::inline concepts

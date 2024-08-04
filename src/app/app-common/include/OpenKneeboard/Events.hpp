@@ -27,6 +27,7 @@
 
 #include <winrt/Windows.Foundation.h>
 
+#include <OpenKneeboard/bind.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
