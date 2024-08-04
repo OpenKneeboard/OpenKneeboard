@@ -51,6 +51,11 @@ concept cppwinrt_weak_ref
       std::decay_t<T>,
       std::decay_t<decltype(winrt::make_weak(std::declval<T>().get()))>>;
 
+template <class T>
+concept cppwinrt_raw_pointer = std::is_pointer_v<T> && requires(T v) {
+  { v->get_weak() } -> cppwinrt_weak_ref;
+};
+
 static_assert(!cppwinrt_strong_ref<int>);
 static_assert(!cppwinrt_strong_ref<std::shared_ptr<int>>);
 static_assert(!cppwinrt_weak_ref<std::weak_ptr<int>>);

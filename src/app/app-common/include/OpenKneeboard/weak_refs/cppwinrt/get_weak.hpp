@@ -19,13 +19,12 @@
  */
 #pragma once
 
+#include "../../cppwinrt/concepts.hpp"
 #include "../cppwinrt.hpp"
 
 namespace OpenKneeboard::weak_refs_adl_definitions {
-template <class T>
-concept cppwinrt_raw_pointer = std::is_pointer_v<T> && requires(T v) {
-  { v->get_weak() } -> weak_refs::weak_ref;
-};
+
+using namespace OpenKneeboard::cppwinrt::concepts;
 
 template <cppwinrt_raw_pointer T>
 struct adl_make_weak_ref<T> {
