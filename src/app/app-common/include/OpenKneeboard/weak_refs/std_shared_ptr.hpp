@@ -35,7 +35,7 @@ concept std_weak_ptr = std::same_as<
   std::weak_ptr<std::decay_t<typename T::element_type>>>;
 
 template <std_shared_ptr T>
-struct adl_make_weak_ref<T> {
+struct make_weak_ref_fn<T> {
   template <class TValue>
     requires std::same_as<std::decay_t<T>, std::decay_t<TValue>>
   static constexpr auto make(TValue&& value) {
@@ -45,7 +45,7 @@ struct adl_make_weak_ref<T> {
 };
 
 template <std_weak_ptr T>
-struct adl_lock_weak_ref<T> {
+struct lock_weak_ref_fn<T> {
   static constexpr auto lock(auto&& value) {
     return value.lock();
   }

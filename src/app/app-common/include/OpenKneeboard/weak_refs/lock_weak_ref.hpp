@@ -38,7 +38,7 @@ namespace OpenKneeboard::weak_refs_detail {
 struct lock_weak_ref_fn {
   template <weak_refs::weak_ref T>
   constexpr auto operator()(T&& weak) const {
-    return weak_refs_extensions::adl_lock_weak_ref<std::decay_t<T>>::lock(
+    return weak_refs_extensions::lock_weak_ref_fn<std::decay_t<T>>::lock(
       std::forward<T>(weak));
   }
 };

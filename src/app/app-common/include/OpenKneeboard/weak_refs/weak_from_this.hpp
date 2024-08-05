@@ -34,7 +34,7 @@ concept with_weak_from_this = std::is_pointer_v<T> && requires(T x) {
 static_assert(!with_weak_from_this<std::shared_ptr<int>>);
 
 template <with_weak_from_this T>
-struct adl_make_weak_ref<T> {
+struct make_weak_ref_fn<T> {
   static constexpr auto make(auto&& value) {
     return value->weak_from_this();
   }
