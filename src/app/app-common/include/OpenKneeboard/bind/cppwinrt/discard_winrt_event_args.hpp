@@ -22,7 +22,7 @@
 #include "../../cppwinrt/concepts.hpp"
 
 namespace OpenKneeboard::bind_detail::cppwinrt {
-using namespace ::OpenKneeboard::cppwinrt::concepts;
+using namespace ::OpenKneeboard::cppwinrt::cppwinrt_concepts;
 
 template <class... Args>
 struct bind_trace_t {};

@@ -28,7 +28,7 @@
 
 namespace OpenKneeboard::weak_refs_adl_definitions {
 
-using namespace OpenKneeboard::cppwinrt::concepts;
+using namespace OpenKneeboard::cppwinrt::cppwinrt_concepts;
 
 template <cppwinrt_strong_ref T>
 struct adl_make_weak_ref<T> {
