@@ -25,28 +25,25 @@ namespace OpenKneeboard::weak_refs_extensions {
 
 template <class T>
 struct adl_make_weak_ref {
-  // We have `class =` on `T` here instead of constraining the class to:
-  // - keep SFINAE behavior if it is false
-  // - keep the ability to specialize this class
-  template <
-    class TValue,
-    class = decltype(make_weak_ref(std::declval<std::decay_t<TValue>>()))>
-    requires std::same_as<std::decay_t<TValue>, std::decay_t<T>>
-  static constexpr auto make(TValue&& value) {
-    return make_weak_ref(std::forward<TValue>(value));
-  }
+  /** Create a weak ref from the specified value.
+   *
+   *  We have the class defined but useless so that we:
+   *  - have the ability to specialize this class
+   *  - keep SFINAE for invocation failures
+   *
+   * Ideally this would be a `static operator()`, but that :
+   * - requires C++23
+   * - is not yet widely supported as of 2024-08-05
+   *
+   * Declaring this method as `delete` has no effect; it's only here to
+   * document what specializations need to implement.
+   */
+  constexpr auto operator()(T&&) const noexcept = delete;
 };
 
-// Same pattern as adl_make_weak_ref
 template <class T>
 struct adl_lock_weak_ref {
-  template <
-    class TValue,
-    class = decltype(lock_weak_ref(std::declval<std::decay_t<TValue>>()))>
-    requires std::same_as<std::decay_t<TValue>, std::decay_t<T>>
-  static constexpr auto lock(TValue&& value) {
-    return lock_weak_ref(std::forward<TValue>(value));
-  }
+  constexpr auto operator()(T&&) const noexcept = delete;
 };
 
 }// namespace OpenKneeboard::weak_refs_extensions
