@@ -26,12 +26,12 @@ namespace OpenKneeboard::weak_refs::inline weak_refs_ref_types {
 /// e.g. `std::weak_ptr<T>`
 template <class TStrong>
 using weak_ref_t
-  = decltype(weak_refs_adl_definitions::adl_make_weak_ref<
-             std::decay_t<TStrong>>::make(std::declval<TStrong>()));
+  = decltype(weak_refs_adl::adl_make_weak_ref<std::decay_t<TStrong>>::make(
+    std::declval<TStrong>()));
 /// e.g. `std::strong_ptr<T>`
 template <class TWeak>
 using strong_ref_t
-  = decltype(weak_refs_adl_definitions::adl_lock_weak_ref<
-             std::decay_t<TWeak>>::lock(std::declval<TWeak>()));
+  = decltype(weak_refs_adl::adl_lock_weak_ref<std::decay_t<TWeak>>::lock(
+    std::declval<TWeak>()));
 
-}// namespace OpenKneeboard::weak_refs
+}// namespace OpenKneeboard::weak_refs::inline weak_refs_ref_types

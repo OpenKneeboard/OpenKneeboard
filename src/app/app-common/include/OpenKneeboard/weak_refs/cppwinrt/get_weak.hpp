@@ -22,7 +22,7 @@
 #include "../../cppwinrt/concepts.hpp"
 #include "../cppwinrt.hpp"
 
-namespace OpenKneeboard::weak_refs_adl_definitions {
+namespace OpenKneeboard::weak_refs_adl {
 
 using namespace OpenKneeboard::cppwinrt::cppwinrt_concepts;
 
@@ -35,4 +35,4 @@ struct adl_make_weak_ref<T> {
 
 // FIXME: test winrt::com_ptr()
 
-}// namespace OpenKneeboard::weak_refs_adl_definitions
+}// namespace OpenKneeboard::weak_refs_adl

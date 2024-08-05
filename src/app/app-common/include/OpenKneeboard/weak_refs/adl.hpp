@@ -21,7 +21,7 @@
 
 #include <concepts>
 
-namespace OpenKneeboard::weak_refs_adl_definitions {
+namespace OpenKneeboard::weak_refs_adl {
 
 template <class T>
 struct adl_make_weak_ref {
@@ -49,4 +49,4 @@ struct adl_lock_weak_ref {
   }
 };
 
-}// namespace OpenKneeboard::weak_refs_adl_definitions
+}// namespace OpenKneeboard::weak_refs_adl
