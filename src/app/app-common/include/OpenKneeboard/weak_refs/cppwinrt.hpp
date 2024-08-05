@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace OpenKneeboard::weak_refs_adl {
+namespace OpenKneeboard::weak_refs_extensions {
 
 using namespace OpenKneeboard::cppwinrt::cppwinrt_concepts;
 
@@ -45,7 +45,7 @@ struct adl_lock_weak_ref<T> {
   }
 };
 
-}// namespace OpenKneeboard::weak_refs_adl
+}// namespace OpenKneeboard::weak_refs_extensions
 
 namespace OpenKneeboard::weak_refs {
 static_assert(convertible_to_weak_ref<winrt::Windows::Foundation::IStringable>);

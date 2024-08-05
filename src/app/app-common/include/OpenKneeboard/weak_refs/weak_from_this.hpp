@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace OpenKneeboard::weak_refs_adl {
+namespace OpenKneeboard::weak_refs_extensions {
 namespace weak_refs = ::OpenKneeboard::weak_refs;
 
 template <class T>
@@ -40,7 +40,7 @@ struct adl_make_weak_ref<T> {
   }
 };
 
-}// namespace OpenKneeboard::weak_refs_adl
+}// namespace OpenKneeboard::weak_refs_extensions
 
 // TODO: split to test file
 

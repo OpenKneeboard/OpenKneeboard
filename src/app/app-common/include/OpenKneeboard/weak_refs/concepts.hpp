@@ -33,7 +33,7 @@ namespace OpenKneeboard::weak_refs::inline weak_refs_concepts {
 template <class T>
 concept weak_ref = requires(T v) {
   {
-    weak_refs_adl::adl_lock_weak_ref<std::decay_t<T>>::lock(v)
+    weak_refs_extensions::adl_lock_weak_ref<std::decay_t<T>>::lock(v)
   } -> std::copyable;
 };
 

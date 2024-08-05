@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace OpenKneeboard::weak_refs_adl {
+namespace OpenKneeboard::weak_refs_extensions {
 template <class T>
 concept std_shared_ptr = std::same_as<
   std::decay_t<T>,
@@ -50,7 +50,7 @@ struct adl_lock_weak_ref<T> {
     return value.lock();
   }
 };
-}// namespace OpenKneeboard::weak_refs_adl
+}// namespace OpenKneeboard::weak_refs_extensions
 
 namespace OpenKneeboard::weak_refs {
 static_assert(strong_ref<std::shared_ptr<int>>);
