@@ -47,7 +47,7 @@ class OpenKneeboardAPI extends EventTarget {
         if (runtimeData.AvailableExperimentalFeatures) {
             var message = "OpenKneeboard: the following experimental features are available in this build:"
             for (const feature of runtimeData.AvailableExperimentalFeatures) {
-                message += `\n- '${feature.Name}' version ${feature.Version}`
+                message += `\n🧪 '${feature.Name}' version ${feature.Version}`
             }
             console.log(message);
         }
@@ -76,8 +76,19 @@ class OpenKneeboardAPI extends EventTarget {
         return this.EnableExperimentalFeatures([{ name, version }]);
     }
 
-    EnableExperimentalFeatures(features) {
-        return this.#AsyncRequest("OpenKneeboard.EnableExperimentalFeatures", { features });
+    async EnableExperimentalFeatures(features) {
+        const ret = await this.#AsyncRequest("OpenKneeboard.EnableExperimentalFeatures", { features });
+        if (!(ret.details?.features)) {
+            return ret;
+        }
+        var message = "OpenKneeboard: the following experimental features have been enabled by scripts in this page:";
+        for (const feature of ret.details.features) {
+            console.log(feature);
+            message += `\n🧪 ✅ '${feature.Name}' version ${feature.Version}`;
+        }
+        console.log(message);
+
+        return ret;
     }
 
     #OnDOMContentLoaded() {

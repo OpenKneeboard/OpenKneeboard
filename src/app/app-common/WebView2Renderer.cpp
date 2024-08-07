@@ -860,6 +860,12 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
 
   auto& pageApi = mDocumentResources;
 
+  const auto EnableFeature = [&](const ExperimentalFeature& feature) {
+    dprintf("WARNING: JS enabled experimental feature {}", feature);
+    pageApi.mEnabledExperimentalFeatures.push_back(feature);
+    enabledFeatures.push_back(feature);
+  };
+
   for (const auto& featureSpec: args.at("features")) {
     const std::string name = featureSpec.at("name");
     const uint64_t version = featureSpec.at("version");
@@ -887,16 +893,6 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
         name,
         version);
     }
-
-    dprintf(
-      "WARNING: JS enabled experimental feature `{}` version `{}`",
-      name,
-      version);
-
-    const auto EnableFeature = [&](const ExperimentalFeature& feature) {
-      pageApi.mEnabledExperimentalFeatures.push_back(feature);
-      enabledFeatures.push_back(feature);
-    };
 
     EnableFeature(feature);
 
