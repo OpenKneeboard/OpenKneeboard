@@ -771,16 +771,12 @@ void KneeboardView::SetTabViews(
   mTabEvents.clear();
 
   for (const auto& tabView: mTabViews) {
-    auto repaint = bind_front(
-      [](auto self, auto tabView) {
-        if (self->GetCurrentTabView() != tabView) {
-          return;
-        }
-        self->evNeedsRepaintEvent.Emit();
-      },
-      only_refs,
-      weak_from_this(),
-      tabView);
+    auto repaint = [](auto self, auto tabView) {
+      if (self->GetCurrentTabView() != tabView) {
+        return;
+      }
+      self->evNeedsRepaintEvent.Emit();
+    } | bind_refs_front(this, tabView);
 
     mTabEvents.insert(
       mTabEvents.end(),

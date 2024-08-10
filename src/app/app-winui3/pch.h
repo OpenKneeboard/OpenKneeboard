@@ -35,5 +35,5 @@
 
 #include <wil/cppwinrt_helpers.h>
 
-#include <OpenKneeboard/bind.hpp>
+#include <OpenKneeboard/composable_bind.hpp>
 #include <OpenKneeboard/weak_refs.hpp>

@@ -42,12 +42,8 @@ InputSettingsPage::InputSettingsPage() {
 
   AddEventListener(
     mKneeboard->evInputDevicesChangedEvent,
-    bind_front(
-      [](auto self) { self->EmitPropertyChangedEvent(L"Devices"); },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      this));
+    [](auto self) { self->EmitPropertyChangedEvent(L"Devices"); }
+      | bind_winrt_context(mUIThread) | bind_refs_front(this));
 }
 
 InputSettingsPage::~InputSettingsPage() {

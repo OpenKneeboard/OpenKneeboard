@@ -197,26 +197,22 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    bind_front(
-      [](auto self) {
-        self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
-        self->ResetKneeboardView();
-        auto backStack = self->Frame().BackStack();
-        std::vector<PageStackEntry> newBackStack;
-        for (auto entry: backStack) {
-          if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
-            newBackStack.clear();
-            continue;
-          }
-          newBackStack.push_back(entry);
+    [](auto self) {
+      self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
+      self->ResetKneeboardView();
+      auto backStack = self->Frame().BackStack();
+      std::vector<PageStackEntry> newBackStack;
+      for (auto entry: backStack) {
+        if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
+          newBackStack.clear();
+          continue;
         }
-        backStack.ReplaceAll(newBackStack);
-        self->PromptForViewMode();
-      },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      this));
+        newBackStack.push_back(entry);
+      }
+      backStack.ReplaceAll(newBackStack);
+      self->PromptForViewMode();
+    } | bind_winrt_context(mUIThread)
+      | bind_refs_front(this));
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
@@ -958,14 +954,11 @@ MainWindow::NavigationItems() noexcept {
       muxc::FontIcon renameIcon;
       renameIcon.Glyph(L"\uE8AC");
       renameItem.Icon(renameIcon);
-      renameItem.Click(bind_front(
+      renameItem.Click(
         [bookmark = *bookmark, title](const auto& self, const auto& tab) {
           self->RenameBookmark(tab, bookmark, title);
-        },
-        discard_winrt_event_args,
-        maybe_refs,
-        this,
-        tab));
+        }
+        | drop_winrt_event_args() | bind_refs_front(this, tab));
 
       muxc::MenuFlyout contextFlyout;
       contextFlyout.Items().Append(renameItem);
@@ -985,12 +978,9 @@ MainWindow::NavigationItems() noexcept {
       icon.Glyph(L"\uE8AC");
       renameItem.Icon(icon);
 
-      renameItem.Click(bind_front(
-        &MainWindow::RenameTab,
-        discard_winrt_event_args,
-        only_refs,
-        this,
-        tab));
+      renameItem.Click(
+        &MainWindow::RenameTab | drop_winrt_event_args()
+        | bind_refs_front(this, tab));
       contextFlyout.Items().Append(renameItem);
     }
     item.ContextFlyout(contextFlyout);

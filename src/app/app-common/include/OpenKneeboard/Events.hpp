@@ -27,7 +27,7 @@
 
 #include <winrt/Windows.Foundation.h>
 
-#include <OpenKneeboard/bind.hpp>
+#include <OpenKneeboard/composable_bind.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
@@ -52,29 +52,36 @@ class Event;
 template <class... Args>
 class EventHandler final {
  public:
+  using self_t = EventHandler<Args...>;
   using Callback = std::function<void(Args...)>;
 
   constexpr EventHandler() = default;
 
-  template <std::convertible_to<Callback> T>
-    requires(!std::same_as<std::decay_t<decltype(*this)>, std::decay_t<T>>)
-  constexpr EventHandler(T&& impl) : mImpl(std::forward<T>(impl)) {
-  }
-
-  template <std::convertible_to<std::function<void()>> T>
-    requires(!std::same_as<std::decay_t<decltype(*this)>, std::decay_t<T>>)
-  constexpr EventHandler(T&& impl)
-    requires(sizeof...(Args) > 0)
-  {
-    mImpl = [impl](Args...) { impl(); };
+  template <arg_dropping_invocable<Args...> T>
+    requires(!std::same_as<self_t, std::decay_t<T>>)
+  constexpr EventHandler(T&& fn) {
+    mImpl = [fn = std::decay_t<T> {std::forward<T>(fn)}]<class... CallArgs>(
+              CallArgs&&... args) {
+      arg_dropping_invoke(fn, std::forward<CallArgs>(args)...);
+    };
   }
 
   /// Convenience wrapper for `{this, &MyClass::myMethod}`
   template <class F, convertible_to_weak_ref Bind>
   constexpr EventHandler(Bind&& bind, F&& f)
     : EventHandler(
-        bind_front(std::forward<F>(f), only_refs, std::forward<Bind>(bind))) {
+        bind_refs_front(std::forward<F>(f), std::forward<Bind>(bind))) {
   }
+
+  /** Deleting so error mesages lead here :)
+   *
+   * Unsafe, as `this` may be deleted between enqueuing and executing.
+   *
+   * Use `std::enable_shared_from_this()` or similar.
+   */
+  template <class Bind, class F>
+    requires(!convertible_to_weak_ref<Bind*>)
+  constexpr EventHandler(Bind*, F&& f) = delete;
 
   explicit constexpr operator bool() const noexcept {
     return !!mImpl;
@@ -87,6 +94,39 @@ class EventHandler final {
  private:
   Callback mImpl;
 };
+
+namespace {
+
+struct TestClass {
+  void Foo0() {};
+  void Foo1(int) {};
+  void Foo2(int, int) {};
+  void Foo3(int, int, int) {};
+};
+// FIXME
+void static_event_handler_test() {
+  using TTest = EventHandler<int, int>;
+  TTest {[](int, int) {}};
+  TTest {[](int) {}};
+  TTest {[]() {}};
+
+  constexpr auto ptr = static_cast<TestClass*>(nullptr);
+  TTest {std::bind_front(&TestClass::Foo2, ptr)};
+  TTest {std::bind_front(&TestClass::Foo1, ptr)};
+
+  auto it = std::make_shared<TestClass>();
+
+  TTest {FredEmmott::weak_refs::bind_refs_front(&TestClass::Foo2, it)};
+  TTest {FredEmmott::weak_refs::bind_refs_front(&TestClass::Foo1, it)};// HERE
+
+  TTest {bind_refs_front(&TestClass::Foo2, it)};
+  TTest {bind_refs_front(&TestClass::Foo1, it)};
+
+  TTest {it, &TestClass::Foo2};
+  TTest {it, &TestClass::Foo1};
+  TTest {it, &TestClass::Foo0};
+}
+}// namespace
 
 class EventReceiver;
 

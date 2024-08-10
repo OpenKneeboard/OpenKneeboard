@@ -81,20 +81,14 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
       mWintabMode = tablet->GetWintabMode();
     }
     mTabletSettingsChangeToken = AddEventListener(
-      tablet->evSettingsChangedEvent,
-      bind_front(
-        [](auto self, auto tablet) {
-          static_assert(strong_ref<decltype(self)>);
-          if (
-            tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
-            self->mWintabMode = tablet->GetWintabMode();
-          } else {
-            self->mWintabMode = WintabMode::Disabled;
-          }
-        },
-        only_refs,
-        weak_from_this(),
-        tablet));
+      tablet->evSettingsChangedEvent, [](auto self, auto tablet) {
+        static_assert(strong_ref<decltype(self)>);
+        if (tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
+          self->mWintabMode = tablet->GetWintabMode();
+        } else {
+          self->mWintabMode = WintabMode::Disabled;
+        }
+      } | bind_refs_front(this, tablet));
   }
 
   dprint("Watching for game processes");

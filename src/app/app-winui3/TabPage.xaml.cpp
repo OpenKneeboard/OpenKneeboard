@@ -255,29 +255,20 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
   button.IsEnabled(action->IsEnabled());
 
   button.IsChecked(action->IsActive());
-  button.Checked(bind_front(
-    &ToolbarToggleAction::Activate,
-    discard_winrt_event_args,
-    only_refs,
-    action));
-  button.Unchecked(bind_front(
-    &ToolbarToggleAction::Deactivate,
-    discard_winrt_event_args,
-    only_refs,
-    action));
+  button.Checked(
+    &ToolbarToggleAction::Activate | drop_winrt_event_args()
+    | bind_refs_front(action));
+  button.Unchecked(
+    &ToolbarToggleAction::Deactivate | drop_winrt_event_args()
+    | bind_refs_front(action));
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
-      [](auto action, auto button) noexcept {
-        button.IsChecked(action->IsActive());
-        button.IsEnabled(action->IsEnabled());
-      },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      action,
-      button));
+    [](auto action, auto button) noexcept {
+      button.IsChecked(action->IsActive());
+      button.IsEnabled(action->IsEnabled());
+    } | bind_winrt_context(mUIThread)
+      | bind_refs_front(action, button));
 
   return button;
 }
@@ -297,15 +288,10 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
-      [](auto action, auto button) noexcept {
-        button.IsEnabled(action->IsEnabled());
-      },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      action,
-      button));
+    [](auto action, auto button) noexcept {
+      button.IsEnabled(action->IsEnabled());
+    } | bind_winrt_context(mUIThread)
+      | bind_refs_front(action, button));
 
   return button;
 }
@@ -338,12 +324,10 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-  button.Click(bind_front(
-    &TabPage::OnToolbarActionClick,
-    discard_winrt_event_args,
-    only_refs,
-    this,
-    action));
+
+  button.Click(
+    &TabPage::OnToolbarActionClick | drop_winrt_event_args()
+    | bind_refs_front(this, action));
   return button;
 }
 
@@ -363,39 +347,21 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     tmfi.IsChecked(checkable->IsChecked());
     AddEventListener(
       checkable->evStateChangedEvent,
-      bind_front(
-        [](auto tmfi, auto checkable) {
-          tmfi.IsChecked(checkable->IsChecked());
-        },
-        bind_winrt_context,
-        mUIThread,
-        only_refs,
-        tmfi,
-        checkable));
+      [](auto tmfi, auto checkable) { tmfi.IsChecked(checkable->IsChecked()); }
+        | bind_winrt_context(mUIThread) | bind_refs_front(tmfi, checkable));
   } else {
     ret = {};
   }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
-  ret.Click(bind_front(
-    [](auto self, auto action, const auto&...) {
-      self->OnToolbarActionClick(action);
-    },
-    only_refs,
-    this,
-    action));
+  ret.Click([](auto self, auto action, const auto&...) {
+    self->OnToolbarActionClick(action);
+  } | bind_refs_front(this, action));
 
   AddEventListener(
     action->evStateChangedEvent,
-    bind_front(
-      [](auto action, auto item) noexcept {
-        item.IsEnabled(action->IsEnabled());
-      },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      action,
-      ret));
+    [](auto action, auto item) noexcept { item.IsEnabled(action->IsEnabled()); }
+      | bind_winrt_context(mUIThread) | bind_refs_front(action, ret));
   return ret;
 }
 
@@ -425,8 +391,7 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   }
   mTabView = state;
   mRenderTarget = GetRenderTarget(mDXR, state->GetRuntimeID());
-  AddEventListener(
-    state->evNeedsRepaintEvent, std::bind_front(&TabPage::PaintLater, this));
+  AddEventListener(state->evNeedsRepaintEvent, {this, &TabPage::PaintLater});
   this->PaintLater();
 
   this->UpdateToolbar();
@@ -476,17 +441,11 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    bind_front(
-      [](auto control, auto visibility) {
-        control.Visibility(
-          visibility->IsVisible() ? Visibility::Visible
-                                  : Visibility::Collapsed);
-      },
-      bind_winrt_context,
-      mUIThread,
-      only_refs,
-      control,
-      visibility));
+    [](auto control, auto visibility) {
+      control.Visibility(
+        visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
+    } | bind_winrt_context(mUIThread)
+      | bind_refs_front(control, visibility));
 }
 
 void TabPage::OnCanvasSizeChanged(

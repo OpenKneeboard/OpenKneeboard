@@ -59,6 +59,7 @@ include(wmm.cmake)
 include(zlib.cmake)
 
 include(libzip.cmake)
+include(weak_refs.cmake)
 include(webview2.cmake)
 include(windowsappsdk.cmake)
 include(qpdf.cmake)

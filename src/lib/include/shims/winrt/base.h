@@ -31,6 +31,7 @@
 #include <ppltasks.h>
 
 #include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.System.h>
 
 #include <OpenKneeboard/tracing.hpp>
 #pragma warning(push)
