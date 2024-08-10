@@ -49,6 +49,10 @@ class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 template <class... Args>
 class Event;
 
+template <class TFn, class... TArgs>
+concept event_handler_fn
+  = std::invocable<decltype(std::declval<TFn>() | drop_extra_back()), TArgs...>;
+
 template <class... Args>
 class EventHandler final {
  public:
@@ -57,13 +61,9 @@ class EventHandler final {
 
   constexpr EventHandler() = default;
 
-  template <arg_dropping_invocable<Args...> T>
+  template <event_handler_fn<Args...> T>
     requires(!std::same_as<self_t, std::decay_t<T>>)
-  constexpr EventHandler(T&& fn) {
-    mImpl = [fn = std::decay_t<T> {std::forward<T>(fn)}]<class... CallArgs>(
-              CallArgs&&... args) {
-      arg_dropping_invoke(fn, std::forward<CallArgs>(args)...);
-    };
+  constexpr EventHandler(T&& fn) : mImpl(drop_extra_back(std::forward<T>(fn))) {
   }
 
   /// Convenience wrapper for `{this, &MyClass::myMethod}`

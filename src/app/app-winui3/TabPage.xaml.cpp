@@ -324,7 +324,6 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-
   button.Click(
     &TabPage::OnToolbarActionClick | drop_winrt_event_args()
     | bind_refs_front(this, action));

@@ -22,7 +22,7 @@ else()
     FetchContent_Declare(
         weak_refs
         GIT_REPOSITORY "https://github.com/fredemmott/weak_refs.git"
-        GIT_TAG "5bfcbd347f653a29142fa493708abeb24ee82700"
+        GIT_TAG "f09879458ea064881ada820ff3bd2ee7a4cba045"
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(weak_refs)
