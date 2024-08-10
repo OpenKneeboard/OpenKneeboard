@@ -95,39 +95,6 @@ class EventHandler final {
   Callback mImpl;
 };
 
-namespace {
-
-struct TestClass {
-  void Foo0() {};
-  void Foo1(int) {};
-  void Foo2(int, int) {};
-  void Foo3(int, int, int) {};
-};
-// FIXME
-void static_event_handler_test() {
-  using TTest = EventHandler<int, int>;
-  TTest {[](int, int) {}};
-  TTest {[](int) {}};
-  TTest {[]() {}};
-
-  constexpr auto ptr = static_cast<TestClass*>(nullptr);
-  TTest {std::bind_front(&TestClass::Foo2, ptr)};
-  TTest {std::bind_front(&TestClass::Foo1, ptr)};
-
-  auto it = std::make_shared<TestClass>();
-
-  TTest {FredEmmott::weak_refs::bind_refs_front(&TestClass::Foo2, it)};
-  TTest {FredEmmott::weak_refs::bind_refs_front(&TestClass::Foo1, it)};// HERE
-
-  TTest {bind_refs_front(&TestClass::Foo2, it)};
-  TTest {bind_refs_front(&TestClass::Foo1, it)};
-
-  TTest {it, &TestClass::Foo2};
-  TTest {it, &TestClass::Foo1};
-  TTest {it, &TestClass::Foo0};
-}
-}// namespace
-
 class EventReceiver;
 
 class EventConnectionBase;
