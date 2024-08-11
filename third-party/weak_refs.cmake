@@ -26,6 +26,13 @@ else()
         EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(weak_refs)
+
+    install(
+        FILES
+        "${weak_refs_SOURCE_DIR}/LICENSE"
+        TYPE DOC
+        RENAME "LICENSE-ThirdParty-weak_refs.txt"
+    )
 endif()
 
 add_library(weak_refs_unified INTERFACE)
@@ -40,10 +47,3 @@ target_link_libraries(
 )
 
 add_library(ThirdParty::weak_refs ALIAS weak_refs_unified)
-
-install(
-    FILES
-    "${weak_refs_unified_SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-weak_refs.txt"
-)
