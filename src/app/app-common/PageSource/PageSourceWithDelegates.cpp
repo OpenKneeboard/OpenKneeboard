@@ -70,7 +70,7 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
     | std::views::filter([](auto it) -> bool { return !!it; })
     | std::views::transform([](auto it) { return it->DisposeAsync(); })
     | std::ranges::to<std::vector>();
-  for (auto&& it: disposers) {
+  for (auto& it: disposers) {
     co_await it;
   }
 
@@ -92,15 +92,7 @@ IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
     co_return;
   }
 
-  auto children = mDelegates | std::views::transform([](auto it) {
-                    return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
-                  })
-    | std::views::filter([](auto it) -> bool { return static_cast<bool>(it); })
-    | std::views::transform([](auto it) { return it->DisposeAsync(); })
-    | std::ranges::to<std::vector>();
-  for (auto&& child: children) {
-    co_await child;
-  }
+  co_await this->SetDelegates({});
 }
 
 void PageSourceWithDelegates::SetDelegatesFromEmpty(
