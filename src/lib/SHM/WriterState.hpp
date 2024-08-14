@@ -40,18 +40,6 @@ enum class WriterState {
 #undef IT
 };
 
-constexpr auto formattable_state(WriterState state) noexcept {
-  switch (state) {
-#define IT(x) \
-  case WriterState::x: \
-    return "WriterState::" #x;
-    OPENKNEEBOARD_SHM_WRITER_STATES
-#undef IT
-  }
-  OPENKNEEBOARD_LOG_AND_FATAL(
-    "Invalid SHM WriterState: {}", std::to_underlying(state));
-}
-
 using WriterStateMachine = StateMachine<
   WriterState,
   WriterState::Unlocked,

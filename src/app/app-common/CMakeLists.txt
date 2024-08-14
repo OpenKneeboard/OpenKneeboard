@@ -19,15 +19,13 @@ target_compile_definitions(
   "DIRECTINPUT_VERSION=0x0800"
   "OPENKNEEBOARD_JSON_SERIALIZE=1"
 )
-target_link_libraries(
-  OpenKneeboard-App-Common
-  PUBLIC
-  ThirdParty::JSON
-  OpenKneeboard-Events
-)
 target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(
   OpenKneeboard-App-Common
+  PUBLIC
+  OpenKneeboard-Events
+  OpenKneeboard-StateMachine
+  ThirdParty::JSON
   PRIVATE
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources

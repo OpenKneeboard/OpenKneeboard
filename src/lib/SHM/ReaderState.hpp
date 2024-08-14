@@ -37,18 +37,6 @@ enum class ReaderState {
 #undef IT
 };
 
-constexpr auto formattable_state(ReaderState state) noexcept {
-  switch (state) {
-#define IT(x) \
-  case ReaderState::x: \
-    return "ReaderState::" #x;
-    OPENKNEEBOARD_SHM_READER_STATES
-#undef IT
-  }
-  OPENKNEEBOARD_LOG_AND_FATAL(
-    "Invalid SHM ReaderState: {}", std::to_underlying(state));
-}
-
 using ReaderStateMachine = StateMachine<
   ReaderState,
   ReaderState::Unlocked,

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/format_enum.hpp>
 
 #include <array>
 #include <atomic>
@@ -31,6 +32,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+
 namespace OpenKneeboard {
 
 /** This file provides a state machine implementation with
@@ -79,13 +81,6 @@ namespace OpenKneeboard {
  *   `std::atomic`'s usual behavior
  * - you can omit the final state parameter, or provide `std::nullopt`
  */
-
-namespace ADL {
-template <class State>
-constexpr auto formattable_state(State state) noexcept {
-  return std::to_underlying(state);
-}
-}// namespace ADL
 
 template <class State>
   requires std::is_scoped_enum_v<State>
@@ -141,19 +136,19 @@ class StateMachineBase {
   }
 
   constexpr void Assert(
-    State state,
+    State expected,
     std::string_view message = "Assertion failure",
     const std::source_location& caller = std::source_location::current()) {
-    if (mState == state) [[likely]] {
+    const auto actual = Get();
+    if (actual == expected) [[likely]] {
       return;
     }
-    using namespace ADL;
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       caller,
-      "{}: Expected state `{}`, but state is `{}`",
+      "{}: Expected state {:#}, but state is {:#}",
       message,
-      formattable_state(state),
-      formattable_state(this->Get()));
+      expected,
+      actual);
   }
 
   StateMachineBase(const StateMachineBase&) = delete;
@@ -170,13 +165,12 @@ class StateMachineBase {
       return;
     }
 
-    using namespace ADL;
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       loc,
-      "Unexpected state `{}`; expected (`{}` -> `{}`)",
-      formattable_state(result.error()),
-      formattable_state(in),
-      formattable_state(out));
+      "Unexpected state {:#}; expected ({} -> {})",
+      result.error(),
+      in,
+      out);
   }
 
   template <State in, State out>

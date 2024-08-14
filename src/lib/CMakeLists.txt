@@ -230,6 +230,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-dprint
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-StateMachine
   PRIVATE
   OpenKneeboard-Elevation
   OpenKneeboard-config
@@ -325,6 +326,13 @@ target_link_libraries(
   OpenKneeboard-RayIntersectsRect
   PRIVATE
   OpenKneeboard-dprint)
+
+ok_add_library(OpenKneeboard-StateMachine INTERFACE)
+target_link_libraries(
+  OpenKneeboard-StateMachine
+  INTERFACE
+  OpenKneeboard-Lib-Headers
+  ThirdParty::magic_enum)
 
 ok_add_library(OpenKneeboard-scope_exit INTERFACE)
 target_link_libraries(
@@ -453,6 +461,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-Lib-Headers
   PRIVATE
+  OpenKneeboard-StateMachine
   OpenKneeboard-dprint
   OpenKneeboard-UTF8
   System::Shlwapi
