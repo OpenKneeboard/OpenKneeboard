@@ -89,7 +89,7 @@ class TabView final : private EventReceiver {
 
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
-  std::shared_ptr<ITab> mRootTab;
+  std::weak_ptr<ITab> mRootTab;
 
   // Each TabView should only be used by a single kneeboard view; keep track so
   // we know which events affect us

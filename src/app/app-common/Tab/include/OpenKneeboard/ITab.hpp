@@ -40,17 +40,27 @@ class ITab : public virtual IPageSource {
   ITab();
   virtual ~ITab();
 
-  virtual winrt::guid GetPersistentID() const = 0;
-  virtual std::string GetGlyph() const = 0;
-  virtual std::string GetTitle() const = 0;
+  [[nodiscard]]
+  virtual winrt::guid GetPersistentID() const
+    = 0;
+  [[nodiscard]]
+  virtual std::string GetGlyph() const
+    = 0;
+  [[nodiscard]]
+  virtual std::string GetTitle() const
+    = 0;
   virtual void SetTitle(const std::string&) = 0;
-  virtual RuntimeID GetRuntimeID() const = 0;
+  [[nodiscard]]
+  virtual RuntimeID GetRuntimeID() const
+    = 0;
 
   [[nodiscard]]
   virtual winrt::Windows::Foundation::IAsyncAction Reload()
     = 0;
 
-  virtual std::vector<Bookmark> GetBookmarks() const = 0;
+  [[nodiscard]]
+  virtual std::vector<Bookmark> GetBookmarks() const
+    = 0;
   virtual void SetBookmarks(const std::vector<Bookmark>&) = 0;
 
   Event<> evSettingsChangedEvent;

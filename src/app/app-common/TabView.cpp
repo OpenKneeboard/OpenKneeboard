@@ -37,7 +37,7 @@ TabView::TabView(
   const std::shared_ptr<ITab>& tab,
   KneeboardViewID id)
   : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mKneeboardViewID(id) {
-  const auto rootPageIDs = mRootTab->GetPageIDs();
+  const auto rootPageIDs = tab->GetPageIDs();
   if (!rootPageIDs.empty()) {
     mRootTabPage = {rootPageIDs.front(), 0};
   }
@@ -69,11 +69,11 @@ TabView::~TabView() {
 }
 
 std::shared_ptr<ITab> TabView::GetRootTab() const {
-  return mRootTab;
+  return mRootTab.lock();
 }
 
 std::shared_ptr<ITab> TabView::GetTab() const {
-  return mActiveSubTab ? mActiveSubTab : mRootTab;
+  return mActiveSubTab ? mActiveSubTab : mRootTab.lock();
 }
 
 PageID TabView::GetPageID() const {
@@ -94,7 +94,14 @@ PageID TabView::GetPageID() const {
 }
 
 std::vector<PageID> TabView::GetPageIDs() const {
-  return mActiveSubTab ? mActiveSubTab->GetPageIDs() : mRootTab->GetPageIDs();
+  if (mActiveSubTab) {
+    return mActiveSubTab->GetPageIDs();
+  }
+  auto tab = mRootTab.lock();
+  if (!tab) {
+    return {};
+  }
+  return tab->GetPageIDs();
 }
 
 void TabView::PostCursorEvent(const CursorEvent& ev) {
@@ -141,7 +148,12 @@ void TabView::OnTabContentChanged() {
     }
   });
 
-  const auto pages = mRootTab->GetPageIDs();
+  const auto tab = mRootTab.lock();
+  if (!tab) {
+    return;
+  }
+
+  const auto pages = tab->GetPageIDs();
   if (pages.empty()) {
     mRootTabPage = {};
     evPageChangedEvent.Emit();
@@ -177,7 +189,12 @@ void TabView::OnTabContentChanged() {
 }
 
 void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
-  auto pages = mRootTab->GetPageIDs();
+  auto tab = mRootTab.lock();
+  if (!tab) {
+    return;
+  }
+
+  auto pages = tab->GetPageIDs();
   if (pages.size() < 2 || !mRootTabPage) {
     mRootTabPage = {pages.front(), 0};
     evPageChangedEvent.Emit();
@@ -215,7 +232,11 @@ bool TabView::SupportsTabMode(TabMode mode) const {
     case TabMode::Normal:
       return true;
     case TabMode::Navigation: {
-      auto nav = std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab);
+      auto tab = mRootTab.lock();
+      if (!tab) {
+        return false;
+      }
+      auto nav = std::dynamic_pointer_cast<IPageSourceWithNavigation>(tab);
       return nav && nav->IsNavigationAvailable();
     }
   }
@@ -245,10 +266,14 @@ bool TabView::SetTabMode(TabMode mode) {
     case TabMode::Navigation: {
       OPENKNEEBOARD_TraceLoggingScope(
         "TabView::SetTabMode(TabMode::Navigation)");
+      auto tab = mRootTab.lock();
+      if (!tab) {
+        return false;
+      }
       mActiveSubTab = std::make_shared<NavigationTab>(
         mDXR,
-        mRootTab,
-        std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
+        tab,
+        std::dynamic_pointer_cast<IPageSourceWithNavigation>(tab)
           ->GetNavigationEntries());
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
@@ -256,7 +281,11 @@ bool TabView::SetTabMode(TabMode mode) {
           if (ctx != mKneeboardViewID) {
             return;
           }
-          const auto ids = mRootTab->GetPageIDs();
+          auto tab = mRootTab.lock();
+          if (!tab) {
+            return;
+          }
+          const auto ids = tab->GetPageIDs();
           const auto it = std::ranges::find(ids, newPage);
           if (it == ids.end()) {
             return;
