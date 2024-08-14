@@ -19,28 +19,31 @@
  */
 #pragma once
 
+#include <concepts>
 #include <functional>
 
 namespace OpenKneeboard {
 
 // Roughly equivalent to `std::experimental::scope_exit`, but that isn't wideley
 // available yet
+template <std::invocable<> TCallback>
 class scope_exit final {
  private:
-  std::function<void()> mCallback;
+  std::decay_t<TCallback> mCallback;
 
  public:
-  scope_exit(std::function<void()> f);
-  ~scope_exit() noexcept;
+  constexpr scope_exit(TCallback&& f) : mCallback(std::forward<TCallback>(f)) {
+  }
 
-  void abandon();
-
-  scope_exit(scope_exit&&) noexcept = default;
-  scope_exit& operator=(scope_exit&&) noexcept = default;
+  ~scope_exit() noexcept {
+    std::invoke(mCallback);
+  }
 
   scope_exit() = delete;
   scope_exit(const scope_exit&) = delete;
+  scope_exit(scope_exit&&) noexcept = delete;
   scope_exit& operator=(const scope_exit&) = delete;
+  scope_exit& operator=(scope_exit&&) noexcept = delete;
 };
 
 }// namespace OpenKneeboard

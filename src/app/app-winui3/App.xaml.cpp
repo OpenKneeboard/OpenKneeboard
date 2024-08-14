@@ -45,6 +45,7 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/launder_nodiscard.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
@@ -199,7 +200,9 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   DispatcherShutdownMode(
     winrt::Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown);
 
-  mWindow = make<MainWindow>();
+  auto window = make<MainWindow>();
+  mWindow = window;
+  launder_nodiscard(window.Init());
 }
 
 static void LogSystemInformation() {

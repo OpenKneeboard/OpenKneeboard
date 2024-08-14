@@ -47,6 +47,9 @@ struct MainWindow : MainWindowT<MainWindow>,
   MainWindow();
   ~MainWindow();
 
+  [[nodiscard]]
+  IAsyncAction Init();
+
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args) noexcept;

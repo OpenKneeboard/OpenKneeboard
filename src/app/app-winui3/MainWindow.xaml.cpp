@@ -110,8 +110,10 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     0);
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
+}
 
-  mKneeboard = KneeboardState::Create(mHwnd, mDXR);
+IAsyncAction MainWindow::Init() {
+  mKneeboard = co_await KneeboardState::Create(mHwnd, mDXR);
   gKneeboard = mKneeboard;
 
   ResetKneeboardView();
@@ -170,7 +172,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
       "Failed to open hwnd file: {} {:#08x}",
       err,
       std::bit_cast<uint32_t>(err));
-    return;
+    co_return;
   }
   void* mapping = MapViewOfFile(
     mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(MainWindowInfo));
@@ -457,7 +459,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
   }
 
   viewSettings.mAppWindowMode = mode;
-  self->mKneeboard->SetViewsSettings(viewSettings);
+  co_await self->mKneeboard->SetViewsSettings(viewSettings);
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -616,23 +618,19 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
     auto weakItem = make_weak(item);
     item.Click(
-      [weak = get_weak(), profile, weakItem](const auto&, const auto&) {
-        auto kneeboard = gKneeboard.lock();
-        auto settings = kneeboard->GetProfileSettings();
+      [](auto self, auto item, auto profile) -> winrt::fire_and_forget {
+        auto settings = self->mKneeboard->GetProfileSettings();
         if (settings.mActiveProfile == profile.mID) {
-          weakItem.get().IsChecked(true);
-          return;
+          item.IsChecked(true);
+          co_return;
         }
 
-        auto self = weak.get();
-        if (!self) {
-          return;
-        }
         self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
 
         settings.mActiveProfile = profile.mID;
-        kneeboard->SetProfileSettings(settings);
-      });
+        co_await self->mKneeboard->SetProfileSettings(settings);
+      } | bind_refs_front(this, item)
+        | bind_front(profile) | drop_winrt_event_args());
 
     if (profile.mID == settings.mActiveProfile) {
       item.IsChecked(true);
@@ -750,7 +748,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
     dprint("Saving window position");
     auto settings = mKneeboard->GetAppSettings();
     settings.mWindowRect = *mWindowPosition;
-    mKneeboard->SetAppSettings(settings);
+    co_await mKneeboard->SetAppSettings(settings);
   }
 
   dprint("Releasing kneeboard resources tied to hwnd");

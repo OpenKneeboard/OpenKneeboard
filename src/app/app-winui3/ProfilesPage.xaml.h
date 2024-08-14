@@ -46,7 +46,7 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
     const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveProfile(const IInspectable&, const RoutedEventArgs&);
 
-  void OnList_SelectionChanged(
+  fire_and_forget OnList_SelectionChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
 

@@ -67,8 +67,8 @@ fire_and_forget InputSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetDirectInputSettings();
-  mKneeboard->ResetTabletInputSettings();
+  co_await mKneeboard->ResetDirectInputSettings();
+  co_await mKneeboard->ResetTabletInputSettings();
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
 }

@@ -47,10 +47,12 @@
 
 namespace OpenKneeboard {
 
-std::shared_ptr<KneeboardState> KneeboardState::Create(
+concurrency::task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
   HWND hwnd,
-  const audited_ptr<DXResources>& dxr) {
-  return shared_with_final_release(new KneeboardState(hwnd, dxr));
+  audited_ptr<DXResources> dxr) {
+  auto ret = shared_with_final_release(new KneeboardState(hwnd, dxr));
+  co_await ret->Init();
+  co_return ret;
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -66,6 +68,9 @@ std::shared_ptr<PluginStore> KneeboardState::GetPluginStore() const {
 
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
+}
+
+IAsyncAction KneeboardState::Init() {
   const scope_exit saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
@@ -85,7 +90,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     mGamesList->evGameChangedEvent,
     std::bind_front(&KneeboardState::OnGameChangedEvent, this));
 
-  mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.mTabs);
+  mTabsList = co_await TabsList::Create(mDXResources, this, mSettings.mTabs);
   AddEventListener(
     mTabsList->evSettingsChangedEvent,
     std::bind_front(&KneeboardState::SaveSettings, this));
@@ -98,7 +103,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
     }
   });
 
-  mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
+  mDirectInput = DirectInputAdapter::Create(mHwnd, mSettings.mDirectInput);
   AddEventListener(
     mDirectInput->evUserActionEvent,
     std::bind_front(&KneeboardState::PostUserAction, this));
@@ -271,11 +276,11 @@ IAsyncAction KneeboardState::DisposeAsync() noexcept {
   }
 }
 
-void KneeboardState::PostUserAction(UserAction action) {
+IAsyncAction KneeboardState::PostUserAction(UserAction action) {
   if (winrt::apartment_context() != mUIThread) {
     dprint("User action in wrong thread!");
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
   OPENKNEEBOARD_TraceLoggingScope(
     "KneeboardState::PostUserAction()",
@@ -288,19 +293,19 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::SHOW:
     case UserAction::HIDE:
       mInterprocessRenderer->PostUserAction(action);
-      return;
+      co_return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& forceZoom = this->mSettings.mVR.mForceZoom;
       forceZoom = !forceZoom;
       this->SaveSettings();
       this->SetRepaintNeeded();
-      return;
+      co_return;
     }
     case UserAction::RECENTER_VR:
       dprint("Recentering");
       this->mSettings.mVR.mRecenterCount++;
       this->SetRepaintNeeded();
-      return;
+      co_return;
     case UserAction::SWAP_FIRST_TWO_VIEWS:
       if (mViews.size() >= 2) {
         mViews.at(0)->SwapState(*mViews.at(1));
@@ -310,7 +315,7 @@ void KneeboardState::PostUserAction(UserAction action) {
           "views",
           mViews.size());
       }
-      return;
+      co_return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
@@ -320,41 +325,41 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::TOGGLE_BOOKMARK:
     case UserAction::RELOAD_CURRENT_TAB:
       GetActiveViewForGlobalInput()->PostUserAction(action);
-      return;
+      co_return;
     case UserAction::PREVIOUS_PROFILE:
-      this->SwitchProfile(Direction::Previous);
-      return;
+      co_await this->SwitchProfile(Direction::Previous);
+      co_return;
     case UserAction::NEXT_PROFILE:
-      this->SwitchProfile(Direction::Next);
-      return;
+      co_await this->SwitchProfile(Direction::Next);
+      co_return;
     case UserAction::ENABLE_TINT:
       this->mSettings.mApp.mTint.mEnabled = true;
       this->SaveSettings();
-      return;
+      co_return;
     case UserAction::DISABLE_TINT:
       this->mSettings.mApp.mTint.mEnabled = false;
       this->SaveSettings();
-      return;
+      co_return;
     case UserAction::TOGGLE_TINT:
       this->mSettings.mApp.mTint.mEnabled
         = !this->mSettings.mApp.mTint.mEnabled;
       this->SaveSettings();
-      return;
+      co_return;
     case UserAction::CYCLE_ACTIVE_VIEW:
       if (this->mViews.size() < 2) {
-        return;
+        co_return;
       }
       this->mInputViewIndex = (this->mInputViewIndex + 1) % this->mViews.size();
       this->evActiveViewChangedEvent.Emit();
       this->SetRepaintNeeded();
-      return;
+      co_return;
     case UserAction::INCREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mApp.mTint;
       tint.mEnabled = true;
       tint.mBrightness
         = std::clamp(tint.mBrightness + tint.mBrightnessStep, 0.0f, 1.0f);
       this->SaveSettings();
-      return;
+      co_return;
     }
     case UserAction::DECREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mApp.mTint;
@@ -362,11 +367,11 @@ void KneeboardState::PostUserAction(UserAction action) {
       tint.mBrightness
         = std::clamp(tint.mBrightness - tint.mBrightnessStep, 0.0f, 1.0f);
       this->SaveSettings();
-      return;
+      co_return;
     }
     case UserAction::REPAINT_NOW:
       this->SetRepaintNeeded();
-      return;
+      co_return;
   }
   // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;
@@ -384,7 +389,7 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
+IAsyncAction KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");
     OPENKNEEBOARD_BREAK;
@@ -396,8 +401,8 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
   if (ev.name == APIEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
   if (ev.value == #ACTION) { \
-    PostUserAction(UserAction::ACTION); \
-    return; \
+    co_await PostUserAction(UserAction::ACTION); \
+    co_return; \
   }
     OPENKNEEBOARD_USER_ACTIONS
 #undef IT
@@ -409,7 +414,7 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
     if (receiver) {
       receiver->PostCustomAction(parsed.mActionID, parsed.mExtraData);
     }
-    return;
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_TAB_BY_ID) {
@@ -419,17 +424,17 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
       guid = winrt::guid {parsed.mID};
     } catch (const std::invalid_argument&) {
       dprintf("Failed to set tab by ID: '{}' is not a valid GUID", parsed.mID);
-      return;
+      co_return;
     }
     const auto tab = std::ranges::find_if(
       tabs, [guid](const auto& tab) { return tab->GetPersistentID() == guid; });
     if (tab == tabs.end()) {
       dprintf(
         "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
-      return;
+      co_return;
     }
     this->SetCurrentTab(*tab, parsed);
-    return;
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_TAB_BY_NAME) {
@@ -441,10 +446,10 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
       dprintf(
         "Asked to switch to tab with name '{}', but can't find it",
         parsed.mName);
-      return;
+      co_return;
     }
     this->SetCurrentTab(*tab, parsed);
-    return;
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_TAB_BY_INDEX) {
@@ -453,10 +458,10 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
       dprintf(
         "Asked to switch to tab index {}, but there aren't that many tabs",
         parsed.mIndex);
-      return;
+      co_return;
     }
     this->SetCurrentTab(tabs.at(parsed.mIndex), parsed);
-    return;
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_PROFILE_BY_ID) {
@@ -468,12 +473,12 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
       dprintf(
         "Asked to switch to profile with ID '{}', but it doesn't exist",
         parsed.mID);
-      return;
+      co_return;
     }
     ProfileSettings newSettings(mProfiles);
     newSettings.mActiveProfile = parsed.mID;
-    this->SetProfileSettings(newSettings);
-    return;
+    co_await this->SetProfileSettings(newSettings);
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_PROFILE_BY_NAME) {
@@ -488,12 +493,12 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
       dprintf(
         "Asked to switch to profile with ID '{}', but it doesn't exist",
         parsed.mName);
-      return;
+      co_return;
     }
     ProfileSettings newSettings(mProfiles);
     newSettings.mActiveProfile = it->first;
-    this->SetProfileSettings(newSettings);
-    return;
+    co_await this->SetProfileSettings(newSettings);
+    co_return;
   }
 
   if (ev.name == APIEvent::EVT_SET_BRIGHTNESS) {
@@ -506,7 +511,7 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
           dprintf(
             "Requested absolute brightness '{}' is outside of range 0 to 1",
             parsed.mBrightness);
-          return;
+          co_return;
         }
         tint.mBrightness = parsed.mBrightness;
         break;
@@ -515,14 +520,14 @@ void KneeboardState::OnAPIEvent(const APIEvent& ev) noexcept {
           dprintf(
             "Requested relative brightness '{}' is outside of range -1 to 1",
             parsed.mBrightness);
-          return;
+          co_return;
         }
         tint.mBrightness
           = std::clamp(tint.mBrightness + parsed.mBrightness, 0.0f, 1.0f);
         break;
     }
     this->SaveSettings();
-    return;
+    co_return;
   }
 
   this->evAPIEvent.Emit(ev);
@@ -573,7 +578,7 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
+IAsyncAction KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
@@ -582,9 +587,10 @@ void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
 
   this->SaveSettings();
   this->SetRepaintNeeded();
+  co_return;
 }
 
-void KneeboardState::SetVRSettings(const VRConfig& value) {
+IAsyncAction KneeboardState::SetVRSettings(const VRConfig& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
@@ -605,15 +611,18 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
   mSettings.mVR = value;
   this->SaveSettings();
   this->SetRepaintNeeded();
+
+  co_return;
 }
 
-void KneeboardState::SetAppSettings(const AppSettings& value) {
+IAsyncAction KneeboardState::SetAppSettings(const AppSettings& value) {
   const EventDelay delay;// lock must be released first
   {
     const std::unique_lock lock(*this);
     mSettings.mApp = value;
     this->SaveSettings();
   }
+  co_return;
 }
 
 GamesList* KneeboardState::GetGamesList() const {
@@ -637,7 +646,8 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
   return mProfiles;
 }
 
-void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+IAsyncAction KneeboardState::SetProfileSettings(
+  const ProfileSettings& profiles) {
   if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
     dprintf("Switching to profile: '{}'", profiles.mActiveProfile);
   }
@@ -662,7 +672,7 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
 
   const auto newID = mProfiles.mActiveProfile;
   if (oldID == newID) {
-    return;
+    co_return;
   }
 
   const auto newSettings = Settings::Load(newID);
@@ -672,15 +682,15 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   // Avoid partially overwriting the new profile with
   // the old profile
 
-  mTabsList->LoadSettings(newSettings.mTabs);
-  this->SetViewsSettings(newSettings.mViews);
+  co_await mTabsList->LoadSettings(newSettings.mTabs);
+  co_await this->SetViewsSettings(newSettings.mViews);
 
-  this->SetAppSettings(newSettings.mApp);
-  this->SetDoodlesSettings(newSettings.mDoodles);
+  co_await this->SetAppSettings(newSettings.mApp);
+  co_await this->SetDoodlesSettings(newSettings.mDoodles);
   mGamesList->LoadSettings(newSettings.mGames);
   mDirectInput->LoadSettings(newSettings.mDirectInput);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
-  this->SetVRSettings(newSettings.mVR);
+  co_await this->SetVRSettings(newSettings.mVR);
 
   this->evSettingsChangedEvent.Emit();
   this->SetRepaintNeeded();
@@ -708,18 +718,20 @@ void KneeboardState::SaveSettings() {
   evSettingsChangedEvent.Emit();
 }
 
-void KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
+IAsyncAction KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mSettings.mDoodles = value;
   this->SaveSettings();
+  co_return;
 }
 
-void KneeboardState::SetTextSettings(const TextSettings& value) {
+IAsyncAction KneeboardState::SetTextSettings(const TextSettings& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mSettings.mText = value;
   this->SaveSettings();
+  co_return;
 }
 
 void KneeboardState::StartOpenVRThread() {
@@ -749,30 +761,34 @@ void KneeboardState::StartTabletInput() {
     std::bind_front(&KneeboardState::SaveSettings, this));
 }
 
-void KneeboardState::SetDirectInputSettings(
+IAsyncAction KneeboardState::SetDirectInputSettings(
   const DirectInputSettings& settings) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
   mDirectInput->LoadSettings(settings);
+  co_return;
 }
 
-void KneeboardState::SetTabletInputSettings(const TabletSettings& settings) {
+IAsyncAction KneeboardState::SetTabletInputSettings(
+  const TabletSettings& settings) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mTabletInput->LoadSettings(settings);
+  co_return;
 }
 
-void KneeboardState::SetGamesSettings(const nlohmann::json& j) {
+IAsyncAction KneeboardState::SetGamesSettings(const nlohmann::json& j) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mGamesList->LoadSettings(j);
+  co_return;
 }
 
-void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
+IAsyncAction KneeboardState::SetTabsSettings(const nlohmann::json& j) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
-  mTabsList->LoadSettings(j);
+  co_await mTabsList->LoadSettings(j);
 }
 
 winrt::Windows::Foundation::IAsyncAction
@@ -799,13 +815,13 @@ void KneeboardState::AcquireExclusiveResources() {
     std::bind_front(&KneeboardState::OnAPIEvent, this));
 }
 
-void KneeboardState::SwitchProfile(Direction direction) {
+IAsyncAction KneeboardState::SwitchProfile(Direction direction) {
   if (!mProfiles.mEnabled) {
-    return;
+    co_return;
   }
   const auto count = mProfiles.mProfiles.size();
   if (count < 2) {
-    return;
+    co_return;
   }
   const auto profiles = mProfiles.GetSortedProfiles();
   const auto it = std::ranges::find_if(
@@ -815,7 +831,7 @@ void KneeboardState::SwitchProfile(Direction direction) {
     dprintf(
       "Current profile '{}' is not in profiles list.",
       mProfiles.mActiveProfile);
-    return;
+    co_return;
   }
   const auto oldIdx = it - profiles.begin();
   const auto nextIdx
@@ -823,13 +839,13 @@ void KneeboardState::SwitchProfile(Direction direction) {
   if (!mProfiles.mLoopProfiles) {
     if (nextIdx < 0 || nextIdx >= count) {
       dprint("Ignoring profile switch request, looping disabled");
-      return;
+      co_return;
     }
   }
 
   auto settings = mProfiles;
   settings.mActiveProfile = profiles.at((nextIdx + count) % count).mID;
-  this->SetProfileSettings(settings);
+  co_await this->SetProfileSettings(settings);
 }
 
 bool KneeboardState::IsRepaintNeeded() const {
@@ -983,10 +999,10 @@ void KneeboardState::AfterFrame(FramePostEventKind) {
   cpptype KneeboardState::Get##name##Settings() const { \
     return mSettings.m##name; \
   } \
-  void KneeboardState::Reset##name##Settings() { \
+  IAsyncAction KneeboardState::Reset##name##Settings() { \
     auto newSettings = mSettings; \
     newSettings.Reset##name##Section(mProfiles.mActiveProfile); \
-    this->Set##name##Settings(newSettings.m##name); \
+    co_await this->Set##name##Settings(newSettings.m##name); \
   }
 OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT

@@ -70,10 +70,10 @@ bool AdvancedSettingsPage::Bookmarks() const noexcept {
   return mKneeboard->GetAppSettings().mBookmarks.mEnabled;
 }
 
-void AdvancedSettingsPage::Bookmarks(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::Bookmarks(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mBookmarks.mEnabled = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 
   mPropertyChangedEvent(
     *this,
@@ -84,34 +84,36 @@ uint8_t AdvancedSettingsPage::AppWindowViewMode() const noexcept {
   return static_cast<uint8_t>(mKneeboard->GetViewsSettings().mAppWindowMode);
 }
 
-void AdvancedSettingsPage::AppWindowViewMode(uint8_t rawValue) noexcept {
+fire_and_forget AdvancedSettingsPage::AppWindowViewMode(
+  uint8_t rawValue) noexcept {
   const auto value = static_cast<OpenKneeboard::AppWindowViewMode>(rawValue);
   auto views = mKneeboard->GetViewsSettings();
   if (views.mAppWindowMode == value) {
-    return;
+    co_return;
   }
   views.mAppWindowMode = value;
-  mKneeboard->SetViewsSettings(views);
+  co_await mKneeboard->SetViewsSettings(views);
 }
 
 bool AdvancedSettingsPage::EnableMouseButtonBindings() const noexcept {
   return mKneeboard->GetDirectInputSettings().mEnableMouseButtonBindings;
 }
 
-void AdvancedSettingsPage::EnableMouseButtonBindings(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::EnableMouseButtonBindings(
+  bool value) noexcept {
   auto s = mKneeboard->GetDirectInputSettings();
   if (s.mEnableMouseButtonBindings == value) {
-    return;
+    co_return;
   }
   s.mEnableMouseButtonBindings = value;
-  mKneeboard->SetDirectInputSettings(s);
+  co_await mKneeboard->SetDirectInputSettings(s);
 }
 
 bool AdvancedSettingsPage::MultipleProfiles() const noexcept {
   return mKneeboard->GetProfileSettings().mEnabled;
 }
 
-void AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
   static bool sHaveShownTip = false;
   auto s = mKneeboard->GetProfileSettings();
   if (value && (!s.mEnabled) && !sHaveShownTip) {
@@ -119,7 +121,7 @@ void AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
     sHaveShownTip = true;
   }
   s.mEnabled = value;
-  mKneeboard->SetProfileSettings(s);
+  co_await mKneeboard->SetProfileSettings(s);
 
   mPropertyChangedEvent(
     *this,
@@ -131,156 +133,157 @@ bool AdvancedSettingsPage::GazeInputFocus() const noexcept {
   return mKneeboard->GetVRSettings().mEnableGazeInputFocus;
 }
 
-void AdvancedSettingsPage::GazeInputFocus(bool enabled) noexcept {
+fire_and_forget AdvancedSettingsPage::GazeInputFocus(bool enabled) noexcept {
   auto vrc = mKneeboard->GetVRSettings();
   vrc.mEnableGazeInputFocus = enabled;
-  mKneeboard->SetVRSettings(vrc);
+  co_await mKneeboard->SetVRSettings(vrc);
 }
 
 bool AdvancedSettingsPage::LoopPages() const noexcept {
   return mKneeboard->GetAppSettings().mLoopPages;
 }
 
-void AdvancedSettingsPage::LoopPages(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::LoopPages(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mLoopPages = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 bool AdvancedSettingsPage::LoopTabs() const noexcept {
   return mKneeboard->GetAppSettings().mLoopTabs;
 }
 
-void AdvancedSettingsPage::LoopTabs(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::LoopTabs(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mLoopTabs = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 bool AdvancedSettingsPage::LoopProfiles() const noexcept {
   return mKneeboard->GetProfileSettings().mLoopProfiles;
 }
 
-void AdvancedSettingsPage::LoopProfiles(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::LoopProfiles(bool value) noexcept {
   auto s = mKneeboard->GetProfileSettings();
   s.mLoopProfiles = value;
-  mKneeboard->SetProfileSettings(s);
+  co_await mKneeboard->SetProfileSettings(s);
 }
 
 bool AdvancedSettingsPage::LoopBookmarks() const noexcept {
   return mKneeboard->GetAppSettings().mBookmarks.mLoop;
 }
 
-void AdvancedSettingsPage::LoopBookmarks(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::LoopBookmarks(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mBookmarks.mLoop = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 bool AdvancedSettingsPage::InGameHeader() const noexcept {
   return mKneeboard->GetAppSettings().mInGameUI.mHeaderEnabled;
 }
 
-void AdvancedSettingsPage::InGameHeader(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::InGameHeader(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mInGameUI.mHeaderEnabled = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 bool AdvancedSettingsPage::InGameFooter() const noexcept {
   return mKneeboard->GetAppSettings().mInGameUI.mFooterEnabled;
 }
 
-void AdvancedSettingsPage::InGameFooter(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::InGameFooter(bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   s.mInGameUI.mFooterEnabled = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 bool AdvancedSettingsPage::InGameFooterFrameCount() const noexcept {
   return mKneeboard->GetAppSettings().mInGameUI.mFooterFrameCountEnabled;
 }
 
-void AdvancedSettingsPage::InGameFooterFrameCount(bool value) noexcept {
+fire_and_forget AdvancedSettingsPage::InGameFooterFrameCount(
+  bool value) noexcept {
   auto s = mKneeboard->GetAppSettings();
   if (value == s.mInGameUI.mFooterFrameCountEnabled) {
-    return;
+    co_return;
   }
   s.mInGameUI.mFooterFrameCountEnabled = value;
-  mKneeboard->SetAppSettings(s);
+  co_await mKneeboard->SetAppSettings(s);
 }
 
 uint32_t AdvancedSettingsPage::MinimumPenRadius() {
   return mKneeboard->GetDoodlesSettings().mPen.mMinimumRadius;
 }
 
-void AdvancedSettingsPage::MinimumPenRadius(uint32_t value) {
+fire_and_forget AdvancedSettingsPage::MinimumPenRadius(uint32_t value) {
   auto ds = mKneeboard->GetDoodlesSettings();
   ds.mPen.mMinimumRadius = value;
-  mKneeboard->SetDoodlesSettings(ds);
+  co_await mKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::PenSensitivity() {
   return mKneeboard->GetDoodlesSettings().mPen.mSensitivity;
 }
 
-void AdvancedSettingsPage::PenSensitivity(uint32_t value) {
+fire_and_forget AdvancedSettingsPage::PenSensitivity(uint32_t value) {
   auto ds = mKneeboard->GetDoodlesSettings();
   ds.mPen.mSensitivity = value;
-  mKneeboard->SetDoodlesSettings(ds);
+  co_await mKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::MinimumEraseRadius() {
   return mKneeboard->GetDoodlesSettings().mEraser.mMinimumRadius;
 }
 
-void AdvancedSettingsPage::MinimumEraseRadius(uint32_t value) {
+fire_and_forget AdvancedSettingsPage::MinimumEraseRadius(uint32_t value) {
   auto ds = mKneeboard->GetDoodlesSettings();
   ds.mEraser.mMinimumRadius = value;
-  mKneeboard->SetDoodlesSettings(ds);
+  co_await mKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::EraseSensitivity() {
   return mKneeboard->GetDoodlesSettings().mEraser.mSensitivity;
 }
 
-void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
+fire_and_forget AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
   auto ds = mKneeboard->GetDoodlesSettings();
   ds.mEraser.mSensitivity = value;
-  mKneeboard->SetDoodlesSettings(ds);
+  co_await mKneeboard->SetDoodlesSettings(ds);
 }
 
 float AdvancedSettingsPage::TextPageFontSize() {
   return mKneeboard->GetTextSettings().mFontSize;
 }
 
-void AdvancedSettingsPage::TextPageFontSize(float value) {
+fire_and_forget AdvancedSettingsPage::TextPageFontSize(float value) {
   auto s = mKneeboard->GetTextSettings();
   s.mFontSize = value;
-  mKneeboard->SetTextSettings(s);
+  co_await mKneeboard->SetTextSettings(s);
 }
 
-void AdvancedSettingsPage::RestoreTextDefaults(
+fire_and_forget AdvancedSettingsPage::RestoreTextDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {
-  mKneeboard->ResetTextSettings();
+  co_await mKneeboard->ResetTextSettings();
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
-void AdvancedSettingsPage::RestoreDoodleDefaults(
+fire_and_forget AdvancedSettingsPage::RestoreDoodleDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {
-  mKneeboard->ResetDoodlesSettings();
+  co_await mKneeboard->ResetDoodlesSettings();
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
-void AdvancedSettingsPage::RestoreQuirkDefaults(
+fire_and_forget AdvancedSettingsPage::RestoreQuirkDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {
   auto vr = mKneeboard->GetVRSettings();
   vr.mQuirks = {};
-  mKneeboard->SetVRSettings(vr);
+  co_await mKneeboard->SetVRSettings(vr);
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
@@ -289,30 +292,30 @@ bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
   return mKneeboard->GetVRSettings().mQuirks.mOculusSDK_DiscardDepthInformation;
 }
 
-void AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
+fire_and_forget AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
   bool value) noexcept {
   auto vrc = mKneeboard->GetVRSettings();
   auto& vrcValue = vrc.mQuirks.mOculusSDK_DiscardDepthInformation;
   if (value == vrcValue) {
-    return;
+    co_return;
   }
   vrcValue = value;
-  mKneeboard->SetVRSettings(vrc);
+  co_await mKneeboard->SetVRSettings(vrc);
 }
 
 bool AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept {
   return mKneeboard->GetVRSettings().mQuirks.mOpenXR_AlwaysUpdateSwapchain;
 }
 
-void AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(
+fire_and_forget AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(
   bool value) noexcept {
   auto vrc = mKneeboard->GetVRSettings();
   auto& vrcValue = vrc.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   if (value == vrcValue) {
-    return;
+    co_return;
   }
   vrcValue = value;
-  mKneeboard->SetVRSettings(vrc);
+  co_await mKneeboard->SetVRSettings(vrc);
 }
 
 uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {
@@ -320,15 +323,16 @@ uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {
     mKneeboard->GetVRSettings().mQuirks.mOpenXR_Upscaling);
 }
 
-void AdvancedSettingsPage::Quirk_OpenXR_Upscaling(uint8_t rawValue) noexcept {
+fire_and_forget AdvancedSettingsPage::Quirk_OpenXR_Upscaling(
+  uint8_t rawValue) noexcept {
   const auto value = static_cast<VRConfig::Quirks::Upscaling>(rawValue);
   auto vrs = mKneeboard->GetVRSettings();
   auto& vrsValue = vrs.mQuirks.mOpenXR_Upscaling;
   if (vrsValue == value) {
-    return;
+    co_return;
   }
   vrsValue = value;
-  mKneeboard->SetVRSettings(vrs);
+  co_await mKneeboard->SetVRSettings(vrs);
 }
 
 bool AdvancedSettingsPage::CanChangeElevation() const noexcept {
@@ -417,13 +421,13 @@ bool AdvancedSettingsPage::TintEnabled() {
   return mKneeboard->GetAppSettings().mTint.mEnabled;
 }
 
-void AdvancedSettingsPage::TintEnabled(bool value) {
+fire_and_forget AdvancedSettingsPage::TintEnabled(bool value) {
   auto settings = mKneeboard->GetAppSettings();
   if (settings.mTint.mEnabled == value) {
-    return;
+    co_return;
   }
   settings.mTint.mEnabled = value;
-  mKneeboard->SetAppSettings(settings);
+  co_await mKneeboard->SetAppSettings(settings);
 }
 
 winrt::Windows::UI::Color AdvancedSettingsPage::Tint() {
@@ -436,7 +440,7 @@ winrt::Windows::UI::Color AdvancedSettingsPage::Tint() {
   };
 }
 
-void AdvancedSettingsPage::Tint(Windows::UI::Color value) {
+fire_and_forget AdvancedSettingsPage::Tint(Windows::UI::Color value) {
   auto settings = mKneeboard->GetAppSettings();
   const auto originalTint = settings.mTint;
   auto& tint = settings.mTint;
@@ -444,22 +448,22 @@ void AdvancedSettingsPage::Tint(Windows::UI::Color value) {
   tint.mGreen = (1.0f * value.G) / 0xff;
   tint.mBlue = (1.0f * value.B) / 0xff;
   if (tint == originalTint) {
-    return;
+    co_return;
   }
-  mKneeboard->SetAppSettings(settings);
+  co_await mKneeboard->SetAppSettings(settings);
 }
 
 float AdvancedSettingsPage::TintBrightness() {
   return mKneeboard->GetAppSettings().mTint.mBrightness * 100.0f;
 }
 
-void AdvancedSettingsPage::TintBrightness(float value) {
+fire_and_forget AdvancedSettingsPage::TintBrightness(float value) {
   auto settings = mKneeboard->GetAppSettings();
   if (settings.mTint.mBrightness == value / 100.0f) {
-    return;
+    co_return;
   }
   settings.mTint.mBrightness = value / 100.0f;
-  mKneeboard->SetAppSettings(settings);
+  co_await mKneeboard->SetAppSettings(settings);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

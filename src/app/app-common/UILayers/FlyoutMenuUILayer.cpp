@@ -28,6 +28,7 @@
 #include <OpenKneeboard/ToolbarSeparator.hpp>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/launder_nodiscard.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <dwrite.h>
@@ -520,7 +521,7 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
 
   auto action = std::dynamic_pointer_cast<ToolbarAction>(item.mItem);
   if (action) {
-    fire_and_forget(action->Execute());
+    launder_nodiscard(action->Execute());
     evCloseMenuRequestedEvent.Emit();
     return;
   }

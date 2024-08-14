@@ -92,21 +92,21 @@ void ProfilesPage::UpdateList() {
   }
 }
 
-void ProfilesPage::OnList_SelectionChanged(
+fire_and_forget ProfilesPage::OnList_SelectionChanged(
   const IInspectable&,
   const SelectionChangedEventArgs& args) {
   auto it = args.AddedItems().First();
   if (!it.HasCurrent()) {
-    return;
+    co_return;
   }
   const auto selectedID {to_string(it.Current().as<ProfileUIData>()->ID())};
 
   auto profileSettings = mKneeboard->GetProfileSettings();
   if (profileSettings.mActiveProfile == selectedID) {
-    return;
+    co_return;
   }
   profileSettings.mActiveProfile = selectedID;
-  mKneeboard->SetProfileSettings(profileSettings);
+  co_await mKneeboard->SetProfileSettings(profileSettings);
 }
 
 fire_and_forget ProfilesPage::RemoveProfile(
@@ -142,7 +142,7 @@ fire_and_forget ProfilesPage::RemoveProfile(
     profileSettings.mActiveProfile = "default";
   }
   profileSettings.mProfiles.erase(id);
-  mKneeboard->SetProfileSettings(profileSettings);
+  co_await mKneeboard->SetProfileSettings(profileSettings);
   mUIProfiles.RemoveAt(static_cast<uint32_t>(index));
   List().SelectedIndex(0);
 }
@@ -186,7 +186,7 @@ fire_and_forget ProfilesPage::CreateProfile(
 
   profileSettings.mActiveProfile = profile.mID;
   profileSettings.mProfiles[profile.mID] = profile;
-  mKneeboard->SetProfileSettings(profileSettings);
+  co_await mKneeboard->SetProfileSettings(profileSettings);
 
   const auto sorted = profileSettings.GetSortedProfiles();
   for (int32_t i = 0; i < sorted.size(); ++i) {

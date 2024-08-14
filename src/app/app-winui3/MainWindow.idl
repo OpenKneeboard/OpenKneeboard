@@ -5,6 +5,8 @@ namespace OpenKneeboardApp
                               Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         MainWindow();
+        Windows.Foundation.IAsyncAction Init();
+        
         Microsoft.UI.Xaml.Controls.Frame Frame { get; };
 
         Windows.Foundation.Collections.IVector<IInspectable> NavigationItems { get; };

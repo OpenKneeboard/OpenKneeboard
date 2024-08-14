@@ -22,6 +22,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/launder_nodiscard.hpp>
 
 #include <Psapi.h>
 #include <Shlwapi.h>
@@ -383,7 +384,7 @@ void WindowCaptureTab::SetMatchSpecification(const MatchSpecification& spec) {
   mSpec = spec;
   this->evSettingsChangedEvent.Emit();
   if (!this->WindowMatches(mHwnd)) {
-    fire_and_forget(this->Reload());
+    launder_nodiscard(this->Reload());
   }
 }
 
@@ -409,7 +410,7 @@ HWNDPageSource::CaptureArea WindowCaptureTab::GetCaptureArea() const {
 void WindowCaptureTab::SetCaptureArea(CaptureArea value) {
   mCaptureOptions.mCaptureArea = value;
   evSettingsChangedEvent.Emit();
-  fire_and_forget(this->Reload());
+  launder_nodiscard(this->Reload());
 }
 
 bool WindowCaptureTab::IsCursorCaptureEnabled() const {
@@ -419,7 +420,7 @@ bool WindowCaptureTab::IsCursorCaptureEnabled() const {
 void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
   mCaptureOptions.mCaptureCursor = value;
   evSettingsChangedEvent.Emit();
-  fire_and_forget(this->Reload());
+  launder_nodiscard(this->Reload());
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {

@@ -43,73 +43,79 @@ struct AdvancedSettingsPage
   ~AdvancedSettingsPage();
 
   bool MultipleProfiles() const noexcept;
-  void MultipleProfiles(bool value) noexcept;
+  fire_and_forget MultipleProfiles(bool value) noexcept;
 
   bool Bookmarks() const noexcept;
-  void Bookmarks(bool value) noexcept;
+  fire_and_forget Bookmarks(bool value) noexcept;
 
   uint8_t AppWindowViewMode() const noexcept;
-  void AppWindowViewMode(uint8_t value) noexcept;
+  fire_and_forget AppWindowViewMode(uint8_t value) noexcept;
 
   bool EnableMouseButtonBindings() const noexcept;
-  void EnableMouseButtonBindings(bool value) noexcept;
+  fire_and_forget EnableMouseButtonBindings(bool value) noexcept;
 
   bool GazeInputFocus() const noexcept;
-  void GazeInputFocus(bool value) noexcept;
+  fire_and_forget GazeInputFocus(bool value) noexcept;
 
   bool LoopPages() const noexcept;
-  void LoopPages(bool) noexcept;
+  fire_and_forget LoopPages(bool) noexcept;
 
   bool LoopTabs() const noexcept;
-  void LoopTabs(bool) noexcept;
+  fire_and_forget LoopTabs(bool) noexcept;
 
   bool LoopProfiles() const noexcept;
-  void LoopProfiles(bool) noexcept;
+  fire_and_forget LoopProfiles(bool) noexcept;
 
   bool LoopBookmarks() const noexcept;
-  void LoopBookmarks(bool) noexcept;
+  fire_and_forget LoopBookmarks(bool) noexcept;
 
   bool InGameHeader() const noexcept;
-  void InGameHeader(bool) noexcept;
+  fire_and_forget InGameHeader(bool) noexcept;
 
   bool InGameFooter() const noexcept;
-  void InGameFooter(bool) noexcept;
+  fire_and_forget InGameFooter(bool) noexcept;
 
   bool InGameFooterFrameCount() const noexcept;
-  void InGameFooterFrameCount(bool) noexcept;
+  fire_and_forget InGameFooterFrameCount(bool) noexcept;
 
-  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
-  void RestoreTextDefaults(const IInspectable&, const IInspectable&) noexcept;
-  void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;
+  fire_and_forget RestoreDoodleDefaults(
+    const IInspectable&,
+    const IInspectable&) noexcept;
+  fire_and_forget RestoreTextDefaults(
+    const IInspectable&,
+    const IInspectable&) noexcept;
+  fire_and_forget RestoreQuirkDefaults(
+    const IInspectable&,
+    const IInspectable&) noexcept;
 
   uint32_t MinimumPenRadius();
-  void MinimumPenRadius(uint32_t value);
+  fire_and_forget MinimumPenRadius(uint32_t value);
   uint32_t PenSensitivity();
-  void PenSensitivity(uint32_t value);
+  fire_and_forget PenSensitivity(uint32_t value);
 
   uint32_t MinimumEraseRadius();
-  void MinimumEraseRadius(uint32_t value);
+  fire_and_forget MinimumEraseRadius(uint32_t value);
   uint32_t EraseSensitivity();
-  void EraseSensitivity(uint32_t value);
+  fire_and_forget EraseSensitivity(uint32_t value);
 
   float TextPageFontSize();
-  void TextPageFontSize(float value);
+  fire_and_forget TextPageFontSize(float value);
 
   bool TintEnabled();
-  void TintEnabled(bool value);
+  fire_and_forget TintEnabled(bool value);
   float TintBrightness();
-  void TintBrightness(float value);
+  fire_and_forget TintBrightness(float value);
   winrt::Windows::UI::Color Tint();
-  void Tint(winrt::Windows::UI::Color value);
+  fire_and_forget Tint(winrt::Windows::UI::Color value);
 
   bool Quirk_OculusSDK_DiscardDepthInformation() const noexcept;
-  void Quirk_OculusSDK_DiscardDepthInformation(bool value) noexcept;
+  fire_and_forget Quirk_OculusSDK_DiscardDepthInformation(bool value) noexcept;
 
   bool Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept;
-  void Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept;
+  fire_and_forget Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept;
 
   uint8_t Quirk_OpenXR_Upscaling() const noexcept;
-  void Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
+  fire_and_forget Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
 
   bool CanChangeElevation() const noexcept;
 

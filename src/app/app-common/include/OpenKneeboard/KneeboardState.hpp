@@ -84,9 +84,9 @@ class KneeboardState final
     public std::enable_shared_from_this<KneeboardState> {
  public:
   KneeboardState() = delete;
-  static std::shared_ptr<KneeboardState> Create(
+  static concurrency::task<std::shared_ptr<KneeboardState>> Create(
     HWND mainWindow,
-    const audited_ptr<DXResources>&);
+    audited_ptr<DXResources>);
   ~KneeboardState() noexcept;
   [[nodiscard]]
   virtual IAsyncAction DisposeAsync() noexcept override;
@@ -123,7 +123,8 @@ class KneeboardState final
   std::shared_ptr<TabletInputAdapter> GetTabletInputAdapter() const;
 
   ProfileSettings GetProfileSettings() const;
-  void SetProfileSettings(const ProfileSettings&);
+  [[nodiscard]]
+  IAsyncAction SetProfileSettings(const ProfileSettings&);
 
   void NotifyAppWindowIsForeground(bool isForeground);
 
@@ -134,14 +135,17 @@ class KneeboardState final
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \
-  void Set##name##Settings(const cpptype&); \
-  void Reset##name##Settings();
+  [[nodiscard]] \
+  IAsyncAction Set##name##Settings(const cpptype&); \
+  [[nodiscard]] \
+  IAsyncAction Reset##name##Settings();
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
   void SaveSettings();
 
-  void PostUserAction(UserAction action);
+  [[nodiscard]]
+  IAsyncAction PostUserAction(UserAction action);
 
   bool IsRepaintNeeded() const;
   void SetRepaintNeeded();
@@ -170,6 +174,8 @@ class KneeboardState final
 
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
+  [[nodiscard]]
+  IAsyncAction Init();
 
   DisposalState mDisposal;
 
@@ -191,7 +197,7 @@ class KneeboardState final
   PixelSize mLastNonVRPixelSize {};
 
   std::unique_ptr<GamesList> mGamesList;
-  std::unique_ptr<TabsList> mTabsList;
+  std::shared_ptr<TabsList> mTabsList;
   std::shared_ptr<InterprocessRenderer> mInterprocessRenderer;
   // Initalization and destruction order must match as they both use
   // SetWindowLongPtr
@@ -209,7 +215,8 @@ class KneeboardState final
   void OnGameChangedEvent(
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
-  void OnAPIEvent(const APIEvent& ev) noexcept;
+  [[nodiscard]]
+  IAsyncAction OnAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);
@@ -225,7 +232,8 @@ class KneeboardState final
     Previous,
     Next,
   };
-  void SwitchProfile(Direction);
+  [[nodiscard]]
+  IAsyncAction SwitchProfile(Direction);
 
   void InitializeViews();
 };

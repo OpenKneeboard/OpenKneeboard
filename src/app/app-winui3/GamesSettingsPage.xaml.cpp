@@ -80,7 +80,7 @@ fire_and_forget GamesSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetGamesSettings();
+  co_await mKneeboard->ResetGamesSettings();
 }
 
 void GamesSettingsPage::UpdateGames() {

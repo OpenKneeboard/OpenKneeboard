@@ -82,7 +82,7 @@ fire_and_forget IndependentVRViewSettingsControl::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetVRSettings();
+  co_await mKneeboard->ResetVRSettings();
 
   if (!mPropertyChangedEvent) {
     co_return;
@@ -102,7 +102,7 @@ IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
   return it->mVR.GetIndependentConfig();
 }
 
-void IndependentVRViewSettingsControl::SetViewConfig(
+winrt::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
   const IndependentViewVRConfig& config) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
@@ -111,13 +111,13 @@ void IndependentVRViewSettingsControl::SetViewConfig(
     OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
   }
   it->mVR.SetIndependentConfig(config);
-  mKneeboard->SetViewsSettings(viewsConfig);
+  co_await mKneeboard->SetViewsSettings(viewsConfig);
 }
 
-void IndependentVRViewSettingsControl::RecenterNow(
+winrt::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
   const IInspectable&,
   const RoutedEventArgs&) {
-  mKneeboard->PostUserAction(UserAction::RECENTER_VR);
+  co_await mKneeboard->PostUserAction(UserAction::RECENTER_VR);
 }
 
 void IndependentVRViewSettingsControl::GoToBindings(

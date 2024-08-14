@@ -32,6 +32,7 @@
 #include <OpenKneeboard/ToolbarToggleAction.hpp>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/launder_nodiscard.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
@@ -493,7 +494,7 @@ bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {
 void HeaderUILayer::OnClick(const Button& button) {
   auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
   if (action) {
-    fire_and_forget(action->Execute());
+    launder_nodiscard(action->Execute());
     return;
   }
 

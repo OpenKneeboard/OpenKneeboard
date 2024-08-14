@@ -33,11 +33,12 @@ class KneeboardState;
 class TabsList final : private EventReceiver {
  public:
   TabsList() = delete;
-  TabsList(
+  ~TabsList();
+
+  static concurrency::task<std::shared_ptr<TabsList>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState* kneeboard,
     const nlohmann::json& config);
-  ~TabsList();
 
   std::vector<std::shared_ptr<ITab>> GetTabs() const;
 
@@ -49,18 +50,22 @@ class TabsList final : private EventReceiver {
   IAsyncAction SetTabs(std::vector<std::shared_ptr<ITab>> tabs);
 
   nlohmann::json GetSettings() const;
-  void LoadSettings(const nlohmann::json&);
+  [[nodiscard]]
+  IAsyncAction LoadSettings(const nlohmann::json&);
 
   Event<> evSettingsChangedEvent;
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
 
  private:
+  TabsList(const audited_ptr<DXResources>&, KneeboardState* kneeboard);
+
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITab>> mTabs;
   std::vector<EventHandlerToken> mTabEvents;
 
-  void LoadDefaultSettings();
+  [[nodiscard]]
+  IAsyncAction LoadDefaultSettings();
 };
 
 }// namespace OpenKneeboard

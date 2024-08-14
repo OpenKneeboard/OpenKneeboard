@@ -44,13 +44,13 @@ struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl>,
   void ViewID(const winrt::guid&);
 
   bool IsEnabledInVR();
-  void IsEnabledInVR(bool);
+  fire_and_forget IsEnabledInVR(bool);
 
   IInspectable SelectedKind();
-  void SelectedKind(const IInspectable&);
+  fire_and_forget SelectedKind(const IInspectable&);
 
   IInspectable SelectedDefaultTab();
-  void SelectedDefaultTab(const IInspectable&);
+  fire_and_forget SelectedDefaultTab(const IInspectable&);
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;

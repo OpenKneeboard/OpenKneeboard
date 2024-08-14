@@ -74,8 +74,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetVRSettings();
-  mKneeboard->ResetViewsSettings();
+  co_await mKneeboard->ResetVRSettings();
+  co_await mKneeboard->ResetViewsSettings();
 
   if (!mPropertyChangedEvent) {
     co_return;
@@ -89,10 +89,10 @@ bool VRSettingsPage::SteamVREnabled() {
   return mKneeboard->GetVRSettings().mEnableSteamVR;
 }
 
-void VRSettingsPage::SteamVREnabled(bool enabled) {
+fire_and_forget VRSettingsPage::SteamVREnabled(bool enabled) {
   auto config = mKneeboard->GetVRSettings();
   config.mEnableSteamVR = enabled;
-  mKneeboard->SetVRSettings(config);
+  co_await mKneeboard->SetVRSettings(config);
 }
 
 static bool IsOpenXRAPILayerEnabled(
@@ -218,7 +218,7 @@ fire_and_forget VRSettingsPage::AddView(
   }
 
   settings.mViews.push_back({.mName = name, .mVR = vr});
-  mKneeboard->SetViewsSettings(settings);
+  co_await mKneeboard->SetViewsSettings(settings);
   AppendViewTab(settings.mViews.back());
 
   TabView().SelectedIndex(TabView().TabItems().Size() - 1);
@@ -263,7 +263,7 @@ fire_and_forget VRSettingsPage::RemoveView(
     }
     return view.mVR.GetMirrorOfGUID() == guid;
   });
-  mKneeboard->SetViewsSettings(settings);
+  co_await mKneeboard->SetViewsSettings(settings);
 
   auto items = tabView.TabItems();
   uint32_t selectedIndex = tabView.SelectedIndex();

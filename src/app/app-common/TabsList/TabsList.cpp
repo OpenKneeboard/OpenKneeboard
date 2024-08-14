@@ -32,6 +32,7 @@
 #include <shims/nlohmann/json.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/launder_nodiscard.hpp>
 
 #include <algorithm>
 
@@ -39,10 +40,17 @@ namespace OpenKneeboard {
 
 TabsList::TabsList(
   const audited_ptr<DXResources>& dxr,
-  KneeboardState* kneeboard,
-  const nlohmann::json& config)
+  KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
-  LoadSettings(config);
+}
+
+concurrency::task<std::shared_ptr<TabsList>> TabsList::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kneeboard,
+  const nlohmann::json& config) {
+  std::unique_ptr<TabsList> ret {new TabsList(dxr, kneeboard)};
+  co_await ret->LoadSettings(config);
+  co_return ret;
 }
 
 TabsList::~TabsList() {
@@ -59,10 +67,10 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-void TabsList::LoadSettings(const nlohmann::json& config) {
+IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
   if (config.is_null()) {
-    LoadDefaultSettings();
-    return;
+    co_await LoadDefaultSettings();
+    co_return;
   }
   std::vector<nlohmann::json> jsonTabs = config;
 
@@ -108,11 +116,11 @@ void TabsList::LoadSettings(const nlohmann::json& config) {
     dprintf("Couldn't load tab with type {}", rawType);
     OPENKNEEBOARD_BREAK;
   }
-  fire_and_forget(this->SetTabs(tabs));
+  co_await this->SetTabs(tabs);
 }
 
-void TabsList::LoadDefaultSettings() {
-  fire_and_forget(this->SetTabs({
+IAsyncAction TabsList::LoadDefaultSettings() {
+  co_await this->SetTabs({
     std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
@@ -122,7 +130,7 @@ void TabsList::LoadDefaultSettings() {
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),
     std::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
     std::make_shared<DCSTerrainTab>(mDXR, mKneeboard),
-  }));
+  });
 }
 
 nlohmann::json TabsList::GetSettings() const {

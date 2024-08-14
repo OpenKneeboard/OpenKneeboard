@@ -108,7 +108,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
         updateLogVersion.data(),
         static_cast<DWORD>(updateLogVersion.size()));
       appSettings.mLastRunVersion = updateLogVersion;
-      kneeboard->SetAppSettings(appSettings);
+      co_await kneeboard->SetAppSettings(appSettings);
     }
   }
 
@@ -204,10 +204,11 @@ concurrency::task<UpdateResult> CheckForUpdates(
   dprintf(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
-  scope_exit oncePerDay([&]() {
+  scope_exit oncePerDay([&]() -> winrt::fire_and_forget {
     settings.mDisabledUntil = now + (60 * 60 * 24);
     appSettings.mAutoUpdate = settings;
-    gKneeboard.lock()->SetAppSettings(appSettings);
+    auto kneeboard = gKneeboard.lock();
+    co_await kneeboard->SetAppSettings(appSettings);
   });
 
   const auto currentVersionString = ToSemVerString(

@@ -180,7 +180,7 @@ fire_and_forget TabsSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetTabsSettings();
+  co_await mKneeboard->ResetTabsSettings();
 }
 
 static std::shared_ptr<ITab> find_tab(const IInspectable& sender) {

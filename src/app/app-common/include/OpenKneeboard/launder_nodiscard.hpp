@@ -17,23 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/scope_exit.hpp>
+#pragma once
 
 namespace OpenKneeboard {
-
-scope_exit::scope_exit(std::function<void()> f) : mCallback(f) {
+constexpr void launder_nodiscard(auto&&) {
 }
-
-// Destructors can't/shouldn't throw; if the callback throws, terminate.
-scope_exit::~scope_exit() noexcept {
-  if (!mCallback) {
-    return;
-  }
-  mCallback();
-}
-
-void scope_exit::abandon() {
-  mCallback = {};
-}
-
 }// namespace OpenKneeboard

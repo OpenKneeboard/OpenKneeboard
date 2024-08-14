@@ -47,7 +47,7 @@ struct VRSettingsPage
   ~VRSettingsPage();
 
   bool SteamVREnabled();
-  void SteamVREnabled(bool);
+  fire_and_forget SteamVREnabled(bool);
 
   bool OpenXR64Enabled() noexcept;
   fire_and_forget OpenXR64Enabled(bool) noexcept;

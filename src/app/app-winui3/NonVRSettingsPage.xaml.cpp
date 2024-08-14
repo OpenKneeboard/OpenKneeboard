@@ -137,16 +137,17 @@ ViewNonVRConfig NonVRSettingsPage::GetViewConfig() {
   return views.at(mCurrentView).mNonVR;
 }
 
-void NonVRSettingsPage::SetViewConfig(const ViewNonVRConfig& value) {
+winrt::fire_and_forget NonVRSettingsPage::SetViewConfig(
+  const ViewNonVRConfig& value) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {
     dprintf("View {} >= count {}", mCurrentView, views.size());
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
   views[mCurrentView].mNonVR = value;
-  mKneeboard->SetViewsSettings(viewsConfig);
+  co_await mKneeboard->SetViewsSettings(viewsConfig);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

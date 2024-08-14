@@ -326,10 +326,10 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-dprint)
 
-ok_add_library(OpenKneeboard-scope_exit STATIC scope_exit.cpp)
+ok_add_library(OpenKneeboard-scope_exit INTERFACE)
 target_link_libraries(
   OpenKneeboard-scope_exit
-  PUBLIC
+  INTERFACE
   OpenKneeboard-Lib-Headers)
 
 ok_add_library(OpenKneeboard-Wintab
