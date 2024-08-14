@@ -83,7 +83,6 @@ class OpenKneeboardAPI extends EventTarget {
         }
         var message = "OpenKneeboard: the following experimental features have been enabled by scripts in this page:";
         for (const feature of ret.details.features) {
-            console.log(feature);
             message += `\n🧪 ✅ '${feature.Name}' version ${feature.Version}`;
         }
         console.log(message);
