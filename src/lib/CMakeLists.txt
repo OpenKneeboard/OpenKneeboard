@@ -41,18 +41,6 @@ target_link_libraries(
   OpenKneeboard-shims
 )
 
-ok_add_library(OpenKneeboard-RunSubprocessAsync STATIC RunSubprocessAsync.cpp)
-target_link_libraries(
-  OpenKneeboard-RunSubprocessAsync
-  PUBLIC
-  OpenKneeboard-shims
-)
-target_link_libraries(
-  OpenKneeboard-RunSubprocessAsync
-  PRIVATE
-  OpenKneeboard-dprint
-)
-
 ok_add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
 target_link_libraries(
   OpenKneeboard-GetSystemColor
@@ -403,22 +391,6 @@ target_link_libraries(
   OpenKneeboard-shims
   INTERFACE
   OpenKneeboard-dprint
-)
-
-ok_add_library(OpenKneeboard-OpenXRMode STATIC OpenXRMode.cpp)
-target_link_libraries(
-  OpenKneeboard-OpenXRMode
-  PUBLIC
-  ThirdParty::JSON
-  OpenKneeboard-Lib-Headers
-)
-target_link_libraries(
-  OpenKneeboard-OpenXRMode
-  PRIVATE
-  OpenKneeboard-RunSubprocessAsync
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-dprint
-  ThirdParty::CppWinRT
 )
 
 ok_add_library(OpenKneeboard-json STATIC json.cpp)

@@ -20,8 +20,10 @@
 #pragma once
 
 #include <shims/filesystem>
+#include <shims/winrt/base.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <memory>
 #include <string>
@@ -39,7 +41,8 @@ class FilePageSource final {
 
   static std::vector<std::string> GetSupportedExtensions(
     const audited_ptr<DXResources>&) noexcept;
-  static std::shared_ptr<IPageSource> Create(
+
+  static task<std::shared_ptr<IPageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path&) noexcept;

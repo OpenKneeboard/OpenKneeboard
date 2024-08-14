@@ -240,7 +240,7 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
   OPENKNEEBOARD_TraceLoggingWrite( \
     OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_START), ##__VA_ARGS__); \
   const ::OpenKneeboard::scope_exit OPENKNEEBOARD_CONCAT2( \
-    _okbtllcoro__, _COUNTER__) {[]() { \
+    _okbtllcoro__, _COUNTER__) {[&]() { \
     OPENKNEEBOARD_TraceLoggingWrite( \
       OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_STOP), ##__VA_ARGS__); \
   }};

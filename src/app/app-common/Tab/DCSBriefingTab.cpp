@@ -34,10 +34,10 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSBriefingTab::DCSBriefingTab(
+task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
   const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs)
-  : DCSBriefingTab(dxr, kbs, {}, _("Briefing")) {
+  KneeboardState* kbs) {
+  return Create(dxr, kbs, {}, _("Briefing"));
 }
 
 DCSBriefingTab::DCSBriefingTab(
@@ -52,10 +52,20 @@ DCSBriefingTab::DCSBriefingTab(
     mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(
       std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {
-  this->SetDelegatesFromEmpty({
-    std::static_pointer_cast<IPageSource>(mTextPages),
-    std::static_pointer_cast<IPageSource>(mImagePages),
+}
+
+task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  std::string_view title) {
+  std::shared_ptr<DCSBriefingTab> ret {
+    new DCSBriefingTab(dxr, kbs, persistentID, title)};
+  co_await ret->SetDelegates({
+    std::static_pointer_cast<IPageSource>(ret->mTextPages),
+    std::static_pointer_cast<IPageSource>(ret->mImagePages),
   });
+  co_return ret;
 }
 
 DCSBriefingTab::~DCSBriefingTab() {

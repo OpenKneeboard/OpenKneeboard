@@ -40,8 +40,10 @@ class DCSBriefingTab final : public TabBase,
                              public virtual DCSTab,
                              public virtual PageSourceWithDelegates {
  public:
-  DCSBriefingTab(const audited_ptr<DXResources>&, KneeboardState*);
-  DCSBriefingTab(
+  static task<std::shared_ptr<DCSBriefingTab>> Create(
+    const audited_ptr<DXResources>&,
+    KneeboardState*);
+  static task<std::shared_ptr<DCSBriefingTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -61,6 +63,11 @@ class DCSBriefingTab final : public TabBase,
     OnAPIEvent(APIEvent, std::filesystem::path, std::filesystem::path) override;
 
  private:
+  DCSBriefingTab(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    std::string_view title);
   KneeboardState* mKneeboard {nullptr};
 
   std::shared_ptr<DCSExtractedMission> mMission;

@@ -32,7 +32,6 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   OpenKneeboard-APIEvent
   OpenKneeboard-GetSystemColor
-  OpenKneeboard-OpenXRMode
   OpenKneeboard-PDFNavigation
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles

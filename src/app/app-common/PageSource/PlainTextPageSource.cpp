@@ -157,7 +157,7 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
   return {static_cast<PageIndex>(it - mPageIDs.begin())};
 }
 
-void PlainTextPageSource::RenderPage(
+[[nodiscard]] IAsyncAction PlainTextPageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
@@ -207,14 +207,14 @@ void PlainTextPageSource::RenderPage(
        virtualSize.mWidth - mPadding,
        mPadding + mRowHeight},
       footerBrush.get());
-    return;
+    co_return;
   }
 
   const auto pageIndex = FindPageIndex(pageID);
 
   if (!pageIndex) [[unlikely]] {
     D2DErrorRenderer(mDXR).Render(ctx, _("Invalid Page ID"), rect);
-    return;
+    co_return;
   }
 
   const auto& lines = (*pageIndex == mCompletePages.size())

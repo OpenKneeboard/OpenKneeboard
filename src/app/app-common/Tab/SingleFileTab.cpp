@@ -34,34 +34,44 @@ SingleFileTab::SingleFileTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  std::string_view title,
-  const std::filesystem::path& path)
+  std::string_view title)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {
-  this->SetPathFromEmpty(path);
 }
 
-SingleFileTab::SingleFileTab(
+task<std::shared_ptr<SingleFileTab>> SingleFileTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path)
-  : SingleFileTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem()), path) {
+  const std::filesystem::path& path) {
+  return Create(dxr, kbs, winrt::guid {}, to_utf8(path.stem()), path);
 }
 
-SingleFileTab::SingleFileTab(
+task<std::shared_ptr<SingleFileTab>> SingleFileTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
-  const nlohmann::json& settings)
-  : SingleFileTab(
-      dxr,
-      kbs,
-      persistentID,
-      title,
-      settings.at("Path").get<std::filesystem::path>()) {
+  const nlohmann::json& settings) {
+  return Create(
+    dxr,
+    kbs,
+    persistentID,
+    title,
+    settings.at("Path").get<std::filesystem::path>());
+}
+
+task<std::shared_ptr<SingleFileTab>> SingleFileTab::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  std::string_view title,
+  const std::filesystem::path& path) {
+  std::shared_ptr<SingleFileTab> ret {
+    new SingleFileTab(dxr, kbs, persistentID, title)};
+  co_await ret->SetPath(path);
+  co_return ret;
 }
 
 SingleFileTab::~SingleFileTab() {
@@ -94,6 +104,12 @@ std::filesystem::path SingleFileTab::GetPath() const {
   return mPath;
 }
 
+winrt::Windows::Foundation::IAsyncAction SingleFileTab::Reload() {
+  mKind = Kind::Unknown;
+  auto path = std::exchange(mPath, {});
+  co_await this->SetPath(path);
+}
+
 winrt::Windows::Foundation::IAsyncAction SingleFileTab::SetPath(
   std::filesystem::path rawPath) {
   auto path = rawPath;
@@ -105,23 +121,9 @@ winrt::Windows::Foundation::IAsyncAction SingleFileTab::SetPath(
   }
   mPath = path;
 
-  co_await this->Reload();
-}
-
-winrt::Windows::Foundation::IAsyncAction SingleFileTab::Reload() {
-  mKind = Kind::Unknown;
-  auto path = std::move(mPath);
-  co_await this->SetDelegates({});
-  this->SetPathFromEmpty(path);
-}
-
-void SingleFileTab::SetPathFromEmpty(const std::filesystem::path& path) {
-  assert(mPath.empty());
-  mPath = path;
-
-  auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
+  auto delegate = co_await FilePageSource::Create(mDXR, mKneeboard, mPath);
   if (!delegate) {
-    return;
+    co_return;
   }
 
   if (std::dynamic_pointer_cast<PDFFilePageSource>(delegate)) {
@@ -134,7 +136,7 @@ void SingleFileTab::SetPathFromEmpty(const std::filesystem::path& path) {
     mKind = Kind::HTMLFile;
   }
 
-  this->SetDelegatesFromEmpty({delegate});
+  co_await this->SetDelegates({delegate});
 }
 
 }// namespace OpenKneeboard

@@ -90,7 +90,7 @@ winrt::Windows::Foundation::IAsyncAction DCSMissionTab::Reload() {
   for (const auto& path: paths) {
     if (std::filesystem::exists(root / path)) {
       sources.push_back(
-        FolderPageSource::Create(mDXR, mKneeboard, root / path));
+        co_await FolderPageSource::Create(mDXR, mKneeboard, root / path));
       mDebugInformation += std::format("\u2714 miz:\\{}\n", to_utf8(path));
     } else {
       mDebugInformation += std::format("\u274c miz:\\{}\n", to_utf8(path));

@@ -15,6 +15,8 @@
 
 #include "Globals.h"
 
+#include <shims/winrt/base.h>
+
 #include <winrt/Microsoft.UI.Composition.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Input.h>

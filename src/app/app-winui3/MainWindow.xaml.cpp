@@ -38,6 +38,7 @@
 #include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/ITab.hpp>
+#include <OpenKneeboard/InterprocessRenderer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
@@ -313,7 +314,7 @@ winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   dprint("Game elevation warning dialog closed.");
 }
 
-void MainWindow::FrameTick() {
+winrt::fire_and_forget MainWindow::FrameTick() {
   TraceLoggingActivity<gTraceProvider> activity;
   // Including the build number just to make sure it's in every trace
   TraceLoggingWriteStart(
@@ -325,13 +326,7 @@ void MainWindow::FrameTick() {
   // - Windows.Data.Pdf.PdfDocument re-enters the loop from its' destructor
   const std::unique_lock recursiveFrameLock(mFrameInProgress, std::try_to_lock);
   if (!recursiveFrameLock) {
-    dprint(
-      "WARNING: recursive frame loop entry detected; this is likely a bug in a "
-      "Windows component.");
-    OPENKNEEBOARD_BREAK;
-    TraceLoggingWriteStop(
-      activity, "FrameTick", TraceLoggingValue("Result", "NestedFrame"));
-    return;
+    co_return;
   }
 
   this->CheckForElevatedConsumer();
@@ -339,10 +334,6 @@ void MainWindow::FrameTick() {
     std::shared_lock kbLock(*mKneeboard);
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
     mKneeboard->evFrameTimerPreEvent.Emit();
-    auto content = Frame().Content();
-    if (auto tab = content.try_as<TabPage>()) {
-      tab.PaintIfDirty();
-    }
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
   if (!mKneeboard->IsRepaintNeeded()) {
@@ -353,16 +344,21 @@ void MainWindow::FrameTick() {
     }
     TraceLoggingWriteStop(
       activity, "FrameTick", TraceLoggingValue("No repaint needed", "Result"));
-    return;
+    co_return;
   }
 
-  std::shared_lock kbLock(*mKneeboard);
-  TraceLoggingWriteTagged(activity, "Kneeboard relocked");
-  const std::unique_lock dxLock(*mDXR);
-  TraceLoggingWriteTagged(activity, "DX locked");
   {
-    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerEvent.emit()");
-    mKneeboard->evFrameTimerEvent.Emit();
+    std::shared_lock kbLock(*mKneeboard);
+    TraceLoggingWriteTagged(activity, "Kneeboard relocked");
+    const std::unique_lock dxLock(*mDXR);
+    TraceLoggingWriteTagged(activity, "DX locked");
+    OPENKNEEBOARD_TraceLoggingCoro("Paint");
+    if (auto ipc = mKneeboard->GetInterprocessRenderer()) {
+      co_await ipc->RenderNow();
+    }
+    if (auto tab = Frame().Content().try_as<TabPage>()) {
+      co_await tab.PaintIfDirty();
+    }
   }
   mKneeboard->Repainted();
   TraceLoggingWriteStop(
@@ -816,7 +812,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
 
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
-  OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabChanged()");
+  OPENKNEEBOARD_TraceLoggingCoro("MainWindow::OnTabChanged()");
 
   if (mTabSwitchReason != TabSwitchReason::InAppNavSelection) {
     // Don't automatically move away from "Profiles"

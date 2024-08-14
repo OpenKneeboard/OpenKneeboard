@@ -14,10 +14,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
-
 #include <OpenKneeboard/DoodleRenderer.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
@@ -40,19 +39,25 @@
 #include <wininet.h>
 #include <wrl.h>
 
+#include <wil/cppwinrt_helpers.h>
+
 namespace OpenKneeboard {
 
-std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
+task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const Settings& settings) {
+  winrt::apartment_context uiThread;
   auto ret = std::shared_ptr<WebView2PageSource>(
     new WebView2PageSource(dxr, kbs, settings));
-  ret->Init();
-  return ret;
+  co_await ret->Init();
+  co_await uiThread;
+
+  dprint("Hello!");
+  co_return ret;
 }
 
-std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
+task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
@@ -70,7 +75,7 @@ std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   return Create(dxr, kbs, settings);
 }
 
-winrt::fire_and_forget WebView2PageSource::Init() {
+IAsyncAction WebView2PageSource::Init() {
   if (!IsAvailable()) {
     co_return;
   }
@@ -79,9 +84,9 @@ winrt::fire_and_forget WebView2PageSource::Init() {
 
   mRenderersState
     .Transition<RenderersState::Constructed, RenderersState::Initializing>();
-  co_await winrt::resume_foreground(mWorkerDQ);
+  co_await wil::resume_foreground(mWorkerDQ);
   auto self = weak.lock();
-  if (!self) {
+  if ((!self) || mDisposal.HasStarted()) {
     co_return;
   }
 
@@ -101,6 +106,9 @@ winrt::fire_and_forget WebView2PageSource::Init() {
     {}, userData.wstring(), options);
 
   co_await uiThread;
+  if (mDisposal.HasStarted()) {
+    co_return;
+  }
 
   auto doodles = std::make_shared<DoodleRenderer>(mDXResources, mKneeboard);
 
@@ -114,7 +122,7 @@ winrt::fire_and_forget WebView2PageSource::Init() {
     .mDoodles = doodles,
   };
 
-  auto renderer = WebView2Renderer::Create(
+  auto renderer = co_await WebView2Renderer::Create(
     mDXResources,
     mKneeboard,
     mSettings,
@@ -140,9 +148,12 @@ WebView2PageSource::WebView2PageSource(
   if (!IsAvailable()) {
     return;
   }
-  mWorkerDQC = winrt::Windows::System::DispatcherQueueController::
-    CreateOnDedicatedThread();
+  mWorkerDQC = WorkerDQC::CreateOnDedicatedThread();
   mWorkerDQ = mWorkerDQC.DispatcherQueue();
+  dprintf(
+    "Created queue {:#018x} in thread {}",
+    std::hash<winrt::Windows::Foundation::IUnknown> {}(mWorkerDQC),
+    std::this_thread::get_id());
 }
 
 std::string WebView2PageSource::GetVersion() {
@@ -192,6 +203,10 @@ WebView2PageSource::DisposeAsync() noexcept {
     mEnvironment = nullptr;
     co_await mUIThread;
     mDocumentResources = {};
+    dprintf(
+      "Shutting down queue {:#018x} in thread {}",
+      std::hash<winrt::Windows::Foundation::IUnknown> {}(mWorkerDQ),
+      std::this_thread::get_id());
     mWorkerDQ = {nullptr};
     co_await mWorkerDQC.ShutdownQueueAsync();
   }
@@ -298,16 +313,16 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
   return {};
 }
 
-void WebView2PageSource::RenderPage(
+[[nodiscard]] IAsyncAction WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::RenderPage");
   if (mDisposal.HasStarted()) [[unlikely]] {
-    return;
+    co_return;
   }
   if (mRenderersState.Get() != RenderersState::Ready) [[unlikely]] {
-    return;
+    co_return;
   }
   const auto isPageMode
     = (mDocumentResources.mContentMode == ContentMode::PageBased);
@@ -323,7 +338,7 @@ void WebView2PageSource::RenderPage(
 
   if (!mDocumentResources.mRenderers.contains(key)) {
     assert(isPageMode);
-    auto renderer = WebView2Renderer::Create(
+    auto renderer = co_await WebView2Renderer::Create(
       mDXResources,
       mKneeboard,
       mSettings,

@@ -111,7 +111,7 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
   };
 }
 
-void FooterUILayer::Render(
+IAsyncAction FooterUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
@@ -135,7 +135,7 @@ void FooterUILayer::Render(
     {rect.Width(), footerHeight},
   };
 
-  next.front()->Render(
+  co_await next.front()->Render(
     rc,
     next.subspan(1),
     context,

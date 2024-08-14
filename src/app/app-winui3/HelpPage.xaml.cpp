@@ -51,7 +51,6 @@
 #include <fstream>
 #include <string>
 
-#include <appmodel.h>
 #include <shellapi.h>
 #include <shobjidl.h>
 #include <time.h>
@@ -116,23 +115,13 @@ HelpPage::~HelpPage() {
 }
 
 void HelpPage::PopulateVersion() {
-  UINT32 packageNameLen = MAX_PATH;
-  wchar_t packageName[MAX_PATH];
-  if (
-    GetCurrentPackageFullName(&packageNameLen, packageName) == ERROR_SUCCESS) {
-    packageNameLen -= 1;// null terminator
-  } else {
-    packageNameLen = 0;
-  }
-
   auto details = std::format(
     "OpenKneeboard {}\n\n"
     "Copyright © 2021-2022 Frederick Emmott.\n\n"
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
     "artwork.\n\n"
     "Build: {}-{}-{}\n"
-    "Tag: {}\n"
-    "Package: {}\n",
+    "Tag: {}\n",
     Version::ReleaseName,
     Version::IsGithubActionsBuild ? std::format("GHA{}", Version::Build)
                                   : "local",
@@ -144,24 +133,24 @@ void HelpPage::PopulateVersion() {
     "Win32",
 #endif
 #endif
-    Version::IsTaggedVersion ? Version::TagName : "NONE - UNRELEASED VERSION",
-    packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
-                   : "unpackaged");
+    Version::IsTaggedVersion ? Version::TagName : "NONE - UNRELEASED VERSION");
   VersionText().Text(winrt::to_hstring(details));
 
   mVersionClipboardData = details;
 }
 
 static inline void SetClipboardText(std::string_view text) {
-  Windows::ApplicationModel::DataTransfer::DataPackage package;
+  winrt::Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(winrt::to_hstring(text));
-  Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+  winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(
+    package);
 }
 
 static inline void SetClipboardText(std::wstring_view text) {
-  Windows::ApplicationModel::DataTransfer::DataPackage package;
+  winrt::Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(text);
-  Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+  winrt::Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(
+    package);
 }
 
 void HelpPage::OnCopyVersionDataClick(

@@ -75,7 +75,8 @@ class WGCRenderer : public virtual EventReceiver,
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Options& options);
-  winrt::fire_and_forget Init() noexcept;
+  [[nodiscard]]
+  IAsyncAction Init() noexcept;
 
   virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
     = 0;

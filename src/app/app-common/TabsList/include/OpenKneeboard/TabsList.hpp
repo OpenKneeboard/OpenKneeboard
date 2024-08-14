@@ -26,6 +26,7 @@
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/inttypes.hpp>
+#include <OpenKneeboard/task.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;
@@ -35,7 +36,7 @@ class TabsList final : private EventReceiver {
   TabsList() = delete;
   ~TabsList();
 
-  static concurrency::task<std::shared_ptr<TabsList>> Create(
+  static task<std::shared_ptr<TabsList>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState* kneeboard,
     const nlohmann::json& config);

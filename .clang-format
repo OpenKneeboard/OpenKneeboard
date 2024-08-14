@@ -38,6 +38,9 @@ IncludeCategories:
     Priority: 31
   - Regex: '^<ppl[a-z]+\.h>'
     Priority: 33
+  - Regex: '^<wil/cppwinrt_helpers\.h>$' # Must be included after various other headers
+    Priority: 1
+    SortPriority: 100
   - Regex: '^<shims/winrt/.+'
     Priority: 1
     SortPriority: 34

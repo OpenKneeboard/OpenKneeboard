@@ -47,7 +47,7 @@
 
 namespace OpenKneeboard {
 
-concurrency::task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
+task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
   HWND hwnd,
   audited_ptr<DXResources> dxr) {
   auto ret = shared_with_final_release(new KneeboardState(hwnd, dxr));
@@ -282,7 +282,7 @@ IAsyncAction KneeboardState::PostUserAction(UserAction action) {
     OPENKNEEBOARD_BREAK;
     co_return;
   }
-  OPENKNEEBOARD_TraceLoggingScope(
+  OPENKNEEBOARD_TraceLoggingCoro(
     "KneeboardState::PostUserAction()",
     TraceLoggingValue(to_string(action).c_str(), "Action"));
 
@@ -324,7 +324,7 @@ IAsyncAction KneeboardState::PostUserAction(UserAction action) {
     case UserAction::NEXT_BOOKMARK:
     case UserAction::TOGGLE_BOOKMARK:
     case UserAction::RELOAD_CURRENT_TAB:
-      GetActiveViewForGlobalInput()->PostUserAction(action);
+      co_await GetActiveViewForGlobalInput()->PostUserAction(action);
       co_return;
     case UserAction::PREVIOUS_PROFILE:
       co_await this->SwitchProfile(Direction::Previous);
@@ -389,13 +389,27 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-IAsyncAction KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
+winrt::fire_and_forget KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
+  mAPIEventQueue.push(ev);
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");
     OPENKNEEBOARD_BREAK;
   }
   TroubleshootingStore::Get()->OnAPIEvent(ev);
 
+  std::unique_lock lock(mAPIEventQueueHandler, std::try_to_lock);
+  if (!lock) {
+    co_return;
+  }
+
+  while (!mAPIEventQueue.empty()) {
+    auto it = mAPIEventQueue.front();
+    mAPIEventQueue.pop();
+    co_await ProcessAPIEvent(it);
+  }
+}
+
+IAsyncAction KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
   const auto tabs = mTabsList->GetTabs();
 
   if (ev.name == APIEvent::EVT_REMOTE_USER_ACTION) {
@@ -633,6 +647,10 @@ TabsList* KneeboardState::GetTabsList() const {
   return mTabsList.get();
 }
 
+InterprocessRenderer* KneeboardState::GetInterprocessRenderer() const {
+  return mInterprocessRenderer.get();
+}
+
 std::shared_ptr<TabletInputAdapter> KneeboardState::GetTabletInputAdapter()
   const {
   return mTabletInput;
@@ -793,7 +811,7 @@ IAsyncAction KneeboardState::SetTabsSettings(const nlohmann::json& j) {
 
 winrt::Windows::Foundation::IAsyncAction
 KneeboardState::ReleaseExclusiveResources() {
-  OPENKNEEBOARD_TraceLoggingScope("ReleaseExclusiveResources");
+  OPENKNEEBOARD_TraceLoggingCoro("ReleaseExclusiveResources");
   mOpenVRThread = {};
   mInterprocessRenderer = {};
   mTabletInput = {};

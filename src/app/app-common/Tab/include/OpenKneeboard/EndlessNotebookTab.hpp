@@ -31,6 +31,7 @@
 #include <shims/filesystem>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/task.hpp>
 
 namespace OpenKneeboard {
 
@@ -44,11 +45,11 @@ class EndlessNotebookTab final
     public virtual EventReceiver,
     public std::enable_shared_from_this<EndlessNotebookTab> {
  public:
-  static std::shared_ptr<EndlessNotebookTab> Create(
+  static task<std::shared_ptr<EndlessNotebookTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
-  static std::shared_ptr<EndlessNotebookTab> Create(
+  static task<std::shared_ptr<EndlessNotebookTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -72,8 +73,8 @@ class EndlessNotebookTab final
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
-    override;
+  [[nodiscard]] IAsyncAction
+  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
@@ -94,7 +95,6 @@ class EndlessNotebookTab final
   KneeboardState* mKneeboard;
 
   std::filesystem::path mPath;
-  void SetPathFromEmpty(const std::filesystem::path& path);
 
   std::shared_ptr<IPageSource> mSource;
   PageID mSourcePageID;

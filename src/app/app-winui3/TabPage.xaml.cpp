@@ -134,10 +134,10 @@ TabPage::TabPage() {
     });
 }
 
-void TabPage::PaintIfDirty() {
+IAsyncAction TabPage::PaintIfDirty() {
   OPENKNEEBOARD_TraceLoggingScope(
     "TabPage::PaintIfDirty()", TraceLoggingBoolean(mNeedsFrame, "NeedsFrame"));
-  this->PaintNow();
+  co_await this->PaintNow();
 }
 
 TabPage::~TabPage() {
@@ -146,7 +146,7 @@ TabPage::~TabPage() {
 
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
-  OPENKNEEBOARD_TraceLoggingScope("TabPage::final_release()");
+  OPENKNEEBOARD_TraceLoggingCoro("TabPage::final_release()");
   instance->RemoveAllEventListeners();
   co_await instance->mUIThread;
 }
@@ -538,10 +538,10 @@ void TabPage::PaintLater() {
   mNeedsFrame = true;
 }
 
-void TabPage::PaintNow(const std::source_location& loc) noexcept {
+IAsyncAction TabPage::PaintNow(const std::source_location& loc) noexcept {
   if (!mTabView) {
     TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
-    return;
+    co_return;
   }
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity,
@@ -553,14 +553,14 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
     OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
   if (!mPanelDimensions) {
     activity.StopWithResult("Invalid panel dimensions");
-    return;
+    co_return;
   }
 
   if (!mSwapChain) {
     this->InitializeSwapChain();
     if (!mSwapChain) {
       activity.StopWithResult("No swap chain");
-      return;
+      co_return;
     }
   }
   if (mPanelDimensions != mSwapChainDimensions) {
@@ -593,7 +593,7 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
           static_cast<FLOAT>(desc.Height),
         });
       activity.StopWithResult("No TabView");
-      return;
+      co_return;
     }
   }
 
@@ -612,12 +612,12 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
         static_cast<FLOAT>(desc.Height),
       });
     activity.StopWithResult("Render width or height is 0");
-    return;
+    co_return;
   }
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
-    tab->RenderPage(
+    co_await tab->RenderPage(
       RenderContext {
         mRenderTarget.get(),
         mKneeboardView.get(),
@@ -634,13 +634,13 @@ void TabPage::PaintNow(const std::source_location& loc) noexcept {
 
   if (!mDrawCursor) {
     activity.StopWithResult("RenderedWithoutCursor");
-    return;
+    co_return;
   }
 
   auto maybePoint = mKneeboardView->GetCursorContentPoint();
   if (!maybePoint) {
     activity.StopWithResult("RenderedWithoutCursorPoint");
-    return;
+    co_return;
   }
   Geometry2D::Point<float> point {maybePoint->x, maybePoint->y};
   point.mX *= metrics.mRenderSize.Width();

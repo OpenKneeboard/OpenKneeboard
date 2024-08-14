@@ -332,7 +332,7 @@ winrt::fire_and_forget TabsSettingsPage::CreatePluginTab(
     OPENKNEEBOARD_BREAK;
     co_return;
   }
-  const auto tab = std::make_shared<PluginTab>(
+  const auto tab = co_await PluginTab::Create(
     mDXR,
     mKneeboard.get(),
     random_guid(),
@@ -340,6 +340,20 @@ winrt::fire_and_forget TabsSettingsPage::CreatePluginTab(
     PluginTab::Settings {.mPluginTabTypeID = id});
   co_await this->AddTabs({tab});
   co_return;
+}
+
+// If inline, MSVC errors that the constraints are not met, even though it's
+// in an `if constexpr(constraints)` block.
+//
+// MSVC is generally smarter, seems to be confused by coroutines.
+template <class T>
+task<std::shared_ptr<T>> make_tab_without_making_msvc_sad(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs) {
+  static_assert(
+    ::OpenKneeboard::detail::
+      shared_constructible_from<T, audited_ptr<DXResources>, KneeboardState*>);
+  return ::OpenKneeboard::detail::make_shared<T>(dxr, kbs);
 }
 
 winrt::fire_and_forget TabsSettingsPage::CreateTab(
@@ -378,11 +392,13 @@ winrt::fire_and_forget TabsSettingsPage::CreateTab(
   }
 #define IT(_, type) \
   if (tabType == TabType::type) { \
-    if constexpr (std::constructible_from< \
+    if constexpr (::OpenKneeboard::detail::shared_constructible_from< \
                     type##Tab, \
                     audited_ptr<DXResources>, \
                     KneeboardState*>) { \
-      co_await AddTabs({std::make_shared<type##Tab>(mDXR, mKneeboard.get())}); \
+      auto tab = co_await make_tab_without_making_msvc_sad<type##Tab>( \
+        mDXR, mKneeboard.get()); \
+      co_await AddTabs({std::static_pointer_cast<ITab>(tab)}); \
       co_return; \
     } else { \
       throw std::logic_error( \
@@ -547,7 +563,8 @@ winrt::fire_and_forget TabsSettingsPage::CreateFileTab(
     // TODO (after v1.4): figure out MSVC compile errors if I move
     // `detail::make_shared()` in TabTypes.h out of the `detail`
     // sub-namespace
-    newTabs.push_back(detail::make_shared<T>(mDXR, mKneeboard.get(), path));
+    newTabs.push_back(
+      co_await detail::make_shared<T>(mDXR, mKneeboard.get(), path));
   }
 
   co_await this->AddTabs(newTabs);
@@ -564,7 +581,7 @@ winrt::fire_and_forget TabsSettingsPage::CreateFolderTab() {
   }
 
   co_await this->AddTabs(
-    {std::make_shared<FolderTab>(mDXR, mKneeboard.get(), *folder)});
+    {co_await FolderTab::Create(mDXR, mKneeboard.get(), *folder)});
 }
 
 winrt::Windows::Foundation::IAsyncAction TabsSettingsPage::AddTabs(

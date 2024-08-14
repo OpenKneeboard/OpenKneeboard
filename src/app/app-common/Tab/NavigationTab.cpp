@@ -200,7 +200,7 @@ void NavigationTab::ClearUserInput() {
   // nothing to do here
 }
 
-void NavigationTab::RenderPage(
+[[nodiscard]] IAsyncAction NavigationTab::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& canvasRect) {
@@ -242,7 +242,7 @@ void NavigationTab::RenderPage(
     mPreviewCache.emplace(rtid, std::make_unique<CachedLayer>(mDXR));
   }
 
-  mPreviewCache.at(rtid)->Render(
+  co_await mPreviewCache.at(rtid)->Render(
     canvasRect,
     pageID.GetTemporaryValue(),
     rc.GetRenderTarget(),
@@ -284,7 +284,7 @@ void NavigationTab::RenderPage(
 
   auto pageIt = std::ranges::find(mPageIDs, pageID);
   if (pageIt == mPageIDs.end()) {
-    return;
+    co_return;
   }
   const auto pageIndex = static_cast<PageIndex>(pageIt - mPageIDs.begin());
 
@@ -339,7 +339,7 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
   mPreviewMetrics.emplace(pageID, std::move(m));
 }
 
-void NavigationTab::RenderPreviewLayer(
+IAsyncAction NavigationTab::RenderPreviewLayer(
   PageID pageID,
   RenderTarget* rt,
   const PixelSize& size) {
@@ -356,7 +356,8 @@ void NavigationTab::RenderPreviewLayer(
     const auto& button = buttons.at(i);
     const auto& rect = m.mRects.at(i);
     const auto scaled = rect.StaticCast<float>() * scale;
-    mRootTab->RenderPage(rc, button.mPageID, scaled.Rounded<uint32_t>());
+    co_await mRootTab->RenderPage(
+      rc, button.mPageID, scaled.Rounded<uint32_t>());
   }
 }
 

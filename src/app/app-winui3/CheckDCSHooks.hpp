@@ -48,8 +48,7 @@ enum class DCSSavedGamesSelectionTrigger {
   EXPLICIT,
 };
 
-concurrency::task<std::optional<std::filesystem::path>>
-ChooseDCSSavedGamesFolder(
+task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
   const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
   DCSSavedGamesSelectionTrigger trigger);
 

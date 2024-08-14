@@ -399,7 +399,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
   evCursorEvent.Emit(ev);
 }
 
-void KneeboardView::RenderWithChrome(
+IAsyncAction KneeboardView::RenderWithChrome(
   RenderTarget* rt,
   const PixelRect& rect,
   bool isActiveForInput) noexcept {
@@ -411,13 +411,13 @@ void KneeboardView::RenderWithChrome(
     auto d2d = rt->d2d();
     d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
     mErrorRenderer->Render(d2d, _("No Tabs"), rect);
-    return;
+    co_return;
   }
 
   auto [first, rest] = this->GetUILayers();
   {
     OPENKNEEBOARD_TraceLoggingScope("RenderWithChrome/RenderUILayers");
-    first->Render(
+    co_await first->Render(
       rc,
       rest,
       {
@@ -440,7 +440,7 @@ void KneeboardView::RenderWithChrome(
   }
 }
 
-winrt::fire_and_forget KneeboardView::PostUserAction(UserAction action) {
+IAsyncAction KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
       this->PreviousTab();

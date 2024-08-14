@@ -30,6 +30,7 @@
 #include <winrt/Windows.UI.Composition.h>
 
 #include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <expected>
 #include <mutex>
@@ -65,18 +66,18 @@ class WebView2PageSource final
   static bool IsAvailable();
   static std::string GetVersion();
 
-  static std::shared_ptr<WebView2PageSource>
+  static task<std::shared_ptr<WebView2PageSource>>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
 
-  static std::shared_ptr<WebView2PageSource> Create(
+  static task<std::shared_ptr<WebView2PageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path&);
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
-  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
-    override;
+  [[nodiscard]] IAsyncAction
+  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
@@ -97,6 +98,8 @@ class WebView2PageSource final
   using InstanceID = WebView2Renderer::InstanceID;
   using ContentMode = WebView2Renderer::ContentMode;
   using RendererKey = KneeboardViewID;
+  using WorkerDQ = WebView2Renderer::WorkerDQ;
+  using WorkerDQC = WebView2Renderer::WorkerDQC;
 
   WebView2PageSource(
     const audited_ptr<DXResources>&,
@@ -105,7 +108,8 @@ class WebView2PageSource final
 
   DisposalState mDisposal;
 
-  winrt::fire_and_forget Init();
+  [[noreturn]]
+  IAsyncAction Init();
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
@@ -128,8 +132,8 @@ class WebView2PageSource final
     }>
     mRenderersState;
 
-  winrt::Windows::System::DispatcherQueueController mWorkerDQC {nullptr};
-  winrt::Windows::System::DispatcherQueue mWorkerDQ {nullptr};
+  WorkerDQC mWorkerDQC {nullptr};
+  WorkerDQ mWorkerDQ {nullptr};
   winrt::apartment_context mUIThread;
 
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment mEnvironment {

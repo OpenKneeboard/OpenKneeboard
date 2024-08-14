@@ -42,7 +42,7 @@ class PluginTab final : public TabBase,
   };
 
   PluginTab() = delete;
-  PluginTab(
+  static task<std::shared_ptr<PluginTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -64,13 +64,17 @@ class PluginTab final : public TabBase,
     const nlohmann::json& arg);
 
  private:
+  PluginTab(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    std::string_view title,
+    const Settings&);
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;
 
   std::shared_ptr<IPageSource> mDelegate;
-
-  void LoadFromEmpty();
 
   std::optional<Plugin::TabType> mTabType;
 };

@@ -73,7 +73,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const SizeChangedEventArgs&) noexcept;
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
 
-  void PaintIfDirty();
+  [[nodiscard]] IAsyncAction PaintIfDirty();
 
  private:
   bool mShuttingDown = false;
@@ -103,7 +103,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   bool mNeedsFrame = true;
   void PaintLater();
-  void PaintNow(
+  [[nodiscard]] IAsyncAction PaintNow(
     const std::source_location& loc = std::source_location::current()) noexcept;
 
   winrt::fire_and_forget OnToolbarActionClick(std::shared_ptr<ToolbarAction>);

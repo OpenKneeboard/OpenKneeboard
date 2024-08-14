@@ -30,34 +30,33 @@ FolderTab::FolderTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  std::string_view title,
-  const std::filesystem::path& path)
+  std::string_view title)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
-    mPageSource(FolderPageSource::Create(dxr, kbs, path)),
-    mPath {path} {
-  this->SetDelegatesFromEmpty({mPageSource});
+    mDXResources(dxr),
+    mKneeboard(kbs) {
 }
 
-FolderTab::FolderTab(
+task<std::shared_ptr<FolderTab>> FolderTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path)
-  : FolderTab(dxr, kbs, winrt::guid {}, to_utf8(path.filename()), path) {
+  const std::filesystem::path& path) {
+  std::shared_ptr<FolderTab> ret {
+    new FolderTab(dxr, kbs, winrt::guid {}, to_utf8(path.filename()))};
+  co_await ret->SetPath(path);
+  co_return ret;
 }
 
-FolderTab::FolderTab(
+task<std::shared_ptr<FolderTab>> FolderTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
-  const nlohmann::json& settings)
-  : FolderTab(
-      dxr,
-      kbs,
-      persistentID,
-      title,
-      settings.at("Path").get<std::filesystem::path>()) {
+  const nlohmann::json& settings) {
+  std::shared_ptr<FolderTab> ret {
+    new FolderTab(dxr, kbs, persistentID, settings)};
+  co_await ret->SetPath(settings.at("Path").get<std::filesystem::path>());
+  co_return ret;
 }
 
 FolderTab::~FolderTab() {
@@ -88,7 +87,14 @@ winrt::Windows::Foundation::IAsyncAction FolderTab::SetPath(
   if (path == mPath) {
     co_return;
   }
-  co_await mPageSource->SetPath(path);
+
+  if (mPageSource) {
+    co_await mPageSource->SetPath(path);
+  } else {
+    mPageSource
+      = co_await FolderPageSource::Create(mDXResources, mKneeboard, path);
+    co_await this->SetDelegates({mPageSource});
+  }
   mPath = path;
 }
 

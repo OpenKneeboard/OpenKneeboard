@@ -26,6 +26,8 @@
 
 #include <shims/winrt/base.h>
 
+#include <winrt/Microsoft.UI.Dispatching.h>
+
 #include <OpenKneeboard/json_format.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -33,6 +35,8 @@
 #include <fstream>
 
 namespace OpenKneeboard {
+
+using jsapi_task = WebView2Renderer::jsapi_task;
 
 void to_json(nlohmann::json& j, const WebView2Renderer::APIPage& v) {
   j.update({
@@ -153,7 +157,24 @@ WebView2Renderer::InitializeContentToCapture() {
   OPENKNEEBOARD_TraceLoggingCoro(
     "WebView2Renderer::InitializeContentToCapture");
   auto weak = weak_from_this();
-  co_await winrt::resume_foreground(mDQC.DispatcherQueue());
+
+  mState.Assert(State::Constructed);
+  {
+    auto dqc = mDQC;
+    auto dq = dqc.DispatcherQueue();
+    if (!dq) {
+      OPENKNEEBOARD_BREAK;
+    }
+    if (!dq.TryEnqueue([]() {})) {
+      mState.Assert(State::Constructed);
+      dprintf(
+        "Failed to enqueue on queue {:#018x} - state: {:#}",
+        std::hash<winrt::Windows::Foundation::IUnknown> {}(dq),
+        mState.Get());
+      OPENKNEEBOARD_BREAK;
+    }
+    co_await wil::resume_foreground(dq);
+  }
   auto self = weak.lock();
   if (!self) {
     co_return;
@@ -563,8 +584,7 @@ winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   respond(jsapi_error("Invalid JS API request: {}", message));
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
   PixelSize size = {
     args.at("width"),
     args.at("height"),
@@ -651,7 +671,7 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
   evNeedsRepaintEvent.Emit();
 }
 
-WebView2Renderer::OKBPromiseResult
+WebView2Renderer::JSAPIResult
 WebView2Renderer::GetJSAPIMissingRequiredFeatureResponse(
   const ExperimentalFeature& feature,
   const std::source_location& caller) {
@@ -688,8 +708,7 @@ bool WebView2Renderer::IsJSAPIFeatureEnabled(
     mDocumentResources.mEnabledExperimentalFeatures, feature);
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
   auto& pageApi = mDocumentResources;
 
   if (!this->IsJSAPIFeatureEnabled(SetCursorEventsModeFeature)) {
@@ -726,8 +745,7 @@ WebView2Renderer::JSAPI_SetCursorEventsMode(nlohmann::json args) {
   co_return jsapi_error("Unrecognized mode '{}'", mode);
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
   auto& dr = mDocumentResources;
   if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
     co_return this->GetJSAPIMissingRequiredFeatureResponse(
@@ -752,8 +770,7 @@ WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
   };
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
   auto& dr = mDocumentResources;
 
   if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
@@ -770,15 +787,13 @@ WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
   co_return nlohmann::json {};
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_OpenDeveloperToolsWindow(
+jsapi_task WebView2Renderer::JSAPI_OpenDeveloperToolsWindow(
   [[maybe_unused]] nlohmann::json args) {
   mWebView.OpenDevToolsWindow();
   co_return nlohmann::json {};
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
   auto weak = weak_from_this();
   auto thread = mUIThread;
 
@@ -816,13 +831,12 @@ WebView2Renderer::JSAPI_SetPages(nlohmann::json args) {
   if (!self) {
     co_return jsapi_error("WebView2 lifetime exceeded.");
   }
-  evJSAPI_SetPages.Emit(pageApi.mPages);
+  evJSAPI_SetPages.EnqueueForContext(mUIThread, pageApi.mPages);
 
   co_return nlohmann::json {};
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_RequestPageChange(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_RequestPageChange(nlohmann::json args) {
   if (!this->IsJSAPIFeatureEnabled(
         PageBasedContentWithRequestPageChangeFeature)) {
     co_return this->GetJSAPIMissingRequiredFeatureResponse(
@@ -850,8 +864,8 @@ WebView2Renderer::JSAPI_RequestPageChange(nlohmann::json args) {
   co_return nlohmann::json {};
 }
 
-concurrency::task<WebView2Renderer::OKBPromiseResult>
-WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
+jsapi_task WebView2Renderer::JSAPI_EnableExperimentalFeatures(
+  nlohmann::json args) {
   std::vector<ExperimentalFeature> enabledFeatures;
 
   auto& pageApi = mDocumentResources;
@@ -985,20 +999,20 @@ void WebView2Renderer::InitializeComposition() noexcept {
   mWebViewVisual.RelativeSizeAdjustment({1, 1});
 }
 
-std::shared_ptr<WebView2Renderer> WebView2Renderer::Create(
+task<std::shared_ptr<WebView2Renderer>> WebView2Renderer::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const Settings& settings,
   const std::shared_ptr<DoodleRenderer>& doodles,
-  const winrt::Windows::System::DispatcherQueueController& workerDQC,
+  const WorkerDQC& workerDQC,
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&
     environment,
   KneeboardView* view,
   const std::vector<APIPage>& apiPages) {
   std::shared_ptr<WebView2Renderer> ret {new WebView2Renderer(
     dxr, kbs, settings, doodles, workerDQC, environment, view, apiPages)};
-  ret->Init();
-  return ret;
+  co_await ret->Init();
+  co_return ret;
 }
 
 WebView2Renderer::WebView2Renderer(
@@ -1006,7 +1020,7 @@ WebView2Renderer::WebView2Renderer(
   KneeboardState* kbs,
   const Settings& settings,
   const std::shared_ptr<DoodleRenderer>& doodles,
-  const winrt::Windows::System::DispatcherQueueController& workerDQC,
+  const WorkerDQC& workerDQC,
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&
     environment,
   KneeboardView* view,
@@ -1044,7 +1058,7 @@ void WebView2Renderer::OnJSAPI_Peer_SetPages(
 
 winrt::fire_and_forget WebView2Renderer::SendJSResponse(
   uint64_t callID,
-  OKBPromiseResult result) {
+  JSAPIResult result) {
   if (!this->IsLiveForContent()) {
     co_return;
   }

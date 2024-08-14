@@ -33,6 +33,7 @@
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <memory>
 
@@ -60,7 +61,7 @@ class HWNDPageSource final : public WGCRenderer,
     constexpr bool operator==(const Options&) const noexcept = default;
   };
 
-  static std::shared_ptr<HWNDPageSource> Create(
+  static task<std::shared_ptr<HWNDPageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     HWND window,
@@ -82,8 +83,8 @@ class HWNDPageSource final : public WGCRenderer,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
-    override;
+  [[nodiscard]] IAsyncAction
+  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   Event<> evWindowClosedEvent;
 
@@ -108,7 +109,8 @@ class HWNDPageSource final : public WGCRenderer,
     HWND window,
     const Options&);
   DisposalState mDisposal;
-  winrt::fire_and_forget Init() noexcept;
+  [[nodiscard]]
+  IAsyncAction Init() noexcept;
   winrt::fire_and_forget InitializeInputHook() noexcept;
 
   void LogAdapter(HMONITOR);

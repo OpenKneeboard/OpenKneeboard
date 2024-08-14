@@ -155,7 +155,7 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
   };
 }
 
-void HeaderUILayer::Render(
+IAsyncAction HeaderUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
@@ -189,7 +189,7 @@ void HeaderUILayer::Render(
     this->DrawHeaderText(tabView, d2d, headerTextRect);
   }
 
-  next.front()->Render(
+  co_await next.front()->Render(
     rc,
     next.subspan(1),
     context,
@@ -200,7 +200,7 @@ void HeaderUILayer::Render(
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
-    secondaryMenu->Render(rc, {}, context, rect);
+    co_await secondaryMenu->Render(rc, {}, context, rect);
   }
 }
 

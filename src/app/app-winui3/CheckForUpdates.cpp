@@ -80,7 +80,7 @@ static winrt::fire_and_forget ShowResultDialog(
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot);
 
-concurrency::task<UpdateResult> CheckForUpdates(
+task<UpdateResult> CheckForUpdates(
   UpdateCheckType checkType,
   const XamlRoot& xamlRoot) {
   winrt::apartment_context uiThread;
@@ -146,7 +146,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
        Version::IsGithubActionsBuild ? L"GHA" : L"local")});
   headers.Accept().Clear();
   headers.Accept().Append(
-    Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
+    winrt::Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
       hstring {L"application/vnd.github.v3+json"}));
 
   const auto baseUri = testing.mBaseURI.empty()
@@ -157,17 +157,16 @@ concurrency::task<UpdateResult> CheckForUpdates(
   dprintf("Starting update check: {}", uri);
 
   nlohmann::json releases;
+  using namespace winrt::Windows::Storage::Streams;
   try {
     // GetStringAsync is UTF-16, GetBufferAsync is often truncated
     auto stream = co_await http.GetInputStreamAsync(Uri(to_hstring(uri)));
     std::string json;
-    Windows::Storage::Streams::Buffer buffer(4096);
-    Windows::Storage::Streams::IBuffer readBuffer;
+    Buffer buffer(4096);
+    IBuffer readBuffer;
     do {
       readBuffer = co_await stream.ReadAsync(
-        buffer,
-        buffer.Capacity(),
-        Windows::Storage::Streams::InputStreamOptions::Partial);
+        buffer, buffer.Capacity(), InputStreamOptions::Partial);
       json += std::string_view {
         reinterpret_cast<const char*>(readBuffer.data()), readBuffer.Length()};
     } while (readBuffer.Length() > 0);
@@ -363,14 +362,12 @@ concurrency::task<UpdateResult> CheckForUpdates(
         }
       });
       auto stream = co_await op;
-      Windows::Storage::Streams::Buffer buffer(4096);
-      Windows::Storage::Streams::IBuffer readBuffer;
+      Buffer buffer(4096);
+      IBuffer readBuffer;
       uint64_t bytesRead = 0;
       do {
         readBuffer = co_await stream.ReadAsync(
-          buffer,
-          buffer.Capacity(),
-          Windows::Storage::Streams::InputStreamOptions::Partial);
+          buffer, buffer.Capacity(), InputStreamOptions::Partial);
 
         of << std::string_view {
           reinterpret_cast<const char*>(readBuffer.data()),

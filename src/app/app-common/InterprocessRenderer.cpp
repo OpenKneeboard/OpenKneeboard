@@ -301,12 +301,6 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
   AddEventListener(
     kneeboard->evGameChangedEvent,
     {weak_from_this(), &InterprocessRenderer::OnGameChanged});
-
-  this->RenderNow();
-
-  AddEventListener(
-    kneeboard->evFrameTimerEvent,
-    {weak_from_this(), &InterprocessRenderer::RenderNow});
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -329,7 +323,7 @@ InterprocessRenderer::~InterprocessRenderer() {
   }
 }
 
-SHM::LayerConfig InterprocessRenderer::RenderLayer(
+task<SHM::LayerConfig> InterprocessRenderer::RenderLayer(
   const ViewRenderInfo& layer,
   const PixelRect& bounds) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::RenderLayer");
@@ -352,19 +346,19 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
     ret.mNonVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
   }
 
-  view->RenderWithChrome(
+  co_await view->RenderWithChrome(
     mCanvas.get(),
     PixelRect {bounds.mOffset, layer.mFullSize},
     layer.mIsActiveForInput);
 
-  return ret;
+  co_return ret;
 }
 
-void InterprocessRenderer::RenderNow() noexcept {
+IAsyncAction InterprocessRenderer::RenderNow() noexcept {
   if (mRendering.test_and_set()) {
     dprint("Two renders in the same instance");
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   const scope_exit markDone([this]() { mRendering.clear(); });
@@ -381,7 +375,7 @@ void InterprocessRenderer::RenderNow() noexcept {
         mSHM.SubmitEmptyFrame();
       }
     }
-    return;
+    co_return;
   }
 
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
@@ -409,7 +403,7 @@ void InterprocessRenderer::RenderNow() noexcept {
 
     mCanvas->SetActiveIdentity(i);
 
-    shmLayers.push_back(this->RenderLayer(renderInfo, bounds));
+    shmLayers.push_back(co_await this->RenderLayer(renderInfo, bounds));
   }
 
   this->SubmitFrame(shmLayers, inputLayerID);

@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
@@ -34,8 +35,11 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/single_threaded_lockable.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <memory>
+#include <queue>
 #include <shared_mutex>
 #include <thread>
 #include <vector>
@@ -54,7 +58,6 @@ class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
 struct BaseSetTabEvent;
-struct APIEvent;
 struct GameInstance;
 class APIEventServer;
 
@@ -84,7 +87,7 @@ class KneeboardState final
     public std::enable_shared_from_this<KneeboardState> {
  public:
   KneeboardState() = delete;
-  static concurrency::task<std::shared_ptr<KneeboardState>> Create(
+  static task<std::shared_ptr<KneeboardState>> Create(
     HWND mainWindow,
     audited_ptr<DXResources>);
   ~KneeboardState() noexcept;
@@ -102,7 +105,6 @@ class KneeboardState final
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
   Event<> evFrameTimerPreEvent;
-  Event<> evFrameTimerEvent;
   Event<FramePostEventKind> evFrameTimerPostEvent;
   Event<> evSettingsChangedEvent;
   Event<> evProfileSettingsChangedEvent;
@@ -129,6 +131,7 @@ class KneeboardState final
   void NotifyAppWindowIsForeground(bool isForeground);
 
   TabsList* GetTabsList() const;
+  InterprocessRenderer* GetInterprocessRenderer() const;
 
   winrt::Windows::Foundation::IAsyncAction ReleaseExclusiveResources();
   winrt::Windows::Foundation::IAsyncAction ReleaseHwndResources();
@@ -216,7 +219,10 @@ class KneeboardState final
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
   [[nodiscard]]
-  IAsyncAction OnAPIEvent(APIEvent) noexcept;
+  winrt::fire_and_forget OnAPIEvent(APIEvent) noexcept;
+  std::queue<APIEvent> mAPIEventQueue;
+  single_threaded_lockable mAPIEventQueueHandler;
+  IAsyncAction ProcessAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);

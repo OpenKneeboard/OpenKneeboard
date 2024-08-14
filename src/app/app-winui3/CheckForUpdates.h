@@ -24,7 +24,10 @@
 // clang-format on
 
 #include <shims/winrt/base.h>
+
 #include <winrt/microsoft.ui.xaml.h>
+
+#include <OpenKneeboard/task.hpp>
 
 #include <future>
 
@@ -40,7 +43,7 @@ enum class UpdateResult {
   NotInstallingUpdate,
 };
 
-concurrency::task<UpdateResult> CheckForUpdates(
+task<UpdateResult> CheckForUpdates(
   UpdateCheckType,
   const winrt::Microsoft::UI::Xaml::XamlRoot&);
 

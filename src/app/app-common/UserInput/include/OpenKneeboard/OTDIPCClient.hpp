@@ -64,7 +64,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   ProcessShutdownBlock mShutdownBlock;
   winrt::apartment_context mUIThread;
 
-  winrt::Microsoft::UI::Dispatching::DispatcherQueueController mDQC {nullptr};
+  DispatcherQueueController mDQC {nullptr};
 
   OTDIPCClient();
   winrt::Windows::Foundation::IAsyncAction Run();

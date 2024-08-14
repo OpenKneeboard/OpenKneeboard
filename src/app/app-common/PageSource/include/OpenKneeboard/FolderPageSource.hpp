@@ -40,7 +40,7 @@ class FolderPageSource final : public PageSourceWithDelegates {
 
  public:
   FolderPageSource() = delete;
-  static std::shared_ptr<FolderPageSource> Create(
+  static task<std::shared_ptr<FolderPageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& = {});
@@ -56,7 +56,6 @@ class FolderPageSource final : public PageSourceWithDelegates {
  private:
   void SubscribeToChanges();
   winrt::fire_and_forget OnFileModified(std::filesystem::path);
-  void SetPathFromEmpty(const std::filesystem::path& path);
 
   winrt::apartment_context mUIThread;
   std::shared_ptr<FilesystemWatcher> mWatcher;

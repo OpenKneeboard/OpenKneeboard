@@ -36,24 +36,24 @@ PlainTextFilePageSource::PlainTextFilePageSource(
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(
       std::make_shared<PlainTextPageSource>(dxr, kbs, _("[empty file]"))) {
-  this->SetDelegatesFromEmpty(
-    {std::static_pointer_cast<IPageSource>(mPageSource)});
 }
 
 PlainTextFilePageSource::~PlainTextFilePageSource() {
   this->RemoveAllEventListeners();
 }
 
-std::shared_ptr<PlainTextFilePageSource> PlainTextFilePageSource::Create(
+task<std::shared_ptr<PlainTextFilePageSource>> PlainTextFilePageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   std::shared_ptr<PlainTextFilePageSource> ret {
     new PlainTextFilePageSource(dxr, kbs)};
+  co_await ret->SetDelegates(
+    {std::static_pointer_cast<IPageSource>(ret->mPageSource)});
   if (!path.empty()) {
     ret->SetPath(path);
   }
-  return ret;
+  co_return ret;
 }
 
 std::filesystem::path PlainTextFilePageSource::GetPath() const {

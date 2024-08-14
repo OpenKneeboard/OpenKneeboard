@@ -45,11 +45,11 @@ class SingleFileTab final : public TabBase,
     ImageFile,
     HTMLFile,
   };
-  SingleFileTab(
+  static task<std::shared_ptr<SingleFileTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
-  SingleFileTab(
+  static task<std::shared_ptr<SingleFileTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -70,16 +70,19 @@ class SingleFileTab final : public TabBase,
     std::filesystem::path);
 
  private:
-  SingleFileTab(
+  static task<std::shared_ptr<SingleFileTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
     const std::filesystem::path& path);
+  SingleFileTab(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    std::string_view title);
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
-
-  void SetPathFromEmpty(const std::filesystem::path& path);
 
   Kind mKind = Kind::Unknown;
   std::filesystem::path mPath;

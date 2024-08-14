@@ -23,14 +23,19 @@
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/WGCRenderer.hpp>
 
+#include <shims/winrt/base.h>
+
 #include <winrt/Microsoft.Web.WebView2.Core.h>
 #include <winrt/Windows.UI.Composition.h>
 
 #include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
+
+#include <OpenKneeboard/task.hpp>
 
 #include <expected>
 #include <queue>
+
+#include <wil/cppwinrt_helpers.h>
 
 namespace OpenKneeboard {
 struct CursorEvent;
@@ -56,6 +61,15 @@ struct ExperimentalFeature {
 
 class WebView2Renderer final : public WGCRenderer {
  public:
+  // CoreWebView2 requires these rather than OpenKneeboards' usual
+  // Microsoft::UI::Dispatching versions
+  using WorkerDQ = winrt::Windows::System::DispatcherQueue;
+  using WorkerDQC = winrt::Windows::System::DispatcherQueueController;
+  template <class T>
+  using worker_task = basic_task<WorkerDQ, T>;
+  using JSAPIResult = std::expected<nlohmann::json, std::string>;
+  using jsapi_task = worker_task<JSAPIResult>;
+
   struct Settings {
     PixelSize mInitialSize {1024, 768};
     bool mIntegrateWithSimHub {true};
@@ -96,12 +110,12 @@ class WebView2Renderer final : public WGCRenderer {
   // Call before destruction in order to safely release shared resources
   winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept override;
 
-  static std::shared_ptr<WebView2Renderer> Create(
+  static task<std::shared_ptr<WebView2Renderer>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const Settings&,
     const std::shared_ptr<DoodleRenderer>&,
-    const winrt::Windows::System::DispatcherQueueController& workerDQC,
+    const WorkerDQC& workerDQC,
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&,
     /** nullptr is expected here, unless in page-based mode.
      *
@@ -151,7 +165,7 @@ class WebView2Renderer final : public WGCRenderer {
     KneeboardState*,
     const Settings&,
     const std::shared_ptr<DoodleRenderer>&,
-    const winrt::Windows::System::DispatcherQueueController& workerDQC,
+    const WorkerDQC& workerDQC,
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&,
     KneeboardView*,
     const std::vector<APIPage>&);
@@ -161,7 +175,7 @@ class WebView2Renderer final : public WGCRenderer {
   PixelSize mSize;
   std::shared_ptr<DoodleRenderer> mDoodles;
 
-  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
+  WorkerDQC mDQC {nullptr};
   winrt::apartment_context mUIThread;
 
   enum class State {
@@ -180,7 +194,7 @@ class WebView2Renderer final : public WGCRenderer {
     },
     State::Disposed>
     mState;
-    
+
   inline bool IsLiveForContent() const {
     return mState.Get() == State::InitializedComposition;
   }
@@ -217,10 +231,7 @@ class WebView2Renderer final : public WGCRenderer {
     winrt::Microsoft::Web::WebView2::Core::
       CoreWebView2WebMessageReceivedEventArgs);
 
-  using OKBPromiseResult = std::expected<nlohmann::json, std::string>;
-
-#define OKB_DECLARE_JSAPI(FUNC) \
-  concurrency::task<OKBPromiseResult> JSAPI_##FUNC(nlohmann::json args);
+#define OKB_DECLARE_JSAPI(FUNC) jsapi_task JSAPI_##FUNC(nlohmann::json args);
   OPENKNEEBOARD_JSAPI_METHODS(OKB_DECLARE_JSAPI)
 #undef OKB_DECLARE_JSAPI
 
@@ -242,7 +253,7 @@ class WebView2Renderer final : public WGCRenderer {
     mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
   }
 
-  winrt::fire_and_forget SendJSResponse(uint64_t callID, OKBPromiseResult);
+  winrt::fire_and_forget SendJSResponse(uint64_t callID, JSAPIResult);
 
   winrt::fire_and_forget SendJSEvent(
     std::string eventType,
@@ -250,7 +261,7 @@ class WebView2Renderer final : public WGCRenderer {
 
   bool IsJSAPIFeatureEnabled(const ExperimentalFeature&) const;
 
-  OKBPromiseResult GetJSAPIMissingRequiredFeatureResponse(
+  JSAPIResult GetJSAPIMissingRequiredFeatureResponse(
     const ExperimentalFeature&,
     const std::source_location& caller = std::source_location::current());
 

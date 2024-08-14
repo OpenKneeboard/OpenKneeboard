@@ -51,14 +51,14 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
   return ret;
 }
 
-std::shared_ptr<IPageSource> FilePageSource::Create(
+task<std::shared_ptr<IPageSource>> FilePageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) noexcept {
   try {
     if (!std::filesystem::is_regular_file(path)) {
       dprintf("FilePageSource file '{}' is not a regular file", path);
-      return {nullptr};
+      co_return nullptr;
     }
   } catch (const std::filesystem::filesystem_error& e) {
     dprintf(
@@ -66,7 +66,7 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
       path,
       e.what(),
       e.code().value());
-    return {nullptr};
+    co_return nullptr;
   }
 
   const auto extension = path.extension().u16string();
@@ -76,25 +76,25 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
   };
 
   if (hasExtension(u".pdf")) {
-    return PDFFilePageSource::Create(dxr, kbs, path);
+    co_return PDFFilePageSource::Create(dxr, kbs, path);
   }
 
   if (hasExtension(u".txt")) {
-    return PlainTextFilePageSource::Create(dxr, kbs, path);
+    co_return co_await PlainTextFilePageSource::Create(dxr, kbs, path);
   }
 
   if (hasExtension(u".htm") || hasExtension(u".html")) {
-    return WebView2PageSource::Create(dxr, kbs, path);
+    co_return co_await WebView2PageSource::Create(dxr, kbs, path);
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {
-    return ImageFilePageSource::Create(
+    co_return ImageFilePageSource::Create(
       dxr, std::vector<std::filesystem::path> {path});
   }
 
   dprintf("Couldn't find handler for {}", path);
 
-  return {nullptr};
+  co_return nullptr;
 }
 
 }// namespace OpenKneeboard

@@ -5,6 +5,6 @@ namespace OpenKneeboardApp
     {
         TabPage();
 
-        void PaintIfDirty();
+        Windows.Foundation.IAsyncAction PaintIfDirty();
     }
 }

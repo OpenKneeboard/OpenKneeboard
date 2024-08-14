@@ -106,7 +106,7 @@ static IAsyncAction ShowPluginInstallationError(
     xamlRoot, path, std::format(errorFmt, std::forward<Args>(args)...));
 }
 
-static concurrency::task<bool> FieldIsNonEmpty(
+static task<bool> FieldIsNonEmpty(
   XamlRoot xamlRoot,
   const auto path,
   const auto fieldName,
@@ -284,12 +284,12 @@ static IAsyncAction InstallPlugin(
     auto tabsStore = kneeboard->GetTabsList();
     auto tabs = tabsStore->GetTabs();
     for (const auto& id: tabsToAppend) {
-      tabs.push_back(std::shared_ptr<PluginTab>(new PluginTab(
+      tabs.push_back(co_await PluginTab::Create(
         kneeboard->GetDXResources(),
         kneeboard.get(),
         {},
         std::ranges::find(plugin.mTabTypes, id, &Plugin::TabType::mID)->mName,
-        {.mPluginTabTypeID = id})));
+        {.mPluginTabTypeID = id}));
     }
     co_await tabsStore->SetTabs(tabs);
   }

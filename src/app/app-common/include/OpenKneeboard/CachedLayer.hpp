@@ -43,11 +43,12 @@ class CachedLayer final {
   CachedLayer(const audited_ptr<DXResources>&);
   ~CachedLayer();
 
-  void Render(
+  [[nodiscard]]
+  IAsyncAction Render(
     const PixelRect& where,
     Key cacheKey,
     RenderTarget*,
-    std::function<void(RenderTarget*, const PixelSize&)> impl,
+    std::function<IAsyncAction(RenderTarget*, const PixelSize&)> impl,
     const std::optional<PixelSize>& cacheDimensions = {});
   void Reset();
 

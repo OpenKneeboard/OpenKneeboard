@@ -57,7 +57,7 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-winrt::fire_and_forget WGCRenderer::Init() noexcept {
+IAsyncAction WGCRenderer::Init() noexcept {
   const auto keepAlive = shared_from_this();
 
   // Requires Windows 11
@@ -338,7 +338,7 @@ void WGCRenderer::PostFrame() {
 }
 
 winrt::fire_and_forget WGCRenderer::ForceResize(PixelSize size) {
-  OPENKNEEBOARD_TraceLoggingScope(
+  OPENKNEEBOARD_TraceLoggingCoro(
     "WGCRenderer::ForceResize()",
     TraceLoggingValue(size.mWidth, "Width"),
     TraceLoggingValue(size.mHeight, "Height"));

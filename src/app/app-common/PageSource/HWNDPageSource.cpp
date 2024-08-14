@@ -61,7 +61,7 @@ namespace OpenKneeboard {
 
 static UINT gControlMessage;
 
-std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
+task<std::shared_ptr<HWNDPageSource>> HWNDPageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   HWND window,
@@ -76,10 +76,10 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   std::shared_ptr<HWNDPageSource> ret {
     new HWNDPageSource(dxr, kneeboard, window, options)};
   if (!ret->HaveWindow()) {
-    return nullptr;
+    co_return nullptr;
   }
-  ret->Init();
-  return ret;
+  co_await ret->Init();
+  co_return ret;
 }
 
 std::optional<float> HWNDPageSource::GetHDRWhiteLevelInNits() const {
@@ -94,8 +94,8 @@ HWNDPageSource::GetPixelFormat() const {
   return mPixelFormat;
 }
 
-winrt::fire_and_forget HWNDPageSource::Init() noexcept {
-  WGCRenderer::Init();
+IAsyncAction HWNDPageSource::Init() noexcept {
+  co_await WGCRenderer::Init();
   co_return;
 }
 
@@ -572,11 +572,12 @@ PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();
 }
 
-void HWNDPageSource::RenderPage(
+[[nodiscard]] IAsyncAction HWNDPageSource::RenderPage(
   const RenderContext& rc,
   PageID,
   const PixelRect& rect) {
   WGCRenderer::Render(rc.GetRenderTarget(), rect);
+  co_return;
 }
 
 }// namespace OpenKneeboard

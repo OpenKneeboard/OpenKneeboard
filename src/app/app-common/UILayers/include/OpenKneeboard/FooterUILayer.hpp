@@ -47,7 +47,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
     KneeboardViewID,
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
-  virtual void Render(
+  [[nodiscard]] IAsyncAction Render(
     const RenderContext&,
     const NextList&,
     const Context&,

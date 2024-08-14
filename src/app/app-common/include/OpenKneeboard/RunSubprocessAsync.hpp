@@ -22,6 +22,8 @@
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
 
+#include <OpenKneeboard/task.hpp>
+
 namespace OpenKneeboard {
 
 enum class RunAs {
@@ -37,7 +39,7 @@ enum class SubprocessResult : int {
   NoProcessHandle,
 };
 
-concurrency::task<SubprocessResult> RunSubprocessAsync(
+task<SubprocessResult> RunSubprocessAsync(
   std::filesystem::path path,
   std::wstring commandLine,
   RunAs) noexcept;

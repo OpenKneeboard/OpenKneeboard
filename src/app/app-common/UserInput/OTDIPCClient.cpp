@@ -46,8 +46,7 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
 
 OTDIPCClient::OTDIPCClient() {
   dprintf("{}", __FUNCTION__);
-  mDQC = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
-    CreateOnDedicatedThread();
+  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
 }
 
 OTDIPCClient::~OTDIPCClient() {

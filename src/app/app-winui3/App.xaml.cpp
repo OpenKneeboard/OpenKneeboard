@@ -57,7 +57,6 @@
 #include <Dbghelp.h>
 #include <Psapi.h>
 #include <ShlObj.h>
-#include <appmodel.h>
 #include <shellapi.h>
 #include <signal.h>
 

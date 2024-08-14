@@ -29,7 +29,7 @@
 
 namespace OpenKneeboard {
 
-concurrency::task<SubprocessResult> RunSubprocessAsync(
+task<SubprocessResult> RunSubprocessAsync(
   std::filesystem::path path,
   std::wstring commandLine,
   RunAs runAs) noexcept {

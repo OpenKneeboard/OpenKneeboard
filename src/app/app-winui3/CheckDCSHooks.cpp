@@ -155,8 +155,7 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   } while (true);
 }
 
-concurrency::task<std::optional<std::filesystem::path>>
-ChooseDCSSavedGamesFolder(
+task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
   const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
   DCSSavedGamesSelectionTrigger trigger) {
   if (trigger == DCSSavedGamesSelectionTrigger::IMPLICIT) {
@@ -172,7 +171,7 @@ ChooseDCSSavedGamesFolder(
     dialog.DefaultButton(ContentDialogButton::Primary);
 
     if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-      co_return {};
+      co_return std::nullopt;
     }
   }
 
@@ -187,7 +186,7 @@ ChooseDCSSavedGamesFolder(
   const auto folder = picker.PickSingleFolder();
 
   if (!folder) {
-    co_return {};
+    co_return std::nullopt;
   }
 
   co_return *folder;

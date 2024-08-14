@@ -78,7 +78,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   };
 }
 
-void TabViewUILayer::Render(
+IAsyncAction TabViewUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList&,
   const Context& context,
@@ -98,20 +98,20 @@ void TabViewUILayer::Render(
 
   if (!tabView) {
     this->RenderError(rc.d2d(), _("No Tab View"), rect);
-    return;
+    co_return;
   }
   auto tab = tabView->GetTab();
   if (!tab) {
     this->RenderError(rc.d2d(), _("No Tab"), rect);
-    return;
+    co_return;
   }
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
     this->RenderError(rc.d2d(), _("No Pages"), rect);
-    return;
+    co_return;
   }
 
-  tab->RenderPage(rc, tabView->GetPageID(), rect);
+  co_await tab->RenderPage(rc, tabView->GetPageID(), rect);
 }
 
 void TabViewUILayer::RenderError(

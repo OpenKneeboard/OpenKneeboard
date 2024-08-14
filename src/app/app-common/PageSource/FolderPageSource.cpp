@@ -36,15 +36,15 @@ FolderPageSource::FolderPageSource(
   : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
 }
 
-std::shared_ptr<FolderPageSource> FolderPageSource::Create(
+task<std::shared_ptr<FolderPageSource>> FolderPageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   std::shared_ptr<FolderPageSource> ret {new FolderPageSource(dxr, kbs)};
   if (!path.empty()) {
-    ret->SetPathFromEmpty(path);
+    co_await ret->SetPath(path);
   }
-  return ret;
+  co_return ret;
 }
 
 FolderPageSource::~FolderPageSource() {
@@ -65,14 +65,6 @@ winrt::Windows::Foundation::IAsyncAction FolderPageSource::Reload() noexcept {
     evContentChangedEvent.Emit();
     co_return;
   }
-
-  auto path = std::move(mPath);
-  this->SetPathFromEmpty(path);
-}
-
-void FolderPageSource::SetPathFromEmpty(const std::filesystem::path& path) {
-  assert(mPath.empty());
-  mPath = path;
 
   this->SubscribeToChanges();
   this->OnFileModified(mPath);
@@ -114,7 +106,7 @@ winrt::fire_and_forget FolderPageSource::OnFileModified(
       newContents[path].mModified = mtime;
       continue;
     }
-    auto delegate = FilePageSource::Create(mDXR, mKneeboard, path);
+    auto delegate = co_await FilePageSource::Create(mDXR, mKneeboard, path);
     if (delegate) {
       modifiedOrNew = true;
       newContents[path] = {mtime, delegate};

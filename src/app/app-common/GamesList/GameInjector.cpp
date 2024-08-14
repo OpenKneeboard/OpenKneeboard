@@ -23,7 +23,6 @@
 #include <ShlObj.h>
 #include <Shlwapi.h>
 #include <Psapi.h>
-#include <appmodel.h>
 #include <WtsApi32.h>
 // clang-format on
 

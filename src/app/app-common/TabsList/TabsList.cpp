@@ -44,7 +44,7 @@ TabsList::TabsList(
   : mDXR(dxr), mKneeboard(kneeboard) {
 }
 
-concurrency::task<std::shared_ptr<TabsList>> TabsList::Create(
+task<std::shared_ptr<TabsList>> TabsList::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const nlohmann::json& config) {
@@ -98,8 +98,8 @@ IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance \
-      = load_tab<it##Tab>(mDXR, mKneeboard, persistentID, title, settings); \
+    auto instance = co_await load_tab<it##Tab>( \
+      mDXR, mKneeboard, persistentID, title, settings); \
     if (instance) { \
       tabs.push_back(instance); \
       continue; \
@@ -108,7 +108,7 @@ IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
     if (type == "Plugin") {
-      auto instance = std::make_shared<PluginTab>(
+      auto instance = co_await PluginTab::Create(
         mDXR, mKneeboard, persistentID, title, settings);
       tabs.push_back(instance);
       continue;
@@ -120,13 +120,23 @@ IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
 }
 
 IAsyncAction TabsList::LoadDefaultSettings() {
+  // This is a little awkwardly structured because MSVC 2022 17.11 crashes if I
+  // put the `co_await`s in the SetTabs initializer list
+  auto quickStartPending = SingleFileTab::Create(
+    mDXR,
+    mKneeboard,
+    Filesystem::GetRuntimeDirectory() / RuntimeFiles::QUICK_START_PDF);
+  auto radioLogPending = DCSRadioLogTab::Create(mDXR, mKneeboard);
+  auto briefingPending = DCSBriefingTab::Create(mDXR, mKneeboard);
+
+  auto quickStart = co_await std::move(quickStartPending);
+  auto radioLog = co_await std::move(radioLogPending);
+  auto briefing = co_await std::move(briefingPending);
+
   co_await this->SetTabs({
-    std::make_shared<SingleFileTab>(
-      mDXR,
-      mKneeboard,
-      Filesystem::GetRuntimeDirectory() / RuntimeFiles::QUICK_START_PDF),
-    DCSRadioLogTab::Create(mDXR, mKneeboard),
-    std::make_shared<DCSBriefingTab>(mDXR, mKneeboard),
+    quickStart,
+    radioLog,
+    briefing,
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),
     std::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
     std::make_shared<DCSTerrainTab>(mDXR, mKneeboard),
@@ -182,18 +192,21 @@ IAsyncAction TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
     co_return;
   }
 
-  std::vector<IAsyncAction> disposers;
-  for (auto tab: mTabs) {
-    if (!std::ranges::contains(tabs, tab->GetRuntimeID(), [](auto it) {
-          return it->GetRuntimeID();
-        })) {
-      if (auto p = std::dynamic_pointer_cast<IHasDisposeAsync>(tab)) {
-        disposers.push_back(p->DisposeAsync());
+  {
+    const auto oldTabs = std::exchange(mTabs, {});
+    std::vector<IAsyncAction> disposers;
+    for (auto tab: oldTabs) {
+      if (!std::ranges::contains(tabs, tab->GetRuntimeID(), [](auto it) {
+            return it->GetRuntimeID();
+          })) {
+        if (auto p = std::dynamic_pointer_cast<IHasDisposeAsync>(tab)) {
+          disposers.push_back(p->DisposeAsync());
+        }
       }
     }
-  }
-  for (auto& it: disposers) {
-    co_await it;
+    for (auto& it: disposers) {
+      co_await it;
+    }
   }
 
   mTabs = tabs;

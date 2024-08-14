@@ -117,7 +117,7 @@ IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
   return next.front()->GetMetrics(next.subspan(1), context);
 }
 
-void FlyoutMenuUILayer::Render(
+IAsyncAction FlyoutMenuUILayer::Render(
   const RenderContext& rc,
   const NextList& next,
   const Context& context,
@@ -132,27 +132,27 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    previous->Render(rc, submenuNext, context, rect);
-    return;
+    co_await previous->Render(rc, submenuNext, context, rect);
+    co_return;
   }
 
   if ((!mLastRenderRect) || rect != mLastRenderRect) {
     this->UpdateLayout(rc.d2d(), rect);
     if (!mMenu) {
       OPENKNEEBOARD_BREAK;
-      return;
+      co_return;
     }
   }
 
   if (!next.empty()) {
-    next.front()->Render(rc, next.subspan(1), context, rect);
+    co_await next.front()->Render(rc, next.subspan(1), context, rect);
   }
 
   Menu menu {};
   try {
     menu = mMenu.value();
   } catch (const std::bad_optional_access&) {
-    return;
+    co_return;
   }
 
   auto d2d = rc.d2d();

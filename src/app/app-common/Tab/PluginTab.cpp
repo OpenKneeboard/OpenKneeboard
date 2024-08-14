@@ -36,7 +36,18 @@ PluginTab::PluginTab(
     mDXResources(dxr),
     mKneeboard(kbs),
     mSettings(settings) {
-  this->LoadFromEmpty();
+}
+
+task<std::shared_ptr<PluginTab>> PluginTab::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  std::string_view title,
+  const Settings& settings) {
+  std::shared_ptr<PluginTab> ret {
+    new PluginTab(dxr, kbs, persistentID, title, settings)};
+  co_await ret->Reload();
+  co_return ret;
 }
 
 PluginTab::~PluginTab() {
@@ -56,6 +67,10 @@ std::string PluginTab::GetGlyph() const {
   return mTabType->mGlyph;
 }
 
+nlohmann::json PluginTab::GetSettings() const {
+  return mSettings;
+}
+
 IAsyncAction PluginTab::Reload() {
   const auto disposable
     = std::dynamic_pointer_cast<IHasDisposeAsync>(mDelegate);
@@ -65,14 +80,7 @@ IAsyncAction PluginTab::Reload() {
   mDelegate = nullptr;
   mTabType = std::nullopt;
   co_await this->SetDelegates({});
-  this->LoadFromEmpty();
-}
 
-nlohmann::json PluginTab::GetSettings() const {
-  return mSettings;
-}
-
-void PluginTab::LoadFromEmpty() {
   const auto tabTypes = mKneeboard->GetPluginStore()->GetTabTypes();
   const auto it = std::ranges::find(
     tabTypes, mSettings.mPluginTabTypeID, &Plugin::TabType::mID);
@@ -81,7 +89,7 @@ void PluginTab::LoadFromEmpty() {
     dprintf(
       "WARNING: couldn't find plugin for tab type `{}`",
       mSettings.mPluginTabTypeID);
-    return;
+    co_return;
   }
 
   mTabType = *it;
@@ -90,7 +98,7 @@ void PluginTab::LoadFromEmpty() {
     case Kind::WebBrowser: {
       const auto args
         = std::get<Plugin::TabType::WebBrowserArgs>(it->mImplementationArgs);
-      mDelegate = WebView2PageSource::Create(
+      mDelegate = co_await WebView2PageSource::Create(
         mDXResources,
         mKneeboard,
         WebView2PageSource::Settings {
@@ -98,13 +106,13 @@ void PluginTab::LoadFromEmpty() {
           .mIntegrateWithSimHub = false,
           .mURI = args.mURI,
         });
-      this->SetDelegatesFromEmpty({mDelegate});
-      return;
+      co_await this->SetDelegates({mDelegate});
+      co_return;
     }
     default:
       dprint("Unrecognized plugin implementation");
       OPENKNEEBOARD_BREAK;
-      return;
+      co_return;
   }
 }
 

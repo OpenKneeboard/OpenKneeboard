@@ -54,13 +54,23 @@ namespace OpenKneeboard {
 using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
 
 #if __has_include(<winrt/Microsoft.UI.Dispatching.h>)
+using DispatcherQueue = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
+using DispatcherQueueController
+  = winrt::Microsoft::UI::Dispatching::DispatcherQueueController;
+
 template <class... Args>
 inline void disown_later(Args&&... args) {
-  winrt::check_bool(
-    winrt::Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread()
-      .TryEnqueue(
-        std::bind_front([](auto&&...) {}, std::forward<Args>(args)...)));
+  winrt::check_bool(DispatcherQueue::GetForCurrentThread().TryEnqueue(
+    std::bind_front([](auto&&...) {}, std::forward<Args>(args)...)));
 }
+#else
+// Let's provide a nice compiler error message; all actions are invalid on
+// these
+struct requires_Microsoft_UI_Dispatching_from_WinUI3 {
+  requires_Microsoft_UI_Dispatching_from_WinUI3() = delete;
+};
+using DispatcherQueue = requires_Microsoft_UI_Dispatching_from_WinUI3;
+using DispatcherQueueController = requires_Microsoft_UI_Dispatching_from_WinUI3;
 #endif
 
 inline auto random_guid() {

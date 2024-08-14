@@ -34,11 +34,11 @@ CachedLayer::CachedLayer(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
 CachedLayer::~CachedLayer() {
 }
 
-void CachedLayer::Render(
+IAsyncAction CachedLayer::Render(
   const PixelRect& destRect,
   Key cacheKey,
   RenderTarget* rt,
-  std::function<void(RenderTarget*, const PixelSize&)> impl,
+  std::function<IAsyncAction(RenderTarget*, const PixelSize&)> impl,
   const std::optional<PixelSize>& providedCacheDimensions) {
   std::scoped_lock lock(mCacheMutex);
 
@@ -47,7 +47,7 @@ void CachedLayer::Render(
 
   if (cacheDimensions.IsEmpty()) [[unlikely]] {
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   if (mCacheDimensions != cacheDimensions || !mCache) {
@@ -77,7 +77,7 @@ void CachedLayer::Render(
       mDXR->mD3D11ImmediateContext->ClearRenderTargetView(
         d3d.rtv(), DirectX::Colors::Transparent);
     }
-    impl(mCacheRenderTarget.get(), cacheDimensions);
+    co_await impl(mCacheRenderTarget.get(), cacheDimensions);
     mKey = cacheKey;
   }
 

@@ -101,7 +101,8 @@
     "*.idl": "idl",
     "source_location": "cpp",
     "expected": "cpp",
-    "csetjmp": "cpp"
+    "csetjmp": "cpp",
+    "latch": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++23",

@@ -151,7 +151,7 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) {
   return true;
 }
 
-concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   auto weak = weak_from_this();
 
   if (!hwnd) {
@@ -164,7 +164,8 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     co_return false;
   }
 
-  auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
+  auto source
+    = co_await HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
   if (!source) {
     co_return false;
   }
@@ -423,7 +424,7 @@ void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
   launder_nodiscard(this->Reload());
 }
 
-concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
+task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
   auto weak = weak_from_this();
   if (mHwnd) {
     co_return;

@@ -57,8 +57,8 @@ class NavigationTab final : public TabBase,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
-    override;
+  [[nodiscard]] IAsyncAction
+  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
@@ -104,7 +104,8 @@ class NavigationTab final : public TabBase,
 
   void CalculatePreviewMetrics(PageID);
   // PageID is first for `std::bind_front()`
-  void RenderPreviewLayer(PageID, RenderTarget*, const PixelSize& size);
+  [[nodiscard]] IAsyncAction
+  RenderPreviewLayer(PageID, RenderTarget*, const PixelSize& size);
 
   static constexpr auto PaddingRatio = 1.5f;
 };

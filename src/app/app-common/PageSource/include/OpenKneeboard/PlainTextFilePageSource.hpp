@@ -42,7 +42,7 @@ class PlainTextFilePageSource final : public PageSourceWithDelegates {
  public:
   PlainTextFilePageSource() = delete;
   virtual ~PlainTextFilePageSource();
-  static std::shared_ptr<PlainTextFilePageSource> Create(
+  static task<std::shared_ptr<PlainTextFilePageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});

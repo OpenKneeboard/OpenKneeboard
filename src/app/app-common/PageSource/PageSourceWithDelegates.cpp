@@ -62,6 +62,16 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
   }
 }
 
+IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::DisposeAsync()");
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
+
+  co_await this->SetDelegates({});
+}
+
 winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
   std::vector<std::shared_ptr<IPageSource>> delegates) {
   winrt::apartment_context thread;
@@ -85,31 +95,10 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
-  mDelegates.clear();
   mDelegateEvents.clear();
-
-  this->SetDelegatesFromEmpty(delegates);
-}
-
-IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
-  OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::DisposeAsync()");
-  const auto disposing = mDisposal.Start();
-  if (!disposing) {
-    co_return;
-  }
-
-  co_await this->SetDelegates({});
-}
-
-void PageSourceWithDelegates::SetDelegatesFromEmpty(
-  const std::vector<std::shared_ptr<IPageSource>>& delegates) {
-  assert(mDelegates.empty());
-  assert(mDelegateEvents.empty());
-
   mDelegates = delegates;
 
   for (auto& delegate: delegates) {
-    std::weak_ptr<IPageSource> weakDelegate {delegate};
     std::ranges::copy(
       std::vector<EventHandlerToken> {
         AddEventListener(
@@ -178,22 +167,22 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   return delegate->GetPreferredSize(pageID);
 }
 
-void PageSourceWithDelegates::RenderPage(
+[[nodiscard]] IAsyncAction PageSourceWithDelegates::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
     // Expected e.g. for a window capture tab with no matching window
-    return;
+    co_return;
   }
 
   auto withInternalCaching
     = std::dynamic_pointer_cast<IPageSourceWithInternalCaching>(delegate);
   if (withInternalCaching) {
-    delegate->RenderPage(rc, pageID, rect);
+    co_await delegate->RenderPage(rc, pageID, rect);
   } else {
-    this->RenderPageWithCache(
+    co_await this->RenderPageWithCache(
       delegate.get(), rc.GetRenderTarget(), pageID, rect);
   }
 
@@ -205,7 +194,7 @@ void PageSourceWithDelegates::RenderPage(
   }
 }
 
-void PageSourceWithDelegates::RenderPageWithCache(
+[[nodiscard]] IAsyncAction PageSourceWithDelegates::RenderPageWithCache(
   IPageSource* delegate,
   RenderTarget* rt,
   PageID pageID,
@@ -215,12 +204,14 @@ void PageSourceWithDelegates::RenderPageWithCache(
     mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
   }
 
-  mContentLayerCache[rtid]->Render(
+  co_await mContentLayerCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [delegate, pageID](RenderTarget* rt, const PixelSize& size) {
-      delegate->RenderPage(RenderContext {rt, nullptr}, pageID, {{0, 0}, size});
+    [delegate, pageID](
+      RenderTarget* rt, const PixelSize& size) -> IAsyncAction {
+      co_await delegate->RenderPage(
+        RenderContext {rt, nullptr}, pageID, {{0, 0}, size});
     });
 }
 

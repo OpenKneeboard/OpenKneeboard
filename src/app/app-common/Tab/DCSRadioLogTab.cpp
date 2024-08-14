@@ -36,20 +36,22 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
   });
 
-std::shared_ptr<DCSRadioLogTab> DCSRadioLogTab::Create(
+task<std::shared_ptr<DCSRadioLogTab>> DCSRadioLogTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs) {
   return Create(dxr, kbs, {}, _("Radio Log"), {});
 }
 
-std::shared_ptr<DCSRadioLogTab> DCSRadioLogTab::Create(
+task<std::shared_ptr<DCSRadioLogTab>> DCSRadioLogTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
   const nlohmann::json& config) {
-  return std::shared_ptr<DCSRadioLogTab>(
+  std::shared_ptr<DCSRadioLogTab> ret(
     new DCSRadioLogTab(dxr, kbs, persistentID, title, config));
+  co_await ret->SetDelegates({ret->mPageSource});
+  co_return ret;
 }
 
 DCSRadioLogTab::DCSRadioLogTab(
@@ -65,9 +67,8 @@ DCSRadioLogTab::DCSRadioLogTab(
       dxr,
       kbs,
       _("[waiting for radio messages]"))) {
-  this->SetDelegatesFromEmpty({mPageSource});
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
-  LoadSettings(config);
+  this->LoadSettings(config);
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {

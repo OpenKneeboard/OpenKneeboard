@@ -35,11 +35,11 @@ class FolderTab final : public TabBase,
                         public PageSourceWithDelegates,
                         public ITabWithSettings {
  public:
-  explicit FolderTab(
+  static task<std::shared_ptr<FolderTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
-  explicit FolderTab(
+  static task<std::shared_ptr<FolderTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -64,8 +64,10 @@ class FolderTab final : public TabBase,
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    std::string_view title,
-    const std::filesystem::path& path);
+    std::string_view title);
+
+  audited_ptr<DXResources> mDXResources;
+  KneeboardState* mKneeboard {nullptr};
 
   std::shared_ptr<FolderPageSource> mPageSource;
   std::filesystem::path mPath;

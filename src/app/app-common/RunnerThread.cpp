@@ -37,8 +37,7 @@ RunnerThread::RunnerThread(
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
   const std::source_location& loc)
   : mName(std::string {name}) {
-  mDQC = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
-    CreateOnDedicatedThread();
+  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
   mCompletionEvent
     = winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 

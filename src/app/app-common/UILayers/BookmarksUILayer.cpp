@@ -138,7 +138,7 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
   };
 }
 
-void BookmarksUILayer::Render(
+IAsyncAction BookmarksUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,
@@ -147,8 +147,8 @@ void BookmarksUILayer::Render(
   auto [first, rest] = Split(next);
 
   if (!this->IsEnabled()) {
-    first->Render(rc, rest, context, rect);
-    return;
+    co_await first->Render(rc, rest, context, rect);
+    co_return;
   }
 
   const auto metrics = this->GetMetrics(next, context);
@@ -232,7 +232,7 @@ void BookmarksUILayer::Render(
   auto nextArea
     = (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
   nextArea.mOffset += rect.mOffset;
-  first->Render(rc, rest, context, nextArea);
+  co_await first->Render(rc, rest, context, nextArea);
   d2d.Reacquire();
 
   d2d->DrawLine(

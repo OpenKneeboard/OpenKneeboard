@@ -109,7 +109,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   // avoids building up a massive backlog of overdue scheduled
   // events.
   winrt::Windows::Foundation::IAsyncAction FrameLoop();
-  void FrameTick();
+  winrt::fire_and_forget FrameTick();
   single_threaded_lockable mFrameInProgress;
   winrt::handle mFrameLoopCompletionEvent;
 

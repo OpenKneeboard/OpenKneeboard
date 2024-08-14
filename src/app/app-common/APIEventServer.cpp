@@ -163,11 +163,8 @@ winrt::fire_and_forget APIEventServer::DispatchEvent(std::string_view ref) {
   co_await winrt::resume_background();
 
   auto event = APIEvent::Unserialize(buffer);
-  TraceLoggingActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
-    activity, "APIEvent", TraceLoggingValue(event.name.c_str(), "Name"));
-  const scope_exit stopActivity(
-    [&activity]() { TraceLoggingWriteStop(activity, "APIEvent"); });
+  OPENKNEEBOARD_TraceLoggingCoro(
+    "APIEvent", TraceLoggingValue(event.name.c_str(), "Name"));
   if (event.name != APIEvent::EVT_MULTI_EVENT) {
     this->evAPIEvent.EnqueueForContext(mUIThread, event);
     co_return;
@@ -176,12 +173,9 @@ winrt::fire_and_forget APIEventServer::DispatchEvent(std::string_view ref) {
   std::vector<std::tuple<std::string, std::string>> events;
   events = nlohmann::json::parse(event.value);
   for (const auto& [name, value]: events) {
-    TraceLoggingActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(
-      subActivity, "APIEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
+    OPENKNEEBOARD_TraceLoggingCoro(
+      "APIEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
     co_await this->evAPIEvent.EmitFromContextAsync(mUIThread, {name, value});
-    TraceLoggingWriteStop(
-      subActivity, "APIEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
   }
 
   co_return;

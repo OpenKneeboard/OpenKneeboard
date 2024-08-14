@@ -69,7 +69,7 @@ IAsyncAction BrowserTab::Reload() {
 
   mDelegate = {};
   co_await this->SetDelegates({});
-  mDelegate = WebView2PageSource::Create(mDXR, mKneeboard, mSettings);
+  mDelegate = co_await WebView2PageSource::Create(mDXR, mKneeboard, mSettings);
   co_await this->SetDelegates({mDelegate});
 }
 

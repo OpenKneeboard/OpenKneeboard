@@ -77,15 +77,15 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  virtual void RenderPage(const RenderContext&, PageID, const PixelRect& rect)
-    override;
+  [[nodiscard]] IAsyncAction
+  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
  private:
-  using DQ = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
   winrt::apartment_context mUIThread;
   // Useful because `wil::resume_foreground()` will *always* enqueue, never
   // execute immediately
-  DQ mUIThreadDispatcherQueue = DQ::GetForCurrentThread();
+  DispatcherQueue mUIThreadDispatcherQueue
+    = DispatcherQueue::GetForCurrentThread();
 
   audited_ptr<DXResources> mDXR;
   mutable std::shared_mutex mMutex;

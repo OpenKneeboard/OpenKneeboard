@@ -61,6 +61,7 @@ class InterprocessRenderer final
     KneeboardState*);
 
   void PostUserAction(UserAction);
+  [[nodiscard]] IAsyncAction RenderNow() noexcept;
 
  private:
   InterprocessRenderer() = delete;
@@ -109,8 +110,7 @@ class InterprocessRenderer final
   std::shared_ptr<GameInstance> mCurrentGame;
 
   void MarkDirty();
-  void RenderNow() noexcept;
-  SHM::LayerConfig RenderLayer(
+  task<SHM::LayerConfig> RenderLayer(
     const ViewRenderInfo&,
     const PixelRect& bounds) noexcept;
 

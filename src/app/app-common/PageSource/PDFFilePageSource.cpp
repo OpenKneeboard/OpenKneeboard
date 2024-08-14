@@ -138,7 +138,6 @@ struct PDFFilePageSource::DocumentResources final {
     : mPath(path), mWatcher(std::move(watcher)) {
   }
 
-  using DispatcherQueue = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
   DispatcherQueue mDispatcherQueue = DispatcherQueue::GetForCurrentThread();
 };
 
@@ -632,7 +631,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
   return entries;
 }
 
-void PDFFilePageSource::RenderPage(
+[[nodiscard]] IAsyncAction PDFFilePageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
@@ -645,12 +644,13 @@ void PDFFilePageSource::RenderPage(
   const auto cacheDimensions
     = this->GetPreferredSize(pageID).mPixelSize.IntegerScaledToFit(
       MaxViewRenderSize);
-  mDocumentResources->mCache[rtid]->Render(
+  co_await mDocumentResources->mCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [this, pageID](auto rt, const auto& size) {
+    [this, pageID](auto rt, const auto& size) -> IAsyncAction {
       this->RenderPageContent(rt, pageID, {{0, 0}, size});
+      co_return;
     },
     cacheDimensions);
 

@@ -27,6 +27,8 @@
 #include <winrt/microsoft.ui.xaml.h>
 #include <winrt/windows.foundation.h>
 
+#include <OpenKneeboard/task.hpp>
+
 namespace OpenKneeboard {
 
 winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
@@ -48,8 +50,7 @@ enum class DCSSavedGamesSelectionTrigger {
   EXPLICIT,
 };
 
-concurrency::task<std::optional<std::filesystem::path>>
-ChooseDCSSavedGamesFolder(
+task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
   const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
   DCSSavedGamesSelectionTrigger trigger);
 

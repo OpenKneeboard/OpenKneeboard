@@ -131,7 +131,7 @@ winrt::fire_and_forget DCSTerrainTab::OnAPIEvent(
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (auto& path: paths) {
     delegates.push_back(std::static_pointer_cast<IPageSource>(
-      FolderPageSource::Create(mDXR, mKneeboard, path)));
+      co_await FolderPageSource::Create(mDXR, mKneeboard, path)));
   }
   co_await this->SetDelegates(delegates);
 }

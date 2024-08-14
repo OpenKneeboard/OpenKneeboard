@@ -112,7 +112,7 @@ class WindowCaptureTab final : public TabBase,
     std::string_view title,
     const Settings&);
   winrt::fire_and_forget TryToStartCapture();
-  concurrency::task<bool> TryToStartCapture(HWND hwnd);
+  task<bool> TryToStartCapture(HWND hwnd);
   bool WindowMatches(HWND hwnd);
 
   winrt::fire_and_forget OnWindowClosed();
@@ -125,7 +125,7 @@ class WindowCaptureTab final : public TabBase,
     LONG idChild,
     DWORD idEventThread,
     DWORD dwmsEventTime);
-  concurrency::task<void> OnNewWindow(HWND hwnd);
+  task<void> OnNewWindow(HWND hwnd);
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;

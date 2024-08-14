@@ -85,21 +85,28 @@ struct DXResources;
 namespace detail {
 template <class T, class... TArgs>
   requires std::constructible_from<T, TArgs...>
-auto make_shared(TArgs&&... args) {
-  return std::make_shared<T>(std::forward<TArgs>(args)...);
+task<std::shared_ptr<T>> make_shared(TArgs&&... args) {
+  co_return std::make_shared<T>(std::forward<TArgs>(args)...);
 }
 
 template <class T, class... TArgs>
   requires requires(TArgs... args) {
     { T::Create(args...) } -> std::same_as<std::shared_ptr<T>>;
   }
-auto make_shared(TArgs&&... args) {
+task<std::shared_ptr<T>> make_shared(TArgs&&... args) {
+  co_return T::Create(std::forward<TArgs>(args)...);
+}
+template <class T, class... TArgs>
+  requires requires(TArgs... args) {
+    { T::Create(args...) } -> std::convertible_to<task<std::shared_ptr<T>>>;
+  }
+task<std::shared_ptr<T>> make_shared(TArgs&&... args) {
   return T::Create(std::forward<TArgs>(args)...);
 }
 
 template <class T, class... TArgs>
 concept shared_constructible_from = requires(TArgs... args) {
-  { detail::make_shared<T>(args...) } -> std::same_as<std::shared_ptr<T>>;
+  { detail::make_shared<T>(args...) } -> std::same_as<task<std::shared_ptr<T>>>;
 };
 
 }// namespace detail
@@ -110,6 +117,10 @@ static_assert(detail::shared_constructible_from<
               const audited_ptr<DXResources>&,
               KneeboardState*,
               const std::filesystem::path&>);
+static_assert(!detail::shared_constructible_from<
+              SingleFileTab,
+              const audited_ptr<DXResources>&,
+              KneeboardState*>);
 // Static method
 static_assert(detail::shared_constructible_from<
               WindowCaptureTab,
@@ -121,7 +132,7 @@ static_assert(detail::shared_constructible_from<
 
 /** Create a `shared_ptr<ITab>` with existing config */
 template <std::derived_from<ITab> T>
-std::shared_ptr<T> load_tab(
+task<std::shared_ptr<T>> load_tab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
@@ -139,8 +150,8 @@ std::shared_ptr<T> load_tab(
 }
 
 template <class T>
-concept loadable_tab = std::is_invocable_r_v<
-  std::shared_ptr<T>,
+concept loadable_tab = std::invocable<
+  // FIXME: check return type too
   decltype(&load_tab<T>),
   const audited_ptr<DXResources>&,
   KneeboardState*,
@@ -148,7 +159,8 @@ concept loadable_tab = std::is_invocable_r_v<
   const std::string&,
   const nlohmann::json&>;
 
-#define IT(_, T) static_assert(loadable_tab<T##Tab>);
+#define IT(_, T) \
+  static_assert(loadable_tab<T##Tab>, "Couldn't construct "##Tab);
 OPENKNEEBOARD_TAB_TYPES
 #undef IT
 

@@ -71,8 +71,6 @@ target_link_libraries(
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-Elevation
-  OpenKneeboard-OpenXRMode
-  OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-32bit-runtime-components

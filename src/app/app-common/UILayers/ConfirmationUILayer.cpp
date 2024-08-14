@@ -81,27 +81,27 @@ void ConfirmationUILayer::PostCursorEvent(
   dialog.mButtons->PostCursorEvent(KneeboardViewID, canvasEvent);
 }
 
-void ConfirmationUILayer::Render(
+IAsyncAction ConfirmationUILayer::Render(
   const RenderContext& rc,
   const NextList& next,
   const Context& context,
   const PixelRect& rect) {
   OPENKNEEBOARD_TraceLoggingScope("ConfirmationUILayer::Render()");
-  next.front()->Render(rc, next.subspan(1), context, rect);
+  co_await next.front()->Render(rc, next.subspan(1), context, rect);
 
   if (rect != mCanvasRect) {
     UpdateLayout(rect);
   }
 
   if (!mCanvasRect) {
-    return;
+    co_return;
   }
 
   Dialog dialog {};
   try {
     dialog = mDialog.value();
   } catch (const std::bad_optional_access&) {
-    return;
+    co_return;
   }
 
   auto d2d = rc.d2d();
