@@ -79,6 +79,7 @@ bool BrowserTab::IsBackgroundTransparent() const {
 }
 
 IAsyncAction BrowserTab::SetBackgroundTransparent(bool transparent) {
+  OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::SetBackgroundTransparent()");
   if (transparent == this->IsBackgroundTransparent()) {
     co_return;
   }
@@ -92,6 +93,8 @@ bool BrowserTab::IsDeveloperToolsWindowEnabled() const {
 }
 
 IAsyncAction BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
+  OPENKNEEBOARD_TraceLoggingCoro(
+    "BrowserTab::SetDeveloperToolsWindowsEnabled()");
   if (enabled == this->IsDeveloperToolsWindowEnabled()) {
     co_return;
   }

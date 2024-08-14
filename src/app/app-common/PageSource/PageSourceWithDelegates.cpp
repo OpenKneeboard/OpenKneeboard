@@ -52,6 +52,8 @@ PageSourceWithDelegates::PageSourceWithDelegates(
 }
 
 PageSourceWithDelegates::~PageSourceWithDelegates() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "PageSourceWithDelegates::~PageSourceWithDelegates()");
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
@@ -63,6 +65,7 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
 winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
   std::vector<std::shared_ptr<IPageSource>> delegates) {
   winrt::apartment_context thread;
+  OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::SetDelegates()");
 
   auto disposers = mDelegates | std::views::transform([](auto it) {
                      return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
@@ -87,6 +90,7 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
 }
 
 IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::DisposeAsync()");
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;

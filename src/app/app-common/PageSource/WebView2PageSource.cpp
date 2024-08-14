@@ -166,10 +166,13 @@ bool WebView2PageSource::IsAvailable() {
   return !GetVersion().empty();
 }
 
-WebView2PageSource::~WebView2PageSource() = default;
+WebView2PageSource::~WebView2PageSource() {
+  OPENKNEEBOARD_TraceLoggingWrite("WebView2PageSource::~WebView2PageSource()");
+}
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2PageSource::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::DisposeAsync()");
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;
@@ -202,6 +205,7 @@ void WebView2PageSource::PostCursorEvent(
   KneeboardViewID view,
   const CursorEvent& event,
   PageID) {
+  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::PostCursorEvent");
   const auto key = (mDocumentResources.mContentMode == ContentMode::PageBased)
     ? view
     : mScrollableContentRendererKey;
@@ -298,6 +302,7 @@ void WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::RenderPage");
   if (mDisposal.HasStarted()) [[unlikely]] {
     return;
   }

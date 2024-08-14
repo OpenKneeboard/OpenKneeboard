@@ -138,9 +138,12 @@ WGCRenderer::WGCRenderer(
     kneeboard->evFrameTimerPreEvent, [this]() { this->PreOKBFrame(); });
 }
 
-WGCRenderer::~WGCRenderer() = default;
+WGCRenderer::~WGCRenderer() {
+  OPENKNEEBOARD_TraceLoggingWrite("WGCRenderer::~WGCRenderer");
+}
 
 IAsyncAction WGCRenderer::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("WGCRenderer::DisposeAsync");
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;
@@ -151,16 +154,12 @@ IAsyncAction WGCRenderer::DisposeAsync() noexcept {
 
   if (mCaptureSession) {
     mCaptureSession.Close();
-    // Closing queues up some events in the main loop without keeping a strong
-    // reference :( Give them some time to clean up
-    co_await winrt::resume_after(std::chrono::milliseconds(100));
-    co_await mUIThread;
   }
-
-  mCaptureItem = {nullptr};
-  mNextFrame = {nullptr};
-  mCaptureSession = {nullptr};
-  mFramePool = {nullptr};
+  disown_later(
+    std::move(mCaptureItem),
+    std::move(mNextFrame),
+    std::move(mCaptureSession),
+    std::move(mFramePool));
 
   mTexture = nullptr;
 }

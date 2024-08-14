@@ -100,7 +100,9 @@ auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 
-WebView2Renderer::~WebView2Renderer() = default;
+WebView2Renderer::~WebView2Renderer() {
+  OPENKNEEBOARD_TraceLoggingWrite("WebView2::~WebView2Renderer()");
+}
 
 static wchar_t WindowClassName[] {L"OpenKneeboard/WebView2Host"};
 
@@ -148,10 +150,14 @@ void WebView2Renderer::CreateBrowserWindow() {
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2Renderer::InitializeContentToCapture() {
-  TraceLoggingActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
-    activity, "WebView2Renderer::InitializeContentToCapture");
+  OPENKNEEBOARD_TraceLoggingCoro(
+    "WebView2Renderer::InitializeContentToCapture");
+  auto weak = weak_from_this();
   co_await winrt::resume_foreground(mDQC.DispatcherQueue());
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
 
   this->CreateBrowserWindow();
 
@@ -261,11 +267,6 @@ WebView2Renderer::InitializeContentToCapture() {
   mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
 
   mState.Transition<State::Constructed, State::InitializedComposition>();
-
-  TraceLoggingWriteStop(
-    activity,
-    "WebView2Renderer::InitializeContentToCapture",
-    TraceLoggingValue("Finished", "Result"));
 }
 
 std::optional<float> WebView2Renderer::GetHDRWhiteLevelInNits() const {
@@ -938,6 +939,7 @@ WebView2Renderer::JSAPI_EnableExperimentalFeatures(nlohmann::json args) {
 
 winrt::Windows::Foundation::IAsyncAction
 WebView2Renderer::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("WebView2Renderer::DisposeAsync");
   if (mState.Get() == State::Disposed) {
     co_return;
   }

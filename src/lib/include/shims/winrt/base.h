@@ -41,11 +41,27 @@
 
 #include <stop_token>
 
+#if __has_include(<winrt/Microsoft.UI.Dispatching.h>)
+#include <winrt/Microsoft.UI.Dispatching.h>
+
+#include <functional>
+#endif
+
 namespace OpenKneeboard {
 
 // FUTURE - C++?? (maybe?) - add [[nodiscard]]:
 // https://github.com/cplusplus/papers/issues/1888
 using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
+
+#if __has_include(<winrt/Microsoft.UI.Dispatching.h>)
+template <class... Args>
+inline void disown_later(Args&&... args) {
+  winrt::check_bool(
+    winrt::Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread()
+      .TryEnqueue(
+        std::bind_front([](auto&&...) {}, std::forward<Args>(args)...)));
+}
+#endif
 
 inline auto random_guid() {
   winrt::guid ret;

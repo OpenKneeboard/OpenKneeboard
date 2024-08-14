@@ -21,9 +21,11 @@
 
 // clang-format off
 #include <Windows.h>
+#include <winmeta.h>
 // clang-format on
 
 #include <OpenKneeboard/macros.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <exception>
 #include <source_location>
@@ -118,6 +120,8 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
 #define TraceLoggingWriteStop(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 #define TraceLoggingWriteTagged(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define OPENKNEEBOARD_TraceLoggingCoro(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 
 #else
@@ -231,6 +235,15 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     TraceLoggingValue(__LINE__, "Line"), \
     TraceLoggingValue(__FUNCTION__, "Function"), \
     ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingCoro(OKBTL_NAME, ...) \
+  OPENKNEEBOARD_TraceLoggingWrite( \
+    OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_START), ##__VA_ARGS__); \
+  const ::OpenKneeboard::scope_exit OPENKNEEBOARD_CONCAT2( \
+    _okbtllcoro__, _COUNTER__) {[]() { \
+    OPENKNEEBOARD_TraceLoggingWrite( \
+      OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_STOP), ##__VA_ARGS__); \
+  }};
 
 #endif
 
