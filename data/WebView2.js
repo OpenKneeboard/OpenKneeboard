@@ -36,7 +36,6 @@ class OpenKneeboardAPI extends EventTarget {
         this.#inFlightRequests = {};
         this.#nextAsyncCallID = 0;
 
-        document.addEventListener('DOMContentLoaded', this.#OnDOMContentLoaded.bind(this));
         window.chrome.webview.addEventListener('message', this.#OnNativeMessage.bind(this));
 
         if (runtimeData.PeerInfo) {
@@ -89,11 +88,6 @@ class OpenKneeboardAPI extends EventTarget {
 
         return ret;
     }
-
-    #OnDOMContentLoaded() {
-        document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
-    }
-
 
     #runtimeData;
     #inFlightRequests;

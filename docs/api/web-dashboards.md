@@ -20,8 +20,18 @@ There are several ways to detect if your web page is being accessed within OpenK
 
 - the user agent string contains `OpenKneeboard/a.b.c.d`, where `a.b.c.d` is the version number
 - `window.OpenKneeboard` is set, and is a valid object
-- the `<body>` element has the `OpenKneeboard` class
-- the `<body>` element has the `OpenKneeboard_WebView2` class; this also indicates that OpenKneeboard is using Microsoft's Chromium-based-Edge 'WebView2' browser engine
+- *DEPRECATED - removed in v1.9*: the `<body>` element has the `OpenKneeboard` class
+- *DEPRECATED - removed in v1.9*: the `<body>` element has the `OpenKneeboard_WebView2` class; this also indicates that OpenKneeboard is using Microsoft's Chromium-based-Edge 'WebView2' browser engine
+
+OpenKneeboard v1.9 and above no longer add CSS classes to the body, as this can lead to compatibility problems. The easiest way to restore the old behavior is to add the following to your page:
+
+```js
+if (windows.OpenKneeboard) {
+  document.body.classList.add("OpenKneeboard");
+}
+```
+
+The `window.OpenKneeboard` object is loaded before any scripts on the page start executing.
 
 ## Transparency
 
