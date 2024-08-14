@@ -21,11 +21,11 @@
 
 #include <shims/winrt/base.h>
 
-#include <FredEmmott/composable_bind.hpp>
+#include <FredEmmott/bindline.hpp>
 #include <OpenKneeboard/cppwinrt.hpp>
 
 #include <utility>
 
 namespace OpenKneeboard {
-using namespace FredEmmott::composable_bind;
+using namespace FredEmmott::bindline;
 }// namespace OpenKneeboard

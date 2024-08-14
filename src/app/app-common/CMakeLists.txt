@@ -5,7 +5,7 @@ target_link_libraries(
   OpenKneeboard-config
   ThirdParty::WIL
   ThirdParty::CppWinRT
-  ThirdParty::weak_refs
+  ThirdParty::bindline
 )
 target_include_directories(OpenKneeboard-Events PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 

@@ -27,7 +27,7 @@
 
 #include <winrt/Windows.Foundation.h>
 
-#include <OpenKneeboard/composable_bind.hpp>
+#include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
