@@ -58,8 +58,8 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
     [](auto self) {
       self->mPropertyChangedEvent(
         *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
-    } | bind_winrt_context(mUIThread)
-      | bind_refs_front(this));
+    } | bind_refs_front(this)
+      | bind_winrt_context(mUIThread));
 }
 
 AdvancedSettingsPage::~AdvancedSettingsPage() {
@@ -348,7 +348,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   const scope_exit propertyChanged([](auto self) {
     self->mPropertyChangedEvent(
       *self, PropertyChangedEventArgs(L"DesiredElevation"));
-  } | bind_winrt_context(mUIThread) | bind_refs_front(this));
+  } | bind_refs_front(this) | bind_winrt_context(mUIThread));
 
   // Always use the helper; while it's not needed, it never hurts, and gives us
   // a single path to act

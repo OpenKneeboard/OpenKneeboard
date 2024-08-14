@@ -187,16 +187,14 @@ WebView2Renderer::InitializeContentToCapture() {
   settings.IsWebMessageEnabled(true);
   mWebView.WebMessageReceived(
     std::bind_front(&WebView2Renderer::OnWebMessageReceived, this));
-  mWebView.NavigationStarting(
-    [](auto self, auto, auto args) {
-      self->mDocumentResources = {};
-      const auto originalURI = self->mSettings.mURI;
-      const auto newURI = winrt::to_string(args.Uri());
-      if (originalURI == newURI) {
-        self->mDocumentResources.mPages = self->mInitialPages;
-      }
+  mWebView.NavigationStarting([](auto self, auto, auto args) {
+    self->mDocumentResources = {};
+    const auto originalURI = self->mSettings.mURI;
+    const auto newURI = winrt::to_string(args.Uri());
+    if (originalURI == newURI) {
+      self->mDocumentResources.mPages = self->mInitialPages;
     }
-    | bind_winrt_context(mUIThread) | bind_refs_front(this));
+  } | bind_refs_front(this) | bind_winrt_context(mUIThread));
 
   co_await this->ImportJavascriptFile(
     Filesystem::GetImmutableDataDirectory() / "WebView2.js");

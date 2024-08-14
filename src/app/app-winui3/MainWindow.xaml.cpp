@@ -211,8 +211,8 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
       }
       backStack.ReplaceAll(newBackStack);
       self->PromptForViewMode();
-    } | bind_winrt_context(mUIThread)
-      | bind_refs_front(this));
+    } | bind_refs_front(this)
+      | bind_winrt_context(mUIThread));
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {

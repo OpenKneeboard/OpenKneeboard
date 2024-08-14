@@ -267,8 +267,8 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
     [](auto action, auto button) noexcept {
       button.IsChecked(action->IsActive());
       button.IsEnabled(action->IsEnabled());
-    } | bind_winrt_context(mUIThread)
-      | bind_refs_front(action, button));
+    } | bind_refs_front(action, button)
+      | bind_winrt_context(mUIThread));
 
   return button;
 }
@@ -290,8 +290,8 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
     action->evStateChangedEvent,
     [](auto action, auto button) noexcept {
       button.IsEnabled(action->IsEnabled());
-    } | bind_winrt_context(mUIThread)
-      | bind_refs_front(action, button));
+    } | bind_refs_front(action, button)
+      | bind_winrt_context(mUIThread));
 
   return button;
 }
@@ -347,7 +347,7 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     AddEventListener(
       checkable->evStateChangedEvent,
       [](auto tmfi, auto checkable) { tmfi.IsChecked(checkable->IsChecked()); }
-        | bind_winrt_context(mUIThread) | bind_refs_front(tmfi, checkable));
+        | bind_refs_front(tmfi, checkable) | bind_winrt_context(mUIThread));
   } else {
     ret = {};
   }
@@ -360,7 +360,7 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
   AddEventListener(
     action->evStateChangedEvent,
     [](auto action, auto item) noexcept { item.IsEnabled(action->IsEnabled()); }
-      | bind_winrt_context(mUIThread) | bind_refs_front(action, ret));
+      | bind_refs_front(action, ret) | bind_winrt_context(mUIThread));
   return ret;
 }
 
@@ -443,8 +443,8 @@ void TabPage::AttachVisibility(
     [](auto control, auto visibility) {
       control.Visibility(
         visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
-    } | bind_winrt_context(mUIThread)
-      | bind_refs_front(control, visibility));
+    } | bind_refs_front(control, visibility)
+      | bind_winrt_context(mUIThread));
 }
 
 void TabPage::OnCanvasSizeChanged(
