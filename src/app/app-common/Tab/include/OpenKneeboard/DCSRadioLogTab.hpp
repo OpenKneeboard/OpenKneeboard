@@ -35,12 +35,10 @@ namespace OpenKneeboard {
 
 class PlainTextPageSource;
 
-class DCSRadioLogTab final
-  : public TabBase,
-    public DCSTab,
-    public PageSourceWithDelegates,
-    public ITabWithSettings,
-    public std::enable_shared_from_this<DCSRadioLogTab> {
+class DCSRadioLogTab final : public TabBase,
+                             public DCSTab,
+                             public PageSourceWithDelegates,
+                             public ITabWithSettings {
  public:
   // Indices must match TabsSettingsPage.xaml
   enum class MissionStartBehavior : uint8_t {

@@ -34,10 +34,22 @@ BrowserTab::BrowserTab(
     mDXR(dxr),
     mKneeboard(kbs),
     mSettings(settings) {
-  fire_and_forget(this->Reload());
+}
+
+std::shared_ptr<BrowserTab> BrowserTab::Create(
+  const audited_ptr<DXResources>& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  std::string_view title,
+  const Settings& settings) {
+  std::shared_ptr<BrowserTab> ret {
+    new BrowserTab(dxr, kbs, persistentID, title, settings)};
+  fire_and_forget(ret->Reload());
+  return ret;
 }
 
 BrowserTab::~BrowserTab() {
+  OPENKNEEBOARD_TraceLoggingScope("BrowserTab::~BrowserTab()");
   this->RemoveAllEventListeners();
 }
 
@@ -51,6 +63,9 @@ std::string BrowserTab::GetStaticGlyph() {
 }
 
 IAsyncAction BrowserTab::Reload() {
+  OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::Reload()");
+  auto keepAlive = shared_from_this();
+
   mDelegate = {};
   co_await this->SetDelegates({});
   mDelegate = WebView2PageSource::Create(mDXR, mKneeboard, mSettings);
@@ -66,6 +81,7 @@ bool BrowserTab::IsSimHubIntegrationEnabled() const {
 }
 
 IAsyncAction BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
+  OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::SetSimHubIntegrationEnabled()");
   if (enabled == this->IsSimHubIntegrationEnabled()) {
     co_return;
   }

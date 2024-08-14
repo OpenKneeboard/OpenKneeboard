@@ -29,11 +29,9 @@
 
 namespace OpenKneeboard {
 
-class WindowCaptureTab final
-  : public TabBase,
-    public ITabWithSettings,
-    public PageSourceWithDelegates,
-    public std::enable_shared_from_this<WindowCaptureTab> {
+class WindowCaptureTab final : public TabBase,
+                               public ITabWithSettings,
+                               public PageSourceWithDelegates {
  public:
   struct WindowSpecification {
     std::string mExecutablePathPattern;

@@ -67,6 +67,8 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
   winrt::apartment_context thread;
   OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::SetDelegates()");
 
+  auto keepAlive = shared_from_this();
+
   auto disposers = mDelegates | std::views::transform([](auto it) {
                      return std::dynamic_pointer_cast<IHasDisposeAsync>(it);
                    })

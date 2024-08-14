@@ -26,8 +26,10 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/enable_shared_from_this.hpp>
 
 #include <memory>
 #include <tuple>
@@ -40,11 +42,13 @@ struct DXResources;
 class CachedLayer;
 class DoodleRenderer;
 
-class PageSourceWithDelegates : public virtual IPageSource,
-                                public virtual IPageSourceWithCursorEvents,
-                                public virtual IPageSourceWithNavigation,
-                                public IHasDisposeAsync,
-                                public virtual EventReceiver {
+class PageSourceWithDelegates
+  : public virtual IPageSource,
+    public virtual IPageSourceWithCursorEvents,
+    public virtual IPageSourceWithNavigation,
+    public IHasDisposeAsync,
+    public virtual EventReceiver,
+    public enable_shared_from_this<PageSourceWithDelegates> {
  public:
   PageSourceWithDelegates() = delete;
   PageSourceWithDelegates(const audited_ptr<DXResources>&, KneeboardState*);

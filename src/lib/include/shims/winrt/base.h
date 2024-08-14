@@ -119,8 +119,9 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
 }
 
 /// Used for intentionally await and discarding `[[nodiscard]]` IAsyncAction
+// FIXME: replace with bind_refs_front(...)();
 inline winrt::fire_and_forget fire_and_forget(
-  winrt::Windows::Foundation::IAsyncAction&& x) {
+  winrt::Windows::Foundation::IAsyncAction x) {
   co_await x;
 }
 

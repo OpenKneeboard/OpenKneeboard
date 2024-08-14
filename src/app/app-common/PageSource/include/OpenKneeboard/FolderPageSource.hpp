@@ -34,9 +34,7 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 
-class FolderPageSource final
-  : public PageSourceWithDelegates,
-    public std::enable_shared_from_this<FolderPageSource> {
+class FolderPageSource final : public PageSourceWithDelegates {
  private:
   FolderPageSource(const audited_ptr<DXResources>&, KneeboardState*);
 

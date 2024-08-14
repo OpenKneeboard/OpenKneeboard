@@ -35,9 +35,7 @@ namespace OpenKneeboard {
 
 class PlainTextPageSource;
 
-class PlainTextFilePageSource final
-  : public PageSourceWithDelegates,
-    public std::enable_shared_from_this<PlainTextFilePageSource> {
+class PlainTextFilePageSource final : public PageSourceWithDelegates {
  private:
   PlainTextFilePageSource(const audited_ptr<DXResources>&, KneeboardState*);
 

@@ -34,7 +34,7 @@ template <class Base>
 class enable_shared_from_this : public std::enable_shared_from_this<Base> {
  public:
   template <class Self>
-  auto shared_from_this(this Self& self) {
+  auto shared_from_this(this Self& self) try {
     using decayed_base_t = std::enable_shared_from_this<Base>;
     using base_t = std::conditional_t<
       std::is_const_v<Self>,
@@ -43,6 +43,13 @@ class enable_shared_from_this : public std::enable_shared_from_this<Base> {
 
     auto parent = static_cast<base_t&>(self).shared_from_this();
     return static_pointer_cast<std::remove_reference_t<Self>>(parent);
+  } catch (const std::bad_weak_ptr&) {
+    // Calling shared_from_this() from an object that does not yet have a
+    // shared_ptr()
+    //
+    // You probably want two-phase construction.
+    OPENKNEEBOARD_BREAK;
+    throw;
   }
 
   template <class Self>

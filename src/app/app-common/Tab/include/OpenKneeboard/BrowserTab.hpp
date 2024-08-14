@@ -38,7 +38,7 @@ class BrowserTab final : public TabBase,
  public:
   struct Settings;
   BrowserTab() = delete;
-  BrowserTab(
+  static std::shared_ptr<BrowserTab> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -71,6 +71,12 @@ class BrowserTab final : public TabBase,
   IAsyncAction SetDeveloperToolsWindowEnabled(bool);
 
  private:
+  BrowserTab(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    std::string_view title,
+    const Settings&);
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard {nullptr};
