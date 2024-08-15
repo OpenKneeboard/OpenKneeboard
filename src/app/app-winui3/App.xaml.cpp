@@ -475,6 +475,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   });
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
+  SetThreadDescription(GetCurrentThread(), L"UI Thread");
 
   // Strong
   auto troubleshootingStore = TroubleshootingStore::Get();

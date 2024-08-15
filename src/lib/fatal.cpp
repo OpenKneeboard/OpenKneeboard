@@ -33,6 +33,8 @@
 #include <chrono>
 #include <fstream>
 
+using std::operator""s;
+
 namespace OpenKneeboard::detail {
 
 void FatalData::fatal() const noexcept {
@@ -93,11 +95,21 @@ void FatalData::fatal() const noexcept {
     now)
     << std::format("💀 FATAL: {}\n", mMessage);
 
+  std::unique_ptr<wchar_t, decltype(&LocalFree)> threadDescriptionBuf {
+    nullptr, &LocalFree};
+  GetThreadDescription(GetCurrentThread(), std::out_ptr(threadDescriptionBuf));
+  const auto threadDescription = winrt::to_string(threadDescriptionBuf.get());
+
   f << "\n"
     << "Metadata\n"
     << "========\n\n"
     << std::format("Executable:  {}\n", executable)
     << std::format("Module:      {}\n", modulePath)
+    << std::format(
+         "Thread:      {} {}\n",
+         std::this_thread::get_id(),
+         threadDescription.empty() ? "[no description]"s
+                                   : std::format("(\"{}\")", threadDescription))
     << std::format("Blame frame: {}\n", blameString)
     << std::format("OKB Version: {}\n", Version::ReleaseName);
 
