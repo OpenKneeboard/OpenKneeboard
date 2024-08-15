@@ -226,7 +226,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     AddFile("timestamp.txt", buffer);
   }
 
-  AddFile("debug-log.txt", winrt::to_string(GetDPrintMessagesAsWString()));
+  AddFile("debug-log.txt", GetDPrintMessagesAsString());
   AddFile("api-events.txt", GetAPIEventsAsString());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
@@ -330,40 +330,13 @@ std::string HelpPage::GetAPIEventsAsString() noexcept {
   return ret;
 }
 
-std::wstring HelpPage::GetDPrintMessagesAsWString() noexcept {
-  auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
-
-  std::wstring ret;
-  if (messages.empty()) {
-    ret = L"No log messages (?!)";
+std::string HelpPage::GetDPrintMessagesAsString() noexcept {
+  auto dumper = GetDPrintDumper();
+  if (!dumper) {
+    return "No log messages available.";
   }
 
-  bool first = true;
-  for (const auto& entry: messages) {
-    if (first) [[unlikely]] {
-      first = false;
-    } else {
-      ret += L'\n';
-    }
-
-    auto exe = std::wstring_view(entry.mExecutable);
-    {
-      auto dirSep = exe.find_last_of(L'\\');
-      if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
-        exe.remove_prefix(dirSep + 1);
-      }
-    }
-
-    ret += std::format(
-      L"[{:%F %T} {} ({})] {}: {}",
-      ReadableTime(entry.mWhen),
-      exe,
-      entry.mProcessID,
-      entry.mPrefix,
-      entry.mMessage);
-  }
-
-  return ret;
+  return dumper();
 }
 
 winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(

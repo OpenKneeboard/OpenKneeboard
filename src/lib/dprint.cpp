@@ -33,6 +33,15 @@
 
 namespace OpenKneeboard {
 
+static DPrintDumper sDumper;
+DPrintDumper GetDPrintDumper() {
+  return sDumper;
+}
+
+void SetDPrintDumper(const DPrintDumper& value) {
+  sDumper = value;
+}
+
 static std::wstring GetDPrintResourceName(std::wstring_view key) {
   // v2: explicit size added
   // v3: compatibility for 32-bit sender and 64-bit receiver

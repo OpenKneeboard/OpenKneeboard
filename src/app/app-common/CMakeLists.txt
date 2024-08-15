@@ -43,6 +43,7 @@ target_link_libraries(
   OpenKneeboard-Wintab
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-fatal
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_exit

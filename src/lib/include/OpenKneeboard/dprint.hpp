@@ -27,10 +27,17 @@
 #include <OpenKneeboard/tracing.hpp>
 
 #include <format>
+#include <functional>
+#include <ostream>
 #include <stop_token>
 #include <string>
 
 namespace OpenKneeboard {
+
+using DPrintDumper = std::function<std::string()>;
+[[nodiscard]]
+DPrintDumper GetDPrintDumper();
+void SetDPrintDumper(const DPrintDumper&);
 
 void dprint(std::string_view s);
 void dprint(std::wstring_view s);

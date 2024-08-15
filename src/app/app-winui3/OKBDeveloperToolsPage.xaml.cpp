@@ -150,7 +150,7 @@ void OKBDeveloperToolsPage::OnCopyAPIEventsClick(
 void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
   const IInspectable&,
   const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
-  SetClipboardText(winrt::to_string(HelpPage::GetDPrintMessagesAsWString()));
+  SetClipboardText(GetDPrintDumper()());
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

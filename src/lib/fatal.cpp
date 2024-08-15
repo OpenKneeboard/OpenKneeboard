@@ -77,15 +77,10 @@ void FatalData::fatal() const noexcept {
     std::chrono::system_clock::now());
   const auto pid = GetCurrentProcessId();
 
-  const auto crashFile = logsDirectory
-    / std::format(L"{}-crash-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.txt",
-                  modulePath.stem(),
-                  now,
-                  Version::Major,
-                  Version::Minor,
-                  Version::Patch,
-                  Version::Build,
-                  pid);
+  const auto crashFile
+    = logsDirectory
+    / std::format(
+        L"{}-crash-{:%Y%m%dT%H%M%S}-{}.txt", modulePath.stem(), now, pid);
 
   std::ofstream f(crashFile, std::ios::binary);
 
@@ -119,6 +114,14 @@ void FatalData::fatal() const noexcept {
     << "Actual trace\n"
     << "============\n\n"
     << actualTrace << "\n";
+
+  auto dumper = GetDPrintDumper();
+  if (dumper) {
+    f << "\n"
+      << "Logs\n"
+      << "====\n\n"
+      << dumper() << "\n";
+  }
 
   f.close();
 

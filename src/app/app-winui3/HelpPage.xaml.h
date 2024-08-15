@@ -55,7 +55,7 @@ struct HelpPage : HelpPageT<HelpPage>,
   bool AgreeButtonIsEnabled() noexcept;
 
   static std::string GetAPIEventsAsString() noexcept;
-  static std::wstring GetDPrintMessagesAsWString() noexcept;
+  static std::string GetDPrintMessagesAsString() noexcept;
 
  private:
   winrt::apartment_context mUIThread;

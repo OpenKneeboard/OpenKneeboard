@@ -27,10 +27,43 @@
 #include <OpenKneeboard/version.hpp>
 
 #include <chrono>
+#include <format>
 
 namespace OpenKneeboard {
 
 static std::weak_ptr<TroubleshootingStore> gStore;
+
+static std::string GetMessagesAsString() {
+  auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
+
+  if (messages.empty()) {
+    return "No log messages (?!)";
+  }
+
+  std::wstring ret;
+  for (const auto& entry: messages) {
+    auto exe = std::wstring_view(entry.mExecutable);
+    {
+      auto dirSep = exe.find_last_of(L'\\');
+      if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
+        exe.remove_prefix(dirSep + 1);
+      }
+    }
+
+    ret += std::format(
+      L"[{:%F %T} {} ({})] {}: {}\n",
+      std::chrono::zoned_time(
+        std::chrono::current_zone(),
+        std::chrono::time_point_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now())),
+      exe,
+      entry.mProcessID,
+      entry.mPrefix,
+      entry.mMessage);
+  }
+
+  return winrt::to_string(ret);
+}
 
 std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
   auto shared = gStore.lock();
@@ -38,6 +71,9 @@ std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
     shared.reset(new TroubleshootingStore());
     gStore = shared;
   }
+  std::once_flag sOnce;
+  std::call_once(sOnce, []() { SetDPrintDumper(&GetMessagesAsString); });
+
   return shared;
 }
 
