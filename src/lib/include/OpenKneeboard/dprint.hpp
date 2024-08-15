@@ -23,6 +23,7 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
 #include <format>

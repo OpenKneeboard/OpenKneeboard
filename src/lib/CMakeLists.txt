@@ -28,6 +28,17 @@ ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)
 target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC OpenKneeboard-Lib-Headers)
 target_link_libraries(OpenKneeboard-ThreadGuard PRIVATE OpenKneeboard-dprint)
 
+ok_add_library(OpenKneeboard-fatal STATIC fatal.cpp)
+target_link_libraries(
+  OpenKneeboard-fatal
+  PUBLIC
+  OpenKneeboard-Lib-Headers
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-shims
+  OpenKneeboard-Filesystem
+)
+
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)
 target_link_libraries(
   OpenKneeboard-GetMainHWND

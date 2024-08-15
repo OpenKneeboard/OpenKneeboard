@@ -31,6 +31,7 @@ namespace OpenKneeboard::Filesystem {
  * it guarantees to be in canonical form */
 std::filesystem::path GetTemporaryDirectory();
 std::filesystem::path GetLocalAppDataDirectory();
+std::filesystem::path GetLogsDirectory();
 std::filesystem::path GetRuntimeDirectory();
 std::filesystem::path GetImmutableDataDirectory();
 std::filesystem::path GetSettingsDirectory();

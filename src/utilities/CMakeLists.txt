@@ -78,6 +78,7 @@ add_utility_executable(
 target_link_libraries(
   OpenKneeboard-Viewer
   PRIVATE
+  OpenKneeboard-fatal
   OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-D3D11
