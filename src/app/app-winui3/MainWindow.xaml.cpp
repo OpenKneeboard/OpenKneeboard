@@ -791,22 +791,12 @@ winrt::fire_and_forget MainWindow::Shutdown() {
 
   co_await mKneeboard->DisposeAsync();
 
-  try {
-    self->mKneeboard = {};
-  } catch (const winrt::hresult_error& e) {
-    auto x = e.message();
-    __debugbreak();
-  } catch (const std::exception& e) {
-    auto x = e.what();
-    __debugbreak();
-  } catch (...) {
-    __debugbreak();
-  }
+  self->mKneeboard = {};
   self->mDXR = nullptr;
 
-  self->DispatcherQueue().TryEnqueue([]() -> task<void> {
+  self->DispatcherQueue().TryEnqueue([]() -> winrt::fire_and_forget {
     auto app = winrt::Microsoft::UI::Xaml::Application::Current().as<App>();
-    return app.as<App>()->CleanupAndExitAsync();
+    co_await app.as<App>()->CleanupAndExitAsync();
   });
 }
 
