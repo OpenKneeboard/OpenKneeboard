@@ -73,9 +73,6 @@ using namespace OpenKneeboard;
 
 #include <WindowsAppSDK-VersionInfo.h>
 
-static std::filesystem::path gDumpDirectory;
-static bool gDumped = false;
-
 namespace OpenKneeboard {
 /* PS > [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.App")
  * cc76597c-1041-5d57-c8ab-92cf9437104a
@@ -85,63 +82,6 @@ TRACELOGGING_DEFINE_PROVIDER(
   "OpenKneeboard.App",
   (0xcc76597c, 0x1041, 0x5d57, 0xc8, 0xab, 0x92, 0xcf, 0x94, 0x37, 0x10, 0x4a));
 }// namespace OpenKneeboard
-
-static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
-  if (gDumped) {
-    return;
-  }
-  gDumped = true;
-#ifdef DEBUG
-  if (IsDebuggerPresent()) {
-    __debugbreak();
-  }
-#endif
-  const auto processId = GetCurrentProcessId();
-
-  auto fileName = std::format(
-    L"OpenKneeboard-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.dmp",
-    std::chrono::system_clock::now(),
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    processId);
-  auto filePath = (gDumpDirectory / fileName).wstring();
-  const auto dumpFile = Win32::CreateFileW(
-    filePath.c_str(),
-    GENERIC_READ | GENERIC_WRITE,
-    0,
-    nullptr,
-    CREATE_ALWAYS,
-    FILE_ATTRIBUTE_NORMAL,
-    NULL);
-  MINIDUMP_EXCEPTION_INFORMATION exceptionInfo {
-    .ThreadId = GetCurrentThreadId(),
-    .ExceptionPointers = exceptionPointers,
-    .ClientPointers /* exception in debugger target */ = false,
-  };
-
-  EXCEPTION_RECORD exceptionRecord {};
-  CONTEXT exceptionContext {};
-  EXCEPTION_POINTERS fakeExceptionPointers;
-  if (!exceptionPointers) {
-    ::RtlCaptureContext(&exceptionContext);
-    exceptionRecord.ExceptionCode = STATUS_BREAKPOINT;
-    fakeExceptionPointers = {&exceptionRecord, &exceptionContext};
-    exceptionInfo.ExceptionPointers = &fakeExceptionPointers;
-  }
-
-  MiniDumpWriteDump(
-    GetCurrentProcess(),
-    processId,
-    dumpFile.get(),
-    static_cast<MINIDUMP_TYPE>(
-      MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithProcessThreadData
-      | MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo),
-    &exceptionInfo,
-    /* user stream = */ nullptr,
-    /* callback = */ nullptr);
-}
 
 App::App() {
   InitializeComponent();
@@ -399,8 +339,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     []() { TraceLoggingUnregister(gTraceProvider); });
 
   try {
-    gDumpDirectory
-      = Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>() / "OpenKneeboard";
+    Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>();
   } catch (const winrt::hresult_error& error) {
     const auto message = std::format(
       _(L"Windows was unable to find your 'Saved Games' folder; "
@@ -416,7 +355,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
     return 1;
   }
-  std::filesystem::create_directories(gDumpDirectory);
   OpenKneeboard::divert_process_failure_to_fatal();
 
   if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {

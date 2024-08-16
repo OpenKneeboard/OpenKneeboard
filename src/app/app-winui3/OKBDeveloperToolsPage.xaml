@@ -23,6 +23,9 @@
     <Button Click="OnCopyAPIEventsClick">
       Copy API events
     </Button>
+    <Button Click="OnTriggerCrashClick">
+      💥 Trigger crash
+    </Button>
     <ToggleSwitch
       Header="Register this executable for .OpenKneeboardPlugin files in HKCU"
       OffContent="Not registered in HKCU"

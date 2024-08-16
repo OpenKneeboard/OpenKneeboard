@@ -34,6 +34,10 @@ struct OKBDeveloperToolsPage : OKBDeveloperToolsPageT<OKBDeveloperToolsPage> {
   void OnCopyDebugMessagesClick(
     const IInspectable&,
     const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
+
+  void OnTriggerCrashClick(
+    const IInspectable&,
+    const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

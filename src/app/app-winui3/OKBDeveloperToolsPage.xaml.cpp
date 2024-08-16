@@ -153,4 +153,10 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
   SetClipboardText(GetDPrintDumper()());
 }
 
+void OKBDeveloperToolsPage::OnTriggerCrashClick(
+  const IInspectable&,
+  const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
+  fatal("'Trigger crash' clicked on developer tools page");
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

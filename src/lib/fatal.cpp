@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Win32.hpp>
+
 #include <shims/filesystem>
 #include <shims/source_location>
 #include <shims/winrt/base.h>
@@ -28,13 +30,16 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/filesystem.hpp>
+#include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <atomic>
+#include <bit>
 #include <chrono>
 #include <fstream>
 #include <ranges>
 
+#include <DbgHelp.h>
 #include <wchar.h>
 
 using std::operator""s;
@@ -43,13 +48,144 @@ namespace OpenKneeboard::detail {
 
 [[noreturn]]
 static void fast_fail() {
-  // The FAST_FAIL_FATAL_APP_EXIT macro is defined in winnt.h, but we don't want
-  // to pull that in here
-  constexpr unsigned int fast_fail_fatal_app_exit = 7;
   __fastfail(FAST_FAIL_FATAL_APP_EXIT);
 }
 
-static void log_fatal(const FatalData& fatal) noexcept {
+struct CrashMeta {
+  const std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
+    mNow {std::chrono::time_point_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now())};
+  const DWORD mPID {GetCurrentProcessId()};
+  const std::filesystem::path mModulePath {GetModulePath()};
+
+  const std::filesystem::path mCrashLogPath;
+  const std::filesystem::path mCrashDumpPath;
+
+  CrashMeta() noexcept
+    : mCrashLogPath(GetCrashFilePath(L"txt")),
+      mCrashDumpPath(GetCrashFilePath(L"dmp")) {
+  }
+
+  bool CanWriteDump() noexcept {
+    this->LoadDbgHelp();
+    return static_cast<bool>(mMiniDumpWriteDump);
+  }
+
+  decltype(&MiniDumpWriteDump) GetWriteMiniDumpProc() {
+    this->LoadDbgHelp();
+    if (!mMiniDumpWriteDump) {
+      OPENKNEEBOARD_BREAK;
+      fast_fail();
+    }
+    return mMiniDumpWriteDump;
+  }
+
+ private:
+  inline static std::filesystem::path GetModulePath() {
+    HMODULE thisModule {nullptr};
+    GetModuleHandleExA(
+      GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+        | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+      std::bit_cast<LPCSTR>(_ReturnAddress()),
+      &thisModule);
+    wchar_t buf[MAX_PATH];
+    const auto charCount = GetModuleFileNameW(thisModule, buf, MAX_PATH);
+    return {std::wstring_view {buf, charCount}};
+  }
+
+  std::filesystem::path GetCrashFilePath(std::wstring_view extension) {
+    return Filesystem::GetLogsDirectory()
+      / std::format(
+             L"{}-crash-{:%Y%m%dT%H%M%S}-{}.{}",
+             mModulePath.stem(),
+             mNow,
+             mPID,
+             extension);
+  }
+
+  unique_hmodule mDbgHelp;
+  decltype(&MiniDumpWriteDump) mMiniDumpWriteDump {nullptr};
+  bool mLoadedDbgHelp {false};
+  void LoadDbgHelp() {
+    if (std::exchange(mLoadedDbgHelp, true)) {
+      return;
+    }
+    mDbgHelp.reset(LoadLibraryW(L"Dbghelp.dll"));
+    if (!mDbgHelp) {
+      return;
+    }
+
+    mMiniDumpWriteDump = reinterpret_cast<decltype(&MiniDumpWriteDump)>(
+      GetProcAddress(mDbgHelp.get(), "MiniDumpWriteDump"));
+  }
+};
+
+enum class DumpType {
+  MiniDump,
+  FullDump,
+};
+
+static void CreateDump(
+  CrashMeta& meta,
+  DumpType dumpType,
+  std::string_view extraData,
+  LPEXCEPTION_POINTERS exceptionPointers) {
+  static std::atomic_flag sDumped;
+  if (sDumped.test_and_set()) {
+    return;
+  }
+
+  if (!meta.CanWriteDump()) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  const auto dumpFile = Win32::CreateFileW(
+    meta.mCrashDumpPath.c_str(),
+    GENERIC_READ | GENERIC_WRITE,
+    0,
+    nullptr,
+    CREATE_ALWAYS,
+    FILE_ATTRIBUTE_NORMAL,
+    NULL);
+  MINIDUMP_EXCEPTION_INFORMATION exceptionInfo {
+    .ThreadId = GetCurrentThreadId(),
+    .ExceptionPointers = exceptionPointers,
+    .ClientPointers /* exception in debugger target */ = false,
+  };
+
+  EXCEPTION_RECORD exceptionRecord {};
+  CONTEXT exceptionContext {};
+  EXCEPTION_POINTERS fakeExceptionPointers;
+  if (!exceptionPointers) {
+    ::RtlCaptureContext(&exceptionContext);
+    exceptionRecord.ExceptionCode = STATUS_BREAKPOINT;
+    fakeExceptionPointers = {&exceptionRecord, &exceptionContext};
+    exceptionInfo.ExceptionPointers = &fakeExceptionPointers;
+  }
+
+  constexpr auto miniDumpType = static_cast<MINIDUMP_TYPE>(
+    MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithProcessThreadData
+    | MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo);
+  constexpr auto fullDumpType = static_cast<MINIDUMP_TYPE>(
+    (miniDumpType & ~MiniDumpWithIndirectlyReferencedMemory)
+    | MiniDumpWithFullMemory | MiniDumpIgnoreInaccessibleMemory);
+  auto thisDumpType
+    = (dumpType == DumpType::FullDump) ? fullDumpType : miniDumpType;
+
+  (*meta.GetWriteMiniDumpProc())(
+    GetCurrentProcess(),
+    meta.mPID,
+    dumpFile.get(),
+    thisDumpType,
+    &exceptionInfo,
+    /* user stream = */ nullptr,
+    /* callback = */ nullptr);
+}
+
+static std::string GetFatalLogContents(
+  const CrashMeta& meta,
+  const FatalData& fatal) noexcept {
   static std::atomic_flag sRecursing;
   if (sRecursing.test_and_set()) {
     OutputDebugStringA(
@@ -74,37 +210,15 @@ static void log_fatal(const FatalData& fatal) noexcept {
   // Let's just get the basics out early in case anything else goes wrong
   dprintf("💀 FATAL: {} @ {}", fatal.mMessage, blameString);
 
-  HMODULE thisModule {nullptr};
-  GetModuleHandleExA(
-    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-      | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-    std::bit_cast<LPCSTR>(&FatalData::fatal),
-    &thisModule);
-  wchar_t moduleNameBuf[MAX_PATH];
-  const auto moduleNameChars
-    = GetModuleFileNameW(thisModule, moduleNameBuf, MAX_PATH);
-  const std::filesystem::path modulePath {
-    std::wstring_view {moduleNameBuf, moduleNameChars}};
-
-  const std::filesystem::path logsDirectory = Filesystem::GetLogsDirectory();
-  const auto now = std::chrono::time_point_cast<std::chrono::seconds>(
-    std::chrono::system_clock::now());
-  const auto pid = GetCurrentProcessId();
-
-  const auto crashFile
-    = logsDirectory
-    / std::format(
-        L"{}-crash-{:%Y%m%dT%H%M%S}-{}.txt", modulePath.stem(), now, pid);
-
-  std::ofstream f(crashFile, std::ios::binary);
+  std::stringstream f;
 
   const auto executable = Filesystem::GetCurrentExecutablePath();
 
   f << std::format(
     "{} (PID {}) crashed at {:%Y%m%dT%H%M%S}\n\n",
     executable.filename(),
-    pid,
-    now)
+    meta.mPID,
+    meta.mNow)
     << std::format("💀 FATAL: {}\n", fatal.mMessage);
 
   std::unique_ptr<wchar_t, decltype(&LocalFree)> threadDescriptionBuf {
@@ -116,7 +230,7 @@ static void log_fatal(const FatalData& fatal) noexcept {
     << "Metadata\n"
     << "========\n\n"
     << std::format("Executable:  {}\n", executable)
-    << std::format("Module:      {}\n", modulePath)
+    << std::format("Module:      {}\n", meta.mModulePath)
     << std::format(
          "Thread:      {} {}\n",
          std::this_thread::get_id(),
@@ -138,15 +252,75 @@ static void log_fatal(const FatalData& fatal) noexcept {
       << dumper() << "\n";
   }
 
-  f.close();
+  return f.str();
+}
 
-  Filesystem::OpenExplorerWithSelectedFile(crashFile);
+[[noreturn]]
+static void FatalAndDump(
+  const FatalData& fatal,
+  LPEXCEPTION_POINTERS dumpableExceptions) {
+  CrashMeta meta {};
+
+  const auto logContents = GetFatalLogContents(meta, fatal);
+
+  {
+    std::ofstream f(meta.mCrashLogPath, std::ios::binary);
+    f << logContents;
+  }
+
+  OPENKNEEBOARD_BREAK;
+
+  if (meta.CanWriteDump()) {
+    auto thisProcess = Filesystem::GetCurrentExecutablePath();
+
+    const auto createFullDump = MessageBox(
+      NULL,
+      L"OpenKneeboard has crashed and a log has been created; would you like "
+      L"to "
+      L"create a full dump that you can share with the developers?\n\nThis may "
+      L"create a file that is several hundred megabytes.",
+      thisProcess.stem().c_str(),
+      MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
+
+    if (createFullDump == IDYES) {
+      CreateDump(meta, DumpType::FullDump, logContents, dumpableExceptions);
+
+      try {
+        Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
+      } catch (...) {
+      }
+
+      fast_fail();
+    }
+
+    const auto createMiniDump = MessageBox(
+      NULL,
+      L"Would you like to create a minidump instead?\n\nThis will usually be "
+      L"tens of megabytes.",
+      thisProcess.stem().c_str(),
+      MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
+    if (createMiniDump == IDYES) {
+      CreateDump(meta, DumpType::MiniDump, logContents, dumpableExceptions);
+
+      try {
+        Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
+      } catch (...) {
+      }
+
+      fast_fail();
+    }
+  }
+
+  try {
+    Filesystem::OpenExplorerWithSelectedFile(meta.mCrashLogPath);
+  } catch (...) {
+  }
+
+  fast_fail();
 }
 
 void FatalData::fatal() const noexcept {
-  log_fatal(*this);
-  OPENKNEEBOARD_BREAK;
-  fast_fail();
+  FatalAndDump(*this, nullptr);
 }
 
 struct WILResultInfo {
@@ -157,7 +331,6 @@ struct WILResultInfo {
 static thread_local WILResultInfo tLastWILResult {};
 
 static void OnTerminate() {
-  __debugbreak();
   if (!std::uncaught_exceptions()) {
     if (tLastWILResult.mFailureInfo.returnAddress) {
       const auto trace = std::stacktrace::current();
@@ -167,7 +340,7 @@ static void OnTerminate() {
           return (it.source_file() == info.pszFile)
             && (it.source_line() == info.uLineNumber);
         });
-      __debugbreak();
+      OPENKNEEBOARD_BREAK;
     }
     fatal("std::terminate() called with no uncaught exceptions");
   }
@@ -191,8 +364,7 @@ static void OnTerminate() {
 
 LONG __callback WINAPI
 OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
-  auto count = std::uncaught_exceptions();
-  __debugbreak();
+  FatalAndDump({"Uncaught exceptions"}, exceptionPointers);
   return EXCEPTION_EXECUTE_HANDLER;
 }
 

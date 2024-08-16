@@ -80,7 +80,6 @@ target_link_libraries(
   OpenKneeboard-tracing
   OpenKneeboard-version
   System::Comctl32
-  System::Dbghelp
   System::Dxgi
   System::Shell32
   System::User32
