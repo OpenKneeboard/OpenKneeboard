@@ -32,7 +32,6 @@
 #include <shims/nlohmann/json.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/launder_nodiscard.hpp>
 
 #include <algorithm>
 

@@ -41,6 +41,7 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
 
+#include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
 #include <stop_token>
@@ -76,6 +77,16 @@ struct requires_Microsoft_UI_Dispatching_from_WinUI3 {
 using DispatcherQueue = requires_Microsoft_UI_Dispatching_from_WinUI3;
 using DispatcherQueueController = requires_Microsoft_UI_Dispatching_from_WinUI3;
 #endif
+
+winrt::fire_and_forget fire_and_forget(
+  auto awaitable,
+  std::source_location caller = std::source_location::current()) {
+  try {
+    co_await std::move(awaitable);
+  } catch (...) {
+    fatal_with_exception(std::current_exception());
+  }
+}
 
 inline auto random_guid() {
   winrt::guid ret;
