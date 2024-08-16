@@ -218,3 +218,30 @@ target_include_directories(
 set_property(
   TARGET capi-test
   PROPERTY CXX_STANDARD 17)
+
+ok_add_executable(symbolize-traces symbolize-traces.cpp)
+target_link_libraries(
+  symbolize-traces
+  PRIVATE
+  OpenKneeboard-shims
+  ThirdParty::DIA
+  ThirdParty::WIL
+)
+add_custom_command(
+  TARGET symbolize-traces
+  POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+  "${DIASDK_DLL}"
+  "$<TARGET_FILE_DIR:symbolize-traces>/"
+)
+install(
+  TARGETS symbolize-traces
+  DESTINATION "."
+  COMPONENT DebugSymbols
+)
+install(
+  FILES
+  "${DIASDK_DLL}"
+  DESTINATION "."
+  COMPONENT DebugSymbols
+)

@@ -37,6 +37,7 @@ configure_file(
 include(abiwinrt.cmake)
 include(detours.cmake)
 include(cppwinrt.cmake)
+include(dia.cmake)
 include(directxtex.cmake)
 include(directxtk.cmake)
 include(directxtk12.cmake)
