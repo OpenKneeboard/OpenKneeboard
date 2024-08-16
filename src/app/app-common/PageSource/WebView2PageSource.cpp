@@ -150,10 +150,6 @@ WebView2PageSource::WebView2PageSource(
   }
   mWorkerDQC = WorkerDQC::CreateOnDedicatedThread();
   mWorkerDQ = mWorkerDQC.DispatcherQueue();
-  dprintf(
-    "Created queue {:#018x} in thread {}",
-    std::hash<winrt::Windows::Foundation::IUnknown> {}(mWorkerDQC),
-    std::this_thread::get_id());
 }
 
 std::string WebView2PageSource::GetVersion() {
@@ -203,10 +199,6 @@ WebView2PageSource::DisposeAsync() noexcept {
     mEnvironment = nullptr;
     co_await mUIThread;
     mDocumentResources = {};
-    dprintf(
-      "Shutting down queue {:#018x} in thread {}",
-      std::hash<winrt::Windows::Foundation::IUnknown> {}(mWorkerDQ),
-      std::this_thread::get_id());
     mWorkerDQ = {nullptr};
     co_await mWorkerDQC.ShutdownQueueAsync();
   }
