@@ -23,12 +23,35 @@
 #include <optional>
 #include <source_location>
 #include <stacktrace>
+#include <string>
+
+typedef LONG HRESULT;
 
 namespace OpenKneeboard::detail {
+struct SourceLocation {
+  std::string mFunctionName;
+  std::string mFileName;
+  size_t mLine {0};
+  size_t mColumn {0};
+
+  SourceLocation() = delete;
+  SourceLocation(const std::source_location& loc)
+    : mFunctionName(loc.function_name()),
+      mFileName(loc.file_name()),
+      mLine(loc.line()),
+      mColumn(loc.column()) {
+  }
+
+  SourceLocation(const std::stacktrace_entry& entry)
+    : mFunctionName(entry.description()),
+      mFileName(entry.source_file()),
+      mLine(entry.source_line()) {
+  }
+};
 
 struct FatalData {
   std::string mMessage;
-  std::optional<std::source_location> mBlameLocation;
+  std::optional<SourceLocation> mBlameLocation;
 
   [[noreturn, msvc::noinline]]
   void fatal() const noexcept;
@@ -59,6 +82,8 @@ void fatal(
   }
     .fatal();
 }
+
+void fatal_with_hresult(HRESULT);
 
 /// Hook std::terminate() and SetUnhandledExceptionFilter()
 void divert_process_failure_to_fatal();

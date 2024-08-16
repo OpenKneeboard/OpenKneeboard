@@ -31,6 +31,7 @@
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/filesystem.hpp>
 #include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <atomic>
@@ -40,14 +41,14 @@
 #include <ranges>
 
 #include <DbgHelp.h>
+#include <detours.h>
 #include <wchar.h>
 
 using std::operator""s;
 
-namespace OpenKneeboard::detail {
-
+namespace {
 [[noreturn]]
-static void fast_fail() {
+void fast_fail() {
   __fastfail(FAST_FAIL_FATAL_APP_EXIT);
 }
 
@@ -58,6 +59,43 @@ struct SkipStacktraceEntries {
 
   size_t mCount;
 };
+
+struct ExceptionRecord {
+  std::stacktrace mCreationStack;
+};
+static thread_local std::optional<ExceptionRecord> tLatestException {};
+
+struct WILFailureRecord {
+  std::stacktrace mCreationStack;
+  HRESULT mHR {};
+  std::wstring mMessage;
+  // Used for ERROR_UNHANDLED_EXCEPTION
+  std::optional<ExceptionRecord> mException;
+};
+static thread_local std::optional<WILFailureRecord> tLatestWILFailure {};
+
+}// namespace
+
+template <class CharT>
+struct std::formatter<OpenKneeboard::detail::SourceLocation, CharT>
+  : std::formatter<std::basic_string_view<CharT>, CharT> {
+  template <class FormatContext>
+  auto format(
+    const OpenKneeboard::detail::SourceLocation& loc,
+    FormatContext& fc) const {
+    const auto converted = std::format(
+      "{}:{}:{} - {}",
+      loc.mFileName,
+      loc.mLine,
+      loc.mColumn,
+      loc.mFunctionName);
+
+    return std::formatter<std::basic_string_view<CharT>, CharT>::format(
+      std::basic_string_view<CharT> {converted}, fc);
+  }
+};
+
+namespace OpenKneeboard::detail {
 
 struct CrashMeta {
   // Stack trace with the second entry being the blame frame.
@@ -253,9 +291,35 @@ static std::string GetFatalLogContents(
     << std::format("OKB Version: {}\n", Version::ReleaseName);
 
   f << "\n"
-    << "Actual trace\n"
-    << "============\n\n"
+    << "Stack Trace\n"
+    << "===========\n\n"
     << meta.mStacktrace << "\n";
+
+  if (tLatestException) {
+    f << "\n"
+      << "Latest Exception\n"
+      << "================\n\n"
+      << tLatestException->mCreationStack << "\n";
+  }
+
+  if (tLatestWILFailure) {
+    f << "\n"
+      << "Latest WIL Failure\n"
+      << "==================\n"
+      << "\n"
+      << std::format(
+           "HRESULT: {:#018x} ({})\n",
+           static_cast<uint32_t>(tLatestWILFailure->mHR),
+           winrt::to_string(
+             winrt::hresult_error(tLatestWILFailure->mHR).message()))
+      << std::format(
+           "Message: {}\n", winrt::to_string(tLatestWILFailure->mMessage));
+
+    if (tLatestWILFailure->mException) {
+      f << std::format(
+        "\nException:\n\n{}\n", tLatestWILFailure->mException->mCreationStack);
+    }
+  }
 
   auto dumper = GetDPrintDumper();
   if (dumper) {
@@ -342,28 +406,8 @@ struct WILResultInfo {
   std::wstring mDebugMessage;
 };
 
-static thread_local WILResultInfo tLastWILResult {};
-
 static void OnTerminate() {
-  if (!std::uncaught_exceptions()) {
-    fatal("std::terminate() called with no uncaught exceptions");
-  }
-
-  try {
-    std::rethrow_exception(std::current_exception());
-  } catch (const winrt::hresult_error& e) {
-    fatal(
-      "std::terminate() called with uncaught winrt::hresult_error: {}",
-      winrt::to_string(e.message()));
-  } catch (const std::exception& e) {
-    fatal(
-      "std::terminate() called with derived_from<std::exception> ({}): {}",
-      typeid(e).name(),
-      e.what());
-  } catch (...) {
-    fatal(
-      "std::terminate() called with an exception with an unknown base class");
-  }
+  fatal("std::terminate() called");
 }
 
 LONG __callback WINAPI
@@ -377,9 +421,17 @@ static void __stdcall OnWILResult(
   wil::FailureInfo* failure,
   PWSTR debugMessage,
   size_t debugMessageChars) noexcept {
-  tLastWILResult = {
-    *failure,
-    std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)}};
+  tLatestWILFailure = {
+    .mCreationStack = std::stacktrace::current(),
+    .mHR = failure->hr,
+    .mMessage
+    = std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
+  };
+  if (
+    failure->hr == HRESULT_FROM_WIN32(ERROR_UNHANDLED_EXCEPTION)
+    && tLatestException) {
+    tLatestWILFailure->mException = *tLatestException;
+  }
 }
 
 static void divert_thread_failure_to_fatal() {
@@ -398,14 +450,48 @@ struct ThreadFailureHook {
 };
 static thread_local ThreadFailureHook tThreadFailureHook;
 
+static decltype(&_CxxThrowException) gCxxThrowException {&_CxxThrowException};
+extern "C" void __stdcall CxxThrowExceptionHook(
+  void* pExceptionObject,
+  _ThrowInfo* pThrowInfo) {
+  if (pExceptionObject) {
+    // Otherwise, it's a rethrow
+    tLatestException = {
+      std::stacktrace::current(1),
+    };
+  }
+
+  gCxxThrowException(pExceptionObject, pThrowInfo);
+}
+
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
-void divert_process_failure_to_fatal() {
-  wil::SetResultMessageCallback(&detail::OnWILResult);
 
-  detail::divert_thread_failure_to_fatal();
-  detail::gDivertThreadFailureToFatal = true;
+void fatal_with_hresult(HRESULT hr) {
+  using namespace OpenKneeboard::detail;
+  CrashMeta meta {};
+  FatalAndDump(
+    meta,
+    {std::format(
+      "HRESULT {:#018x} ({})",
+      static_cast<uint32_t>(hr),
+      winrt::to_string(winrt::hresult_error(hr).message()))},
+    nullptr);
+}
+
+void divert_process_failure_to_fatal() {
+  using namespace OpenKneeboard::detail;
+
+  wil::SetResultMessageCallback(&OnWILResult);
+
+  // What could go wrong
+  winrt::check_win32(DetourTransactionBegin());
+  winrt::check_win32(DetourAttach(&gCxxThrowException, &CxxThrowExceptionHook));
+  winrt::check_win32(DetourTransactionCommit());
+
+  divert_thread_failure_to_fatal();
+  gDivertThreadFailureToFatal = true;
 }
 
 }// namespace OpenKneeboard

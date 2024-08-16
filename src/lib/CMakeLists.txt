@@ -39,6 +39,7 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   ThirdParty::CppWinRT
   ThirdParty::WIL
+  ThirdParty::detours
 )
 
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)

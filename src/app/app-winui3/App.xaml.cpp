@@ -85,16 +85,10 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 App::App() {
   InitializeComponent();
-#ifdef DEBUG
   UnhandledException(
-    [this](IInspectable const&, UnhandledExceptionEventArgs const& e) {
-      if (IsDebuggerPresent()) {
-        auto errorMessage = e.Message();
-        __debugbreak();
-      }
-      throw;
+    [](IInspectable const&, UnhandledExceptionEventArgs const& e) {
+      fatal_with_hresult(e.Exception());
     });
-#endif
 }
 
 winrt::fire_and_forget App::CleanupAndExitAsync() {
@@ -355,6 +349,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
     return 1;
   }
+
   OpenKneeboard::divert_process_failure_to_fatal();
 
   if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {

@@ -158,7 +158,7 @@ static constexpr const char TriggeredCrashMessage[]
 
 void OKBDeveloperToolsPage::OnTriggerCrashClick(
   const IInspectable&,
-  const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
+  const Microsoft::UI::Xaml::RoutedEventArgs&) {
   enum class CrashKind {
     Fatal = 0,
     Throw = 1,
@@ -176,13 +176,11 @@ void OKBDeveloperToolsPage::OnTriggerCrashClick(
       triggerCrash = []() { fatal("{}", TriggeredCrashMessage); };
       break;
     case CrashKind::Throw:
-      triggerCrash
-        = []() { throw new std::runtime_error(TriggeredCrashMessage); };
+      triggerCrash = []() { throw std::runtime_error(TriggeredCrashMessage); };
       break;
     case CrashKind::ThrowFromNoexcept:
-      triggerCrash = []() noexcept {
-        throw new std::runtime_error(TriggeredCrashMessage);
-      };
+      triggerCrash
+        = []() noexcept { throw std::runtime_error(TriggeredCrashMessage); };
       break;
     default:
       OPENKNEEBOARD_BREAK;

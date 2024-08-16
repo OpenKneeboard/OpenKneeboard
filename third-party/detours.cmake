@@ -42,6 +42,8 @@ ExternalProject_Get_property(detoursBuild SOURCE_DIR)
 target_include_directories(detours INTERFACE ${SOURCE_DIR}/include)
 target_link_libraries(detours INTERFACE "${SOURCE_DIR}/${LIB}")
 
+add_library(ThirdParty::detours ALIAS detours)
+
 install(
   FILES
   "${SOURCE_DIR}/LICENSE.md"
