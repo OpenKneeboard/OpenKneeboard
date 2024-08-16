@@ -38,7 +38,7 @@ class BrowserTab final : public TabBase,
  public:
   struct Settings;
   BrowserTab() = delete;
-  static std::shared_ptr<BrowserTab> Create(
+  static task<std::shared_ptr<BrowserTab>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,

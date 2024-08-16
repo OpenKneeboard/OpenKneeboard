@@ -441,7 +441,7 @@ winrt::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
   }
   settings.mURI = uri;
 
-  co_await this->AddTabs({BrowserTab::Create(
+  co_await this->AddTabs({co_await BrowserTab::Create(
     mDXR, mKneeboard.get(), random_guid(), _("Web Dashboard"), settings)});
 }
 

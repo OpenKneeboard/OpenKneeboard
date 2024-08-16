@@ -20,7 +20,6 @@
 #include <OpenKneeboard/BrowserTab.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/launder_nodiscard.hpp>
 
 namespace OpenKneeboard {
 
@@ -37,7 +36,7 @@ BrowserTab::BrowserTab(
     mSettings(settings) {
 }
 
-std::shared_ptr<BrowserTab> BrowserTab::Create(
+task<std::shared_ptr<BrowserTab>> BrowserTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
@@ -45,8 +44,8 @@ std::shared_ptr<BrowserTab> BrowserTab::Create(
   const Settings& settings) {
   std::shared_ptr<BrowserTab> ret {
     new BrowserTab(dxr, kbs, persistentID, title, settings)};
-  launder_nodiscard(ret->Reload());
-  return ret;
+  co_await ret->Reload();
+  co_return ret;
 }
 
 BrowserTab::~BrowserTab() {
