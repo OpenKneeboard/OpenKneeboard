@@ -130,14 +130,14 @@ struct Task;
 template <class TDispatcherQueue, class TResult>
 struct TaskPromiseBase {
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
+  std::source_location mCaller;
 
-  TaskPromiseBase() = default;
-  explicit TaskPromiseBase(std::coroutine_handle<> caller) : mWaiting(caller) {
-  }
+  TaskPromiseBase() = delete;
 
   TDispatcherQueue mDQ = TDispatcherQueue::GetForCurrentThread();
   std::exception_ptr mUncaught {};
 
+  [[msvc::noinline]]
   auto get_return_object(this auto& self) {
     return &self;
   }
@@ -177,10 +177,18 @@ struct TaskPromiseBase {
   TaskFinalAwaiter<TDispatcherQueue, TResult> final_suspend() noexcept {
     return {*this, mDQ};
   }
+
+ protected:
+  TaskPromiseBase(std::source_location&& caller) : mCaller(std::move(caller)) {
+  }
 };
 
 template <class TDispatcherQueue, class TResult>
 struct TaskPromise : TaskPromiseBase<TDispatcherQueue, TResult> {
+  TaskPromise(std::source_location&& caller = std::source_location::current())
+    : TaskPromiseBase<TDispatcherQueue, TResult>(std::move(caller)) {
+  }
+
   TResult mResult;
 
   void return_value(TResult&& result) noexcept {
@@ -190,6 +198,10 @@ struct TaskPromise : TaskPromiseBase<TDispatcherQueue, TResult> {
 template <class TDispatcherQueue>
 struct TaskPromise<TDispatcherQueue, void>
   : TaskPromiseBase<TDispatcherQueue, void> {
+  TaskPromise(std::source_location&& caller = std::source_location::current())
+    : TaskPromiseBase<TDispatcherQueue, void>(std::move(caller)) {
+  }
+
   void return_void() noexcept {
   }
 };
