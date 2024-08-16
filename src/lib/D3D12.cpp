@@ -56,8 +56,7 @@ SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::~SpriteBatch()");
 
   if (mCommandList) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "Destroying while frame in progress; did you call End()?");
+    fatal("Destroying while frame in progress; did you call End()?");
   }
 }
 
@@ -67,8 +66,7 @@ void SpriteBatch::Begin(
   const PixelSize& rtvSize) {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::Begin()");
   if (mCommandList) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "frame already in progress; did you call End()?");
+    fatal("frame already in progress; did you call End()?");
   }
 
   mCommandList = commandList;
@@ -102,7 +100,7 @@ void SpriteBatch::Begin(
 void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::Clear()");
   if (!mCommandList) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+    fatal("target not set, call BeginFrame()");
   }
 
   mCommandList->ClearRenderTargetView(mRenderTargetView, color, 0, nullptr);
@@ -116,7 +114,7 @@ void SpriteBatch::Draw(
   const DirectX::XMVECTORF32 tint) {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::Draw()");
   if (!mCommandList) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+    fatal("target not set, call BeginFrame()");
   }
 
   const auto sourceD3DSize
@@ -132,8 +130,7 @@ void SpriteBatch::Draw(
 void SpriteBatch::End() {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::End()");
   if (!mCommandList) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "target not set; double-End() or Begin() not called?");
+    fatal("target not set; double-End() or Begin() not called?");
   }
 
   {

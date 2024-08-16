@@ -287,8 +287,7 @@ std::vector<PageID> WebView2PageSource::GetPageIDs() const {
     case ContentMode::Scrollable:
       return {mScrollableContentPageID};
   }
-  OPENKNEEBOARD_LOG_AND_FATAL(
-    "Invalid content mode in WebView2PageSource::GetPageIDs()");
+  fatal("Invalid content mode in WebView2PageSource::GetPageIDs()");
 }
 
 PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
@@ -329,8 +328,7 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
 
   const auto view = rc.GetKneeboardView();
   if (!view) {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "WebView2PageSource::Render() should always have a view");
+    fatal("WebView2PageSource::Render() should always have a view");
   }
 
   const auto key

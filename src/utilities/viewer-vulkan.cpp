@@ -84,18 +84,18 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
 VulkanRenderer::VulkanRenderer(uint64_t luid) {
   mVulkanLoader = unique_hmodule {LoadLibraryA("vulkan-1.dll")};
   if (!mVulkanLoader) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Failed to load vulkan-1.dll");
+    fatal("Failed to load vulkan-1.dll");
   }
   auto vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
     GetProcAddress(mVulkanLoader.get(), "vkGetInstanceProcAddr"));
   if (!vkGetInstanceProcAddr) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkGetInstanceProcAddr");
+    fatal("Failed to find vkGetInstanceProcAddr");
   }
 
   auto vkCreateInstance = reinterpret_cast<PFN_vkCreateInstance>(
     vkGetInstanceProcAddr(NULL, "vkCreateInstance"));
   if (!vkCreateInstance) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkCreateInstance");
+    fatal("Failed to find vkCreateInstance");
   }
 
   const VkApplicationInfo applicationInfo {
@@ -150,7 +150,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     vkGetInstanceProcAddr(instance, "vkDestroyInstance"));
 
   if (!vkDestroyInstance) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkDestroyInstance");
+    fatal("Failed to find vkDestroyInstance");
   }
   mVKInstance = {instance, {vkDestroyInstance, nullptr}};
 
@@ -198,7 +198,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   }
 
   if (!mVKPhysicalDevice) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find matching device");
+    fatal("Failed to find matching device");
   }
 
   uint32_t queueFamilyCount {0};
@@ -214,7 +214,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
         return (it.queueFlags & VK_QUEUE_GRAPHICS_BIT);
       });
     if (it == queueFamilies.end()) {
-      OPENKNEEBOARD_LOG_AND_FATAL("No graphics queues found");
+      fatal("No graphics queues found");
     }
     mQueueFamilyIndex = (it - queueFamilies.begin());
   }
@@ -366,7 +366,7 @@ void VulkanRenderer::SaveTextureToFile(
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
   if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+    fatal("Unable to find suitable memoryType");
   }
 
   const VkMemoryDedicatedAllocateInfoKHR dedicatedAllocInfo {
@@ -758,7 +758,7 @@ void VulkanRenderer::InitializeDest(
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+    fatal("Unable to find suitable memoryType");
   }
 
   VkImportMemoryWin32HandleInfoKHR importInfo {

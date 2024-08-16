@@ -233,6 +233,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-Elevation
   OpenKneeboard-config
+  OpenKneeboard-fatal
   OpenKneeboard-shims
   OpenKneeboard-version
 )
@@ -445,8 +446,9 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-StateMachine
-  OpenKneeboard-dprint
   OpenKneeboard-UTF8
+  OpenKneeboard-dprint
+  OpenKneeboard-fatal
   System::Shlwapi
   ThirdParty::CppWinRT
   ThirdParty::WIL

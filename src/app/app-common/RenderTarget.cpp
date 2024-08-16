@@ -85,16 +85,14 @@ RenderTargetID RenderTarget::GetID() const {
 
 RenderTarget::D2D RenderTarget::d2d(const std::source_location& loc) {
   if (!mD3DTexture) {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Attempted to start D2D without a texture");
+    fatal(loc, "Attempted to start D2D without a texture");
   }
   return {this->shared_from_this(), loc};
 }
 
 RenderTarget::D3D RenderTarget::d3d(const std::source_location& loc) {
   if (!mD3DTexture) {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Attempted to start D3D without a texture");
+    fatal(loc, "Attempted to start D3D without a texture");
   }
   return {this->shared_from_this()};
 }
@@ -105,8 +103,7 @@ RenderTargetWithMultipleIdentities::Create(
   const winrt::com_ptr<ID3D11Texture2D>& texture,
   size_t identityCount) {
   if (identityCount < 1) {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "Can't create a RenderTarget with no identities");
+    fatal("Can't create a RenderTarget with no identities");
   }
   auto ret = std::shared_ptr<RenderTargetWithMultipleIdentities>(
     new RenderTargetWithMultipleIdentities(dxr, texture));
@@ -120,7 +117,7 @@ RenderTargetID RenderTargetWithMultipleIdentities::GetID() const {
 
 void RenderTargetWithMultipleIdentities::SetActiveIdentity(size_t index) {
   if (index >= mIdentities.size()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("identity index out of bounds");
+    fatal("identity index out of bounds");
   }
   mCurrentIdentity = index;
 }

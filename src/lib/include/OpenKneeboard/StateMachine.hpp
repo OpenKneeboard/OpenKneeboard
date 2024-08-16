@@ -143,7 +143,7 @@ class StateMachineBase {
     if (actual == expected) [[likely]] {
       return;
     }
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+    fatal(
       caller,
       "{}: Expected state {:#}, but state is {:#}",
       message,
@@ -165,7 +165,7 @@ class StateMachineBase {
       return;
     }
 
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+    fatal(
       loc,
       "Unexpected state {:#}; expected ({} -> {})",
       result.error(),

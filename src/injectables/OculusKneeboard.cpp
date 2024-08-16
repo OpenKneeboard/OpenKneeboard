@@ -239,7 +239,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {
-      OPENKNEEBOARD_LOG_AND_FATAL("Commit failed with {}", error);
+      fatal("Commit failed with {}", error);
     }
 
     for (size_t i = 0; i < cacheKeys.size(); ++i) {

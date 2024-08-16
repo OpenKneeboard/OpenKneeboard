@@ -26,7 +26,7 @@ static bool sHaveInstance = false;
 
 DebugPrivileges::DebugPrivileges() {
   if (sHaveInstance) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Can't nest DebugPrivileges");
+    fatal("Can't nest DebugPrivileges");
   }
   sHaveInstance = true;
   if (!OpenProcessToken(

@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/json_fwd.hpp>
+#include <openKneeboard/format_enum.hpp>
 
 #include <variant>
 
@@ -83,7 +84,7 @@ struct ViewVRConfig {
 
   constexpr auto GetIndependentConfig() const {
     if (mType != Type::Independent) [[unlikely]] {
-      OPENKNEEBOARD_FATAL;
+      fatal("Can't get an independent view for {:#}", mType);
     }
     return std::get<IndependentViewVRConfig>(mData);
   }
@@ -95,7 +96,7 @@ struct ViewVRConfig {
 
   constexpr auto GetMirrorOfGUID() const {
     if (mType != Type::HorizontalMirror) {
-      OPENKNEEBOARD_FATAL;
+      fatal("Can't get a mirror GUID for {:#}", mType);
     }
     return std::get<winrt::guid>(mData);
   }

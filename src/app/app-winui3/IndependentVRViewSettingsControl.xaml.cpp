@@ -96,7 +96,7 @@ IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
 
   const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   if (it == views.end()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
+    fatal("Requested view not found");
   }
 
   return it->mVR.GetIndependentConfig();
@@ -108,7 +108,7 @@ winrt::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
   auto& views = viewsConfig.mViews;
   auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   if (it == views.end()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
+    fatal("Requested view not found");
   }
   it->mVR.SetIndependentConfig(config);
   co_await mKneeboard->SetViewsSettings(viewsConfig);

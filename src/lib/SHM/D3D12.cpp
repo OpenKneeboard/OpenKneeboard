@@ -70,7 +70,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetD3D12ShaderResourceViewGPUHandle() {
   }
 
   if (!mTexture) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Can't create an SRV without a texture");
+    fatal("Can't create an SRV without a texture");
   }
 
   mDevice->CreateShaderResourceView(

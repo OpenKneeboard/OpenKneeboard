@@ -112,8 +112,7 @@ winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
         if (code == ERROR_BAD_LENGTH) {
           continue;// ?! We're not providing a length...
         }
-        OPENKNEEBOARD_LOG_AND_FATAL(
-          "WTSEnumerateProcessesExW() failed with {}", code);
+        fatal("WTSEnumerateProcessesExW() failed with {}", code);
       }
     }
 

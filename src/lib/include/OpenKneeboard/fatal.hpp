@@ -48,4 +48,17 @@ void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
     .fatal();
 }
 
+template <class... Ts>
+[[noreturn]]
+void fatal(
+  const std::source_location& blame,
+  std::format_string<Ts...> fmt,
+  Ts&&... values) noexcept {
+  detail::FatalData {
+    .mMessage = std::format(fmt, std::forward<Ts>(values)...),
+    .mBlameLocation = blame,
+  }
+    .fatal();
+}
+
 }// namespace OpenKneeboard

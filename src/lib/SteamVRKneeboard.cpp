@@ -470,8 +470,7 @@ static bool IsSteamVRRunning() {
       // internally fails
       return sIsRunning;
     }
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "WTSEnumerateProcessesExW() failed with {}", code);
+    fatal("WTSEnumerateProcessesExW() failed with {}", code);
   }
 
   static constexpr std::wstring_view SteamVRExecutable {L"vrmonitor.exe"};

@@ -150,7 +150,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
   const size_t count = mSettings.mViews.mViews.size();
   if (count != mViews.size()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("View count mismatch");
+    fatal("View count mismatch");
   }
   for (size_t i = 0; i < count; ++i) {
     const auto& viewConfig = mSettings.mViews.mViews.at(i);

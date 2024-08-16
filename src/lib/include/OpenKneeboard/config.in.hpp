@@ -94,23 +94,6 @@ inline void fatal [[noreturn]] () {
 #define OPENKNEEBOARD_BREAK
 #endif
 
-/** Use this if something is so wrong that we're almost certainly going to
- * crash.
- *
- * Crashing earlier is better than crashing later, as we get more usable
- * debugging information.
- *
- * Prefer `OPENKNEEBOARD_LOG_AND_FATAL()` from <OpenKneeboard/dprint.hpp>
- *
- * This uses `__fastfail()` because `abort()` can end up lost and confusing in
- * some multi-threaded environments.
- */
-#define OPENKNEEBOARD_FATAL \
-  { \
-    OPENKNEEBOARD_BREAK; \
-    OpenKneeboard::Detail::fatal(); \
-  }
-
 // clang-format off
 #define OPENKNEEBOARD_BUILD_BITNESS @BUILD_BITNESS@
 // clang-format on

@@ -289,7 +289,7 @@ uint8_t Snapshot::GetLayerCount() const {
 
 const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
+    fatal(
       "Asked for layer {}, but there are {} layers",
       layerIndex,
       this->GetLayerCount());
@@ -717,7 +717,7 @@ void Writer::SubmitFrame(
     State::Locked>(p);
 
   if (layers.size() > MaxViewCount) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
+    fatal(
       "Asked to publish {} layers, but max is {}", layers.size(), MaxViewCount);
   }
 
@@ -788,7 +788,7 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
 
   const auto swapchainIndex = mSwapchainIndex;
   if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+    fatal(
       loc,
       "swapchainIndex {} >= swapchainLength {}; did you call "
       "InitializeCache()?",

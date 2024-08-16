@@ -229,13 +229,13 @@ class Snapshot final {
   template <std::derived_from<IPCClientTexture> T>
   T* GetTexture() const {
     if (mState != State::ValidWithTexture) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL(
+      fatal(
         "Called SHM::Snapshot::GetTexture() with invalid state {}",
         static_cast<uint8_t>(mState));
     }
     const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL("Layer texture cache type mismatch");
+      fatal("Layer texture cache type mismatch");
     }
     return ret.get();
   }

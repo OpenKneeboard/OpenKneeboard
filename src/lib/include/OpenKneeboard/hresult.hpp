@@ -60,8 +60,7 @@ inline void check_hresult(
   HRESULT code,
   const std::source_location& loc = std::source_location::current()) {
   if (FAILED(code)) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "HRESULT {}", winrt::hresult {code});
+    fatal(loc, "HRESULT {}", winrt::hresult {code});
   }
 }
 

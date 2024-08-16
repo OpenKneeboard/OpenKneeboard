@@ -36,8 +36,7 @@ class single_threaded_lockable final {
   constexpr single_threaded_lockable() = default;
   inline ~single_threaded_lockable() {
     if (mLocked) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL(
-        "In ~single_threaded_lockable() while locked");
+      fatal("In ~single_threaded_lockable() while locked");
     }
   }
 

@@ -75,7 +75,7 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
 SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::~SpriteBatch()");
   if (mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
+    fatal(
       "Destroying SpriteBatch while frame in progress; did you call End()?");
   }
 }
@@ -86,8 +86,7 @@ void SpriteBatch::Begin(
   std::function<void __cdecl()> setCustomShaders) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
   if (mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "frame already in progress; did you call End()?");
+    fatal("frame already in progress; did you call End()?");
   }
   const D3D11_VIEWPORT viewport {
     0,
@@ -131,7 +130,7 @@ void SpriteBatch::Begin(
 void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Clear()");
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+    fatal("target not set, call BeginFrame()");
   }
   mDeviceContext->ClearRenderTargetView(mTarget, color);
 };
@@ -143,7 +142,7 @@ void SpriteBatch::Draw(
   const DirectX::XMVECTORF32 tint) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Draw()");
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+    fatal("target not set, call BeginFrame()");
   }
 
   const D3D11_RECT sourceD3DRect = sourceRect;
@@ -155,8 +154,7 @@ void SpriteBatch::Draw(
 void SpriteBatch::End() {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::End()");
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "target not set; double-End() or Begin() not called?");
+    fatal("target not set; double-End() or Begin() not called?");
   }
   mDXTKSpriteBatch->End();
   ID3D11RenderTargetView* nullrtv {nullptr};

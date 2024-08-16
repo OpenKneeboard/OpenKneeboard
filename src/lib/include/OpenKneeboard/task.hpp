@@ -165,12 +165,12 @@ struct TaskPromiseBase {
 
   std::suspend_never initial_suspend() noexcept {
     if (!mDQ) {
-      OPENKNEEBOARD_LOG_AND_FATAL(
+      fatal(
         "Couldn't get a DispatcherQueue for the current thread - perhaps it "
         "has a DispatcherQueue from a different namespace?");
     }
     if (!mDQ.HasThreadAccess()) {
-      OPENKNEEBOARD_LOG_AND_FATAL(
+      fatal(
         "This threads dispatcher queue does not have access to this thread");
     }
     return {};

@@ -214,8 +214,7 @@ void SpriteBatch::CreateVertexBuffer() {
       | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "Couldn't find compatible memory type for vertex buffer");
+    fatal("Couldn't find compatible memory type for vertex buffer");
   }
 
   VkMemoryAllocateInfo allocInfo {
@@ -237,7 +236,7 @@ void SpriteBatch::CreateVertexBuffer() {
 SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingWrite("SpriteBatch::~SpriteBatch()");
   if (mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Closing spritebatch without calling End()");
+    fatal("Closing spritebatch without calling End()");
   }
 }
 
@@ -247,7 +246,7 @@ void SpriteBatch::Begin(
   const PixelSize& targetSize,
   const std::source_location& caller) {
   if (mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+    fatal(
       caller, "Begin() called but already in progress; did you call End()?");
   }
 
@@ -264,8 +263,7 @@ void SpriteBatch::Draw(
   const Color& color,
   const std::source_location& loc) {
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Calling Draw() without Begin()");
+    fatal(loc, "Calling Draw() without Begin()");
   }
 
   mSprites.push_back({
@@ -279,16 +277,14 @@ void SpriteBatch::Draw(
 
 void SpriteBatch::Clear(Color color, const std::source_location& caller) {
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      caller, "Calling Clear() without Begin()");
+    fatal(caller, "Calling Clear() without Begin()");
   }
   mClearColor = color;
 }
 
 void SpriteBatch::End(const std::source_location& loc) {
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Calling End() without Begin()");
+    fatal(loc, "Calling End() without Begin()");
   }
 
   OPENKNEEBOARD_TraceLoggingScopedActivity(
@@ -362,7 +358,7 @@ void SpriteBatch::End(const std::source_location& loc) {
   }
 
   if (sources.size() > MaxSpritesPerBatch) {
-    OPENKNEEBOARD_LOG_AND_FATAL(
+    fatal(
       "OpenKneeboard's Vulkan Spritebatch only supports up to {} source "
       "imeages",
       MaxSpritesPerBatch);

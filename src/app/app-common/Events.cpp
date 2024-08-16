@@ -98,7 +98,7 @@ struct GlobalData {
   void Shutdown(HANDLE event) {
     mShutdownEvent = event;
     if (mShuttingDown.test_and_set()) {
-      OPENKNEEBOARD_LOG_AND_FATAL("Shutting down the event system twice");
+      fatal("Shutting down the event system twice");
     }
 
     this->Sub1();
@@ -115,7 +115,7 @@ struct GlobalData {
   void Sub1() {
     if (mEventCount.fetch_sub(1) == 1) {
       if (!mShuttingDown.test()) [[unlikely]] {
-        OPENKNEEBOARD_LOG_AND_FATAL("Event count = 0, but not shutting down");
+        fatal("Event count = 0, but not shutting down");
       }
       SetEvent(mShutdownEvent);
     }

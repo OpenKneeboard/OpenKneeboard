@@ -230,7 +230,7 @@ void Texture::CopyFrom(
 
 void Texture::InitializeCacheImage() {
   if (mImage) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing cache image");
+    fatal("Double-initializing cache image");
   }
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeCacheImages()");
 
@@ -266,7 +266,7 @@ void Texture::InitializeCacheImage() {
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+    fatal("Unable to find suitable memoryType");
   }
 
   VkMemoryDedicatedAllocateInfoKHR dedicatedAllocInfo {
@@ -311,7 +311,7 @@ void Texture::InitializeCacheImage() {
 void Texture::InitializeReadySemaphore() {
   if (mReadySemaphore) [[unlikely]] {
     // destructor assumes this was called by destructor
-    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing semaphore");
+    fatal("Double-initializing semaphore");
   }
 
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeReadySemaphore");
@@ -378,7 +378,7 @@ void CachedReader::InitializeCache(
   mVK->GetPhysicalDeviceProperties2KHR(mPhysicalDevice, &properties2);
 
   if (!id.deviceLUIDValid) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Could not retrieve a device LUID");
+    fatal("Could not retrieve a device LUID");
   }
   static_assert(sizeof(uint64_t) == sizeof(id.deviceLUID));
   mGPULUID = std::bit_cast<uint64_t>(id.deviceLUID);
@@ -565,8 +565,7 @@ VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
   if (mIPCImages.contains(handle)) {
     const auto& data = mIPCImages.at(handle);
     if (data.mDimensions != dimensions) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL(
-        "Reported dimensions of image handle have changed");
+      fatal("Reported dimensions of image handle have changed");
     }
     return data.mImage.get();
   }
@@ -627,7 +626,7 @@ VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+    fatal("Unable to find suitable memoryType");
   }
 
   VkImportMemoryWin32HandleInfoKHR importInfo {

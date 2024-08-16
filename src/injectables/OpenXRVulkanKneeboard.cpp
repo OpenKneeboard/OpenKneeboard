@@ -89,7 +89,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size) {
   if (mSwapchainResources) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Asked to create a second swapchain");
+    fatal("Asked to create a second swapchain");
   }
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
@@ -216,7 +216,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   if (!(mSwapchainResources && mSwapchainResources->mSwapchain == swapchain))
     [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Asked to destroy an inactive swapchain");
+    fatal("Asked to destroy an inactive swapchain");
   }
 
   this->WaitForAllFences();
@@ -252,7 +252,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
 
   if (!(mSwapchainResources && mSwapchainResources->mSwapchain == swapchain))
     [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Asked to render to wrong swapchain");
+    fatal("Asked to render to wrong swapchain");
   }
 
   const auto& sr = *mSwapchainResources;

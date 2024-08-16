@@ -769,7 +769,7 @@ std::shared_ptr<BrowserTab> BrowserTabUIData::GetTab() const {
 
   auto refined = std::dynamic_pointer_cast<BrowserTab>(tab);
   if (!refined) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Expected a BrowserTab but didn't get one");
+    fatal("Expected a BrowserTab but didn't get one");
   }
   return refined;
 }
@@ -781,7 +781,7 @@ std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {
   }
   auto refined = std::dynamic_pointer_cast<DCSRadioLogTab>(tab);
   if (!refined) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("Expected a DCSRadioLogTab but didn't get one");
+    fatal("Expected a DCSRadioLogTab but didn't get one");
   }
   return refined;
 }

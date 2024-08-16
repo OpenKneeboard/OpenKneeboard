@@ -103,7 +103,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -123,10 +125,9 @@ static inline XrResult check_xrresult(
   const auto codeAsString = xrresult_to_string(code);
 
   if (codeAsString.empty()) {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "OpenXR call failed: {}", static_cast<int>(code));
+    fatal(loc, "OpenXR call failed: {}", static_cast<int>(code));
   } else {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+    fatal(
       loc, "OpenXR call failed: {} ({})", codeAsString, static_cast<int>(code));
   }
 }
@@ -254,7 +255,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       TraceLoggingValue(swapchainDimensions.mHeight, "height"));
     mSwapchain = this->CreateSwapchain(session, swapchainDimensions);
     if (!mSwapchain) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
+      fatal("Failed to create swapchain");
     }
     mSwapchainDimensions = swapchainDimensions;
     mSessionID = snapshot.GetSessionID();

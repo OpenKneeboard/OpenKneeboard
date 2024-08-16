@@ -39,8 +39,7 @@ inline VkResult check_vkresult(
   VkResult code,
   const std::source_location& loc = std::source_location::current()) {
   if (VK_FAILED(code)) {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Vulkan call failed: {}", static_cast<int>(code));
+    fatal(loc, "Vulkan call failed: {}", static_cast<int>(code));
   }
   return code;
 }

@@ -41,8 +41,7 @@ struct ShutdownData {
   uint64_t Increment(const std::source_location& loc) noexcept {
     mBlockCount.fetch_add(1);
     if (mShuttingDown.test()) {
-      OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-        loc, "Incrementing after shutdown");
+      fatal(loc, "Incrementing after shutdown");
     }
     const auto id = mNextID++;
     std::unique_lock lock(mMutex);
@@ -68,7 +67,7 @@ struct ShutdownData {
 
     if (remaining == 0) {
       if (!mShuttingDown.test()) [[unlikely]] {
-        OPENKNEEBOARD_LOG_AND_FATAL("Block count = 0, but not shutting down");
+        fatal("Block count = 0, but not shutting down");
       }
       SetEvent(mShutdownEvent);
     }
@@ -80,7 +79,7 @@ struct ShutdownData {
     {
       std::unique_lock lock(mMutex);
       if (mShuttingDown.test_and_set()) {
-        OPENKNEEBOARD_LOG_AND_FATAL("Running shutdown blockers twice");
+        fatal("Running shutdown blockers twice");
       }
 
       this->DumpActiveBlocks();
