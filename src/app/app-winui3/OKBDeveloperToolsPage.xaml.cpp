@@ -153,10 +153,72 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
   SetClipboardText(GetDPrintDumper()());
 }
 
+static constexpr const char TriggeredCrashMessage[]
+  = "'Trigger crash' clicked on developer tools page";
+
 void OKBDeveloperToolsPage::OnTriggerCrashClick(
   const IInspectable&,
   const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
-  fatal("'Trigger crash' clicked on developer tools page");
+  enum class CrashKind {
+    Fatal = 0,
+    Throw = 1,
+    ThrowFromNoexcept = 2,
+  };
+  enum class CrashLocation {
+    UIThread = 0,
+    MUITask = 1,
+    WindowsSystemTask = 2,
+  };
+
+  std::function<void()> triggerCrash;
+  switch (static_cast<CrashKind>(this->CrashKind().SelectedIndex())) {
+    case CrashKind::Fatal:
+      triggerCrash = []() { fatal("{}", TriggeredCrashMessage); };
+      break;
+    case CrashKind::Throw:
+      triggerCrash
+        = []() { throw new std::runtime_error(TriggeredCrashMessage); };
+      break;
+    case CrashKind::ThrowFromNoexcept:
+      triggerCrash = []() noexcept {
+        throw new std::runtime_error(TriggeredCrashMessage);
+      };
+      break;
+    default:
+      OPENKNEEBOARD_BREAK;
+      // Error: task failed successfully 🤷
+      fatal("Invalid CrashKind selected from dev tools page");
+  }
+
+  if (!triggerCrash) {
+    OPENKNEEBOARD_BREAK;
+    fatal("triggerCrash not set");
+  }
+
+  const auto location
+    = static_cast<CrashLocation>(this->CrashLocation().SelectedIndex());
+  if (location == CrashLocation::UIThread) {
+    triggerCrash();
+    std::unreachable();
+  }
+  if (location == CrashLocation::MUITask) {
+    auto dqc = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
+      CreateOnDedicatedThread();
+    dqc.DispatcherQueue().TryEnqueue([triggerCrash, dqc]() { triggerCrash(); });
+    return;
+  }
+
+  if (location == CrashLocation::WindowsSystemTask) {
+    auto dqc = winrt::Windows::System::DispatcherQueueController::
+      CreateOnDedicatedThread();
+    dqc.DispatcherQueue().TryEnqueue([triggerCrash, dqc]() { triggerCrash(); });
+    return;
+  }
+
+  OPENKNEEBOARD_BREAK;
+  fatal(
+    "Unhandled CrashLocation from devtools page: {}",
+    std::to_underlying(location));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

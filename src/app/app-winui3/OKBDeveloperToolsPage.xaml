@@ -23,9 +23,25 @@
     <Button Click="OnCopyAPIEventsClick">
       Copy API events
     </Button>
-    <Button Click="OnTriggerCrashClick">
-      💥 Trigger crash
-    </Button>
+    <StackPanel
+      Orientation="Horizontal"
+      Spacing="4">
+      <Button Click="OnTriggerCrashClick">💥 Trigger crash</Button>
+      <ComboBox
+        x:Name="CrashKind"
+        SelectedIndex="0">
+        <x:String>fatal()</x:String>
+        <x:String>throw</x:String>
+        <x:String>throw from noexcept</x:String>
+      </ComboBox>
+      <ComboBox
+        x:Name="CrashLocation"
+        SelectedIndex="0">
+        <x:String>in UI thread</x:String>
+        <x:String>in Microsoft::UI DQ task</x:String>
+        <x:String>in Windows::System DQ task</x:String>
+      </ComboBox>
+    </StackPanel>
     <ToggleSwitch
       Header="Register this executable for .OpenKneeboardPlugin files in HKCU"
       OffContent="Not registered in HKCU"
