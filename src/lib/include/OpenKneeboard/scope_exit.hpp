@@ -20,30 +20,72 @@
 #pragma once
 
 #include <concepts>
+#include <exception>
 #include <functional>
 
-namespace OpenKneeboard {
+namespace OpenKneeboard::detail {
+
+enum class basic_scope_execution_policy {
+  Always,
+  OnFailure,
+  OnSuccess,
+};
 
 // Roughly equivalent to `std::experimental::scope_exit`, but that isn't wideley
 // available yet
-template <std::invocable<> TCallback>
-class scope_exit final {
+template <basic_scope_execution_policy TWhen, std::invocable<> TCallback>
+class basic_scope_exit final {
  private:
   std::decay_t<TCallback> mCallback;
+  int mInitialUncaught = std::uncaught_exceptions();
+
+  using enum basic_scope_execution_policy;
 
  public:
-  constexpr scope_exit(TCallback&& f) : mCallback(std::forward<TCallback>(f)) {
+  constexpr basic_scope_exit(TCallback&& f)
+    : mCallback(std::forward<TCallback>(f)) {
   }
 
-  ~scope_exit() noexcept {
+  ~basic_scope_exit() noexcept
+    requires(TWhen == Always)
+  {
     std::invoke(mCallback);
   }
 
-  scope_exit() = delete;
-  scope_exit(const scope_exit&) = delete;
-  scope_exit(scope_exit&&) noexcept = delete;
-  scope_exit& operator=(const scope_exit&) = delete;
-  scope_exit& operator=(scope_exit&&) noexcept = delete;
+  ~basic_scope_exit() noexcept
+    requires(TWhen == OnFailure)
+  {
+    if (std::uncaught_exceptions() > mInitialUncaught) {
+      auto it = std::current_exception();
+      std::invoke(mCallback);
+    }
+  }
+  ~basic_scope_exit() noexcept
+    requires(TWhen == OnSuccess)
+  {
+    if (std::uncaught_exceptions() == mInitialUncaught) {
+      std::invoke(mCallback);
+    }
+  }
+
+  basic_scope_exit() = delete;
+  basic_scope_exit(const basic_scope_exit&) = delete;
+  basic_scope_exit(basic_scope_exit&&) noexcept = delete;
+  basic_scope_exit& operator=(const basic_scope_exit&) = delete;
+  basic_scope_exit& operator=(basic_scope_exit&&) noexcept = delete;
 };
 
+}// namespace OpenKneeboard::detail
+
+namespace OpenKneeboard {
+
+template <class T>
+using scope_exit
+  = detail::basic_scope_exit<detail::basic_scope_execution_policy::Always, T>;
+template <class T>
+using scope_fail = detail::
+  basic_scope_exit<detail::basic_scope_execution_policy::OnFailure, T>;
+template <class T>
+using scope_success = detail::
+  basic_scope_exit<detail::basic_scope_execution_policy::OnSuccess, T>;
 }// namespace OpenKneeboard

@@ -502,6 +502,42 @@ void fatal_with_hresult(HRESULT hr) {
     nullptr);
 }
 
+void fatal_with_exception(std::exception_ptr ep) {
+  using namespace OpenKneeboard::detail;
+  CrashMeta meta {};
+  if (!ep) {
+    FatalAndDump(
+      meta, {"fatal_with_exception() called without an exception"}, nullptr);
+    std::unreachable();
+  }
+
+  try {
+    std::rethrow_exception(std::current_exception());
+  } catch (const winrt::hresult_error& e) {
+    FatalAndDump(
+      meta,
+      {
+        std::format(
+          "Uncaught winrt::hresult_error: {:#018x} - {}",
+          static_cast<uint32_t>(e.code()),
+          winrt::to_string(e.message())),
+      },
+      nullptr);
+
+  } catch (const std::exception& e) {
+    FatalAndDump(
+      meta,
+      {
+        std::format(
+          "Uncaught std::exception ({}): {}", typeid(e).name(), e.what()),
+      },
+      nullptr);
+    std::unreachable();
+  }
+
+  FatalAndDump(meta, {"Uncaught exception of unknown kind"}, nullptr);
+}
+
 void divert_process_failure_to_fatal() {
   using namespace OpenKneeboard::detail;
 

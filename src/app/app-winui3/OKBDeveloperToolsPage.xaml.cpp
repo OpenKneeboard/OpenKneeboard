@@ -28,6 +28,7 @@ using namespace ::OpenKneeboard;
 #include "HelpPage.xaml.h"
 
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/TryEnqueue.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -202,14 +203,16 @@ void OKBDeveloperToolsPage::OnTriggerCrashClick(
   if (location == CrashLocation::MUITask) {
     auto dqc = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
       CreateOnDedicatedThread();
-    dqc.DispatcherQueue().TryEnqueue([triggerCrash, dqc]() { triggerCrash(); });
+    OpenKneeboard::TryEnqueue(
+      dqc.DispatcherQueue(), [triggerCrash, dqc]() { triggerCrash(); });
     return;
   }
 
   if (location == CrashLocation::WindowsSystemTask) {
     auto dqc = winrt::Windows::System::DispatcherQueueController::
       CreateOnDedicatedThread();
-    dqc.DispatcherQueue().TryEnqueue([triggerCrash, dqc]() { triggerCrash(); });
+    OpenKneeboard::TryEnqueue(
+      dqc.DispatcherQueue(), [triggerCrash, dqc]() { triggerCrash(); });
     return;
   }
 

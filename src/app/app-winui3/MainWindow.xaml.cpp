@@ -45,6 +45,7 @@
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
+#include <OpenKneeboard/TryEnqueue.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <shims/winrt/Microsoft.UI.Interop.h>
@@ -794,7 +795,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   self->mKneeboard = {};
   self->mDXR = nullptr;
 
-  self->DispatcherQueue().TryEnqueue([]() -> winrt::fire_and_forget {
+  TryEnqueue(self->DispatcherQueue(), []() -> task<void> {
     auto app = winrt::Microsoft::UI::Xaml::Application::Current().as<App>();
     co_await app.as<App>()->CleanupAndExitAsync();
   });

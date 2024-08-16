@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <exception>
 #include <format>
 #include <optional>
 #include <source_location>
@@ -84,6 +85,7 @@ void fatal(
 }
 
 void fatal_with_hresult(HRESULT);
+void fatal_with_exception(std::exception_ptr);
 
 /// Hook std::terminate() and SetUnhandledExceptionFilter()
 void divert_process_failure_to_fatal();
