@@ -30,7 +30,7 @@ struct FatalData {
   std::string mMessage;
   std::optional<std::source_location> mBlameLocation;
 
-  [[noreturn]]
+  [[noreturn, msvc::noinline]]
   void fatal() const noexcept;
 };
 
@@ -39,7 +39,7 @@ struct FatalData {
 namespace OpenKneeboard {
 
 template <class... Ts>
-[[noreturn]]
+[[noreturn, msvc::noinline]]
 void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
   detail::FatalData {
     .mMessage = std::format(fmt, std::forward<Ts>(values)...),
@@ -48,7 +48,7 @@ void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
 }
 
 template <class... Ts>
-[[noreturn]]
+[[noreturn, msvc::noinline]]
 void fatal(
   const std::source_location& blame,
   std::format_string<Ts...> fmt,

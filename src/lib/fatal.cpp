@@ -51,7 +51,20 @@ static void fast_fail() {
   __fastfail(FAST_FAIL_FATAL_APP_EXIT);
 }
 
+struct SkipStacktraceEntries {
+  SkipStacktraceEntries() = delete;
+  explicit SkipStacktraceEntries(size_t count) : mCount(count) {
+  }
+
+  size_t mCount;
+};
+
 struct CrashMeta {
+  // Stack trace with the second entry being the blame frame.
+  //
+  // This should be a direct stack trace, not a stored/attributed one.
+  const std::stacktrace mStacktrace;
+
   const std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
     mNow {std::chrono::time_point_cast<std::chrono::seconds>(
       std::chrono::system_clock::now())};
@@ -61,8 +74,9 @@ struct CrashMeta {
   const std::filesystem::path mCrashLogPath;
   const std::filesystem::path mCrashDumpPath;
 
-  CrashMeta() noexcept
-    : mCrashLogPath(GetCrashFilePath(L"txt")),
+  CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries {0})
+    : mStacktrace(std::stacktrace::current(skipCount.mCount + 1)),
+      mCrashLogPath(GetCrashFilePath(L"txt")),
       mCrashDumpPath(GetCrashFilePath(L"dmp")) {
   }
 
@@ -183,6 +197,7 @@ static void CreateDump(
     /* callback = */ nullptr);
 }
 
+[[msvc::noinline]]
 static std::string GetFatalLogContents(
   const CrashMeta& meta,
   const FatalData& fatal) noexcept {
@@ -190,16 +205,14 @@ static std::string GetFatalLogContents(
   if (sRecursing.test_and_set()) {
     OutputDebugStringA(
       std::format("💀💀 FATAL DURING FATAL: {}", fatal.mMessage).c_str());
-    OPENKNEEBOARD_BREAK;
     fast_fail();
   }
 
-  const auto actualTrace = std::stacktrace::current(-3);
   std::string blameString;
   if (fatal.mBlameLocation) {
     blameString = std::format("{}", *fatal.mBlameLocation);
   } else {
-    const auto& caller = actualTrace.at(2);
+    const auto& caller = meta.mStacktrace.at(1);
     blameString = std::format(
       "{}:{} - {}",
       caller.source_file(),
@@ -242,7 +255,7 @@ static std::string GetFatalLogContents(
   f << "\n"
     << "Actual trace\n"
     << "============\n\n"
-    << actualTrace << "\n";
+    << meta.mStacktrace << "\n";
 
   auto dumper = GetDPrintDumper();
   if (dumper) {
@@ -255,12 +268,10 @@ static std::string GetFatalLogContents(
   return f.str();
 }
 
-[[noreturn]]
-static void FatalAndDump(
+[[noreturn, msvc::noinline]] static void FatalAndDump(
+  CrashMeta& meta,
   const FatalData& fatal,
   LPEXCEPTION_POINTERS dumpableExceptions) {
-  CrashMeta meta {};
-
   const auto logContents = GetFatalLogContents(meta, fatal);
 
   {
@@ -268,7 +279,9 @@ static void FatalAndDump(
     f << logContents;
   }
 
-  OPENKNEEBOARD_BREAK;
+  if (IsDebuggerPresent()) {
+    __debugbreak();
+  }
 
   if (meta.CanWriteDump()) {
     auto thisProcess = Filesystem::GetCurrentExecutablePath();
@@ -277,8 +290,8 @@ static void FatalAndDump(
       NULL,
       L"OpenKneeboard has crashed and a log has been created; would you like "
       L"to "
-      L"create a full dump that you can share with the developers?\n\nThis may "
-      L"create a file that is several hundred megabytes.",
+      L"create a full dump that you can share with the developers?\n\nThis "
+      L"may create a file that is several hundred megabytes.",
       thisProcess.stem().c_str(),
       MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
 
@@ -320,7 +333,8 @@ static void FatalAndDump(
 }
 
 void FatalData::fatal() const noexcept {
-  FatalAndDump(*this, nullptr);
+  CrashMeta meta {SkipStacktraceEntries {1}};
+  FatalAndDump(meta, *this, nullptr);
 }
 
 struct WILResultInfo {
@@ -332,16 +346,6 @@ static thread_local WILResultInfo tLastWILResult {};
 
 static void OnTerminate() {
   if (!std::uncaught_exceptions()) {
-    if (tLastWILResult.mFailureInfo.returnAddress) {
-      const auto trace = std::stacktrace::current();
-      auto it = std::ranges::find_if(
-        trace,
-        [&info = tLastWILResult.mFailureInfo](const std::stacktrace_entry& it) {
-          return (it.source_file() == info.pszFile)
-            && (it.source_line() == info.uLineNumber);
-        });
-      OPENKNEEBOARD_BREAK;
-    }
     fatal("std::terminate() called with no uncaught exceptions");
   }
 
@@ -364,7 +368,8 @@ static void OnTerminate() {
 
 LONG __callback WINAPI
 OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
-  FatalAndDump({"Uncaught exceptions"}, exceptionPointers);
+  CrashMeta meta {};
+  FatalAndDump(meta, {"Uncaught exceptions"}, exceptionPointers);
   return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -396,7 +401,6 @@ static thread_local ThreadFailureHook tThreadFailureHook;
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
-
 void divert_process_failure_to_fatal() {
   wil::SetResultMessageCallback(&detail::OnWILResult);
 
