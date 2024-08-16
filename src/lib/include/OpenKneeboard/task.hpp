@@ -22,6 +22,7 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/fatal.hpp>
 
 #include <atomic>
 #include <coroutine>
@@ -149,8 +150,7 @@ struct TaskPromiseBase {
   void abandon() {
     auto oldState = mWaiting.exchange(TaskPromiseAbandoned);
     if (oldState == TaskPromiseRunning) {
-      // UNSAFE: any exceptions will be silently ignored
-      OPENKNEEBOARD_BREAK;
+      fatal(mCaller, "result *must* be awaited");
       return;
     }
     this->destroy();
