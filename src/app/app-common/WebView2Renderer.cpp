@@ -152,8 +152,7 @@ void WebView2Renderer::CreateBrowserWindow() {
   }
 }
 
-winrt::Windows::Foundation::IAsyncAction
-WebView2Renderer::InitializeContentToCapture() {
+task<void> WebView2Renderer::InitializeContentToCapture() {
   OPENKNEEBOARD_TraceLoggingCoro(
     "WebView2Renderer::InitializeContentToCapture");
   auto weak = weak_from_this();

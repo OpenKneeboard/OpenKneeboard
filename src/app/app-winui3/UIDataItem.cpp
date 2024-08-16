@@ -32,7 +32,7 @@ void UIDataItem::Label(hstring const& value) {
   mLabel = value;
 }
 
-IInspectable UIDataItem::Tag() {
+winrt::Windows::Foundation::IInspectable UIDataItem::Tag() {
   return mTag;
 }
 

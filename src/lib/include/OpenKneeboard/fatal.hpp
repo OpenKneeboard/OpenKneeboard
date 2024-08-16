@@ -29,7 +29,6 @@ namespace OpenKneeboard::detail {
 struct FatalData {
   std::string mMessage;
   std::optional<std::source_location> mBlameLocation;
-  std::optional<std::stacktrace> mBlameTrace;
 
   [[noreturn]]
   void fatal() const noexcept;
@@ -60,5 +59,8 @@ void fatal(
   }
     .fatal();
 }
+
+/// Hook std::terminate() and SetUnhandledExceptionFilter()
+void divert_process_failure_to_fatal();
 
 }// namespace OpenKneeboard

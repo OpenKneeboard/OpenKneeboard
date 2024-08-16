@@ -65,6 +65,7 @@ set_property(
 target_link_libraries(
   OpenKneeboard-App-WinUI3
   PRIVATE
+  OpenKneeboard-32bit-runtime-components
   OpenKneeboard-App-Common
   OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
@@ -73,7 +74,7 @@ target_link_libraries(
   OpenKneeboard-Elevation
   OpenKneeboard-config
   OpenKneeboard-dprint
-  OpenKneeboard-32bit-runtime-components
+  OpenKneeboard-fatal
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-tracing

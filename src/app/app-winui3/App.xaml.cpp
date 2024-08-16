@@ -143,17 +143,6 @@ static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
     /* callback = */ nullptr);
 }
 
-LONG __callback WINAPI
-OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
-  CreateDump(exceptionPointers);
-  return EXCEPTION_EXECUTE_HANDLER;
-}
-
-static void OnTerminate() {
-  CreateDump(nullptr);
-  abort();
-}
-
 App::App() {
   InitializeComponent();
 #ifdef DEBUG
@@ -428,8 +417,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 1;
   }
   std::filesystem::create_directories(gDumpDirectory);
-  SetUnhandledExceptionFilter(&OnUnhandledException);
-  set_terminate(&OnTerminate);
+  OpenKneeboard::divert_process_failure_to_fatal();
 
   if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {
     return 0;

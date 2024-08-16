@@ -30,14 +30,18 @@
 #include <pplawait.h>
 #include <ppltasks.h>
 
+#pragma warning(push)
+#pragma warning(disable : 26820)// Potentially expensive copy operation
+#if __has_include(<wil/cppwinrt.h>)
+#include <wil/cppwinrt.h>
+#endif
+#include <winrt/base.h>
+#pragma warning(pop)
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
 
 #include <OpenKneeboard/tracing.hpp>
-#pragma warning(push)
-#pragma warning(disable : 26820)// Potentially expensive copy operation
-#include <winrt/base.h>
-#pragma warning(pop)
 
 #include <stop_token>
 

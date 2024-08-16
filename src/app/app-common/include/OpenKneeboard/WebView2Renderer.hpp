@@ -146,8 +146,7 @@ class WebView2Renderer final : public WGCRenderer {
     const nlohmann::json&);
 
  protected:
-  virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
-    override;
+  virtual task<void> InitializeContentToCapture() override;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
     const override;

@@ -21,6 +21,7 @@
 
 #include <shims/filesystem>
 #include <shims/source_location>
+#include <shims/winrt/base.h>
 
 #include <Windows.h>
 
@@ -32,24 +33,35 @@
 #include <atomic>
 #include <chrono>
 #include <fstream>
+#include <ranges>
+
+#include <wchar.h>
 
 using std::operator""s;
 
 namespace OpenKneeboard::detail {
 
-void FatalData::fatal() const noexcept {
+[[noreturn]]
+static void fast_fail() {
+  // The FAST_FAIL_FATAL_APP_EXIT macro is defined in winnt.h, but we don't want
+  // to pull that in here
+  constexpr unsigned int fast_fail_fatal_app_exit = 7;
+  __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+}
+
+static void log_fatal(const FatalData& fatal) noexcept {
   static std::atomic_flag sRecursing;
   if (sRecursing.test_and_set()) {
     OutputDebugStringA(
-      std::format("💀💀 FATAL DURING FATAL: {}", mMessage).c_str());
+      std::format("💀💀 FATAL DURING FATAL: {}", fatal.mMessage).c_str());
     OPENKNEEBOARD_BREAK;
-    std::terminate();
+    fast_fail();
   }
 
-  const auto actualTrace = std::stacktrace::current(-2);
+  const auto actualTrace = std::stacktrace::current(-3);
   std::string blameString;
-  if (mBlameLocation) {
-    blameString = std::format("{}", *mBlameLocation);
+  if (fatal.mBlameLocation) {
+    blameString = std::format("{}", *fatal.mBlameLocation);
   } else {
     const auto& caller = actualTrace.at(2);
     blameString = std::format(
@@ -60,7 +72,7 @@ void FatalData::fatal() const noexcept {
   }
 
   // Let's just get the basics out early in case anything else goes wrong
-  dprintf("💀 FATAL: {} @ {}", mMessage, blameString);
+  dprintf("💀 FATAL: {} @ {}", fatal.mMessage, blameString);
 
   HMODULE thisModule {nullptr};
   GetModuleHandleExA(
@@ -93,7 +105,7 @@ void FatalData::fatal() const noexcept {
     executable.filename(),
     pid,
     now)
-    << std::format("💀 FATAL: {}\n", mMessage);
+    << std::format("💀 FATAL: {}\n", fatal.mMessage);
 
   std::unique_ptr<wchar_t, decltype(&LocalFree)> threadDescriptionBuf {
     nullptr, &LocalFree};
@@ -114,15 +126,6 @@ void FatalData::fatal() const noexcept {
     << std::format("OKB Version: {}\n", Version::ReleaseName);
 
   f << "\n"
-    << "Provided trace\n"
-    << "==============\n\n";
-  if (mBlameTrace) {
-    f << *mBlameTrace << "\n";
-  } else {
-    f << "None.\n";
-  }
-
-  f << "\n"
     << "Actual trace\n"
     << "============\n\n"
     << actualTrace << "\n";
@@ -138,9 +141,95 @@ void FatalData::fatal() const noexcept {
   f.close();
 
   Filesystem::OpenExplorerWithSelectedFile(crashFile);
-
-  OPENKNEEBOARD_BREAK;
-  std::terminate();
 }
 
+void FatalData::fatal() const noexcept {
+  log_fatal(*this);
+  OPENKNEEBOARD_BREAK;
+  fast_fail();
+}
+
+struct WILResultInfo {
+  wil::FailureInfo mFailureInfo {};
+  std::wstring mDebugMessage;
+};
+
+static thread_local WILResultInfo tLastWILResult {};
+
+static void OnTerminate() {
+  __debugbreak();
+  if (!std::uncaught_exceptions()) {
+    if (tLastWILResult.mFailureInfo.returnAddress) {
+      const auto trace = std::stacktrace::current();
+      auto it = std::ranges::find_if(
+        trace,
+        [&info = tLastWILResult.mFailureInfo](const std::stacktrace_entry& it) {
+          return (it.source_file() == info.pszFile)
+            && (it.source_line() == info.uLineNumber);
+        });
+      __debugbreak();
+    }
+    fatal("std::terminate() called with no uncaught exceptions");
+  }
+
+  try {
+    std::rethrow_exception(std::current_exception());
+  } catch (const winrt::hresult_error& e) {
+    fatal(
+      "std::terminate() called with uncaught winrt::hresult_error: {}",
+      winrt::to_string(e.message()));
+  } catch (const std::exception& e) {
+    fatal(
+      "std::terminate() called with derived_from<std::exception> ({}): {}",
+      typeid(e).name(),
+      e.what());
+  } catch (...) {
+    fatal(
+      "std::terminate() called with an exception with an unknown base class");
+  }
+}
+
+LONG __callback WINAPI
+OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
+  auto count = std::uncaught_exceptions();
+  __debugbreak();
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static void __stdcall OnWILResult(
+  wil::FailureInfo* failure,
+  PWSTR debugMessage,
+  size_t debugMessageChars) noexcept {
+  tLastWILResult = {
+    *failure,
+    std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)}};
+}
+
+static void divert_thread_failure_to_fatal() {
+  std::set_terminate(&OnTerminate);
+  SetUnhandledExceptionFilter(&OnUnhandledException);
+}
+
+static bool gDivertThreadFailureToFatal {false};
+
+struct ThreadFailureHook {
+  ThreadFailureHook() {
+    if (gDivertThreadFailureToFatal) {
+      divert_thread_failure_to_fatal();
+    }
+  }
+};
+static thread_local ThreadFailureHook tThreadFailureHook;
+
 }// namespace OpenKneeboard::detail
+
+namespace OpenKneeboard {
+
+void divert_process_failure_to_fatal() {
+  wil::SetResultMessageCallback(&detail::OnWILResult);
+
+  detail::divert_thread_failure_to_fatal();
+  detail::gDivertThreadFailureToFatal = true;
+}
+
+}// namespace OpenKneeboard

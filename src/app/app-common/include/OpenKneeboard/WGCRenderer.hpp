@@ -35,6 +35,7 @@
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/enable_shared_from_this.hpp>
 #include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <memory>
 
@@ -78,8 +79,7 @@ class WGCRenderer : public virtual EventReceiver,
   [[nodiscard]]
   IAsyncAction Init() noexcept;
 
-  virtual winrt::Windows::Foundation::IAsyncAction InitializeContentToCapture()
-    = 0;
+  virtual task<void> InitializeContentToCapture() = 0;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
     const

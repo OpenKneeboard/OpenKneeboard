@@ -36,7 +36,6 @@
 #include <winrt/Windows.UI.Core.h>
 
 #include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
 
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
@@ -51,6 +50,8 @@
 #include <libloaderapi.h>
 #include <shellapi.h>
 #include <wow64apiset.h>
+
+#include <wil/cppwinrt_helpers.h>
 
 namespace WGC = winrt::Windows::Graphics::Capture;
 namespace WGDX = winrt::Windows::Graphics::DirectX;
@@ -307,8 +308,7 @@ PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) const {
   return *clientArea;
 }
 
-winrt::Windows::Foundation::IAsyncAction
-HWNDPageSource::InitializeContentToCapture() {
+task<void> HWNDPageSource::InitializeContentToCapture() {
   co_return;
 }
 
