@@ -225,13 +225,35 @@ static void CreateDump(
   auto thisDumpType
     = (dumpType == DumpType::FullDump) ? fullDumpType : miniDumpType;
 
+  MINIDUMP_USER_STREAM_INFORMATION userStreams {};
+  MINIDUMP_USER_STREAM extraDataStream {};
+
+  std::wstring extraDataW;
+  if (!extraData.empty()) {
+    extraDataW = winrt::to_hstring(extraData);
+  }
+
+  if (!extraData.empty()) {
+    extraDataStream = {
+      .Type = CommentStreamW,
+      .BufferSize
+      = static_cast<ULONG>(extraDataW.size() * sizeof(extraDataW[0])),
+      .Buffer
+      = const_cast<void*>(reinterpret_cast<const void*>(extraDataW.data())),
+    };
+    userStreams = {
+      .UserStreamCount = 1,
+      .UserStreamArray = &extraDataStream,
+    };
+  }
+
   (*meta.GetWriteMiniDumpProc())(
     GetCurrentProcess(),
     meta.mPID,
     dumpFile.get(),
     thisDumpType,
     &exceptionInfo,
-    /* user stream = */ nullptr,
+    &userStreams,
     /* callback = */ nullptr);
 }
 
