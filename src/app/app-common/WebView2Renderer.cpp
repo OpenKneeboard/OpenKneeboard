@@ -158,22 +158,9 @@ task<void> WebView2Renderer::InitializeContentToCapture() {
   auto weak = weak_from_this();
 
   mState.Assert(State::Constructed);
-  {
-    auto dqc = mDQC;
-    auto dq = dqc.DispatcherQueue();
-    if (!dq) {
-      OPENKNEEBOARD_BREAK;
-    }
-    if (!dq.TryEnqueue([]() {})) {
-      mState.Assert(State::Constructed);
-      dprintf(
-        "Failed to enqueue on queue {:#018x} - state: {:#}",
-        std::hash<winrt::Windows::Foundation::IUnknown> {}(dq),
-        mState.Get());
-      OPENKNEEBOARD_BREAK;
-    }
-    co_await wil::resume_foreground(dq);
-  }
+  auto dqc = mDQC;
+  auto dq = mDQC.DispatcherQueue();
+  co_await wil::resume_foreground(dq);
   auto self = weak.lock();
   if (!self) {
     co_return;
