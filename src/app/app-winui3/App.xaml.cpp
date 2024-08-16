@@ -91,7 +91,7 @@ App::App() {
     });
 }
 
-winrt::fire_and_forget App::CleanupAndExitAsync() {
+task<void> App::CleanupAndExitAsync() {
   auto keepAlive = get_strong();
   winrt::apartment_context uiThread;
   dprint("Starting app shutdown");

@@ -21,6 +21,8 @@
 
 #include "App.xaml.g.h"
 
+#include <OpenKneeboard/task.hpp>
+
 namespace winrt::OpenKneeboardApp::implementation {
 struct App : AppT<App> {
   App();
@@ -28,7 +30,7 @@ struct App : AppT<App> {
   void OnLaunched(
     Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
 
-  winrt::fire_and_forget CleanupAndExitAsync();
+  ::OpenKneeboard::task<void> CleanupAndExitAsync();
 
  private:
   winrt::Microsoft::UI::Xaml::Window mWindow {nullptr};

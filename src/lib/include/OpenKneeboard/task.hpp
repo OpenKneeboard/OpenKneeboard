@@ -148,14 +148,12 @@ struct TaskPromiseBase {
 
   void abandon() {
     auto oldState = mWaiting.exchange(TaskPromiseAbandoned);
-    switch (oldState.mState) {
-      case TaskPromiseState::Abandoned:
-      case TaskPromiseState::Running:
-      case TaskPromiseState::Completed:
-        return;
-      default:
-        oldState.mNext.destroy();
+    if (oldState == TaskPromiseRunning) {
+      // UNSAFE: any exceptions will be silently ignored
+      OPENKNEEBOARD_BREAK;
+      return;
     }
+    this->destroy();
   }
 
   template <class Self>

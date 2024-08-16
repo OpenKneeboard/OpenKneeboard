@@ -804,9 +804,9 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   }
   self->mDXR = nullptr;
 
-  self->DispatcherQueue().TryEnqueue([]() {
+  self->DispatcherQueue().TryEnqueue([]() -> task<void> {
     auto app = winrt::Microsoft::UI::Xaml::Application::Current().as<App>();
-    app.as<App>()->CleanupAndExitAsync();
+    return app.as<App>()->CleanupAndExitAsync();
   });
 }
 
