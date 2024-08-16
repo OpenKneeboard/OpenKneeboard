@@ -32,6 +32,7 @@ namespace OpenKneeboard::Filesystem {
 std::filesystem::path GetTemporaryDirectory();
 std::filesystem::path GetLocalAppDataDirectory();
 std::filesystem::path GetLogsDirectory();
+std::filesystem::path GetCrashLogsDirectory();
 std::filesystem::path GetRuntimeDirectory();
 std::filesystem::path GetImmutableDataDirectory();
 std::filesystem::path GetSettingsDirectory();

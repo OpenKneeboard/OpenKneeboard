@@ -146,7 +146,7 @@ struct CrashMeta {
   }
 
   std::filesystem::path GetCrashFilePath(std::wstring_view extension) {
-    return Filesystem::GetLogsDirectory()
+    return Filesystem::GetCrashLogsDirectory()
       / std::format(
              L"{}-crash-{:%Y%m%dT%H%M%S}-{}.{}",
              mModulePath.stem(),

@@ -233,12 +233,6 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   AddFile("renderers.txt", GetActiveConsumers());
   AddFile("version.txt", mVersionClipboardData);
 
-  struct Dump {
-    std::filesystem::path mPath;
-    std::filesystem::file_time_type mTime;
-  };
-  std::vector<Dump> dumps;
-
   const auto settingsDir = Filesystem::GetSettingsDirectory();
   for (const auto entry:
        std::filesystem::recursive_directory_iterator(settingsDir)) {
@@ -247,7 +241,6 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     }
     const auto path = entry.path();
     if (path.extension() == ".dmp") {
-      dumps.push_back({path, entry.last_write_time()});
       continue;
     }
     if (path.extension() != ".txt" && path.extension() != ".json") {
@@ -267,6 +260,12 @@ winrt::fire_and_forget HelpPage::OnExportClick(
       ZIP_FL_ENC_UTF_8);
   }
 
+  struct Dump {
+    std::filesystem::path mPath;
+    std::filesystem::file_time_type mTime;
+  };
+  std::vector<Dump> dumps;
+
   {
     const auto crashDumps
       = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / L"CrashDumps";
@@ -279,6 +278,29 @@ winrt::fire_and_forget HelpPage::OnExportClick(
         }
       }
     }
+  }
+  for (const auto entry: std::filesystem::directory_iterator(
+         Filesystem::GetCrashLogsDirectory())) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+
+    const auto path = entry.path();
+    if (path.extension() == ".dmp") {
+      dumps.push_back({entry.path(), entry.last_write_time()});
+      continue;
+    }
+
+    if (path.extension() != ".txt") {
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
+
+    zip_file_add(
+      zip.get(),
+      ("crashes" / path.filename()).string().c_str(),
+      zip_source_file(zip.get(), to_utf8(path).c_str(), 0, -1),
+      ZIP_FL_ENC_UTF_8);
   }
 
   if (!dumps.empty()) {
@@ -295,7 +317,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
         to_utf8(dump.mPath),
         std::filesystem::file_size(dump.mPath));
     }
-    AddFile("crash-dumps.txt", buffer);
+    AddFile("crashes/dumps.txt", buffer);
   }
 }
 

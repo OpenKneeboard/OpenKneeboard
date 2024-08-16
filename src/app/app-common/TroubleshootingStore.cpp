@@ -137,8 +137,7 @@ void TroubleshootingStore::InitializeLogFile() {
     return;
   }
 
-  const auto directory = Filesystem::GetSettingsDirectory() / "logs";
-  std::filesystem::create_directories(directory);
+  const auto directory = Filesystem::GetLogsDirectory();
 
   std::vector<std::filesystem::path> existingFiles;
   for (const auto& it: std::filesystem::directory_iterator(directory)) {
@@ -151,7 +150,8 @@ void TroubleshootingStore::InitializeLogFile() {
 
   const auto file = directory
     / std::format(L"OpenKneeboard-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.log",
-                  std::chrono::system_clock::now(),
+                  std::chrono::time_point_cast<std::chrono::seconds>(
+                    std::chrono::system_clock::now()),
                   Version::Major,
                   Version::Minor,
                   Version::Patch,

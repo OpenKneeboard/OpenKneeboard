@@ -181,6 +181,15 @@ std::filesystem::path GetLogsDirectory() {
   return sPath;
 }
 
+std::filesystem::path GetCrashLogsDirectory() {
+  static LazyPath sPath {[]() -> std::filesystem::path {
+    const auto ret = GetLogsDirectory() / "crashes";
+    std::filesystem::create_directories(ret);
+    return ret;
+  }};
+  return sPath;
+}
+
 std::filesystem::path GetInstalledPluginsDirectory() {
   static LazyPath sPath {[]() {
     const auto ret = GetLocalAppDataDirectory() / "Plugins" / "v1";
