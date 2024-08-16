@@ -136,14 +136,14 @@ struct TaskPromiseBase {
   }
 
   TDispatcherQueue mDQ = TDispatcherQueue::GetForCurrentThread();
+  std::exception_ptr mUncaught {};
 
   auto get_return_object(this auto& self) {
     return &self;
   }
 
   void unhandled_exception() {
-    OPENKNEEBOARD_BREAK;
-    throw;
+    mUncaught = std::current_exception();
   }
 
   void abandon() {
@@ -235,11 +235,17 @@ struct TaskAwaiter {
   template <class T = TResult>
     requires std::same_as<T, void>
   void await_resume() const noexcept {
+    if (mPromise->mUncaught) {
+      std::rethrow_exception(std::move(mPromise->mUncaught));
+    }
   }
 
   template <std::convertible_to<TResult> T = TResult>
     requires(!std::same_as<T, void>)
   T&& await_resume() noexcept {
+    if (mPromise->mUncaught) {
+      std::rethrow_exception(std::move(mPromise->mUncaught));
+    }
     return std::move(mPromise->mResult);
   }
 };
