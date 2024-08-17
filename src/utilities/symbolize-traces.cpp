@@ -104,6 +104,17 @@ int main(int argc, char** argv) {
       return EXIT_FAILURE;
     }
   }
+
+  const auto hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+  {
+    // Handle intentionally not closed per MSDN docs
+    DWORD mode = 0;
+    if (GetConsoleMode(hStdout, &mode)) {
+      mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
+      SetConsoleMode(hStdout, mode);
+    }
+  }
+
   wil::com_ptr<IDiaSession> diaSession;
   wil::com_ptr<IDiaSymbol> diaGlobal;
 
@@ -256,7 +267,7 @@ int main(int argc, char** argv) {
       diaLine->get_lineNumberEnd(&lastLine);
 
       std::println(
-        "{}> {}({}): {}!{}+0x{:0X}",
+        "{}> \x1b[33m{}({})\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
         counter.str(),
         fileName,
         firstLine,
