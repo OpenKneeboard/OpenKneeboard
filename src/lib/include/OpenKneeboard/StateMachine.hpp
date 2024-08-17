@@ -166,11 +166,7 @@ class StateMachineBase {
     }
 
     fatal(
-      loc,
-      "Unexpected state {:#}; expected ({} -> {})",
-      result.error(),
-      in,
-      out);
+      loc, "Unexpected state {:#}; expected {} -> {}", result.error(), in, out);
   }
 
   template <State in, State out>
