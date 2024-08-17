@@ -252,19 +252,14 @@ int main(int argc, char** argv) {
 
       DWORD firstLine {};
       DWORD lastLine {};
-      DWORD firstColumn {};
-      DWORD lastColumn {};
       diaLine->get_lineNumber(&firstLine);
       diaLine->get_lineNumberEnd(&lastLine);
-      diaLine->get_columnNumber(&firstColumn);
-      diaLine->get_columnNumberEnd(&lastColumn);
 
       std::println(
-        "{}> {}({}:{}): {}!{}+0x{:0X}",
+        "{}> {}({}): {}!{}+0x{:0X}",
         counter.str(),
         fileName,
         firstLine,
-        firstColumn,
         module,
         symbolName,
         frame->mOffset - functionBaseOffset);
