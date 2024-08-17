@@ -335,7 +335,8 @@ target_link_libraries(
   OpenKneeboard-StateMachine
   INTERFACE
   OpenKneeboard-Lib-Headers
-  ThirdParty::magic_enum)
+  ThirdParty::magic_enum
+)
 
 ok_add_library(OpenKneeboard-scope_exit INTERFACE)
 target_link_libraries(
@@ -485,4 +486,15 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   ThirdParty::RenderDoc
+)
+
+add_library(OpenKneeboard-task INTERFACE)
+target_link_libraries(
+  OpenKneeboard-task
+  INTERFACE
+  OpenKneeboard-StateMachine
+  OpenKneeboard-dprint
+  OpenKneeboard-fatal
+  OpenKneeboard-shims
+  ThirdParty::CppWinRT
 )

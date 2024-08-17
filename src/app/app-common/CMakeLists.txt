@@ -3,6 +3,7 @@ target_link_libraries(
   OpenKneeboard-Events
   PUBLIC
   OpenKneeboard-config
+  OpenKneeboard-task
   ThirdParty::WIL
   ThirdParty::CppWinRT
   ThirdParty::bindline
@@ -47,6 +48,7 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_exit
+  OpenKneeboard-task
   System::D2d1
   System::Dinput8
   System::Dwmapi

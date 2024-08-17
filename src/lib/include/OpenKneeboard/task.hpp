@@ -24,6 +24,8 @@
 #include <ctxtcall.h>
 // clang-format on
 
+#include <OpenKneeboard/StateMachine.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -39,6 +41,16 @@ enum class TaskPromiseState : uintptr_t {
   Running = 1,
   Abandoned = 2,
   Completed = 3,
+};
+
+enum class TaskPromiseResultState {
+  NoResult,
+  HaveException,
+  ThrownException,
+  HaveResult,
+  HaveVoidResult,
+  ReturnedResult,
+  ReturnedVoid,
 };
 
 /* Union so we can do std::atomic.
@@ -155,6 +167,23 @@ struct Task;
 
 template <class TResult>
 struct TaskPromiseBase {
+  using enum TaskPromiseResultState;
+  AtomicStateMachine<
+    TaskPromiseResultState,
+    NoResult,
+    std::array {
+      Transition {NoResult, HaveResult},
+      Transition {HaveResult, ReturnedResult},
+
+      Transition {NoResult, HaveException},
+      Transition {HaveException, ThrownException},
+
+      Transition {NoResult, HaveVoidResult},
+      Transition {HaveVoidResult, ReturnedVoid},
+    },
+    std::nullopt>
+    mResultState;
+
   std::exception_ptr mUncaught {};
 
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
@@ -172,6 +201,8 @@ struct TaskPromiseBase {
   }
 
   void unhandled_exception() {
+    mResultState.Transition<NoResult, HaveException>();
+
     mUncaught = std::current_exception();
   }
 
@@ -208,7 +239,9 @@ struct TaskPromise : TaskPromiseBase<TResult> {
   TResult mResult;
 
   void return_value(TResult&& result) noexcept {
+    using enum TaskPromiseResultState;
     mResult = std::move(result);
+    this->mResultState.Transition<NoResult, HaveResult>();
   }
 };
 
@@ -220,6 +253,8 @@ struct TaskPromise<void> : TaskPromiseBase<void> {
   }
 
   void return_void() noexcept {
+    using enum TaskPromiseResultState;
+    mResultState.Transition<NoResult, HaveVoidResult>();
   }
 };
 
@@ -262,17 +297,23 @@ struct TaskAwaiter {
   template <class T = TResult>
     requires std::same_as<T, void>
   void await_resume() const noexcept {
+    using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
+      mPromise->mResultState.Transition<HaveException, ThrownException>();
       std::rethrow_exception(std::move(mPromise->mUncaught));
     }
+    mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
   }
 
   template <std::convertible_to<TResult> T = TResult>
     requires(!std::same_as<T, void>)
   T&& await_resume() noexcept {
+    using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
+      mPromise->mResultState.Transition<HaveException, ThrownException>();
       std::rethrow_exception(std::move(mPromise->mUncaught));
     }
+    mPromise->mResultState.Transition<HaveResult, ReturnedResult>();
     return std::move(mPromise->mResult);
   }
 };

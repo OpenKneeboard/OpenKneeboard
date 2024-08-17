@@ -106,3 +106,11 @@ void fatal_with_exception(std::exception_ptr);
 void divert_process_failure_to_fatal();
 
 }// namespace OpenKneeboard
+
+#define OPENKNEEBOARD_ALWAYS_ASSERT(x) \
+  if (!x) [[unlikely]] { \
+    ::OpenKneeboard::fatal("Assertion failed: {}", #x); \
+  }
+
+// Maybe change this to depend on DEBUG in the future
+#define OPENKNEEBOARD_ASSERT(x) OPENKNEEBOARD_ALWAYS_ASSERT(x)
