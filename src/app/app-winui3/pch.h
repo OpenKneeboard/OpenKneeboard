@@ -15,6 +15,11 @@
 
 #include "Globals.h"
 
+// clang-format off
+#include <combaseapi.h>
+#include <ctxtcall.h>
+// clang-format on
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Composition.h>
@@ -35,7 +40,7 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
-#include <wil/cppwinrt_helpers.h>
-
 #include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
+
+#include <wil/cppwinrt_helpers.h>

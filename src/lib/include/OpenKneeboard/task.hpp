@@ -19,6 +19,11 @@
  */
 #pragma once
 
+// clang-format off
+#include <combaseapi.h>
+#include <ctxtcall.h>
+// clang-format on
+
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -59,37 +64,16 @@ constexpr bool operator==(TaskPromiseWaiting a, TaskPromiseWaiting b) noexcept {
   return a.mNext == b.mNext;
 }
 
-template <class TFn>
-struct TaskExecutor {
-  TaskExecutor() = delete;
+struct TaskContext {
+  winrt::com_ptr<IContextCallback> mCOMCallback;
+  std::thread::id mThreadID = std::this_thread::get_id();
 
-  TaskExecutor(TFn&& fn) : mFn(std::forward<TFn>(fn)) {
-  }
-
-  TaskExecutor(TaskExecutor<TFn>&& other)
-    : mOrphaned(std::exchange(other.mOrphaned, false)),
-      mFn(std::move(other.mFn)) {
-  }
-
-  TaskExecutor(const TaskExecutor&) = delete;
-  TaskExecutor& operator=(TaskExecutor&&) = delete;
-  TaskExecutor& operator==(const TaskExecutor&) = delete;
-
-  void operator()() {
-    mOrphaned = false;
-    std::invoke(mFn);
-  }
-
-  ~TaskExecutor() {
-    if (mOrphaned) {
-      // TODO: add and properly handle an 'Orphaned by dispatcherqueue' state
-      OPENKNEEBOARD_BREAK;
+  inline TaskContext() {
+    if (!SUCCEEDED(CoGetObjectContext(IID_PPV_ARGS(mCOMCallback.put()))))
+      [[unlikely]] {
+      fatal("Attempted to create a task<> from thread without COM");
     }
   }
-
- private:
-  std::decay_t<TFn> mFn;
-  bool mOrphaned = true;
 };
 
 template <class TDispatcherQueue, class TResult>
@@ -98,7 +82,7 @@ struct TaskPromiseBase;
 template <class TDispatcherQueue, class TResult>
 struct TaskFinalAwaiter {
   TaskPromiseBase<TDispatcherQueue, TResult>& mPromise;
-  TDispatcherQueue mDQ {nullptr};
+  TaskContext mContext;
 
   bool await_ready() const noexcept {
     return false;
@@ -109,19 +93,41 @@ struct TaskFinalAwaiter {
     auto oldState = mPromise.mWaiting.exchange(TaskPromiseCompleted);
     if (oldState == TaskPromiseAbandoned) {
       mPromise.destroy();
-    } else if (oldState != TaskPromiseRunning) {
-      // Must have a valid pointer, or we have corruption
-      assert(oldState != TaskPromiseCompleted);
-      if (mDQ.HasThreadAccess()) {
-        oldState.mNext.resume();
-      } else {
-        mDQ.TryEnqueue(
-          TaskExecutor {[caller = oldState.mNext]() { caller.resume(); }});
-      }
+      return;
     }
+    if (oldState == TaskPromiseRunning) {
+      return;
+    }
+
+    // Must have a valid pointer, or we have corruption
+    assert(oldState != TaskPromiseCompleted);
+    if (mContext.mThreadID == std::this_thread::get_id()) {
+      oldState.mNext.resume();
+      return;
+    }
+
+    ComCallData data {.pUserDefined = oldState.mNext.address()};
+    const auto result = mContext.mCOMCallback->ContextCallback(
+      &TaskFinalAwaiter<TDispatcherQueue, TResult>::resume,
+      &data,
+      IID_ICallbackWithNoReentrancyToApplicationSTA,
+      5,
+      NULL);
+    if (SUCCEEDED(result)) [[likely]] {
+      return;
+    }
+    fatal(
+      "Failed to enqueue coroutine resumption for the desired thread: {:#010x}",
+      static_cast<uint32_t>(result));
   }
 
   void await_resume() const noexcept {
+  }
+
+ private:
+  static HRESULT resume(ComCallData* data) {
+    std::coroutine_handle<>::from_address(data->pUserDefined).resume();
+    return S_OK;
   }
 };
 
@@ -130,13 +136,14 @@ struct Task;
 
 template <class TDispatcherQueue, class TResult>
 struct TaskPromiseBase {
+  std::exception_ptr mUncaught {};
+
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
   std::source_location mCaller;
 
-  TaskPromiseBase() = delete;
+  TaskContext mContext;
 
-  TDispatcherQueue mDQ = TDispatcherQueue::GetForCurrentThread();
-  std::exception_ptr mUncaught {};
+  TaskPromiseBase() = delete;
 
   [[msvc::noinline]]
   auto get_return_object(this auto& self) {
@@ -162,20 +169,11 @@ struct TaskPromiseBase {
   }
 
   std::suspend_never initial_suspend() noexcept {
-    if (!mDQ) {
-      fatal(
-        "Couldn't get a DispatcherQueue for the current thread - perhaps it "
-        "has a DispatcherQueue from a different namespace?");
-    }
-    if (!mDQ.HasThreadAccess()) {
-      fatal(
-        "This threads dispatcher queue does not have access to this thread");
-    }
     return {};
   };
 
   TaskFinalAwaiter<TDispatcherQueue, TResult> final_suspend() noexcept {
-    return {*this, mDQ};
+    return {*this, mContext};
   }
 
  protected:
