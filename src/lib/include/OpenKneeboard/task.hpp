@@ -326,9 +326,34 @@ struct [[nodiscard]] Task {
   using promise_type = promise_t;
 
   Task() = delete;
+  Task(const Task&) = delete;
+  Task& operator=(const Task&) = delete;
+  Task(Task&&) = default;
+  Task& operator=(Task&&) = default;
+
   Task(std::nullptr_t) = delete;
   Task(promise_t* promise) : mPromise(promise) {
-    assert(promise);
+    OPENKNEEBOARD_ASSERT(promise);
+  }
+
+  ~Task() {
+    if (!mPromise) {
+      // moved
+      return;
+    }
+    using enum TaskPromiseResultState;
+    const auto resultState = mPromise->mResultState.Get();
+    switch (resultState) {
+      case ThrownException:
+      case ReturnedResult:
+      case ReturnedVoid:
+        break;
+      default:
+        fatal(
+          mPromise->mContext.mCaller,
+          "Invalid final result state: {:#}",
+          resultState);
+    }
   }
 
   // just to give nice compiler error messages
