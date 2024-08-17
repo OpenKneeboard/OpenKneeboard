@@ -351,7 +351,7 @@ struct [[nodiscard]] Task {
       default:
         fatal(
           mPromise->mContext.mCaller,
-          "Invalid final result state: {:#}",
+          "Invalid final result state: {:#} - did you `co_await` the task?",
           resultState);
     }
   }
@@ -364,6 +364,8 @@ struct [[nodiscard]] Task {
   cannot_await_lvalue_use_std_move operator co_await() & = delete;
 
   auto operator co_await() && noexcept {
+    // probably moved
+    OPENKNEEBOARD_ASSERT(mPromise);
     return TaskAwaiter<TResult> {std::move(mPromise)};
   }
 
