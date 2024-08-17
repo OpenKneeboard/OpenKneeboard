@@ -156,3 +156,12 @@ add_custom_target(
   DEPENDS
   all
 )
+
+add_custom_target(
+  "build-and-windbg"
+  COMMAND
+  WinDbgX
+  "$<TARGET_FILE:OpenKneeboard-App-WinUI3>"
+  DEPENDS
+  all
+)
