@@ -268,6 +268,7 @@ struct [[nodiscard]] Task {
   using promise_type = promise_t;
 
   Task() = delete;
+  Task(std::nullptr_t) = delete;
   Task(promise_t* promise) : mPromise(promise) {
     assert(promise);
   }
