@@ -67,8 +67,9 @@ constexpr bool operator==(TaskPromiseWaiting a, TaskPromiseWaiting b) noexcept {
 struct TaskContext {
   winrt::com_ptr<IContextCallback> mCOMCallback;
   std::thread::id mThreadID = std::this_thread::get_id();
+  StackFramePointer mCaller {nullptr};
 
-  inline TaskContext() {
+  inline TaskContext(StackFramePointer&& caller) : mCaller(std::move(caller)) {
     if (!SUCCEEDED(CoGetObjectContext(IID_PPV_ARGS(mCOMCallback.put()))))
       [[unlikely]] {
       fatal("Attempted to create a task<> from thread without COM");
@@ -157,11 +158,14 @@ struct TaskPromiseBase {
   std::exception_ptr mUncaught {};
 
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
-  std::source_location mCaller;
 
   TaskContext mContext;
 
   TaskPromiseBase() = delete;
+
+  TaskPromiseBase(TaskContext&& context) noexcept
+    : mContext(std::move(context)) {
+  }
 
   auto get_return_object(this auto& self) {
     return &self;
@@ -174,7 +178,7 @@ struct TaskPromiseBase {
   void abandon() {
     auto oldState = mWaiting.exchange(TaskPromiseAbandoned);
     if (oldState == TaskPromiseRunning) {
-      fatal(mCaller, "result *must* be awaited");
+      fatal(mContext.mCaller, "result *must* be awaited");
       return;
     }
     this->destroy();
@@ -192,16 +196,13 @@ struct TaskPromiseBase {
   TaskFinalAwaiter<TResult> final_suspend() noexcept {
     return {*this};
   }
-
- protected:
-  TaskPromiseBase(std::source_location&& caller) : mCaller(std::move(caller)) {
-  }
 };
 
 template <class TResult>
 struct TaskPromise : TaskPromiseBase<TResult> {
-  TaskPromise(std::source_location&& caller = std::source_location::current())
-    : TaskPromiseBase<TResult>(std::move(caller)) {
+  [[msvc::forceinline]]
+  TaskPromise()
+    : TaskPromiseBase<TResult>(StackFramePointer {_ReturnAddress()}) {
   }
 
   TResult mResult;
@@ -213,8 +214,9 @@ struct TaskPromise : TaskPromiseBase<TResult> {
 
 template <>
 struct TaskPromise<void> : TaskPromiseBase<void> {
-  TaskPromise(std::source_location&& caller = std::source_location::current())
-    : TaskPromiseBase<void>(std::move(caller)) {
+  [[msvc::forceinline]]
+  TaskPromise()
+    : TaskPromiseBase<void>(StackFramePointer {_ReturnAddress()}) {
   }
 
   void return_void() noexcept {
@@ -311,7 +313,8 @@ namespace OpenKneeboard {
  * apartment
  * - calls fatal() if not awaited
  * - statically requires that the reuslt is discarded via [[nodiscard]]
- * - calls fatal()
+ * - calls fatal() if there is an uncaught exception
+ * - propagates uncaught exceptions back to the caller
  *
  * This is similar to wil::com_task(), except that it doesn't have as many
  * dependencies/unwanted interaections with various parts of Windows.h and

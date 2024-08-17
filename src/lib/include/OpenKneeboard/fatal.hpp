@@ -19,14 +19,37 @@
  */
 #pragma once
 
+#include <concepts>
 #include <exception>
 #include <format>
-#include <optional>
-#include <source_location>
-#include <stacktrace>
+#include <functional>
 #include <string>
+#include <variant>
 
 typedef LONG HRESULT;
+
+namespace std {
+struct source_location;
+class stacktrace_entry;
+}// namespace std
+
+namespace OpenKneeboard {
+
+struct StackFramePointer {
+  void* mValue {nullptr};
+
+  StackFramePointer() = delete;
+
+  inline StackFramePointer(std::nullptr_t) noexcept {
+  }
+
+  explicit inline StackFramePointer(std::type_identity_t<void*> value) noexcept
+    : mValue(value) {
+  }
+
+  std::string to_string() const noexcept;
+};
+}// namespace OpenKneeboard
 
 namespace OpenKneeboard::detail {
 struct SourceLocation {
@@ -36,18 +59,10 @@ struct SourceLocation {
   size_t mColumn {0};
 
   SourceLocation() = delete;
-  SourceLocation(const std::source_location& loc)
-    : mFunctionName(loc.function_name()),
-      mFileName(loc.file_name()),
-      mLine(loc.line()),
-      mColumn(loc.column()) {
-  }
 
-  SourceLocation(const std::stacktrace_entry& entry)
-    : mFunctionName(entry.description()),
-      mFileName(entry.source_file()),
-      mLine(entry.source_line()) {
-  }
+  SourceLocation(const std::stacktrace_entry& entry) noexcept;
+  SourceLocation(StackFramePointer) noexcept;
+  SourceLocation(const std::source_location& loc) noexcept;
 };
 
 struct FatalData {
@@ -71,15 +86,15 @@ void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
     .fatal();
 }
 
-template <class... Ts>
+template <std::convertible_to<detail::SourceLocation> TLocation, class... Ts>
 [[noreturn, msvc::noinline]]
 void fatal(
-  const std::source_location& blame,
+  TLocation&& blame,
   std::format_string<Ts...> fmt,
   Ts&&... values) noexcept {
   detail::FatalData {
     .mMessage = std::format(fmt, std::forward<Ts>(values)...),
-    .mBlameLocation = blame,
+    .mBlameLocation = detail::SourceLocation {std::forward<TLocation>(blame)},
   }
     .fatal();
 }

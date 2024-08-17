@@ -39,6 +39,8 @@
 #include <chrono>
 #include <fstream>
 #include <ranges>
+#include <source_location>
+#include <stacktrace>
 
 #include <DbgHelp.h>
 #include <detours.h>
@@ -255,6 +257,29 @@ static void CreateDump(
     &exceptionInfo,
     &userStreams,
     /* callback = */ nullptr);
+}
+
+SourceLocation::SourceLocation(const std::stacktrace_entry& entry) noexcept {
+  if (!entry) [[unlikely]] {
+    dprint(
+      "Attempted to construct a SourceLocation with an empty stacktrace_entry");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  mFunctionName = entry.description();
+  mFileName = entry.source_file();
+  mLine = entry.source_line();
+}
+
+SourceLocation::SourceLocation(const std::source_location& loc) noexcept
+  : mFunctionName(loc.function_name()),
+    mFileName(loc.file_name()),
+    mLine(loc.line()),
+    mColumn(loc.column()) {
+}
+
+SourceLocation::SourceLocation(StackFramePointer frame) noexcept
+  : SourceLocation(std::bit_cast<std::stacktrace_entry>(frame.mValue)) {
 }
 
 [[msvc::noinline]]
@@ -550,6 +575,14 @@ void divert_process_failure_to_fatal() {
 
   divert_thread_failure_to_fatal();
   gDivertThreadFailureToFatal = true;
+}
+
+std::string StackFramePointer::to_string() const noexcept {
+  if (!mValue) {
+    return "[nullptr]";
+  }
+
+  return std::format("{}", std::bit_cast<std::stacktrace_entry>(*this));
 }
 
 }// namespace OpenKneeboard
