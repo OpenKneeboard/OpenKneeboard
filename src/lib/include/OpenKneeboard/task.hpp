@@ -387,6 +387,9 @@ namespace OpenKneeboard {
  * This is similar to wil::com_task(), except that it doesn't have as many
  * dependencies/unwanted interaections with various parts of Windows.h and
  * ole2.h
+ *
+ * If you want to store one, use an `std::optional<task<T>>`; to co_await the
+ * stored task, use `co_await std::move(optional).value()`
  */
 template <class TIgnoredDispatcherQueue, class T>
 using basic_task = detail::Task<T>;
