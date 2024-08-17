@@ -400,39 +400,23 @@ static std::string GetFatalLogContents(
     const auto createFullDump = MessageBox(
       NULL,
       L"OpenKneeboard has crashed and a log has been created; would you like "
-      L"to "
-      L"create a full dump that you can share with the developers?\n\nThis "
-      L"may create a file that is several hundred megabytes.",
+      L"to create a full dump that you can share with the developers? "
+      L"Otherwise, a much smaller - but much less useful - minidump will be "
+      L"created instead.\n\n"
+      L"This may create a very large file (several hundred MB).",
       thisProcess.stem().c_str(),
       MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
 
-    if (createFullDump == IDYES) {
-      CreateDump(meta, DumpType::FullDump, logContents, dumpableExceptions);
+    const auto dumpType
+      = (createFullDump == IDYES) ? DumpType::FullDump : DumpType::MiniDump;
+    CreateDump(meta, dumpType, logContents, dumpableExceptions);
 
-      try {
-        Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
-      } catch (...) {
-      }
-
-      fast_fail();
+    try {
+      Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
+    } catch (...) {
     }
 
-    const auto createMiniDump = MessageBox(
-      NULL,
-      L"Would you like to create a minidump instead?\n\nThis will usually be "
-      L"tens of megabytes.",
-      thisProcess.stem().c_str(),
-      MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
-    if (createMiniDump == IDYES) {
-      CreateDump(meta, DumpType::MiniDump, logContents, dumpableExceptions);
-
-      try {
-        Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
-      } catch (...) {
-      }
-
-      fast_fail();
-    }
+    fast_fail();
   }
 
   try {
