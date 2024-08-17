@@ -230,9 +230,11 @@ target_link_libraries(
 add_custom_command(
   TARGET symbolize-traces
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+  COMMAND
+  "${CMAKE_COMMAND}" -E copy_if_different
   "${DIASDK_DLL}"
-  "$<TARGET_FILE_DIR:symbolize-traces>/"
+  "$<TARGET_FILE:symbolize-traces>"
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/"
 )
 install(
   TARGETS symbolize-traces
