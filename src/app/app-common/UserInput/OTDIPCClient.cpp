@@ -60,6 +60,8 @@ winrt::fire_and_forget OTDIPCClient::final_release(
   self->mStopper.request_stop();
   dprint("Waiting for OTDIPCClient completion handle");
   co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  dprint("Waiting for OTDIPCClient coro");
+  co_await std::move(self->mRunner).value();
   dprint("Shutting down DQC");
   co_await self->mDQC.ShutdownQueueAsync();
   dprint("Destroying OTDIPCClient");

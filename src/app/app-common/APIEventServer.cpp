@@ -44,6 +44,7 @@ winrt::fire_and_forget APIEventServer::final_release(
   TraceLoggingWrite(gTraceProvider, "APIEventServer::final_release()");
   self->mStop.request_stop();
   co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  co_await std::move(self->mRunner).value();
   self = {};
   TraceLoggingWrite(gTraceProvider, "APIEventServer::~final_release()");
 }

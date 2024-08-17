@@ -94,12 +94,17 @@ task<void> DirectInputAdapter::ReleaseDevices() {
   lock.unlock();
 
   dprint("Requesting directinput listener stops");
-  for (auto& [id, device]: devices) {
+  for (auto&& [id, device]: devices) {
     device.mStop.request_stop();
   }
   dprint("Waiting for listeners to stop");
-  for (auto& [id, device]: devices) {
+  for (auto&& [id, device]: devices) {
     co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
+  }
+
+  dprint("Waiting for listener coroutines");
+  for (auto&& [id, device]: devices) {
+    co_await std::move(device.mListener);
   }
 }
 
