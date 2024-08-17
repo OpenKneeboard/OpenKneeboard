@@ -47,13 +47,9 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const Settings& settings) {
-  winrt::apartment_context uiThread;
   auto ret = std::shared_ptr<WebView2PageSource>(
     new WebView2PageSource(dxr, kbs, settings));
   co_await ret->Init();
-  co_await uiThread;
-
-  dprint("Hello!");
   co_return ret;
 }
 
