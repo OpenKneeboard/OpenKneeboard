@@ -873,6 +873,16 @@ winrt::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
   }
   co_await mUIThread;
 
+  {
+    FLASHWINFO flash {
+      .cbSize = sizeof(FLASHWINFO),
+      .hwnd = mHwnd,
+      .dwFlags = FLASHW_ALL,
+      .uCount = 1,
+    };
+    winrt::check_bool(FlashWindowEx(&flash));
+  }
+
   const std::wstring commandLine {winrt::to_hstring(ev.value)};
   co_await InstallPlugin(
     mKneeboard, Navigation().XamlRoot(), commandLine.c_str());
