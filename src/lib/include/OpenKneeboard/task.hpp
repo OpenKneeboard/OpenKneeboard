@@ -76,13 +76,12 @@ struct TaskContext {
   }
 };
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct TaskPromiseBase;
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct TaskFinalAwaiter {
-  TaskPromiseBase<TDispatcherQueue, TResult>& mPromise;
-  TaskContext mContext;
+  TaskPromiseBase<TResult>& mPromise;
 
   bool await_ready() const noexcept {
     return false;
@@ -101,15 +100,20 @@ struct TaskFinalAwaiter {
 
     // Must have a valid pointer, or we have corruption
     assert(oldState != TaskPromiseCompleted);
-    if (mContext.mThreadID == std::this_thread::get_id()) {
+    const auto& context = mPromise.mContext;
+    if (context.mThreadID == std::this_thread::get_id()) {
       oldState.mNext.resume();
       return;
     }
 
-    ComCallData data {.pUserDefined = oldState.mNext.address()};
-    const auto result = mContext.mCOMCallback->ContextCallback(
-      &TaskFinalAwaiter<TDispatcherQueue, TResult>::resume,
-      &data,
+    ResumeData resumeData {
+      .mContext = context,
+      .mCoro = oldState.mNext,
+    };
+    ComCallData comData {.pUserDefined = &resumeData};
+    const auto result = context.mCOMCallback->ContextCallback(
+      &TaskFinalAwaiter<TResult>::resume,
+      &comData,
       IID_ICallbackWithNoReentrancyToApplicationSTA,
       5,
       NULL);
@@ -125,16 +129,30 @@ struct TaskFinalAwaiter {
   }
 
  private:
-  static HRESULT resume(ComCallData* data) {
-    std::coroutine_handle<>::from_address(data->pUserDefined).resume();
+  struct ResumeData {
+    TaskContext mContext;
+    std::coroutine_handle<> mCoro;
+  };
+
+  static HRESULT resume(ComCallData* comData) {
+    const auto& resumeData
+      = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
+    if (std::this_thread::get_id() != resumeData.mContext.mThreadID)
+      [[unlikely]] {
+      fatal(
+        "Expected to resume task in thread {}, but resumed in thread {}",
+        resumeData.mContext.mThreadID,
+        std::this_thread::get_id());
+    }
+    resumeData.mCoro.resume();
     return S_OK;
   }
 };
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct Task;
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct TaskPromiseBase {
   std::exception_ptr mUncaught {};
 
@@ -145,7 +163,6 @@ struct TaskPromiseBase {
 
   TaskPromiseBase() = delete;
 
-  [[msvc::noinline]]
   auto get_return_object(this auto& self) {
     return &self;
   }
@@ -172,8 +189,8 @@ struct TaskPromiseBase {
     return {};
   };
 
-  TaskFinalAwaiter<TDispatcherQueue, TResult> final_suspend() noexcept {
-    return {*this, mContext};
+  TaskFinalAwaiter<TResult> final_suspend() noexcept {
+    return {*this};
   }
 
  protected:
@@ -181,10 +198,10 @@ struct TaskPromiseBase {
   }
 };
 
-template <class TDispatcherQueue, class TResult>
-struct TaskPromise : TaskPromiseBase<TDispatcherQueue, TResult> {
+template <class TResult>
+struct TaskPromise : TaskPromiseBase<TResult> {
   TaskPromise(std::source_location&& caller = std::source_location::current())
-    : TaskPromiseBase<TDispatcherQueue, TResult>(std::move(caller)) {
+    : TaskPromiseBase<TResult>(std::move(caller)) {
   }
 
   TResult mResult;
@@ -193,11 +210,11 @@ struct TaskPromise : TaskPromiseBase<TDispatcherQueue, TResult> {
     mResult = std::move(result);
   }
 };
-template <class TDispatcherQueue>
-struct TaskPromise<TDispatcherQueue, void>
-  : TaskPromiseBase<TDispatcherQueue, void> {
+
+template <>
+struct TaskPromise<void> : TaskPromiseBase<void> {
   TaskPromise(std::source_location&& caller = std::source_location::current())
-    : TaskPromiseBase<TDispatcherQueue, void>(std::move(caller)) {
+    : TaskPromiseBase<void>(std::move(caller)) {
   }
 
   void return_void() noexcept {
@@ -214,9 +231,9 @@ struct TaskPromiseDeleter {
 template <class T>
 using TaskPromisePtr = std::unique_ptr<T, TaskPromiseDeleter<T>>;
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct TaskAwaiter {
-  using promise_t = TaskPromise<TDispatcherQueue, TResult>;
+  using promise_t = TaskPromise<TResult>;
   using promise_ptr_t = TaskPromisePtr<promise_t>;
   promise_ptr_t mPromise;
 
@@ -258,9 +275,9 @@ struct TaskAwaiter {
   }
 };
 
-template <class TDispatcherQueue, class TResult>
+template <class TResult>
 struct [[nodiscard]] Task {
-  using promise_t = TaskPromise<TDispatcherQueue, TResult>;
+  using promise_t = TaskPromise<TResult>;
   using promise_ptr_t = TaskPromisePtr<promise_t>;
 
   using promise_type = promise_t;
@@ -279,7 +296,7 @@ struct [[nodiscard]] Task {
   cannot_await_lvalue_use_std_move operator co_await() & = delete;
 
   auto operator co_await() && noexcept {
-    return TaskAwaiter<TDispatcherQueue, TResult> {std::move(mPromise)};
+    return TaskAwaiter<TResult> {std::move(mPromise)};
   }
 
   promise_ptr_t mPromise;
@@ -288,14 +305,20 @@ struct [[nodiscard]] Task {
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
-/** A coroutine that always returns to the same thread it was invoked from.
+/** A coroutine that:
+ * - always returns to the same thread it was invoked from
+ * - to implement that, requires that it is called from a thread with a COM
+ * apartment
+ * - calls fatal() if not awaited
+ * - statically requires that the reuslt is discarded via [[nodiscard]]
+ * - calls fatal()
  *
  * This is similar to wil::com_task(), except that it doesn't have as many
  * dependencies/unwanted interaections with various parts of Windows.h and
  * ole2.h
  */
-template <class TDispatcherQueue, class T>
-using basic_task = detail::Task<TDispatcherQueue, T>;
+template <class TIgnoredDispatcherQueue, class T>
+using basic_task = detail::Task<T>;
 template <class T>
 using task = basic_task<DispatcherQueue, T>;
 
