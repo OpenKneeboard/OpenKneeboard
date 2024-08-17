@@ -1070,6 +1070,9 @@ winrt::fire_and_forget WebView2Renderer::SendJSResponse(
   } else {
     response.emplace("error", result.error());
     dprintf("WARNING: WebView2 API error: {}", result.error());
+    if constexpr (!Version::IsStableRelease) {
+      mWebView.OpenDevToolsWindow();
+    }
   }
 
   if (mWebView) {
