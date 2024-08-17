@@ -75,7 +75,7 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   return Create(dxr, kbs, settings);
 }
 
-IAsyncAction WebView2PageSource::Init() {
+task<void> WebView2PageSource::Init() {
   if (!IsAvailable()) {
     co_return;
   }
@@ -177,8 +177,7 @@ WebView2PageSource::~WebView2PageSource() {
   OPENKNEEBOARD_TraceLoggingWrite("WebView2PageSource::~WebView2PageSource()");
 }
 
-winrt::Windows::Foundation::IAsyncAction
-WebView2PageSource::DisposeAsync() noexcept {
+task<void> WebView2PageSource::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::DisposeAsync()");
   const auto disposing = mDisposal.Start();
   if (!disposing) {
@@ -187,17 +186,18 @@ WebView2PageSource::DisposeAsync() noexcept {
 
   auto self = shared_from_this();
   if (mWorkerDQ) {
-    co_await wil::resume_foreground(self->mWorkerDQ);
-
     auto children = self->mDocumentResources.mRenderers | std::views::values
       | std::views::transform([](auto it) { return it->DisposeAsync(); })
       | std::ranges::to<std::vector>();
     for (auto&& child: children) {
-      co_await child;
+      co_await std::move(child);
     }
+
+    co_await wil::resume_foreground(mWorkerDQ);
 
     mEnvironment = nullptr;
     co_await mUIThread;
+
     mDocumentResources = {};
     mWorkerDQ = {nullptr};
     co_await mWorkerDQC.ShutdownQueueAsync();
@@ -304,7 +304,7 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
   return {};
 }
 
-[[nodiscard]] IAsyncAction WebView2PageSource::RenderPage(
+[[nodiscard]] task<void> WebView2PageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
@@ -341,7 +341,7 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
     mDocumentResources.mRenderers.emplace(key, std::move(renderer));
   }
   auto renderer = mDocumentResources.mRenderers.at(key);
-  renderer->RenderPage(rc, pageID, rect);
+  co_await renderer->RenderPage(rc, pageID, rect);
 }
 
 void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {

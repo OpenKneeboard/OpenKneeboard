@@ -53,7 +53,7 @@ class DCSBriefingTab final : public TabBase,
   static std::string GetStaticGlyph();
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() noexcept override;
+  virtual task<void> Reload() noexcept override;
 
   bool IsNavigationAvailable() const override;
   std::vector<NavigationEntry> GetNavigationEntries() const override;

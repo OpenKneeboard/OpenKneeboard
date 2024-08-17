@@ -92,7 +92,7 @@ class KneeboardState final
     audited_ptr<DXResources>);
   ~KneeboardState() noexcept;
   [[nodiscard]]
-  virtual IAsyncAction DisposeAsync() noexcept override;
+  virtual task<void> DisposeAsync() noexcept override;
 
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
@@ -126,29 +126,29 @@ class KneeboardState final
 
   ProfileSettings GetProfileSettings() const;
   [[nodiscard]]
-  IAsyncAction SetProfileSettings(const ProfileSettings&);
+  task<void> SetProfileSettings(const ProfileSettings&);
 
   void NotifyAppWindowIsForeground(bool isForeground);
 
   TabsList* GetTabsList() const;
   InterprocessRenderer* GetInterprocessRenderer() const;
 
-  winrt::Windows::Foundation::IAsyncAction ReleaseExclusiveResources();
-  winrt::Windows::Foundation::IAsyncAction ReleaseHwndResources();
+  task<void> ReleaseExclusiveResources();
+  task<void> ReleaseHwndResources();
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \
   [[nodiscard]] \
-  IAsyncAction Set##name##Settings(const cpptype&); \
+  task<void> Set##name##Settings(const cpptype&); \
   [[nodiscard]] \
-  IAsyncAction Reset##name##Settings();
+  task<void> Reset##name##Settings();
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
   void SaveSettings();
 
   [[nodiscard]]
-  IAsyncAction PostUserAction(UserAction action);
+  task<void> PostUserAction(UserAction action);
 
   bool IsRepaintNeeded() const;
   void SetRepaintNeeded();
@@ -178,7 +178,7 @@ class KneeboardState final
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
   [[nodiscard]]
-  IAsyncAction Init();
+  task<void> Init();
 
   DisposalState mDisposal;
 
@@ -222,7 +222,7 @@ class KneeboardState final
   winrt::fire_and_forget OnAPIEvent(APIEvent) noexcept;
   std::queue<APIEvent> mAPIEventQueue;
   single_threaded_lockable mAPIEventQueueHandler;
-  IAsyncAction ProcessAPIEvent(APIEvent) noexcept;
+  task<void> ProcessAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);
@@ -239,7 +239,7 @@ class KneeboardState final
     Next,
   };
   [[nodiscard]]
-  IAsyncAction SwitchProfile(Direction);
+  task<void> SwitchProfile(Direction);
 
   void InitializeViews();
 };

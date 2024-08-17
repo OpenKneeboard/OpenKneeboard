@@ -44,7 +44,7 @@ class APIEventServer final
  private:
   ProcessShutdownBlock mShutdownBlock;
   APIEventServer();
-  winrt::Windows::Foundation::IAsyncAction mRunner;
+  std::optional<task<void>> mRunner;
   std::stop_source mStop;
   winrt::apartment_context mUIThread;
   winrt::handle mCompletionHandle {
@@ -52,7 +52,7 @@ class APIEventServer final
 
   void Start();
 
-  winrt::Windows::Foundation::IAsyncAction Run();
+  task<void> Run();
   static winrt::Windows::Foundation::IAsyncOperation<bool>
   RunSingle(std::weak_ptr<APIEventServer>, HANDLE event, HANDLE mailslot);
   winrt::fire_and_forget DispatchEvent(std::string_view);

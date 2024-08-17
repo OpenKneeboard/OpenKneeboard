@@ -21,13 +21,14 @@
 #include <OpenKneeboard/OTDIPCClient.hpp>
 
 #include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <ranges>
+
+#include <wil/cppwinrt_helpers.h>
 
 #include <OTD-IPC/DeviceInfo.h>
 #include <OTD-IPC/MessageType.h>
@@ -64,7 +65,7 @@ winrt::fire_and_forget OTDIPCClient::final_release(
   dprint("Destroying OTDIPCClient");
 }
 
-winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
+task<void> OTDIPCClient::Run() {
   const scope_exit markCompletion([handle = mCompletionHandle.get()]() {
     dprint("Setting OTDIPC completion handle");
     SetEvent(handle);
@@ -102,7 +103,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
   evTabletInputEvent.Emit(id, *state);
 }
 
-winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
+task<void> OTDIPCClient::RunSingle() {
   const auto connection = Win32::CreateFileW(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,

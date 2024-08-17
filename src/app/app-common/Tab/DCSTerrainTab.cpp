@@ -63,7 +63,7 @@ std::string DCSTerrainTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-winrt::Windows::Foundation::IAsyncAction DCSTerrainTab::Reload() {
+task<void> DCSTerrainTab::Reload() {
   mPaths = {};
   mTerrain = {};
   co_await this->SetDelegates({});

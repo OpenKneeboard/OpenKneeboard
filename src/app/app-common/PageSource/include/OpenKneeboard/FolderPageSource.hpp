@@ -48,10 +48,10 @@ class FolderPageSource final : public PageSourceWithDelegates {
 
   std::filesystem::path GetPath() const;
   [[nodiscard]]
-  winrt::Windows::Foundation::IAsyncAction SetPath(std::filesystem::path path);
+  task<void> SetPath(std::filesystem::path path);
 
   [[nodiscard]]
-  winrt::Windows::Foundation::IAsyncAction Reload() noexcept;
+  task<void> Reload() noexcept;
 
  private:
   void SubscribeToChanges();

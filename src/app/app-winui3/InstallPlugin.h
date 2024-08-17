@@ -27,6 +27,8 @@
 
 #include <winrt/microsoft.ui.xaml.h>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <future>
 #include <memory>
 
@@ -34,7 +36,7 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 
-IAsyncAction InstallPlugin(
+task<void> InstallPlugin(
   std::weak_ptr<KneeboardState>,
   winrt::Microsoft::UI::Xaml::XamlRoot,
   const wchar_t* const commandLine);

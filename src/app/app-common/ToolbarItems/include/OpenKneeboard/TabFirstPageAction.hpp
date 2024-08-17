@@ -33,7 +33,7 @@ class TabFirstPageAction final : public ToolbarAction, private EventReceiver {
 
   virtual bool IsEnabled() const override;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
+  virtual task<void> Execute() override;
 
  private:
   std::weak_ptr<TabView> mTabView;

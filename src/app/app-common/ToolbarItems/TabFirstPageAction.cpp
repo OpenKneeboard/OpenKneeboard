@@ -41,7 +41,7 @@ bool TabFirstPageAction::IsEnabled() const {
   return !(pageIDs.empty() || tv->GetPageID() == pageIDs.front());
 }
 
-winrt::Windows::Foundation::IAsyncAction TabFirstPageAction::Execute() {
+task<void> TabFirstPageAction::Execute() {
   auto tv = mTabView.lock();
   if (!tv) {
     co_return;

@@ -71,8 +71,7 @@ void GameInjector::SetGameInstances(
   mGames = games;
 }
 
-winrt::Windows::Foundation::IAsyncAction GameInjector::Run(
-  std::stop_token stopToken) {
+task<void> GameInjector::Run(std::stop_token stopToken) {
   this->RemoveEventListener(mTabletSettingsChangeToken);
   auto tablet = mKneeboardState->GetTabletInputAdapter();
   if (tablet) {

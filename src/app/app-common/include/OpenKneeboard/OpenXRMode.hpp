@@ -24,6 +24,8 @@
 
 #include <winrt/Windows.Foundation.h>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <optional>
 
 namespace OpenKneeboard {
@@ -33,9 +35,7 @@ enum class OpenXRMode {
   AllUsers,
 };
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXR64ModeWithHelperProcess(
-  OpenXRMode newMode);
+task<void> SetOpenXR64ModeWithHelperProcess(OpenXRMode newMode);
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXR32ModeWithHelperProcess(
-  OpenXRMode newMode);
+task<void> SetOpenXR32ModeWithHelperProcess(OpenXRMode newMode);
 }// namespace OpenKneeboard

@@ -43,16 +43,14 @@ class TabsList final : private EventReceiver {
 
   std::vector<std::shared_ptr<ITab>> GetTabs() const;
 
-  [[nodiscard]] IAsyncAction RemoveTab(TabIndex index);
-  [[nodiscard]] IAsyncAction InsertTab(
-    TabIndex index,
-    std::shared_ptr<ITab> tab);
+  [[nodiscard]] task<void> RemoveTab(TabIndex index);
+  [[nodiscard]] task<void> InsertTab(TabIndex index, std::shared_ptr<ITab> tab);
   [[nodiscard]]
-  IAsyncAction SetTabs(std::vector<std::shared_ptr<ITab>> tabs);
+  task<void> SetTabs(std::vector<std::shared_ptr<ITab>> tabs);
 
   nlohmann::json GetSettings() const;
   [[nodiscard]]
-  IAsyncAction LoadSettings(const nlohmann::json&);
+  task<void> LoadSettings(const nlohmann::json&);
 
   Event<> evSettingsChangedEvent;
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
@@ -66,7 +64,7 @@ class TabsList final : private EventReceiver {
   std::vector<EventHandlerToken> mTabEvents;
 
   [[nodiscard]]
-  IAsyncAction LoadDefaultSettings();
+  task<void> LoadDefaultSettings();
 };
 
 }// namespace OpenKneeboard

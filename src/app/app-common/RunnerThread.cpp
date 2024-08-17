@@ -32,7 +32,7 @@ RunnerThread::RunnerThread() = default;
 
 RunnerThread::RunnerThread(
   std::string_view name,
-  std::function<winrt::Windows::Foundation::IAsyncAction(std::stop_token)> impl,
+  std::function<task<void>(std::stop_token)> impl,
   // Not a coroutine.
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
   const std::source_location& loc)

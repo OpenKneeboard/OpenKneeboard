@@ -95,7 +95,7 @@ HWNDPageSource::GetPixelFormat() const {
   return mPixelFormat;
 }
 
-IAsyncAction HWNDPageSource::Init() noexcept {
+task<void> HWNDPageSource::Init() noexcept {
   co_await WGCRenderer::Init();
   co_return;
 }
@@ -269,7 +269,7 @@ bool HWNDPageSource::HaveWindow() const {
 
 HWNDPageSource::~HWNDPageSource() = default;
 
-IAsyncAction HWNDPageSource::DisposeAsync() noexcept {
+task<void> HWNDPageSource::DisposeAsync() noexcept {
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;
@@ -572,7 +572,7 @@ PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();
 }
 
-[[nodiscard]] IAsyncAction HWNDPageSource::RenderPage(
+[[nodiscard]] task<void> HWNDPageSource::RenderPage(
   const RenderContext& rc,
   PageID,
   const PixelRect& rect) {

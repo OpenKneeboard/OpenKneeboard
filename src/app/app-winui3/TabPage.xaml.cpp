@@ -134,7 +134,7 @@ TabPage::TabPage() {
     });
 }
 
-IAsyncAction TabPage::PaintIfDirty() {
+winrt::Windows::Foundation::IAsyncAction TabPage::PaintIfDirty() {
   OPENKNEEBOARD_TraceLoggingScope(
     "TabPage::PaintIfDirty()", TraceLoggingBoolean(mNeedsFrame, "NeedsFrame"));
   co_await this->PaintNow();
@@ -538,7 +538,7 @@ void TabPage::PaintLater() {
   mNeedsFrame = true;
 }
 
-IAsyncAction TabPage::PaintNow(const std::source_location& loc) noexcept {
+task<void> TabPage::PaintNow(const std::source_location& loc) noexcept {
   if (!mTabView) {
     TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
     co_return;

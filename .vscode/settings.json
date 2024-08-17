@@ -103,7 +103,8 @@
     "expected": "cpp",
     "csetjmp": "cpp",
     "latch": "cpp",
-    "stacktrace": "cpp"
+    "stacktrace": "cpp",
+    "print": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++23",

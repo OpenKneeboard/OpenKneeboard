@@ -101,7 +101,7 @@ bool ClearUserInputAction::IsEnabled() const {
   std::unreachable();
 }
 
-winrt::Windows::Foundation::IAsyncAction ClearUserInputAction::Execute() {
+task<void> ClearUserInputAction::Execute() {
   if (mMode == Mode::AllTabs) {
     for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
       auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tab);

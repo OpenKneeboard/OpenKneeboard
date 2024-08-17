@@ -81,7 +81,7 @@ void ConfirmationUILayer::PostCursorEvent(
   dialog.mButtons->PostCursorEvent(KneeboardViewID, canvasEvent);
 }
 
-IAsyncAction ConfirmationUILayer::Render(
+task<void> ConfirmationUILayer::Render(
   const RenderContext& rc,
   const NextList& next,
   const Context& context,

@@ -63,7 +63,7 @@ class TabletInputAdapter final
   Event<> evSettingsChangedEvent;
 
   WintabMode GetWintabMode() const;
-  winrt::Windows::Foundation::IAsyncAction SetWintabMode(WintabMode);
+  task<void> SetWintabMode(WintabMode);
 
   bool HaveAnyTablet() const;
 

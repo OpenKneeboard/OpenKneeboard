@@ -157,7 +157,7 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
   return {static_cast<PageIndex>(it - mPageIDs.begin())};
 }
 
-[[nodiscard]] IAsyncAction PlainTextPageSource::RenderPage(
+[[nodiscard]] task<void> PlainTextPageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {

@@ -60,7 +60,7 @@ std::string DCSMissionTab::GetStaticGlyph() {
   return "\uF0E3";
 }
 
-winrt::Windows::Foundation::IAsyncAction DCSMissionTab::Reload() {
+task<void> DCSMissionTab::Reload() {
   if (mMission.empty()) {
     co_return;
   }

@@ -60,8 +60,7 @@ class WebView2PageSource final
   WebView2PageSource() = delete;
   virtual ~WebView2PageSource();
 
-  virtual winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept
-    override;
+  virtual task<void> DisposeAsync() noexcept override;
 
   static bool IsAvailable();
   static std::string GetVersion();
@@ -76,7 +75,7 @@ class WebView2PageSource final
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual bool CanClearUserInput(PageID) const override;
@@ -109,7 +108,7 @@ class WebView2PageSource final
   DisposalState mDisposal;
 
   [[noreturn]]
-  IAsyncAction Init();
+  task<void> Init();
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};

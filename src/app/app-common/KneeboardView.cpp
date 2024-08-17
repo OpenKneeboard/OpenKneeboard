@@ -399,7 +399,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
   evCursorEvent.Emit(ev);
 }
 
-IAsyncAction KneeboardView::RenderWithChrome(
+task<void> KneeboardView::RenderWithChrome(
   RenderTarget* rt,
   const PixelRect& rect,
   bool isActiveForInput) noexcept {
@@ -440,7 +440,7 @@ IAsyncAction KneeboardView::RenderWithChrome(
   }
 }
 
-IAsyncAction KneeboardView::PostUserAction(UserAction action) {
+task<void> KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
       this->PreviousTab();

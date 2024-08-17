@@ -40,7 +40,7 @@ class ReloadTabAction final : public ToolbarAction,
   ~ReloadTabAction();
 
   virtual bool IsEnabled() const override;
-  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
+  virtual task<void> Execute() override;
 
   virtual std::string_view GetConfirmationTitle() const override;
   virtual std::string_view GetConfirmationDescription() const override;

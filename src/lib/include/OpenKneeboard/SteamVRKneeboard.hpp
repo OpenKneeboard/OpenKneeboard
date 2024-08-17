@@ -28,6 +28,7 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/task.hpp>
 #include <directxtk/SimpleMath.h>
 
 #include <memory>
@@ -45,7 +46,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   SteamVRKneeboard();
   ~SteamVRKneeboard();
 
-  winrt::Windows::Foundation::IAsyncAction Run(std::stop_token);
+  task<void> Run(std::stop_token);
 
  protected:
   std::optional<Pose> GetHMDPose(float);

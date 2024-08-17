@@ -21,7 +21,7 @@
 
 namespace OpenKneeboard {
 
-winrt::Windows::Foundation::IAsyncAction ToolbarToggleAction::Execute() {
+task<void> ToolbarToggleAction::Execute() {
   if (!this->IsEnabled()) {
     co_return;
   }

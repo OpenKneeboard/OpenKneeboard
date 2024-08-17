@@ -61,7 +61,7 @@ using namespace winrt;
 
 namespace OpenKneeboard {
 
-static IAsyncAction ShowPluginInstallationError(
+static task<void> ShowPluginInstallationError(
   XamlRoot xamlRoot,
   std::filesystem::path path,
   std::string_view error) {
@@ -97,7 +97,7 @@ static IAsyncAction ShowPluginInstallationError(
 
 template <class... Args>
   requires(sizeof...(Args) >= 1)
-static IAsyncAction ShowPluginInstallationError(
+static task<void> ShowPluginInstallationError(
   XamlRoot xamlRoot,
   std::filesystem::path path,
   std::format_string<Args...> errorFmt,
@@ -139,7 +139,7 @@ static std::string sha256_hex(std::string_view data) {
       EncodeToHexString(hashObj.GetValueAndReset()));
 }
 
-static IAsyncAction InstallPlugin(
+static task<void> InstallPlugin(
   std::weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
   const std::filesystem::path& path,
@@ -295,7 +295,7 @@ static IAsyncAction InstallPlugin(
   }
 }
 
-static IAsyncAction InstallPluginFromPath(
+static task<void> InstallPluginFromPath(
   std::weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   std::filesystem::path path) {
@@ -454,7 +454,7 @@ static IAsyncAction InstallPluginFromPath(
   }
 }
 
-IAsyncAction InstallPlugin(
+task<void> InstallPlugin(
   std::weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   const wchar_t* const commandLine) {

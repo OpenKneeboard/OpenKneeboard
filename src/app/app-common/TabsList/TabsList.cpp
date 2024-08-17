@@ -66,7 +66,7 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
+task<void> TabsList::LoadSettings(const nlohmann::json& config) {
   if (config.is_null()) {
     co_await LoadDefaultSettings();
     co_return;
@@ -118,7 +118,7 @@ IAsyncAction TabsList::LoadSettings(const nlohmann::json& config) {
   co_await this->SetTabs(tabs);
 }
 
-IAsyncAction TabsList::LoadDefaultSettings() {
+task<void> TabsList::LoadDefaultSettings() {
   // This is a little awkwardly structured because MSVC 2022 17.11 crashes if I
   // put the `co_await`s in the SetTabs initializer list
   auto quickStartPending = SingleFileTab::Create(
@@ -186,14 +186,14 @@ std::vector<std::shared_ptr<ITab>> TabsList::GetTabs() const {
   return mTabs;
 }
 
-IAsyncAction TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
+task<void> TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
   if (std::ranges::equal(tabs, mTabs)) {
     co_return;
   }
 
   {
     const auto oldTabs = std::exchange(mTabs, {});
-    std::vector<IAsyncAction> disposers;
+    std::vector<task<void>> disposers;
     for (auto tab: oldTabs) {
       if (!std::ranges::contains(tabs, tab->GetRuntimeID(), [](auto it) {
             return it->GetRuntimeID();
@@ -204,7 +204,7 @@ IAsyncAction TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
       }
     }
     for (auto& it: disposers) {
-      co_await it;
+      co_await std::move(it);
     }
   }
 
@@ -222,13 +222,13 @@ IAsyncAction TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
   evSettingsChangedEvent.Emit();
 }
 
-IAsyncAction TabsList::InsertTab(TabIndex index, std::shared_ptr<ITab> tab) {
+task<void> TabsList::InsertTab(TabIndex index, std::shared_ptr<ITab> tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
   co_await this->SetTabs(tabs);
 }
 
-IAsyncAction TabsList::RemoveTab(TabIndex index) {
+task<void> TabsList::RemoveTab(TabIndex index) {
   if (index >= mTabs.size()) {
     co_return;
   }

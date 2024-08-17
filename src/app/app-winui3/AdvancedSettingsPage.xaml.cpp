@@ -117,7 +117,8 @@ fire_and_forget AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
   static bool sHaveShownTip = false;
   auto s = mKneeboard->GetProfileSettings();
   if (value && (!s.mEnabled) && !sHaveShownTip) {
-    OpenKneeboard::LaunchURI("openkneeboard:///TeachingTips/ProfileSwitcher");
+    co_await OpenKneeboard::LaunchURI(
+      "openkneeboard:///TeachingTips/ProfileSwitcher");
     sHaveShownTip = true;
   }
   s.mEnabled = value;

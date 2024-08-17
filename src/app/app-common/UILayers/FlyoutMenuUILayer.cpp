@@ -116,7 +116,7 @@ IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
   return next.front()->GetMetrics(next.subspan(1), context);
 }
 
-IAsyncAction FlyoutMenuUILayer::Render(
+task<void> FlyoutMenuUILayer::Render(
   const RenderContext& rc,
   const NextList& next,
   const Context& context,

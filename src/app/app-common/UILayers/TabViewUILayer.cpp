@@ -78,7 +78,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   };
 }
 
-IAsyncAction TabViewUILayer::Render(
+task<void> TabViewUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList&,
   const Context& context,

@@ -53,7 +53,7 @@ class IUILayer {
     const CursorEvent&)
     = 0;
 
-  [[nodiscard]] virtual IAsyncAction Render(
+  [[nodiscard]] virtual task<void> Render(
     const RenderContext&,
     const NextList&,
     const Context&,

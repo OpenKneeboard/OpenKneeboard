@@ -51,7 +51,7 @@ bool SwitchTabAction::IsEnabled() const {
   return true;
 }
 
-winrt::Windows::Foundation::IAsyncAction SwitchTabAction::Execute() {
+task<void> SwitchTabAction::Execute() {
   if (auto kbv = mKneeboardView.lock()) {
     kbv->SetCurrentTabByRuntimeID(mTabID);
   }

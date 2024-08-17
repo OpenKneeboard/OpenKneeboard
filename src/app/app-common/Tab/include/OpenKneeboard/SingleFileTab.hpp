@@ -60,14 +60,13 @@ class SingleFileTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 
   std::filesystem::path GetPath() const;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction SetPath(
-    std::filesystem::path);
+  virtual task<void> SetPath(std::filesystem::path);
 
  private:
   static task<std::shared_ptr<SingleFileTab>> Create(

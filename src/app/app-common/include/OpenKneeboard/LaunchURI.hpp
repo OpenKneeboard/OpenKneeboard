@@ -23,6 +23,8 @@
 
 #include <winrt/Windows.Foundation.h>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <functional>
 #include <string>
 
@@ -32,6 +34,6 @@ void RegisterURIHandler(
   const std::string& schemeName,
   std::function<void(std::string_view)> handler);
 
-winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uri);
+task<void> LaunchURI(std::string_view uri);
 
 }// namespace OpenKneeboard

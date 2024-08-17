@@ -62,7 +62,7 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
   }
 }
 
-IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
+task<void> PageSourceWithDelegates::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::DisposeAsync()");
   const auto disposing = mDisposal.Start();
   if (!disposing) {
@@ -72,7 +72,7 @@ IAsyncAction PageSourceWithDelegates::DisposeAsync() noexcept {
   co_await this->SetDelegates({});
 }
 
-winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
+task<void> PageSourceWithDelegates::SetDelegates(
   std::vector<std::shared_ptr<IPageSource>> delegates) {
   winrt::apartment_context thread;
   OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::SetDelegates()");
@@ -86,7 +86,7 @@ winrt::Windows::Foundation::IAsyncAction PageSourceWithDelegates::SetDelegates(
     | std::views::transform([](auto it) { return it->DisposeAsync(); })
     | std::ranges::to<std::vector>();
   for (auto& it: disposers) {
-    co_await it;
+    co_await std::move(it);
   }
 
   mPageDelegates.clear();
@@ -167,7 +167,7 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   return delegate->GetPreferredSize(pageID);
 }
 
-[[nodiscard]] IAsyncAction PageSourceWithDelegates::RenderPage(
+[[nodiscard]] task<void> PageSourceWithDelegates::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
@@ -194,7 +194,7 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   }
 }
 
-[[nodiscard]] IAsyncAction PageSourceWithDelegates::RenderPageWithCache(
+[[nodiscard]] task<void> PageSourceWithDelegates::RenderPageWithCache(
   IPageSource* delegate,
   RenderTarget* rt,
   PageID pageID,
@@ -208,8 +208,7 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [delegate, pageID](
-      RenderTarget* rt, const PixelSize& size) -> IAsyncAction {
+    [delegate, pageID](RenderTarget* rt, const PixelSize& size) -> task<void> {
       co_await delegate->RenderPage(
         RenderContext {rt, nullptr}, pageID, {{0, 0}, size});
     });

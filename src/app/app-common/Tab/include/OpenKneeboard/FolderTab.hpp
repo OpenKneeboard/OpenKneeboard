@@ -52,12 +52,11 @@ class FolderTab final : public TabBase,
   virtual nlohmann::json GetSettings() const final override;
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() final override;
+  virtual task<void> Reload() final override;
 
   std::filesystem::path GetPath() const;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction SetPath(
-    std::filesystem::path);
+  virtual task<void> SetPath(std::filesystem::path);
 
  private:
   FolderTab(

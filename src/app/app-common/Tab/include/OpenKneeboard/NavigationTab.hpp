@@ -52,12 +52,12 @@ class NavigationTab final : public TabBase,
   virtual std::string GetGlyph() const override;
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
@@ -104,7 +104,7 @@ class NavigationTab final : public TabBase,
 
   void CalculatePreviewMetrics(PageID);
   // PageID is first for `std::bind_front()`
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPreviewLayer(PageID, RenderTarget*, const PixelSize& size);
 
   static constexpr auto PaddingRatio = 1.5f;

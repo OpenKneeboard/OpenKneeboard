@@ -490,8 +490,7 @@ static bool IsSteamVRRunning() {
   return sIsRunning;
 }
 
-winrt::Windows::Foundation::IAsyncAction SteamVRKneeboard::Run(
-  std::stop_token stopToken) {
+task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Stopping OpenVR support, no runtime installed.");
     co_return;

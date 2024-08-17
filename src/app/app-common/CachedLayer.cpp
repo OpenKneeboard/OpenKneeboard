@@ -34,11 +34,11 @@ CachedLayer::CachedLayer(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
 CachedLayer::~CachedLayer() {
 }
 
-IAsyncAction CachedLayer::Render(
+task<void> CachedLayer::Render(
   const PixelRect& destRect,
   Key cacheKey,
   RenderTarget* rt,
-  std::function<IAsyncAction(RenderTarget*, const PixelSize&)> impl,
+  std::function<task<void>(RenderTarget*, const PixelSize&)> impl,
   const std::optional<PixelSize>& providedCacheDimensions) {
   std::scoped_lock lock(mCacheMutex);
 

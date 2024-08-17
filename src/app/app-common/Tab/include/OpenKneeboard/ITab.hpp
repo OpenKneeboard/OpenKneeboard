@@ -55,7 +55,7 @@ class ITab : public virtual IPageSource {
     = 0;
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload()
+  virtual task<void> Reload()
     = 0;
 
   [[nodiscard]]

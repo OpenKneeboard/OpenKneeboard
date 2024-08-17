@@ -40,8 +40,7 @@ static auto LaunchAndWaitForOpenXRHelperSubprocess(
   return RunSubprocessAsync(exePath, commandLine, runas);
 }
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXR64ModeWithHelperProcess(
-  OpenXRMode mode) {
+task<void> SetOpenXR64ModeWithHelperProcess(OpenXRMode mode) {
   switch (mode) {
     case OpenXRMode::Disabled:
       co_await LaunchAndWaitForOpenXRHelperSubprocess(
@@ -54,8 +53,7 @@ winrt::Windows::Foundation::IAsyncAction SetOpenXR64ModeWithHelperProcess(
   }
 }
 
-winrt::Windows::Foundation::IAsyncAction SetOpenXR32ModeWithHelperProcess(
-  OpenXRMode mode) {
+task<void> SetOpenXR32ModeWithHelperProcess(OpenXRMode mode) {
   switch (mode) {
     case OpenXRMode::Disabled:
       co_await LaunchAndWaitForOpenXRHelperSubprocess(

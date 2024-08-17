@@ -60,7 +60,7 @@ bool TabNextPageAction::IsEnabled() const {
   return tv->GetPageID() != pages.back();
 }
 
-winrt::Windows::Foundation::IAsyncAction TabNextPageAction::Execute() {
+task<void> TabNextPageAction::Execute() {
   auto tv = mTabView.lock();
   if (!tv) {
     co_return;

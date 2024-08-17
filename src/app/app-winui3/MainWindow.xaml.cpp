@@ -114,7 +114,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 }
 
-IAsyncAction MainWindow::Init() {
+winrt::Windows::Foundation::IAsyncAction MainWindow::Init() {
   mKneeboard = co_await KneeboardState::Create(mHwnd, mDXR);
   gKneeboard = mKneeboard;
 
@@ -749,7 +749,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   }
 
   dprint("Releasing kneeboard resources tied to hwnd");
-  self->mKneeboard->ReleaseHwndResources();
+  co_await self->mKneeboard->ReleaseHwndResources();
 
   dprint("Removing window subclass");
   RemoveWindowSubclass(self->mHwnd, &MainWindow::SubclassProc, 0);

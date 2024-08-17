@@ -247,7 +247,7 @@ std::string WindowCaptureTab::GetStaticGlyph() {
   return {"\ue7f4"};
 }
 
-winrt::Windows::Foundation::IAsyncAction WindowCaptureTab::Reload() {
+task<void> WindowCaptureTab::Reload() {
   mHwnd = {};
   if (mDelegate) {
     co_await mDelegate->DisposeAsync();

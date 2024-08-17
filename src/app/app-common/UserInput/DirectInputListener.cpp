@@ -73,7 +73,7 @@ DirectInputListener::~DirectInputListener() {
   }
 }
 
-winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
+task<void> DirectInputListener::Run(
   std::stop_token stopToken,
   winrt::com_ptr<IDirectInput8> di,
   std::shared_ptr<DirectInputDevice> device,
@@ -98,7 +98,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   co_return;
 }
 
-winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
+task<void> DirectInputListener::Run() noexcept {
   this->Initialize();
 
   if (!(mDIDevice && mEventHandle)) {

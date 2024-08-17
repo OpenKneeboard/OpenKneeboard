@@ -43,7 +43,7 @@ bool SwitchProfileAction::IsEnabled() const {
   return true;
 }
 
-winrt::Windows::Foundation::IAsyncAction SwitchProfileAction::Execute() {
+task<void> SwitchProfileAction::Execute() {
   auto profileSettings = mKneeboardState->GetProfileSettings();
   profileSettings.mActiveProfile = mProfileID;
   co_await mKneeboardState->SetProfileSettings(profileSettings);

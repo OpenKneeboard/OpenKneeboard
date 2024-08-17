@@ -59,7 +59,7 @@ std::string DCSAircraftTab::GetStaticGlyph() {
   return "\uE709";
 }
 
-winrt::Windows::Foundation::IAsyncAction DCSAircraftTab::Reload() {
+task<void> DCSAircraftTab::Reload() {
   mPaths = {};
   mAircraft = {};
   co_await this->SetDelegates({});

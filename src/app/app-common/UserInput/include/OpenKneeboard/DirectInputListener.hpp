@@ -41,10 +41,10 @@ class DirectInputListener {
    *
    * `completionHandle` should be an event, which will be set on either
    * completion or cancellation; this is because awaiting a cancelled
-   * `IAsyncAction` instantly fails, even if the coroutine hasn't
+   * `task<void>` instantly fails, even if the coroutine hasn't
    * finished - so wait for the signal.
    */
-  static winrt::Windows::Foundation::IAsyncAction Run(
+  static task<void> Run(
     std::stop_token,
     winrt::com_ptr<IDirectInput8> di,
     std::shared_ptr<DirectInputDevice> device,
@@ -75,7 +75,7 @@ class DirectInputListener {
   winrt::handle mEventHandle;
   bool mInitialized = false;
 
-  winrt::Windows::Foundation::IAsyncAction Run() noexcept;
+  task<void> Run() noexcept;
   void Initialize();
 };
 

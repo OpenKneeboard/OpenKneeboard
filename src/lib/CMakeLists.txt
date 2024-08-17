@@ -439,6 +439,8 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-dprint
 )
+# task<void> needs Microsoft::UI::Dispatching
+target_link_windows_app_sdk(OpenKneeboard-SteamVRKneeboard)
 
 ok_add_library(OpenKneeboard-Filesystem STATIC Filesystem.cpp)
 target_link_libraries(

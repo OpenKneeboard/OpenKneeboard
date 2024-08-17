@@ -53,7 +53,7 @@ class WGCRenderer : public virtual EventReceiver,
                     public enable_shared_from_this<WGCRenderer> {
  public:
   virtual ~WGCRenderer();
-  virtual IAsyncAction DisposeAsync() noexcept override;
+  virtual task<void> DisposeAsync() noexcept override;
 
   PreferredSize GetPreferredSize() const;
 
@@ -77,7 +77,7 @@ class WGCRenderer : public virtual EventReceiver,
     KneeboardState*,
     const Options& options);
   [[nodiscard]]
-  IAsyncAction Init() noexcept;
+  task<void> Init() noexcept;
 
   virtual task<void> InitializeContentToCapture() = 0;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;

@@ -39,7 +39,7 @@ class SwitchTabAction final : public ToolbarAction,
   virtual bool IsEnabled() const override;
   virtual bool IsChecked() const override;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
+  virtual task<void> Execute() override;
 
   SwitchTabAction() = delete;
 

@@ -62,7 +62,7 @@ class DCSRadioLogTab final : public TabBase,
 
   virtual PageIndex GetPageCount() const override;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 

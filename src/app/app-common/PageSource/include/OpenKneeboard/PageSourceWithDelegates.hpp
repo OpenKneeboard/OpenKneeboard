@@ -55,12 +55,12 @@ class PageSourceWithDelegates
   virtual ~PageSourceWithDelegates();
 
   [[nodiscard]]
-  virtual IAsyncAction DisposeAsync() noexcept override;
+  virtual task<void> DisposeAsync() noexcept override;
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
@@ -77,8 +77,7 @@ class PageSourceWithDelegates
   DisposalState mDisposal;
 
   [[nodiscard]]
-  winrt::Windows::Foundation::IAsyncAction SetDelegates(
-    std::vector<std::shared_ptr<IPageSource>>);
+  task<void> SetDelegates(std::vector<std::shared_ptr<IPageSource>>);
 
  private:
   audited_ptr<DXResources> mDXResources;
@@ -93,7 +92,7 @@ class PageSourceWithDelegates
     mContentLayerCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
 
-  [[nodiscard]] IAsyncAction RenderPageWithCache(
+  [[nodiscard]] task<void> RenderPageWithCache(
     IPageSource* delegate,
     RenderTarget*,
     PageID,

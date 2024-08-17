@@ -36,9 +36,9 @@ class TabNavigationAction final : public ToolbarToggleAction,
   virtual bool IsEnabled() const override;
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Activate() override;
+  virtual task<void> Activate() override;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Deactivate() override;
+  virtual task<void> Deactivate() override;
 
  private:
   std::weak_ptr<TabView> mTabView;

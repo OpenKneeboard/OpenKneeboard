@@ -46,14 +46,14 @@ bool TabNavigationAction::IsActive() {
   return tv && tv->GetTabMode() == TabMode::Navigation;
 }
 
-winrt::Windows::Foundation::IAsyncAction TabNavigationAction::Activate() {
+task<void> TabNavigationAction::Activate() {
   if (auto tv = mTabView.lock()) {
     tv->SetTabMode(TabMode::Navigation);
   }
   co_return;
 }
 
-winrt::Windows::Foundation::IAsyncAction TabNavigationAction::Deactivate() {
+task<void> TabNavigationAction::Deactivate() {
   if (auto tv = mTabView.lock()) {
     tv->SetTabMode(TabMode::Normal);
   }

@@ -71,7 +71,7 @@ nlohmann::json PluginTab::GetSettings() const {
   return mSettings;
 }
 
-IAsyncAction PluginTab::Reload() {
+task<void> PluginTab::Reload() {
   const auto disposable
     = std::dynamic_pointer_cast<IHasDisposeAsync>(mDelegate);
   if (disposable) {

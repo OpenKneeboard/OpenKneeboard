@@ -200,7 +200,7 @@ void NavigationTab::ClearUserInput() {
   // nothing to do here
 }
 
-[[nodiscard]] IAsyncAction NavigationTab::RenderPage(
+[[nodiscard]] task<void> NavigationTab::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& canvasRect) {
@@ -339,7 +339,7 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
   mPreviewMetrics.emplace(pageID, std::move(m));
 }
 
-IAsyncAction NavigationTab::RenderPreviewLayer(
+task<void> NavigationTab::RenderPreviewLayer(
   PageID pageID,
   RenderTarget* rt,
   const PixelSize& size) {
@@ -361,7 +361,7 @@ IAsyncAction NavigationTab::RenderPreviewLayer(
   }
 }
 
-winrt::Windows::Foundation::IAsyncAction NavigationTab::Reload() {
+task<void> NavigationTab::Reload() {
   co_return;
 }
 

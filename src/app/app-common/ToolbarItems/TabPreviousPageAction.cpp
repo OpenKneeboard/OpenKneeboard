@@ -61,7 +61,7 @@ bool TabPreviousPageAction::IsEnabled() const {
   return tv->GetPageID() != pages.front();
 }
 
-winrt::Windows::Foundation::IAsyncAction TabPreviousPageAction::Execute() {
+task<void> TabPreviousPageAction::Execute() {
   auto tv = mTabView.lock();
   if (!tv) {
     co_return;

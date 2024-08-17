@@ -71,7 +71,7 @@ bool ToggleBookmarkAction::IsActive() {
   return view->CurrentPageHasBookmark();
 }
 
-winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Activate() {
+task<void> ToggleBookmarkAction::Activate() {
   if (IsActive()) {
     co_return;
   }
@@ -83,7 +83,7 @@ winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Activate() {
   view->AddBookmarkForCurrentPage();
 }
 
-winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Deactivate() {
+task<void> ToggleBookmarkAction::Deactivate() {
   if (!IsActive()) {
     co_return;
   }
@@ -95,7 +95,7 @@ winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Deactivate() {
   view->RemoveBookmarkForCurrentPage();
 }
 
-winrt::Windows::Foundation::IAsyncAction ToggleBookmarkAction::Execute() {
+task<void> ToggleBookmarkAction::Execute() {
   // Re-implemented to put in UserActionHandler vtable
   co_await ToolbarToggleAction::Execute();
 }

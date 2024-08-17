@@ -65,7 +65,7 @@ void FilesystemWatcher::Initialize() {
   mImpl = this->Run();
 }
 
-winrt::Windows::Foundation::IAsyncAction FilesystemWatcher::Run() {
+task<void> FilesystemWatcher::Run() {
   auto handle = mHandle.get();
   auto stop = mStop.get_token();
   while (!stop.stop_requested()) {

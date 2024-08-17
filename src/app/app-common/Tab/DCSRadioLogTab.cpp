@@ -196,7 +196,7 @@ winrt::fire_and_forget DCSRadioLogTab::OnAPIEvent(
   mPageSource->PushMessage(formatted);
 }
 
-winrt::Windows::Foundation::IAsyncAction DCSRadioLogTab::Reload() {
+task<void> DCSRadioLogTab::Reload() {
   mPageSource->ClearText();
   this->evContentChangedEvent.Emit();
   co_return;

@@ -46,7 +46,7 @@ class DCSTerrainTab final : public TabBase,
   ~DCSTerrainTab();
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();

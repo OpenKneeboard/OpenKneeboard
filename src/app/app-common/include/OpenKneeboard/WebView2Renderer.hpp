@@ -108,7 +108,7 @@ class WebView2Renderer final : public WGCRenderer {
   ~WebView2Renderer();
 
   // Call before destruction in order to safely release shared resources
-  winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept override;
+  task<void> DisposeAsync() noexcept override;
 
   static task<std::shared_ptr<WebView2Renderer>> Create(
     const audited_ptr<DXResources>&,
@@ -131,7 +131,8 @@ class WebView2Renderer final : public WGCRenderer {
 
   void PostCursorEvent(KneeboardViewID, const CursorEvent&);
 
-  void RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
+  task<void>
+  RenderPage(const RenderContext&, PageID page, const PixelRect& rect);
 
   void PostCustomAction(std::string_view id, const nlohmann::json& arg);
 
@@ -220,10 +221,9 @@ class WebView2Renderer final : public WGCRenderer {
   uint32_t mMouseButtons {};
   winrt::fire_and_forget FlushCursorEvents();
 
-  winrt::Windows::Foundation::IAsyncAction Resize(PixelSize);
+  task<void> Resize(PixelSize);
 
-  winrt::Windows::Foundation::IAsyncAction ImportJavascriptFile(
-    std::filesystem::path path);
+  worker_task<void> ImportJavascriptFile(std::filesystem::path path);
 
   winrt::fire_and_forget OnWebMessageReceived(
     winrt::Microsoft::Web::WebView2::Core::CoreWebView2,

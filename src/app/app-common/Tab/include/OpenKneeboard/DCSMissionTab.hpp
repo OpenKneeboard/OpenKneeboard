@@ -48,7 +48,7 @@ class DCSMissionTab final : public TabBase,
   static std::string GetStaticGlyph();
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual std::string GetDebugInformation() const override;
 

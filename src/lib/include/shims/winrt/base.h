@@ -54,10 +54,6 @@
 
 namespace OpenKneeboard {
 
-// FUTURE - C++?? (maybe?) - add [[nodiscard]]:
-// https://github.com/cplusplus/papers/issues/1888
-using IAsyncAction = winrt::Windows::Foundation::IAsyncAction;
-
 #if __has_include(<winrt/Microsoft.UI.Dispatching.h>)
 using DispatcherQueue = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
 using DispatcherQueueController
@@ -121,6 +117,8 @@ make_stoppable(std::stop_token token, auto action, std::source_location loc) {
       gTraceProvider,
       "make_stoppable()/cancelled",
       TraceLoggingString(src.c_str(), "Source"));
+  } catch (...) {
+    fatal_with_exception(std::current_exception());
   }
 }
 

@@ -55,8 +55,7 @@ task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
   co_return ret;
 }
 
-winrt::Windows::Foundation::IAsyncAction
-KneeboardState::ReleaseHwndResources() {
+task<void> KneeboardState::ReleaseHwndResources() {
   mTabletInput = {};
   mDirectInput = {};
   co_return;
@@ -70,7 +69,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
 }
 
-IAsyncAction KneeboardState::Init() {
+task<void> KneeboardState::Init() {
   const scope_exit saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
@@ -257,7 +256,7 @@ void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
   mAppWindowIsForeground = isForeground;
 }
 
-IAsyncAction KneeboardState::DisposeAsync() noexcept {
+task<void> KneeboardState::DisposeAsync() noexcept {
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;
@@ -271,12 +270,12 @@ IAsyncAction KneeboardState::DisposeAsync() noexcept {
     | std::views::filter([](auto it) { return static_cast<bool>(it); })
     | std::views::transform([](auto it) { return it->DisposeAsync(); })
     | std::ranges::to<std::vector>();
-  for (auto&& child: children) {
-    co_await child;
+  for (auto& child: children) {
+    co_await std::move(child);
   }
 }
 
-IAsyncAction KneeboardState::PostUserAction(UserAction action) {
+task<void> KneeboardState::PostUserAction(UserAction action) {
   if (winrt::apartment_context() != mUIThread) {
     dprint("User action in wrong thread!");
     OPENKNEEBOARD_BREAK;
@@ -409,7 +408,7 @@ winrt::fire_and_forget KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
   }
 }
 
-IAsyncAction KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
+task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
   const auto tabs = mTabsList->GetTabs();
 
   if (ev.name == APIEvent::EVT_REMOTE_USER_ACTION) {
@@ -592,7 +591,7 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-IAsyncAction KneeboardState::SetViewsSettings(const ViewsConfig& view) {
+task<void> KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
@@ -604,7 +603,7 @@ IAsyncAction KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   co_return;
 }
 
-IAsyncAction KneeboardState::SetVRSettings(const VRConfig& value) {
+task<void> KneeboardState::SetVRSettings(const VRConfig& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
@@ -629,7 +628,7 @@ IAsyncAction KneeboardState::SetVRSettings(const VRConfig& value) {
   co_return;
 }
 
-IAsyncAction KneeboardState::SetAppSettings(const AppSettings& value) {
+task<void> KneeboardState::SetAppSettings(const AppSettings& value) {
   const EventDelay delay;// lock must be released first
   {
     const std::unique_lock lock(*this);
@@ -664,8 +663,7 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
   return mProfiles;
 }
 
-IAsyncAction KneeboardState::SetProfileSettings(
-  const ProfileSettings& profiles) {
+task<void> KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
     dprintf("Switching to profile: '{}'", profiles.mActiveProfile);
   }
@@ -736,7 +734,7 @@ void KneeboardState::SaveSettings() {
   evSettingsChangedEvent.Emit();
 }
 
-IAsyncAction KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
+task<void> KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mSettings.mDoodles = value;
@@ -744,7 +742,7 @@ IAsyncAction KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
   co_return;
 }
 
-IAsyncAction KneeboardState::SetTextSettings(const TextSettings& value) {
+task<void> KneeboardState::SetTextSettings(const TextSettings& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mSettings.mText = value;
@@ -755,7 +753,7 @@ IAsyncAction KneeboardState::SetTextSettings(const TextSettings& value) {
 void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = {
     "OKB OpenVR Client",
-    [](std::stop_token stopToken) -> winrt::Windows::Foundation::IAsyncAction {
+    [](std::stop_token stopToken) -> task<void> {
       TraceLoggingWrite(gTraceProvider, "OpenVRThread/Start");
       {
         SteamVRKneeboard steamVR;
@@ -779,7 +777,7 @@ void KneeboardState::StartTabletInput() {
     std::bind_front(&KneeboardState::SaveSettings, this));
 }
 
-IAsyncAction KneeboardState::SetDirectInputSettings(
+task<void> KneeboardState::SetDirectInputSettings(
   const DirectInputSettings& settings) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
@@ -788,7 +786,7 @@ IAsyncAction KneeboardState::SetDirectInputSettings(
   co_return;
 }
 
-IAsyncAction KneeboardState::SetTabletInputSettings(
+task<void> KneeboardState::SetTabletInputSettings(
   const TabletSettings& settings) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
@@ -796,21 +794,20 @@ IAsyncAction KneeboardState::SetTabletInputSettings(
   co_return;
 }
 
-IAsyncAction KneeboardState::SetGamesSettings(const nlohmann::json& j) {
+task<void> KneeboardState::SetGamesSettings(const nlohmann::json& j) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mGamesList->LoadSettings(j);
   co_return;
 }
 
-IAsyncAction KneeboardState::SetTabsSettings(const nlohmann::json& j) {
+task<void> KneeboardState::SetTabsSettings(const nlohmann::json& j) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   co_await mTabsList->LoadSettings(j);
 }
 
-winrt::Windows::Foundation::IAsyncAction
-KneeboardState::ReleaseExclusiveResources() {
+task<void> KneeboardState::ReleaseExclusiveResources() {
   OPENKNEEBOARD_TraceLoggingCoro("ReleaseExclusiveResources");
   mOpenVRThread = {};
   mInterprocessRenderer = {};
@@ -833,7 +830,7 @@ void KneeboardState::AcquireExclusiveResources() {
     std::bind_front(&KneeboardState::OnAPIEvent, this));
 }
 
-IAsyncAction KneeboardState::SwitchProfile(Direction direction) {
+task<void> KneeboardState::SwitchProfile(Direction direction) {
   if (!mProfiles.mEnabled) {
     co_return;
   }
@@ -1017,7 +1014,7 @@ void KneeboardState::AfterFrame(FramePostEventKind) {
   cpptype KneeboardState::Get##name##Settings() const { \
     return mSettings.m##name; \
   } \
-  IAsyncAction KneeboardState::Reset##name##Settings() { \
+  task<void> KneeboardState::Reset##name##Settings() { \
     auto newSettings = mSettings; \
     newSettings.Reset##name##Section(mProfiles.mActiveProfile); \
     co_await this->Set##name##Settings(newSettings.m##name); \

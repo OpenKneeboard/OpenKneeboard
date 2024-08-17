@@ -111,7 +111,7 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
   };
 }
 
-IAsyncAction FooterUILayer::Render(
+task<void> FooterUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,

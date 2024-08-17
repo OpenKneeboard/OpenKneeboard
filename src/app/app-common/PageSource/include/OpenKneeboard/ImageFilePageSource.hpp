@@ -55,7 +55,7 @@ class ImageFilePageSource final
     const audited_ptr<DXResources>& dxr,
     const std::filesystem::path&);
 
-  [[nodiscard]] IAsyncAction RenderPage(
+  [[nodiscard]] task<void> RenderPage(
     const RenderContext&,
     PageID,
     const PixelRect& rect) final override;

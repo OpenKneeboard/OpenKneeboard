@@ -83,15 +83,14 @@ std::filesystem::path EndlessNotebookTab::GetPath() const {
   return mPath;
 }
 
-winrt::Windows::Foundation::IAsyncAction EndlessNotebookTab::Reload() {
+task<void> EndlessNotebookTab::Reload() {
   const scope_exit contentChanged([this]() { evContentChangedEvent.Emit(); });
 
   auto path = std::exchange(mPath, {});
   co_await this->SetPath(path);
 }
 
-winrt::Windows::Foundation::IAsyncAction EndlessNotebookTab::SetPath(
-  std::filesystem::path rawPath) {
+task<void> EndlessNotebookTab::SetPath(std::filesystem::path rawPath) {
   auto path = rawPath;
   if (std::filesystem::exists(path)) {
     path = std::filesystem::canonical(path);
@@ -165,7 +164,7 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
   };
 }
 
-[[nodiscard]] IAsyncAction EndlessNotebookTab::RenderPage(
+[[nodiscard]] task<void> EndlessNotebookTab::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {

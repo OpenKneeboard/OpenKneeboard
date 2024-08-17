@@ -49,8 +49,7 @@ void GamesList::StartInjector() {
   mInjectorThread = {
     "GameInjector Thread",
     std::bind_front(
-      [](auto injector, std::stop_token stop)
-        -> winrt::Windows::Foundation::IAsyncAction {
+      [](auto injector, std::stop_token stop) -> task<void> {
         co_await injector->Run(stop);
       },
       mInjector),

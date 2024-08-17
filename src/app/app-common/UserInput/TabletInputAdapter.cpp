@@ -140,8 +140,7 @@ WintabMode TabletInputAdapter::GetWintabMode() const {
   return mSettings.mWintab;
 }
 
-winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
-  WintabMode mode) {
+task<void> TabletInputAdapter::SetWintabMode(WintabMode mode) {
   auto weak = weak_from_this();
 
   if (mode == GetWintabMode()) {

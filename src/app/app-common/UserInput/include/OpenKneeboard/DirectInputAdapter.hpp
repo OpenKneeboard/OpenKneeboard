@@ -67,7 +67,7 @@ class DirectInputAdapter final
   ProcessShutdownBlock mShutdownBlock;
 
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
-  winrt::Windows::Foundation::IAsyncAction ReleaseDevices();
+  task<void> ReleaseDevices();
   winrt::fire_and_forget Reload();
   winrt::fire_and_forget UpdateDevices();
 
@@ -81,7 +81,7 @@ class DirectInputAdapter final
 
   struct DeviceState {
     std::shared_ptr<DirectInputDevice> mDevice;
-    winrt::Windows::Foundation::IAsyncAction mListener;
+    task<void> mListener;
     std::stop_source mStop;
     winrt::handle mListenerCompletionHandle;
   };

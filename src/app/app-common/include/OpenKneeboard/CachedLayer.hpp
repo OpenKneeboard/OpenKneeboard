@@ -26,6 +26,7 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <functional>
 #include <mutex>
@@ -44,11 +45,11 @@ class CachedLayer final {
   ~CachedLayer();
 
   [[nodiscard]]
-  IAsyncAction Render(
+  task<void> Render(
     const PixelRect& where,
     Key cacheKey,
     RenderTarget*,
-    std::function<IAsyncAction(RenderTarget*, const PixelSize&)> impl,
+    std::function<task<void>(RenderTarget*, const PixelSize&)> impl,
     const std::optional<PixelSize>& cacheDimensions = {});
   void Reset();
 

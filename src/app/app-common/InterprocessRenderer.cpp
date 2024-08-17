@@ -354,7 +354,7 @@ task<SHM::LayerConfig> InterprocessRenderer::RenderLayer(
   co_return ret;
 }
 
-IAsyncAction InterprocessRenderer::RenderNow() noexcept {
+task<void> InterprocessRenderer::RenderNow() noexcept {
   if (mRendering.test_and_set()) {
     dprint("Two renders in the same instance");
     OPENKNEEBOARD_BREAK;

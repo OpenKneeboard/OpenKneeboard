@@ -80,7 +80,7 @@ std::string DCSBriefingTab::GetStaticGlyph() {
   return "\uE95D";
 }
 
-winrt::Windows::Foundation::IAsyncAction DCSBriefingTab::Reload() noexcept {
+task<void> DCSBriefingTab::Reload() noexcept {
   const scope_exit emitEvents([this]() {
     this->evContentChangedEvent.Emit();
     this->evAvailableFeaturesChangedEvent.Emit();

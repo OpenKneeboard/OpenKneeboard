@@ -61,7 +61,7 @@ class InterprocessRenderer final
     KneeboardState*);
 
   void PostUserAction(UserAction);
-  [[nodiscard]] IAsyncAction RenderNow() noexcept;
+  [[nodiscard]] task<void> RenderNow() noexcept;
 
  private:
   InterprocessRenderer() = delete;

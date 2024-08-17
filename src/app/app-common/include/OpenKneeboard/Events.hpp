@@ -29,6 +29,7 @@
 
 #include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/task.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
 
@@ -245,7 +246,7 @@ class Event final : public EventBase {
     }
   }
 
-  winrt::Windows::Foundation::IAsyncAction EmitFromContextAsync(
+  task<void> EmitFromContextAsync(
     auto context,
     Args... args,
     std::source_location location = std::source_location::current()) {

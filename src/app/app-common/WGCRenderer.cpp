@@ -36,7 +36,6 @@
 #include <winrt/Windows.UI.Core.h>
 
 #include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
 
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
@@ -52,12 +51,14 @@
 #include <shellapi.h>
 #include <wow64apiset.h>
 
+#include <wil/cppwinrt_helpers.h>
+
 namespace WGC = winrt::Windows::Graphics::Capture;
 namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-IAsyncAction WGCRenderer::Init() noexcept {
+task<void> WGCRenderer::Init() noexcept {
   const auto keepAlive = shared_from_this();
 
   // Requires Windows 11
@@ -142,7 +143,7 @@ WGCRenderer::~WGCRenderer() {
   OPENKNEEBOARD_TraceLoggingWrite("WGCRenderer::~WGCRenderer");
 }
 
-IAsyncAction WGCRenderer::DisposeAsync() noexcept {
+task<void> WGCRenderer::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("WGCRenderer::DisposeAsync");
   const auto disposing = mDisposal.Start();
   if (!disposing) {

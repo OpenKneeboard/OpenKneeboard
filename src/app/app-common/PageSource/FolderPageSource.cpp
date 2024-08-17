@@ -51,7 +51,7 @@ FolderPageSource::~FolderPageSource() {
   this->RemoveAllEventListeners();
 }
 
-winrt::Windows::Foundation::IAsyncAction FolderPageSource::Reload() noexcept {
+task<void> FolderPageSource::Reload() noexcept {
   const auto weakThis = this->weak_from_this();
   co_await mUIThread;
   const auto stayingAlive = this->shared_from_this();
@@ -133,8 +133,7 @@ std::filesystem::path FolderPageSource::GetPath() const {
   return mPath;
 }
 
-winrt::Windows::Foundation::IAsyncAction FolderPageSource::SetPath(
-  std::filesystem::path path) {
+task<void> FolderPageSource::SetPath(std::filesystem::path path) {
   if (path == mPath) {
     co_return;
   }

@@ -154,7 +154,7 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
   };
 }
 
-IAsyncAction HeaderUILayer::Render(
+task<void> HeaderUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,

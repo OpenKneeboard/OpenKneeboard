@@ -85,7 +85,7 @@ void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
   this->evSettingsChangedEvent.Emit();
 }
 
-winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
+task<void> DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
   dprint("DirectInputAdapter::ReleaseDevices()");
 

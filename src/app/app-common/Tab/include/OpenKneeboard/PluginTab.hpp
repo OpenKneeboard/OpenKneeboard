@@ -54,7 +54,7 @@ class PluginTab final : public TabBase,
   virtual std::string GetGlyph() const override;
 
   [[nodiscard]]
-  virtual IAsyncAction Reload() final override;
+  virtual task<void> Reload() final override;
 
   nlohmann::json GetSettings() const override;
 

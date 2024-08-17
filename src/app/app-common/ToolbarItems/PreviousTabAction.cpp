@@ -58,7 +58,7 @@ bool PreviousTabAction::IsEnabled() const {
   return mKneeboardState->GetAppSettings().mLoopTabs;
 }
 
-winrt::Windows::Foundation::IAsyncAction PreviousTabAction::Execute() {
+task<void> PreviousTabAction::Execute() {
   if (auto kbv = mKneeboardView.lock()) {
     kbv->PreviousTab();
   }

@@ -62,7 +62,7 @@ std::string BrowserTab::GetStaticGlyph() {
   return {"\ueb41"};
 }
 
-IAsyncAction BrowserTab::Reload() {
+task<void> BrowserTab::Reload() {
   OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::Reload()");
   auto keepAlive = shared_from_this();
 
@@ -80,7 +80,7 @@ bool BrowserTab::IsSimHubIntegrationEnabled() const {
   return mSettings.mIntegrateWithSimHub;
 }
 
-IAsyncAction BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
+task<void> BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
   OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::SetSimHubIntegrationEnabled()");
   if (enabled == this->IsSimHubIntegrationEnabled()) {
     co_return;
@@ -94,7 +94,7 @@ bool BrowserTab::IsBackgroundTransparent() const {
   return mSettings.mTransparentBackground;
 }
 
-IAsyncAction BrowserTab::SetBackgroundTransparent(bool transparent) {
+task<void> BrowserTab::SetBackgroundTransparent(bool transparent) {
   OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::SetBackgroundTransparent()");
   if (transparent == this->IsBackgroundTransparent()) {
     co_return;
@@ -108,7 +108,7 @@ bool BrowserTab::IsDeveloperToolsWindowEnabled() const {
   return mSettings.mOpenDeveloperToolsWindow;
 }
 
-IAsyncAction BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
+task<void> BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
   OPENKNEEBOARD_TraceLoggingCoro(
     "BrowserTab::SetDeveloperToolsWindowsEnabled()");
   if (enabled == this->IsDeveloperToolsWindowEnabled()) {

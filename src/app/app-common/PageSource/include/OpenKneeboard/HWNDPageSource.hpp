@@ -68,7 +68,7 @@ class HWNDPageSource final : public WGCRenderer,
     const Options& options) noexcept;
 
   virtual ~HWNDPageSource();
-  virtual IAsyncAction DisposeAsync() noexcept override;
+  virtual task<void> DisposeAsync() noexcept override;
 
   bool HaveWindow() const;
   void InstallWindowHooks(HWND);
@@ -83,7 +83,7 @@ class HWNDPageSource final : public WGCRenderer,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   Event<> evWindowClosedEvent;
@@ -109,7 +109,7 @@ class HWNDPageSource final : public WGCRenderer,
     const Options&);
   DisposalState mDisposal;
   [[nodiscard]]
-  IAsyncAction Init() noexcept;
+  task<void> Init() noexcept;
   winrt::fire_and_forget InitializeInputHook() noexcept;
 
   void LogAdapter(HMONITOR);

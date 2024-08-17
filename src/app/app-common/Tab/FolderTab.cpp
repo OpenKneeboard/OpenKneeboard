@@ -74,7 +74,7 @@ std::string FolderTab::GetStaticGlyph() {
   return "\uE838";
 }
 
-winrt::Windows::Foundation::IAsyncAction FolderTab::Reload() {
+task<void> FolderTab::Reload() {
   return mPageSource->Reload();
 }
 
@@ -82,8 +82,7 @@ std::filesystem::path FolderTab::GetPath() const {
   return mPath;
 }
 
-winrt::Windows::Foundation::IAsyncAction FolderTab::SetPath(
-  std::filesystem::path path) {
+task<void> FolderTab::SetPath(std::filesystem::path path) {
   if (path == mPath) {
     co_return;
   }

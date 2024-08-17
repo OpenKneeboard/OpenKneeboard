@@ -26,14 +26,14 @@ namespace OpenKneeboard {
 class ToolbarToggleAction : public ToolbarAction {
  public:
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute() override;
+  virtual task<void> Execute() override;
 
   virtual bool IsActive() = 0;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Activate()
+  virtual task<void> Activate()
     = 0;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Deactivate()
+  virtual task<void> Deactivate()
     = 0;
 
  protected:

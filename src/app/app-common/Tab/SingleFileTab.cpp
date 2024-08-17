@@ -104,14 +104,13 @@ std::filesystem::path SingleFileTab::GetPath() const {
   return mPath;
 }
 
-winrt::Windows::Foundation::IAsyncAction SingleFileTab::Reload() {
+task<void> SingleFileTab::Reload() {
   mKind = Kind::Unknown;
   auto path = std::exchange(mPath, {});
   co_await this->SetPath(path);
 }
 
-winrt::Windows::Foundation::IAsyncAction SingleFileTab::SetPath(
-  std::filesystem::path rawPath) {
+task<void> SingleFileTab::SetPath(std::filesystem::path rawPath) {
   auto path = rawPath;
   if (std::filesystem::exists(path)) {
     path = std::filesystem::canonical(path);

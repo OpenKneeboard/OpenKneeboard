@@ -25,13 +25,15 @@
 
 #include <winrt/Windows.Foundation.h>
 
+#include <OpenKneeboard/task.hpp>
+
 namespace OpenKneeboard {
 class IHasDisposeAsync {
  public:
   // This is an alternative to `final_release()`, where consumers (or
   // subclasses) may need to be able to wait for async cleanup
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction DisposeAsync() noexcept
+  virtual task<void> DisposeAsync() noexcept
     = 0;
 };
 
@@ -43,7 +45,7 @@ class IHasDisposeAsync {
  * DisposalState mDisposal;
  *
  * ...
- * IAsyncAction DisposeAsync() noexcept {
+ * task<void> DisposeAsync() noexcept {
  *   const auto disposing = mDisposal.Start();
  *   if (!disposing) {
  *     co_return;

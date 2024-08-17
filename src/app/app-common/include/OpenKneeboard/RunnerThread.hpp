@@ -25,6 +25,8 @@
 
 #include <winrt/Microsoft.UI.Dispatching.h>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <functional>
 #include <stop_token>
 #include <string_view>
@@ -36,8 +38,7 @@ class RunnerThread final {
   RunnerThread();
   RunnerThread(
     std::string_view name,
-    std::function<winrt::Windows::Foundation::IAsyncAction(std::stop_token)>
-      impl,
+    std::function<task<void>(std::stop_token)> impl,
     const std::source_location& loc = std::source_location::current());
   ~RunnerThread();
 

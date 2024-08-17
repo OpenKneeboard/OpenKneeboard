@@ -36,6 +36,8 @@
 
 namespace OpenKneeboard {
 
+template <class T>
+using worker_task = WebView2Renderer::worker_task<T>;
 using jsapi_task = WebView2Renderer::jsapi_task;
 
 void to_json(nlohmann::json& j, const WebView2Renderer::APIPage& v) {
@@ -415,7 +417,7 @@ void WebView2Renderer::PostCustomAction(
       }}});
 }
 
-winrt::Windows::Foundation::IAsyncAction WebView2Renderer::ImportJavascriptFile(
+worker_task<void> WebView2Renderer::ImportJavascriptFile(
   std::filesystem::path path) {
   std::ifstream f(path);
   std::stringstream ss;
@@ -426,7 +428,7 @@ winrt::Windows::Foundation::IAsyncAction WebView2Renderer::ImportJavascriptFile(
     winrt::to_hstring(js));
 }
 
-void WebView2Renderer::RenderPage(
+task<void> WebView2Renderer::RenderPage(
   const RenderContext& rc,
   PageID page,
   const PixelRect& rect) {
@@ -435,7 +437,7 @@ void WebView2Renderer::RenderPage(
     auto it = std::ranges::find(dr.mPages, page, &APIPage::mPageID);
     if (it != dr.mPages.end()) {
       dr.mCurrentPage = page;
-      this->Resize(it->mPixelSize);
+      co_await this->Resize(it->mPixelSize);
       this->SendJSEvent("pageChanged", {{"detail", {{"page", *it}}}});
     }
   }
@@ -619,8 +621,7 @@ jsapi_task WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
   co_return success("resized");
 }
 
-winrt::Windows::Foundation::IAsyncAction WebView2Renderer::Resize(
-  PixelSize size) {
+task<void> WebView2Renderer::Resize(PixelSize size) {
   if (mSize == size) {
     co_return;
   }
@@ -937,8 +938,7 @@ jsapi_task WebView2Renderer::JSAPI_EnableExperimentalFeatures(
   };
 }
 
-winrt::Windows::Foundation::IAsyncAction
-WebView2Renderer::DisposeAsync() noexcept {
+task<void> WebView2Renderer::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("WebView2Renderer::DisposeAsync");
   if (mState.Get() == State::Disposed) {
     co_return;
@@ -962,10 +962,11 @@ WebView2Renderer::DisposeAsync() noexcept {
   mCompositor = nullptr;
   mBrowserWindow.reset();
 
+  co_await mUIThread;
+
   co_await WGCRenderer::DisposeAsync();
 
   mState.Transition<State::Disposing, State::Disposed>();
-  co_await mUIThread;
 }
 
 void WebView2Renderer::InitializeComposition() noexcept {

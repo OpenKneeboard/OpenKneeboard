@@ -34,7 +34,7 @@ class UserActionHandler {
   virtual ~UserActionHandler();
   virtual bool IsEnabled() const = 0;
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute()
+  virtual task<void> Execute()
     = 0;
 
   static std::unique_ptr<UserActionHandler> Create(

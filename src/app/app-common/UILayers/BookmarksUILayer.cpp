@@ -138,7 +138,7 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
   };
 }
 
-IAsyncAction BookmarksUILayer::Render(
+task<void> BookmarksUILayer::Render(
   const RenderContext& rc,
   const IUILayer::NextList& next,
   const Context& context,

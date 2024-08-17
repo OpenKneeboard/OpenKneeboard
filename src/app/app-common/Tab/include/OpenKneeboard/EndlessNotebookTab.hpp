@@ -61,19 +61,18 @@ class EndlessNotebookTab final
   static std::string GetStaticGlyph();
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
 
   std::filesystem::path GetPath() const;
 
-  [[nodiscard]] virtual winrt::Windows::Foundation::IAsyncAction SetPath(
-    std::filesystem::path path);
+  [[nodiscard]] virtual task<void> SetPath(std::filesystem::path path);
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  [[nodiscard]] IAsyncAction
+  [[nodiscard]] task<void>
   RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)

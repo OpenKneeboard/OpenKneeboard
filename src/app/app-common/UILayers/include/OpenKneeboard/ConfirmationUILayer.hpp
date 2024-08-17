@@ -47,7 +47,7 @@ class ConfirmationUILayer final
     KneeboardViewID,
     const CursorEvent&) override;
 
-  [[nodiscard]] IAsyncAction Render(
+  [[nodiscard]] task<void> Render(
     const RenderContext&,
     const NextList&,
     const Context&,

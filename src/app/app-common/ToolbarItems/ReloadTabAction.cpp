@@ -51,7 +51,7 @@ bool ReloadTabAction::IsEnabled() const {
   return true;
 }
 
-winrt::Windows::Foundation::IAsyncAction ReloadTabAction::Execute() {
+task<void> ReloadTabAction::Execute() {
   if (mMode == Mode::ThisTab) {
     auto tv = mTabView.lock();
     if (!tv) {

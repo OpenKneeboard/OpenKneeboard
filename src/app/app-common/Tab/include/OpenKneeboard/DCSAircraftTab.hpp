@@ -50,7 +50,7 @@ class DCSAircraftTab final : public TabBase,
   ~DCSAircraftTab();
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Reload() override;
+  virtual task<void> Reload() override;
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();

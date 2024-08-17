@@ -55,7 +55,7 @@ bool NextTabAction::IsEnabled() const {
   return kbv && ((kbv->GetTabIndex() + 1) < count);
 }
 
-winrt::Windows::Foundation::IAsyncAction NextTabAction::Execute() {
+task<void> NextTabAction::Execute() {
   auto kbv = mKneeboardView.lock();
   if (kbv) {
     kbv->NextTab();

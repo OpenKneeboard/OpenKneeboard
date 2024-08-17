@@ -39,7 +39,6 @@
 #include <winrt/Windows.Storage.h>
 
 #include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
 
 #include <windows.data.pdf.interop.h>
 
@@ -59,6 +58,8 @@
 #include <unordered_map>
 
 #include <inttypes.h>
+
+#include <wil/cppwinrt_helpers.h>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -300,9 +301,8 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
       handler->evClicked,
       {
         weak,
-        // Not a coroutine.
-        // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
-        [](auto self, KneeboardViewID ctx, const PDFNavigation::Link& link) {
+        [](auto self, KneeboardViewID ctx, PDFNavigation::Link link)
+          -> winrt::fire_and_forget {
           const auto& dest = link.mDestination;
           switch (dest.mType) {
             case PDFNavigation::DestinationType::Page:
@@ -310,7 +310,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
                 ctx, self->GetPageIDForIndex(dest.mPageIndex));
               break;
             case PDFNavigation::DestinationType::URI: {
-              LaunchURI(dest.mURI);
+              co_await LaunchURI(dest.mURI);
               break;
             }
           }
@@ -631,7 +631,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
   return entries;
 }
 
-[[nodiscard]] IAsyncAction PDFFilePageSource::RenderPage(
+[[nodiscard]] task<void> PDFFilePageSource::RenderPage(
   const RenderContext& rc,
   PageID pageID,
   const PixelRect& rect) {
@@ -648,7 +648,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [this, pageID](auto rt, const auto& size) -> IAsyncAction {
+    [this, pageID](auto rt, const auto& size) -> task<void> {
       this->RenderPageContent(rt, pageID, {{0, 0}, size});
       co_return;
     },

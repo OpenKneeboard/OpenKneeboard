@@ -67,8 +67,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   DispatcherQueueController mDQC {nullptr};
 
   OTDIPCClient();
-  winrt::Windows::Foundation::IAsyncAction Run();
-  winrt::Windows::Foundation::IAsyncAction RunSingle();
+  task<void> Run();
+  task<void> RunSingle();
 
   winrt::fire_and_forget EnqueueMessage(std::string message);
   void ProcessMessage(const OTDIPC::Messages::Header* const);
@@ -76,7 +76,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   void ProcessMessage(const OTDIPC::Messages::State* const);
   void TimeoutTablet(const std::string& id);
 
-  winrt::Windows::Foundation::IAsyncAction mRunner;
+  std::optional<task<void>> mRunner;
+
   winrt::handle mCompletionHandle {
     Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
   std::stop_source mStopper;

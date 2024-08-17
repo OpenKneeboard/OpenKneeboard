@@ -37,7 +37,7 @@ class ToolbarAction : public virtual ISelectableToolbarItem {
   std::string_view GetLabel() const override final;
 
   [[nodiscard]]
-  virtual winrt::Windows::Foundation::IAsyncAction Execute()
+  virtual task<void> Execute()
     = 0;
 
  protected:

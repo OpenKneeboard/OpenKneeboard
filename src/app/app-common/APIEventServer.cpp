@@ -63,7 +63,7 @@ APIEventServer::~APIEventServer() {
   dprintf("{}", __FUNCTION__);
 }
 
-winrt::Windows::Foundation::IAsyncAction APIEventServer::Run() {
+task<void> APIEventServer::Run() {
   const scope_exit markCompletion(
     [handle = mCompletionHandle.get()]() { SetEvent(handle); });
 

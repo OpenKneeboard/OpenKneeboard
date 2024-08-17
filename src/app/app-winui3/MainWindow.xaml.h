@@ -48,7 +48,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   ~MainWindow();
 
   [[nodiscard]]
-  IAsyncAction Init();
+  winrt::Windows::Foundation::IAsyncAction Init();
 
   void OnNavigationItemInvoked(
     const IInspectable& sender,

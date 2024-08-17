@@ -40,7 +40,7 @@ void RegisterURIHandler(
     std::wstring(winrt::to_hstring(schemeName)), handler);
 }
 
-winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uriStr) {
+task<void> LaunchURI(std::string_view uriStr) {
   auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
   const std::wstring scheme(uri.SchemeName());
   if (gHandlers.contains(scheme)) {
