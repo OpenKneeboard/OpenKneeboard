@@ -250,6 +250,11 @@ class AtomicStateMachine final : public Base {
     }
     return {};
   }
+
+  constexpr State Get(
+    std::memory_order order = std::memory_order_seq_cst) const noexcept {
+    return this->mState.load(order);
+  }
 };
 
 template <class TStateMachine, auto pre, auto state, auto post>
