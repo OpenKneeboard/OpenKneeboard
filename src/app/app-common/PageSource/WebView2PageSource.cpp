@@ -47,6 +47,8 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const Settings& settings) {
+  OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::Create(..., settings)");
+
   auto ret = std::shared_ptr<WebView2PageSource>(
     new WebView2PageSource(dxr, kbs, settings));
   co_await ret->Init();
@@ -57,6 +59,8 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
+  OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::Create(..., path)");
+
   char buffer[INTERNET_MAX_URL_LENGTH];
   DWORD charCount {std::size(buffer)};
 
@@ -72,6 +76,7 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
 }
 
 task<void> WebView2PageSource::Init() {
+  OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::Init()");
   if (!IsAvailable()) {
     co_return;
   }
