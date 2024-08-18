@@ -107,10 +107,37 @@ void divert_process_failure_to_fatal();
 
 }// namespace OpenKneeboard
 
-#define OPENKNEEBOARD_ALWAYS_ASSERT(x) \
-  if (!x) [[unlikely]] { \
-    ::OpenKneeboard::fatal("Assertion failed: {}", #x); \
+namespace OpenKneeboard::detail {
+
+inline void assert_impl(bool value, std::string_view stringified) {
+  if (value) [[likely]] {
+    return;
   }
+  ::OpenKneeboard::fatal(
+    StackFramePointer {_ReturnAddress()}, "Assertion failed: {}", stringified);
+}
+
+template <class... Ts>
+inline void assert_impl(
+  bool value,
+  std::string_view stringified,
+  std::format_string<Ts...> fmt,
+  Ts&&... fmtArgs) {
+  if (value) [[likely]] {
+    return;
+  }
+  ::OpenKneeboard::fatal(
+    StackFramePointer {_ReturnAddress()},
+    "Assertion failed ({}): {}",
+    stringified,
+    std::format(fmt, std::forward<Ts>(fmtArgs)...));
+}
+
+}// namespace OpenKneeboard::detail
+
+#define OPENKNEEBOARD_ALWAYS_ASSERT(x, ...) \
+  ::OpenKneeboard::detail::assert_impl(static_cast<bool>(x), #x, ##__VA_ARGS__);
 
 // Maybe change this to depend on DEBUG in the future
-#define OPENKNEEBOARD_ASSERT(x) OPENKNEEBOARD_ALWAYS_ASSERT(x)
+#define OPENKNEEBOARD_ASSERT(x, ...) \
+  OPENKNEEBOARD_ALWAYS_ASSERT(x, ##__VA_ARGS__)
