@@ -107,7 +107,6 @@ class WebView2PageSource final
 
   DisposalState mDisposal;
 
-  [[noreturn]]
   task<void> Init();
 
   audited_ptr<DXResources> mDXResources;
