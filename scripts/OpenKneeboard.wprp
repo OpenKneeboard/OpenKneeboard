@@ -6,14 +6,7 @@
       <Buffers Value="4" />
     </EventCollector>
 
-    <EventProvider Id="EventProvider_OpenKneeboard.App" Name="cc76597c-1041-5d57-c8ab-92cf9437104a" Level="5">
-      <Keywords>
-        <Keyword Value="0x1" /><!-- Uncategorized -->
-        <Keyword Value="0x2" /><!-- DPrint -->
-        <Keyword Value="0x4" /><!-- Events -->
-        <Keyword Value="0x8" /><!-- TaskCoro -->
-      </Keywords>
-    </EventProvider>
+    <EventProvider Id="EventProvider_OpenKneeboard.App" Name="cc76597c-1041-5d57-c8ab-92cf9437104a" />
 
     <EventProvider Id="EventProvider_OpenKneeboard.API.C" Name="cfaa744f-ba6f-5e56-5c91-88de46269c4b" />
     <EventProvider Id="EventProvider_OpenKneeboard.API.Lua" Name="039d7b52-2065-5863-802b-873c638bdf88" />
@@ -42,8 +35,14 @@
           <EventProviders>
             <EventProviderId Value="EventProvider_OpenKneeboard.App">
               <Keywords>
-                <Keyword Value="0x1" /><!-- Uncategorized -->
-                <Keyword Value="0x2" /><!-- DPrint -->
+                <!-- Uncategorized - anything marked for tracing without a more specific tag -->
+                <Keyword Value="0x1" />
+                <!-- DPrint - things written to the debug log -->
+                <Keyword Value="0x2" />
+                <!-- Events - things like 'clicked the mouse'. very spammy -->
+                <!--<Keyword Value="0x4" />-->
+                <!-- TaskCoro - internal details of the coroutine implementation -->
+                <!--<Keyword Value="0x8" />-->
               </Keywords>
             </EventProviderId>
             <EventProviderId Value="EventProvider_OpenKneeboard.API.C" />
