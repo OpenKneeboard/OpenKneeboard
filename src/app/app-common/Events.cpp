@@ -173,6 +173,14 @@ void EventBase::Shutdown(HANDLE event) {
 void EventBase::InvokeOrEnqueue(
   std::function<void()> func,
   std::source_location location) {
+  EventsTraceLoggingThreadActivity activity;
+  TraceLoggingWriteStart(
+    activity,
+    "EventBase::InvokeOrEnqueue()",
+    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
+  const scope_exit tlStop(
+    [&]() { TraceLoggingWriteStop(activity, "EventBase::InvokeOrEnqueue()"); });
+
   auto& queue = ThreadData::Get();
   queue.EmitOrEnqueue({func, location});
 }

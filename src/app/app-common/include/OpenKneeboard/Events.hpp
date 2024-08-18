@@ -370,13 +370,11 @@ void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
       TraceLoggingWriteStop(
         activity,
         "Event::Emit()",
-        TraceLoggingValue("Stopped by hook", "Result"),
-        OPENKNEEBOARD_TraceLoggingSourceLocation(location));
+        TraceLoggingValue("Stopped by hook", "Result"));
       return;
     }
   }
 
-  TraceLoggingWriteTagged(activity, "Invoking or enqueuing");
   InvokeOrEnqueue(
     [=]() {
       for (const auto& [token, receiver]: receivers) {
@@ -387,10 +385,7 @@ void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
     },
     location);
   TraceLoggingWriteStop(
-    activity,
-    "Event::Emit()",
-    TraceLoggingValue("Done", "Result"),
-    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
+    activity, "Event::Emit()", TraceLoggingValue("Done", "Result"));
 }
 
 template <class... Args>
