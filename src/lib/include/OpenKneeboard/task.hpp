@@ -313,27 +313,22 @@ struct TaskAwaiter {
     return oldState == TaskPromiseRunning;
   }
 
-  template <class T = TResult>
-    requires std::same_as<T, void>
-  void await_resume() const noexcept {
+  decltype(auto) await_resume() noexcept {
+    const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
+    OPENKNEEBOARD_ASSERT(waiting == TaskPromiseCompleted);
     using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
       mPromise->mResultState.Transition<HaveException, ThrownException>();
       std::rethrow_exception(std::move(mPromise->mUncaught));
     }
-    mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
-  }
 
-  template <std::convertible_to<TResult> T = TResult>
-    requires(!std::same_as<T, void>)
-  T&& await_resume() noexcept {
-    using enum TaskPromiseResultState;
-    if (mPromise->mUncaught) {
-      mPromise->mResultState.Transition<HaveException, ThrownException>();
-      std::rethrow_exception(std::move(mPromise->mUncaught));
-    }
+    if constexpr (std::same_as<TResult, void>) {
+    mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
+      return;
+    } else {
     mPromise->mResultState.Transition<HaveResult, ReturnedResult>();
     return std::move(mPromise->mResult);
+    }
   }
 };
 
