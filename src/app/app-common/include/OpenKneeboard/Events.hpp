@@ -47,6 +47,10 @@ namespace OpenKneeboard {
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 
+using EventsTraceLoggingThreadActivity = TraceLoggingThreadActivity<
+  gTraceProvider,
+  std::to_underlying(TraceLoggingEventKeywords::Events)>;
+
 template <class... Args>
 class Event;
 
@@ -148,7 +152,7 @@ class EventDelay final {
 
  private:
   std::source_location mSourceLocation;
-  TraceLoggingThreadActivity<gTraceProvider> mActivity;
+  EventsTraceLoggingThreadActivity mActivity;
 };
 
 class EventConnectionBase {
@@ -352,7 +356,7 @@ void Event<Args...>::RemoveHandler(EventHandlerToken token) {
 
 template <class... Args>
 void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
+  EventsTraceLoggingThreadActivity activity;
   TraceLoggingWriteStart(
     activity,
     "Event::Emit()",

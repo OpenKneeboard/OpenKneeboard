@@ -175,6 +175,7 @@ void dprint(std::wstring_view message) {
   TraceLoggingWrite(
     gTraceProvider,
     "dprint",
+    TraceLoggingKeyword(std::to_underlying(TraceLoggingEventKeywords::DPrint)),
     TraceLoggingCountedWideString(message.data(), message.size(), "Message"));
   if (IsDebugStreamEnabled()) {
     auto output = std::format(L"[{}] {}\n", gPrefixW, message);

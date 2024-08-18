@@ -35,6 +35,15 @@
 
 namespace OpenKneeboard {
 
+/// Bitmask; we can use up to 48 bits here. Upper 16 bits are reserved for
+/// Microsoft
+enum class TraceLoggingEventKeywords {
+  Uncategorized = 1,
+  DPrint = 2,
+  Events = 4,
+  TaskCoro = 8,
+};
+
 wchar_t* GetFullPathForCurrentExecutable();
 
 #define TraceLoggingThisExecutable() \
@@ -136,6 +145,11 @@ static_assert(!OPENKNEEBOARD_VA_OPT_SUPPORTED);
 // ... but we currently depend on ##__VA_ARGS__
 static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 
+using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
+  gTraceProvider,
+  std::to_underlying(TraceLoggingEventKeywords::Uncategorized),
+  WINEVENT_LEVEL_INFO>;
+
 /** Create and automatically start and stop a named activity.
  *
  * @param OKBTL_ACTIVITY the local variable to store the activity in
@@ -148,10 +162,10 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
  */
 #define OPENKNEEBOARD_TraceLoggingScopedActivity( \
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
-  const std::function<void(TraceLoggingThreadActivity<gTraceProvider>&)> \
+  const std::function<void(UncategorizedTraceLoggingThreadActivity&)> \
     OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY) \
     = [&, loc = std::source_location::current()]( \
-        TraceLoggingThreadActivity<gTraceProvider>& activity) { \
+        UncategorizedTraceLoggingThreadActivity& activity) { \
         TraceLoggingWriteStart( \
           activity, \
           OKBTL_NAME, \
@@ -159,7 +173,7 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
           ##__VA_ARGS__); \
       }; \
   class OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) final \
-    : public TraceLoggingThreadActivity<gTraceProvider> { \
+    : public UncategorizedTraceLoggingThreadActivity { \
    public: \
     OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
     (decltype(OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY))& startImpl) { \
@@ -231,18 +245,19 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
   TraceLoggingWrite( \
     gTraceProvider, \
     OKBTL_NAME, \
+    TraceLoggingLevel(WINEVENT_LEVEL_INFO), \
+    TraceLoggingKeyword( \
+      std::to_underlying(TraceLoggingEventKeywords::Uncategorized)), \
     TraceLoggingValue(__FILE__, "File"), \
     TraceLoggingValue(__LINE__, "Line"), \
     TraceLoggingValue(__FUNCTION__, "Function"), \
     ##__VA_ARGS__)
 
 #define OPENKNEEBOARD_TraceLoggingCoro(OKBTL_NAME, ...) \
-  OPENKNEEBOARD_TraceLoggingWrite( \
-    OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_START), ##__VA_ARGS__); \
+  OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME##"/coroStart", ##__VA_ARGS__); \
   const ::OpenKneeboard::scope_exit OPENKNEEBOARD_CONCAT2( \
     _okbtllcoro__, _COUNTER__) {[&]() { \
-    OPENKNEEBOARD_TraceLoggingWrite( \
-      OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_STOP), ##__VA_ARGS__); \
+    OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME##"/coroStop", ##__VA_ARGS__); \
   }};
 
 #endif
