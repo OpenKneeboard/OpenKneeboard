@@ -56,6 +56,7 @@ winrt::fire_and_forget FilesystemWatcher::final_release(
   std::unique_ptr<FilesystemWatcher> self) {
   self->mStop.request_stop();
   co_await winrt::resume_on_signal(self->mShutdownHandle.get());
+  co_await std::move(self->mImpl).value();
 }
 
 FilesystemWatcher::~FilesystemWatcher() = default;
