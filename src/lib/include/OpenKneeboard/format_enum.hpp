@@ -41,8 +41,10 @@ struct std::formatter<T, char> {
   }
 
   constexpr auto format(T v, auto& ctx) const {
-    const auto value
-      = std::format("{}({})", magic_enum::enum_name(v), std::to_underlying(v));
+    const auto value = std::format(
+      "{}({})",
+      magic_enum::enum_contains(v) ? magic_enum::enum_name(v) : "[invalid]",
+      std::to_underlying(v));
     if (!mIncludeTypeName) {
       return std::copy(value.begin(), value.end(), ctx.out());
     }
