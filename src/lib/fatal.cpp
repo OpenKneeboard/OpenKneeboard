@@ -390,10 +390,6 @@ static std::string GetFatalLogContents(
     f << logContents;
   }
 
-  if (IsDebuggerPresent()) {
-    __debugbreak();
-  }
-
   if (meta.CanWriteDump()) {
     auto thisProcess = Filesystem::GetCurrentExecutablePath();
 
@@ -501,6 +497,7 @@ namespace OpenKneeboard {
 
 void fatal_with_hresult(HRESULT hr) {
   using namespace OpenKneeboard::detail;
+  prepare_to_fatal();
   CrashMeta meta {};
   FatalAndDump(
     meta,
@@ -513,6 +510,7 @@ void fatal_with_hresult(HRESULT hr) {
 
 void fatal_with_exception(std::exception_ptr ep) {
   using namespace OpenKneeboard::detail;
+  prepare_to_fatal();
   CrashMeta meta {};
   if (!ep) {
     FatalAndDump(

@@ -73,6 +73,15 @@ struct FatalData {
   void fatal() const noexcept;
 };
 
+inline void break_if_debugger_present() {
+  if (IsDebuggerPresent()) {
+    __debugbreak();
+  }
+}
+
+inline void prepare_to_fatal() {
+  break_if_debugger_present();
+}
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
@@ -80,6 +89,7 @@ namespace OpenKneeboard {
 template <class... Ts>
 [[noreturn, msvc::noinline]]
 void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
+  detail::prepare_to_fatal();
   detail::FatalData {
     .mMessage = std::format(fmt, std::forward<Ts>(values)...),
   }
@@ -92,6 +102,7 @@ void fatal(
   TLocation&& blame,
   std::format_string<Ts...> fmt,
   Ts&&... values) noexcept {
+  detail::prepare_to_fatal();
   detail::FatalData {
     .mMessage = std::format(fmt, std::forward<Ts>(values)...),
     .mBlameLocation = detail::SourceLocation {std::forward<TLocation>(blame)},
