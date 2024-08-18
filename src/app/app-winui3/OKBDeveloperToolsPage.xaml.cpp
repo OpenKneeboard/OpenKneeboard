@@ -157,7 +157,7 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
 static constexpr const char TriggeredCrashMessage[]
   = "'Trigger crash' clicked on developer tools page";
 
-void OKBDeveloperToolsPage::OnTriggerCrashClick(
+winrt::fire_and_forget OKBDeveloperToolsPage::OnTriggerCrashClick(
   const IInspectable&,
   const Microsoft::UI::Xaml::RoutedEventArgs&) {
   enum class CrashKind {
@@ -171,17 +171,27 @@ void OKBDeveloperToolsPage::OnTriggerCrashClick(
     WindowsSystemTask = 2,
   };
 
-  std::function<void()> triggerCrash;
+  // We need the unreachable co_return to make the functions coroutines, so we
+  // get task<void>'s exception handler
+  std::function<task<void>()> triggerCrash;
   switch (static_cast<CrashKind>(this->CrashKind().SelectedIndex())) {
     case CrashKind::Fatal:
-      triggerCrash = []() { fatal("{}", TriggeredCrashMessage); };
+      triggerCrash = []() -> task<void> {
+        fatal("{}", TriggeredCrashMessage);
+        co_return;
+      };
       break;
     case CrashKind::Throw:
-      triggerCrash = []() { throw std::runtime_error(TriggeredCrashMessage); };
+      triggerCrash = []() -> task<void> {
+        throw std::runtime_error(TriggeredCrashMessage);
+        co_return;
+      };
       break;
     case CrashKind::ThrowFromNoexcept:
-      triggerCrash
-        = []() noexcept { throw std::runtime_error(TriggeredCrashMessage); };
+      triggerCrash = []() noexcept -> task<void> {
+        throw std::runtime_error(TriggeredCrashMessage);
+        co_return;
+      };
       break;
     default:
       OPENKNEEBOARD_BREAK;
@@ -197,23 +207,23 @@ void OKBDeveloperToolsPage::OnTriggerCrashClick(
   const auto location
     = static_cast<CrashLocation>(this->CrashLocation().SelectedIndex());
   if (location == CrashLocation::UIThread) {
-    triggerCrash();
+    co_await triggerCrash();
     std::unreachable();
   }
   if (location == CrashLocation::MUITask) {
     auto dqc = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
       CreateOnDedicatedThread();
-    OpenKneeboard::TryEnqueue(
-      dqc.DispatcherQueue(), [triggerCrash, dqc]() { triggerCrash(); });
-    return;
+    co_await wil::resume_foreground(dqc.DispatcherQueue());
+    co_await triggerCrash();
+    std::unreachable();
   }
 
   if (location == CrashLocation::WindowsSystemTask) {
     auto dqc = winrt::Windows::System::DispatcherQueueController::
       CreateOnDedicatedThread();
-    OpenKneeboard::TryEnqueue(
-      dqc.DispatcherQueue(), [triggerCrash, dqc]() { triggerCrash(); });
-    return;
+    co_await wil::resume_foreground(dqc.DispatcherQueue());
+    co_await triggerCrash();
+    std::unreachable();
   }
 
   OPENKNEEBOARD_BREAK;

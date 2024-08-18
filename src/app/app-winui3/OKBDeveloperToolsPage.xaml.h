@@ -35,7 +35,7 @@ struct OKBDeveloperToolsPage : OKBDeveloperToolsPageT<OKBDeveloperToolsPage> {
     const IInspectable&,
     const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
 
-  void OnTriggerCrashClick(
+  winrt::fire_and_forget OnTriggerCrashClick(
     const IInspectable&,
     const Microsoft::UI::Xaml::RoutedEventArgs&);
 };
