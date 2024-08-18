@@ -261,7 +261,7 @@ void MainWindow::CheckForElevatedConsumer() {
   ShowWarningIfElevated(pid);
 }
 
-winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
+OpenKneeboard::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   if (pid == mElevatedConsumerProcessID) {
     co_return;
   }
@@ -315,7 +315,7 @@ winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   dprint("Game elevation warning dialog closed.");
 }
 
-winrt::fire_and_forget MainWindow::FrameTick() {
+OpenKneeboard::fire_and_forget MainWindow::FrameTick() {
   TraceLoggingActivity<gTraceProvider> activity;
   // Including the build number just to make sure it's in every trace
   TraceLoggingWriteStart(
@@ -370,7 +370,7 @@ winrt::fire_and_forget MainWindow::FrameTick() {
   }
 }
 
-winrt::fire_and_forget MainWindow::OnLoaded() {
+OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   // WinUI3 gives us the spinning circle for a long time...
   SetCursor(LoadCursorW(NULL, IDC_ARROW));
 
@@ -566,7 +566,7 @@ MainWindow::~MainWindow() {
   gMainWindow = {};
 }
 
-winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
+OpenKneeboard::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
   co_await mUIThread;
   // As of Windows App SDK v1.1.4, changing the visibility and signalling the
   // bound property changed doesn't correctly update the navigation view, even
@@ -615,7 +615,7 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
     auto weakItem = make_weak(item);
     item.Click(
-      [](auto self, auto item, auto profile) -> winrt::fire_and_forget {
+      [](auto self, auto item, auto profile) -> OpenKneeboard::fire_and_forget {
         auto settings = self->mKneeboard->GetProfileSettings();
         if (settings.mActiveProfile == profile.mID) {
           item.IsChecked(true);
@@ -728,7 +728,7 @@ void MainWindow::SaveWindowPosition() {
   mWindowPosition = windowRect;
 }
 
-winrt::fire_and_forget MainWindow::Shutdown() {
+OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
   auto self = get_strong();
   self->RemoveAllEventListeners();
@@ -801,7 +801,7 @@ winrt::fire_and_forget MainWindow::Shutdown() {
   });
 }
 
-winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
+OpenKneeboard::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingCoro("MainWindow::OnTabChanged()");
 
@@ -867,7 +867,7 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   mTabSwitchReason = TabSwitchReason::Other;
 }
 
-winrt::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
+OpenKneeboard::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
   if (ev.name != APIEvent::EVT_OKB_EXECUTABLE_LAUNCHED) {
     co_return;
   }
@@ -888,7 +888,7 @@ winrt::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
     mKneeboard, Navigation().XamlRoot(), commandLine.c_str());
 }
 
-winrt::fire_and_forget MainWindow::OnTabsChanged() {
+OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabsChanged()");
   // In theory, we could directly mutate Navigation().MenuItems();
@@ -985,7 +985,8 @@ MainWindow::NavigationItems() noexcept {
   return navItems;
 }
 
-winrt::fire_and_forget MainWindow::RenameTab(std::shared_ptr<ITab> tab) {
+OpenKneeboard::fire_and_forget MainWindow::RenameTab(
+  std::shared_ptr<ITab> tab) {
   OpenKneeboardApp::RenameTabDialog dialog;
   dialog.XamlRoot(Navigation().XamlRoot());
   dialog.TabTitle(to_hstring(tab->GetTitle()));
@@ -1002,7 +1003,7 @@ winrt::fire_and_forget MainWindow::RenameTab(std::shared_ptr<ITab> tab) {
   tab->SetTitle(newName);
 }
 
-winrt::fire_and_forget MainWindow::RenameBookmark(
+OpenKneeboard::fire_and_forget MainWindow::RenameBookmark(
   std::shared_ptr<ITab> tab,
   Bookmark bookmark,
   winrt::hstring title) {
@@ -1095,7 +1096,7 @@ void MainWindow::OnBackRequested(
   Frame().GoBack();
 }
 
-winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
+OpenKneeboard::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
   std::string_view uriStr) {
   auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
   std::wstring_view path(uri.Path());

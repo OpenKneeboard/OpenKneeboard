@@ -54,7 +54,7 @@ OTDIPCClient::~OTDIPCClient() {
   dprintf("{}", __FUNCTION__);
 }
 
-winrt::fire_and_forget OTDIPCClient::final_release(
+OpenKneeboard::fire_and_forget OTDIPCClient::final_release(
   std::unique_ptr<OTDIPCClient> self) {
   dprint("Requesting OTDIPCClient stop");
   self->mStopper.request_stop();
@@ -210,7 +210,8 @@ task<void> OTDIPCClient::RunSingle() {
   }
 }
 
-winrt::fire_and_forget OTDIPCClient::EnqueueMessage(std::string message) {
+OpenKneeboard::fire_and_forget OTDIPCClient::EnqueueMessage(
+  std::string message) {
   auto weakThis = weak_from_this();
   co_await mUIThread;
   auto self = weakThis.lock();

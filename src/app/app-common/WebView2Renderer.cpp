@@ -370,7 +370,7 @@ void WebView2Renderer::PostCursorEvent(
   }
 }
 
-winrt::fire_and_forget WebView2Renderer::SendJSEvent(
+OpenKneeboard::fire_and_forget WebView2Renderer::SendJSEvent(
   std::string eventType,
   nlohmann::json eventOptions) {
   auto weak = weak_from_this();
@@ -389,7 +389,8 @@ winrt::fire_and_forget WebView2Renderer::SendJSEvent(
   mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
 }
 
-winrt::fire_and_forget WebView2Renderer::ActivateJSAPI(std::string api) {
+OpenKneeboard::fire_and_forget WebView2Renderer::ActivateJSAPI(
+  std::string api) {
   auto weak = weak_from_this();
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   auto self = weak.lock();
@@ -453,7 +454,7 @@ task<void> WebView2Renderer::RenderPage(
   }
 }
 
-winrt::fire_and_forget WebView2Renderer::FlushCursorEvents() {
+OpenKneeboard::fire_and_forget WebView2Renderer::FlushCursorEvents() {
   if (mCursorEvents.empty()) {
     co_return;
   }
@@ -531,7 +532,7 @@ winrt::fire_and_forget WebView2Renderer::FlushCursorEvents() {
   }
 }
 
-winrt::fire_and_forget WebView2Renderer::OnWebMessageReceived(
+OpenKneeboard::fire_and_forget WebView2Renderer::OnWebMessageReceived(
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2WebMessageReceivedEventArgs
     args) {
@@ -1043,7 +1044,7 @@ void WebView2Renderer::OnJSAPI_Peer_SetPages(
   this->SendJSEvent("pagesChanged", {{"detail", {{"pages", pages}}}});
 }
 
-winrt::fire_and_forget WebView2Renderer::SendJSResponse(
+OpenKneeboard::fire_and_forget WebView2Renderer::SendJSResponse(
   uint64_t callID,
   JSAPIResult result) {
   if (!this->IsLiveForContent()) {

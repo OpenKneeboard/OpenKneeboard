@@ -37,7 +37,7 @@ namespace OpenKneeboard {
 template <class TDQ, class TFn>
 auto TryEnqueue(TDQ dq, TFn&& fn) {
   dq.TryEnqueue(std::bind_front(
-    [](auto fn) -> winrt::fire_and_forget {
+    [](auto fn) -> OpenKneeboard::fire_and_forget {
       try {
         if constexpr (detail::awaitable<std::invoke_result_t<TFn>>) {
           co_await std::invoke(fn);

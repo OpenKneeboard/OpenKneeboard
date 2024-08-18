@@ -117,13 +117,14 @@ task<void> App::CleanupAndExitAsync() {
   TraceLoggingWrite(gTraceProvider, "PostQuitMessage()");
 }
 
-void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
+OpenKneeboard::fire_and_forget App::OnLaunched(
+  LaunchActivatedEventArgs const&) noexcept {
   DispatcherShutdownMode(
     winrt::Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown);
 
   auto window = make<MainWindow>();
   mWindow = window;
-  ::OpenKneeboard::fire_and_forget(window.Init());
+  co_await window.Init();
 }
 
 static void LogSystemInformation() {

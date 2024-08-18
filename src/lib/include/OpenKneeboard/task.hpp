@@ -105,15 +105,44 @@ struct TaskContext {
   }
 };
 
-template <class TResult>
+template <class TTraits>
 struct TaskPromiseBase;
 
+template <class TTraits>
+struct TaskPromise;
+
+enum class TaskExceptionBehavior {
+  StoreAndRethrow,
+  Terminate,
+};
+
+enum class TaskAwaiting {
+  Required,
+  Optional,
+  NotSupported,
+};
+
 template <class TResult>
+struct TaskTraits {
+  static constexpr auto OnException = TaskExceptionBehavior::StoreAndRethrow;
+  static constexpr auto Awaiting = TaskAwaiting::Required;
+
+  using result_type = TResult;
+};
+
+struct FireAndForgetTraits {
+  static constexpr auto OnException = TaskExceptionBehavior::Terminate;
+  static constexpr auto Awaiting = TaskAwaiting::NotSupported;
+
+  using result_type = void;
+};
+
+template <class TTraits>
 struct TaskFinalAwaiter {
-  TaskPromiseBase<TResult>& mPromise;
+  TaskPromiseBase<TTraits>& mPromise;
 
   TaskFinalAwaiter() = delete;
-  TaskFinalAwaiter(TaskPromiseBase<TResult>& promise) : mPromise(promise) {
+  TaskFinalAwaiter(TaskPromiseBase<TTraits>& promise) : mPromise(promise) {
     if constexpr (!DebugTaskCoroutines) {
       return;
     }
@@ -162,7 +191,7 @@ struct TaskFinalAwaiter {
       .mCoro = oldState.mNext,
     };
     const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
-      &TaskFinalAwaiter<TResult>::resume_on_thread_pool, resumeData, nullptr);
+      &TaskFinalAwaiter<TTraits>::resume_on_thread_pool, resumeData, nullptr);
     if (threadPoolSuccess) [[likely]] {
       return;
     }
@@ -190,7 +219,7 @@ struct TaskFinalAwaiter {
 
     ComCallData comData {.pUserDefined = resumeData.get()};
     const auto result = resumeData->mContext.mCOMCallback->ContextCallback(
-      &TaskFinalAwaiter<TResult>::resume_on_thread_pool,
+      &TaskFinalAwaiter<TTraits>::resume_on_thread_pool,
       &comData,
       IID_ICallbackWithNoReentrancyToApplicationSTA,
       5,
@@ -219,13 +248,10 @@ struct TaskFinalAwaiter {
   }
 };
 
-template <class TResult>
+template <class TTraits>
 struct Task;
 
-template <class TResult>
-struct TaskPromise;
-
-template <class TResult>
+template <class TTraits>
 struct TaskPromiseBase {
   using enum TaskPromiseResultState;
   AtomicStateMachine<
@@ -251,11 +277,11 @@ struct TaskPromiseBase {
   TaskContext mContext;
 
   TaskPromiseBase() = delete;
-  TaskPromiseBase(const TaskPromiseBase<TResult>&) = delete;
-  TaskPromiseBase<TResult>& operator=(const TaskPromiseBase<TResult>&) = delete;
+  TaskPromiseBase(const TaskPromiseBase<TTraits>&) = delete;
+  TaskPromiseBase<TTraits>& operator=(const TaskPromiseBase<TTraits>&) = delete;
 
-  TaskPromiseBase(TaskPromiseBase<TResult>&&) = delete;
-  TaskPromiseBase<TResult>& operator=(TaskPromiseBase<TResult>&&) = delete;
+  TaskPromiseBase(TaskPromiseBase<TTraits>&&) = delete;
+  TaskPromiseBase<TTraits>& operator=(TaskPromiseBase<TTraits>&&) = delete;
 
   TaskPromiseBase(TaskContext&& context) noexcept
     : mContext(std::move(context)) {
@@ -274,7 +300,7 @@ struct TaskPromiseBase {
   }
 
   auto get_return_object() {
-    return static_cast<TaskPromise<TResult>*>(this);
+    return static_cast<TaskPromise<TTraits>*>(this);
   }
 
   void unhandled_exception() noexcept {
@@ -290,15 +316,23 @@ struct TaskPromiseBase {
       TraceLoggingValue(
         std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
         "ResultState"));
-    mUncaught = std::current_exception();
-    mResultState.Transition<NoResult, HaveException>();
+    if constexpr (
+      TTraits::OnException == TaskExceptionBehavior::StoreAndRethrow) {
+      mUncaught = std::current_exception();
+      mResultState.Transition<NoResult, HaveException>();
+    } else {
+      static_assert(TTraits::OnException == TaskExceptionBehavior::Terminate);
+      fatal_with_exception(std::current_exception());
+    }
   }
 
   void abandon() {
     auto oldState
       = mWaiting.exchange(TaskPromiseAbandoned, std::memory_order_acq_rel);
     if (oldState == TaskPromiseRunning) {
-      fatal(mContext.mCaller, "result *must* be awaited");
+      if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
+        fatal(mContext.mCaller, "result *must* be awaited");
+      }
       return;
     }
     this->destroy();
@@ -325,7 +359,7 @@ struct TaskPromiseBase {
     return {};
   };
 
-  TaskFinalAwaiter<TResult> final_suspend() noexcept {
+  TaskFinalAwaiter<TTraits> final_suspend() noexcept {
     TraceLoggingWrite(
       gTraceProvider,
       "TaskPromiseBase<>::final_suspend()",
@@ -343,14 +377,15 @@ struct TaskPromiseBase {
   }
 };
 
-template <class TResult>
-struct TaskPromise : TaskPromiseBase<TResult> {
+template <class TTraits>
+struct TaskPromise : TaskPromiseBase<TTraits> {
   [[msvc::forceinline]]
-  TaskPromise()
-    : TaskPromiseBase<TResult>(StackFramePointer {_ReturnAddress()}) {
+  TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
+    : TaskPromiseBase<TTraits>(
+        caller.value_or(StackFramePointer {_ReturnAddress()})) {
   }
 
-  TResult mResult;
+  typename TTraits::result_type mResult;
 
   template <class T>
   void return_value(T&& result) noexcept {
@@ -374,11 +409,13 @@ struct TaskPromise : TaskPromiseBase<TResult> {
   }
 };
 
-template <>
-struct TaskPromise<void> : TaskPromiseBase<void> {
+template <class TTraits>
+  requires std::same_as<typename TTraits::result_type, void>
+struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   [[msvc::forceinline]]
-  TaskPromise()
-    : TaskPromiseBase<void>(StackFramePointer {_ReturnAddress()}) {
+  TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
+    : TaskPromiseBase<TTraits>(
+        caller.value_or(StackFramePointer {_ReturnAddress()})) {
   }
 
   void return_void() noexcept {
@@ -397,7 +434,7 @@ struct TaskPromise<void> : TaskPromiseBase<void> {
           .c_str(),
         "ResultState"));
     using enum TaskPromiseResultState;
-    mResultState.Transition<NoResult, HaveVoidResult>();
+    this->mResultState.Transition<NoResult, HaveVoidResult>();
   }
 };
 
@@ -430,9 +467,9 @@ struct TaskPromiseDeleter {
 template <class T>
 using TaskPromisePtr = std::unique_ptr<T, TaskPromiseDeleter<T>>;
 
-template <class TResult>
+template <class TTraits>
 struct TaskAwaiter {
-  using promise_t = TaskPromise<TResult>;
+  using promise_t = TaskPromise<TTraits>;
   using promise_ptr_t = TaskPromisePtr<promise_t>;
   promise_ptr_t mPromise;
 
@@ -517,7 +554,7 @@ struct TaskAwaiter {
       std::rethrow_exception(std::move(mPromise->mUncaught));
     }
 
-    if constexpr (std::same_as<TResult, void>) {
+    if constexpr (std::same_as<typename TTraits::result_type, void>) {
       mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
       return;
     } else {
@@ -527,9 +564,9 @@ struct TaskAwaiter {
   }
 };
 
-template <class TResult>
+template <class TTraits>
 struct [[nodiscard]] Task {
-  using promise_t = TaskPromise<TResult>;
+  using promise_t = TaskPromise<TTraits>;
   using promise_ptr_t = TaskPromisePtr<promise_t>;
 
   using promise_type = promise_t;
@@ -588,11 +625,12 @@ struct [[nodiscard]] Task {
         std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
       TraceLoggingPointer(this, "Task"),
       TraceLoggingPointer(mPromise.get(), "Promise"));
-    if (mPromise) [[unlikely]] {
-      fatal(
-        mPromise->mContext.mCaller,
-        "all tasks must be either moved or awaited");
-      return;
+    if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
+      if (mPromise) [[unlikely]] {
+        fatal(
+          mPromise->mContext.mCaller,
+          "all tasks must be either moved or awaited");
+      }
     }
   }
 
@@ -603,7 +641,9 @@ struct [[nodiscard]] Task {
   };
   cannot_await_lvalue_use_std_move operator co_await() & = delete;
 
-  auto operator co_await() && noexcept {
+  auto operator co_await() && noexcept
+    requires(TTraits::Awaiting != TaskAwaiting::NotSupported)
+  {
     TraceLoggingWrite(
       gTraceProvider,
       "Task<>::operator co_await()",
@@ -614,7 +654,7 @@ struct [[nodiscard]] Task {
 
     OPENKNEEBOARD_ASSERT(
       mPromise, "Can't await a task that has been moved or already awaited");
-    return TaskAwaiter<TResult> {std::move(mPromise)};
+    return TaskAwaiter<TTraits> {std::move(mPromise)};
   }
 
   promise_ptr_t mPromise;
@@ -640,8 +680,17 @@ namespace OpenKneeboard {
  * stored task, use `co_await std::move(optional).value()`
  */
 template <class TIgnoredDispatcherQueue, class T>
-using basic_task = detail::Task<T>;
+using basic_task = detail::Task<detail::TaskTraits<T>>;
 template <class T>
 using task = basic_task<DispatcherQueue, T>;
+
+struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
+  using detail::Task<detail::FireAndForgetTraits>::Task;
+
+  static fire_and_forget wrap(auto toWrap, auto... args) {
+    co_await std::invoke(std::move(toWrap), std::move(args)...);
+    co_return;
+  }
+};
 
 }// namespace OpenKneeboard

@@ -34,11 +34,11 @@ After you have build the project, you can also use "C/C++: Run code analysis" fr
 This is the primary reason why clang-tidy may be clean: both of these are buggy:
 
 ```C++
-auto example_a = [](const std::string& foo) -> winrt::fire_and_forget {
+auto example_a = [](const std::string& foo) -> OpenKneeboard::fire_and_forget {
   co_await wait_for_something();
   do_stuff(foo); // `foo` may now be invalid
 };
-auto example_b = [foo]() -> winrt::fire_and_forget {
+auto example_b = [foo]() -> OpenKneeboard::fire_and_forget {
   co_await wait_for_something();
   do_stuff(foo); // `foo` may now be invalid
 }

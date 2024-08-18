@@ -230,7 +230,7 @@ HWNDPageSource::CreateWGCaptureItem() {
   return item;
 }
 
-winrt::fire_and_forget HWNDPageSource::InitializeInputHook() noexcept {
+OpenKneeboard::fire_and_forget HWNDPageSource::InitializeInputHook() noexcept {
   auto weak = weak_from_this();
   co_await winrt::resume_after(std::chrono::milliseconds(100));
   auto self = weak.lock();

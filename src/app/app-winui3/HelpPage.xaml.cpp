@@ -102,7 +102,7 @@ HelpPage::HelpPage() {
   this->PopulateVersion();
   this->PopulateLicenses();
 
-  QuickStartLink().Click([](auto&, auto&) -> winrt::fire_and_forget {
+  QuickStartLink().Click([](auto&, auto&) -> OpenKneeboard::fire_and_forget {
     const auto quickStartPath = RuntimeFiles::GetInstallationDirectory()
       / RuntimeFiles::QUICK_START_PDF;
 
@@ -166,7 +166,7 @@ auto ReadableTime(const std::chrono::time_point<C, T>& time) {
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
-winrt::fire_and_forget HelpPage::OnExportClick(
+OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   IInspectable,
   RoutedEventArgs) noexcept {
   constexpr winrt::guid thisCall {
@@ -361,7 +361,7 @@ std::string HelpPage::GetDPrintMessagesAsString() noexcept {
   return dumper();
 }
 
-winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
+OpenKneeboard::fire_and_forget HelpPage::OnCheckForUpdatesClick(
   IInspectable,
   RoutedEventArgs) noexcept {
   co_await CheckForUpdates(UpdateCheckType::Manual, this->XamlRoot());

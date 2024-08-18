@@ -50,7 +50,7 @@ class PDFFilePageSource final
  public:
   PDFFilePageSource() = delete;
   virtual ~PDFFilePageSource();
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<PDFFilePageSource>);
 
   static std::shared_ptr<PDFFilePageSource> Create(
@@ -58,7 +58,7 @@ class PDFFilePageSource final
     KneeboardState*,
     const std::filesystem::path& path = {});
 
-  virtual winrt::fire_and_forget Reload();
+  virtual OpenKneeboard::fire_and_forget Reload();
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;
@@ -96,8 +96,10 @@ class PDFFilePageSource final
   struct DocumentResources;
   std::shared_ptr<DocumentResources> mDocumentResources;
 
-  winrt::fire_and_forget ReloadRenderer(std::weak_ptr<DocumentResources>);
-  winrt::fire_and_forget ReloadNavigation(std::weak_ptr<DocumentResources>);
+  OpenKneeboard::fire_and_forget ReloadRenderer(
+    std::weak_ptr<DocumentResources>);
+  OpenKneeboard::fire_and_forget ReloadNavigation(
+    std::weak_ptr<DocumentResources>);
 
   void OnFileModified(const std::filesystem::path& path);
 

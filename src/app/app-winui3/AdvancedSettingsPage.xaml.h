@@ -43,84 +43,86 @@ struct AdvancedSettingsPage
   ~AdvancedSettingsPage();
 
   bool MultipleProfiles() const noexcept;
-  fire_and_forget MultipleProfiles(bool value) noexcept;
+  OpenKneeboard::fire_and_forget MultipleProfiles(bool value) noexcept;
 
   bool Bookmarks() const noexcept;
-  fire_and_forget Bookmarks(bool value) noexcept;
+  OpenKneeboard::fire_and_forget Bookmarks(bool value) noexcept;
 
   uint8_t AppWindowViewMode() const noexcept;
-  fire_and_forget AppWindowViewMode(uint8_t value) noexcept;
+  OpenKneeboard::fire_and_forget AppWindowViewMode(uint8_t value) noexcept;
 
   bool EnableMouseButtonBindings() const noexcept;
-  fire_and_forget EnableMouseButtonBindings(bool value) noexcept;
+  OpenKneeboard::fire_and_forget EnableMouseButtonBindings(bool value) noexcept;
 
   bool GazeInputFocus() const noexcept;
-  fire_and_forget GazeInputFocus(bool value) noexcept;
+  OpenKneeboard::fire_and_forget GazeInputFocus(bool value) noexcept;
 
   bool LoopPages() const noexcept;
-  fire_and_forget LoopPages(bool) noexcept;
+  OpenKneeboard::fire_and_forget LoopPages(bool) noexcept;
 
   bool LoopTabs() const noexcept;
-  fire_and_forget LoopTabs(bool) noexcept;
+  OpenKneeboard::fire_and_forget LoopTabs(bool) noexcept;
 
   bool LoopProfiles() const noexcept;
-  fire_and_forget LoopProfiles(bool) noexcept;
+  OpenKneeboard::fire_and_forget LoopProfiles(bool) noexcept;
 
   bool LoopBookmarks() const noexcept;
-  fire_and_forget LoopBookmarks(bool) noexcept;
+  OpenKneeboard::fire_and_forget LoopBookmarks(bool) noexcept;
 
   bool InGameHeader() const noexcept;
-  fire_and_forget InGameHeader(bool) noexcept;
+  OpenKneeboard::fire_and_forget InGameHeader(bool) noexcept;
 
   bool InGameFooter() const noexcept;
-  fire_and_forget InGameFooter(bool) noexcept;
+  OpenKneeboard::fire_and_forget InGameFooter(bool) noexcept;
 
   bool InGameFooterFrameCount() const noexcept;
-  fire_and_forget InGameFooterFrameCount(bool) noexcept;
+  OpenKneeboard::fire_and_forget InGameFooterFrameCount(bool) noexcept;
 
-  fire_and_forget RestoreDoodleDefaults(
+  OpenKneeboard::fire_and_forget RestoreDoodleDefaults(
     const IInspectable&,
     const IInspectable&) noexcept;
-  fire_and_forget RestoreTextDefaults(
+  OpenKneeboard::fire_and_forget RestoreTextDefaults(
     const IInspectable&,
     const IInspectable&) noexcept;
-  fire_and_forget RestoreQuirkDefaults(
+  OpenKneeboard::fire_and_forget RestoreQuirkDefaults(
     const IInspectable&,
     const IInspectable&) noexcept;
 
   uint32_t MinimumPenRadius();
-  fire_and_forget MinimumPenRadius(uint32_t value);
+  OpenKneeboard::fire_and_forget MinimumPenRadius(uint32_t value);
   uint32_t PenSensitivity();
-  fire_and_forget PenSensitivity(uint32_t value);
+  OpenKneeboard::fire_and_forget PenSensitivity(uint32_t value);
 
   uint32_t MinimumEraseRadius();
-  fire_and_forget MinimumEraseRadius(uint32_t value);
+  OpenKneeboard::fire_and_forget MinimumEraseRadius(uint32_t value);
   uint32_t EraseSensitivity();
-  fire_and_forget EraseSensitivity(uint32_t value);
+  OpenKneeboard::fire_and_forget EraseSensitivity(uint32_t value);
 
   float TextPageFontSize();
-  fire_and_forget TextPageFontSize(float value);
+  OpenKneeboard::fire_and_forget TextPageFontSize(float value);
 
   bool TintEnabled();
-  fire_and_forget TintEnabled(bool value);
+  OpenKneeboard::fire_and_forget TintEnabled(bool value);
   float TintBrightness();
-  fire_and_forget TintBrightness(float value);
+  OpenKneeboard::fire_and_forget TintBrightness(float value);
   winrt::Windows::UI::Color Tint();
-  fire_and_forget Tint(winrt::Windows::UI::Color value);
+  OpenKneeboard::fire_and_forget Tint(winrt::Windows::UI::Color value);
 
   bool Quirk_OculusSDK_DiscardDepthInformation() const noexcept;
-  fire_and_forget Quirk_OculusSDK_DiscardDepthInformation(bool value) noexcept;
+  OpenKneeboard::fire_and_forget Quirk_OculusSDK_DiscardDepthInformation(
+    bool value) noexcept;
 
   bool Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept;
-  fire_and_forget Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept;
+  OpenKneeboard::fire_and_forget Quirk_OpenXR_AlwaysUpdateSwapchain(
+    bool value) noexcept;
 
   uint8_t Quirk_OpenXR_Upscaling() const noexcept;
-  fire_and_forget Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
+  OpenKneeboard::fire_and_forget Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
 
   bool CanChangeElevation() const noexcept;
 
   int32_t DesiredElevation() const noexcept;
-  fire_and_forget DesiredElevation(int32_t value) noexcept;
+  OpenKneeboard::fire_and_forget DesiredElevation(int32_t value) noexcept;
 
  private:
   winrt::apartment_context mUIThread {};

@@ -54,7 +54,7 @@ struct InputSettingsPage
   bool IsWinTabAvailable() const;
   winrt::hstring WinTabAvailability() const;
 
-  winrt::fire_and_forget RestoreDefaults(
+OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;
 

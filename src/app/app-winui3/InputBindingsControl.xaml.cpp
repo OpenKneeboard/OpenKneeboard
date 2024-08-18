@@ -134,7 +134,8 @@ void InputBindingsControl::DeviceID(const hstring& value) {
   }
 }
 
-fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
+OpenKneeboard::fire_and_forget InputBindingsControl::PromptForBinding(
+  UserAction action) {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Bind Buttons"))));
@@ -188,7 +189,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
           : strongThis->mDevice->GetButtonComboDescription(pressedButtons);
 
         [](auto strongThis, auto dialog, const auto bindingDesc)
-          -> winrt::fire_and_forget {
+          -> OpenKneeboard::fire_and_forget {
           co_await strongThis->mUIThread;
           dialog.Content(box_value(to_hstring(std::format(
             _("Press then release buttons to bind input.\n\n{}"),
@@ -203,7 +204,9 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
       cancelled = false;
       strongThis->mDevice->evButtonEvent.RemoveHook(hookToken);
 
-      [](auto strongThis, auto dialog) noexcept -> winrt::fire_and_forget {
+      [](
+        auto strongThis,
+        auto dialog) noexcept -> OpenKneeboard::fire_and_forget {
         // Show the complete combo for a moment
         co_await winrt::resume_after(std::chrono::milliseconds(250));
         co_await strongThis->mUIThread;

@@ -51,7 +51,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
  public:
   static std::shared_ptr<OTDIPCClient> Create();
   ~OTDIPCClient();
-  static winrt::fire_and_forget final_release(std::unique_ptr<OTDIPCClient>);
+  static OpenKneeboard::fire_and_forget final_release(
+    std::unique_ptr<OTDIPCClient>);
 
   std::optional<TabletState> GetState(const std::string& id) const;
   std::optional<TabletInfo> GetTablet(const std::string& id) const;
@@ -70,7 +71,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   task<void> Run();
   task<void> RunSingle();
 
-  winrt::fire_and_forget EnqueueMessage(std::string message);
+  OpenKneeboard::fire_and_forget EnqueueMessage(std::string message);
   void ProcessMessage(const OTDIPC::Messages::Header* const);
   void ProcessMessage(const OTDIPC::Messages::DeviceInfo* const);
   void ProcessMessage(const OTDIPC::Messages::State* const);

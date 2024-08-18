@@ -496,7 +496,8 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
   return device;
 }
 
-winrt::fire_and_forget TabletInputAdapter::OnOTDDevice(TabletInfo tablet) {
+OpenKneeboard::fire_and_forget TabletInputAdapter::OnOTDDevice(
+  TabletInfo tablet) {
   auto weak = weak_from_this();
   co_await mUIThread;
   if (auto self = weak.lock()) {
@@ -504,7 +505,7 @@ winrt::fire_and_forget TabletInputAdapter::OnOTDDevice(TabletInfo tablet) {
   }
 }
 
-winrt::fire_and_forget TabletInputAdapter::OnOTDInput(
+OpenKneeboard::fire_and_forget TabletInputAdapter::OnOTDInput(
   std::string id,
   TabletState state) {
   auto weak = weak_from_this();

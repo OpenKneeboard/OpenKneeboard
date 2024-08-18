@@ -163,9 +163,9 @@ void TabsSettingsPage::CreateAddTabMenu(
   button.Flyout(flyout);
 }
 
-fire_and_forget TabsSettingsPage::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+OpenKneeboard::fire_and_forget TabsSettingsPage::RestoreDefaults(
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
@@ -206,9 +206,9 @@ void TabsSettingsPage::CopyDebugInfo(
   Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
 }
 
-fire_and_forget TabsSettingsPage::ShowDebugInfo(
-  const IInspectable& sender,
-  const RoutedEventArgs&) {
+OpenKneeboard::fire_and_forget TabsSettingsPage::ShowDebugInfo(
+  IInspectable sender,
+  RoutedEventArgs) {
   const std::shared_lock lock(*mKneeboard);
   const auto tab = find_tab(sender);
   if (!tab) {
@@ -233,9 +233,9 @@ fire_and_forget TabsSettingsPage::ShowDebugInfo(
   co_await DebugInfoDialog().ShowAsync();
 }
 
-fire_and_forget TabsSettingsPage::ShowTabSettings(
-  const IInspectable& sender,
-  const RoutedEventArgs&) {
+OpenKneeboard::fire_and_forget TabsSettingsPage::ShowTabSettings(
+  IInspectable sender,
+  RoutedEventArgs) {
   const std::shared_lock lock(*mKneeboard);
   const auto tab = find_tab(sender);
   if (!tab) {
@@ -281,9 +281,9 @@ fire_and_forget TabsSettingsPage::ShowTabSettings(
   TabSettingsDialogContent().ContentTemplateSelector({nullptr});
 }
 
-fire_and_forget TabsSettingsPage::RemoveTab(
-  const IInspectable& sender,
-  const RoutedEventArgs&) {
+OpenKneeboard::fire_and_forget TabsSettingsPage::RemoveTab(
+  IInspectable sender,
+  RoutedEventArgs) {
   const std::shared_lock lock(*mKneeboard);
 
   const auto tab = find_tab(sender);
@@ -321,7 +321,7 @@ fire_and_forget TabsSettingsPage::RemoveTab(
     .RemoveAt(idx);
 }
 
-winrt::fire_and_forget TabsSettingsPage::CreatePluginTab(
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreatePluginTab(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   const auto id
@@ -356,7 +356,7 @@ task<std::shared_ptr<T>> make_tab_without_making_msvc_sad(
   return ::OpenKneeboard::detail::make_shared<T>(dxr, kbs);
 }
 
-winrt::fire_and_forget TabsSettingsPage::CreateTab(
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreateTab(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   auto tabType = static_cast<TabType>(
@@ -411,7 +411,7 @@ winrt::fire_and_forget TabsSettingsPage::CreateTab(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
-winrt::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
+OpenKneeboard::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
   if (
     co_await InstallWebView2Dialog().ShowAsync()
     != ContentDialogResult::Primary) {
@@ -422,7 +422,7 @@ winrt::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
   co_await LaunchURI("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
 }
 
-winrt::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
   if (!WebView2PageSource::IsAvailable()) {
     this->PromptToInstallWebView2();
     co_return;
@@ -468,7 +468,7 @@ void TabsSettingsPage::OnAddBrowserAddressTextChanged(
   AddBrowserDialog().IsPrimaryButtonEnabled(valid);
 }
 
-winrt::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   OpenKneeboardApp::WindowPickerDialog picker;
   picker.XamlRoot(this->XamlRoot());
 
@@ -534,7 +534,7 @@ winrt::guid TabsSettingsPage::GetFilePickerPersistenceGuid() {
 }
 
 template <class T>
-winrt::fire_and_forget TabsSettingsPage::CreateFileTab(
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreateFileTab(
   const std::string& pickerDialogTitle) {
   FilePicker picker(gMainWindow);
   picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
@@ -570,7 +570,7 @@ winrt::fire_and_forget TabsSettingsPage::CreateFileTab(
   co_await this->AddTabs(newTabs);
 }
 
-winrt::fire_and_forget TabsSettingsPage::CreateFolderTab() {
+OpenKneeboard::fire_and_forget TabsSettingsPage::CreateFolderTab() {
   FilePicker picker(gMainWindow);
   picker.SettingsIdentifier(GetFilePickerPersistenceGuid());
   picker.SuggestedStartLocation(FOLDERID_Documents);
@@ -614,7 +614,7 @@ winrt::Windows::Foundation::IAsyncAction TabsSettingsPage::AddTabs(
   }
 }
 
-winrt::fire_and_forget TabsSettingsPage::OnTabsChanged(
+OpenKneeboard::fire_and_forget TabsSettingsPage::OnTabsChanged(
   IInspectable,
   Windows::Foundation::Collections::IVectorChangedEventArgs) noexcept {
   const std::shared_lock lock(*mKneeboard);
@@ -739,7 +739,7 @@ bool BrowserTabUIData::IsSimHubIntegrationEnabled() const {
   return GetTab()->IsSimHubIntegrationEnabled();
 }
 
-winrt::fire_and_forget BrowserTabUIData::IsSimHubIntegrationEnabled(
+OpenKneeboard::fire_and_forget BrowserTabUIData::IsSimHubIntegrationEnabled(
   bool value) {
   co_await GetTab()->SetSimHubIntegrationEnabled(value);
 }
@@ -748,7 +748,8 @@ bool BrowserTabUIData::IsBackgroundTransparent() const {
   return GetTab()->IsBackgroundTransparent();
 }
 
-winrt::fire_and_forget BrowserTabUIData::IsBackgroundTransparent(bool value) {
+OpenKneeboard::fire_and_forget BrowserTabUIData::IsBackgroundTransparent(
+  bool value) {
   co_await GetTab()->SetBackgroundTransparent(value);
 }
 
@@ -756,7 +757,7 @@ bool BrowserTabUIData::IsDeveloperToolsWindowEnabled() const {
   return GetTab()->IsDeveloperToolsWindowEnabled();
 }
 
-winrt::fire_and_forget BrowserTabUIData::IsDeveloperToolsWindowEnabled(
+OpenKneeboard::fire_and_forget BrowserTabUIData::IsDeveloperToolsWindowEnabled(
   bool value) {
   co_await GetTab()->SetDeveloperToolsWindowEnabled(value);
 }
@@ -812,31 +813,31 @@ winrt::hstring WindowCaptureTabUIData::WindowTitle() {
   return to_hstring(GetTab()->GetMatchSpecification().mTitle);
 }
 
-void WindowCaptureTabUIData::WindowTitle(const hstring& title) {
+task<void> WindowCaptureTabUIData::WindowTitle(const hstring& title) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mTitle = to_string(title);
-  GetTab()->SetMatchSpecification(spec);
+  co_await GetTab()->SetMatchSpecification(spec);
 }
 
 bool WindowCaptureTabUIData::MatchWindowClass() {
   return GetTab()->GetMatchSpecification().mMatchWindowClass;
 }
 
-void WindowCaptureTabUIData::MatchWindowClass(bool value) {
+task<void> WindowCaptureTabUIData::MatchWindowClass(bool value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mMatchWindowClass = value;
-  GetTab()->SetMatchSpecification(spec);
+  co_await GetTab()->SetMatchSpecification(spec);
 }
 
 uint8_t WindowCaptureTabUIData::MatchWindowTitle() {
   return static_cast<uint8_t>(GetTab()->GetMatchSpecification().mMatchTitle);
 }
 
-void WindowCaptureTabUIData::MatchWindowTitle(uint8_t value) {
+task<void> WindowCaptureTabUIData::MatchWindowTitle(uint8_t value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mMatchTitle
     = static_cast<WindowCaptureTab::MatchSpecification::TitleMatchKind>(value);
-  GetTab()->SetMatchSpecification(spec);
+  co_await GetTab()->SetMatchSpecification(spec);
 }
 
 bool WindowCaptureTabUIData::IsInputEnabled() const {
@@ -851,16 +852,16 @@ bool WindowCaptureTabUIData::IsCursorCaptureEnabled() const {
   return GetTab()->IsCursorCaptureEnabled();
 }
 
-void WindowCaptureTabUIData::IsCursorCaptureEnabled(bool value) {
-  GetTab()->SetCursorCaptureEnabled(value);
+task<void> WindowCaptureTabUIData::IsCursorCaptureEnabled(bool value) {
+  co_await GetTab()->SetCursorCaptureEnabled(value);
 }
 
 bool WindowCaptureTabUIData::CaptureClientArea() const {
   return GetTab()->GetCaptureArea() == HWNDPageSource::CaptureArea::ClientArea;
 }
 
-void WindowCaptureTabUIData::CaptureClientArea(bool enabled) {
-  GetTab()->SetCaptureArea(
+task<void> WindowCaptureTabUIData::CaptureClientArea(bool enabled) {
+  co_await GetTab()->SetCaptureArea(
     enabled ? HWNDPageSource::CaptureArea::ClientArea
             : HWNDPageSource::CaptureArea::FullWindow);
 }
@@ -869,20 +870,20 @@ hstring WindowCaptureTabUIData::ExecutablePathPattern() const {
   return to_hstring(GetTab()->GetMatchSpecification().mExecutablePathPattern);
 }
 
-void WindowCaptureTabUIData::ExecutablePathPattern(hstring pattern) {
+task<void> WindowCaptureTabUIData::ExecutablePathPattern(hstring pattern) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mExecutablePathPattern = to_string(pattern);
-  GetTab()->SetMatchSpecification(spec);
+  co_await GetTab()->SetMatchSpecification(spec);
 }
 
 hstring WindowCaptureTabUIData::WindowClass() const {
   return to_hstring(GetTab()->GetMatchSpecification().mWindowClass);
 }
 
-void WindowCaptureTabUIData::WindowClass(hstring value) {
+task<void> WindowCaptureTabUIData::WindowClass(hstring value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mWindowClass = to_string(value);
-  GetTab()->SetMatchSpecification(spec);
+  co_await GetTab()->SetMatchSpecification(spec);
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {

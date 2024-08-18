@@ -157,9 +157,9 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
 static constexpr const char TriggeredCrashMessage[]
   = "'Trigger crash' clicked on developer tools page";
 
-winrt::fire_and_forget OKBDeveloperToolsPage::OnTriggerCrashClick(
-  const IInspectable&,
-  const Microsoft::UI::Xaml::RoutedEventArgs&) {
+OpenKneeboard::fire_and_forget OKBDeveloperToolsPage::OnTriggerCrashClick(
+  IInspectable,
+  Microsoft::UI::Xaml::RoutedEventArgs) {
   enum class CrashKind {
     Fatal = 0,
     Throw = 1,

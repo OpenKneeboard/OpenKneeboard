@@ -75,7 +75,7 @@ class WindowCaptureTab final : public TabBase,
     const winrt::guid& persistentID,
     std::string_view title,
     const nlohmann::json& settings);
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<WindowCaptureTab>);
   virtual ~WindowCaptureTab();
   virtual std::string GetGlyph() const override;
@@ -86,17 +86,17 @@ class WindowCaptureTab final : public TabBase,
   virtual nlohmann::json GetSettings() const override;
 
   MatchSpecification GetMatchSpecification() const;
-  void SetMatchSpecification(const MatchSpecification&);
+  task<void> SetMatchSpecification(const MatchSpecification&);
 
   bool IsInputEnabled() const;
   void SetIsInputEnabled(bool);
 
   using CaptureArea = HWNDPageSource::CaptureArea;
   CaptureArea GetCaptureArea() const;
-  void SetCaptureArea(CaptureArea);
+  task<void> SetCaptureArea(CaptureArea);
 
   bool IsCursorCaptureEnabled() const;
-  void SetCursorCaptureEnabled(bool);
+  task<void> SetCursorCaptureEnabled(bool);
 
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
@@ -111,11 +111,11 @@ class WindowCaptureTab final : public TabBase,
     const winrt::guid& persistentID,
     std::string_view title,
     const Settings&);
-  winrt::fire_and_forget TryToStartCapture();
+  OpenKneeboard::fire_and_forget TryToStartCapture();
   task<bool> TryToStartCapture(HWND hwnd);
   bool WindowMatches(HWND hwnd);
 
-  winrt::fire_and_forget OnWindowClosed();
+  OpenKneeboard::fire_and_forget OnWindowClosed();
 
   static void WinEventProc_NewWindowHook(
     HWINEVENTHOOK,

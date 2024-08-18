@@ -69,7 +69,7 @@ class WGCRenderer : public virtual EventReceiver,
   Event<> evNeedsRepaintEvent;
   Event<> evContentChangedEvent;
 
-  winrt::fire_and_forget ForceResize(PixelSize);
+  OpenKneeboard::fire_and_forget ForceResize(PixelSize);
 
  protected:
   WGCRenderer(

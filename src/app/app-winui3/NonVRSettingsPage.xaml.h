@@ -40,9 +40,9 @@ struct NonVRSettingsPage
     OpenKneeboard::WithPropertyChangedEventOnProfileChange<NonVRSettingsPage> {
   NonVRSettingsPage();
 
-  fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+  OpenKneeboard::fire_and_forget RestoreDefaults(
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
   uint8_t KneeboardHeightPercent();
   void KneeboardHeightPercent(uint8_t value);
@@ -62,7 +62,7 @@ struct NonVRSettingsPage
   const size_t mCurrentView = 0;
 
   ViewNonVRConfig GetViewConfig();
-  winrt::fire_and_forget SetViewConfig(const ViewNonVRConfig&);
+  OpenKneeboard::fire_and_forget SetViewConfig(const ViewNonVRConfig&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

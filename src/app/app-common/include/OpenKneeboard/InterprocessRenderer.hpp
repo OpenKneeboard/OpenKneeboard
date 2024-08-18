@@ -53,7 +53,7 @@ class InterprocessRenderer final
     public std::enable_shared_from_this<InterprocessRenderer> {
  public:
   ~InterprocessRenderer();
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<InterprocessRenderer>);
 
   static std::shared_ptr<InterprocessRenderer> Create(

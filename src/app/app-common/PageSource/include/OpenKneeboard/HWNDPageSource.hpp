@@ -110,7 +110,7 @@ class HWNDPageSource final : public WGCRenderer,
   DisposalState mDisposal;
   [[nodiscard]]
   task<void> Init() noexcept;
-  winrt::fire_and_forget InitializeInputHook() noexcept;
+  OpenKneeboard::fire_and_forget InitializeInputHook() noexcept;
 
   void LogAdapter(HMONITOR);
   void LogAdapter(HWND);

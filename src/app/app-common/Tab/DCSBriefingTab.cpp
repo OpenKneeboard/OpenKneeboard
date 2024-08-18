@@ -164,7 +164,7 @@ task<void> DCSBriefingTab::Reload() noexcept {
   this->evContentChangedEvent.Emit();
 }
 
-winrt::fire_and_forget DCSBriefingTab::OnAPIEvent(
+OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
   APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path) {

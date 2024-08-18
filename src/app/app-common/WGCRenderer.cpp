@@ -338,7 +338,7 @@ void WGCRenderer::PreOKBFrame() {
 void WGCRenderer::PostFrame() {
 }
 
-winrt::fire_and_forget WGCRenderer::ForceResize(PixelSize size) {
+OpenKneeboard::fire_and_forget WGCRenderer::ForceResize(PixelSize size) {
   OPENKNEEBOARD_TraceLoggingCoro(
     "WGCRenderer::ForceResize()",
     TraceLoggingValue(size.mWidth, "Width"),

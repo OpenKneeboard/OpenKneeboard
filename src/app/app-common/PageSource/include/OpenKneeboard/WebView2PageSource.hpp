@@ -150,7 +150,7 @@ class WebView2PageSource final
   RendererKey mScrollableContentRendererKey;
   PageID mScrollableContentPageID;
 
-  winrt::fire_and_forget OnJSAPI_SetPages(std::vector<APIPage> pages);
+  OpenKneeboard::fire_and_forget OnJSAPI_SetPages(std::vector<APIPage> pages);
   void OnJSAPI_SendMessageToPeers(const InstanceID&, const nlohmann::json&);
 
   void ConnectRenderer(WebView2Renderer*);

@@ -80,7 +80,7 @@ class DCSRadioLogTab final : public TabBase,
     std::string_view title,
     const nlohmann::json& config);
 
-  virtual winrt::fire_and_forget OnAPIEvent(
+  virtual OpenKneeboard::fire_and_forget OnAPIEvent(
     APIEvent,
     std::filesystem::path installPath,
     std::filesystem::path savedGamesPath) override;

@@ -53,16 +53,18 @@ struct GamesSettingsPage
   GamesSettingsPage();
   ~GamesSettingsPage() noexcept;
 
-  winrt::fire_and_forget RestoreDefaults(
+  OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;
 
-  winrt::fire_and_forget AddRunningProcess(
+  OpenKneeboard::fire_and_forget AddRunningProcess(
     IInspectable,
     RoutedEventArgs) noexcept;
-  winrt::fire_and_forget RemoveGame(IInspectable, RoutedEventArgs) noexcept;
-  winrt::fire_and_forget AddExe(IInspectable, RoutedEventArgs) noexcept;
-  winrt::fire_and_forget ChangeDCSSavedGamesPath(
+  OpenKneeboard::fire_and_forget RemoveGame(
+    IInspectable,
+    RoutedEventArgs) noexcept;
+  OpenKneeboard::fire_and_forget AddExe(IInspectable, RoutedEventArgs) noexcept;
+  OpenKneeboard::fire_and_forget ChangeDCSSavedGamesPath(
     IInspectable,
     RoutedEventArgs) noexcept;
 
@@ -74,7 +76,7 @@ struct GamesSettingsPage
 
  private:
   void UpdateGames();
-  fire_and_forget AddPath(const std::filesystem::path&);
+  OpenKneeboard::fire_and_forget AddPath(const std::filesystem::path&);
 
   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
   std::shared_ptr<KneeboardState> mKneeboard;

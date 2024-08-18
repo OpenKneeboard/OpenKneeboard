@@ -46,7 +46,7 @@ struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
 
  private:
   winrt::apartment_context mUIThread;
-  fire_and_forget PromptForBinding(UserAction);
+  ::OpenKneeboard::fire_and_forget PromptForBinding(UserAction);
   void ClearBinding(UserAction);
 
   void PopulateUI();

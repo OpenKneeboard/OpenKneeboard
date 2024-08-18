@@ -43,8 +43,11 @@
 #include <stacktrace>
 
 #include <DbgHelp.h>
-#include <detours.h>
 #include <wchar.h>
+
+#ifndef __clang__
+#include <detours.h>
+#endif
 
 using std::operator""s;
 
@@ -550,10 +553,12 @@ void divert_process_failure_to_fatal() {
 
   wil::SetResultMessageCallback(&OnWILResult);
 
+#ifndef __clang__
   // What could go wrong
   winrt::check_win32(DetourTransactionBegin());
   winrt::check_win32(DetourAttach(&gCxxThrowException, &CxxThrowExceptionHook));
   winrt::check_win32(DetourTransactionCommit());
+#endif
 
   divert_thread_failure_to_fatal();
   gDivertThreadFailureToFatal = true;

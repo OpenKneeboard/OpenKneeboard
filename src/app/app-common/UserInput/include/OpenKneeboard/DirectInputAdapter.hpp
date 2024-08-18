@@ -52,7 +52,7 @@ class DirectInputAdapter final
     HWND mainWindow,
     const DirectInputSettings& settings);
   ~DirectInputAdapter();
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<DirectInputAdapter>);
 
   DirectInputSettings GetSettings() const;
@@ -68,8 +68,8 @@ class DirectInputAdapter final
 
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
   task<void> ReleaseDevices();
-  winrt::fire_and_forget Reload();
-  winrt::fire_and_forget UpdateDevices();
+  OpenKneeboard::fire_and_forget Reload();
+  OpenKneeboard::fire_and_forget UpdateDevices();
 
   bool mShuttingDown = false;
 

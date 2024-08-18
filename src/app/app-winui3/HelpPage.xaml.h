@@ -45,9 +45,11 @@ struct HelpPage : HelpPageT<HelpPage>,
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
   void OnAgreeClick(const IInspectable&, const RoutedEventArgs&) noexcept;
-  winrt::fire_and_forget OnExportClick(IInspectable, RoutedEventArgs) noexcept;
+  OpenKneeboard::fire_and_forget OnExportClick(
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
-  winrt::fire_and_forget OnCheckForUpdatesClick(
+  OpenKneeboard::fire_and_forget OnCheckForUpdatesClick(
     IInspectable,
     RoutedEventArgs) noexcept;
 

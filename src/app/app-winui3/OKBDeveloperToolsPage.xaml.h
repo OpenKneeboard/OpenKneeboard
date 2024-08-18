@@ -35,9 +35,9 @@ struct OKBDeveloperToolsPage : OKBDeveloperToolsPageT<OKBDeveloperToolsPage> {
     const IInspectable&,
     const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept;
 
-  winrt::fire_and_forget OnTriggerCrashClick(
-    const IInspectable&,
-    const Microsoft::UI::Xaml::RoutedEventArgs&);
+  OpenKneeboard::fire_and_forget OnTriggerCrashClick(
+    IInspectable,
+    Microsoft::UI::Xaml::RoutedEventArgs);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

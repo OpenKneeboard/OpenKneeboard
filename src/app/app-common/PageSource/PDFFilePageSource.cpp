@@ -119,7 +119,7 @@ struct PDFFilePageSource::DocumentResources final {
    * 5. Double-free if the condition that led to the deletion is still
    *    present, or make pure virtual calls, or...
    */
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<DocumentResources> self) {
     co_await wil::resume_foreground(self->mDispatcherQueue);
     self->mPDFDocument = nullptr;
@@ -177,7 +177,7 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   return ret;
 }
 
-winrt::fire_and_forget PDFFilePageSource::ReloadRenderer(
+OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
   std::weak_ptr<DocumentResources> weakDoc) {
   auto weak = weak_from_this();
 
@@ -225,7 +225,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer(
       // Another workaround for
       // https://github.com/microsoft/WindowsAppSDK/issues/3506
       if (doc->mPDFDocument) {
-        ([](auto dq, auto deleteLater) -> winrt::fire_and_forget {
+        ([](auto dq, auto deleteLater) -> OpenKneeboard::fire_and_forget {
           co_await wil::resume_foreground(dq);
         })(mUIThreadDispatcherQueue, std::move(doc->mPDFDocument));
       }
@@ -242,7 +242,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer(
   }
 }
 
-winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
+OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
   std::weak_ptr<DocumentResources> weakDoc) {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
@@ -302,7 +302,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation(
       {
         weak,
         [](auto self, KneeboardViewID ctx, PDFNavigation::Link link)
-          -> winrt::fire_and_forget {
+          -> OpenKneeboard::fire_and_forget {
           const auto& dest = link.mDestination;
           switch (dest.mType) {
             case PDFNavigation::DestinationType::Page:
@@ -355,7 +355,7 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   return mDocumentResources->mPageIDs.back();
 }
 
-winrt::fire_and_forget PDFFilePageSource::Reload() try {
+OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
   static uint64_t sCount = 0;
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
@@ -410,7 +410,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() try {
   OPENKNEEBOARD_BREAK;
 }
 
-winrt::fire_and_forget PDFFilePageSource::final_release(
+OpenKneeboard::fire_and_forget PDFFilePageSource::final_release(
   std::unique_ptr<PDFFilePageSource> self) {
   co_await self->mUIThread;
   self->mThreadGuard.CheckThread();

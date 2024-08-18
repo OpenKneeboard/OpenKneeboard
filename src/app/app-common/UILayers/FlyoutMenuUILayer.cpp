@@ -520,7 +520,7 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
 
   auto action = std::dynamic_pointer_cast<ToolbarAction>(item.mItem);
   if (action) {
-    fire_and_forget(action->Execute());
+    fire_and_forget::wrap(&ToolbarAction::Execute, action);
     evCloseMenuRequestedEvent.Emit();
     return;
   }

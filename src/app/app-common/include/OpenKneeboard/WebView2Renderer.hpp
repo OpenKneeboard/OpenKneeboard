@@ -219,13 +219,13 @@ class WebView2Renderer final : public WGCRenderer {
   std::mutex mCursorEventsMutex;
   std::queue<CursorEvent> mCursorEvents;
   uint32_t mMouseButtons {};
-  winrt::fire_and_forget FlushCursorEvents();
+  OpenKneeboard::fire_and_forget FlushCursorEvents();
 
   task<void> Resize(PixelSize);
 
   worker_task<void> ImportJavascriptFile(std::filesystem::path path);
 
-  winrt::fire_and_forget OnWebMessageReceived(
+  OpenKneeboard::fire_and_forget OnWebMessageReceived(
     winrt::Microsoft::Web::WebView2::Core::CoreWebView2,
     winrt::Microsoft::Web::WebView2::Core::
       CoreWebView2WebMessageReceivedEventArgs);
@@ -234,7 +234,7 @@ class WebView2Renderer final : public WGCRenderer {
   OPENKNEEBOARD_JSAPI_METHODS(OKB_DECLARE_JSAPI)
 #undef OKB_DECLARE_JSAPI
 
-  winrt::fire_and_forget SendJSLog(auto&&... args) {
+  OpenKneeboard::fire_and_forget SendJSLog(auto&&... args) {
     const auto jsArgs
       = nlohmann::json::array({std::forward<decltype(args)>(args)...});
     auto weak = weak_from_this();
@@ -252,9 +252,9 @@ class WebView2Renderer final : public WGCRenderer {
     mWebView.PostWebMessageAsJson(winrt::to_hstring(message.dump()));
   }
 
-  winrt::fire_and_forget SendJSResponse(uint64_t callID, JSAPIResult);
+  OpenKneeboard::fire_and_forget SendJSResponse(uint64_t callID, JSAPIResult);
 
-  winrt::fire_and_forget SendJSEvent(
+  OpenKneeboard::fire_and_forget SendJSEvent(
     std::string eventType,
     nlohmann::json eventOptions);
 
@@ -264,7 +264,7 @@ class WebView2Renderer final : public WGCRenderer {
     const ExperimentalFeature&,
     const std::source_location& caller = std::source_location::current());
 
-  winrt::fire_and_forget ActivateJSAPI(std::string api);
+  OpenKneeboard::fire_and_forget ActivateJSAPI(std::string api);
 
   struct ViewInfo {
     winrt::guid mGuid;

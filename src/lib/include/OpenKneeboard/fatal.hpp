@@ -40,10 +40,11 @@ struct StackFramePointer {
 
   StackFramePointer() = delete;
 
-  inline StackFramePointer(std::nullptr_t) noexcept {
+  constexpr StackFramePointer(std::nullptr_t) noexcept {
   }
 
-  explicit inline StackFramePointer(std::type_identity_t<void*> value) noexcept
+  explicit constexpr StackFramePointer(
+    std::type_identity_t<void*> value) noexcept
     : mValue(value) {
   }
 

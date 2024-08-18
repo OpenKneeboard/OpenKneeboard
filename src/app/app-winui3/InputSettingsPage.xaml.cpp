@@ -50,7 +50,7 @@ InputSettingsPage::~InputSettingsPage() {
   this->RemoveAllEventListeners();
 }
 
-fire_and_forget InputSettingsPage::RestoreDefaults(
+OpenKneeboard::fire_and_forget InputSettingsPage::RestoreDefaults(
   IInspectable,
   RoutedEventArgs) noexcept {
   ContentDialog dialog;

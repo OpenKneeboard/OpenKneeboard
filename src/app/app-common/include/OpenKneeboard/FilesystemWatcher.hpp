@@ -43,7 +43,7 @@ class FilesystemWatcher final
   static std::shared_ptr<FilesystemWatcher> Create(
     const std::filesystem::path&);
 
-  static winrt::fire_and_forget final_release(
+  static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<FilesystemWatcher>);
 
   Event<std::filesystem::path> evFilesystemModifiedEvent;
@@ -55,7 +55,7 @@ class FilesystemWatcher final
   FilesystemWatcher(const std::filesystem::path&);
   void Initialize();
   task<void> Run();
-  winrt::fire_and_forget OnContentsChanged();
+  OpenKneeboard::fire_and_forget OnContentsChanged();
 
   std::optional<task<void>> mImpl;
 

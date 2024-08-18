@@ -42,14 +42,14 @@ struct IndependentVRViewSettingsControl
   IndependentVRViewSettingsControl();
   ~IndependentVRViewSettingsControl();
 
-  fire_and_forget RestoreDefaults(
+  OpenKneeboard::fire_and_forget RestoreDefaults(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
   winrt::guid ViewID();
   void ViewID(const winrt::guid&);
 
-  winrt::fire_and_forget RecenterNow(
+  OpenKneeboard::fire_and_forget RecenterNow(
     const IInspectable&,
     const RoutedEventArgs&);
   void GoToBindings(const IInspectable&, const RoutedEventArgs&);
@@ -94,7 +94,7 @@ struct IndependentVRViewSettingsControl
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   OpenKneeboard::IndependentViewVRConfig GetViewConfig();
-  winrt::fire_and_forget SetViewConfig(
+  OpenKneeboard::fire_and_forget SetViewConfig(
     const OpenKneeboard::IndependentViewVRConfig&);
 
   winrt::guid mViewID;

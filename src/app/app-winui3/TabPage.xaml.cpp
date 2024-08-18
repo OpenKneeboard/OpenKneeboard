@@ -144,7 +144,7 @@ TabPage::~TabPage() {
   OPENKNEEBOARD_TraceLoggingScope("TabPage::~TabPage()");
 }
 
-winrt::fire_and_forget TabPage::final_release(
+OpenKneeboard::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
   OPENKNEEBOARD_TraceLoggingCoro("TabPage::final_release()");
   instance->RemoveAllEventListeners();
@@ -296,7 +296,7 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
   return button;
 }
 
-winrt::fire_and_forget TabPage::OnToolbarActionClick(
+OpenKneeboard::fire_and_forget TabPage::OnToolbarActionClick(
   std::shared_ptr<ToolbarAction> action) {
   auto confirm
     = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
@@ -396,7 +396,7 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   this->UpdateToolbar();
 }
 
-winrt::fire_and_forget TabPage::UpdateToolbar() {
+OpenKneeboard::fire_and_forget TabPage::UpdateToolbar() {
   co_await mUIThread;
   auto actions
     = InAppActions::Create(mKneeboard.get(), mKneeboardView, mTabView);

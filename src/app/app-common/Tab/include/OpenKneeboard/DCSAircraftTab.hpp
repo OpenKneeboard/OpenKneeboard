@@ -66,7 +66,7 @@ class DCSAircraftTab final : public TabBase,
   std::string mAircraft;
   std::vector<std::filesystem::path> mPaths;
 
-  virtual winrt::fire_and_forget
+  virtual OpenKneeboard::fire_and_forget
     OnAPIEvent(APIEvent, std::filesystem::path, std::filesystem::path) override;
 };
 

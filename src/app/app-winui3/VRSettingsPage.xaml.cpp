@@ -57,7 +57,7 @@ VRSettingsPage::~VRSettingsPage() {
   this->RemoveAllEventListeners();
 }
 
-fire_and_forget VRSettingsPage::RestoreDefaults(
+OpenKneeboard::fire_and_forget VRSettingsPage::RestoreDefaults(
   IInspectable,
   RoutedEventArgs) noexcept {
   ContentDialog dialog;
@@ -89,7 +89,7 @@ bool VRSettingsPage::SteamVREnabled() {
   return mKneeboard->GetVRSettings().mEnableSteamVR;
 }
 
-fire_and_forget VRSettingsPage::SteamVREnabled(bool enabled) {
+OpenKneeboard::fire_and_forget VRSettingsPage::SteamVREnabled(bool enabled) {
   auto config = mKneeboard->GetVRSettings();
   config.mEnableSteamVR = enabled;
   co_await mKneeboard->SetVRSettings(config);
@@ -133,7 +133,7 @@ bool VRSettingsPage::OpenXR32Enabled() noexcept {
   return IsOpenXRAPILayerEnabled(jsonPath, RRF_SUBKEY_WOW6432KEY);
 }
 
-fire_and_forget VRSettingsPage::AddView(
+OpenKneeboard::fire_and_forget VRSettingsPage::AddView(
   muxc::TabView tabView,
   IInspectable) noexcept {
   auto kinds = AddViewKind().Items();
@@ -224,7 +224,7 @@ fire_and_forget VRSettingsPage::AddView(
   TabView().SelectedIndex(TabView().TabItems().Size() - 1);
 }
 
-fire_and_forget VRSettingsPage::RemoveView(
+OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
   muxc::TabView tabView,
   muxc::TabViewTabCloseRequestedEventArgs args) noexcept {
   const auto guid = unbox_value<winrt::guid>(args.Tab().Tag());
@@ -309,7 +309,8 @@ void VRSettingsPage::PopulateViews() noexcept {
   TabView().SelectedIndex(0);
 }
 
-fire_and_forget VRSettingsPage::OpenXR64Enabled(bool enabled) noexcept {
+OpenKneeboard::fire_and_forget VRSettingsPage::OpenXR64Enabled(
+  bool enabled) noexcept {
   if (enabled == OpenXR64Enabled()) {
     co_return;
   }
@@ -319,7 +320,8 @@ fire_and_forget VRSettingsPage::OpenXR64Enabled(bool enabled) noexcept {
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"OpenXR64Enabled"));
 }
 
-fire_and_forget VRSettingsPage::OpenXR32Enabled(bool enabled) noexcept {
+OpenKneeboard::fire_and_forget VRSettingsPage::OpenXR32Enabled(
+  bool enabled) noexcept {
   if (enabled == OpenXR32Enabled()) {
     co_return;
   }

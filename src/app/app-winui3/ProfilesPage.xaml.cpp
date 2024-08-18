@@ -92,7 +92,7 @@ void ProfilesPage::UpdateList() {
   }
 }
 
-fire_and_forget ProfilesPage::OnList_SelectionChanged(
+OpenKneeboard::fire_and_forget ProfilesPage::OnList_SelectionChanged(
   const IInspectable&,
   const SelectionChangedEventArgs& args) {
   auto it = args.AddedItems().First();
@@ -109,7 +109,7 @@ fire_and_forget ProfilesPage::OnList_SelectionChanged(
   co_await mKneeboard->SetProfileSettings(profileSettings);
 }
 
-fire_and_forget ProfilesPage::RemoveProfile(
+OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
@@ -147,7 +147,7 @@ fire_and_forget ProfilesPage::RemoveProfile(
   List().SelectedIndex(0);
 }
 
-fire_and_forget ProfilesPage::CreateProfile(
+OpenKneeboard::fire_and_forget ProfilesPage::CreateProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
   ContentDialog dialog;

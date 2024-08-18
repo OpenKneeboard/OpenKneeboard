@@ -55,7 +55,7 @@ class FolderPageSource final : public PageSourceWithDelegates {
 
  private:
   void SubscribeToChanges();
-  winrt::fire_and_forget OnFileModified(std::filesystem::path);
+  OpenKneeboard::fire_and_forget OnFileModified(std::filesystem::path);
 
   winrt::apartment_context mUIThread;
   std::shared_ptr<FilesystemWatcher> mWatcher;

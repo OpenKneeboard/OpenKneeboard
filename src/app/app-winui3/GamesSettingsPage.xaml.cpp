@@ -63,7 +63,7 @@ GamesSettingsPage::GamesSettingsPage() {
     [this]() { this->UpdateGames(); });
 }
 
-fire_and_forget GamesSettingsPage::RestoreDefaults(
+OpenKneeboard::fire_and_forget GamesSettingsPage::RestoreDefaults(
   IInspectable,
   RoutedEventArgs) noexcept {
   ContentDialog dialog;
@@ -121,7 +121,7 @@ GamesSettingsPage::~GamesSettingsPage() noexcept {
   this->RemoveAllEventListeners();
 }
 
-winrt::fire_and_forget GamesSettingsPage::AddRunningProcess(
+OpenKneeboard::fire_and_forget GamesSettingsPage::AddRunningProcess(
   IInspectable,
   RoutedEventArgs) noexcept {
   ::winrt::OpenKneeboardApp::ProcessPickerDialog picker;
@@ -140,7 +140,7 @@ winrt::fire_and_forget GamesSettingsPage::AddRunningProcess(
   this->AddPath(std::wstring_view {path});
 }
 
-winrt::fire_and_forget GamesSettingsPage::AddExe(
+OpenKneeboard::fire_and_forget GamesSettingsPage::AddExe(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   constexpr winrt::guid thisCall {
@@ -198,7 +198,7 @@ void GamesSettingsPage::OnOverlayAPIChanged(
   mKneeboard->SaveSettings();
 }
 
-winrt::fire_and_forget GamesSettingsPage::RemoveGame(
+OpenKneeboard::fire_and_forget GamesSettingsPage::RemoveGame(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
@@ -230,7 +230,7 @@ winrt::fire_and_forget GamesSettingsPage::RemoveGame(
   UpdateGames();
 }
 
-winrt::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
+OpenKneeboard::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
   IInspectable sender,
   RoutedEventArgs) noexcept {
   auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
@@ -253,7 +253,7 @@ winrt::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
   UpdateGames();
 }
 
-winrt::fire_and_forget GamesSettingsPage::AddPath(
+OpenKneeboard::fire_and_forget GamesSettingsPage::AddPath(
   const std::filesystem::path& rawPath) {
   if (rawPath.empty()) {
     co_return;

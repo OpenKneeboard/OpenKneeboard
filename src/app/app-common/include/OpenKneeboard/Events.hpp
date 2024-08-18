@@ -239,7 +239,7 @@ class Event final : public EventBase {
     mImpl->Emit(args..., location);
   }
 
-  winrt::fire_and_forget EnqueueForContext(
+  OpenKneeboard::fire_and_forget EnqueueForContext(
     auto context,
     Args... args,
     std::source_location location = std::source_location::current()) {

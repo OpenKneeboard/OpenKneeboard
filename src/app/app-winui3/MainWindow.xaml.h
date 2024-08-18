@@ -109,25 +109,25 @@ struct MainWindow : MainWindowT<MainWindow>,
   // avoids building up a massive backlog of overdue scheduled
   // events.
   winrt::Windows::Foundation::IAsyncAction FrameLoop();
-  winrt::fire_and_forget FrameTick();
+  OpenKneeboard::fire_and_forget FrameTick();
   single_threaded_lockable mFrameInProgress;
   winrt::handle mFrameLoopCompletionEvent;
 
-  winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
-  winrt::fire_and_forget OnTabChanged() noexcept;
-  winrt::fire_and_forget OnTabsChanged();
-  winrt::fire_and_forget OnAPIEvent(APIEvent);
-  winrt::fire_and_forget OnLoaded();
+  OpenKneeboard::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
+  OpenKneeboard::fire_and_forget OnTabChanged() noexcept;
+  OpenKneeboard::fire_and_forget OnTabsChanged();
+  OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent);
+  OpenKneeboard::fire_and_forget OnLoaded();
   winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
   winrt::Windows::Foundation::IAsyncAction PromptForViewMode();
-  winrt::fire_and_forget UpdateProfileSwitcherVisibility();
-  winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
-  winrt::fire_and_forget Shutdown();
+  OpenKneeboard::fire_and_forget UpdateProfileSwitcherVisibility();
+  OpenKneeboard::fire_and_forget RenameTab(std::shared_ptr<ITab>);
+  OpenKneeboard::fire_and_forget Shutdown();
 
   void CheckForElevatedConsumer();
-  winrt::fire_and_forget ShowWarningIfElevated(DWORD pid);
+  OpenKneeboard::fire_and_forget ShowWarningIfElevated(DWORD pid);
 
-  winrt::fire_and_forget
+  OpenKneeboard::fire_and_forget
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
 
   void SaveWindowPosition();

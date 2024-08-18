@@ -36,6 +36,7 @@
 #include <OpenKneeboard/Events.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/task.hpp>
 
 #include <string>
 
@@ -64,18 +65,22 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
 
   IVector<IInspectable> Tabs() noexcept;
 
-  fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+  OpenKneeboard::fire_and_forget RestoreDefaults(
+    IInspectable,
+    RoutedEventArgs) noexcept;
 
-  winrt::fire_and_forget CreateTab(IInspectable, RoutedEventArgs) noexcept;
-  winrt::fire_and_forget CreatePluginTab(IInspectable, RoutedEventArgs) noexcept;
-  fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
-  fire_and_forget ShowTabSettings(const IInspectable&, const RoutedEventArgs&);
-  fire_and_forget ShowDebugInfo(const IInspectable&, const RoutedEventArgs&);
+  OpenKneeboard::fire_and_forget CreateTab(
+    IInspectable,
+    RoutedEventArgs) noexcept;
+  OpenKneeboard::fire_and_forget CreatePluginTab(
+    IInspectable,
+    RoutedEventArgs) noexcept;
+  OpenKneeboard::fire_and_forget RemoveTab(IInspectable, RoutedEventArgs);
+  OpenKneeboard::fire_and_forget ShowTabSettings(IInspectable, RoutedEventArgs);
+  OpenKneeboard::fire_and_forget ShowDebugInfo(IInspectable, RoutedEventArgs);
   void CopyDebugInfo(const IInspectable&, const RoutedEventArgs&);
 
-  winrt::fire_and_forget OnTabsChanged(
+  OpenKneeboard::fire_and_forget OnTabsChanged(
     IInspectable,
     Windows::Foundation::Collections::IVectorChangedEventArgs) noexcept;
   void OnAddBrowserAddressTextChanged(
@@ -86,12 +91,12 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
   void CreateAddTabMenu(const Button& button, FlyoutPlacementMode);
 
   template <class T>
-  winrt::fire_and_forget CreateFileTab(
+  OpenKneeboard::fire_and_forget CreateFileTab(
     const std::string& pickerDialogTitle = {});
-  winrt::fire_and_forget CreateFolderTab();
-  winrt::fire_and_forget CreateWindowCaptureTab();
-  winrt::fire_and_forget CreateBrowserTab();
-  winrt::fire_and_forget PromptToInstallWebView2();
+  OpenKneeboard::fire_and_forget CreateFolderTab();
+  OpenKneeboard::fire_and_forget CreateWindowCaptureTab();
+  OpenKneeboard::fire_and_forget CreateBrowserTab();
+  OpenKneeboard::fire_and_forget PromptToInstallWebView2();
   winrt::guid GetFilePickerPersistenceGuid();
 
   [[nodiscard]]
@@ -131,13 +136,13 @@ struct BrowserTabUIData : BrowserTabUIDataT<
   BrowserTabUIData() = default;
 
   bool IsSimHubIntegrationEnabled() const;
-  winrt::fire_and_forget IsSimHubIntegrationEnabled(bool);
+  OpenKneeboard::fire_and_forget IsSimHubIntegrationEnabled(bool);
 
   bool IsBackgroundTransparent() const;
-  winrt::fire_and_forget IsBackgroundTransparent(bool);
+  OpenKneeboard::fire_and_forget IsBackgroundTransparent(bool);
 
   bool IsDeveloperToolsWindowEnabled() const;
-  winrt::fire_and_forget IsDeveloperToolsWindowEnabled(bool);
+  OpenKneeboard::fire_and_forget IsDeveloperToolsWindowEnabled(bool);
 
  private:
   std::shared_ptr<OpenKneeboard::BrowserTab> GetTab() const;
@@ -161,22 +166,25 @@ struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
                                   OpenKneeboardApp::implementation::TabUIData> {
   WindowCaptureTabUIData() = default;
 
+  template <class T>
+  using task = OpenKneeboard::task<T>;
+
   hstring WindowTitle();
-  void WindowTitle(hstring const& value);
+  task<void> WindowTitle(hstring const& value);
   bool MatchWindowClass();
-  void MatchWindowClass(bool value);
+  task<void> MatchWindowClass(bool value);
   uint8_t MatchWindowTitle();
-  void MatchWindowTitle(uint8_t value);
+  task<void> MatchWindowTitle(uint8_t value);
   bool IsInputEnabled() const;
   void IsInputEnabled(bool value);
   bool IsCursorCaptureEnabled() const;
-  void IsCursorCaptureEnabled(bool value);
+  task<void> IsCursorCaptureEnabled(bool value);
   bool CaptureClientArea() const;
-  void CaptureClientArea(bool value);
+  task<void> CaptureClientArea(bool value);
   hstring ExecutablePathPattern() const;
-  void ExecutablePathPattern(hstring);
+  task<void> ExecutablePathPattern(hstring);
   hstring WindowClass() const;
-  void WindowClass(hstring);
+  task<void> WindowClass(hstring);
 
  private:
   std::shared_ptr<OpenKneeboard::WindowCaptureTab> GetTab() const;

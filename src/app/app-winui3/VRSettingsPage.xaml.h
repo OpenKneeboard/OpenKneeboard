@@ -47,21 +47,21 @@ struct VRSettingsPage
   ~VRSettingsPage();
 
   bool SteamVREnabled();
-  fire_and_forget SteamVREnabled(bool);
+  OpenKneeboard::fire_and_forget SteamVREnabled(bool);
 
   bool OpenXR64Enabled() noexcept;
-  fire_and_forget OpenXR64Enabled(bool) noexcept;
+  OpenKneeboard::fire_and_forget OpenXR64Enabled(bool) noexcept;
 
   bool OpenXR32Enabled() noexcept;
-  fire_and_forget OpenXR32Enabled(bool) noexcept;
+  OpenKneeboard::fire_and_forget OpenXR32Enabled(bool) noexcept;
 
-  winrt::fire_and_forget RestoreDefaults(
+  OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;
 
-  fire_and_forget AddView(muxc::TabView, IInspectable) noexcept;
+  OpenKneeboard::fire_and_forget AddView(muxc::TabView, IInspectable) noexcept;
 
-  fire_and_forget RemoveView(
+  OpenKneeboard::fire_and_forget RemoveView(
     muxc::TabView,
     muxc::TabViewTabCloseRequestedEventArgs) noexcept;
 

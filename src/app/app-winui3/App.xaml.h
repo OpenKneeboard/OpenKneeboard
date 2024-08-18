@@ -27,7 +27,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct App : AppT<App> {
   App();
 
-  void OnLaunched(
+  OpenKneeboard::fire_and_forget OnLaunched(
     Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
 
   ::OpenKneeboard::task<void> CleanupAndExitAsync();

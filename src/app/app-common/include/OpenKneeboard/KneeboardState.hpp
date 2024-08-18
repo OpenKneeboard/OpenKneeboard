@@ -94,7 +94,8 @@ class KneeboardState final
   [[nodiscard]]
   virtual task<void> DisposeAsync() noexcept override;
 
-  static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
+  static OpenKneeboard::fire_and_forget final_release(
+    std::unique_ptr<KneeboardState>);
 
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
   std::shared_ptr<KneeboardView> GetActiveInGameView() const;
@@ -138,9 +139,7 @@ class KneeboardState final
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \
-  [[nodiscard]] \
   task<void> Set##name##Settings(const cpptype&); \
-  [[nodiscard]] \
   task<void> Reset##name##Settings();
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
@@ -219,7 +218,7 @@ class KneeboardState final
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
   [[nodiscard]]
-  winrt::fire_and_forget OnAPIEvent(APIEvent) noexcept;
+  OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent) noexcept;
   std::queue<APIEvent> mAPIEventQueue;
   single_threaded_lockable mAPIEventQueueHandler;
   task<void> ProcessAPIEvent(APIEvent) noexcept;

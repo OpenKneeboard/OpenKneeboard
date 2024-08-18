@@ -41,6 +41,7 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <OpenKneeboard/bindline.hpp>
+#include <OpenKneeboard/task.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
 
 #include <wil/cppwinrt_helpers.h>

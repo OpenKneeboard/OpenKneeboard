@@ -36,7 +36,8 @@ class APIEventServer final
   : public std::enable_shared_from_this<APIEventServer> {
  public:
   static std::shared_ptr<APIEventServer> Create();
-  static winrt::fire_and_forget final_release(std::unique_ptr<APIEventServer>);
+  static OpenKneeboard::fire_and_forget final_release(
+    std::unique_ptr<APIEventServer>);
   ~APIEventServer();
 
   Event<APIEvent> evAPIEvent;
@@ -55,7 +56,7 @@ class APIEventServer final
   task<void> Run();
   static winrt::Windows::Foundation::IAsyncOperation<bool>
   RunSingle(std::weak_ptr<APIEventServer>, HANDLE event, HANDLE mailslot);
-  winrt::fire_and_forget DispatchEvent(std::string_view);
+  OpenKneeboard::fire_and_forget DispatchEvent(std::string_view);
 };
 
 }// namespace OpenKneeboard

@@ -65,7 +65,8 @@ IndependentVRViewSettingsControl::~IndependentVRViewSettingsControl() {
   this->RemoveAllEventListeners();
 }
 
-fire_and_forget IndependentVRViewSettingsControl::RestoreDefaults(
+OpenKneeboard::fire_and_forget
+IndependentVRViewSettingsControl::RestoreDefaults(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
@@ -102,7 +103,7 @@ IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
   return it->mVR.GetIndependentConfig();
 }
 
-winrt::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
+OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
   const IndependentViewVRConfig& config) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
@@ -114,7 +115,7 @@ winrt::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
   co_await mKneeboard->SetViewsSettings(viewsConfig);
 }
 
-winrt::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
+OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
   const IInspectable&,
   const RoutedEventArgs&) {
   co_await mKneeboard->PostUserAction(UserAction::RECENTER_VR);

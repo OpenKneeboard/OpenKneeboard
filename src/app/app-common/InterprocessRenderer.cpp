@@ -277,7 +277,7 @@ std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   return ret;
 }
 
-winrt::fire_and_forget InterprocessRenderer::final_release(
+OpenKneeboard::fire_and_forget InterprocessRenderer::final_release(
   std::unique_ptr<InterprocessRenderer> it) {
   // Delete in the correct thread
   co_await it->mOwnerThread;

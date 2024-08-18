@@ -39,7 +39,7 @@ std::shared_ptr<APIEventServer> APIEventServer::Create() {
   return ret;
 }
 
-winrt::fire_and_forget APIEventServer::final_release(
+OpenKneeboard::fire_and_forget APIEventServer::final_release(
   std::unique_ptr<APIEventServer> self) {
   TraceLoggingWrite(gTraceProvider, "APIEventServer::final_release()");
   self->mStop.request_stop();
@@ -157,7 +157,8 @@ winrt::Windows::Foundation::IAsyncOperation<bool> APIEventServer::RunSingle(
   co_return true;
 }
 
-winrt::fire_and_forget APIEventServer::DispatchEvent(std::string_view ref) {
+OpenKneeboard::fire_and_forget APIEventServer::DispatchEvent(
+  std::string_view ref) {
   const std::string buffer(ref);
 
   const auto stayingAlive = shared_from_this();

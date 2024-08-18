@@ -43,7 +43,7 @@ RunnerThread::RunnerThread(
 
   mDQC.DispatcherQueue().TryEnqueue(std::bind_front(
     [](auto name, auto impl, auto stop, auto loc, auto event)
-      -> winrt::fire_and_forget {
+      -> OpenKneeboard::fire_and_forget {
       const scope_exit setEventOnExit([event, name]() {
         TraceLoggingWrite(
           gTraceProvider,
@@ -80,7 +80,7 @@ void RunnerThread::Stop() {
     TraceLoggingString(mName.c_str(), "Name"));
   mStopSource.request_stop();
 
-  ([](auto event, auto dqc) -> winrt::fire_and_forget {
+  ([](auto event, auto dqc) -> OpenKneeboard::fire_and_forget {
     dprint("Waiting for completion event");
     co_await winrt::resume_on_signal(event.get());
     dprint("Shutting down runner thread DQC");

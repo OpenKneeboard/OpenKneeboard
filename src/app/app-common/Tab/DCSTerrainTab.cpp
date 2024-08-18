@@ -81,7 +81,7 @@ static std::string_view NormalizeTerrain(std::string_view terrain) {
   return terrain;
 }
 
-winrt::fire_and_forget DCSTerrainTab::OnAPIEvent(
+OpenKneeboard::fire_and_forget DCSTerrainTab::OnAPIEvent(
   APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {

@@ -110,7 +110,7 @@ std::string DCSMissionTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-winrt::fire_and_forget DCSMissionTab::OnAPIEvent(
+OpenKneeboard::fire_and_forget DCSMissionTab::OnAPIEvent(
   APIEvent event,
   [[maybe_unused]] std::filesystem::path installPath,
   [[maybe_unused]] std::filesystem::path savedGamePath) {

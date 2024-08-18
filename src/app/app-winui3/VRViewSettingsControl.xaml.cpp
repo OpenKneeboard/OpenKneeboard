@@ -69,7 +69,8 @@ IInspectable VRViewSettingsControl::SelectedKind() {
   return {nullptr};
 }
 
-fire_and_forget VRViewSettingsControl::SelectedKind(const IInspectable& item) {
+OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedKind(
+  const IInspectable& item) {
   auto settings = mKneeboard->GetViewsSettings();
   auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
 
@@ -153,7 +154,8 @@ bool VRViewSettingsControl::IsEnabledInVR() {
   return it->mVR.mEnabled;
 }
 
-fire_and_forget VRViewSettingsControl::IsEnabledInVR(bool value) {
+OpenKneeboard::fire_and_forget VRViewSettingsControl::IsEnabledInVR(
+  bool value) {
   auto settings = mKneeboard->GetViewsSettings();
   auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
   if (it->mVR.mEnabled == value) {
@@ -220,7 +222,7 @@ IInspectable VRViewSettingsControl::SelectedDefaultTab() {
   return items.GetAt(0);
 }
 
-fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
+OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
   const IInspectable& item) {
   const auto guid
     = unbox_value_or<winrt::guid>(item.as<UIDataItem>().Tag(), {});

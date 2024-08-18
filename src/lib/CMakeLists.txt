@@ -39,8 +39,11 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   ThirdParty::CppWinRT
   ThirdParty::WIL
-  ThirdParty::detours
 )
+
+if(NOT CLANG_CL)
+  target_link_libraries(OpenKneeboard-fatal PRIVATE ThirdParty::detours)
+endif()
 
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)
 target_link_libraries(

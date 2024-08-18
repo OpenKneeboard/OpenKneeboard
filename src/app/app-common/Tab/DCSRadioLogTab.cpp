@@ -127,7 +127,7 @@ PageIndex DCSRadioLogTab::GetPageCount() const {
   return count == 0 ? 1 : count;
 }
 
-winrt::fire_and_forget DCSRadioLogTab::OnAPIEvent(
+OpenKneeboard::fire_and_forget DCSRadioLogTab::OnAPIEvent(
   APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {

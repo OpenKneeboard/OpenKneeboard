@@ -45,7 +45,7 @@ class DCSTab : public virtual ITab, public virtual EventReceiver {
     "or not it is meant to exist. Some crosses are expected, and not "
     "necessarily an error.\n");
 
-  virtual winrt::fire_and_forget OnAPIEvent(
+  virtual OpenKneeboard::fire_and_forget OnAPIEvent(
     APIEvent,
     std::filesystem::path installPath,
     std::filesystem::path savedGamesPath)

@@ -69,7 +69,7 @@ std::string DCSAircraftTab::GetDebugInformation() const {
   return mDebugInformation;
 }
 
-winrt::fire_and_forget DCSAircraftTab::OnAPIEvent(
+OpenKneeboard::fire_and_forget DCSAircraftTab::OnAPIEvent(
   APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {

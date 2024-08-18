@@ -52,7 +52,7 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
   mShutdownHandle = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 }
 
-winrt::fire_and_forget FilesystemWatcher::final_release(
+OpenKneeboard::fire_and_forget FilesystemWatcher::final_release(
   std::unique_ptr<FilesystemWatcher> self) {
   self->mStop.request_stop();
   co_await winrt::resume_on_signal(self->mShutdownHandle.get());
@@ -82,7 +82,7 @@ task<void> FilesystemWatcher::Run() {
   }
 }
 
-winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
+OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
   const auto weak = weak_from_this();
 
   try {

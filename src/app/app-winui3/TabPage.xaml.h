@@ -65,7 +65,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   TabPage();
   ~TabPage();
 
-  static winrt::fire_and_forget final_release(std::unique_ptr<TabPage>);
+  static OpenKneeboard::fire_and_forget final_release(std::unique_ptr<TabPage>);
 
   void OnNavigatedTo(const NavigationEventArgs&) noexcept;
   void OnCanvasSizeChanged(
@@ -98,7 +98,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void FlushCursorEvents();
 
   void SetTab(const std::shared_ptr<TabView>&);
-  winrt::fire_and_forget UpdateToolbar();
+  OpenKneeboard::fire_and_forget UpdateToolbar();
   void InitializeSwapChain();
   void ResizeSwapChain();
 
@@ -107,7 +107,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   [[nodiscard]] task<void> PaintNow(
     const std::source_location& loc = std::source_location::current()) noexcept;
 
-  winrt::fire_and_forget OnToolbarActionClick(std::shared_ptr<ToolbarAction>);
+  OpenKneeboard::fire_and_forget OnToolbarActionClick(
+    std::shared_ptr<ToolbarAction>);
 
   float mCompositionScaleX {1.0f};
   float mCompositionScaleY {1.0f};

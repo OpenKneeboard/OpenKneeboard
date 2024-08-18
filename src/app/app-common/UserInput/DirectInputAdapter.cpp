@@ -108,7 +108,7 @@ task<void> DirectInputAdapter::ReleaseDevices() {
   }
 }
 
-winrt::fire_and_forget DirectInputAdapter::Reload() {
+OpenKneeboard::fire_and_forget DirectInputAdapter::Reload() {
   const auto keepAlive = shared_from_this();
 
   co_await this->ReleaseDevices();
@@ -116,7 +116,7 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
   this->UpdateDevices();
 }
 
-winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
+OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
   // Make sure the lock is released first
   EventDelay delay;
   std::unique_lock lock(mDevicesMutex);
@@ -203,7 +203,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   this->evAttachedControllersChangedEvent.Emit();
 }
 
-winrt::fire_and_forget DirectInputAdapter::final_release(
+OpenKneeboard::fire_and_forget DirectInputAdapter::final_release(
   std::unique_ptr<DirectInputAdapter> self) {
   self->mShuttingDown = true;
   co_await self->ReleaseDevices();

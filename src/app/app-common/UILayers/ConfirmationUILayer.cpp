@@ -316,7 +316,7 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
   });
   AddEventListener(
     buttons->evClicked,
-    [](auto self, auto, auto button) -> winrt::fire_and_forget {
+    [](auto self, auto, auto button) -> OpenKneeboard::fire_and_forget {
       if (button.mAction == ButtonAction::Confirm) {
         auto action = std::dynamic_pointer_cast<ToolbarAction>(self->mItem);
         if (action) {

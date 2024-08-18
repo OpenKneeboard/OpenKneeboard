@@ -41,12 +41,14 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
 
   static void final_release(std::unique_ptr<ProfilesPage>);
 
-  fire_and_forget CreateProfile(
+  OpenKneeboard::fire_and_forget CreateProfile(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
-  fire_and_forget RemoveProfile(const IInspectable&, const RoutedEventArgs&);
+  OpenKneeboard::fire_and_forget RemoveProfile(
+    const IInspectable&,
+    const RoutedEventArgs&);
 
-  fire_and_forget OnList_SelectionChanged(
+  OpenKneeboard::fire_and_forget OnList_SelectionChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
 

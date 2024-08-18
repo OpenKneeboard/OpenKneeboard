@@ -126,7 +126,7 @@ KneeboardState::~KneeboardState() noexcept {
   dprint("~KneeboardState()");
 }
 
-winrt::fire_and_forget KneeboardState::final_release(
+OpenKneeboard::fire_and_forget KneeboardState::final_release(
   std::unique_ptr<KneeboardState> self) {
   TraceLoggingWrite(gTraceProvider, "KneeboardState::final_release()");
   self->RemoveAllEventListeners();
@@ -388,7 +388,8 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-winrt::fire_and_forget KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
+OpenKneeboard::fire_and_forget KneeboardState::OnAPIEvent(
+  APIEvent ev) noexcept {
   mAPIEventQueue.push(ev);
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");

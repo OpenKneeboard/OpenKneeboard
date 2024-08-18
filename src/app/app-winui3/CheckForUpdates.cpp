@@ -75,7 +75,7 @@ static std::string ToSemVerString(std::string_view raw) {
   return ret;
 }
 
-static winrt::fire_and_forget ShowResultDialog(
+static OpenKneeboard::fire_and_forget ShowResultDialog(
   std::string_view message,
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot);
@@ -203,7 +203,7 @@ task<UpdateResult> CheckForUpdates(
   dprintf(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
-  scope_exit oncePerDay([&]() -> winrt::fire_and_forget {
+  scope_exit oncePerDay([&]() -> OpenKneeboard::fire_and_forget {
     settings.mDisabledUntil = now + (60 * 60 * 24);
     appSettings.mAutoUpdate = settings;
     auto kneeboard = gKneeboard.lock();
@@ -425,7 +425,7 @@ task<UpdateResult> CheckForUpdates(
   co_return UpdateResult::NotInstallingUpdate;
 }
 
-static winrt::fire_and_forget ShowResultDialog(
+static OpenKneeboard::fire_and_forget ShowResultDialog(
   std::string_view message,
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot) {

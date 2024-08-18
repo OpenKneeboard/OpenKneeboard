@@ -40,9 +40,9 @@ NonVRSettingsPage::NonVRSettingsPage() {
   mKneeboard = gKneeboard.lock();
 }
 
-fire_and_forget NonVRSettingsPage::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+OpenKneeboard::fire_and_forget NonVRSettingsPage::RestoreDefaults(
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
@@ -137,7 +137,7 @@ ViewNonVRConfig NonVRSettingsPage::GetViewConfig() {
   return views.at(mCurrentView).mNonVR;
 }
 
-winrt::fire_and_forget NonVRSettingsPage::SetViewConfig(
+OpenKneeboard::fire_and_forget NonVRSettingsPage::SetViewConfig(
   const ViewNonVRConfig& value) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;

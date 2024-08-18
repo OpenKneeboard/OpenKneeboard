@@ -107,8 +107,8 @@ class TabletInputAdapter final
 
   ///// OpenTabletDriver /////
 
-  winrt::fire_and_forget OnOTDInput(std::string id, TabletState);
-  winrt::fire_and_forget OnOTDDevice(TabletInfo);
+  OpenKneeboard::fire_and_forget OnOTDInput(std::string id, TabletState);
+  OpenKneeboard::fire_and_forget OnOTDDevice(TabletInfo);
   std::shared_ptr<TabletInputDevice> GetOTDDevice(const std::string& id);
 
   std::shared_ptr<OTDIPCClient> mOTDIPC;

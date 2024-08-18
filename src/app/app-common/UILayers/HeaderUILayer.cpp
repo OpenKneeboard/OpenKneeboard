@@ -493,7 +493,7 @@ bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {
 void HeaderUILayer::OnClick(const Button& button) {
   auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
   if (action) {
-    fire_and_forget(action->Execute());
+    fire_and_forget::wrap(&ToolbarAction::Execute, action);
     return;
   }
 

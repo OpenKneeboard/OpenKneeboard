@@ -53,7 +53,7 @@ class DCSMissionTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  virtual winrt::fire_and_forget
+  virtual OpenKneeboard::fire_and_forget
     OnAPIEvent(APIEvent, std::filesystem::path, std::filesystem::path) override;
 
  private:

@@ -80,7 +80,7 @@ void FolderPageSource::SubscribeToChanges() {
     });
 }
 
-winrt::fire_and_forget FolderPageSource::OnFileModified(
+OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
   std::filesystem::path directory) {
   if (directory != mPath) {
     co_return;

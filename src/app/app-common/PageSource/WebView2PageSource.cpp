@@ -359,7 +359,7 @@ void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {
     renderer->evJSAPI_PageChangeRequested, this->evPageChangeRequestedEvent);
 }
 
-winrt::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
+OpenKneeboard::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(
   std::vector<APIPage> pages) {
   auto keepAlive = shared_from_this();
   mRenderersState

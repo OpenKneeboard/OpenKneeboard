@@ -186,7 +186,7 @@ task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   co_return true;
 }
 
-winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
+OpenKneeboard::fire_and_forget WindowCaptureTab::TryToStartCapture() {
   auto weak = weak_from_this();
   co_await winrt::resume_background();
   auto self = weak.lock();
@@ -228,7 +228,7 @@ WindowCaptureTab::~WindowCaptureTab() {
   }
 }
 
-winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
+OpenKneeboard::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   auto weak = weak_from_this();
   co_await mUIThread;
   auto self = weak.lock();
@@ -265,7 +265,7 @@ nlohmann::json WindowCaptureTab::GetSettings() const {
   };
 }
 
-winrt::fire_and_forget WindowCaptureTab::final_release(
+OpenKneeboard::fire_and_forget WindowCaptureTab::final_release(
   std::unique_ptr<WindowCaptureTab> self) {
   if (self->mDelegate) {
     co_await self->mDelegate->DisposeAsync();
@@ -380,11 +380,12 @@ WindowCaptureTab::MatchSpecification WindowCaptureTab::GetMatchSpecification()
   return mSpec;
 }
 
-void WindowCaptureTab::SetMatchSpecification(const MatchSpecification& spec) {
+task<void> WindowCaptureTab::SetMatchSpecification(
+  const MatchSpecification& spec) {
   mSpec = spec;
   this->evSettingsChangedEvent.Emit();
   if (!this->WindowMatches(mHwnd)) {
-    fire_and_forget(this->Reload());
+    co_await this->Reload();
   }
 }
 
@@ -407,20 +408,20 @@ HWNDPageSource::CaptureArea WindowCaptureTab::GetCaptureArea() const {
   return mCaptureOptions.mCaptureArea;
 }
 
-void WindowCaptureTab::SetCaptureArea(CaptureArea value) {
+task<void> WindowCaptureTab::SetCaptureArea(CaptureArea value) {
   mCaptureOptions.mCaptureArea = value;
   evSettingsChangedEvent.Emit();
-  fire_and_forget(this->Reload());
+  co_await this->Reload();
 }
 
 bool WindowCaptureTab::IsCursorCaptureEnabled() const {
   return mCaptureOptions.mCaptureCursor;
 }
 
-void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
+task<void> WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
   mCaptureOptions.mCaptureCursor = value;
   evSettingsChangedEvent.Emit();
-  fire_and_forget(this->Reload());
+  co_await this->Reload();
 }
 
 task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
@@ -495,7 +496,7 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
     }
   }
 
-  [](auto hwnd, auto weak) -> winrt::fire_and_forget {
+  [](auto hwnd, auto weak) -> OpenKneeboard::fire_and_forget {
     if (auto instance = weak.lock()) {
       co_await instance->OnNewWindow(hwnd);
     }

@@ -43,7 +43,7 @@ foo.OnSomeEvent(std::bind_front(&MyClass::SomeMethod, this));
 
 ```C++
 // Coroutines
-winrt::fire_and_forget MyClass::MyCoroutineMethod() {
+OpenKneeboard::fire_and_forget MyClass::MyCoroutineMethod() {
   // Safe, as long as:
   // - liveness was guaranteed when `MyCoroutineMethod` was called
   // - the coroutine type's `initial_suspend()` returns an `std::suspend_never`
@@ -76,7 +76,7 @@ foo.OnSomeEvent(
 ```
 
 ```C++
-winrt::fire_and_forget MyClass::MyCoroutineMethod() {
+OpenKneeboard::fire_and_forget MyClass::MyCoroutineMethod() {
   // Safe, as long as:
   // - liveness was guaranteed when `MyCoroutineMethod` was called
   // - the coroutine type's `initial_suspend()` returns an `std::suspend_never`
@@ -92,7 +92,7 @@ winrt::fire_and_forget MyClass::MyCoroutineMethod() {
 ## Tangent: captures in coroutine lambdas
 
 ```C++
-auto lambda = [this, bar] () -> winrt::fire_and_forget {
+auto lambda = [this, bar] () -> OpenKneeboard::fire_and_forget {
   // Only safe *IF* the coroutine's `initial_suspend()` returns
   // an `std::suspend_never`:
   this->DoStuff();
@@ -113,7 +113,7 @@ Lambda captures are only guaranteed to be valid for the lifetime of the lambda -
 
 ```C++
 auto lambda = [this, bar] () {
-  return [](auto& weakThis, auto bar) -> winrt::fire_and_forget {
+  return [](auto& weakThis, auto bar) -> OpenKneeboard::fire_and_forget {
     // ...
   }(weak_from_this(), bar);
 }();
