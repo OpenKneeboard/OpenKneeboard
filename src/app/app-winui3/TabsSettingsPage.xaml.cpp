@@ -251,7 +251,7 @@ fire_and_forget TabsSettingsPage::ShowTabSettings(
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
   if (title.empty()) {
-    OPENKNEEBOARD_BREAK;
+    // We reach this for plugin tabs
     title = _("Tab Settings");
   } else {
     auto idx = title.find(" (");
