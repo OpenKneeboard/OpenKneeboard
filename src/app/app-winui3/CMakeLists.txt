@@ -149,23 +149,3 @@ set_property(
   PROPERTY
   CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
 )
-
-add_custom_target(
-  "build-and-run"
-  COMMAND "$<TARGET_FILE:OpenKneeboard-App-WinUI3>"
-  DEPENDS
-  OpenKneeboard-App-WinUI3
-  CopyRuntimeFiles
-  CopyDataFiles
-)
-
-add_custom_target(
-  "build-and-windbg"
-  COMMAND
-  WinDbgX
-  "$<TARGET_FILE:OpenKneeboard-App-WinUI3>"
-  DEPENDS
-  OpenKneeboard-App-WinUI3
-  CopyRuntimeFiles
-  CopyDataFiles
-)
