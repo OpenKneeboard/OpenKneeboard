@@ -119,23 +119,20 @@ struct TaskFinalAwaiter {
       return;
     }
 
-    ResumeData resumeData {
+    auto resumeData = new ResumeData {
       .mContext = context,
       .mCoro = oldState.mNext,
     };
-    ComCallData comData {.pUserDefined = &resumeData};
-    const auto result = context.mCOMCallback->ContextCallback(
-      &TaskFinalAwaiter<TResult>::resume,
-      &comData,
-      IID_ICallbackWithNoReentrancyToApplicationSTA,
-      5,
-      NULL);
-    if (SUCCEEDED(result)) [[likely]] {
+    const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
+      &TaskFinalAwaiter<TResult>::resume_on_thread_pool, resumeData, nullptr);
+    if (threadPoolSuccess) [[likely]] {
       return;
     }
+    const auto threadPoolError = GetLastError();
+    delete resumeData;
     fatal(
-      "Failed to enqueue coroutine resumption for the desired thread: {:#010x}",
-      static_cast<uint32_t>(result));
+      "Failed to enqueue resumption on thread pool: {:010x}",
+      static_cast<uint32_t>(threadPoolError));
   }
 
   void await_resume() const noexcept {
@@ -147,7 +144,29 @@ struct TaskFinalAwaiter {
     std::coroutine_handle<> mCoro;
   };
 
-  static HRESULT resume(ComCallData* comData) {
+  static void resume_on_thread_pool(
+    PTP_CALLBACK_INSTANCE,
+    void* userData) noexcept {
+    std::unique_ptr<ResumeData> resumeData {
+      reinterpret_cast<ResumeData*>(userData)};
+
+    ComCallData comData {.pUserDefined = resumeData.get()};
+    const auto result = resumeData->mContext.mCOMCallback->ContextCallback(
+      &TaskFinalAwaiter<TResult>::resume_on_thread_pool,
+      &comData,
+      IID_ICallbackWithNoReentrancyToApplicationSTA,
+      5,
+      NULL);
+    if (SUCCEEDED(result)) [[likely]] {
+      return;
+    }
+    fatal(
+      "Failed to enqueue coroutine resumption for the desired thread: "
+      "{:#010x}",
+      static_cast<uint32_t>(result));
+  }
+
+  static HRESULT resume_on_thread_pool(ComCallData* comData) noexcept {
     const auto& resumeData
       = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
     if (std::this_thread::get_id() != resumeData.mContext.mThreadID)
