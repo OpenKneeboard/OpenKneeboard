@@ -30,12 +30,16 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
+#include <OpenKneeboard/format_enum.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <atomic>
 #include <coroutine>
 #include <memory>
 
 namespace OpenKneeboard::detail {
+
+constexpr bool DebugTaskCoroutines = true;
 
 enum class TaskPromiseState : uintptr_t {
   Running = 1,
@@ -44,12 +48,16 @@ enum class TaskPromiseState : uintptr_t {
 };
 
 enum class TaskPromiseResultState {
+  Invalid = 0,// Moved or never initialized
   NoResult,
+
   HaveException,
   ThrownException,
+
   HaveResult,
-  HaveVoidResult,
   ReturnedResult,
+
+  HaveVoidResult,
   ReturnedVoid,
 };
 
@@ -64,6 +72,14 @@ union TaskPromiseWaiting {
 };
 static_assert(sizeof(TaskPromiseWaiting) == sizeof(TaskPromiseState));
 static_assert(sizeof(TaskPromiseWaiting) == sizeof(std::coroutine_handle<>));
+
+constexpr auto to_string(TaskPromiseWaiting value) {
+  if (magic_enum::enum_contains(value.mState)) {
+    return std::format("{}", value.mState);
+  }
+  return std::format(
+    "{:#018x}", reinterpret_cast<uintptr_t>(value.mNext.address()));
+}
 
 constexpr TaskPromiseWaiting TaskPromiseRunning {
   .mState = TaskPromiseState::Running};
@@ -96,13 +112,35 @@ template <class TResult>
 struct TaskFinalAwaiter {
   TaskPromiseBase<TResult>& mPromise;
 
+  TaskFinalAwaiter() = delete;
+  TaskFinalAwaiter(TaskPromiseBase<TResult>& promise) : mPromise(promise) {
+    if constexpr (!DebugTaskCoroutines) {
+      return;
+    }
+
+    using enum TaskPromiseResultState;
+    const auto state = mPromise.mResultState.Get();
+    switch (state) {
+      case HaveException:
+      case HaveResult:
+      case HaveVoidResult:
+        return;
+      default:
+        fatal(
+          mPromise.mContext.mCaller,
+          "Invalid state for final awaiter: {:#}",
+          state);
+    }
+  }
+
   bool await_ready() const noexcept {
     return false;
   }
 
   template <class TPromise>
   void await_suspend(std::coroutine_handle<TPromise> handle) noexcept {
-    auto oldState = mPromise.mWaiting.exchange(TaskPromiseCompleted);
+    auto oldState = mPromise.mWaiting.exchange(
+      TaskPromiseCompleted, std::memory_order_acq_rel);
     if (oldState == TaskPromiseAbandoned) {
       mPromise.destroy();
       return;
@@ -112,7 +150,7 @@ struct TaskFinalAwaiter {
     }
 
     // Must have a valid pointer, or we have corruption
-    assert(oldState != TaskPromiseCompleted);
+    OPENKNEEBOARD_ASSERT(oldState != TaskPromiseCompleted);
     const auto& context = mPromise.mContext;
     if (context.mThreadID == std::this_thread::get_id()) {
       oldState.mNext.resume();
@@ -185,6 +223,9 @@ template <class TResult>
 struct Task;
 
 template <class TResult>
+struct TaskPromise;
+
+template <class TResult>
 struct TaskPromiseBase {
   using enum TaskPromiseResultState;
   AtomicStateMachine<
@@ -210,23 +251,52 @@ struct TaskPromiseBase {
   TaskContext mContext;
 
   TaskPromiseBase() = delete;
+  TaskPromiseBase(const TaskPromiseBase<TResult>&) = delete;
+  TaskPromiseBase<TResult>& operator=(const TaskPromiseBase<TResult>&) = delete;
+
+  TaskPromiseBase(TaskPromiseBase<TResult>&&) = delete;
+  TaskPromiseBase<TResult>& operator=(TaskPromiseBase<TResult>&&) = delete;
 
   TaskPromiseBase(TaskContext&& context) noexcept
     : mContext(std::move(context)) {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromiseBase<>::TaskPromiseBase()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
+        "ResultState"));
   }
 
-  auto get_return_object(this auto& self) {
-    return &self;
+  auto get_return_object() {
+    return static_cast<TaskPromise<TResult>*>(this);
   }
 
-  void unhandled_exception() {
-    mResultState.Transition<NoResult, HaveException>();
-
+  void unhandled_exception() noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromiseBase<>::unhandled_exception()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
+        "ResultState"));
     mUncaught = std::current_exception();
+    mResultState.Transition<NoResult, HaveException>();
   }
 
   void abandon() {
-    auto oldState = mWaiting.exchange(TaskPromiseAbandoned);
+    auto oldState
+      = mWaiting.exchange(TaskPromiseAbandoned, std::memory_order_acq_rel);
     if (oldState == TaskPromiseRunning) {
       fatal(mContext.mCaller, "result *must* be awaited");
       return;
@@ -240,10 +310,35 @@ struct TaskPromiseBase {
   }
 
   std::suspend_never initial_suspend() noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromiseBase<>::initial_suspend()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
+        "ResultState"));
     return {};
   };
 
   TaskFinalAwaiter<TResult> final_suspend() noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromiseBase<>::final_suspend()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
+        "ResultState"),
+      TraceLoggingValue(std::uncaught_exceptions(), "UncaughtExceptions"));
     return {*this};
   }
 };
@@ -257,9 +352,24 @@ struct TaskPromise : TaskPromiseBase<TResult> {
 
   TResult mResult;
 
-  void return_value(TResult&& result) noexcept {
+  template <class T>
+  void return_value(T&& result) noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromise<>::return_value()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(this->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(this->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", this->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
     using enum TaskPromiseResultState;
-    mResult = std::move(result);
+    mResult = std::forward<T>(result);
     this->mResultState.Transition<NoResult, HaveResult>();
   }
 };
@@ -272,6 +382,20 @@ struct TaskPromise<void> : TaskPromiseBase<void> {
   }
 
   void return_void() noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromise<void>::return_void()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Promise"),
+      TraceLoggingCodePointer(this->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(this->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", this->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
     using enum TaskPromiseResultState;
     mResultState.Transition<NoResult, HaveVoidResult>();
   }
@@ -280,6 +404,25 @@ struct TaskPromise<void> : TaskPromiseBase<void> {
 template <class T>
 struct TaskPromiseDeleter {
   void operator()(T* promise) const noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskPromiseDeleter<>::operator()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingCodePointer(
+        promise->mContext.mCaller.mValue, "PromiseCaller"),
+      TraceLoggingPointer(promise, "Promise"),
+      TraceLoggingValue(
+        to_string(promise->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", promise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"),
+      TraceLoggingCodePointer(_ReturnAddress(), "DeleterReturnAddress"),
+      TraceLoggingCodePointer(
+        _AddressOfReturnAddress(), "DeleterAddressOfReturnAddress"));
+
     promise->abandon();
   }
 };
@@ -294,28 +437,80 @@ struct TaskAwaiter {
   promise_ptr_t mPromise;
 
   TaskAwaiter() = delete;
+  TaskAwaiter(const TaskAwaiter&) = delete;
+  TaskAwaiter& operator=(const TaskAwaiter&) = delete;
+
+  TaskAwaiter(TaskAwaiter&&) = delete;
+  TaskAwaiter& operator=(TaskAwaiter&&) = delete;
+
   TaskAwaiter(promise_ptr_t&& init) : mPromise(std::move(init)) {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskAwaiter<>::TaskAwaiter()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(mPromise.get(), "Promise"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(
+        to_string(mPromise->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
   }
 
   bool await_ready() const noexcept {
-    switch (mPromise->mWaiting.load().mState) {
-      case TaskPromiseState::Running:
-        return false;
-      case TaskPromiseState::Completed:
-        return true;
-      default:
-        return false;
-    }
+    const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskAwaiter<>::await_ready()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(mPromise.get(), "Promise"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(to_string(waiting).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
+    return waiting == TaskPromiseCompleted;
   }
 
   bool await_suspend(std::coroutine_handle<> caller) {
-    auto oldState = mPromise->mWaiting.exchange({.mNext = caller});
+    auto oldState = mPromise->mWaiting.exchange(
+      {.mNext = caller}, std::memory_order_acq_rel);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskAwaiter<>::await_suspend()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(mPromise.get(), "Promise"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(to_string(oldState).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
     return oldState == TaskPromiseRunning;
   }
 
   decltype(auto) await_resume() noexcept {
     const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
     OPENKNEEBOARD_ASSERT(waiting == TaskPromiseCompleted);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskAwaiter<>::await_resume()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(mPromise.get(), "Promise"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(to_string(waiting).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
+
     using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
       mPromise->mResultState.Transition<HaveException, ThrownException>();
@@ -323,11 +518,11 @@ struct TaskAwaiter {
     }
 
     if constexpr (std::same_as<TResult, void>) {
-    mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
+      mPromise->mResultState.Transition<HaveVoidResult, ReturnedVoid>();
       return;
     } else {
-    mPromise->mResultState.Transition<HaveResult, ReturnedResult>();
-    return std::move(mPromise->mResult);
+      mPromise->mResultState.Transition<HaveResult, ReturnedResult>();
+      return std::move(mPromise->mResult);
     }
   }
 };
@@ -342,31 +537,62 @@ struct [[nodiscard]] Task {
   Task() = delete;
   Task(const Task&) = delete;
   Task& operator=(const Task&) = delete;
-  Task(Task&&) = default;
-  Task& operator=(Task&&) = default;
+
+  Task(Task&& other) {
+    mPromise = std::move(other.mPromise);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "Task<>::Task(Task&&)",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Task"),
+      TraceLoggingPointer(mPromise.get(), "Promise"));
+  }
+
+  Task& operator=(Task&& other) {
+    mPromise = std::move(other.mPromise);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "Task<>::operator=(Task&&)",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Task"),
+      TraceLoggingPointer(mPromise.get(), "Promise"));
+    return *this;
+  }
 
   Task(std::nullptr_t) = delete;
   Task(promise_t* promise) : mPromise(promise) {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "Task<>::Task(promise_t*)",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Task"),
+      TraceLoggingPointer(promise, "Promise"),
+      TraceLoggingCodePointer(promise->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingValue(to_string(promise->mWaiting).c_str(), "Waiting"),
+      TraceLoggingValue(
+        std::format("{}", promise->mResultState.Get(std::memory_order_relaxed))
+          .c_str(),
+        "ResultState"));
+
     OPENKNEEBOARD_ASSERT(promise);
   }
 
   ~Task() {
-    if (!mPromise) {
-      // moved
+    TraceLoggingWrite(
+      gTraceProvider,
+      "Task<>::~Task()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Task"),
+      TraceLoggingPointer(mPromise.get(), "Promise"));
+    if (mPromise) [[unlikely]] {
+      fatal(
+        mPromise->mContext.mCaller,
+        "all tasks must be either moved or awaited");
       return;
-    }
-    using enum TaskPromiseResultState;
-    const auto resultState = mPromise->mResultState.Get();
-    switch (resultState) {
-      case ThrownException:
-      case ReturnedResult:
-      case ReturnedVoid:
-        break;
-      default:
-        fatal(
-          mPromise->mContext.mCaller,
-          "Invalid final result state: {:#} - did you `co_await` the task?",
-          resultState);
     }
   }
 
@@ -378,8 +604,16 @@ struct [[nodiscard]] Task {
   cannot_await_lvalue_use_std_move operator co_await() & = delete;
 
   auto operator co_await() && noexcept {
-    // probably moved
-    OPENKNEEBOARD_ASSERT(mPromise);
+    TraceLoggingWrite(
+      gTraceProvider,
+      "Task<>::operator co_await()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(this, "Task"),
+      TraceLoggingPointer(mPromise.get(), "Promise"));
+
+    OPENKNEEBOARD_ASSERT(
+      mPromise, "Can't await a task that has been moved or already awaited");
     return TaskAwaiter<TResult> {std::move(mPromise)};
   }
 
