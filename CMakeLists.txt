@@ -145,6 +145,27 @@ else()
   set(CLANG_CL 0)
 endif()
 
+# As of 2024-07-24:
+# - CMake automatically converts this to `/std:c++latest` for MSVC
+# - clang-cl doesn't treat that as equivalent or `c++23`
+if(CLANG_CL)
+  add_compile_options(
+    "$<$<COMPILE_LANGUAGE:CXX>:/clang:--std=c++23>"
+    "$<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-command-line-argument>"
+  )
+endif()
+
+# MSBuild ignores CMAKE_CXX_COMPILER and friends
+set(MSBUILD_LLVM_ROOT "" CACHE PATH "Change LLVM binary used by MSBuild; you must also set MSBUILD_LLVM_VERSION")
+set(MSBUILD_LLVM_VERSION "" CACHE STRING "LLVM version used by MSBuild; you must also set MSBUILD_LLVM_ROOT")
+if(MSBUILD_LLVM_ROOT)
+  list(
+    APPEND CMAKE_VS_GLOBALS
+    "LLVMInstallDir=${MSBUILD_LLVM_ROOT}"
+    "LLVMToolsVersion=${MSBUILD_LLVM_VERSION}"
+  )
+endif()
+
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
 message(STATUS "MSVC: ${MSVC}")
