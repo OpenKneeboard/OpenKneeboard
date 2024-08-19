@@ -48,13 +48,13 @@
 #include <detours.h>
 #endif
 
-using std::operator""s;
-
-#ifdef CLANG_TIDY
+#ifdef __clang__
 // Microsoft C++ intrinsics
 using _ThrowInfo = void*;
 extern "C" void __stdcall _CxxThrowException(void*, _ThrowInfo);
 #endif
+
+using std::operator""s;
 
 namespace {
 [[noreturn]]
