@@ -584,7 +584,7 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateFolderTab() {
     {co_await FolderTab::Create(mDXR, mKneeboard.get(), *folder)});
 }
 
-winrt::Windows::Foundation::IAsyncAction TabsSettingsPage::AddTabs(
+task<void> TabsSettingsPage::AddTabs(
   const std::vector<std::shared_ptr<ITab>>& tabs) {
   const std::shared_lock lock(*mKneeboard);
 

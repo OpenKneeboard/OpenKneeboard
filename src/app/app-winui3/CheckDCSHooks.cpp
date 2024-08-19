@@ -76,9 +76,7 @@ static DCSHookInstallState GetHookInstallState(
   return UP_TO_DATE;
 }
 
-winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
-  XamlRoot root,
-  std::filesystem::path savedGamesPath) {
+task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
   if (!std::filesystem::exists(savedGamesPath)) {
     co_return;
   }
@@ -192,7 +190,7 @@ task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
   co_return *folder;
 }
 
-winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(XamlRoot root) {
+task<void> CheckAllDCSHooks(XamlRoot root) {
   winrt::apartment_context uiThread;
 
   std::set<std::filesystem::path> dcsSavedGamesPaths;

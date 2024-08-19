@@ -662,7 +662,7 @@ struct [[nodiscard]] Task {
 
 }// namespace OpenKneeboard::detail
 
-namespace OpenKneeboard {
+namespace OpenKneeboard::inline task_ns {
 /** A coroutine that:
  * - always returns to the same thread it was invoked from
  * - to implement that, requires that it is called from a thread with a COM
@@ -683,6 +683,10 @@ template <class TIgnoredDispatcherQueue, class T>
 using basic_task = detail::Task<detail::TaskTraits<T>>;
 template <class T>
 using task = basic_task<DispatcherQueue, T>;
+
+}// namespace OpenKneeboard::inline task_ns
+
+namespace OpenKneeboard {
 
 struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
   using detail::Task<detail::FireAndForgetTraits>::Task;

@@ -30,6 +30,7 @@
 #include "CheckForUpdates.h"
 #include "Globals.h"
 #include "InstallPlugin.h"
+#include "TabPage.xaml.h"
 
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
@@ -79,6 +80,9 @@ using namespace ::OpenKneeboard;
 
 namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
+using TabPage_WinRT = winrt::OpenKneeboardApp::TabPage;
+using TabPage_Implementation = winrt::OpenKneeboardApp::implementation::TabPage;
+
 namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() : mDXR(new DXResources()) {
   InitializeComponent();
@@ -114,7 +118,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 }
 
-winrt::Windows::Foundation::IAsyncAction MainWindow::Init() {
+task<void> MainWindow::Init() {
   mKneeboard = co_await KneeboardState::Create(mHwnd, mDXR);
   gKneeboard = mKneeboard;
 
@@ -201,25 +205,26 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::Init() {
 
   AddEventListener(
     mKneeboard->evCurrentProfileChangedEvent,
-    [](auto self) {
+    [](auto self) -> ::OpenKneeboard::fire_and_forget {
       self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
       self->ResetKneeboardView();
       auto backStack = self->Frame().BackStack();
       std::vector<PageStackEntry> newBackStack;
       for (auto entry: backStack) {
-        if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
+        if (
+          entry.SourcePageType().Name == xaml_typename<TabPage_WinRT>().Name) {
           newBackStack.clear();
           continue;
         }
         newBackStack.push_back(entry);
       }
       backStack.ReplaceAll(newBackStack);
-      self->PromptForViewMode();
+      co_await self->PromptForViewMode();
     } | bind_refs_front(this)
       | bind_winrt_context(mUIThread));
 }
 
-winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
+task<void> MainWindow::FrameLoop() {
   auto stop = mFrameLoopStopSource.get_token();
   const auto interval = std::chrono::milliseconds(
     static_cast<unsigned int>(1000 / FramesPerSecond));
@@ -357,8 +362,8 @@ OpenKneeboard::fire_and_forget MainWindow::FrameTick() {
     if (auto ipc = mKneeboard->GetInterprocessRenderer()) {
       co_await ipc->RenderNow();
     }
-    if (auto tab = Frame().Content().try_as<TabPage>()) {
-      co_await tab.PaintIfDirty();
+    if (auto tab = Frame().Content().try_as<TabPage_WinRT>()) {
+      co_await get_self<TabPage_Implementation>(tab)->PaintNow();
     }
   }
   mKneeboard->Repainted();
@@ -431,7 +436,7 @@ void MainWindow::WinEventProc(
   kneeboard->NotifyAppWindowIsForeground(hwnd == gMainWindow);
 }
 
-winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
+task<void> MainWindow::PromptForViewMode() {
   auto weakThis = get_weak();
 
   auto viewSettings = mKneeboard->GetViewsSettings();
@@ -459,8 +464,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::PromptForViewMode() {
   co_await self->mKneeboard->SetViewsSettings(viewSettings);
 }
 
-winrt::Windows::Foundation::IAsyncAction
-MainWindow::ShowSelfElevationWarning() {
+task<void> MainWindow::ShowSelfElevationWarning() {
   if (!IsElevated()) {
     co_return;
   }
@@ -483,7 +487,7 @@ MainWindow::ShowSelfElevationWarning() {
   dprint("Self elevation warning closed");
 }
 
-winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
+task<void> MainWindow::WriteInstanceData() {
   const auto path = MainWindow::GetInstanceDataPath();
   const bool uncleanShutdown = std::filesystem::exists(path);
 
@@ -758,6 +762,7 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   self->mFrameLoopStopSource.request_stop();
   try {
     co_await winrt::resume_on_signal(self->mFrameLoopCompletionEvent.get());
+    co_await std::move(self->mFrameLoop).value();
   } catch (const winrt::hresult_error& e) {
     auto x = e.message();
     __debugbreak();
@@ -856,13 +861,13 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabChanged() noexcept {
 
   if (mTabSwitchReason == TabSwitchReason::Other) {
     this->Frame().Navigate(
-      xaml_typename<TabPage>(),
+      xaml_typename<TabPage_WinRT>(),
       winrt::box_value(id.GetTemporaryValue()),
       Microsoft::UI::Xaml::Media::Animation::
         SuppressNavigationTransitionInfo {});
   } else {
     this->Frame().Navigate(
-      xaml_typename<TabPage>(), winrt::box_value(id.GetTemporaryValue()));
+      xaml_typename<TabPage_WinRT>(), winrt::box_value(id.GetTemporaryValue()));
   }
   mTabSwitchReason = TabSwitchReason::Other;
 }
@@ -1080,14 +1085,17 @@ void MainWindow::OnNavigationItemInvoked(
   }
 
   // Current tab == desired tab - but is that what we're actually showing?
-  if (Frame().CurrentSourcePageType().Name == xaml_typename<TabPage>().Name) {
+  if (
+    Frame().CurrentSourcePageType().Name
+    == xaml_typename<TabPage_WinRT>().Name) {
     return;
   }
 
   // Nope, perhaps we're in 'Settings' instead
   mTabSwitchReason = TabSwitchReason::InAppNavSelection;
   Frame().Navigate(
-    xaml_typename<TabPage>(), winrt::box_value(tabID.GetTemporaryValue()));
+    xaml_typename<TabPage_WinRT>(),
+    winrt::box_value(tabID.GetTemporaryValue()));
 }
 
 void MainWindow::OnBackRequested(

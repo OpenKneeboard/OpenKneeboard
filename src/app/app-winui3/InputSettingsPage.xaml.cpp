@@ -115,8 +115,7 @@ uint8_t InputSettingsPage::WintabMode() const {
     mKneeboard->GetTabletInputAdapter()->GetWintabMode());
 }
 
-winrt::Windows::Foundation::IAsyncAction InputSettingsPage::WintabMode(
-  uint8_t rawMode) const {
+task<void> InputSettingsPage::WintabMode(uint8_t rawMode) const {
   auto t = mKneeboard->GetTabletInputAdapter();
   const auto mode = static_cast<OpenKneeboard::WintabMode>(rawMode);
   if (mode == t->GetWintabMode()) {

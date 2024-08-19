@@ -124,7 +124,7 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
 
   auto window = make<MainWindow>();
   mWindow = window;
-  co_await window.Init();
+  co_await winrt::get_self<implementation::MainWindow>(window)->Init();
 }
 
 static void LogSystemInformation() {

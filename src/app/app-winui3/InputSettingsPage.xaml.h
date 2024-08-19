@@ -46,7 +46,7 @@ struct InputSettingsPage
   ~InputSettingsPage();
 
   uint8_t WintabMode() const;
-  winrt::Windows::Foundation::IAsyncAction WintabMode(uint8_t) const;
+  task<void> WintabMode(uint8_t) const;
 
   bool IsOpenTabletDriverEnabled() const;
   void IsOpenTabletDriverEnabled(bool);
@@ -54,7 +54,7 @@ struct InputSettingsPage
   bool IsWinTabAvailable() const;
   winrt::hstring WinTabAvailability() const;
 
-OpenKneeboard::fire_and_forget RestoreDefaults(
+  OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;
 

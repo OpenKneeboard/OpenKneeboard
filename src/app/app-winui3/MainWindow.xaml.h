@@ -48,7 +48,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   ~MainWindow();
 
   [[nodiscard]]
-  winrt::Windows::Foundation::IAsyncAction Init();
+  task<void> Init();
 
   void OnNavigationItemInvoked(
     const IInspectable& sender,
@@ -90,7 +90,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   std::vector<EventHandlerToken> mKneeboardViewEvents;
   DispatcherQueueTimer mFrameTimer {nullptr};
   std::stop_source mFrameLoopStopSource;
-  winrt::Windows::Foundation::IAsyncAction mFrameLoop {nullptr};
+  std::optional<task<void>> mFrameLoop;
 
   enum class TabSwitchReason {
     InAppNavSelection,
@@ -108,7 +108,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   // of time between iterations; this keeps the UI responsive, and
   // avoids building up a massive backlog of overdue scheduled
   // events.
-  winrt::Windows::Foundation::IAsyncAction FrameLoop();
+  task<void> FrameLoop();
   OpenKneeboard::fire_and_forget FrameTick();
   single_threaded_lockable mFrameInProgress;
   winrt::handle mFrameLoopCompletionEvent;
@@ -118,8 +118,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   OpenKneeboard::fire_and_forget OnTabsChanged();
   OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent);
   OpenKneeboard::fire_and_forget OnLoaded();
-  winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
-  winrt::Windows::Foundation::IAsyncAction PromptForViewMode();
+  task<void> ShowSelfElevationWarning();
+  task<void> PromptForViewMode();
   OpenKneeboard::fire_and_forget UpdateProfileSwitcherVisibility();
   OpenKneeboard::fire_and_forget RenameTab(std::shared_ptr<ITab>);
   OpenKneeboard::fire_and_forget Shutdown();
@@ -134,7 +134,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   std::optional<RECT> mWindowPosition;
 
   static std::filesystem::path GetInstanceDataPath();
-  winrt::Windows::Foundation::IAsyncAction WriteInstanceData();
+  task<void> WriteInstanceData();
 
   static LRESULT SubclassProc(
     HWND hWnd,

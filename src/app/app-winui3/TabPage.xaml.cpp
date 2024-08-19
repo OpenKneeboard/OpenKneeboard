@@ -134,12 +134,6 @@ TabPage::TabPage() {
     });
 }
 
-winrt::Windows::Foundation::IAsyncAction TabPage::PaintIfDirty() {
-  OPENKNEEBOARD_TraceLoggingScope(
-    "TabPage::PaintIfDirty()", TraceLoggingBoolean(mNeedsFrame, "NeedsFrame"));
-  co_await this->PaintNow();
-}
-
 TabPage::~TabPage() {
   OPENKNEEBOARD_TraceLoggingScope("TabPage::~TabPage()");
 }

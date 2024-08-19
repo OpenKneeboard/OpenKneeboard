@@ -45,3 +45,7 @@
 #include <OpenKneeboard/weak_refs.hpp>
 
 #include <wil/cppwinrt_helpers.h>
+
+namespace winrt::OpenKneeboardApp {
+using namespace ::OpenKneeboard::task_ns;
+}

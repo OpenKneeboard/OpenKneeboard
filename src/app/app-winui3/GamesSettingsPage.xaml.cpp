@@ -247,7 +247,7 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
   }
 
   instance->mSavedGamesPath = *path;
-  CheckDCSHooks(this->XamlRoot(), instance->mSavedGamesPath);
+  co_await CheckDCSHooks(this->XamlRoot(), instance->mSavedGamesPath);
 
   mKneeboard->SaveSettings();
   UpdateGames();
