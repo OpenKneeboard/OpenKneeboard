@@ -125,7 +125,6 @@ class StateMachineBase {
   }
 
   ~StateMachineBase() {
-    using FinalState_t = decltype(FinalState);
     if constexpr (HasFinalState) {
       this->Assert(FinalState, "Unexpected final state", mCreator);
     }
