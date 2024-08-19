@@ -94,7 +94,7 @@ task<void> APIEventServer::Run() {
   co_return;
 }
 
-winrt::Windows::Foundation::IAsyncOperation<bool> APIEventServer::RunSingle(
+task<bool> APIEventServer::RunSingle(
   std::weak_ptr<APIEventServer> instance,
   HANDLE notifyEvent,
   HANDLE mailslot) {

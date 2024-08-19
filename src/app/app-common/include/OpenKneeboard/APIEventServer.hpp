@@ -52,7 +52,7 @@ class APIEventServer final
   void Start();
 
   task<void> Run();
-  static winrt::Windows::Foundation::IAsyncOperation<bool>
+  static task<bool>
   RunSingle(std::weak_ptr<APIEventServer>, HANDLE event, HANDLE mailslot);
   OpenKneeboard::fire_and_forget DispatchEvent(std::string_view);
 };
