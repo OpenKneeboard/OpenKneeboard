@@ -39,16 +39,13 @@ class DirectInputListener {
 
   /** Run until completion or cancellation.
    *
-   * `completionHandle` should be an event, which will be set on either
-   * completion or cancellation; this is because awaiting a cancelled
    * `task<void>` instantly fails, even if the coroutine hasn't
    * finished - so wait for the signal.
    */
   static task<void> Run(
     std::stop_token,
     winrt::com_ptr<IDirectInput8> di,
-    std::shared_ptr<DirectInputDevice> device,
-    HANDLE completionHandle);
+    std::shared_ptr<DirectInputDevice> device);
 
  protected:
   DirectInputListener(

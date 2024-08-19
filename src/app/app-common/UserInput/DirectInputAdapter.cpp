@@ -99,11 +99,6 @@ task<void> DirectInputAdapter::ReleaseDevices() {
   }
   dprint("Waiting for listeners to stop");
   for (auto&& [id, device]: devices) {
-    co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
-  }
-
-  dprint("Waiting for listener coroutines");
-  for (auto&& [id, device]: devices) {
     co_await std::move(device.mListener);
   }
 }
@@ -149,8 +144,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
     dit->second.mStop.request_stop();
-    co_await winrt::resume_on_signal(
-      dit->second.mListenerCompletionHandle.get());
+    co_await std::move(dit->second).mListener;
     dit = mDevices.erase(dit);
   }
 
@@ -181,8 +175,6 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       device->SetButtonBindings(bindings);
     }
 
-    auto completionHandle = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
-
     std::stop_source stopper;
     auto stopToken = stopper.get_token();
 
@@ -190,10 +182,8 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       id,
       DeviceState {
         .mDevice = device,
-        .mListener = DirectInputListener::Run(
-          stopToken, mDI8, device, completionHandle.get()),
+        .mListener = DirectInputListener::Run(stopToken, mDI8, device),
         .mStop = stopper,
-        .mListenerCompletionHandle = std::move(completionHandle),
       });
 
     AddEventListener(device->evUserActionEvent, this->evUserActionEvent);

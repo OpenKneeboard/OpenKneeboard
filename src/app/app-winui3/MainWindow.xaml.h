@@ -111,7 +111,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   task<void> FrameLoop();
   OpenKneeboard::fire_and_forget FrameTick();
   single_threaded_lockable mFrameInProgress;
-  winrt::handle mFrameLoopCompletionEvent;
 
   OpenKneeboard::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   OpenKneeboard::fire_and_forget OnTabChanged() noexcept;

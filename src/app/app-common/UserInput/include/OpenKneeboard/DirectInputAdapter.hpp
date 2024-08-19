@@ -83,7 +83,6 @@ class DirectInputAdapter final
     std::shared_ptr<DirectInputDevice> mDevice;
     task<void> mListener;
     std::stop_source mStop;
-    winrt::handle mListenerCompletionHandle;
   };
   mutable std::shared_mutex mDevicesMutex;
   std::unordered_map<std::string, DeviceState> mDevices;

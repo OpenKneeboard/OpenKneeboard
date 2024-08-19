@@ -249,7 +249,6 @@ task<void> MainWindow::FrameLoop() {
     co_await OpenKneeboard::resume_after(stop, wait);
     co_await mUIThread;
   }
-  SetEvent(mFrameLoopCompletionEvent.get());
   co_return;
 }
 
@@ -408,8 +407,6 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   }
   co_await mUIThread;
 
-  mFrameLoopCompletionEvent
-    = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
   mFrameLoop = this->FrameLoop();
 
   co_await ShowSelfElevationWarning();
@@ -761,7 +758,6 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   dprint("Stopping frame loop...");
   self->mFrameLoopStopSource.request_stop();
   try {
-    co_await winrt::resume_on_signal(self->mFrameLoopCompletionEvent.get());
     co_await std::move(self->mFrameLoop).value();
   } catch (const winrt::hresult_error& e) {
     auto x = e.message();

@@ -76,11 +76,7 @@ DirectInputListener::~DirectInputListener() {
 task<void> DirectInputListener::Run(
   std::stop_token stopToken,
   winrt::com_ptr<IDirectInput8> di,
-  std::shared_ptr<DirectInputDevice> device,
-  HANDLE completionHandle) {
-  const scope_exit markComplete(
-    [completionHandle]() { SetEvent(completionHandle); });
-
+  std::shared_ptr<DirectInputDevice> device) {
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
     DirectInputKeyboardListener listener {stopToken, di, device};
     co_await listener.Run();

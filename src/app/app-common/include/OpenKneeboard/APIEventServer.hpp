@@ -48,8 +48,6 @@ class APIEventServer final
   std::optional<task<void>> mRunner;
   std::stop_source mStop;
   winrt::apartment_context mUIThread;
-  winrt::handle mCompletionHandle {
-    Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
   void Start();
 
