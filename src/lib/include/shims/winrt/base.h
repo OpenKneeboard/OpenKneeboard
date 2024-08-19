@@ -80,6 +80,8 @@ inline auto random_guid() {
   return ret;
 }
 
+namespace detail {
+
 inline winrt::Windows::Foundation::IAsyncAction
 make_stoppable(std::stop_token token, auto action, std::source_location loc) {
   const auto src = std::format("{}", loc);
@@ -111,13 +113,14 @@ make_stoppable(std::stop_token token, auto action, std::source_location loc) {
     fatal_with_exception(std::current_exception());
   }
 }
+}// namespace detail
 
 inline winrt::Windows::Foundation::IAsyncAction resume_on_signal(
   std::stop_token token,
   HANDLE handle,
   winrt::Windows::Foundation::TimeSpan timeout = {},
   std::source_location loc = std::source_location::current()) {
-  return make_stoppable(
+  return detail::make_stoppable(
     token,
     [handle, timeout]() { return winrt::resume_on_signal(handle, timeout); },
     loc);
@@ -127,7 +130,7 @@ inline winrt::Windows::Foundation::IAsyncAction resume_after(
   std::stop_token token,
   winrt::Windows::Foundation::TimeSpan timeout,
   std::source_location loc = std::source_location::current()) {
-  return make_stoppable(
+  return detail::make_stoppable(
     token, [timeout]() { return winrt::resume_after(timeout); }, loc);
 }
 
