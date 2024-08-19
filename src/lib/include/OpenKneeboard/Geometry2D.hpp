@@ -28,10 +28,6 @@
 #include <d2d1.h>
 #include <d3d11.h>
 
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <OpenKneeboard/json.hpp>
-#endif
-
 namespace OpenKneeboard::Geometry2D {
 
 enum class ScaleToFitMode {
@@ -408,18 +404,5 @@ struct Rect {
     return StaticCastWithBottomRight<FLOAT, D2D1_RECT_F>();
   }
 };
-
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-template <class T>
-void from_json(const nlohmann::json& j, Size<T>& v) {
-  v.mWidth = j.at("Width");
-  v.mHeight = j.at("Height");
-}
-template <class T>
-void to_json(nlohmann::json& j, const Size<T>& v) {
-  j["Width"] = v.mWidth;
-  j["Height"] = v.mHeight;
-}
-#endif
 
 }// namespace OpenKneeboard::Geometry2D

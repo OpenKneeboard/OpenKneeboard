@@ -28,7 +28,8 @@
 
 #include <winrt/Microsoft.UI.Dispatching.h>
 
-#include <OpenKneeboard/json_format.hpp>
+#include <OpenKneeboard/format/json.hpp>
+#include <OpenKneeboard/json/Geometry2D.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <format>

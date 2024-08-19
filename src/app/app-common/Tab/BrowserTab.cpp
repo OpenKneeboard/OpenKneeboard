@@ -20,6 +20,7 @@
 #include <OpenKneeboard/BrowserTab.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/json/Geometry2D.hpp>
 
 namespace OpenKneeboard {
 

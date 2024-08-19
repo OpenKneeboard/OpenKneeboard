@@ -23,6 +23,7 @@
 #include <Windows.h>
 
 #include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/json/Geometry2D.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>

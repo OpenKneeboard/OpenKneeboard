@@ -26,8 +26,8 @@
 #include <Windows.h>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/format/json.hpp>
 #include <OpenKneeboard/hresult.hpp>
-#include <OpenKneeboard/json_format.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <fstream>

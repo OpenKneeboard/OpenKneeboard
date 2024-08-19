@@ -21,7 +21,8 @@
 
 #include <OpenKneeboard/Pixels.hpp>
 
-#include <OpenKneeboard/json_fwd.hpp>
+#include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/json/Geometry2D.hpp>
 
 #include <string>
 #include <variant>
