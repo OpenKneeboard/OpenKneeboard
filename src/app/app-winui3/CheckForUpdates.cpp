@@ -210,22 +210,23 @@ task<UpdateResult> CheckForUpdates(
     co_await kneeboard->SetAppSettings(appSettings);
   });
 
-  const auto currentVersionString = ToSemVerString(
-    testing.mFakeCurrentVersion.empty() ? Version::ReleaseName
-                                        : testing.mFakeCurrentVersion);
-  const auto latestVersionString = ToSemVerString(
+  const auto currentVersionString = testing.mFakeCurrentVersion.empty()
+    ? Version::ReleaseName
+    : testing.mFakeCurrentVersion;
+  const auto currentVersionSemverString = ToSemVerString(currentVersionString);
+  const auto latestVersionSemverString = ToSemVerString(
     testing.mFakeUpdateVersion.empty()
       ? latestRelease.at("tag_name").get<std::string_view>()
       : testing.mFakeUpdateVersion);
 
-  const version::Semver200_version currentVersion(currentVersionString);
-  const version::Semver200_version latestVersion(latestVersionString);
+  const version::Semver200_version currentVersion(currentVersionSemverString);
+  const version::Semver200_version latestVersion(latestVersionSemverString);
 
   if (currentVersion >= latestVersion) {
     dprintf(
       "Current version '{}' >= latest '{}'",
-      currentVersionString,
-      latestVersionString);
+      currentVersionSemverString,
+      latestVersionSemverString);
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(
         _("You're running the latest version!"), uiThread, xamlRoot);
@@ -234,11 +235,11 @@ task<UpdateResult> CheckForUpdates(
   } else {
     dprintf(
       "Current version '{}' < latest '{}'",
-      currentVersionString,
-      latestVersionString);
+      currentVersionSemverString,
+      latestVersionSemverString);
   }
 
-  const auto oldName = Version::ReleaseName;
+  const auto oldName = currentVersionString;
   const auto newName = latestRelease.at("tag_name").get<std::string_view>();
 
   dprintf("Found upgrade {} to {}", oldName, newName);
@@ -415,7 +416,7 @@ task<UpdateResult> CheckForUpdates(
       co_await std::move(dialogClosed);
 
       if (wasCancelled) {
-      co_return UpdateResult::NotInstallingUpdate;
+        co_return UpdateResult::NotInstallingUpdate;
       }
     }
 
