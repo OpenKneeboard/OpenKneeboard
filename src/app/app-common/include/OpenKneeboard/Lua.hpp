@@ -194,8 +194,8 @@ class LuaRef final {
   LuaRef at(const LuaRef&) const;
   template <class Key>
     requires requires(const LuaRef& r, const Key& k) { r == k; }
-  bool contains(const Key& wantedKey) const {
-    for (const auto& [key, value]: *this) {
+  bool contains(this const auto& self, const Key& wantedKey) {
+    for (const auto& [key, value]: self) {
       if (key == wantedKey) {
         return true;
       }
