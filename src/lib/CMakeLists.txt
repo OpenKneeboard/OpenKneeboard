@@ -33,6 +33,7 @@ target_link_libraries(
   OpenKneeboard-fatal
   PUBLIC
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-config
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-shims
@@ -305,7 +306,13 @@ target_link_libraries(OpenKneeboard-dprint
 )
 
 ok_add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
-target_link_libraries(OpenKneeboard-consolelib PUBLIC OpenKneeboard-Lib-Headers)
+target_link_libraries(
+  OpenKneeboard-consolelib
+  PUBLIC
+  OpenKneeboard-Lib-Headers
+  PRIVATE
+  OpenKneeboard-fatal
+)
 
 ok_add_library(OpenKneeboard-APIEvent STATIC APIEvent.cpp)
 target_link_libraries(OpenKneeboard-APIEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)

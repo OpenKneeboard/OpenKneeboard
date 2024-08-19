@@ -91,13 +91,17 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
 
 #undef TraceLoggingProviderEnabled
 
-#undef TraceLoggingValue
-#undef TraceLoggingCountedWideString
-#undef TraceLoggingString
+#undef TraceLoggingKeyword
+
 #undef TraceLoggingBinary
+#undef TraceLoggingCodePointer
+#undef TraceLoggingCountedWideString
 #undef TraceLoggingGuid
 #undef TraceLoggingHexUInt64
 #undef TraceLoggingHexUInt64Array
+#undef TraceLoggingPointer
+#undef TraceLoggingString
+#undef TraceLoggingValue
 
 #undef TraceLoggingWrite
 #undef TraceLoggingWriteStart
@@ -107,6 +111,9 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
 #define TraceLoggingProviderEnabled(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 
+#define TraceLoggingKeyword(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+
 #define TraceLoggingValue(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 #define TraceLoggingCountedWideString(...) \
@@ -114,6 +121,10 @@ constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
 #define TraceLoggingString(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 #define TraceLoggingBinary(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingPointer(...) \
+  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
+#define TraceLoggingCodePointer(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
 #define TraceLoggingGuid(...) \
   OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)

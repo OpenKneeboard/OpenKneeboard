@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
 
+#include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <shims/filesystem>
@@ -29,7 +29,6 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
-#include <OpenKneeboard/filesystem.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/version.hpp>
@@ -50,6 +49,12 @@
 #endif
 
 using std::operator""s;
+
+#ifdef CLANG_TIDY
+// Microsoft C++ intrinsics
+using _ThrowInfo = void*;
+extern "C" void __stdcall _CxxThrowException(void*, _ThrowInfo);
+#endif
 
 namespace {
 [[noreturn]]
@@ -106,16 +111,16 @@ struct CrashMeta {
   // Stack trace with the second entry being the blame frame.
   //
   // This should be a direct stack trace, not a stored/attributed one.
-  const std::stacktrace mStacktrace;
+  std::stacktrace mStacktrace;
 
-  const std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
+  std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
     mNow {std::chrono::time_point_cast<std::chrono::seconds>(
       std::chrono::system_clock::now())};
-  const DWORD mPID {GetCurrentProcessId()};
-  const std::filesystem::path mModulePath {GetModulePath()};
+  DWORD mPID {GetCurrentProcessId()};
+  std::filesystem::path mModulePath {GetModulePath()};
 
-  const std::filesystem::path mCrashLogPath;
-  const std::filesystem::path mCrashDumpPath;
+  std::filesystem::path mCrashLogPath;
+  std::filesystem::path mCrashDumpPath;
 
   CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries {0})
     : mStacktrace(std::stacktrace::current(skipCount.mCount + 1)),
@@ -285,7 +290,7 @@ SourceLocation::SourceLocation(StackFramePointer frame) noexcept
   : SourceLocation(std::bit_cast<std::stacktrace_entry>(frame.mValue)) {
 }
 
-[[msvc::noinline]]
+OPENKNEEBOARD_NOINLINE
 static std::string GetFatalLogContents(
   const CrashMeta& meta,
   const FatalData& fatal) noexcept {
@@ -382,7 +387,8 @@ static std::string GetFatalLogContents(
   return f.str();
 }
 
-[[noreturn, msvc::noinline]] static void FatalAndDump(
+OPENKNEEBOARD_NOINLINE
+[[noreturn]] static void FatalAndDump(
   CrashMeta& meta,
   const FatalData& fatal,
   LPEXCEPTION_POINTERS dumpableExceptions) {

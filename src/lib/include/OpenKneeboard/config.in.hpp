@@ -103,3 +103,11 @@ inline void fatal [[noreturn]] () {
 #if (OPENKNEEBOARD_BUILD_BITNESS == 64)
 #define OPENKNEEBOARD_64BIT_BUILD 1
 #endif
+
+#if defined(_MSVC_LANG) && !defined(CLANG_TIDY)
+#define OPENKNEEBOARD_FORCEINLINE [[msvc::forceinline]]
+#define OPENKNEEBOARD_NOINLINE [[msvc::noinline]]
+#else
+#define OPENKNEEBOARD_FORCEINLINE [[]]
+#define OPENKNEEBOARD_NOINLINE [[]]
+#endif

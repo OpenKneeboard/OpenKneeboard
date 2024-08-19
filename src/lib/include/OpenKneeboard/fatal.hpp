@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.hpp>
+
 #include <concepts>
 #include <exception>
 #include <format>
@@ -70,7 +72,8 @@ struct FatalData {
   std::string mMessage;
   std::optional<SourceLocation> mBlameLocation;
 
-  [[noreturn, msvc::noinline]]
+  OPENKNEEBOARD_NOINLINE
+  [[noreturn]]
   void fatal() const noexcept;
 };
 
@@ -88,7 +91,7 @@ inline void prepare_to_fatal() {
 namespace OpenKneeboard {
 
 template <class... Ts>
-[[noreturn, msvc::noinline]]
+OPENKNEEBOARD_NOINLINE [[noreturn]]
 void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
   detail::prepare_to_fatal();
   detail::FatalData {
@@ -98,7 +101,7 @@ void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
 }
 
 template <std::convertible_to<detail::SourceLocation> TLocation, class... Ts>
-[[noreturn, msvc::noinline]]
+OPENKNEEBOARD_NOINLINE [[noreturn]]
 void fatal(
   TLocation&& blame,
   std::format_string<Ts...> fmt,

@@ -379,7 +379,7 @@ struct TaskPromiseBase {
 
 template <class TTraits>
 struct TaskPromise : TaskPromiseBase<TTraits> {
-  [[msvc::forceinline]]
+  OPENKNEEBOARD_FORCEINLINE
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
         caller.value_or(StackFramePointer {_ReturnAddress()})) {
@@ -412,7 +412,7 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
 template <class TTraits>
   requires std::same_as<typename TTraits::result_type, void>
 struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
-  [[msvc::forceinline]]
+  OPENKNEEBOARD_FORCEINLINE
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
         caller.value_or(StackFramePointer {_ReturnAddress()})) {
