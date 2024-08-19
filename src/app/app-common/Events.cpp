@@ -20,6 +20,7 @@
 #include <OpenKneeboard/Events.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <queue>

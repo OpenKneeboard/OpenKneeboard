@@ -3,10 +3,14 @@ target_link_libraries(
   OpenKneeboard-Events
   PUBLIC
   OpenKneeboard-config
+  OpenKneeboard-dprint
   OpenKneeboard-task
   ThirdParty::WIL
   ThirdParty::CppWinRT
   ThirdParty::bindline
+  PRIVATE
+  OpenKneeboard-config
+  OpenKneeboard-fatal
 )
 target_include_directories(OpenKneeboard-Events PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
