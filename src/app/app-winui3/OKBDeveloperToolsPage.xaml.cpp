@@ -36,6 +36,8 @@ using namespace ::OpenKneeboard;
 
 #include <wil/registry.h>
 
+#include <OpenKneeboard/version.hpp>
+
 #include <mutex>
 
 using namespace OpenKneeboard;
@@ -50,6 +52,7 @@ static inline void SetClipboardText(std::string_view text) {
 
 OKBDeveloperToolsPage::OKBDeveloperToolsPage() {
   InitializeComponent();
+  AutoUpdateFakeCurrentVersion_TextBox().PlaceholderText(Version::ReleaseNameW);
 }
 
 OKBDeveloperToolsPage::~OKBDeveloperToolsPage() {
@@ -152,6 +155,20 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
   const IInspectable&,
   const Microsoft::UI::Xaml::RoutedEventArgs&) noexcept {
   SetClipboardText(GetDPrintDumper()());
+}
+
+winrt::hstring OKBDeveloperToolsPage::AutoUpdateFakeCurrentVersion() noexcept {
+  return winrt::to_hstring(gKneeboard.lock()
+                             ->GetAppSettings()
+                             .mAutoUpdate.mTesting.mFakeCurrentVersion);
+}
+
+OpenKneeboard::fire_and_forget
+OKBDeveloperToolsPage::AutoUpdateFakeCurrentVersion(winrt::hstring value) {
+  auto kb = gKneeboard.lock();
+  auto settings = kb->GetAppSettings();
+  settings.mAutoUpdate.mTesting.mFakeCurrentVersion = winrt::to_string(value);
+  co_await kb->SetAppSettings(settings);
 }
 
 static constexpr const char TriggeredCrashMessage[]

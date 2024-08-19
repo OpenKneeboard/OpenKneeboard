@@ -23,6 +23,10 @@
     <Button Click="OnCopyAPIEventsClick">
       Copy API events
     </Button>
+    <TextBox
+      x:Name="AutoUpdateFakeCurrentVersion_TextBox"
+      Header="Current version for autoupdate check"
+      Text="{x:Bind AutoUpdateFakeCurrentVersion}"/>
     <StackPanel
       Orientation="Horizontal"
       Spacing="4">

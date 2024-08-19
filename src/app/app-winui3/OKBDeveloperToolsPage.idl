@@ -6,5 +6,7 @@ namespace OpenKneeboardApp
         OKBDeveloperToolsPage();
 
         Boolean PluginFileTypeInHKCU;
+
+        String AutoUpdateFakeCurrentVersion;
     }
 }
