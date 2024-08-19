@@ -23,9 +23,3 @@ Checks:
   - -cppcoreguidelines-macro-usage
   - -cppcoreguidelines-pro-*
 WarningsAsErrors: 'concurrency-*,cppcoreguidelines-*coroutine*'
-ExtraArgs:
-- -Wno-unknown-pragmas
-- -Wno-missing-braces
-- -Wno-c++23-extensions
-- -Wno-vexing-parse
-- -DCLANG_TIDY=1
