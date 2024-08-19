@@ -326,14 +326,13 @@ task<UpdateResult> CheckForUpdates(
     dialog.Content(layout);
     dialog.CloseButtonText(_(L"Cancel"));
     bool cancelled = false;
-    auto dialogResultAsync = [](bool& cancelled, ContentDialog& dialog)
-      -> decltype(dialog.ShowAsync()) {
+    auto dialogAwaitable
+      = [](bool* cancelled, ContentDialog dialog) -> task<void> {
       const auto result = co_await dialog.ShowAsync();
       if (result == ContentDialogResult::None) {
-        cancelled = true;
+        *cancelled = true;
       }
-      co_return result;
-    }(cancelled, dialog);
+    }(&cancelled, dialog);
 
     // ProgressRing is buggy inside a ContentDialog, and only works properly
     // after it has been set multiple times with a time delay
@@ -400,18 +399,27 @@ task<UpdateResult> CheckForUpdates(
 
     progressText.Text(_(L"Launching installer..."));
 
-    co_await winrt::when_any(
-      [](decltype(dialogResultAsync)& dialogResultAsync) -> IAsyncAction {
-        co_await dialogResultAsync;
-      }(dialogResultAsync),
-      []() -> IAsyncAction {
-        co_await winrt::resume_after(std::chrono::seconds(1));
-      }());
-    if (cancelled) {
+    {
+      winrt::handle closedEvent {CreateEvent(nullptr, false, false, nullptr)};
+      auto dialogClosed = [](auto event, auto&& dialog) -> task<void> {
+        co_await std::move(dialog);
+        SetEvent(event);
+      }(closedEvent.get(), std::move(dialogAwaitable));
+      co_await winrt::resume_on_signal(
+        closedEvent.get(), std::chrono::seconds(1));
+
+      co_await uiThread;
+
+      const bool wasCancelled = cancelled;
+      dialog.Hide();// Sets cancelled if it wasn't already
+      co_await std::move(dialogClosed);
+
+      if (wasCancelled) {
       co_return UpdateResult::NotInstallingUpdate;
+      }
     }
+
     // Settings saved by scope guard
-    co_await uiThread;
     co_await OpenKneeboard::LaunchURI(to_utf8(destination));
     Application::Current().Exit();
     co_return UpdateResult::InstallingUpdate;
