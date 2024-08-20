@@ -160,7 +160,7 @@ concept loadable_tab = std::invocable<
   const nlohmann::json&>;
 
 #define IT(_, T) \
-  static_assert(loadable_tab<T##Tab>, "Couldn't construct "##Tab);
+  static_assert(loadable_tab<T##Tab>, "Couldn't construct " #T "Tab");
 OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
