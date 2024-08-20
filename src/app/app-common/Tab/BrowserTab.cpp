@@ -38,11 +38,11 @@ BrowserTab::BrowserTab(
 }
 
 task<std::shared_ptr<BrowserTab>> BrowserTab::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID,
+  winrt::guid persistentID,
   std::string_view title,
-  const Settings& settings) {
+  Settings settings) {
   std::shared_ptr<BrowserTab> ret {
     new BrowserTab(dxr, kbs, persistentID, title, settings)};
   co_await ret->Reload();

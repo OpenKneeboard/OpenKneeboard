@@ -27,5 +27,6 @@
 #include <utility>
 
 namespace OpenKneeboard {
-using namespace FredEmmott::bindline;
+namespace bindline = FredEmmott::bindline;
+using namespace bindline;
 }// namespace OpenKneeboard

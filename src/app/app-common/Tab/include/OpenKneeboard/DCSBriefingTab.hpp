@@ -44,9 +44,9 @@ class DCSBriefingTab final : public TabBase,
     const audited_ptr<DXResources>&,
     KneeboardState*);
   static task<std::shared_ptr<DCSBriefingTab>> Create(
-    const audited_ptr<DXResources>&,
+    audited_ptr<DXResources>,
     KneeboardState*,
-    const winrt::guid& persistentID,
+    winrt::guid persistentID,
     std::string_view title);
   virtual ~DCSBriefingTab();
   virtual std::string GetGlyph() const override;

@@ -55,9 +55,9 @@ DCSBriefingTab::DCSBriefingTab(
 }
 
 task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID,
+  winrt::guid persistentID,
   std::string_view title) {
   std::shared_ptr<DCSBriefingTab> ret {
     new DCSBriefingTab(dxr, kbs, persistentID, title)};

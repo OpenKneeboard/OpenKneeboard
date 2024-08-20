@@ -43,9 +43,9 @@ PlainTextFilePageSource::~PlainTextFilePageSource() {
 }
 
 task<std::shared_ptr<PlainTextFilePageSource>> PlainTextFilePageSource::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path) {
+  std::filesystem::path path) {
   std::shared_ptr<PlainTextFilePageSource> ret {
     new PlainTextFilePageSource(dxr, kbs)};
   co_await ret->SetDelegates(

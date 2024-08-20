@@ -44,9 +44,9 @@
 namespace OpenKneeboard {
 
 task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const Settings& settings) {
+  Settings settings) {
   OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::Create(..., settings)");
 
   auto ret = std::shared_ptr<WebView2PageSource>(

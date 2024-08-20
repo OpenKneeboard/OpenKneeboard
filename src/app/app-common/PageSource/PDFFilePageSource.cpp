@@ -631,10 +631,8 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
   return entries;
 }
 
-task<void> PDFFilePageSource::RenderPage(
-  RenderContext rc,
-  PageID pageID,
-  PixelRect rect) {
+task<void>
+PDFFilePageSource::RenderPage(RenderContext rc, PageID pageID, PixelRect rect) {
   auto rt = rc.GetRenderTarget();
   const auto rtid = rt->GetID();
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");
@@ -648,10 +646,10 @@ task<void> PDFFilePageSource::RenderPage(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [this, pageID](auto rt, const auto& size) -> task<void> {
-      this->RenderPageContent(rt, pageID, {{0, 0}, size});
+    [](auto self, auto pageID, auto rt, auto size) -> task<void> {
+      self->RenderPageContent(rt, pageID, {{0, 0}, size});
       co_return;
-    },
+    } | bindline::bind_front(this, pageID),
     cacheDimensions);
 
   const auto d2d = rt->d2d();

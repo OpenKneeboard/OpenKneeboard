@@ -39,11 +39,11 @@ class BrowserTab final : public TabBase,
   struct Settings;
   BrowserTab() = delete;
   static task<std::shared_ptr<BrowserTab>> Create(
-    const audited_ptr<DXResources>&,
+    audited_ptr<DXResources>,
     KneeboardState*,
-    const winrt::guid& persistentID,
+    winrt::guid persistentID,
     std::string_view title,
-    const Settings&);
+    Settings);
   virtual ~BrowserTab();
 
   virtual std::string GetGlyph() const override;

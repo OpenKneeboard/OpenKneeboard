@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DoodleRenderer.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
+#include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -208,10 +209,11 @@ task<void> PageSourceWithDelegates::RenderPageWithCache(
     rect,
     pageID.GetTemporaryValue(),
     rt,
-    [delegate, pageID](RenderTarget* rt, const PixelSize& size) -> task<void> {
+    [](auto delegate, auto pageID, RenderTarget* rt, PixelSize size)
+      -> task<void> {
       co_await delegate->RenderPage(
         RenderContext {rt, nullptr}, pageID, {{0, 0}, size});
-    });
+    } | bind_front(delegate, pageID));
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {

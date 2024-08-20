@@ -50,11 +50,11 @@ class DCSRadioLogTab final : public TabBase,
     const audited_ptr<DXResources>&,
     KneeboardState*);
   static task<std::shared_ptr<DCSRadioLogTab>> Create(
-    const audited_ptr<DXResources>&,
+    audited_ptr<DXResources>,
     KneeboardState*,
-    const winrt::guid& persistentID,
+    winrt::guid persistentID,
     std::string_view title,
-    const nlohmann::json& config);
+    nlohmann::json config);
   virtual ~DCSRadioLogTab();
 
   virtual std::string GetGlyph() const override;

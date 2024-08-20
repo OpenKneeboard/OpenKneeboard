@@ -43,11 +43,11 @@ task<std::shared_ptr<DCSRadioLogTab>> DCSRadioLogTab::Create(
 }
 
 task<std::shared_ptr<DCSRadioLogTab>> DCSRadioLogTab::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID,
+  winrt::guid persistentID,
   std::string_view title,
-  const nlohmann::json& config) {
+  nlohmann::json config) {
   std::shared_ptr<DCSRadioLogTab> ret(
     new DCSRadioLogTab(dxr, kbs, persistentID, title, config));
   co_await ret->SetDelegates({ret->mPageSource});

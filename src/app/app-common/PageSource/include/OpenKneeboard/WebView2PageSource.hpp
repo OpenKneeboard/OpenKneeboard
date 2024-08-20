@@ -66,7 +66,7 @@ class WebView2PageSource final
   static std::string GetVersion();
 
   static task<std::shared_ptr<WebView2PageSource>>
-  Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
+  Create(audited_ptr<DXResources>, KneeboardState*, Settings);
 
   static task<std::shared_ptr<WebView2PageSource>> Create(
     const audited_ptr<DXResources>&,
