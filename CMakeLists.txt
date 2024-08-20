@@ -10,6 +10,7 @@ set(PROJECT_OPENXR_API_LAYER_DESCRIPTION "OpenKneeboard - https://github.com/Ope
 set(MINIMUM_WINDOWS_VERSION "10.0.20348.0")
 set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum Windows Version" FORCE)
 set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum windows version" FORCE)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -28,12 +29,16 @@ find_program(
   NAMES clang-tidy
 )
 if (CLANG_TIDY)
+  cmake_path(GET CLANG_TIDY PARENT_PATH CLANG_TIDY_FOLDER)
+  cmake_path(GET CLANG_TIDY FILENAME CLANG_TIDY_FILENAME)
   list(
     APPEND
     CMAKE_VS_GLOBALS
     "RunCodeAnalysis=false"
     "EnableMicrosoftCodeAnalysis=false"
     "EnableClangTidyCodeAnalysis=true"
+    "ClangTidyToolPath=${CLANG_TIDY_FOLDER}"
+    "ClangTidyToolExe=${CLANG_TIDY_FILENAME}"
   )
 endif ()
 
@@ -164,7 +169,7 @@ if(MSBUILD_LLVM_ROOT)
     "LLVMInstallDir=${MSBUILD_LLVM_ROOT}"
     "LLVMToolsVersion=${MSBUILD_LLVM_VERSION}"
   )
-endif()
+endif() 
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")

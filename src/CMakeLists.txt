@@ -4,6 +4,7 @@ add_compile_options(
 
   # All warnings as errors
   "/WX"
+  # TODO: more warnings, /W4
 
   # Lots of legacy C functions are unsafe, and raise warnings in third-party code
   "/wd4996"
@@ -11,6 +12,11 @@ add_compile_options(
   # Informational 'warning' describing how diamond inheritance works
   "/wd4250"
 )
+if(CLANG_CL)
+  add_compile_options(
+    "/clang:-Wno-missing-braces"
+  )
+endif()
 
 add_compile_definitions(
   "UNICODE=1"

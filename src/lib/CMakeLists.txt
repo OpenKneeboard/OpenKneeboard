@@ -69,7 +69,10 @@ ok_add_library(OpenKneeboard-FilesDiffer STATIC FilesDiffer.cpp)
 target_link_libraries(
   OpenKneeboard-FilesDiffer
   PUBLIC
-  OpenKneeboard-Lib-Headers)
+  OpenKneeboard-Lib-Headers
+  PRIVATE
+  OpenKneeboard-fatal
+)
 
 ok_add_library(OpenKneeboard-handles INTERFACE)
 target_link_libraries(
@@ -100,6 +103,8 @@ target_link_libraries(
   PUBLIC
   ThirdParty::JSON
   OpenKneeboard-Lib-Headers
+  PRIVATE
+  OpenKneeboard-fatal
 )
 
 ok_add_library(OpenKneeboard-PDFNavigation STATIC PDFNavigation.cpp)
@@ -299,6 +304,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-Lib-Headers
   OpenKneeboard-config
+  OpenKneeboard-fatal
 )
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
@@ -417,6 +423,7 @@ target_link_libraries(
   OpenKneeboard-shims
   INTERFACE
   OpenKneeboard-dprint
+  OpenKneeboard-fatal
 )
 
 ok_add_library(OpenKneeboard-json STATIC json.cpp)
