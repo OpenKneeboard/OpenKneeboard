@@ -24,7 +24,7 @@ add_compile_definitions(
   "NOMINMAX=1"
   "WIN32_LEAN_AND_MEAN=1"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
-  "BUILD_CONFIG=\"$<CONFIG>\""
+  "BUILD_CONFIG=$<CONFIG>"
 )
 
 add_subdirectory(shaders)

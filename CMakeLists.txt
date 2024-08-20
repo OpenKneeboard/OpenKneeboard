@@ -250,7 +250,8 @@ if(POWERSHELL)
     -NonInteractive
     -ExecutionPolicy Bypass
     "${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
-    DEPENDS "${SRC_TARGETS}"
+    "$<TARGET_FILE:args-to-lines>"
+    DEPENDS "${SRC_TARGETS}" args-to-lines
     BYPRODUCTS "${CMAKE_BINARY_DIR}/compile_commands.json"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   )

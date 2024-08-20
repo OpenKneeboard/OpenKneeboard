@@ -21,3 +21,5 @@ configure_file(
 	"${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
 	@ONLY
 )
+
+add_executable(args-to-lines args-to-lines.cpp)
