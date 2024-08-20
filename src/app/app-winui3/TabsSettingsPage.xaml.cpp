@@ -365,7 +365,7 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateTab(
   switch (tabType) {
 #define IT(_label, prefix) \
   case TabType::##prefix: \
-    dprint("Adding "## #prefix##" tab"); \
+    dprint("Adding " #prefix " tab"); \
     break;
     OPENKNEEBOARD_TAB_TYPES
 #undef IT

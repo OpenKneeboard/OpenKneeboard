@@ -45,6 +45,6 @@ enum class UpdateResult {
 
 task<UpdateResult> CheckForUpdates(
   UpdateCheckType,
-  const winrt::Microsoft::UI::Xaml::XamlRoot&);
+  winrt::Microsoft::UI::Xaml::XamlRoot);
 
 }// namespace OpenKneeboard

@@ -93,8 +93,8 @@ void ProfilesPage::UpdateList() {
 }
 
 OpenKneeboard::fire_and_forget ProfilesPage::OnList_SelectionChanged(
-  const IInspectable&,
-  const SelectionChangedEventArgs& args) {
+  IInspectable,
+  SelectionChangedEventArgs args) {
   auto it = args.AddedItems().First();
   if (!it.HasCurrent()) {
     co_return;
@@ -110,8 +110,8 @@ OpenKneeboard::fire_and_forget ProfilesPage::OnList_SelectionChanged(
 }
 
 OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
-  const IInspectable& sender,
-  const RoutedEventArgs&) {
+  IInspectable sender,
+  RoutedEventArgs) {
   const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
   auto profileSettings = mKneeboard->GetProfileSettings();
   const auto profile = profileSettings.mProfiles.at(id);
@@ -148,8 +148,8 @@ OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
 }
 
 OpenKneeboard::fire_and_forget ProfilesPage::CreateProfile(
-  const IInspectable& sender,
-  const RoutedEventArgs&) noexcept {
+  IInspectable sender,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(_(L"Create a profile")));

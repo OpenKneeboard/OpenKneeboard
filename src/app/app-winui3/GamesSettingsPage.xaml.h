@@ -76,7 +76,7 @@ struct GamesSettingsPage
 
  private:
   void UpdateGames();
-  OpenKneeboard::fire_and_forget AddPath(const std::filesystem::path&);
+  OpenKneeboard::fire_and_forget AddPath(std::filesystem::path);
 
   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
   std::shared_ptr<KneeboardState> mKneeboard;

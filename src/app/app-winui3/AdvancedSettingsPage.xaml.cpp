@@ -279,23 +279,23 @@ OpenKneeboard::fire_and_forget AdvancedSettingsPage::TextPageFontSize(
 }
 
 OpenKneeboard::fire_and_forget AdvancedSettingsPage::RestoreTextDefaults(
-  const IInspectable&,
-  const IInspectable&) noexcept {
+  Windows::Foundation::IInspectable,
+  Windows::Foundation::IInspectable) noexcept {
   co_await mKneeboard->ResetTextSettings();
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 OpenKneeboard::fire_and_forget AdvancedSettingsPage::RestoreDoodleDefaults(
-  const IInspectable&,
-  const IInspectable&) noexcept {
+  Windows::Foundation::IInspectable,
+  Windows::Foundation::IInspectable) noexcept {
   co_await mKneeboard->ResetDoodlesSettings();
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 OpenKneeboard::fire_and_forget AdvancedSettingsPage::RestoreQuirkDefaults(
-  const IInspectable&,
-  const IInspectable&) noexcept {
+  Windows::Foundation::IInspectable,
+  Windows::Foundation::IInspectable) noexcept {
   auto vr = mKneeboard->GetVRSettings();
   vr.mQuirks = {};
   co_await mKneeboard->SetVRSettings(vr);

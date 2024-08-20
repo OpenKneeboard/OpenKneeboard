@@ -79,14 +79,14 @@ struct AdvancedSettingsPage
   OpenKneeboard::fire_and_forget InGameFooterFrameCount(bool) noexcept;
 
   OpenKneeboard::fire_and_forget RestoreDoodleDefaults(
-    const IInspectable&,
-    const IInspectable&) noexcept;
+    Windows::Foundation::IInspectable,
+    Windows::Foundation::IInspectable) noexcept;
   OpenKneeboard::fire_and_forget RestoreTextDefaults(
-    const IInspectable&,
-    const IInspectable&) noexcept;
+    Windows::Foundation::IInspectable,
+    Windows::Foundation::IInspectable) noexcept;
   OpenKneeboard::fire_and_forget RestoreQuirkDefaults(
-    const IInspectable&,
-    const IInspectable&) noexcept;
+    Windows::Foundation::IInspectable,
+    Windows::Foundation::IInspectable) noexcept;
 
   uint32_t MinimumPenRadius();
   OpenKneeboard::fire_and_forget MinimumPenRadius(uint32_t value);

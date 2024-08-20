@@ -43,15 +43,15 @@ struct IndependentVRViewSettingsControl
   ~IndependentVRViewSettingsControl();
 
   OpenKneeboard::fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    Windows::Foundation::IInspectable,
+    RoutedEventArgs) noexcept;
 
   winrt::guid ViewID();
   void ViewID(const winrt::guid&);
 
   OpenKneeboard::fire_and_forget RecenterNow(
-    const IInspectable&,
-    const RoutedEventArgs&);
+    Windows::Foundation::IInspectable,
+    RoutedEventArgs);
   void GoToBindings(const IInspectable&, const RoutedEventArgs&);
 
   float KneeboardX();
@@ -95,7 +95,7 @@ struct IndependentVRViewSettingsControl
 
   OpenKneeboard::IndependentViewVRConfig GetViewConfig();
   OpenKneeboard::fire_and_forget SetViewConfig(
-    const OpenKneeboard::IndependentViewVRConfig&);
+    OpenKneeboard::IndependentViewVRConfig);
 
   winrt::guid mViewID;
   bool mHaveRecentered {false};

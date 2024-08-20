@@ -67,8 +67,8 @@ IndependentVRViewSettingsControl::~IndependentVRViewSettingsControl() {
 
 OpenKneeboard::fire_and_forget
 IndependentVRViewSettingsControl::RestoreDefaults(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
+  IInspectable,
+  RoutedEventArgs) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
@@ -104,7 +104,7 @@ IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
 }
 
 OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
-  const IndependentViewVRConfig& config) {
+  IndependentViewVRConfig config) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
   auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
@@ -116,8 +116,8 @@ OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
 }
 
 OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
-  const IInspectable&,
-  const RoutedEventArgs&) {
+  IInspectable,
+  RoutedEventArgs) {
   co_await mKneeboard->PostUserAction(UserAction::RECENTER_VR);
 }
 

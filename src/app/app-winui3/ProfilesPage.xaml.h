@@ -42,15 +42,15 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
   static void final_release(std::unique_ptr<ProfilesPage>);
 
   OpenKneeboard::fire_and_forget CreateProfile(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
+    Windows::Foundation::IInspectable,
+    RoutedEventArgs) noexcept;
   OpenKneeboard::fire_and_forget RemoveProfile(
-    const IInspectable&,
-    const RoutedEventArgs&);
+    Windows::Foundation::IInspectable,
+    RoutedEventArgs);
 
   OpenKneeboard::fire_and_forget OnList_SelectionChanged(
-    const IInspectable&,
-    const SelectionChangedEventArgs&);
+    Windows::Foundation::IInspectable,
+    SelectionChangedEventArgs);
 
  private:
   void UpdateList();

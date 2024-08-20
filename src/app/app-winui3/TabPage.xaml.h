@@ -74,7 +74,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
 
   task<void> PaintNow(
-    const std::source_location& loc = std::source_location::current()) noexcept;
+    std::source_location loc = std::source_location::current()) noexcept;
 
  private:
   bool mShuttingDown = false;

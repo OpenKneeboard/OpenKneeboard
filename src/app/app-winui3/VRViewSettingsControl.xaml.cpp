@@ -70,7 +70,7 @@ IInspectable VRViewSettingsControl::SelectedKind() {
 }
 
 OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedKind(
-  const IInspectable& item) {
+  IInspectable item) {
   auto settings = mKneeboard->GetViewsSettings();
   auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
 
@@ -223,7 +223,7 @@ IInspectable VRViewSettingsControl::SelectedDefaultTab() {
 }
 
 OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
-  const IInspectable& item) {
+  IInspectable item) {
   const auto guid
     = unbox_value_or<winrt::guid>(item.as<UIDataItem>().Tag(), {});
 

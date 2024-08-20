@@ -176,12 +176,8 @@ void TabPage::InitializePointerSource() {
   });
 }
 
-void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
+void TabPage::OnNavigatedTo(const NavigationEventArgs&) noexcept {
   this->UpdateKneeboardView();
-  auto id = winrt::unbox_value<uint64_t>(args.Parameter());
-  const auto actualID = mKneeboard->GetActiveViewForGlobalInput()
-                          ->GetCurrentTabView()
-                          ->GetRuntimeID();
 }
 
 void TabPage::UpdateKneeboardView() {
@@ -532,7 +528,7 @@ void TabPage::PaintLater() {
   mNeedsFrame = true;
 }
 
-task<void> TabPage::PaintNow(const std::source_location& loc) noexcept {
+task<void> TabPage::PaintNow(std::source_location loc) noexcept {
   if (!mTabView) {
     TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
     co_return;
@@ -658,10 +654,6 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
     : mTabView->GetPreferredSize();
 
   const auto& contentNativeSize = preferredSize.mPixelSize;
-
-  const bool unscaled = preferredSize.mScalingKind == ScalingKind::Bitmap
-    && contentNativeSize.mWidth <= mPanelDimensions.mWidth
-    && contentNativeSize.mHeight <= mPanelDimensions.mHeight;
 
   const auto contentRenderSize
     = contentNativeSize.StaticCast<float>()

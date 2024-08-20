@@ -62,7 +62,7 @@ struct NonVRSettingsPage
   const size_t mCurrentView = 0;
 
   ViewNonVRConfig GetViewConfig();
-  OpenKneeboard::fire_and_forget SetViewConfig(const ViewNonVRConfig&);
+  OpenKneeboard::fire_and_forget SetViewConfig(ViewNonVRConfig);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

@@ -757,17 +757,7 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
 
   dprint("Stopping frame loop...");
   self->mFrameLoopStopSource.request_stop();
-  try {
-    co_await std::move(self->mFrameLoop).value();
-  } catch (const winrt::hresult_error& e) {
-    auto x = e.message();
-    __debugbreak();
-  } catch (const std::exception& e) {
-    auto x = e.what();
-    __debugbreak();
-  } catch (...) {
-    __debugbreak();
-  }
+  co_await std::move(self->mFrameLoop).value();
 
   dprint("Stopping event system...");
   try {

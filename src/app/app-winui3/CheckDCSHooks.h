@@ -50,7 +50,7 @@ enum class DCSSavedGamesSelectionTrigger {
 };
 
 task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
+  winrt::Microsoft::UI::Xaml::XamlRoot xamlRoot,
   DCSSavedGamesSelectionTrigger trigger);
 
 }// namespace OpenKneeboard

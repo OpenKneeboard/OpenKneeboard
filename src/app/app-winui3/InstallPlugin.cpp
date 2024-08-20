@@ -142,8 +142,8 @@ static std::string sha256_hex(std::string_view data) {
 static task<void> InstallPlugin(
   std::weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
-  const std::filesystem::path& path,
-  const Plugin& plugin) {
+  std::filesystem::path path,
+  Plugin plugin) {
   if (!co_await FieldIsNonEmpty(xamlRoot, path, "ID", plugin.mID)) {
     co_return;
   }

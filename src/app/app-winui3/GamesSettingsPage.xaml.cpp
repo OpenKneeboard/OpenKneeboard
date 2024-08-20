@@ -254,7 +254,7 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::ChangeDCSSavedGamesPath(
 }
 
 OpenKneeboard::fire_and_forget GamesSettingsPage::AddPath(
-  const std::filesystem::path& rawPath) {
+  std::filesystem::path rawPath) {
   if (rawPath.empty()) {
     co_return;
   }

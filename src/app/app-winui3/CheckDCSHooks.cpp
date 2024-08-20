@@ -32,7 +32,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
-#include <winrt/microsoft.ui.xaml.controls.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 #include <microsoft.ui.xaml.window.h>
 
@@ -154,7 +154,7 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
 }
 
 task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
+  winrt::Microsoft::UI::Xaml::XamlRoot xamlRoot,
   DCSSavedGamesSelectionTrigger trigger) {
   if (trigger == DCSSavedGamesSelectionTrigger::IMPLICIT) {
     ContentDialog dialog;

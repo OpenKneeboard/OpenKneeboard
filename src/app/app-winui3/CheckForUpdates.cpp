@@ -77,12 +77,12 @@ static std::string ToSemVerString(std::string_view raw) {
 
 static OpenKneeboard::fire_and_forget ShowResultDialog(
   std::string_view message,
-  winrt::apartment_context& uiThread,
-  const XamlRoot& xamlRoot);
+  winrt::apartment_context uiThread,
+  XamlRoot xamlRoot);
 
 task<UpdateResult> CheckForUpdates(
   UpdateCheckType checkType,
-  const XamlRoot& xamlRoot) {
+  XamlRoot xamlRoot) {
   winrt::apartment_context uiThread;
 
   const auto now = std::chrono::duration_cast<std::chrono::seconds>(
@@ -203,12 +203,12 @@ task<UpdateResult> CheckForUpdates(
   dprintf(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
-  scope_exit oncePerDay([&]() -> OpenKneeboard::fire_and_forget {
+  scope_exit oncePerDay([](auto now, auto settings, auto appSettings) -> OpenKneeboard::fire_and_forget {
     settings.mDisabledUntil = now + (60 * 60 * 24);
     appSettings.mAutoUpdate = settings;
     auto kneeboard = gKneeboard.lock();
     co_await kneeboard->SetAppSettings(appSettings);
-  });
+  } | bind_front(now, settings, appSettings));
 
   const auto currentVersionString = testing.mFakeCurrentVersion.empty()
     ? Version::ReleaseName
@@ -276,7 +276,7 @@ task<UpdateResult> CheckForUpdates(
     = updateAsset->at("browser_download_url").get<std::string_view>();
   dprintf("Update installer found at {}", updateURL);
 
-  ContentDialogResult result;
+  ContentDialogResult result {};
   {
     HyperlinkButton releaseNotesLink;
     releaseNotesLink.Content(box_value(
@@ -402,7 +402,7 @@ task<UpdateResult> CheckForUpdates(
 
     {
       winrt::handle closedEvent {CreateEvent(nullptr, false, false, nullptr)};
-      auto dialogClosed = [](auto event, auto&& dialog) -> task<void> {
+      auto dialogClosed = [](auto event, auto dialog) -> task<void> {
         co_await std::move(dialog);
         SetEvent(event);
       }(closedEvent.get(), std::move(dialogAwaitable));
@@ -436,8 +436,8 @@ task<UpdateResult> CheckForUpdates(
 
 static OpenKneeboard::fire_and_forget ShowResultDialog(
   std::string_view message,
-  winrt::apartment_context& uiThread,
-  const XamlRoot& xamlRoot) {
+  winrt::apartment_context uiThread,
+  XamlRoot xamlRoot) {
   co_await uiThread;
 
   ContentDialog dialog;

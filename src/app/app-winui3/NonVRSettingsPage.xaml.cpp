@@ -138,7 +138,7 @@ ViewNonVRConfig NonVRSettingsPage::GetViewConfig() {
 }
 
 OpenKneeboard::fire_and_forget NonVRSettingsPage::SetViewConfig(
-  const ViewNonVRConfig& value) {
+  ViewNonVRConfig value) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {

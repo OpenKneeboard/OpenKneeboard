@@ -28,7 +28,7 @@ struct App : AppT<App> {
   App();
 
   OpenKneeboard::fire_and_forget OnLaunched(
-    Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
+    Microsoft::UI::Xaml::LaunchActivatedEventArgs) noexcept;
 
   ::OpenKneeboard::task<void> CleanupAndExitAsync();
 

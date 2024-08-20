@@ -68,7 +68,7 @@ using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
 using namespace OpenKneeboard;
 
-#include <mddbootstrap.h>
+#include <MddBootstrap.h>
 
 #include <WindowsAppSDK-VersionInfo.h>
 
@@ -118,7 +118,7 @@ task<void> App::CleanupAndExitAsync() {
 }
 
 OpenKneeboard::fire_and_forget App::OnLaunched(
-  LaunchActivatedEventArgs const&) noexcept {
+  LaunchActivatedEventArgs) noexcept {
   DispatcherShutdownMode(
     winrt::Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown);
 
@@ -148,7 +148,7 @@ static void LogSystemInformation() {
            {L"EnableLUA",
             L"PromptOnSecureDesktop",
             L"ConsentPromptBehaviorAdmin"}) {
-        DWORD data;
+        DWORD data {};
         DWORD dataSize {sizeof(data)};
         if (
           RegGetValueW(
