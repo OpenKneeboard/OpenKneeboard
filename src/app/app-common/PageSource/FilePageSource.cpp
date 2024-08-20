@@ -52,9 +52,9 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
 }
 
 task<std::shared_ptr<IPageSource>> FilePageSource::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path) noexcept {
+  std::filesystem::path path) noexcept {
   try {
     if (!std::filesystem::is_regular_file(path)) {
       dprintf("FilePageSource file '{}' is not a regular file", path);

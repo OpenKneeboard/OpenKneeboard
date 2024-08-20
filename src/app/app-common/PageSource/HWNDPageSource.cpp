@@ -63,10 +63,10 @@ namespace OpenKneeboard {
 static UINT gControlMessage;
 
 task<std::shared_ptr<HWNDPageSource>> HWNDPageSource::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kneeboard,
   HWND window,
-  const Options& options) noexcept {
+  Options options) noexcept {
   if (!gControlMessage) {
     gControlMessage
       = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);

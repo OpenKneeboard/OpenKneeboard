@@ -62,10 +62,10 @@ class HWNDPageSource final : public WGCRenderer,
   };
 
   static task<std::shared_ptr<HWNDPageSource>> Create(
-    const audited_ptr<DXResources>&,
+    audited_ptr<DXResources>,
     KneeboardState*,
     HWND window,
-    const Options& options) noexcept;
+    Options options) noexcept;
 
   virtual ~HWNDPageSource();
   virtual task<void> DisposeAsync() noexcept override;

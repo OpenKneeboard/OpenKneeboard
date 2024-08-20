@@ -43,9 +43,9 @@ class FilePageSource final {
     const audited_ptr<DXResources>&) noexcept;
 
   static task<std::shared_ptr<IPageSource>> Create(
-    const audited_ptr<DXResources>&,
+    audited_ptr<DXResources>,
     KneeboardState*,
-    const std::filesystem::path&) noexcept;
+    std::filesystem::path) noexcept;
 };
 
 }// namespace OpenKneeboard

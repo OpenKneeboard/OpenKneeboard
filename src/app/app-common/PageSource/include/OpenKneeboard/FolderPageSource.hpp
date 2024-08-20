@@ -40,10 +40,8 @@ class FolderPageSource final : public PageSourceWithDelegates {
 
  public:
   FolderPageSource() = delete;
-  static task<std::shared_ptr<FolderPageSource>> Create(
-    const audited_ptr<DXResources>&,
-    KneeboardState*,
-    const std::filesystem::path& = {});
+  static task<std::shared_ptr<FolderPageSource>>
+  Create(audited_ptr<DXResources>, KneeboardState*, std::filesystem::path = {});
   virtual ~FolderPageSource();
 
   std::filesystem::path GetPath() const;

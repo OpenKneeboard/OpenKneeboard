@@ -37,9 +37,9 @@ FolderPageSource::FolderPageSource(
 }
 
 task<std::shared_ptr<FolderPageSource>> FolderPageSource::Create(
-  const audited_ptr<DXResources>& dxr,
+  audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path) {
+  std::filesystem::path path) {
   std::shared_ptr<FolderPageSource> ret {new FolderPageSource(dxr, kbs)};
   if (!path.empty()) {
     co_await ret->SetPath(path);
