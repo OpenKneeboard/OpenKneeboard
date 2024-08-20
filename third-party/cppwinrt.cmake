@@ -25,7 +25,7 @@ ExternalProject_Get_property(CppWinRTNuget BINARY_DIR)
 add_library(CppWinRT INTERFACE)
 add_dependencies(CppWinRT CppWinRTNuget)
 target_link_libraries(CppWinRT INTERFACE System::WindowsApp)
-target_include_directories(CppWinRT INTERFACE "${BINARY_DIR}/include")
+target_include_directories(CppWinRT SYSTEM INTERFACE "${BINARY_DIR}/include")
 add_library(ThirdParty::CppWinRT ALIAS CppWinRT)
 
 add_executable(ThirdParty::CppWinRT::Exe IMPORTED GLOBAL)
