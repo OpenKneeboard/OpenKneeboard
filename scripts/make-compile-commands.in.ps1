@@ -45,7 +45,9 @@ foreach ($Folder in $Folders) {
     $compileArgs = $compileArgs | Where-Object { $_ -notin $removeArgs };
     $compileArgs += $extraArgs;
 
-    $compileArgs = $compileArgs | Join-String -DoubleQuote -Separator ' '
+    # Join-String was introduced in Powershell 6.2, but let's keep working with
+    # Windows Powershell (5.1) as cmake calls this
+    $compileArgs = ($compileArgs | ForEach-Object { "`"$_`"" }) -join ' '
 
     $Command = "`"@NATIVE_PATH_CMAKE_CXX_COMPILER@`" $($compileArgs)"
     foreach ($Source in $(Get-Content $SourcesFile)) {
