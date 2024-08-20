@@ -17,7 +17,7 @@ add_library(json INTERFACE)
 add_dependencies(json jsonFetch)
 
 ExternalProject_Get_property(jsonFetch INSTALL_DIR)
-target_include_directories(json INTERFACE SYSTEM "${INSTALL_DIR}/include")
+target_include_directories(json SYSTEM INTERFACE "${INSTALL_DIR}/include")
 
 
 ExternalProject_Get_property(jsonFetch SOURCE_DIR)
