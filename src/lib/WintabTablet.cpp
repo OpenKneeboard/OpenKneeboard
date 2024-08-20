@@ -27,6 +27,8 @@
 #include <stdexcept>
 #include <thread>
 
+// These macros are part of the WinTab API; best of 1970 :)
+// NOLINTBEGIN(cppcoreguidelines-macro-to-enum)
 // clang-format off
 #include <wintab/WINTAB.H>
 #define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE | PK_CHANGED)
@@ -34,6 +36,7 @@
 #define PACKETEXPKEYS PKEXT_ABSOLUTE
 #include <wintab/PKTDEF.H>
 // clang-format on
+// NOLINTEND(cppcoreguidelines-macro-to-enum)
 
 #define WINTAB_FUNCTIONS \
   IT(WTInfoW) \
