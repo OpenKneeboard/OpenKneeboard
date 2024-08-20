@@ -104,9 +104,12 @@ inline void fatal [[noreturn]] () {
 #define OPENKNEEBOARD_64BIT_BUILD 1
 #endif
 
-#if defined(_MSVC_LANG) && !defined(CLANG_TIDY)
+#if defined(_MSVC_LANG) && (!defined(__clang__)) && !defined(CLANG_CL)
 #define OPENKNEEBOARD_FORCEINLINE [[msvc::forceinline]]
 #define OPENKNEEBOARD_NOINLINE [[msvc::noinline]]
+#elif defined(__clang__)
+#define OPENKNEEBOARD_FORCEINLINE [[clang::always_inline]]
+#define OPENKNEEBOARD_NOINLINE [[clang::noinline]]
 #else
 #define OPENKNEEBOARD_FORCEINLINE [[]]
 #define OPENKNEEBOARD_NOINLINE [[]]
