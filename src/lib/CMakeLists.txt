@@ -321,8 +321,15 @@ target_link_libraries(
 )
 
 ok_add_library(OpenKneeboard-APIEvent STATIC APIEvent.cpp)
-target_link_libraries(OpenKneeboard-APIEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
-target_link_libraries(OpenKneeboard-APIEvent PUBLIC OpenKneeboard-Lib-Headers OpenKneeboard-UTF8 OpenKneeboard-json)
+target_link_libraries(OpenKneeboard-APIEvent
+  PUBLIC
+  OpenKneeboard-Lib-Headers
+  OpenKneeboard-UTF8
+  OpenKneeboard-json
+  PRIVATE
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+)
 
 ok_add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(
