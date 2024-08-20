@@ -20,13 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/UserInputButtonBinding.hpp>
 
 #include <string>
 #include <unordered_set>
 
 namespace OpenKneeboard {
 
-class UserInputButtonBinding;
 class UserInputButtonEvent;
 enum class UserAction;
 
