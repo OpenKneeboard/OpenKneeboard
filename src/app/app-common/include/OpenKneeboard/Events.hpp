@@ -54,9 +54,17 @@ using EventsTraceLoggingThreadActivity = TraceLoggingThreadActivity<
 template <class... Args>
 class Event;
 
-template <class TFn, class... TArgs>
-concept event_handler_fn
-  = std::invocable<decltype(std::declval<TFn>() | drop_extra_back()), TArgs...>;
+template <class... Args>
+class EventHandler;
+
+template <class TInvocable, class... TArgs>
+concept event_handler_invocable = std::invocable<TInvocable, TArgs...>
+  || ((sizeof...(TArgs) > 0) && requires(TInvocable fn) {
+                                    fn | drop_n_back<1>() | drop_extra_back();
+                                    {
+                                      fn | drop_n_back<1>() | drop_extra_back()
+                                    } -> std::invocable<TArgs...>;
+                                  });
 
 template <class... Args>
 class EventHandler final {
@@ -65,8 +73,16 @@ class EventHandler final {
   using Callback = std::function<void(Args...)>;
 
   constexpr EventHandler() = default;
+  constexpr EventHandler(const EventHandler&) = default;
+  constexpr EventHandler(EventHandler&&) = default;
+  EventHandler& operator=(const EventHandler&) = default;
+  EventHandler& operator=(EventHandler&&) = default;
 
-  template <event_handler_fn<Args...> T>
+  constexpr operator bool() const noexcept {
+    return static_cast<bool>(mImpl);
+  }
+
+  template <event_handler_invocable<Args...> T>
     requires(!std::same_as<self_t, std::decay_t<T>>)
   constexpr EventHandler(T&& fn) : mImpl(drop_extra_back(std::forward<T>(fn))) {
   }
@@ -87,10 +103,6 @@ class EventHandler final {
   template <class Bind, class F>
     requires(!convertible_to_weak_ref<Bind*>)
   constexpr EventHandler(Bind*, F&& f) = delete;
-
-  explicit constexpr operator bool() const noexcept {
-    return !!mImpl;
-  }
 
   void operator()(Args... args) const noexcept {
     mImpl(args...);
