@@ -194,11 +194,11 @@ task<void> PageSourceWithDelegates::RenderPage(
   }
 }
 
-[[nodiscard]] task<void> PageSourceWithDelegates::RenderPageWithCache(
+task<void> PageSourceWithDelegates::RenderPageWithCache(
   IPageSource* delegate,
   RenderTarget* rt,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   const auto rtid = rt->GetID();
   if (!mContentLayerCache.contains(rtid)) {
     mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);

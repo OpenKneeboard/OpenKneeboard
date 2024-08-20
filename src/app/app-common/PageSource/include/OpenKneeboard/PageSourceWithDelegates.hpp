@@ -92,11 +92,11 @@ class PageSourceWithDelegates
     mContentLayerCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
 
-  [[nodiscard]] task<void> RenderPageWithCache(
+  task<void> RenderPageWithCache(
     IPageSource* delegate,
     RenderTarget*,
     PageID,
-    const PixelRect& rect);
+    PixelRect rect);
 };
 
 }// namespace OpenKneeboard
