@@ -64,7 +64,8 @@ class audited_ptr {
 
   audited_ptr(
     audited_ptr&& other,
-    const std::source_location& loc = std::source_location::current()) {
+    const std::source_location& loc
+    = std::source_location::current()) noexcept {
     copy_from(other, loc);
   }
 
@@ -88,7 +89,8 @@ class audited_ptr {
   }
 
   audited_ptr& operator=(nullptr_t) {
-    return copy_from({nullptr});
+    copy_from({nullptr});
+    return *this;
   }
 
   audited_ptr& operator=(const audited_ptr&) = delete;
