@@ -30,7 +30,7 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
-#include <OpenKneeboard/format_enum.hpp>
+#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
 #include <atomic>

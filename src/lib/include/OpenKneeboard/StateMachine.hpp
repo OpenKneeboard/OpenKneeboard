@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/format_enum.hpp>
+#include <OpenKneeboard/format/enum.hpp>
 
 #include <array>
 #include <atomic>

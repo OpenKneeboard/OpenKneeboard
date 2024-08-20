@@ -26,8 +26,8 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/bitflags.hpp>
+#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/json_fwd.hpp>
-#include <openKneeboard/format_enum.hpp>
 
 #include <variant>
 
