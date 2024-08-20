@@ -631,10 +631,10 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
   return entries;
 }
 
-[[nodiscard]] task<void> PDFFilePageSource::RenderPage(
-  const RenderContext& rc,
+task<void> PDFFilePageSource::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   auto rt = rc.GetRenderTarget();
   const auto rtid = rt->GetID();
   OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");

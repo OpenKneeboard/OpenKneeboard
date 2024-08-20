@@ -77,8 +77,8 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  [[nodiscard]] task<void>
-  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
+  task<void>
+  RenderPage(RenderContext, PageID, PixelRect rect) override;
 
  private:
   winrt::apartment_context mUIThread;

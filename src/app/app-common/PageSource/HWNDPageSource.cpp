@@ -572,10 +572,10 @@ PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();
 }
 
-[[nodiscard]] task<void> HWNDPageSource::RenderPage(
-  const RenderContext& rc,
+task<void> HWNDPageSource::RenderPage(
+  RenderContext rc,
   PageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   WGCRenderer::Render(rc.GetRenderTarget(), rect);
   co_return;
 }

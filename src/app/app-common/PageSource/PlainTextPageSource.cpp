@@ -157,10 +157,10 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
   return {static_cast<PageIndex>(it - mPageIDs.begin())};
 }
 
-[[nodiscard]] task<void> PlainTextPageSource::RenderPage(
-  const RenderContext& rc,
+task<void> PlainTextPageSource::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   std::unique_lock lock(mMutex);
 
   const auto virtualSize = this->GetPreferredSize(pageID).mPixelSize;

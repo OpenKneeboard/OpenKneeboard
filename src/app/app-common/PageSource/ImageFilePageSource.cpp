@@ -299,10 +299,10 @@ PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
   return {{size.width, size.height}, ScalingKind::Bitmap};
 }
 
-[[nodiscard]] task<void> ImageFilePageSource::RenderPage(
-  const RenderContext& rc,
+task<void> ImageFilePageSource::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     co_return;

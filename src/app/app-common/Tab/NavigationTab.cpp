@@ -200,10 +200,10 @@ void NavigationTab::ClearUserInput() {
   // nothing to do here
 }
 
-[[nodiscard]] task<void> NavigationTab::RenderPage(
-  const RenderContext& rc,
+task<void> NavigationTab::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& canvasRect) {
+  PixelRect canvasRect) {
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPage()");
   auto ctx = rc.d2d();
 

@@ -305,10 +305,10 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
   return {};
 }
 
-[[nodiscard]] task<void> WebView2PageSource::RenderPage(
-  const RenderContext& rc,
+task<void> WebView2PageSource::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::RenderPage");
   if (mDisposal.HasStarted()) [[unlikely]] {
     co_return;

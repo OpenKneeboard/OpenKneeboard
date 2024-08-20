@@ -57,8 +57,8 @@ class NavigationTab final : public TabBase,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual PreferredSize GetPreferredSize(PageID) override;
-  [[nodiscard]] task<void>
-  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
+  task<void>
+  RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;

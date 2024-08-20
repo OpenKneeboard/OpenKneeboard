@@ -167,10 +167,10 @@ PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   return delegate->GetPreferredSize(pageID);
 }
 
-[[nodiscard]] task<void> PageSourceWithDelegates::RenderPage(
-  const RenderContext& rc,
+task<void> PageSourceWithDelegates::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
     // Expected e.g. for a window capture tab with no matching window

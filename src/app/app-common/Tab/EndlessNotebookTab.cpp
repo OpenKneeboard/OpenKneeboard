@@ -164,10 +164,10 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
   };
 }
 
-[[nodiscard]] task<void> EndlessNotebookTab::RenderPage(
-  const RenderContext& rc,
+task<void> EndlessNotebookTab::RenderPage(
+  RenderContext rc,
   PageID pageID,
-  const PixelRect& rect) {
+  PixelRect rect) {
   if (!mSource) {
     co_return;
   }

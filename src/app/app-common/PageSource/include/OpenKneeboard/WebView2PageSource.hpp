@@ -75,8 +75,8 @@ class WebView2PageSource final
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
-  [[nodiscard]] task<void>
-  RenderPage(const RenderContext&, PageID, const PixelRect& rect) override;
+  task<void>
+  RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
