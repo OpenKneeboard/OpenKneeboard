@@ -125,7 +125,7 @@ void HelpPage::PopulateVersion() {
     Version::ReleaseName,
     Version::IsGithubActionsBuild ? std::format("GHA{}", Version::Build)
                                   : "local",
-    BUILD_CONFIG,
+    Config::BuildType,
 #ifdef _WIN32
 #ifdef _WIN64
     "Win64",
