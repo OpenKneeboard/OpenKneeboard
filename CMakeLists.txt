@@ -24,24 +24,6 @@ set(
   "AssetTargetFallback=$(AssetTargetFallback);native"
 )
 
-find_program(
-  CLANG_TIDY
-  NAMES clang-tidy
-)
-if (CLANG_TIDY)
-  cmake_path(GET CLANG_TIDY PARENT_PATH CLANG_TIDY_FOLDER)
-  cmake_path(GET CLANG_TIDY FILENAME CLANG_TIDY_FILENAME)
-  list(
-    APPEND
-    CMAKE_VS_GLOBALS
-    "RunCodeAnalysis=false"
-    "EnableMicrosoftCodeAnalysis=false"
-    "EnableClangTidyCodeAnalysis=true"
-    "ClangTidyToolPath=${CLANG_TIDY_FOLDER}"
-    "ClangTidyToolExe=${CLANG_TIDY_FILENAME}"
-  )
-endif ()
-
 add_compile_options(
 
   # Standard C++ exception behavior
@@ -170,6 +152,25 @@ if(MSBUILD_LLVM_ROOT)
     "LLVMToolsVersion=${MSBUILD_LLVM_VERSION}"
   )
 endif() 
+
+find_program(
+  CLANG_TIDY
+  NAMES clang-tidy
+  HINTS "${MSBUILD_LLVM_ROOT}/bin"
+)
+if (CLANG_TIDY)
+  cmake_path(GET CLANG_TIDY PARENT_PATH CLANG_TIDY_FOLDER)
+  cmake_path(GET CLANG_TIDY FILENAME CLANG_TIDY_FILENAME)
+  list(
+    APPEND
+    CMAKE_VS_GLOBALS
+    "RunCodeAnalysis=false"
+    "EnableMicrosoftCodeAnalysis=false"
+    "EnableClangTidyCodeAnalysis=true"
+    "ClangTidyToolPath=${CLANG_TIDY_FOLDER}"
+    "ClangTidyToolExe=${CLANG_TIDY_FILENAME}"
+  )
+endif ()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
