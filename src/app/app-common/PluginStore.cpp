@@ -19,7 +19,7 @@
  */
 
 #include <OpenKneeboard/Elevation.hpp>
-#include <OpenKneeboard/FileSystem.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/Registry.hpp>
 

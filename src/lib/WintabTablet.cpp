@@ -28,7 +28,7 @@
 #include <thread>
 
 // clang-format off
-#include <wintab/WINTAB.h>
+#include <wintab/WINTAB.H>
 #define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE | PK_CHANGED)
 #define PACKETMODE 0
 #define PACKETEXPKEYS PKEXT_ABSOLUTE

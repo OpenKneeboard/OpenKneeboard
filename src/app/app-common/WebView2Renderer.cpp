@@ -760,8 +760,6 @@ jsapi_task WebView2Renderer::JSAPI_GetPages(nlohmann::json args) {
 }
 
 jsapi_task WebView2Renderer::JSAPI_SendMessageToPeers(nlohmann::json args) {
-  auto& dr = mDocumentResources;
-
   if (!this->IsJSAPIFeatureEnabled(PageBasedContentFeature)) {
     co_return this->GetJSAPIMissingRequiredFeatureResponse(
       PageBasedContentFeature);
