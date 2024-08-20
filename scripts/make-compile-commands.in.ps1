@@ -33,12 +33,14 @@ foreach ($Folder in $Folders) {
       continue;
     }
 
-    $Flags = Get-Content $FlagFile
+    # ~ August 2024, MSBuild has started adding a semicolon before additional flags
+    $Flags = (Get-Content $FlagFile) `
+      -replace ' /D ("?)([^"].+?)\1 ', ' "/D$2" ' `
+      -replace ';', ''
     if (!$Flags) {
       continue;
     }
 
-    # ~ August 2024, MSBuild has started adding a semicolon before additional flags
     $compileArgs = Invoke-Expression "echo $($Flags -replace ';','')";
     $compileArgs = $compileArgs | Where-Object { $_ -notin $removeArgs };
     $compileArgs += $extraArgs;
