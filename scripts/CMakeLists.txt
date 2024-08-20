@@ -9,17 +9,5 @@ install(
 	DESTINATION scripts/
 )
 
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.targets"
-  "${CMAKE_BINARY_DIR}/Directory.Build.targets"
-  COPYONLY
-)
-
-cmake_path(NATIVE_PATH CMAKE_CXX_COMPILER NATIVE_PATH_CMAKE_CXX_COMPILER)
-configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/make-compile-commands.in.ps1"
-	"${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
-	@ONLY
-)
-
 add_executable(args-to-lines args-to-lines.cpp)
+add_executable("true" "true.cpp")

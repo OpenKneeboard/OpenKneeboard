@@ -238,8 +238,22 @@ macro(append_recursive_targets VAR SUBDIR)
 endmacro()
 
 find_program(POWERSHELL powershell)
+find_program(MSBUILD msbuild)
 
-if(POWERSHELL)
+if(POWERSHELL AND CLANG_TIDY AND MSBUILD AND NOT ${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+  file(
+    GENERATE
+    OUTPUT "${CMAKE_BINARY_DIR}/make-compile-commands-$<CONFIG>.ps1"
+    CONTENT "
+& '${CMAKE_SOURCE_DIR}/scripts/make-compile-commands.ps1' `
+  -ArgsToLines '$<TARGET_FILE:args-to-lines>' `
+  -TrueExe '$<TARGET_FILE:true>' `
+  -CXXStandard ${CMAKE_CXX_STANDARD} `
+  -Compiler '${CMAKE_CXX_COMPILER}' `
+  -MSBuild '${MSBUILD}'
+"
+    NEWLINE_STYLE UNIX
+  )
   set(SRC_TARGETS "")
   append_recursive_targets(SRC_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -248,12 +262,10 @@ if(POWERSHELL)
     ALL
     COMMAND
     "${POWERSHELL}"
-    -NonInteractive
     -ExecutionPolicy Bypass
-    "${CMAKE_BINARY_DIR}/make-compile-commands.ps1"
-    "$<TARGET_FILE:args-to-lines>"
-    DEPENDS "${SRC_TARGETS}" args-to-lines
+    "& '${CMAKE_BINARY_DIR}/make-compile-commands-$<CONFIG>.ps1'"
     BYPRODUCTS "${CMAKE_BINARY_DIR}/compile_commands.json"
+    DEPENDS ${SRC_TARGETS} "true" "args-to-lines"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   )
 endif()
