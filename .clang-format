@@ -60,7 +60,7 @@ IncludeCategories:
     Priority: 43
 IndentWidth: 2
 LineEnding: 'LF'
-IndentRequiresClauses: true
+IndentRequiresClause: true
 MaxEmptyLinesToKeep: 1
 PointerAlignment: Left
 ReflowComments: true
