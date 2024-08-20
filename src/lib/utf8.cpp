@@ -18,11 +18,8 @@
  * USA.
  */
 
-#include <shims/winrt/base.h>
-
+#include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/utf8.hpp>
-
-#include <regex>
 
 #include <icu.h>
 
@@ -34,11 +31,46 @@ std::string to_utf8(const std::filesystem::path& in) {
 }
 
 std::string to_utf8(const std::wstring& in) {
-  return winrt::to_string(in);
+  return to_utf8(std::wstring_view {in});
 }
 
 std::string to_utf8(std::wstring_view in) {
-  return winrt::to_string(in);
+  if (in.size() == 0) {
+    return {};
+  }
+
+  UErrorCode ec {};
+  int32_t length = 0;
+  u_strToUTF8(
+    nullptr,
+    0,
+    &length,
+    reinterpret_cast<const UChar*>(in.data()),
+    in.size(),
+    &ec);
+  OPENKNEEBOARD_ASSERT(
+    U_SUCCESS(ec) || ec == U_BUFFER_OVERFLOW_ERROR,
+    "u_strToUTF8 failed with {}",
+    std::to_underlying(ec));
+
+  if (length == 0) {
+    return {};
+  }
+  ec = {};
+
+  std::string ret;
+  ret.resize(length);
+  u_strToUTF8(
+    ret.data(),
+    ret.size(),
+    &length,
+    reinterpret_cast<const UChar*>(in.data()),
+    in.size(),
+    &ec);
+  OPENKNEEBOARD_ASSERT(
+    U_SUCCESS(ec), "u_strToUTF8 failed with {}", std::to_underlying(ec));
+  OPENKNEEBOARD_ASSERT(length == ret.size());
+  return ret;
 }
 
 std::string to_utf8(const wchar_t* in) {
