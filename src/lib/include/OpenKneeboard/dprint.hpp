@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <shims/source_location>
+#include <source_location>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/config.hpp>

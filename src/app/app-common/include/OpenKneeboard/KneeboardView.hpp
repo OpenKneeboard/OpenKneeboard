@@ -25,7 +25,7 @@
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/ThreadGuard.hpp>
 
-#include <shims/source_location>
+#include <source_location>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/inttypes.hpp>

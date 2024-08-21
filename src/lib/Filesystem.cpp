@@ -21,8 +21,6 @@
 #include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
-#include <OpenKneeboard/format/filesystem.hpp>
-
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
@@ -30,6 +28,7 @@
 #include <wil/resource.h>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -39,7 +38,6 @@
 #include <ShlObj.h>
 
 namespace OpenKneeboard::Filesystem {
-
 namespace {
 using LazyPath = LazyOnceValue<std::filesystem::path>;
 

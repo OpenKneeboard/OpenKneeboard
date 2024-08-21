@@ -28,7 +28,7 @@
 #include <OpenKneeboard/VRKneeboard.hpp>
 
 #include <shims/openxr/openxr.h>
-#include <shims/source_location>
+#include <source_location>
 
 #include <OpenKneeboard/config.hpp>
 

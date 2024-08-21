@@ -22,7 +22,7 @@
 #include <OpenKneeboard/Win32.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 
-#include <shims/source_location>
+#include <source_location>
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
@@ -63,7 +63,9 @@ void fast_fail() {
 
 struct SkipStacktraceEntries {
   SkipStacktraceEntries() = delete;
-  explicit SkipStacktraceEntries(size_t count) : mCount(count) {
+
+  explicit SkipStacktraceEntries(size_t count)
+    : mCount(count) {
   }
 
   size_t mCount;
@@ -72,17 +74,18 @@ struct SkipStacktraceEntries {
 struct ExceptionRecord {
   std::stacktrace mCreationStack;
 };
-static thread_local std::optional<ExceptionRecord> tLatestException {};
+
+static thread_local std::optional<ExceptionRecord> tLatestException{};
 
 struct WILFailureRecord {
   std::stacktrace mCreationStack;
-  HRESULT mHR {};
+  HRESULT mHR{};
   std::wstring mMessage;
   // Used for ERROR_UNHANDLED_EXCEPTION
   std::optional<ExceptionRecord> mException;
 };
-static thread_local std::optional<WILFailureRecord> tLatestWILFailure {};
 
+static thread_local std::optional<WILFailureRecord> tLatestWILFailure{};
 }// namespace
 
 template <class CharT>
@@ -100,12 +103,12 @@ struct std::formatter<OpenKneeboard::detail::SourceLocation, CharT>
       loc.mFunctionName);
 
     return std::formatter<std::basic_string_view<CharT>, CharT>::format(
-      std::basic_string_view<CharT> {converted}, fc);
+      std::basic_string_view<CharT>{converted},
+      fc);
   }
 };
 
 namespace OpenKneeboard::detail {
-
 struct CrashMeta {
   // Stack trace with the second entry being the blame frame.
   //
@@ -113,15 +116,15 @@ struct CrashMeta {
   std::stacktrace mStacktrace;
 
   std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
-    mNow {std::chrono::time_point_cast<std::chrono::seconds>(
-      std::chrono::system_clock::now())};
-  DWORD mPID {GetCurrentProcessId()};
-  std::filesystem::path mModulePath {GetModulePath()};
+  mNow{std::chrono::time_point_cast<std::chrono::seconds>(
+    std::chrono::system_clock::now())};
+  DWORD mPID{GetCurrentProcessId()};
+  std::filesystem::path mModulePath{GetModulePath()};
 
   std::filesystem::path mCrashLogPath;
   std::filesystem::path mCrashDumpPath;
 
-  CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries {0})
+  CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries{0})
     : mStacktrace(std::stacktrace::current(skipCount.mCount + 1)),
       mCrashLogPath(GetCrashFilePath(L"txt")),
       mCrashDumpPath(GetCrashFilePath(L"dmp")) {
@@ -141,32 +144,33 @@ struct CrashMeta {
     return mMiniDumpWriteDump;
   }
 
- private:
+private:
   inline static std::filesystem::path GetModulePath() {
-    HMODULE thisModule {nullptr};
+    HMODULE thisModule{nullptr};
     GetModuleHandleExA(
       GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-        | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+      | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
       std::bit_cast<LPCSTR>(_ReturnAddress()),
       &thisModule);
     wchar_t buf[MAX_PATH];
     const auto charCount = GetModuleFileNameW(thisModule, buf, MAX_PATH);
-    return {std::wstring_view {buf, charCount}};
+    return {std::wstring_view{buf, charCount}};
   }
 
   std::filesystem::path GetCrashFilePath(std::wstring_view extension) {
     return Filesystem::GetCrashLogsDirectory()
       / std::format(
-             L"{}-crash-{:%Y%m%dT%H%M%S}-{}.{}",
-             mModulePath.stem(),
-             mNow,
-             mPID,
-             extension);
+        L"{}-crash-{:%Y%m%dT%H%M%S}-{}.{}",
+        mModulePath.stem(),
+        mNow,
+        mPID,
+        extension);
   }
 
   unique_hmodule mDbgHelp;
-  decltype(&MiniDumpWriteDump) mMiniDumpWriteDump {nullptr};
-  bool mLoadedDbgHelp {false};
+  decltype(&MiniDumpWriteDump) mMiniDumpWriteDump{nullptr};
+  bool mLoadedDbgHelp{false};
+
   void LoadDbgHelp() {
     if (std::exchange(mLoadedDbgHelp, true)) {
       return;
@@ -209,14 +213,14 @@ static void CreateDump(
     CREATE_ALWAYS,
     FILE_ATTRIBUTE_NORMAL,
     NULL);
-  MINIDUMP_EXCEPTION_INFORMATION exceptionInfo {
+  MINIDUMP_EXCEPTION_INFORMATION exceptionInfo{
     .ThreadId = GetCurrentThreadId(),
     .ExceptionPointers = exceptionPointers,
     .ClientPointers /* exception in debugger target */ = false,
   };
 
-  EXCEPTION_RECORD exceptionRecord {};
-  CONTEXT exceptionContext {};
+  EXCEPTION_RECORD exceptionRecord{};
+  CONTEXT exceptionContext{};
   EXCEPTION_POINTERS fakeExceptionPointers;
   if (!exceptionPointers) {
     ::RtlCaptureContext(&exceptionContext);
@@ -234,8 +238,8 @@ static void CreateDump(
   auto thisDumpType
     = (dumpType == DumpType::FullDump) ? fullDumpType : miniDumpType;
 
-  MINIDUMP_USER_STREAM_INFORMATION userStreams {};
-  MINIDUMP_USER_STREAM extraDataStream {};
+  MINIDUMP_USER_STREAM_INFORMATION userStreams{};
+  MINIDUMP_USER_STREAM extraDataStream{};
 
   std::wstring extraDataW;
   if (!extraData.empty()) {
@@ -263,7 +267,8 @@ static void CreateDump(
     thisDumpType,
     &exceptionInfo,
     &userStreams,
-    /* callback = */ nullptr);
+    /* callback = */
+    nullptr);
 }
 
 SourceLocation::SourceLocation(const std::stacktrace_entry& entry) noexcept {
@@ -320,13 +325,13 @@ static std::string GetFatalLogContents(
   const auto executable = Filesystem::GetCurrentExecutablePath();
 
   f << std::format(
-    "{} (PID {}) crashed at {:%Y%m%dT%H%M%S}\n\n",
-    executable.filename(),
-    meta.mPID,
-    meta.mNow)
+      "{} (PID {}) crashed at {:%Y%m%dT%H%M%S}\n\n",
+      executable.filename(),
+      meta.mPID,
+      meta.mNow)
     << std::format("💀 FATAL: {}\n", fatal.mMessage);
 
-  std::unique_ptr<wchar_t, decltype(&LocalFree)> threadDescriptionBuf {
+  std::unique_ptr<wchar_t, decltype(&LocalFree)> threadDescriptionBuf{
     nullptr, &LocalFree};
   GetThreadDescription(GetCurrentThread(), std::out_ptr(threadDescriptionBuf));
   const auto threadDescription = winrt::to_string(threadDescriptionBuf.get());
@@ -337,10 +342,11 @@ static std::string GetFatalLogContents(
     << std::format("Executable:  {}\n", executable)
     << std::format("Module:      {}\n", meta.mModulePath)
     << std::format(
-         "Thread:      {} {}\n",
-         std::this_thread::get_id(),
-         threadDescription.empty() ? "[no description]"s
-                                   : std::format("(\"{}\")", threadDescription))
+      "Thread:      {} {}\n",
+      std::this_thread::get_id(),
+      threadDescription.empty()
+      ? "[no description]"s
+      : std::format("(\"{}\")", threadDescription))
     << std::format("Blame frame: {}\n", blameString)
     << std::format("OKB Version: {}\n", Version::ReleaseName);
 
@@ -362,16 +368,18 @@ static std::string GetFatalLogContents(
       << "==================\n"
       << "\n"
       << std::format(
-           "HRESULT: {:#018x} ({})\n",
-           static_cast<uint32_t>(tLatestWILFailure->mHR),
-           winrt::to_string(
-             winrt::hresult_error(tLatestWILFailure->mHR).message()))
+        "HRESULT: {:#018x} ({})\n",
+        static_cast<uint32_t>(tLatestWILFailure->mHR),
+        winrt::to_string(
+          winrt::hresult_error(tLatestWILFailure->mHR).message()))
       << std::format(
-           "Message: {}\n", winrt::to_string(tLatestWILFailure->mMessage));
+        "Message: {}\n",
+        winrt::to_string(tLatestWILFailure->mMessage));
 
     if (tLatestWILFailure->mException) {
       f << std::format(
-        "\nException:\n\n{}\n", tLatestWILFailure->mException->mCreationStack);
+        "\nException:\n\n{}\n",
+        tLatestWILFailure->mException->mCreationStack);
     }
   }
 
@@ -432,12 +440,12 @@ OPENKNEEBOARD_NOINLINE
 }
 
 void FatalData::fatal() const noexcept {
-  CrashMeta meta {SkipStacktraceEntries {1}};
+  CrashMeta meta{SkipStacktraceEntries{1}};
   FatalAndDump(meta, *this, nullptr);
 }
 
 struct WILResultInfo {
-  wil::FailureInfo mFailureInfo {};
+  wil::FailureInfo mFailureInfo{};
   std::wstring mDebugMessage;
 };
 
@@ -447,7 +455,7 @@ static void OnTerminate() {
 
 LONG __callback WINAPI
 OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
-  CrashMeta meta {};
+  CrashMeta meta{};
   FatalAndDump(meta, {"Uncaught exceptions"}, exceptionPointers);
   return EXCEPTION_EXECUTE_HANDLER;
 }
@@ -460,7 +468,7 @@ static void __stdcall OnWILResult(
     .mCreationStack = std::stacktrace::current(),
     .mHR = failure->hr,
     .mMessage
-    = std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
+    = std::wstring{debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
   };
   if (
     failure->hr == HRESULT_FROM_WIN32(ERROR_UNHANDLED_EXCEPTION)
@@ -474,7 +482,7 @@ static void divert_thread_failure_to_fatal() {
   SetUnhandledExceptionFilter(&OnUnhandledException);
 }
 
-static bool gDivertThreadFailureToFatal {false};
+static bool gDivertThreadFailureToFatal{false};
 
 struct ThreadFailureHook {
   ThreadFailureHook() {
@@ -483,9 +491,11 @@ struct ThreadFailureHook {
     }
   }
 };
+
 static thread_local ThreadFailureHook tThreadFailureHook;
 
-static decltype(&_CxxThrowException) gCxxThrowException {&_CxxThrowException};
+static decltype(&_CxxThrowException) gCxxThrowException{&_CxxThrowException};
+
 extern "C" void __stdcall CxxThrowExceptionHook(
   void* pExceptionObject,
   _ThrowInfo* pThrowInfo) {
@@ -498,15 +508,13 @@ extern "C" void __stdcall CxxThrowExceptionHook(
 
   gCxxThrowException(pExceptionObject, pThrowInfo);
 }
-
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
-
 void fatal_with_hresult(HRESULT hr) {
   using namespace OpenKneeboard::detail;
   prepare_to_fatal();
-  CrashMeta meta {};
+  CrashMeta meta{};
   FatalAndDump(
     meta,
     {std::format(
@@ -519,10 +527,12 @@ void fatal_with_hresult(HRESULT hr) {
 void fatal_with_exception(std::exception_ptr ep) {
   using namespace OpenKneeboard::detail;
   prepare_to_fatal();
-  CrashMeta meta {};
+  CrashMeta meta{};
   if (!ep) {
     FatalAndDump(
-      meta, {"fatal_with_exception() called without an exception"}, nullptr);
+      meta,
+      {"fatal_with_exception() called without an exception"},
+      nullptr);
     std::unreachable();
   }
 
@@ -538,13 +548,14 @@ void fatal_with_exception(std::exception_ptr ep) {
           winrt::to_string(e.message())),
       },
       nullptr);
-
   } catch (const std::exception& e) {
     FatalAndDump(
       meta,
       {
         std::format(
-          "Uncaught std::exception ({}): {}", typeid(e).name(), e.what()),
+          "Uncaught std::exception ({}): {}",
+          typeid(e).name(),
+          e.what()),
       },
       nullptr);
     std::unreachable();
@@ -576,5 +587,4 @@ std::string StackFramePointer::to_string() const noexcept {
 
   return std::format("{}", std::bit_cast<std::stacktrace_entry>(*this));
 }
-
 }// namespace OpenKneeboard

@@ -25,14 +25,14 @@
 #include <Unknwn.h>
 // clang-format on
 
-#include <shims/source_location>
-
 #include <pplawait.h>
 #include <ppltasks.h>
 
+#include <source_location>
+
 #pragma warning(push)
 #pragma warning(disable : 26820)// Potentially expensive copy operation
-#if __has_include(<wil/cppwinrt.h>)
+#if __has_include(<wil/cppwinrt.h> )
 #include <wil/cppwinrt.h>
 #endif
 #include <winrt/base.h>
@@ -42,6 +42,7 @@
 #include <winrt/Windows.System.h>
 
 #include <OpenKneeboard/fatal.hpp>
+#include <OpenKneeboard/format/source_location.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
 #include <stop_token>

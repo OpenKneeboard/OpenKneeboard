@@ -41,7 +41,7 @@
 #include <OpenKneeboard/ToolbarSeparator.hpp>
 #include <OpenKneeboard/ToolbarToggleAction.hpp>
 
-#include <shims/source_location>
+#include <source_location>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
