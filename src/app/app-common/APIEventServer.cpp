@@ -69,7 +69,7 @@ task<void> APIEventServer::Run() {
   const auto mailslot = Win32::CreateMailslotW(
     APIEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
   if (!mailslot) {
-    dprintf("Failed to create APIEvent mailslot: {}", GetLastError());
+    dprintf("Failed to create APIEvent mailslot: {}", mailslot.error());
     co_return;
   }
 
@@ -80,11 +80,12 @@ task<void> APIEventServer::Run() {
       std::uncaught_exceptions());
   });
 
-  const auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  const auto event
+    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 
   try {
     while ((!stop.stop_requested())
-           && co_await RunSingle(weak, event.get(), mailslot.get())) {
+           && co_await RunSingle(weak, event.get(), mailslot->get())) {
       // repeat!
     }
   } catch (const winrt::hresult_canceled&) {

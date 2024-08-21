@@ -50,10 +50,7 @@ void DirectInputListener::Initialize() {
   }
   mInitialized = true;
 
-  mEventHandle = Win32::CreateEventW(nullptr, false, false, nullptr);
-  if (!mEventHandle) {
-    return;
-  }
+  mEventHandle = Win32::or_throw::CreateEventW(nullptr, false, false, nullptr);
 
   this->SetDataFormat();
 

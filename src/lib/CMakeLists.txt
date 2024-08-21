@@ -51,6 +51,7 @@ target_link_libraries(
   OpenKneeboard-GetMainHWND
   PUBLIC
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-win32
 )
 target_link_libraries(
   OpenKneeboard-GetMainHWND
@@ -305,6 +306,7 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   OpenKneeboard-config
   OpenKneeboard-fatal
+  ThirdParty::bindline
 )
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
@@ -318,6 +320,7 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-fatal
+  OpenKneeboard-win32
 )
 
 ok_add_library(OpenKneeboard-APIEvent STATIC APIEvent.cpp)
@@ -510,6 +513,17 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   ThirdParty::RenderDoc
+)
+
+ok_add_library(OpenKneeboard-win32 INTERFACE)
+target_link_libraries(
+  OpenKneeboard-win32
+  INTERFACE
+  OpenKneeboard-Lib-Headers
+  OpenKneeboard-fatal
+  OpenKneeboard-shims
+  ThirdParty::bindline
+  ThirdParty::CppWinRT
 )
 
 add_library(OpenKneeboard-task INTERFACE)

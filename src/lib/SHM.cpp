@@ -335,7 +335,7 @@ class Impl {
         sizeof(FrameMetadata::mFeederProcessID));
     });
 
-    auto fileHandle = Win32::CreateFileMappingW(
+    auto fileHandle = Win32::or_default::CreateFileMappingW(
       INVALID_HANDLE_VALUE,
       NULL,
       PAGE_READWRITE,
@@ -349,7 +349,8 @@ class Impl {
       return;
     }
 
-    auto mutexHandle = Win32::CreateMutexW(nullptr, FALSE, MutexPath().c_str());
+    auto mutexHandle
+      = Win32::or_default::CreateMutexW(nullptr, FALSE, MutexPath().c_str());
     if (!mutexHandle) {
       dprintf("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
       return;

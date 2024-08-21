@@ -44,14 +44,15 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     /* watch subtree = */
     true,
     FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME
-    | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
+      | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
   if (handle == INVALID_HANDLE_VALUE) {
     dprintf("Invalid handle: {}", GetLastError());
     OPENKNEEBOARD_BREAK;
     return;
   }
   mHandle.reset(handle);
-  mShutdownHandle = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  mShutdownHandle
+    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 }
 
 OpenKneeboard::fire_and_forget FilesystemWatcher::final_release(
@@ -119,7 +120,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       co_return;
     }
 
-    std::filesystem::file_time_type lastWriteTime{};
+    std::filesystem::file_time_type lastWriteTime {};
     try {
       lastWriteTime = std::filesystem::last_write_time(mPath);
     } catch (const std::filesystem::filesystem_error& e) {
@@ -155,9 +156,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
           continue;
         } else {
           dprintf(
-            L"Failed to open modified file '{}': {}",
-            mPath.wstring(),
-            error);
+            L"Failed to open modified file '{}': {}", mPath.wstring(), error);
           co_return;
         }
       }

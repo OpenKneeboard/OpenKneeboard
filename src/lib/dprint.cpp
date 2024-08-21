@@ -97,7 +97,7 @@ static void WriteIPCMessage(std::wstring_view message) {
     return;
   }
 
-  auto mapping = Win32::CreateFileMappingW(
+  auto mapping = Win32::or_default::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -230,7 +230,8 @@ DPrintReceiver::DPrintReceiver() {
     mBufferReadyEvent = {};
   });
 
-  mMutex = Win32::CreateMutexW(nullptr, true, GetDPrintMutexName().data());
+  mMutex = Win32::or_default::CreateMutexW(
+    nullptr, true, GetDPrintMutexName().data());
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -240,7 +241,7 @@ DPrintReceiver::DPrintReceiver() {
     return;
   }
 
-  mMapping = Win32::CreateFileMappingW(
+  mMapping = Win32::or_default::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -251,15 +252,14 @@ DPrintReceiver::DPrintReceiver() {
     OPENKNEEBOARD_BREAK;
     return;
   }
-
-  mBufferReadyEvent = Win32::CreateEventW(
+  mBufferReadyEvent = Win32::or_default::CreateEventW(
     nullptr, false, false, GetDPrintBufferReadyEventName().data());
   if (!mBufferReadyEvent) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  mDataReadyEvent = Win32::CreateEventW(
+  mDataReadyEvent = Win32::or_default::CreateEventW(
     nullptr, false, false, GetDPrintDataReadyEventName().data());
   if (!mDataReadyEvent) {
     OPENKNEEBOARD_BREAK;
@@ -295,7 +295,8 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
     return;
   }
 
-  const auto stopEvent = Win32::CreateEventW(nullptr, false, false, nullptr);
+  const auto stopEvent
+    = Win32::or_default::CreateEventW(nullptr, false, false, nullptr);
   std::stop_callback stopCallback(
     stopToken, [&]() { SetEvent(stopEvent.get()); });
 

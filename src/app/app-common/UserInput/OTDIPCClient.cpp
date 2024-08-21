@@ -106,7 +106,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 }
 
 task<void> OTDIPCClient::RunSingle() {
-  const auto connection = Win32::CreateFileW(
+  const auto connection = Win32::or_default::CreateFileW(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,
     0,
@@ -125,7 +125,8 @@ task<void> OTDIPCClient::RunSingle() {
       std::uncaught_exceptions());
   });
 
-  const auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  const auto event
+    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
   OVERLAPPED overlapped {.hEvent = event.get()};
 
   char buffer[1024];
