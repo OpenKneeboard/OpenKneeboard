@@ -1,4 +1,5 @@
 ---
+title: Web Dashboards
 parent: APIs
 has_children: true
 ---

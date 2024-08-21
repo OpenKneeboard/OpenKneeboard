@@ -1,5 +1,5 @@
 ---
-parent: Web Dashboard APIs
+parent: Web Dashboards
 ---
 
 # Plugins

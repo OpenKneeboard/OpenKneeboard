@@ -1,5 +1,5 @@
 ---
-parent: Web Dashboard APIs
+parent: Web Dashboards
 ---
 
 # Page-Based Web Applications
