@@ -1,3 +1,14 @@
+GIT
+  remote: https://github.com/just-the-docs/just-the-docs.git
+  revision: a4e4e312aa3e3f41344e351bb1324ec462911515
+  ref: a4e4e312aa3e3f41344e351bb1324ec462911515
+  specs:
+    just-the-docs (0.9.0)
+      jekyll (>= 3.8.5)
+      jekyll-include-cache
+      jekyll-seo-tag (>= 2.0)
+      rake (>= 12.3.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -41,6 +52,7 @@ GEM
     faraday-net_http (3.1.1)
       net-http
     ffi (1.17.0-arm64-darwin)
+    ffi (1.17.0-x64-mingw-ucrt)
     ffi (1.17.0-x86_64-linux-gnu)
     forwardable-extended (2.6.0)
     gemoji (4.1.0)
@@ -213,11 +225,6 @@ GEM
       html-pipeline (~> 2.2)
       jekyll (>= 3.0, < 5.0)
     json (2.7.2)
-    just-the-docs (0.9.0)
-      jekyll (>= 3.8.5)
-      jekyll-include-cache
-      jekyll-seo-tag (>= 2.0)
-      rake (>= 12.3.1)
     kramdown (2.4.0)
       rexml
     kramdown-parser-gfm (1.1.0)
@@ -232,10 +239,12 @@ GEM
       jekyll (>= 3.5, < 5.0)
       jekyll-feed (~> 0.9)
       jekyll-seo-tag (~> 2.1)
-    minitest (5.24.1)
+    minitest (5.25.1)
     net-http (0.4.1)
       uri
     nokogiri (1.16.7-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.16.7-x64-mingw-ucrt)
       racc (~> 1.4)
     nokogiri (1.16.7-x86_64-linux)
       racc (~> 1.4)
@@ -278,13 +287,14 @@ GEM
 
 PLATFORMS
   arm64-darwin-22
+  x64-mingw-ucrt
   x86_64-linux
 
 DEPENDENCIES
   github-pages
   jekyll
   json
-  just-the-docs
+  just-the-docs!
   webrick
 
 BUNDLED WITH
