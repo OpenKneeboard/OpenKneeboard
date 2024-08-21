@@ -90,7 +90,9 @@ Breaking these requirements may lead to:
 - your app crashing OpenKneeboard when the built-in navigation page is opened
 - making OpenKneeboard unusable for people who use the remote controls/API, e.g. with VoiceAttack
 - making OpenKneeboard unusable for people who have 'next page at end of tab -> next tab' behavior enabled
-- other features/expectations breaking, crashes, etc.
+- other features/expectations breaking, crashes, undefined behavior.
+
+*Please* follow these restrictions; for now, I am trusting plugin authors, because adding restrictions will also make it less useful for valid use cases. If this trust-first approach leads to an increased support workload for OpenKneeboard, restrictions are likely. For example, if plugin misuse of `RequestPageChanged()` leads to increased support time, future versions may ignore that API unless it is within 100ms of a cursor event or custom action.
 
 ### Alternatives
 
