@@ -11,7 +11,16 @@ All new contributors will be required to agree to a non-exclusive Contributor Li
 
 ## clang-tidy
 
-All C++ source and header files must pass the version of `clang-tidy` included with Visual Studio 2022.
+All C++ source and header files must pass ~~the version of `clang-tidy` included with Visual Studio 2022~~ ClangTidy 19.1 rc2 (earlier versions do not support C++23 features that OpenKneeboard users)
+
+### Setup
+
+1. Configure the clang-tidy path: pass `-DCLANG_TIDY=/path/to/clang-tidy.exe` to CMake
+2. Build the `compile_targets` CMake target/Visual Studio project
+
+CMake should build/update `compile_targets.json` automatically going forward; if it becomes outdated, you can run `make-compile-commands-Debug.ps1` from the build directory
+
+### Running Clang-Tidy
 
 To run clang-tidy against the entire project (this must pass):
 
@@ -19,13 +28,16 @@ To run clang-tidy against the entire project (this must pass):
 msbuild /t:ClangTidy com.openkneeboard.sln`
 ```
 
-To run against a specific file, from a Visual Studio command prompt, first, build the project normally; then, from a Visual Studio command prompt:
+To run against a specific file or group of files:
 
 ```
+# Single file
 clang-tidy -p build src/foo/bar.cpp
+# Folders (powershell)
+clang-tidy -p build (Get-ChildItem 'src/foo','src/bar' -Recurse -Filter '*.cpp*')
 ```
 
-This assumes that you build inside the `build` subdirectory, which is the default for Visual Studio Code.
+`scripts/run-clang-tidy-one-at-a-time.ps1` will run clang-tidy without parallelization, which can be handy for cleaning up after a refactor.
 
 After you have build the project, you can also use "C/C++: Run code analysis" from within Visual Studio Code; you may need to restart Visual Studio Code after the first file.
 
