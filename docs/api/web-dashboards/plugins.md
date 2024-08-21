@@ -33,17 +33,17 @@ Plugins will typically also use the [Page-Based Web Applications](./page-based-c
 
 ```ts
 {
-	"ID": string,
-	"Metadata": {
-		"PluginName": string,
-		"PluginReadableVersion": string,
-		"PluginSemanticVersion": string,
-		"OKBMinimumVersion": string,
-		"OKBMaximumTestedVersion" ?: string,
+    "ID": string,
+    "Metadata": {
+        "PluginName": string,
+        "PluginReadableVersion": string,
+        "PluginSemanticVersion": string,
+        "OKBMinimumVersion": string,
+        "OKBMaximumTestedVersion" ?: string,
         "Author" ?: string,
         "Website" ?: string,
-	},
-	"TabTypes": [TabType]
+    },
+    "TabTypes": [TabType]
 }
 ```
 
@@ -110,8 +110,8 @@ A `CustomAction` is a JSON object of this form:
 
 ```ts
 {
-	"ID": string,
-	"Name": string,
+    "ID": string,
+    "Name": string,
 }
 ```
 
