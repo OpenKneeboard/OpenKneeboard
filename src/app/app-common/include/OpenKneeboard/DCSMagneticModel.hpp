@@ -19,11 +19,10 @@
  */
 #pragma once
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/handles.hpp>
 
 #include <chrono>
+#include <filesystem>
 #include <vector>
 
 extern "C" {

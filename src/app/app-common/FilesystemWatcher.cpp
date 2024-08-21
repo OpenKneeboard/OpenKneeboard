@@ -21,6 +21,7 @@
 #include <OpenKneeboard/FilesystemWatcher.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 using namespace winrt::Windows::Storage;
@@ -40,9 +41,10 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     = std::filesystem::is_directory(mPath) ? mPath : mPath.parent_path();
   const auto handle = FindFirstChangeNotificationW(
     watchedPath.wstring().c_str(),
-    /* watch subtree = */ true,
+    /* watch subtree = */
+    true,
     FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME
-      | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
+    | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
   if (handle == INVALID_HANDLE_VALUE) {
     dprintf("Invalid handle: {}", GetLastError());
     OPENKNEEBOARD_BREAK;
@@ -117,7 +119,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       co_return;
     }
 
-    std::filesystem::file_time_type lastWriteTime {};
+    std::filesystem::file_time_type lastWriteTime{};
     try {
       lastWriteTime = std::filesystem::last_write_time(mPath);
     } catch (const std::filesystem::filesystem_error& e) {
@@ -153,7 +155,9 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
           continue;
         } else {
           dprintf(
-            L"Failed to open modified file '{}': {}", mPath.wstring(), error);
+            L"Failed to open modified file '{}': {}",
+            mPath.wstring(),
+            error);
           co_return;
         }
       }
@@ -170,5 +174,4 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
     co_return;
   }
 }
-
 }// namespace OpenKneeboard

@@ -25,10 +25,11 @@
 #include <OpenKneeboard/IPageSource.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 
@@ -55,10 +56,7 @@ class ImageFilePageSource final
     const audited_ptr<DXResources>& dxr,
     const std::filesystem::path&);
 
-  task<void> RenderPage(
-    RenderContext,
-    PageID,
-    PixelRect rect) final override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) final override;
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;

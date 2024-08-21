@@ -39,18 +39,18 @@
 #include <OpenKneeboard/WebView2PageSource.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/filesystem>
-
 #include <wil/registry.h>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <chrono>
 #include <exception>
+#include <filesystem>
 #include <set>
 
 #include <Dbghelp.h>
@@ -94,7 +94,7 @@ task<void> App::CleanupAndExitAsync() {
   auto keepAlive = get_strong();
   winrt::apartment_context uiThread;
   dprint("Starting app shutdown");
-  winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+  winrt::handle event{CreateEventW(nullptr, TRUE, FALSE, nullptr)};
   ProcessShutdownBlock::SetEventOnCompletion(event.get());
 
   mWindow = {nullptr};
@@ -148,8 +148,8 @@ static void LogSystemInformation() {
            {L"EnableLUA",
             L"PromptOnSecureDesktop",
             L"ConsentPromptBehaviorAdmin"}) {
-        DWORD data {};
-        DWORD dataSize {sizeof(data)};
+        DWORD data{};
+        DWORD dataSize{sizeof(data)};
         if (
           RegGetValueW(
             hkey.get(),
@@ -183,7 +183,7 @@ static void LogSystemInformation() {
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
   dprintf(L"  Active code page: {}", codePageInfo.CodePageName);
 
-  DWORD codePage {};
+  DWORD codePage{};
   GetLocaleInfoW(
     LOCALE_SYSTEM_DEFAULT,
     LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
@@ -203,7 +203,7 @@ static void LogSystemInformation() {
   LCIDToLocaleName(LOCALE_USER_DEFAULT, localeName, sizeof(localeName), 0);
   dprintf(L"  User locale: {}", localeName);
 
-  uint64_t totalMemoryKB {0};
+  uint64_t totalMemoryKB{0};
   GetPhysicallyInstalledSystemMemory(&totalMemoryKB);
   dprintf("  Total RAM: {}mb", totalMemoryKB / 1024);
   dprint("----------");
@@ -242,7 +242,8 @@ static void SetRegistryValues() {
   }
   if (std::filesystem::exists(utilitiesPath)) {
     savePath(
-      L"InstallationUtilitiesPath", std::filesystem::canonical(utilitiesPath));
+      L"InstallationUtilitiesPath",
+      std::filesystem::canonical(utilitiesPath));
   } else {
     dprint("WARNING: failed to find utilities path");
   }
@@ -279,9 +280,11 @@ static void LogInstallationInformation() {
     }
 
     const auto pathStr = path.wstring();
-    DWORD ignored {};
+    DWORD ignored{};
     const auto versionSize = GetFileVersionInfoSizeExW(
-      FILE_VER_GET_NEUTRAL, pathStr.c_str(), &ignored);
+      FILE_VER_GET_NEUTRAL,
+      pathStr.c_str(),
+      &ignored);
     if (versionSize == 0) {
       dprintf(
         L"Failed to get version info size for {}: {}",
@@ -292,11 +295,11 @@ static void LogInstallationInformation() {
 
     std::vector<char*> versionBuf(versionSize);
     if (!GetFileVersionInfoExW(
-          FILE_VER_GET_NEUTRAL | FILE_VER_GET_PREFETCHED,
-          pathStr.c_str(),
-          NULL,
-          static_cast<DWORD>(versionBuf.size()),
-          versionBuf.data())) {
+      FILE_VER_GET_NEUTRAL | FILE_VER_GET_PREFETCHED,
+      pathStr.c_str(),
+      NULL,
+      static_cast<DWORD>(versionBuf.size()),
+      versionBuf.data())) {
       dprintf(
         L"Failed to get version info for {}: {}",
         path.filename().wstring(),
@@ -304,13 +307,13 @@ static void LogInstallationInformation() {
       continue;
     }
 
-    wchar_t* versionStr {nullptr};
-    UINT versionStrSize {};
+    wchar_t* versionStr{nullptr};
+    UINT versionStrSize{};
     if (!VerQueryValueW(
-          versionBuf.data(),
-          L"\\StringFileInfo\\040904E4\\FileVersion",
-          reinterpret_cast<void**>(&versionStr),
-          &versionStrSize)) {
+      versionBuf.data(),
+      L"\\StringFileInfo\\040904E4\\FileVersion",
+      reinterpret_cast<void**>(&versionStr),
+      &versionStrSize)) {
       dprintf(L"Failed to read FileVersion for {}", path.filename().wstring());
       continue;
     }
@@ -321,7 +324,7 @@ static void LogInstallationInformation() {
     dprintf(
       L"{:<48s} v{}\t{}",
       path.filename().wstring(),
-      std::wstring_view {versionStr, versionStrLen},
+      std::wstring_view{versionStr, versionStrLen},
       modifiedAt);
   }
   dprint("----------");
@@ -336,12 +339,13 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>();
   } catch (const winrt::hresult_error& error) {
     const auto message = std::format(
-      _(L"Windows was unable to find your 'Saved Games' folder; "
+      _(
+        L"Windows was unable to find your 'Saved Games' folder; "
         L"OpenKneeboard "
         L"is unable to start.\n\nSHGetKnownFolderPath() failed: {:#08x} - "
         L"{}"),
       static_cast<const uint32_t>(error.code().value),
-      std::wstring_view {error.message()});
+      std::wstring_view{error.message()});
     MessageBoxW(
       NULL,
       message.c_str(),
@@ -363,7 +367,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     if (!hwnd) {
       MessageBoxW(
         NULL,
-        _(L"OpenKneeboard is already running, but can't find the existing "
+        _(
+          L"OpenKneeboard is already running, but can't find the existing "
           L"window to switch to it.\n\n"
           L"Switch to it with Alt-Tab or the Windows "
           L"task bar, or kill it with Task Manager, then try again."),
@@ -373,7 +378,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     }
     ShowWindow(*hwnd, SW_SHOWNORMAL);
     if (SetForegroundWindow(*hwnd)) {
-      APIEvent::Send({
+      APIEvent::Send(
+      {
         .name = APIEvent::EVT_OKB_EXECUTABLE_LAUNCHED,
         .value = winrt::to_string(GetCommandLineW()),
       });
@@ -381,7 +387,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       // error codes are not set, so no details :(
       MessageBoxW(
         NULL,
-        _(L"OpenKneeboard is already running, but unable to switch to the "
+        _(
+          L"OpenKneeboard is already running, but unable to switch to the "
           L"existing window .\n\n"
           L"Switch to it with Alt-Tab or the Windows "
           L"task bar, or kill it with Task Manager, then try again."),
@@ -391,7 +398,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 0;
   }
 
-  DPrintSettings::Set({
+  DPrintSettings::Set(
+  {
     .prefix = "OpenKneeboard-WinUI3",
   });
 
@@ -415,9 +423,10 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   dprint("Starting Xaml application");
   dprint("----------");
 
-  ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
-    ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
-  });
+  ::winrt::Microsoft::UI::Xaml::Application::Start(
+    [](auto&&) {
+      ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
+    });
 
   TraceLoggingWrite(gTraceProvider, "ApplicationExit");
 

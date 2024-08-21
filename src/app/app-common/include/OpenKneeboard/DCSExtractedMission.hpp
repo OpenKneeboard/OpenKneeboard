@@ -18,9 +18,9 @@
  * USA.
  */
 
+#include <filesystem>
 #include <memory>
 #include <mutex>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 

@@ -29,11 +29,10 @@
 #include <OpenKneeboard/OpenXRMode.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/utf8.hpp>
 
 #include <cmath>
+#include <filesystem>
 #include <numbers>
 
 using namespace winrt::Microsoft::UI::Xaml::Controls;

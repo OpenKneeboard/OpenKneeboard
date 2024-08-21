@@ -25,11 +25,10 @@
 
 #include "ExecutableIconFactory.h"
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/utf8.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <set>
 
 #include <TlHelp32.h>

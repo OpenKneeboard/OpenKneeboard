@@ -21,10 +21,9 @@
 
 #include <OpenKneeboard/Game.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/json.hpp>
 
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 

@@ -20,8 +20,8 @@
 
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Win32.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 
-#include <shims/filesystem>
 #include <shims/source_location>
 #include <shims/winrt/base.h>
 
@@ -30,14 +30,13 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/handles.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <atomic>
 #include <bit>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
-#include <ranges>
 #include <source_location>
 #include <stacktrace>
 

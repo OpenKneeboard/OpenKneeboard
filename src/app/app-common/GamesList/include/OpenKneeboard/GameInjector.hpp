@@ -22,12 +22,11 @@
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/WintabMode.hpp>
 
-#include <shims/filesystem>
-
 #include <Windows.h>
 
 #include <OpenKneeboard/bitflags.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <stop_token>

@@ -31,7 +31,7 @@
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
 
-#include <shims/filesystem>
+#include <filesystem>
 
 namespace OpenKneeboard {
 class ExecutableIconFactory;

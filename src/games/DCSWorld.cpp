@@ -20,6 +20,7 @@
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/DCSWorldInstance.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 
 #include <shims/winrt/base.h>
 

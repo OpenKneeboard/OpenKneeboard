@@ -22,7 +22,6 @@
 #include <OpenKneeboard/PDFNavigation.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
@@ -30,6 +29,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <optional>

@@ -19,10 +19,10 @@
  */
 #pragma once
 
-#include <shims/filesystem>
 #include <shims/nlohmann/json.hpp>
 
 #include <concepts>
+#include <filesystem>
 #include <string>
 
 namespace OpenKneeboard {

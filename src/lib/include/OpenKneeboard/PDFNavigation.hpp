@@ -20,11 +20,10 @@
 
 #pragma once
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/inttypes.hpp>
 
 #include <cinttypes>
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <string>

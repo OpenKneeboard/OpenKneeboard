@@ -23,9 +23,9 @@
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 #include <OpenKneeboard/TabBase.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 

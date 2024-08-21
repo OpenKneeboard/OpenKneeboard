@@ -20,10 +20,10 @@
 #include <OpenKneeboard/FilesDiffer.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <algorithm>
+#include <filesystem>
 
 namespace OpenKneeboard {
 

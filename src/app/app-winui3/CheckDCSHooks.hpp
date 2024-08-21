@@ -21,11 +21,12 @@
 
 #include "FilePicker.h"
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <winrt/microsoft.ui.xaml.h>
 #include <winrt/windows.foundation.h>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 

@@ -20,7 +20,6 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Settings.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -28,6 +27,7 @@
 #include <OpenKneeboard/utf8.hpp>
 
 #include <chrono>
+#include <filesystem>
 #include <format>
 #include <fstream>
 

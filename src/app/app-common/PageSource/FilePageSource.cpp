@@ -27,8 +27,7 @@
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-#include <OpenKneeboard/utf8.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -36,14 +35,13 @@
 #include <icu.h>
 
 namespace OpenKneeboard {
-
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
   const audited_ptr<DXResources>& dxr) noexcept {
-  std::vector<std::string> ret {".txt", ".pdf", ".htm", ".html"};
+  std::vector<std::string> ret{".txt", ".pdf", ".htm", ".html"};
 
   auto images = ImageFilePageSource::GetFileFormatProviders(dxr->mWIC.get())
     | std::views::transform(
-                  &ImageFilePageSource::FileFormatProvider::mExtensions)
+      &ImageFilePageSource::FileFormatProvider::mExtensions)
     | std::views::join;
 
   std::ranges::unique_copy(images, std::back_inserter(ret));
@@ -89,12 +87,12 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {
     co_return ImageFilePageSource::Create(
-      dxr, std::vector<std::filesystem::path> {path});
+      dxr,
+      std::vector<std::filesystem::path>{path});
   }
 
   dprintf("Couldn't find handler for {}", path);
 
   co_return nullptr;
 }
-
 }// namespace OpenKneeboard

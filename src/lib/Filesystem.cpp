@@ -21,6 +21,8 @@
 #include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
+#include <OpenKneeboard/format/filesystem.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <Windows.h>

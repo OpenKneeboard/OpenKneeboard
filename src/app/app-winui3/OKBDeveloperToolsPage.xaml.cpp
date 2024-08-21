@@ -28,6 +28,7 @@ using namespace ::OpenKneeboard;
 #include "HelpPage.xaml.h"
 
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/TryEnqueue.hpp>
 
 #include <shims/winrt/base.h>
@@ -43,7 +44,6 @@ using namespace ::OpenKneeboard;
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
-
 static inline void SetClipboardText(std::string_view text) {
   Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(winrt::to_hstring(text));
@@ -60,28 +60,32 @@ OKBDeveloperToolsPage::~OKBDeveloperToolsPage() {
 
 static auto GetOpenPluginCommandLine() {
   return std::format(
-    L"\"{}\" --plugin \"%1\"", Filesystem::GetCurrentExecutablePath());
+    L"\"{}\" --plugin \"%1\"",
+    Filesystem::GetCurrentExecutablePath());
 }
 
 // I'd prefer OpenKneeboard.Dev.Plugin, but MSDN recommends version at the end
-static constexpr wchar_t PluginHandlerName[] {L"OpenKneeboard.Plugin.Dev"};
+static constexpr wchar_t PluginHandlerName[]{L"OpenKneeboard.Plugin.Dev"};
 
 static void RegisterFileTypeInHKCU() {
   // App registration, and handler for the 'open' action
   wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(
-      L"Software\\Classes\\{}\\shell\\open\\command", PluginHandlerName)
-      .c_str(),
-    /* default value */ nullptr,
+      L"Software\\Classes\\{}\\shell\\open\\command",
+      PluginHandlerName)
+    .c_str(),
+    /* default value */
+    nullptr,
     GetOpenPluginCommandLine().c_str());
 
   // Also register an icon
   wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(L"Software\\Classes\\{}\\DefaultIcon", PluginHandlerName)
-      .c_str(),
-    /* default value */ nullptr,
+    .c_str(),
+    /* default value */
+    nullptr,
     // Reference the first icon from the exe resources
     std::format(L"{},0", Filesystem::GetCurrentExecutablePath()).c_str());
 
@@ -96,7 +100,7 @@ static void RegisterFileTypeInHKCU() {
   wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     std::format(L"Software\\Classes\\{}\\shell\\open", PluginHandlerName)
-      .c_str(),
+    .c_str(),
     L"FriendlyAppName",
     L"OpenKneeboard - Dev");
 
@@ -104,7 +108,8 @@ static void RegisterFileTypeInHKCU() {
   wil::reg::set_value_string(
     HKEY_CURRENT_USER,
     L"Software\\Classes\\.OpenKneeboardPlugin",
-    /* default value */ nullptr,
+    /* default value */
+    nullptr,
     PluginHandlerName);
 }
 
@@ -121,15 +126,18 @@ bool OKBDeveloperToolsPage::PluginFileTypeInHKCU() const noexcept {
   const auto commandLine = wil::reg::try_get_value_string(
     HKEY_CURRENT_USER,
     std::format(
-      L"Software\\Classes\\{}\\shell\\open\\command", PluginHandlerName)
-      .c_str(),
+      L"Software\\Classes\\{}\\shell\\open\\command",
+      PluginHandlerName)
+    .c_str(),
     nullptr);
   if (commandLine != GetOpenPluginCommandLine()) {
     return false;
   }
 
   const auto handlerName = wil::reg::try_get_value_string(
-    HKEY_CURRENT_USER, L"Software\\Classes\\.OpenKneeboardPlugin", nullptr);
+    HKEY_CURRENT_USER,
+    L"Software\\Classes\\.OpenKneeboardPlugin",
+    nullptr);
   if (handlerName != PluginHandlerName) {
     return false;
   }
@@ -158,9 +166,10 @@ void OKBDeveloperToolsPage::OnCopyDebugMessagesClick(
 }
 
 winrt::hstring OKBDeveloperToolsPage::AutoUpdateFakeCurrentVersion() noexcept {
-  return winrt::to_hstring(gKneeboard.lock()
-                             ->GetAppSettings()
-                             .mAutoUpdate.mTesting.mFakeCurrentVersion);
+  return winrt::to_hstring(
+    gKneeboard.lock()
+              ->GetAppSettings()
+              .mAutoUpdate.mTesting.mFakeCurrentVersion);
 }
 
 OpenKneeboard::fire_and_forget
@@ -212,7 +221,7 @@ OpenKneeboard::fire_and_forget OKBDeveloperToolsPage::OnTriggerCrashClick(
       break;
     default:
       OPENKNEEBOARD_BREAK;
-      // Error: task failed successfully 🤷
+    // Error: task failed successfully 🤷
       fatal("Invalid CrashKind selected from dev tools page");
   }
 
@@ -248,5 +257,4 @@ OpenKneeboard::fire_and_forget OKBDeveloperToolsPage::OnTriggerCrashClick(
     "Unhandled CrashLocation from devtools page: {}",
     std::to_underlying(location));
 }
-
 }// namespace winrt::OpenKneeboardApp::implementation

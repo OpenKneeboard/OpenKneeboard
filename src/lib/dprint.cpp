@@ -19,7 +19,6 @@
  */
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
@@ -28,6 +27,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
+#include <filesystem>
 #include <iostream>
 #include <optional>
 

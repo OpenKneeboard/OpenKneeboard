@@ -23,11 +23,11 @@
 #include <OpenKneeboard/FilesystemWatcher.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 
+#include <filesystem>
 #include <memory>
 
 namespace OpenKneeboard {

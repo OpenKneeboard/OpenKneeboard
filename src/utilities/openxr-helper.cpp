@@ -26,13 +26,12 @@
 
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
-#include <shims/filesystem>
-
 #include <Windows.h>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
+#include <filesystem>
 #include <functional>
 #include <string>
 

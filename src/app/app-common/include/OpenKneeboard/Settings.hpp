@@ -28,7 +28,7 @@
 #include <OpenKneeboard/VRConfig.hpp>
 #include <OpenKneeboard/ViewsConfig.hpp>
 
-#include <shims/filesystem>
+#include <filesystem>
 
 namespace OpenKneeboard {
 

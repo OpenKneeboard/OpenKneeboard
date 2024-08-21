@@ -28,8 +28,7 @@
 
 #include <OpenKneeboard/Events.hpp>
 
-#include <shims/filesystem>
-
+#include <filesystem>
 #include <string>
 
 using namespace winrt::Microsoft::UI::Xaml;

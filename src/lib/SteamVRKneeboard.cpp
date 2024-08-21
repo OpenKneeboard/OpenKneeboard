@@ -24,7 +24,6 @@
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/SteamVRKneeboard.hpp>
 
-#include <shims/filesystem>
 #include <shims/source_location>
 #include <shims/winrt/base.h>
 
@@ -33,6 +32,7 @@
 #include <OpenKneeboard/hresult.hpp>
 #include <directxtk/SimpleMath.h>
 
+#include <filesystem>
 #include <thread>
 
 #include <TlHelp32.h>

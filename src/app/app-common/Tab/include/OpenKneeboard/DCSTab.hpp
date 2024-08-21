@@ -24,9 +24,9 @@
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/utf8.hpp>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 

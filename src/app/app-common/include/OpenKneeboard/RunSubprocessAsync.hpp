@@ -19,10 +19,11 @@
  */
 #pragma once
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/task.hpp>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 

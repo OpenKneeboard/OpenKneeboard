@@ -19,8 +19,7 @@
  */
 #pragma once
 
-#include <shims/filesystem>
-
+#include <filesystem>
 #include <thread>
 
 struct _GUID;

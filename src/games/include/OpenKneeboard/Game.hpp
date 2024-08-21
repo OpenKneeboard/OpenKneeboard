@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include <shims/filesystem>
 #include <shims/nlohmann/json_fwd.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <vector>
 

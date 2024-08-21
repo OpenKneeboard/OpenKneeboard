@@ -26,17 +26,15 @@
 #include <d3d12.h>
 // clang-format on
 
+#include <OpenKneeboard/format/filesystem.hpp>
 #include "IDXGISwapChainHook.hpp"
 #include "IVRCompositorWaitGetPosesHook.hpp"
 #include "InjectedDLLMain.hpp"
 #include "OculusEndFrameHook.hpp"
-#include "detours-ext.hpp"
 
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-
-#include <thread>
 
 using namespace OpenKneeboard;
 

@@ -22,7 +22,7 @@
 #include "pch.h"
 // clang-format on
 
-#include <shims/filesystem>
+#include <filesystem>
 
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 struct IWICImagingFactory;

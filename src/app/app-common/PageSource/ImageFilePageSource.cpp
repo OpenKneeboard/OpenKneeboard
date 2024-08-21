@@ -19,9 +19,9 @@
  */
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 
-#include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -33,7 +33,6 @@
 #include <wincodec.h>
 
 namespace OpenKneeboard {
-
 static std::expected<std::wstring, HRESULT> variable_sized_string_mem_fn(
   auto self,
   auto impl) {
@@ -41,14 +40,14 @@ static std::expected<std::wstring, HRESULT> variable_sized_string_mem_fn(
   const auto fn = std::bind_front(impl, self);
   HRESULT result = fn(0, nullptr, &bufSize);
   if (result != S_OK) {
-    return std::unexpected {result};
+    return std::unexpected{result};
   }
 
   std::wstring buf;
   buf.resize(bufSize, L'\0');
   result = fn(bufSize, buf.data(), &bufSize);
   if (result != S_OK) {
-    return std::unexpected {result};
+    return std::unexpected{result};
   }
   buf.pop_back();// trailing null
   return buf;
@@ -63,25 +62,27 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     wic->CreateComponentEnumerator(WICDecoder, 0, enumerator.put()));
 
   winrt::com_ptr<IUnknown> it;
-  ULONG fetched {};
+  ULONG fetched{};
   while (enumerator->Next(1, it.put(), &fetched) == S_OK) {
     const scope_exit clearIt([&]() { it = {nullptr}; });
     const auto info = it.as<IWICBitmapCodecInfo>();
 
-    CLSID clsID {};
+    CLSID clsID{};
     winrt::check_hresult(info->GetCLSID(&clsID));
 
     const auto name = variable_sized_string_mem_fn(
-      info, &IWICBitmapCodecInfo::GetFriendlyName);
+      info,
+      &IWICBitmapCodecInfo::GetFriendlyName);
     const auto author
       = variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
     const auto extensions = variable_sized_string_mem_fn(
-      info, &IWICBitmapCodecInfo::GetFileExtensions);
+      info,
+      &IWICBitmapCodecInfo::GetFileExtensions);
 
     if (!(name && author && extensions)) {
       dprintf(
         "WARNING: Failed to get necessary information for WIC component {}",
-        winrt::guid {clsID});
+        winrt::guid{clsID});
       OPENKNEEBOARD_BREAK;
       continue;
     }
@@ -89,7 +90,7 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     dprintf(
       L"Found WIC codec '{}' ({}) by '{}'; extensions: {}",
       *name,
-      winrt::guid {clsID},
+      winrt::guid{clsID},
       *author,
       *extensions);
 
@@ -99,11 +100,11 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     winrt::check_hresult(info->GetVendorGUID(&vendorGUID));
     dprintf(
       "WIC codec {} has container GUID {} and vendor GUID {}",
-      winrt::guid {clsID},
-      winrt::guid {containerGUID},
-      winrt::guid {vendorGUID});
+      winrt::guid{clsID},
+      winrt::guid{containerGUID},
+      winrt::guid{vendorGUID});
 
-    DWORD status {};
+    DWORD status{};
     winrt::check_hresult(info->GetSigningStatus(&status));
     if (
       ((status & WICComponentSigned) == 0)
@@ -114,14 +115,15 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       continue;
     }
 
-    const ImageFilePageSource::FileFormatProvider provider {
+    const ImageFilePageSource::FileFormatProvider provider{
       .mGuid = {clsID},
       .mContainerGuid = containerGUID,
       .mVendorGuid = vendorGUID,
       .mExtensions = (std::views::split(*extensions, L',')
-        | std::views::transform([](auto range) {
-                       return winrt::to_string({range.begin(), range.end()});
-                     })
+        | std::views::transform(
+          [](auto range) {
+            return winrt::to_string({range.begin(), range.end()});
+          })
         | std::ranges::to<std::vector>()),
     };
     ret.push_back(provider);
@@ -136,7 +138,8 @@ ImageFilePageSource::GetFileFormatProviders(IWICImagingFactory* wic) {
   static std::vector<ImageFilePageSource::FileFormatProvider> sRet;
 
   std::call_once(
-    sOnce, [wic, &ret = sRet] { ret = GetFileFormatProvidersUncached(wic); });
+    sOnce,
+    [wic, &ret = sRet] { ret = GetFileFormatProvidersUncached(wic); });
 
   return sRet;
 }
@@ -156,7 +159,8 @@ ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr)
 void ImageFilePageSource::SetPaths(
   const std::vector<std::filesystem::path>& paths) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "ImageFilePageSource::SetPaths()");
+    activity,
+    "ImageFilePageSource::SetPaths()");
   mPages.clear();
   mPages.reserve(paths.size());
   for (const auto& path: paths) {
@@ -170,7 +174,8 @@ void ImageFilePageSource::SetPaths(
         }
       });
 
-    mPages.push_back({
+    mPages.push_back(
+    {
       .mPath = path,
       .mWatcher = watcher,
     });
@@ -184,7 +189,8 @@ void ImageFilePageSource::SetPaths(
 
 void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
   auto it = std::ranges::find_if(
-    mPages, [&path](auto& page) { return page.mPath == path; });
+    mPages,
+    [&path](auto& page) { return page.mPath == path; });
   if (it == mPages.end()) {
     return;
   }
@@ -199,7 +205,8 @@ void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
 
 std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
   auto view = std::ranges::views::transform(
-    mPages, [](const auto& page) { return page.mPath; });
+    mPages,
+    [](const auto& page) { return page.mPath; });
   return {view.begin(), view.end()};
 }
 
@@ -219,7 +226,7 @@ bool ImageFilePageSource::CanOpenFile(
   if (!decoder) {
     return false;
   }
-  UINT frameCount {0};
+  UINT frameCount{0};
   if (decoder->GetFrameCount(&frameCount) != S_OK) {
     return false;
   }
@@ -247,17 +254,19 @@ winrt::com_ptr<IWICBitmapDecoder> ImageFilePageSource::GetDecoderFromFileName(
   }
   const auto extension = path.extension().u16string();
   const auto hasExtension = [a = extension.c_str()](const std::string& b) {
-    const std::wstring wide {winrt::to_hstring(b)};
+    const std::wstring wide{winrt::to_hstring(b)};
     return u_strcasecmp(
-             a,
-             reinterpret_cast<const UChar*>(wide.c_str()),
-             U_FOLD_CASE_DEFAULT)
+        a,
+        reinterpret_cast<const UChar*>(wide.c_str()),
+        U_FOLD_CASE_DEFAULT)
       == 0;
   };
 
   const auto providers = ImageFilePageSource::GetFileFormatProviders(wic);
   const auto provider
-    = std::ranges::find_if(providers, [&](const auto& provider) {
+    = std::ranges::find_if(
+      providers,
+      [&](const auto& provider) {
         return std::ranges::any_of(provider.mExtensions, hasExtension);
       });
   if (provider == providers.end()) {
@@ -320,7 +329,7 @@ task<void> ImageFilePageSource::RenderPage(
   auto ctx = rc.d2d();
   ctx->DrawBitmap(
     bitmap.get(),
-    PixelRect {{renderLeft, renderTop}, renderSize},
+    PixelRect{{renderLeft, renderTop}, renderSize},
     1.0f,
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
@@ -328,7 +337,8 @@ task<void> ImageFilePageSource::RenderPage(
 winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
   std::unique_lock lock(mMutex);
   auto it = std::ranges::find_if(
-    mPages, [pageID](const auto& page) { return page.mID == pageID; });
+    mPages,
+    [pageID](const auto& page) { return page.mID == pageID; });
   if (it == mPages.end()) [[unlikely]] {
     return {};
   }
@@ -384,8 +394,10 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
    */
   winrt::com_ptr<ID2D1Bitmap> sharedBitmap;
   winrt::com_ptr<ID2D1DeviceContext> ctx;
-  winrt::check_hresult(mDXR->mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
+  winrt::check_hresult(
+    mDXR->mD2DDevice->CreateDeviceContext(
+      D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+      ctx.put()));
 
   ctx->CreateBitmapFromWicBitmap(converter.get(), sharedBitmap.put());
   if (!sharedBitmap) {
@@ -394,15 +406,16 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
 
   // For WIC, this MUST be B8G8R8A8_UNORM, not _UNORM_SRGB, or the copy
   // silently fails.
-  winrt::check_hresult(ctx->CreateBitmap(
-    sharedBitmap->GetPixelSize(),
-    D2D1_BITMAP_PROPERTIES {
-      .pixelFormat = {
-        .format = DXGI_FORMAT_B8G8R8A8_UNORM,
-        .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
+  winrt::check_hresult(
+    ctx->CreateBitmap(
+      sharedBitmap->GetPixelSize(),
+      D2D1_BITMAP_PROPERTIES{
+        .pixelFormat = {
+          .format = DXGI_FORMAT_B8G8R8A8_UNORM,
+          .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
+        },
       },
-    },
-    page.mBitmap.put()));
+      page.mBitmap.put()));
 
   if (!page.mBitmap) {
     return {};
@@ -420,12 +433,12 @@ std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
   std::vector<NavigationEntry> entries;
   for (PageIndex i = 0; i < mPages.size(); ++i) {
     const auto& page = mPages.at(i);
-    entries.push_back({
+    entries.push_back(
+    {
       to_utf8(page.mPath.stem()),
       page.mID,
     });
   }
   return entries;
 }
-
 }// namespace OpenKneeboard

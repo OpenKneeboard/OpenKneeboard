@@ -19,12 +19,12 @@
  */
 #pragma once
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/task.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>

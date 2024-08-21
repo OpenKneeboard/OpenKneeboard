@@ -26,10 +26,9 @@
 #include <OpenKneeboard/IHasDebugInformation.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 
+#include <filesystem>
 #include <vector>
 
 namespace OpenKneeboard {

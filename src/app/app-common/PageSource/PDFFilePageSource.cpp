@@ -31,6 +31,7 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <shims/nlohmann/json.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
@@ -66,14 +67,13 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Storage;
 
 namespace OpenKneeboard {
-
 // Convenience wrapper to make it easy to wrap all locks in `DPrintLifetime`
 static constexpr auto wrap_lock(
   auto&& lock,
   [[maybe_unused]] const std::source_location& location
-  = std::source_location::current()) {
+    = std::source_location::current()) {
   if constexpr (false) {
-    return DPrintLifetime<std::decay_t<decltype(lock)>> {
+    return DPrintLifetime<std::decay_t<decltype(lock)>>{
       "PDFLock", std::move(lock), location};
   } else {
     return lock;
@@ -88,7 +88,7 @@ struct PDFFilePageSource::DocumentResources final {
 
   std::shared_ptr<FilesystemWatcher> mWatcher;
 
-  PdfDocument mPDFDocument {nullptr};
+  PdfDocument mPDFDocument{nullptr};
 
   std::vector<NavigationEntry> mBookmarks;
   std::unordered_map<PageID, std::shared_ptr<LinkHandler>> mLinks;
@@ -102,9 +102,9 @@ struct PDFFilePageSource::DocumentResources final {
   static auto Create(
     const std::filesystem::path& path,
     std::shared_ptr<FilesystemWatcher>&& watcher) {
-    return std::shared_ptr<DocumentResources> {
+    return std::shared_ptr<DocumentResources>{
       new DocumentResources(path, std::move(watcher)),
-      final_release_deleter<DocumentResources> {}};
+      final_release_deleter<DocumentResources>{}};
   }
 
   /** Work around https://github.com/microsoft/WindowsAppSDK/issues/3506
@@ -132,11 +132,12 @@ struct PDFFilePageSource::DocumentResources final {
 
   DocumentResources() = delete;
 
- private:
+private:
   DocumentResources(
     const std::filesystem::path& path,
     std::shared_ptr<FilesystemWatcher>&& watcher)
-    : mPath(path), mWatcher(std::move(watcher)) {
+    : mPath(path),
+      mWatcher(std::move(watcher)) {
   }
 
   DispatcherQueue mDispatcherQueue = DispatcherQueue::GetForCurrentThread();
@@ -151,7 +152,8 @@ PDFFilePageSource::PDFFilePageSource(
   mHighlightBrush = dxr->mHighlightBrush;
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   AddEventListener(
-    mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
+    mDoodles->evAddedPageEvent,
+    this->evAvailableFeaturesChangedEvent);
 }
 
 PDFFilePageSource::~PDFFilePageSource() {
@@ -190,7 +192,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
 
     std::filesystem::path path;
     {
-      const auto readLock = wrap_lock(std::shared_lock {mMutex});
+      const auto readLock = wrap_lock(std::shared_lock{mMutex});
       if (!(doc && doc->mCopy)) {
         co_return;
       }
@@ -201,8 +203,8 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
       }
     }
 
-    StorageFile file {nullptr};
-    PdfDocument document {nullptr};
+    StorageFile file{nullptr};
+    PdfDocument document{nullptr};
     try {
       // Windows 11 print-to-pdf tends to quickly create then delete/expand
       // PDFs, which give us a race condition
@@ -221,7 +223,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
     dprintf("Opened PDF file {} for render", path.string());
 
     {
-      const auto lock = wrap_lock(std::unique_lock {mMutex});
+      const auto lock = wrap_lock(std::unique_lock{mMutex});
       // Another workaround for
       // https://github.com/microsoft/WindowsAppSDK/issues/3506
       if (doc->mPDFDocument) {
@@ -267,7 +269,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
 
   std::filesystem::path path;
   {
-    const auto lock = wrap_lock(std::shared_lock {mMutex});
+    const auto lock = wrap_lock(std::shared_lock{mMutex});
     path = doc->mCopy->GetPath();
   }
   std::optional<PDFNavigation::PDF> maybePdf;
@@ -287,7 +289,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
   }
 
   {
-    const auto lock = wrap_lock(std::unique_lock {mMutex});
+    const auto lock = wrap_lock(std::unique_lock{mMutex});
     doc->mBookmarks = std::move(navigation);
     doc->mNavigationLoaded = true;
   }
@@ -301,13 +303,17 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
       handler->evClicked,
       {
         weak,
-        [](auto self, KneeboardViewID ctx, PDFNavigation::Link link)
-          -> OpenKneeboard::fire_and_forget {
+        [](
+        auto self,
+        KneeboardViewID ctx,
+        PDFNavigation::Link link)
+        -> OpenKneeboard::fire_and_forget {
           const auto& dest = link.mDestination;
           switch (dest.mType) {
             case PDFNavigation::DestinationType::Page:
               self->evPageChangeRequestedEvent.Emit(
-                ctx, self->GetPageIDForIndex(dest.mPageIndex));
+                ctx,
+                self->GetPageIDForIndex(dest.mPageIndex));
               break;
             case PDFNavigation::DestinationType::URI: {
               co_await LaunchURI(dest.mURI);
@@ -320,7 +326,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
   }
 
   {
-    const auto lock = wrap_lock(std::unique_lock {mMutex});
+    const auto lock = wrap_lock(std::unique_lock{mMutex});
     doc->mLinks = std::move(linkHandlers);
   }
 
@@ -333,7 +339,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
 
 PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   {
-    const auto lock = wrap_lock(std::shared_lock {mMutex});
+    const auto lock = wrap_lock(std::shared_lock{mMutex});
     if (!mDocumentResources) {
       return {};
     }
@@ -341,7 +347,7 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
       return mDocumentResources->mPageIDs.at(index);
     }
   }
-  const auto lock = wrap_lock(std::unique_lock {mMutex});
+  const auto lock = wrap_lock(std::unique_lock{mMutex});
   if (!mDocumentResources) {
     return {};
   }
@@ -370,10 +376,11 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
 
     mDoodles->Clear();
 
-    const auto lock = wrap_lock(std::unique_lock {mMutex});
+    const auto lock = wrap_lock(std::unique_lock{mMutex});
 
     mDocumentResources = DocumentResources::Create(
-      mDocumentResources->mPath, std::move(mDocumentResources->mWatcher));
+      mDocumentResources->mPath,
+      std::move(mDocumentResources->mWatcher));
 
     if (!std::filesystem::is_regular_file(mDocumentResources->mPath)) {
       co_return;
@@ -392,10 +399,11 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
       co_return;
     }
     auto tempPath = Filesystem::GetTemporaryDirectory()
-      / std::format(L"{:08x}-{}{}",
-                    ++sCount,
-                    doc->mPath.stem().wstring().substr(0, 16),
-                    doc->mPath.extension());
+      / std::format(
+        L"{:08x}-{}{}",
+        ++sCount,
+        doc->mPath.stem().wstring().substr(0, 16),
+        doc->mPath.extension());
     doc->mCopy
       = std::make_shared<Filesystem::TemporaryCopy>(doc->mPath, tempPath);
   }
@@ -404,7 +412,6 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
 
   this->ReloadRenderer(weakDoc);
   this->ReloadNavigation(weakDoc);
-
 } catch (const std::exception& e) {
   dprintf("WARNING: Exception reloading PDFFilePageSource: {}", e.what());
   OPENKNEEBOARD_BREAK;
@@ -417,7 +424,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::final_release(
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {
-  const auto lock = wrap_lock(std::shared_lock {mMutex});
+  const auto lock = wrap_lock(std::shared_lock{mMutex});
   if (mDocumentResources && mDocumentResources->mPDFDocument) {
     return mDocumentResources->mPDFDocument.PageCount();
   }
@@ -430,19 +437,21 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
     return {};
   }
   {
-    const auto lock = wrap_lock(std::shared_lock {mMutex});
+    const auto lock = wrap_lock(std::shared_lock{mMutex});
     if (pageCount == mDocumentResources->mPageIDs.size()) {
       return mDocumentResources->mPageIDs;
     }
   }
 
-  const auto lock = wrap_lock(std::unique_lock {mMutex});
+  const auto lock = wrap_lock(std::unique_lock{mMutex});
   mDocumentResources->mPageIDs.resize(pageCount);
 
   if (TraceLoggingProviderEnabled(gTraceProvider, 0, 0)) {
     std::vector<uint64_t> values(pageCount);
     std::ranges::transform(
-      mDocumentResources->mPageIDs, begin(values), &PageID::GetTemporaryValue);
+      mDocumentResources->mPageIDs,
+      begin(values),
+      &PageID::GetTemporaryValue);
     TraceLoggingWrite(
       gTraceProvider,
       "PDFFilePageSource::GetPageIDs()",
@@ -481,7 +490,7 @@ void PDFFilePageSource::RenderPageContent(
     return;
   }
 
-  const auto lock = wrap_lock(std::shared_lock {mMutex});
+  const auto lock = wrap_lock(std::shared_lock{mMutex});
 
   const auto pageIt = std::ranges::find(doc->mPageIDs, id);
   if (pageIt == doc->mPageIDs.end()) {
@@ -494,18 +503,22 @@ void PDFFilePageSource::RenderPageContent(
   auto ctx = rt->d2d();
   ctx->FillRectangle(rect, mBackgroundBrush.get());
 
-  PDF_RENDER_PARAMS params {
+  PDF_RENDER_PARAMS params{
     .DestinationWidth = rect.Width(),
     .DestinationHeight = rect.Height(),
   };
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Translation(
-    rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
+  ctx->SetTransform(
+    D2D1::Matrix3x2F::Translation(
+      rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
 
   {
     const std::unique_lock d2dlock(*mDXR);
-    winrt::check_hresult(mDXR->mPDFRenderer->RenderPageToDeviceContext(
-      winrt::get_unknown(page), ctx, &params));
+    winrt::check_hresult(
+      mDXR->mPDFRenderer->RenderPageToDeviceContext(
+        winrt::get_unknown(page),
+        ctx,
+        &params));
   }
 }
 
@@ -527,7 +540,7 @@ void PDFFilePageSource::PostCursorEvent(
 
   scope_exit repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
-  CursorEvent pageEvent {ev};
+  CursorEvent pageEvent{ev};
   pageEvent.mX /= contentSize.mWidth;
   pageEvent.mY /= contentSize.mHeight;
 
@@ -577,7 +590,7 @@ void PDFFilePageSource::RenderOverDoodles(
   const auto contentWidth = contentRect.right - contentRect.left;
   const auto contentHeight = contentRect.bottom - contentRect.top;
 
-  const D2D1_RECT_F rect {
+  const D2D1_RECT_F rect{
     (hoverButton->mRect.left * contentWidth) + contentRect.left,
     (hoverButton->mRect.top * contentHeight) + contentRect.top,
     (hoverButton->mRect.right * contentWidth) + contentRect.left,
@@ -585,7 +598,9 @@ void PDFFilePageSource::RenderOverDoodles(
   };
   const auto radius = contentHeight * 0.006f;
   ctx->DrawRoundedRectangle(
-    D2D1::RoundedRect(rect, radius, radius), mHighlightBrush.get(), radius / 3);
+    D2D1::RoundedRect(rect, radius, radius),
+    mHighlightBrush.get(),
+    radius / 3);
 }
 
 std::filesystem::path PDFFilePageSource::GetPath() const {
@@ -615,16 +630,19 @@ bool PDFFilePageSource::IsNavigationAvailable() const {
 }
 
 std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
-  const auto lock = wrap_lock(std::shared_lock {mMutex});
+  const auto lock = wrap_lock(std::shared_lock{mMutex});
   if (!mDocumentResources->mBookmarks.empty()) {
     return mDocumentResources->mBookmarks;
   }
 
   std::vector<NavigationEntry> entries;
   for (PageIndex i = 0; i < this->GetPageCount(); ++i) {
-    entries.push_back({
+    entries.push_back(
+    {
       std::format(
-        _("Page {} ({})"), i + 1, to_utf8(mDocumentResources->mPath.stem())),
+        _("Page {} ({})"),
+        i + 1,
+        to_utf8(mDocumentResources->mPath.stem())),
       this->GetPageIDForIndex(i),
     });
   }
@@ -662,5 +680,4 @@ void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {
     this->Reload();
   }
 }
-
 }// namespace OpenKneeboard

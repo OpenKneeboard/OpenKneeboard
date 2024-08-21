@@ -19,12 +19,13 @@
  */
 #pragma once
 
-#include <KnownFolders.h>
-#include <ShlObj_core.h>
 #include <shims/winrt/base.h>
 
-#include <shims/filesystem>
+#include <filesystem>
 #include <string>
+
+#include <KnownFolders.h>
+#include <ShlObj_core.h>
 
 namespace OpenKneeboard {
 

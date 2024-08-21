@@ -23,13 +23,13 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 
-#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 
+#include <filesystem>
 #include <memory>
 #include <shared_mutex>
 
@@ -77,8 +77,7 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
  private:
   winrt::apartment_context mUIThread;

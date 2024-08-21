@@ -29,8 +29,6 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
 
-#include <shims/filesystem>
-
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Web.Http.Headers.h>
@@ -42,6 +40,7 @@
 #include <OpenKneeboard/utf8.hpp>
 #include <OpenKneeboard/version.hpp>
 
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <regex>
@@ -203,12 +202,14 @@ task<UpdateResult> CheckForUpdates(
   dprintf(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
-  scope_exit oncePerDay([](auto now, auto settings, auto appSettings) -> OpenKneeboard::fire_and_forget {
-    settings.mDisabledUntil = now + (60 * 60 * 24);
-    appSettings.mAutoUpdate = settings;
-    auto kneeboard = gKneeboard.lock();
-    co_await kneeboard->SetAppSettings(appSettings);
-  } | bind_front(now, settings, appSettings));
+  scope_exit oncePerDay(
+    [](auto now, auto settings, auto appSettings)
+      -> OpenKneeboard::fire_and_forget {
+      settings.mDisabledUntil = now + (60 * 60 * 24);
+      appSettings.mAutoUpdate = settings;
+      auto kneeboard = gKneeboard.lock();
+      co_await kneeboard->SetAppSettings(appSettings);
+    } | bind_front(now, settings, appSettings));
 
   const auto currentVersionString = testing.mFakeCurrentVersion.empty()
     ? Version::ReleaseName

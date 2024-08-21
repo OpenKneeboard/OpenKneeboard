@@ -19,9 +19,8 @@
  */
 #pragma once
 
-#include <shims/filesystem>
-
 #include <concepts>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 

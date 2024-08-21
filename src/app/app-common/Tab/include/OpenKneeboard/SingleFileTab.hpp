@@ -26,9 +26,9 @@
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
-#include <shims/filesystem>
-
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <filesystem>
 
 namespace OpenKneeboard {
 

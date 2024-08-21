@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/Registry.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 
 #include <wil/registry.h>
 
@@ -36,7 +37,6 @@
 #include <ranges>
 
 namespace OpenKneeboard {
-
 PluginStore::PluginStore() {
   if (OpenKneeboard::IsElevated() || OpenKneeboard::IsShellElevated()) {
     dprint(
@@ -62,10 +62,11 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
   const auto hkey = expected.value().get();
 
   using VIT = wil::reg::value_iterator;
-  for (const auto& value: wil::make_range(VIT {hkey}, VIT {})) {
+  for (const auto& value: wil::make_range(VIT{hkey}, VIT{})) {
     if (value.type != REG_DWORD) {
       dprintf(
-        L"ERROR: Registry value for plugin `{}` is not a DWORD", value.name);
+        L"ERROR: Registry value for plugin `{}` is not a DWORD",
+        value.name);
       continue;
     }
     const auto enabled = wil::reg::get_value_dword(hkey, value.name.c_str());
@@ -93,7 +94,7 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
 
 void PluginStore::LoadPluginsFromFilesystem() {
   const auto root = Filesystem::GetInstalledPluginsDirectory();
-  for (const auto& entry: std::filesystem::directory_iterator {root}) {
+  for (const auto& entry: std::filesystem::directory_iterator{root}) {
     if (!entry.is_directory()) {
       continue;
     }
@@ -112,8 +113,8 @@ void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
   dprintf("Loading plugin from `{}`", jsonPath);
   try {
     const auto plugin
-      = nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
-          .get<Plugin>();
+      = nlohmann::json::parse(std::ifstream{jsonPath, std::ios::binary})
+      .get<Plugin>();
     dprintf(
       "Parsed plugin ID `{}` (`{}`), version `{}`",
       plugin.mID,
@@ -141,5 +142,4 @@ void PluginStore::Append(const Plugin& plugin) {
   }
   mPlugins.push_back(plugin);
 }
-
 }// namespace OpenKneeboard
