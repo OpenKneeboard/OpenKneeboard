@@ -57,7 +57,7 @@ The 'ID' field is an arbitrary string of your choice which has negligible chance
 
 The ID field should not change between versions of the plugin, but if you publish multiple plugins, each plugin should have its' own ID.
 
-If you dynamically generate plugins, the ID should be re-used if the user downloads the same plugin again later. A possible ID scheme here would be `myplugin.example.com/~USER/KNEEBOARD_ID`.
+If you dynamically generate plugins, the ID should be re-used if the user downloads the same plugin again later. A possible ID scheme here would be `myplugin.example.com/~USER/KNEEBOARD_ID`, where 'USER' is a user on your system (e.g. a content creator, or someone that can configure their own kneeboards/dashboards on your site), not necessarily a unique OpenKneeboard user.
 
 Forbidden IDs include:
 
