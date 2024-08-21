@@ -73,9 +73,6 @@ concept must_await_task = requires(T v) {
   { std::bool_constant<T::must_await_v> {} } -> std::same_as<std::true_type>;
 };
 
-static_assert(must_await_task<task<void>>);
-static_assert(!must_await_task<fire_and_forget>);
-
 template <class T>
 concept not_must_await_task = not must_await_task<T>;
 
@@ -85,6 +82,10 @@ concept event_handler_invocable
   && requires(TInvocable fn, TArgs... args) {
        { std::invoke(drop_extra_back(fn), args...) } -> not_must_await_task;
      };
+
+static_assert(event_handler_invocable<std::function<void()>>);
+static_assert(event_handler_invocable<std::function<fire_and_forget()>>);
+static_assert(!event_handler_invocable<std::function<task<void>()>>);
 
 template <class... Args>
 class EventHandler final {
