@@ -214,6 +214,9 @@ add_subdirectory("data")
 add_subdirectory("src")
 add_subdirectory("plugin-example")
 
+# MUST be set in this CMakeLists.txt to work, not a subfolder
+set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT OpenKneeboard-App-WinUI3)
+
 install(
   FILES LICENSE
   TYPE DOC
