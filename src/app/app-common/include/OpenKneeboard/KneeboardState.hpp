@@ -174,6 +174,10 @@ class KneeboardState final
     return mDXResources;
   }
 
+  task<void> FlushOrderedEventQueue(
+    std::chrono::time_point<std::chrono::steady_clock> stopAt);
+  void EnqueueOrderedEvent(task<void>&&);
+
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
   [[nodiscard]]
@@ -212,15 +216,15 @@ class KneeboardState final
   RunnerThread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
 
+  std::queue<task<void>> mOrderedEventQueue;
+
   bool mSaveSettingsEnabled = true;
 
   void OnGameChangedEvent(
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
   [[nodiscard]]
-  OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent) noexcept;
-  std::queue<APIEvent> mAPIEventQueue;
-  single_threaded_lockable mAPIEventQueueHandler;
+  void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();

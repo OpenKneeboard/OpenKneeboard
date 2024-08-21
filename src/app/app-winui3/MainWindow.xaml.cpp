@@ -231,17 +231,21 @@ task<void> MainWindow::FrameLoop() {
 
   while (!stop.stop_requested()) {
     const auto start = std::chrono::steady_clock::now();
+    const auto nextGoal = start + interval;
+
     this->FrameTick();
     // Finish any pending UI stuff before figuring out how long to wait
     co_await winrt::resume_after(std::chrono::milliseconds(1));
     co_await mUIThread;
+    co_await mKneeboard->FlushOrderedEventQueue(nextGoal);
 
-    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::steady_clock::now() - start);
-    if (duration >= interval) {
+    const auto wait = std::chrono::duration_cast<std::chrono::milliseconds>(nextGoal - start);
+    if (wait < std::chrono::milliseconds::zero()) {
+      TraceLoggingWrite(
+        gTraceProvider, "MainWindow::FrameLoop()/FrameDurationExceeded");
       continue;
     }
-    const auto wait = interval - duration;
+
     TraceLoggingWrite(
       gTraceProvider,
       "MainWindow::FrameLoop()/Wait",

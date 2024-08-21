@@ -103,9 +103,9 @@ task<void> KneeboardState::Init() {
   });
 
   mDirectInput = DirectInputAdapter::Create(mHwnd, mSettings.mDirectInput);
-  AddEventListener(
-    mDirectInput->evUserActionEvent,
-    std::bind_front(&KneeboardState::PostUserAction, this));
+  AddEventListener(mDirectInput->evUserActionEvent, [this](auto action) {
+    this->EnqueueOrderedEvent(this->PostUserAction(action));
+  });
   AddEventListener(
     mDirectInput->evSettingsChangedEvent,
     std::bind_front(&KneeboardState::SaveSettings, this));
@@ -388,24 +388,28 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-OpenKneeboard::fire_and_forget KneeboardState::OnAPIEvent(
+void KneeboardState::OnAPIEvent(
   APIEvent ev) noexcept {
-  mAPIEventQueue.push(ev);
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");
     OPENKNEEBOARD_BREAK;
   }
   TroubleshootingStore::Get()->OnAPIEvent(ev);
 
-  std::unique_lock lock(mAPIEventQueueHandler, std::try_to_lock);
-  if (!lock) {
-    co_return;
-  }
+  mOrderedEventQueue.push(ProcessAPIEvent(ev));
+}
 
-  while (!mAPIEventQueue.empty()) {
-    auto it = mAPIEventQueue.front();
-    mAPIEventQueue.pop();
-    co_await ProcessAPIEvent(it);
+void KneeboardState::EnqueueOrderedEvent(task<void>&& handler) {
+  mOrderedEventQueue.push(std::move(handler));
+}
+
+task<void> KneeboardState::FlushOrderedEventQueue(
+  std::chrono::time_point<std::chrono::steady_clock> stopAt) {
+  while (std::chrono::steady_clock::now() < stopAt
+         && !mOrderedEventQueue.empty()) {
+    auto it = std::move(mOrderedEventQueue.front());
+    mOrderedEventQueue.pop();
+    co_await std::move(it);
   }
 }
 
@@ -770,9 +774,9 @@ void KneeboardState::StartTabletInput() {
     = TabletInputAdapter::Create(mHwnd, this, mSettings.mTabletInput);
   AddEventListener(
     mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
-  AddEventListener(
-    mTabletInput->evUserActionEvent,
-    std::bind_front(&KneeboardState::PostUserAction, this));
+  AddEventListener(mTabletInput->evUserActionEvent, [this](auto action) {
+    this->EnqueueOrderedEvent(this->PostUserAction(action));
+  });
   AddEventListener(
     mTabletInput->evSettingsChangedEvent,
     std::bind_front(&KneeboardState::SaveSettings, this));
