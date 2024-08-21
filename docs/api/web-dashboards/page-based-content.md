@@ -78,6 +78,26 @@ try {
 }
 ```
 
+## Unsupported Uses
+
+You **MUST NOT**:
+- consider the page changed until the `pageChanged` event is triggered
+- use pages/events as a generic input ('I want a binding in JS' method). It is *not* a usable generic way to get two bindable buttons in your page
+- automatically create new pages in response to page changes, i.e. you can not have an 'infinite' set of pages
+
+Breaking these requirements may lead to:
+
+- your app crashing OpenKneeboard when the built-in navigation page is opened
+- making OpenKneeboard unusable for people who use the remote controls/API, e.g. with VoiceAttack
+- making OpenKneeboard unusable for people who have 'next page at end of tab -> next tab' behavior enabled
+- other features/expectations breaking, crashes, etc.
+
+### Alternatives
+
+- For "I want more user input", use [plugin custom actions](plugins.md#custom-actions)
+- While you *must not* have infinite pages, or create new pages in reaction to page changes events, you can increase the set of pages in response to other actions. For example, the built-in endless notebook tab type adds a new page when you draw on the last page.
+- A common desire is to use pages for zoom levels; this works fine for a fixed number of zoom levels. If you want infinite zoom, you mus use plugin custom actions instead.
+
 ## Subscribe to the events
 
 You should subscribe to the events immediately after enabling the feature - especially before making any `SetPages()` or `GetPages()` API calls.
@@ -210,7 +230,6 @@ OpenKneeboard.RequestPageChange(guid: string): Promise<any>;
 pages = (await OpenKneeboard.GetPages()).pages;
 await OpenKneeboard.RequestPageChange(pages[1].guid);
 ```
-
 ### The peerMessage event
 
 This is a `CustomEvent`; the `detail` property contains an object with a `message` property, containing the message that was passed to `SendMessageToPeers()`, verbatim.
