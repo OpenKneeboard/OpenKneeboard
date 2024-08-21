@@ -253,6 +253,7 @@ struct Task;
 
 template <class TTraits>
 struct TaskPromiseBase {
+  using traits_type = TTraits;
   using enum TaskPromiseResultState;
   AtomicStateMachine<
     TaskPromiseResultState,
@@ -566,6 +567,9 @@ struct TaskAwaiter {
 
 template <class TTraits>
 struct [[nodiscard]] Task {
+  static constexpr bool must_await_v
+    = TTraits::Awaiting == TaskAwaiting::Required;
+
   using promise_t = TaskPromise<TTraits>;
   using promise_ptr_t = TaskPromisePtr<promise_t>;
 

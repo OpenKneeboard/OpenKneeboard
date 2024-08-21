@@ -58,13 +58,33 @@ template <class... Args>
 class EventHandler;
 
 template <class TInvocable, class... TArgs>
-concept event_handler_invocable = std::invocable<TInvocable, TArgs...>
+concept drop_extra_back_invocable
+  = std::invocable<TInvocable, TArgs...>
   || ((sizeof...(TArgs) > 0) && requires(TInvocable fn) {
-                                    fn | drop_n_back<1>() | drop_extra_back();
-                                    {
-                                      fn | drop_n_back<1>() | drop_extra_back()
-                                    } -> std::invocable<TArgs...>;
-                                  });
+       fn | drop_n_back<1>() | drop_extra_back();
+       {
+         fn | drop_n_back<1>() | drop_extra_back()
+       } -> std::invocable<TArgs...>;
+     });
+
+template <class T>
+concept must_await_task = requires(T v) {
+  T::must_await_v;
+  { std::bool_constant<T::must_await_v> {} } -> std::same_as<std::true_type>;
+};
+
+static_assert(must_await_task<task<void>>);
+static_assert(!must_await_task<fire_and_forget>);
+
+template <class T>
+concept not_must_await_task = not must_await_task<T>;
+
+template <class TInvocable, class... TArgs>
+concept event_handler_invocable
+  = drop_extra_back_invocable<TInvocable, TArgs...>
+  && requires(TInvocable fn, TArgs... args) {
+       { std::invoke(drop_extra_back(fn), args...) } -> not_must_await_task;
+     };
 
 template <class... Args>
 class EventHandler final {
