@@ -201,7 +201,7 @@ static void CreateDump(
     return;
   }
 
-  const auto dumpFile = Win32::or_default::CreateFileW(
+  const auto dumpFile = Win32::or_default::CreateFile(
     meta.mCrashDumpPath.c_str(),
     GENERIC_READ | GENERIC_WRITE,
     0,

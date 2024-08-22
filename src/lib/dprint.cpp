@@ -97,7 +97,7 @@ static void WriteIPCMessage(std::wstring_view message) {
     return;
   }
 
-  auto mapping = Win32::or_default::CreateFileMappingW(
+  auto mapping = Win32::or_default::CreateFileMapping(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -230,7 +230,7 @@ DPrintReceiver::DPrintReceiver() {
     mBufferReadyEvent = {};
   });
 
-  mMutex = Win32::or_default::CreateMutexW(
+  mMutex = Win32::or_default::CreateMutex(
     nullptr, true, GetDPrintMutexName().data());
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
     OPENKNEEBOARD_BREAK;
@@ -241,7 +241,7 @@ DPrintReceiver::DPrintReceiver() {
     return;
   }
 
-  mMapping = Win32::or_default::CreateFileMappingW(
+  mMapping = Win32::or_default::CreateFileMapping(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,

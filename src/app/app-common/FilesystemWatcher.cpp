@@ -138,7 +138,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
     }
 
     {
-      const auto handle = Win32::CreateFileW(
+      const auto handle = Win32::CreateFile(
         mPath.c_str(),
         GENERIC_READ,
         FILE_SHARE_READ,

@@ -166,7 +166,7 @@ task<void> MainWindow::Init() {
   const auto hwndMappingName
     = std::format("Local\\{}.hwnd", ProjectReverseDomainA);
   // Initially leak for the duration of the app
-  auto hwndFile = Win32::UTF8::CreateFileMappingW(
+  auto hwndFile = Win32::UTF8::CreateFileMapping(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -768,7 +768,7 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
 
   dprint("Stopping event system...");
   {
-    auto event = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    auto event = Win32::CreateEvent(nullptr, TRUE, FALSE, nullptr);
     if (!event) {
       fatal_with_hresult(event.error());
     }

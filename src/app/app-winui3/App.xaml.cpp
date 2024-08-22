@@ -357,7 +357,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   }
 
   auto mutex
-    = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
+    = Win32::CreateMutex(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
   if (mutex.has_value()) {
     gMutex = std::move(mutex).value();
   } else if (mutex.error() != ERROR_ALREADY_EXISTS) {

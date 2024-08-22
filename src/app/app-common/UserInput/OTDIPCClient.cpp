@@ -106,7 +106,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 }
 
 task<void> OTDIPCClient::RunSingle() {
-  const auto connection = Win32::or_default::CreateFileW(
+  const auto connection = Win32::or_default::CreateFile(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,
     0,

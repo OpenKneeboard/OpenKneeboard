@@ -349,7 +349,7 @@ class Impl {
     }
 
     auto mutexHandle
-      = Win32::or_default::CreateMutexW(nullptr, FALSE, MutexPath().c_str());
+      = Win32::or_default::CreateMutex(nullptr, FALSE, MutexPath().c_str());
     if (!mutexHandle) {
       dprintf("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
       return;

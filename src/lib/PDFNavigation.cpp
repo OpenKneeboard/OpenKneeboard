@@ -295,7 +295,7 @@ PDF::Impl::Impl(const std::filesystem::path& path) {
 
   const auto fileSize = std::filesystem::file_size(path);
   const auto wpath = path.wstring();
-  mFile = Win32::or_default::CreateFileW(
+  mFile = Win32::or_default::CreateFile(
     wpath.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ,
@@ -307,7 +307,7 @@ PDF::Impl::Impl(const std::filesystem::path& path) {
     dprint("Failed to open PDF with CreateFileW");
     return;
   }
-  mMapping = Win32::or_default::CreateFileMappingW(
+  mMapping = Win32::or_default::CreateFileMapping(
     mFile.get(),
     nullptr,
     PAGE_READONLY,

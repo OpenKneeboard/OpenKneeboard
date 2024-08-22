@@ -57,7 +57,7 @@ static bool OpenMailslotHandle() {
   }
   sLastAttempt = now;
 
-  gMailslotHandle = OpenKneeboard::Win32::or_throw::CreateFileW(
+  gMailslotHandle = OpenKneeboard::Win32::or_throw::CreateFile(
     OpenKneeboard::APIEvent::GetMailslotPath(),
     GENERIC_WRITE,
     FILE_SHARE_READ,

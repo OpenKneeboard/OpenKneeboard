@@ -66,7 +66,7 @@ APIEventServer::~APIEventServer() {
 task<void> APIEventServer::Run() {
   auto weak = weak_from_this();
   auto stop = mStop.get_token();
-  const auto mailslot = Win32::CreateMailslotW(
+  const auto mailslot = Win32::CreateMailslot(
     APIEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
   if (!mailslot) {
     dprintf("Failed to create APIEvent mailslot: {}", mailslot.error());
