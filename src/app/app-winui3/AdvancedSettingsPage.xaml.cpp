@@ -428,8 +428,8 @@ OpenKneeboard::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   // Failed to spawn, e.g. UAC deny
   gTroubleshootingStore = TroubleshootingStore::Get();
   dprint("Relaunch failed, coming back up!");
-  gMutex
-    = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
+  gMutex = Win32::or_throw::CreateMutexW(
+    nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
   mKneeboard->AcquireExclusiveResources();
 }
 

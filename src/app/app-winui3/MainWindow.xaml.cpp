@@ -163,21 +163,23 @@ task<void> MainWindow::Init() {
     }
   }
 
-  auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectReverseDomainW);
+  const auto hwndMappingName
+    = std::format("Local\\{}.hwnd", ProjectReverseDomainA);
   // Initially leak for the duration of the app
-  mHwndFile = Win32::CreateFileMappingW(
+  auto hwndFile = Win32::UTF8::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
     /* high bits of size = */ 0,
     sizeof(MainWindowInfo),
-    hwndMappingName.c_str());
-  if (!mHwndFile) {
-    const auto err = GetLastError();
+    hwndMappingName);
+  if (hwndFile.has_value()) {
+    mHwndFile = std::move(hwndFile).value();
+  } else {
     dprintf(
-      "Failed to open hwnd file: {} {:#08x}",
-      err,
-      std::bit_cast<uint32_t>(err));
+      "Failed to open hwnd file: {} {:#010x}",
+      hwndMappingName,
+      static_cast<uint32_t>(hwndFile.error()));
     co_return;
   }
   void* mapping = MapViewOfFile(
@@ -239,7 +241,8 @@ task<void> MainWindow::FrameLoop() {
     co_await mUIThread;
     co_await mKneeboard->FlushOrderedEventQueue(nextGoal);
 
-    const auto wait = std::chrono::duration_cast<std::chrono::milliseconds>(nextGoal - start);
+    const auto wait
+      = std::chrono::duration_cast<std::chrono::milliseconds>(nextGoal - start);
     if (wait < std::chrono::milliseconds::zero()) {
       TraceLoggingWrite(
         gTraceProvider, "MainWindow::FrameLoop()/FrameDurationExceeded");
@@ -764,18 +767,13 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   co_await std::move(self->mFrameLoop).value();
 
   dprint("Stopping event system...");
-  try {
+  {
     auto event = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
-    EventBase::Shutdown(event.get());
-    co_await winrt::resume_on_signal(event.get());
-  } catch (const winrt::hresult_error& e) {
-    dprintf("Error: {}", winrt::to_string(e.message()));
-    OPENKNEEBOARD_BREAK;
-  } catch (const std::exception& e) {
-    dprintf("Error: {}", e.what());
-    OPENKNEEBOARD_BREAK;
-  } catch (...) {
-    OPENKNEEBOARD_BREAK;
+    if (!event) {
+      fatal_with_hresult(event.error());
+    }
+    EventBase::Shutdown(event->get());
+    co_await winrt::resume_on_signal(event->get());
   }
   dprint("Waiting for UI thread");
 

@@ -73,6 +73,7 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   OpenKneeboard-fatal
+  OpenKneeboard-win32
 )
 
 ok_add_library(OpenKneeboard-handles INTERFACE)
@@ -249,6 +250,7 @@ target_link_libraries(
   OpenKneeboard-fatal
   OpenKneeboard-shims
   OpenKneeboard-version
+  OpenKneeboard-win32
 )
 
 ok_add_library(

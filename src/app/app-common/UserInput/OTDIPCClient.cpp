@@ -126,7 +126,7 @@ task<void> OTDIPCClient::RunSingle() {
   });
 
   const auto event
-    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    = Win32::or_throw::CreateEvent(nullptr, FALSE, FALSE, nullptr);
   OVERLAPPED overlapped {.hEvent = event.get()};
 
   char buffer[1024];

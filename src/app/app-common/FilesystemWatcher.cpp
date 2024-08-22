@@ -52,7 +52,7 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
   }
   mHandle.reset(handle);
   mShutdownHandle
-    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    = Win32::or_throw::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 }
 
 OpenKneeboard::fire_and_forget FilesystemWatcher::final_release(

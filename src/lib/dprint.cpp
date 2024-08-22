@@ -252,14 +252,14 @@ DPrintReceiver::DPrintReceiver() {
     OPENKNEEBOARD_BREAK;
     return;
   }
-  mBufferReadyEvent = Win32::or_default::CreateEventW(
+  mBufferReadyEvent = Win32::or_default::CreateEvent(
     nullptr, false, false, GetDPrintBufferReadyEventName().data());
   if (!mBufferReadyEvent) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  mDataReadyEvent = Win32::or_default::CreateEventW(
+  mDataReadyEvent = Win32::or_default::CreateEvent(
     nullptr, false, false, GetDPrintDataReadyEventName().data());
   if (!mDataReadyEvent) {
     OPENKNEEBOARD_BREAK;
@@ -296,7 +296,7 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
   }
 
   const auto stopEvent
-    = Win32::or_default::CreateEventW(nullptr, false, false, nullptr);
+    = Win32::or_default::CreateEvent(nullptr, false, false, nullptr);
   std::stop_callback stopCallback(
     stopToken, [&]() { SetEvent(stopEvent.get()); });
 

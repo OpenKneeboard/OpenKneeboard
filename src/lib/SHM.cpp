@@ -335,7 +335,7 @@ class Impl {
         sizeof(FrameMetadata::mFeederProcessID));
     });
 
-    auto fileHandle = Win32::or_default::CreateFileMappingW(
+    auto fileHandle = Win32::or_default::CreateFileMapping(
       INVALID_HANDLE_VALUE,
       NULL,
       PAGE_READWRITE,
@@ -344,8 +344,7 @@ class Impl {
                        // integer values
       SHMPath().c_str());
     if (!fileHandle) {
-      dprintf(
-        "CreateFileMappingW failed: {}", static_cast<int>(GetLastError()));
+      dprintf("CreateFileMapping failed: {}", static_cast<int>(GetLastError()));
       return;
     }
 

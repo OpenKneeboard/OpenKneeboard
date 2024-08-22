@@ -81,7 +81,7 @@ task<void> APIEventServer::Run() {
   });
 
   const auto event
-    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    = Win32::or_throw::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
   try {
     while ((!stop.stop_requested())

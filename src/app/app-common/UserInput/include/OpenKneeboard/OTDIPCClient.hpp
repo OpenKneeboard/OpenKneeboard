@@ -80,7 +80,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   std::optional<task<void>> mRunner;
 
   winrt::handle mCompletionHandle {
-    Win32::or_throw::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+    Win32::or_throw::CreateEvent(nullptr, TRUE, FALSE, nullptr)};
   std::stop_source mStopper;
 
   struct Tablet {

@@ -24,9 +24,11 @@
 
 #include <FredEmmott/bindline.hpp>
 
+#include <concepts>
 #include <expected>
 #include <functional>
 
+// TODO: split to a separate library
 namespace FredEmmott::winapi {
 
 template <class TDerived>
@@ -92,6 +94,99 @@ struct result_identity : result_transform_t<result_identity> {
   }
 };
 
+template <class Buffer, auto Impl, auto Success>
+struct buffer_wrapper_returns_size_t {
+  constexpr std::expected<Buffer, HRESULT> operator()(
+    auto frontArgs,
+    auto backArgs) const noexcept {
+    const auto size = std::apply(
+      Impl, std::tuple_cat(frontArgs, std::tuple {nullptr, 0}, backArgs));
+    if (!Success(size)) {
+      return std::unexpected(HRESULT_FROM_WIN32(GetLastError()));
+    }
+
+    if (size == 0) {
+      return {};
+    }
+    Buffer buffer;
+    buffer.resize(size);
+    const auto finalSize = std::apply(
+      Impl,
+      std::tuple_cat(frontArgs, std::tuple {buffer.data(), size}, backArgs));
+
+    if (!Success(size)) {
+      return std::unexpected(HRESULT_FROM_WIN32(GetLastError()));
+    }
+    buffer.resize(finalSize);
+    return buffer;
+  }
+};
+
+// Only taking a compile-time code page as we only care about CP_ACP and CP_UTF8
+// for this library
+template <int TCodePage>
+std::expected<std::string, HRESULT> wide_to_narrow(std::wstring_view wide) {
+  if (wide.empty()) {
+    return {};
+  }
+
+  return buffer_wrapper_returns_size_t<
+    std::string,
+    &WideCharToMultiByte,
+    [](auto x) { return x > 0; }> {}(
+    std::tuple {
+      TCodePage,
+      WC_ERR_INVALID_CHARS,
+      const_cast<wchar_t*>(wide.data()),
+      static_cast<int>(wide.size()),
+    },
+    std::tuple {nullptr, nullptr});
+}
+
+template <int TCodePage>
+std::expected<std::wstring, HRESULT> narrow_to_wide(std::string_view narrow) {
+  if (narrow.empty()) {
+    return {};
+  }
+
+  return buffer_wrapper_returns_size_t<
+    std::wstring,
+    &MultiByteToWideChar,
+    [](auto x) { return x > 0; }> {}(
+    std::tuple {
+      TCodePage,
+      WC_ERR_INVALID_CHARS,
+      const_cast<char*>(narrow.data()),
+      static_cast<int>(narrow.size()),
+    },
+    std::tuple {});
+}
+
+struct utf8_traits {
+  static constexpr auto to_wide = &narrow_to_wide<CP_UTF8>;
+  static constexpr auto from_wide = &wide_to_narrow<CP_UTF8>;
+
+  using string_type = std::string;
+};
+
+struct active_code_page_traits {
+  static constexpr auto to_wide = &narrow_to_wide<CP_ACP>;
+  static constexpr auto from_wide = &wide_to_narrow<CP_ACP>;
+
+  using string_type = std::string;
+};
+
+struct wide_traits {
+  static constexpr std::expected<std::wstring, HRESULT> to_wide(auto in) {
+    return std::wstring {in};
+  }
+  static constexpr std::expected<std::wstring, HRESULT> from_wide(auto in) {
+    return std::wstring {in};
+  }
+
+  using string_type = std::wstring;
+};
+
 struct raw_winapi_traits {
   using handle_type = HANDLE;
   using file_handle_type = HANDLE;
@@ -114,76 +209,145 @@ struct winrt_winapi_traits {
   };
 };
 
-template <class TTraits, class TErrorMapper = result_identity>
+template <
+  class TTraits,
+  class TErrorMapper = result_identity,
+  class TStringTraits = wide_traits>
 struct basic_winapi {
- public:
-  using returns_handle = basic_returns_handle<typename TTraits::handle_type>;
-  using returns_file_handle
-    = basic_returns_handle<typename TTraits::file_handle_type>;
+ private:
+  template <class T>
+  static constexpr std::expected<std::wstring, HRESULT> to_wide(T str) {
+    if constexpr (std::same_as<T, std::nullptr_t>) {
+      return {};
+    } else {
+      return TStringTraits::to_wide(str);
+    }
+  }
 
-  using or_throw = basic_winapi<TTraits, or_throw<TTraits>>;
-  using or_default = basic_winapi<TTraits, or_default>;
-  using expected = basic_winapi<TTraits>;
+  template <class T>
+  static constexpr std::expected<typename TStringTraits::string_type, HRESULT>
+  from_wide(T str) {
+    if constexpr (std::same_as<T, std::nullptr_t>) {
+      return {};
+    } else {
+      return TStringTraits::from_wide(str);
+    }
+  }
+
+  template <class T>
+  static constexpr auto make_error(HRESULT hr) {
+    return TErrorMapper::transform_result(
+      std::expected<T, HRESULT>(std::unexpect, hr));
+  }
+
+  static constexpr auto nullable_cstr(const std::wstring& it) {
+    return it.empty() ? nullptr : it.c_str();
+  }
+
+  static constexpr auto nullable_cstr(
+    const std::expected<std::wstring, HRESULT>& it) {
+    return nullable_cstr(it.value());
+  }
+
+ public:
+  using handle_type = typename TTraits::handle_type;
+  using file_handle_type = typename TTraits::file_handle_type;
+
+  using returns_handle = basic_returns_handle<handle_type>;
+  using returns_file_handle = basic_returns_handle<file_handle_type>;
+
+  using or_throw = basic_winapi<TTraits, or_throw<TTraits>, TStringTraits>;
+  using or_default = basic_winapi<TTraits, or_default, TStringTraits>;
+  using expected = basic_winapi<TTraits, result_identity, TStringTraits>;
+
+  using UTF8 = basic_winapi<TTraits, TErrorMapper, utf8_traits>;
+  using ACP = basic_winapi<TTraits, TErrorMapper, active_code_page_traits>;
+  using Wide = basic_winapi<TTraits, TErrorMapper, wide_traits>;
 
   // We could avoid spelling out the arguments here with `static inline const
-  // CreateEventW = ... pipeline
+  // CreateEvent = ... pipeline
   //
   // Spelling them out here to keep the same parameter coercion rules, and for
   // better IDE support
 
   // HANDLE or NULL
-  static constexpr auto CreateEventW(
+  static constexpr auto CreateEvent(
     LPSECURITY_ATTRIBUTES lpEventAttributes,
     BOOL bManualReset,
     BOOL bInitialState,
-    LPCWSTR lpName = nullptr) {
+    auto lpName = nullptr) {
+    const auto name = to_wide(lpName);
+    if (!name.has_value()) {
+      return make_error<handle_type>(name.error());
+    }
+
     return (&::CreateEventW | returns_handle() | TErrorMapper())(
-      lpEventAttributes, bManualReset, bInitialState, lpName);
+      lpEventAttributes, bManualReset, bInitialState, nullable_cstr(name));
   }
 
-  static constexpr auto CreateFileMappingW(
+  static constexpr auto CreateFileMapping(
     HANDLE hFile,
     LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
     DWORD flProtect,
     DWORD dwMaximumSizeHigh,
     DWORD dwMaximumSizeLow,
-    LPCWSTR lpName = nullptr) {
+    auto lpName = nullptr) {
+    const auto name = to_wide(lpName);
+    if (!name.has_value()) {
+      return make_error<handle_type>(name.error());
+    }
+
     return (&::CreateFileMappingW | returns_handle() | TErrorMapper())(
       hFile,
       lpFileMappingAttributes,
       flProtect,
       dwMaximumSizeHigh,
       dwMaximumSizeLow,
-      lpName);
+      nullable_cstr(name));
   }
 
-  static constexpr auto CreateMutexW(
+  static constexpr auto CreateMutex(
     LPSECURITY_ATTRIBUTES lpMutexAttributes,
     BOOL bInitialOwner = true,
-    LPCWSTR lpName = nullptr) {
+    auto lpName = nullptr) {
+    const auto name = to_wide(lpName);
+    if (!name.has_value()) {
+      return make_error<handle_type>(name.error());
+    }
+
     return (&::CreateMutexW | returns_handle() | TErrorMapper())(
-      lpMutexAttributes, bInitialOwner, lpName);
+      lpMutexAttributes, bInitialOwner, nullable_cstr(name));
   }
 
-  static constexpr auto CreateWaitableTimerW(
+  static constexpr auto CreateWaitableTimer(
     LPSECURITY_ATTRIBUTES lpTimerAttributes,
     BOOL bManualReset,
-    LPCWSTR lpTimerName = nullptr) {
+    auto lpTimerName = nullptr) {
+    const auto name = to_wide(lpTimerName);
+    if (!name.has_value()) {
+      return make_error<handle_type>(name.error());
+    }
+
     return (&::CreateWaitableTimerW | returns_handle() | TErrorMapper())(
-      lpTimerAttributes, bManualReset, lpTimerName);
+      lpTimerAttributes, bManualReset, nullable_cstr(name));
   }
 
   // HANDLE or INVALID_HANDLE_VALUE
-  static constexpr auto CreateFileW(
-    LPCWSTR lpFileName,
+  static constexpr auto CreateFile(
+    auto lpFileName,
     DWORD dwDesiredAccess,
     DWORD dwShareMode,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes,
     DWORD dwCreationDisposition,
     DWORD dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL,
     HANDLE hTemplateFile = NULL) {
+    const auto name = to_wide(lpFileName);
+    if (!name.has_value()) {
+      return make_error<file_handle_type>(name.error());
+    }
+
     return (&::CreateFileW | returns_file_handle() | TErrorMapper())(
-      lpFileName,
+      nullable_cstr(name),
       dwDesiredAccess,
       dwShareMode,
       lpSecurityAttributes,
@@ -191,13 +355,18 @@ struct basic_winapi {
       dwFlagsAndAttributes,
       hTemplateFile);
   }
-  static constexpr auto CreateMailslotW(
-    LPCWSTR lpName,
+  static constexpr auto CreateMailslot(
+    auto lpName,
     DWORD nMaxMessageSize,
     DWORD lReadTimeout,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes = nullptr) {
+    const auto name = to_wide(lpName);
+    if (!name.has_value()) {
+      return make_error<file_handle_type>(name.error());
+    }
+
     return (&::CreateMailslotW | returns_file_handle() | TErrorMapper())(
-      lpName, nMaxMessageSize, lReadTimeout, lpSecurityAttributes);
+      nullable_cstr(name), nMaxMessageSize, lReadTimeout, lpSecurityAttributes);
   }
 };
 
