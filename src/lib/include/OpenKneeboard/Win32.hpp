@@ -36,7 +36,7 @@ struct noarg_bindable_t : FredEmmott::bindline_extension_api::bindable_t {
   template <class TFn>
   constexpr auto bind_to(TFn&& fn) const noexcept {
     return std::bind_front(
-      []<class InvokeFn>(InvokeFn&& fn, auto... args) -> decltype(auto) {
+      []<class InvokeFn>(InvokeFn&& fn, auto... args) -> auto {
         return TDerived::invoke(std::forward<InvokeFn>(fn), args...);
       },
       std::forward<TFn>(fn));
@@ -46,11 +46,11 @@ struct noarg_bindable_t : FredEmmott::bindline_extension_api::bindable_t {
 template <class TDerived>
 struct result_transform_t : noarg_bindable_t<TDerived> {
   template <class TFn>
-  constexpr static decltype(auto) invoke(TFn&& fn, auto... args) {
+  constexpr static auto invoke(TFn&& fn, auto... args) {
     return TDerived::transform_result(std::forward<TFn>(fn)(args...));
   }
 
-  static decltype(auto) transform_result(auto) = delete;
+  static auto transform_result(auto) = delete;
 };
 
 template <class THandle>
@@ -68,7 +68,7 @@ struct basic_returns_handle
 template <class TTraits>
 struct or_throw : result_transform_t<or_throw<TTraits>> {
   template <class T>
-  constexpr static decltype(auto) transform_result(T&& expected) {
+  constexpr static auto transform_result(T&& expected) {
     if (expected.has_value()) {
       return std::forward<T>(expected).value();
     }
@@ -88,8 +88,7 @@ struct or_default : result_transform_t<or_default> {
 
 struct result_identity : result_transform_t<result_identity> {
   template <class T>
-  static constexpr decltype(auto) transform_result(
-    std::expected<T, HRESULT>&& expected) {
+  static constexpr auto transform_result(std::expected<T, HRESULT>&& expected) {
     return std::move(expected);
   }
 };
