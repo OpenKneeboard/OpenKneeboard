@@ -56,7 +56,7 @@ Over time, most people will get used to this and it will naturally become more c
 
 Launch OpenKneeboard with a `--minimized` parameter; for example, by editing the shortcut:
 
-![add `--minimized` at the end, separated by a space, after quote marks (if any)](screenshots/minimized-shortcut.png)
+![add `--minimized` at the end, separated by a space, after quote marks (if any)](../screenshots/minimized-shortcut.png)
 
 ## How do I remove the header or footer ('borders')?
 
