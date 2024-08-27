@@ -5,3 +5,4 @@ docs/.bundle
 docs/vendor
 .vs/
 out/
+.idea/
