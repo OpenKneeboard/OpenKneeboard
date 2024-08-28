@@ -83,6 +83,8 @@ struct WILFailureRecord {
 };
 
 static thread_local std::optional<WILFailureRecord> tLatestWILFailure {};
+
+MINIDUMP_TYPE gMinidumpType {MiniDumpNormal};
 }// namespace
 
 template <class CharT>
@@ -181,14 +183,8 @@ struct CrashMeta {
   }
 };
 
-enum class DumpType {
-  MiniDump,
-  FullDump,
-};
-
 static void CreateDump(
   CrashMeta& meta,
-  DumpType dumpType,
   std::string_view extraData,
   LPEXCEPTION_POINTERS exceptionPointers) {
   static std::atomic_flag sDumped;
@@ -229,15 +225,6 @@ static void CreateDump(
     exceptionInfo.ExceptionPointers = &fakeExceptionPointers;
   }
 
-  constexpr auto miniDumpType = static_cast<MINIDUMP_TYPE>(
-    MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithProcessThreadData
-    | MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo);
-  constexpr auto fullDumpType = static_cast<MINIDUMP_TYPE>(
-    (miniDumpType & ~MiniDumpWithIndirectlyReferencedMemory)
-    | MiniDumpWithFullMemory | MiniDumpIgnoreInaccessibleMemory);
-  auto thisDumpType
-    = (dumpType == DumpType::FullDump) ? fullDumpType : miniDumpType;
-
   MINIDUMP_USER_STREAM_INFORMATION userStreams {};
   MINIDUMP_USER_STREAM extraDataStream {};
 
@@ -264,7 +251,7 @@ static void CreateDump(
     GetCurrentProcess(),
     meta.mPID,
     dumpFile.get(),
-    thisDumpType,
+    gMinidumpType,
     &exceptionInfo,
     &userStreams,
     /* callback = */
@@ -406,19 +393,7 @@ OPENKNEEBOARD_NOINLINE
   if (meta.CanWriteDump()) {
     auto thisProcess = Filesystem::GetCurrentExecutablePath();
 
-    const auto createFullDump = MessageBox(
-      NULL,
-      L"OpenKneeboard has crashed and a log has been created; would you like "
-      L"to create a full dump that you can share with the developers? "
-      L"Otherwise, a much smaller - but much less useful - minidump will be "
-      L"created instead.\n\n"
-      L"This may create a very large file (several hundred MB).",
-      thisProcess.stem().c_str(),
-      MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
-
-    const auto dumpType
-      = (createFullDump == IDYES) ? DumpType::FullDump : DumpType::MiniDump;
-    CreateDump(meta, dumpType, logContents, dumpableExceptions);
+    CreateDump(meta, logContents, dumpableExceptions);
 
     try {
       Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
@@ -508,6 +483,24 @@ extern "C" void __stdcall CxxThrowExceptionHook(
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
+
+void SetDumpType(DumpType type) {
+  constexpr auto miniDumpType = static_cast<MINIDUMP_TYPE>(
+    MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithProcessThreadData
+    | MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo);
+  constexpr auto fullDumpType = static_cast<MINIDUMP_TYPE>(
+    (miniDumpType & ~MiniDumpWithIndirectlyReferencedMemory)
+    | MiniDumpWithFullMemory | MiniDumpIgnoreInaccessibleMemory);
+  switch (type) {
+    case DumpType::MiniDump:
+      gMinidumpType = miniDumpType;
+      break;
+    case DumpType::FullDump:
+      gMinidumpType = fullDumpType;
+      break;
+  }
+}
+
 void fatal_with_hresult(HRESULT hr) {
   using namespace OpenKneeboard::detail;
   prepare_to_fatal();

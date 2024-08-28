@@ -351,6 +351,11 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   }
 
   OpenKneeboard::divert_process_failure_to_fatal();
+  const auto fullDumps
+    = wil::reg::try_get_value_dword(
+        HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"CreateFullDumps")
+        .value_or(0);
+  SetDumpType(fullDumps ? DumpType::FullDump : DumpType::MiniDump);
 
   if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {
     return 0;

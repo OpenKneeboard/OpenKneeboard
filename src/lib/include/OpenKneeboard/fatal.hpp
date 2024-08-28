@@ -90,6 +90,12 @@ inline void prepare_to_fatal() {
 
 namespace OpenKneeboard {
 
+enum class DumpType {
+  MiniDump,
+  FullDump,
+};
+void SetDumpType(DumpType);
+
 template <class... Ts>
 OPENKNEEBOARD_NOINLINE [[noreturn]]
 void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
