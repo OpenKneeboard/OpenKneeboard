@@ -53,12 +53,12 @@ struct result_transform_t : noarg_bindable_t<TDerived> {
   static auto transform_result(auto) = delete;
 };
 
-template <class THandle>
+template <class THandle, HANDLE TErrorValue>
 struct basic_returns_handle
-  : result_transform_t<basic_returns_handle<THandle>> {
+  : result_transform_t<basic_returns_handle<THandle, TErrorValue>> {
   constexpr static std::expected<THandle, HRESULT> transform_result(
     HANDLE handle) {
-    if (handle == INVALID_HANDLE_VALUE || !handle) {
+    if (handle == TErrorValue) {
       return std::unexpected(HRESULT_FROM_WIN32(GetLastError()));
     }
     return THandle {handle};
@@ -187,8 +187,8 @@ struct wide_traits {
 };
 
 struct raw_winapi_traits {
-  using handle_type = HANDLE;
-  using file_handle_type = HANDLE;
+  using handle_or_null_type = HANDLE;
+  using handle_or_invalid_type = HANDLE;
 
   // Error message marker
   struct winapi_does_not_use_exceptions_call_optional_value_instead {};
@@ -198,8 +198,8 @@ struct raw_winapi_traits {
 };
 
 struct winrt_winapi_traits {
-  using handle_type = winrt::handle;
-  using file_handle_type = winrt::file_handle;
+  using handle_or_null_type = winrt::handle;
+  using handle_or_invalid_type = winrt::file_handle;
 
   [[noreturn]] static void throw_hresult(const HRESULT hr) {
     OPENKNEEBOARD_ASSERT(FAILED(hr));
@@ -249,11 +249,11 @@ struct basic_winapi {
   }
 
  public:
-  using handle_type = typename TTraits::handle_type;
-  using file_handle_type = typename TTraits::file_handle_type;
+  using handle_or_null_type = typename TTraits::handle_or_null_type;
+  using handle_or_invalid_type = typename TTraits::handle_or_invalid_type;
 
-  using returns_handle = basic_returns_handle<handle_type>;
-  using returns_file_handle = basic_returns_handle<file_handle_type>;
+  using returns_handle_or_null = basic_returns_handle<handle_or_null_type, nullptr>;
+  using returns_handle_or_invalid = basic_returns_handle<handle_or_invalid_type, INVALID_HANDLE_VALUE>;
 
   using or_throw = basic_winapi<TTraits, or_throw<TTraits>, TStringTraits>;
   using or_default = basic_winapi<TTraits, or_default, TStringTraits>;
@@ -277,10 +277,10 @@ struct basic_winapi {
     auto lpName = nullptr) {
     const auto name = to_wide(lpName);
     if (!name.has_value()) {
-      return make_error<handle_type>(name.error());
+      return make_error<handle_or_null_type>(name.error());
     }
 
-    return (&::CreateEventW | returns_handle() | TErrorMapper())(
+    return (&::CreateEventW | returns_handle_or_null() | TErrorMapper())(
       lpEventAttributes, bManualReset, bInitialState, nullable_cstr(name));
   }
 
@@ -293,10 +293,10 @@ struct basic_winapi {
     auto lpName = nullptr) {
     const auto name = to_wide(lpName);
     if (!name.has_value()) {
-      return make_error<handle_type>(name.error());
+      return make_error<handle_or_null_type>(name.error());
     }
 
-    return (&::CreateFileMappingW | returns_handle() | TErrorMapper())(
+    return (&::CreateFileMappingW | returns_handle_or_null() | TErrorMapper())(
       hFile,
       lpFileMappingAttributes,
       flProtect,
@@ -311,10 +311,10 @@ struct basic_winapi {
     auto lpName = nullptr) {
     const auto name = to_wide(lpName);
     if (!name.has_value()) {
-      return make_error<handle_type>(name.error());
+      return make_error<handle_or_null_type>(name.error());
     }
 
-    return (&::CreateMutexW | returns_handle() | TErrorMapper())(
+    return (&::CreateMutexW | returns_handle_or_null() | TErrorMapper())(
       lpMutexAttributes, bInitialOwner, nullable_cstr(name));
   }
 
@@ -324,10 +324,10 @@ struct basic_winapi {
     auto lpTimerName = nullptr) {
     const auto name = to_wide(lpTimerName);
     if (!name.has_value()) {
-      return make_error<handle_type>(name.error());
+      return make_error<handle_or_null_type>(name.error());
     }
 
-    return (&::CreateWaitableTimerW | returns_handle() | TErrorMapper())(
+    return (&::CreateWaitableTimerW | returns_handle_or_null() | TErrorMapper())(
       lpTimerAttributes, bManualReset, nullable_cstr(name));
   }
 
@@ -342,10 +342,10 @@ struct basic_winapi {
     HANDLE hTemplateFile = NULL) {
     const auto name = to_wide(lpFileName);
     if (!name.has_value()) {
-      return make_error<file_handle_type>(name.error());
+      return make_error<handle_or_invalid_type>(name.error());
     }
 
-    return (&::CreateFileW | returns_file_handle() | TErrorMapper())(
+    return (&::CreateFileW | returns_handle_or_invalid() | TErrorMapper())(
       nullable_cstr(name),
       dwDesiredAccess,
       dwShareMode,
@@ -361,10 +361,10 @@ struct basic_winapi {
     LPSECURITY_ATTRIBUTES lpSecurityAttributes = nullptr) {
     const auto name = to_wide(lpName);
     if (!name.has_value()) {
-      return make_error<file_handle_type>(name.error());
+      return make_error<handle_or_invalid_type>(name.error());
     }
 
-    return (&::CreateMailslotW | returns_file_handle() | TErrorMapper())(
+    return (&::CreateMailslotW | returns_handle_or_invalid() | TErrorMapper())(
       nullable_cstr(name), nMaxMessageSize, lReadTimeout, lpSecurityAttributes);
   }
 };
