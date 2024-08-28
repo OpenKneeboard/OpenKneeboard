@@ -140,3 +140,9 @@ As a user, your best way forward is to look for help from the other tool, and co
 ## What settings do you recommend?
 
 I choose what the defaults are, so, the defaults ;)
+
+## My framerate improves when I hide OpenKneeboard when the app is still running; what's up?
+
+When OpenKneeboard is hidden, it keeps doing 99.9% of what it does when it's visible; the biggest change when you hide OpenKnebeoard is that your VR runtime no longer needs to combine the 3D and 2D content.
+
+If hiding OpenKneeboard while it's still running has a significant effect on your framerate, this indicates the performance limitation is your VR runtimes' compositor; this **CAN NOT** be improved by OpenKneeboard - if you need improvements, contact your runtime vendor/headset manufacturer.
