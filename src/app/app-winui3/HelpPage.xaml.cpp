@@ -627,7 +627,13 @@ std::string HelpPage::GetOpenXRRuntime() noexcept {
   }
 
   if (!key) {
-    return "No available runtimes?";
+    // Registering an 'available runtime' is a *should*, and some runtimes
+    // don't.
+    //
+    // It's possible to set an active runtime without setting an available
+    // runtime, so this can fail, but we still have useful information.
+    ret += "No available runtimes?";
+    return ret;
   }
 
   wchar_t path[1024];
