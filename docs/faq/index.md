@@ -146,3 +146,9 @@ I choose what the defaults are, so, the defaults ;)
 When OpenKneeboard is hidden, it keeps doing 99.9% of what it does when it's visible; the biggest change when you hide OpenKnebeoard is that your VR runtime no longer needs to combine the 3D and 2D content.
 
 If hiding OpenKneeboard while it's still running has a significant effect on your framerate, this indicates the performance limitation is your VR runtimes' compositor; this **CAN NOT** be improved by OpenKneeboard - if you need improvements, contact your runtime vendor/headset manufacturer.
+
+## I have another performance problem
+
+OpenKneeboard is highly efficient; if you have already tuned your system to the limit without OpenKneeboard, even the slightest bit of extra load will make any small usage have an outsized effect.
+
+If you believe this is not the trace, and you have *NO* drops without OpenKneeboard (but with the same overlays/content open), reach out on Discord or GitHub issues with [a detailed OpenXR trace](../troubleshooting/logs-and-traces.md#detailed-openxr-traces) showing the problem, along with logs/charts from a tool such as HWMONITOR-PRO showing that you are not unrelatedly hitting thermal/power limits.
