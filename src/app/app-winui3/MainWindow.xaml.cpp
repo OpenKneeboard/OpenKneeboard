@@ -478,7 +478,7 @@ task<void> MainWindow::ShowWarningIfWintabConfiguredButUnusable() {
 
   switch (result) {
     case ContentDialogResult::Primary:
-      co_await LaunchURI("https://go.openkneeboard.com/troubleshooting");
+      co_await LaunchURI("https://go.openkneeboard.com/wintab");
       co_return;
     case ContentDialogResult::Secondary:
       Frame().Navigate(xaml_typename<InputSettingsPage>());
