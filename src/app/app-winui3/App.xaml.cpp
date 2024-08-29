@@ -422,6 +422,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();
 
+  Filesystem::MigrateSettingsDirectory();
+
   DebugPrivileges privileges;
 
   dprint("Starting Xaml application");

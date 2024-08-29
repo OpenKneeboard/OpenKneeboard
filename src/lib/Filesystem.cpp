@@ -33,6 +33,7 @@
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <format>
+#include <fstream>
 #include <mutex>
 
 #include <ShlObj.h>
@@ -147,16 +148,41 @@ std::filesystem::path GetImmutableDataDirectory() {
 
 std::filesystem::path GetSettingsDirectory() {
   static LazyPath sPath {[]() -> std::filesystem::path {
-    const auto base = GetKnownFolderPath<FOLDERID_SavedGames>();
+    const auto base = GetKnownFolderPath<FOLDERID_LocalAppData>();
     if (base.empty()) {
       return {};
     }
-    const auto ret = base / "OpenKneeboard";
+    const auto ret = base / "OpenKneeboard" / "Settings";
     std::filesystem::create_directories(ret);
     return ret;
   }};
 
   return sPath;
+}
+
+void MigrateSettingsDirectory() {
+  const auto newPath = GetSettingsDirectory();
+  if (!std::filesystem::is_empty(newPath)) {
+    return;
+  }
+  const auto oldPath
+    = GetKnownFolderPath<FOLDERID_SavedGames>() / "OpenKneeboard";
+  if (!std::filesystem::exists(oldPath)) {
+    return;
+  }
+
+  dprintf("🚚 moving settings from `{}` to `{}`", oldPath, newPath);
+
+  std::filesystem::remove(newPath);
+  std::filesystem::rename(oldPath, newPath);
+
+  const auto warningFile = oldPath.parent_path() / "OpenKneeboard-README.txt";
+  {
+    std::ofstream f(warningFile, std::ios::binary | std::ios::trunc);
+    f << "OpenKneeboard's settings have been moved to: " << newPath.string()
+      << std::endl;
+  }
+  dprintf("✅ moved, and created warning file at `{}`", warningFile);
 }
 
 std::filesystem::path GetLocalAppDataDirectory() {

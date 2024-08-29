@@ -51,6 +51,8 @@ auto GetKnownFolderPath() {
 
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 
+void MigrateSettingsDirectory();
+
 void CleanupTemporaryDirectories();
 
 class ScopedDeleter {
