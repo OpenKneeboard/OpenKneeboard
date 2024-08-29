@@ -1280,7 +1280,7 @@ void MainWindow::Show() {
 }
 
 std::filesystem::path MainWindow::GetInstanceDataPath() {
-  return Filesystem::GetSettingsDirectory() / ".instance";
+  return Filesystem::GetLocalAppDataDirectory() / "instance.txt";
 }
 
 LRESULT MainWindow::SubclassProc(

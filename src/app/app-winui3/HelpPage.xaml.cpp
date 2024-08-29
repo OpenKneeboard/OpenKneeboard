@@ -249,6 +249,8 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
 
     const auto relative = to_utf8(
       std::filesystem::proximate(path, settingsDir).generic_wstring());
+    // v1.8 and below; PID etc. Now in %LOCALAPPDATA% / OpenKneeboard /
+    // instance.txt
     if (relative == ".instance") {
       continue;
     }

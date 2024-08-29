@@ -186,6 +186,10 @@ void MigrateSettingsDirectory() {
       continue;
     }
 
+    if (src.filename() == ".instance") {
+      continue;
+    }
+
     const auto ext = src.extension();
 
     if (ext == ".dmp" || ext == ".log") {
