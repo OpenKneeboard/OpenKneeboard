@@ -28,11 +28,18 @@ ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)
 target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC OpenKneeboard-Lib-Headers)
 target_link_libraries(OpenKneeboard-ThreadGuard PRIVATE OpenKneeboard-dprint)
 
-ok_add_library(OpenKneeboard-fatal STATIC fatal.cpp)
+ok_add_library(
+  OpenKneeboard-fatal
+  STATIC
+  fatal.cpp
+  HEADERS
+  include/OpenKneeboard/fatal.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
 target_link_libraries(
   OpenKneeboard-fatal
   PUBLIC
-  OpenKneeboard-Lib-Headers
   OpenKneeboard-config
   PRIVATE
   OpenKneeboard-dprint
@@ -301,11 +308,18 @@ target_link_libraries(
   ThirdParty::VulkanHeaders
 )
 
-ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
+ok_add_library(
+  OpenKneeboard-dprint
+  STATIC
+  dprint.cpp
+  HEADERS
+  include/OpenKneeboard/dprint.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
 target_link_libraries(
   OpenKneeboard-dprint
   PUBLIC
-  OpenKneeboard-Lib-Headers
   OpenKneeboard-config
   OpenKneeboard-fatal
   ThirdParty::bindline

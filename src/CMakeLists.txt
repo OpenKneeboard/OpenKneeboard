@@ -91,9 +91,14 @@ function(ok_add_library TARGET KIND)
 
   add_library("${TARGET}" "${KIND}" ${LIBRARY_ARG_UNPARSED_ARGUMENTS})
   if(LIBRARY_ARG_HEADERS)
+    if("$KIND" STREQUAL "INTERFACE")
+      set(HEADER_KIND "INTERFACE")
+    else()
+      set(HEADER_KIND "PUBLIC")
+    endif()
     target_sources(
       "${TARGET}"
-      "${KIND}"
+      "${HEADER_KIND}"
       FILE_SET HEADERS
       TYPE HEADERS
       BASE_DIRS ${LIBRARY_ARG_INCLUDE_DIRECTORIES}
