@@ -130,6 +130,7 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
 static void LogSystemInformation() {
   dprintf("{} {}", ProjectReverseDomainA, Version::ReleaseName);
   dprintf(L"Full path: {}", GetFullPathForCurrentExecutable());
+  dprintf(L"Command line: {}", GetCommandLineW());
   dprint("----------");
   dprintf("  Elevated: {}", IsElevated());
   dprintf("  Shell Elevated: {}", IsShellElevated());
