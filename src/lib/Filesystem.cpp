@@ -173,14 +173,55 @@ void MigrateSettingsDirectory() {
 
   dprintf("🚚 moving settings from `{}` to `{}`", oldPath, newPath);
 
-  std::filesystem::remove(newPath);
-  std::filesystem::rename(oldPath, newPath);
+  bool canDelete = true;
 
-  const auto warningFile = oldPath.parent_path() / "OpenKneeboard-README.txt";
+  std::filesystem::remove(newPath);
+  for (auto&& it: std::filesystem::recursive_directory_iterator(oldPath)) {
+    if (it.is_directory()) {
+      continue;
+    }
+
+    const auto src = it.path();
+    if (!src.has_extension()) {
+      continue;
+    }
+
+    const auto ext = src.extension();
+
+    if (ext == ".dmp" || ext == ".log") {
+      continue;
+    }
+
+    if (ext != ".json") {
+      // Some people put content in their OpenKneeboard folder :/
+      canDelete = false;
+      continue;
+    }
+
+    const auto dest = newPath
+      / std::filesystem::relative(src.parent_path(), oldPath) / src.filename();
+    dprintf("🚚 `{}` -> `{}`", src, dest);
+    std::filesystem::create_directories(dest.parent_path());
+    std::filesystem::rename(src, dest);
+  }
+
+  if (canDelete) {
+    std::filesystem::remove_all(oldPath);
+  }
+
+  const auto warningFile = canDelete
+    ? (oldPath.parent_path() / "OpenKneeboard-README.txt")
+    : (oldPath / "SETTINGS_HAVE_MOVED-README.txt");
   {
     std::ofstream f(warningFile, std::ios::binary | std::ios::trunc);
-    f << "OpenKneeboard's settings have been moved to: " << newPath.string()
-      << std::endl;
+    f << "OpenKneeboard's settings have been moved to:\n"
+      << newPath.string() << std::endl;
+
+    if (!canDelete) {
+      f << "\nThis folder has been left here in case you want to keep any "
+           "other files you may have put in it."
+        << std::endl;
+    }
   }
   dprintf("✅ moved, and created warning file at `{}`", warningFile);
 }
