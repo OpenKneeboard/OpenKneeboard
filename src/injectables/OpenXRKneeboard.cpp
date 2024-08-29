@@ -372,8 +372,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     addedXRLayers.push_back({
       .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
       .next = nullptr,
-      .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
-        | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
+      .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
       .space = mLocalSpace,
       .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
       .subImage = XrSwapchainSubImage {
