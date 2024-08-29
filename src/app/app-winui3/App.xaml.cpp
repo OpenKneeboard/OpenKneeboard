@@ -423,6 +423,24 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   Filesystem::CleanupTemporaryDirectories();
 
   Filesystem::MigrateSettingsDirectory();
+  for (auto&& dir:
+       {Filesystem::GetLocalAppDataDirectory(),
+        Filesystem::GetSettingsDirectory()}) {
+    const auto warningFile = dir / "DO_NOT_PUT_YOUR_FILES_HERE-README.txt";
+    if (std::filesystem::exists(warningFile)) {
+      continue;
+    }
+
+    std::ofstream f(warningFile, std::ios::trunc | std::ios::binary);
+    f << "Do not put any of your files here; this directory is for "
+         "OpenKneeboard's internal use, and OpenKneeboard may delete any files "
+         "you put here without warning.\n\n"
+         "You might want to use the My Documents folder ("
+      << Filesystem::GetKnownFolderPath<FOLDERID_Documents>().string()
+      << ") or a new subfolder of your user folder ("
+      << Filesystem::GetKnownFolderPath<FOLDERID_Profile>().string()
+      << ") instead." << std::endl;
+  }
 
   DebugPrivileges privileges;
 
