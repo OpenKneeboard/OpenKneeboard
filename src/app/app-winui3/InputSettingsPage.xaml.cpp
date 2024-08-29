@@ -115,13 +115,15 @@ uint8_t InputSettingsPage::WintabMode() const {
     mKneeboard->GetTabletInputAdapter()->GetWintabMode());
 }
 
-task<void> InputSettingsPage::WintabMode(uint8_t rawMode) const {
+OpenKneeboard::fire_and_forget InputSettingsPage::WintabMode(uint8_t rawMode) {
   auto t = mKneeboard->GetTabletInputAdapter();
   const auto mode = static_cast<OpenKneeboard::WintabMode>(rawMode);
   if (mode == t->GetWintabMode()) {
     co_return;
   }
   co_await t->SetWintabMode(mode);
+  // Should be 'available', but may also have 'no tablet connnected'
+  this->EmitPropertyChangedEvent(L"WinTabAvailability");
 }
 
 bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
@@ -134,13 +136,23 @@ bool InputSettingsPage::IsWinTabAvailable() const {
 }
 
 winrt::hstring InputSettingsPage::WinTabAvailability() const {
-  switch (mKneeboard->GetTabletInputAdapter()->GetWinTabAvailability()) {
+  auto adapter = mKneeboard->GetTabletInputAdapter();
+
+  switch (adapter->GetWinTabAvailability()) {
     case WinTabAvailability::NotInstalled:
       return _(
         L"No 64-bit WinTab-capable tablet driver is installed on your "
         L"system.");
     case WinTabAvailability::Available:
-      return _(L"WinTab is available on your system.");
+      if (
+        adapter->HaveAnyTablet()
+        || adapter->GetWintabMode() == WintabMode::Disabled) {
+        return _(L"WinTab is available on your system.");
+      } else {
+        return _(
+          L"WinTab is available on your system, but the driver reports that "
+          L"no tablet is connected.");
+      }
     case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
       return _(
         L"WinTab is disabled because you have enabled OpenTabletDriver.");

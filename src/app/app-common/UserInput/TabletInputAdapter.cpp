@@ -205,20 +205,20 @@ task<void> TabletInputAdapter::SetWintabMode(WintabMode mode) {
     co_return;
   }
   if (!mWintabTablet) {
-    dprint("Failed to initialize wintab");
-    co_return;
-  }
-  auto priority = (mSettings.mWintab == WintabMode::Enabled)
-    ? WintabTablet::Priority::AlwaysActive
-    : WintabTablet::Priority::ForegroundOnly;
-  mWintabTablet->SetPriority(priority);
-  // Again, make sure that doesn't crash :)
+    dprint("Initialized wintab, but no tablet attached");
+  } else {
+    auto priority = (mSettings.mWintab == WintabMode::Enabled)
+      ? WintabTablet::Priority::AlwaysActive
+      : WintabTablet::Priority::ForegroundOnly;
+    mWintabTablet->SetPriority(priority);
+    // Again, make sure that doesn't crash :)
 
-  self.reset();
-  co_await winrt::resume_after(std::chrono::milliseconds(100));
-  self = weak.lock();
-  if (!self) {
-    co_return;
+    self.reset();
+    co_await winrt::resume_after(std::chrono::milliseconds(100));
+    self = weak.lock();
+    if (!self) {
+      co_return;
+    }
   }
   evSettingsChangedEvent.Emit();
 }

@@ -119,6 +119,9 @@ struct MainWindow : MainWindowT<MainWindow>,
   OpenKneeboard::fire_and_forget OnLoaded();
   task<void> ShowSelfElevationWarning();
   task<void> PromptForViewMode();
+  task<void> ShowWarningIfTabletConfiguredButUnusable();
+  task<void> ShowWarningIfWintabConfiguredButUnusable();
+  task<void> ShowWarningIfOTDIPCConfiguredButUnusable();
   OpenKneeboard::fire_and_forget UpdateProfileSwitcherVisibility();
   OpenKneeboard::fire_and_forget RenameTab(std::shared_ptr<ITab>);
   OpenKneeboard::fire_and_forget Shutdown();
