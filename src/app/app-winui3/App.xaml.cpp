@@ -204,6 +204,8 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 
 static void LogSystemInformation() {
   dprintf("{} {}", ProjectReverseDomainA, Version::ReleaseName);
+  dprintf(L"Full path: {}", GetFullPathForCurrentExecutable());
+  dprintf(L"Command line: {}", GetCommandLineW());
   dprint("----------");
   dprintf("  Elevated: {}", IsElevated());
   dprintf("  Shell Elevated: {}", IsShellElevated());
