@@ -146,6 +146,19 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
     return false;
   }
 
+  {
+    int argc {};
+    auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    for (int i = 0; i < argc; ++i) {
+      if (std::wstring_view {argv[i]} == L"--do-not-relaunch") {
+        dprint(
+          "⚠️ WARNING: Keeping running with incorrect elevation because "
+          "--do-not-relaunch specified");
+        return false;
+      }
+    }
+  }
+
   // Relaunch as child of the (not-elevated) shell
   DWORD shellProcessID {};
   GetWindowThreadProcessId(GetShellWindow(), &shellProcessID);
@@ -180,6 +193,8 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
     nullptr,
     nullptr));
 
+  auto commandLine = std::format(L"{} --do-not-relaunch", GetCommandLineW());
+
   STARTUPINFOEXW startupInfo {
     .StartupInfo = {.cb = sizeof(STARTUPINFOEXW)},
     .lpAttributeList = tal,
@@ -187,7 +202,7 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
   PROCESS_INFORMATION processInfo {};
   winrt::check_bool(CreateProcessW(
     path,
-    path,
+    commandLine.data(),
     nullptr,
     nullptr,
     false,
