@@ -28,7 +28,7 @@ namespace OpenKneeboardApp
 
         UInt8 WintabMode;
         Boolean IsOpenTabletDriverEnabled;
-        Boolean IsWinTabAvailable { get; };
+        Boolean IsWinTabSelectionEnabled { get; };
 
         String WinTabAvailability { get; };
         

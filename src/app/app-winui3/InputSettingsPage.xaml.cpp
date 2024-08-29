@@ -130,9 +130,10 @@ bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
   return mKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
 }
 
-bool InputSettingsPage::IsWinTabAvailable() const {
-  return mKneeboard->GetTabletInputAdapter()->GetWinTabAvailability()
-    == WinTabAvailability::Available;
+bool InputSettingsPage::IsWinTabSelectionEnabled() const {
+  auto adapter = mKneeboard->GetTabletInputAdapter();
+  return (adapter->GetWinTabAvailability() == WinTabAvailability::Available)
+    || (adapter->GetWintabMode() != WintabMode::Disabled);
 }
 
 winrt::hstring InputSettingsPage::WinTabAvailability() const {
@@ -169,7 +170,7 @@ winrt::hstring InputSettingsPage::WinTabAvailability() const {
 
 void InputSettingsPage::IsOpenTabletDriverEnabled(bool value) {
   mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
-  this->EmitPropertyChangedEvent(L"IsWinTabAvailable");
+  this->EmitPropertyChangedEvent(L"IsWinTabSelectionEnabled");
   this->EmitPropertyChangedEvent(L"WinTabAvailability");
 }
 

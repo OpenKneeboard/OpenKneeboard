@@ -113,7 +113,7 @@
         Spacing="8"
         Padding="8">
         <ComboBox
-          IsEnabled="{x:Bind IsWinTabAvailable, Mode=OneWay}"
+          IsEnabled="{x:Bind IsWinTabSelectionEnabled, Mode=OneWay}"
           Header="Wintab"
           SelectedIndex="{x:Bind WintabMode, Mode=TwoWay}">
           <x:String>Disabled</x:String>
