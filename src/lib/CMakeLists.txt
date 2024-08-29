@@ -517,11 +517,17 @@ target_link_libraries(
   ThirdParty::RenderDoc
 )
 
-ok_add_library(OpenKneeboard-win32 INTERFACE)
+ok_add_library(
+  OpenKneeboard-win32
+  INTERFACE
+  HEADERS
+  include/OpenKneeboard/Win32.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
 target_link_libraries(
   OpenKneeboard-win32
   INTERFACE
-  OpenKneeboard-Lib-Headers
   OpenKneeboard-fatal
   OpenKneeboard-shims
   ThirdParty::bindline

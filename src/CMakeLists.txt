@@ -83,9 +83,31 @@ function(ok_postprocess_target TARGET)
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
-function(ok_add_library TARGET)
-  add_library("${TARGET}" ${ARGN})
+function(ok_add_library TARGET KIND)
+  set(options)
+  set(valueArgs)
+  set(multiValueArgs HEADERS INCLUDE_DIRECTORIES)
+  cmake_parse_arguments(LIBRARY_ARG "${options}" "${valueArgs}" "${multiValueArgs}" ${ARGN})
+
+  add_library("${TARGET}" "${KIND}" ${LIBRARY_ARG_UNPARSED_ARGUMENTS})
+  if(LIBRARY_ARG_HEADERS)
+    target_sources(
+      "${TARGET}"
+      "${KIND}"
+      FILE_SET HEADERS
+      TYPE HEADERS
+      BASE_DIRS ${LIBRARY_ARG_INCLUDE_DIRECTORIES}
+      FILES ${LIBRARY_ARG_HEADERS}
+    )
+  endif()
+
   ok_postprocess_target("${TARGET}")
+
+  if("${KIND}" STREQUAL "INTERFACE" AND "$ENV{CLION_IDE}")
+    # Workaround https://youtrack.jetbrains.com/issue/CPP-11340
+    add_executable("${TARGET}-clion-helper" EXCLUDE_FROM_ALL "${CMAKE_SOURCE_DIR}/scripts/true.cpp")
+    target_link_libraries("${TARGET}-clion-helper" PRIVATE "${TARGET}")
+  endif()
 endfunction()
 
 function(ok_add_executable TARGET)
