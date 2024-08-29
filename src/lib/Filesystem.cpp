@@ -202,8 +202,16 @@ void MigrateSettingsDirectory() {
       continue;
     }
 
-    const auto dest = newPath
-      / std::filesystem::relative(src.parent_path(), oldPath) / src.filename();
+    auto dest = newPath;
+    for (auto&& part: std::filesystem::relative(src.parent_path(), oldPath)
+           / src.filename()) {
+      if (part == "profiles") {
+        dest /= "Profiles";
+      } else {
+        dest /= part;
+      }
+    }
+
     dprintf("🚚 `{}` -> `{}`", src, dest);
     std::filesystem::create_directories(dest.parent_path());
     std::filesystem::rename(src, dest);
@@ -245,7 +253,7 @@ std::filesystem::path GetLocalAppDataDirectory() {
 
 std::filesystem::path GetLogsDirectory() {
   static LazyPath sPath {[]() -> std::filesystem::path {
-    const auto ret = GetLocalAppDataDirectory() / "logs";
+    const auto ret = GetLocalAppDataDirectory() / "Logs";
     std::filesystem::create_directories(ret);
     return ret;
   }};
@@ -254,7 +262,7 @@ std::filesystem::path GetLogsDirectory() {
 
 std::filesystem::path GetCrashLogsDirectory() {
   static LazyPath sPath {[]() -> std::filesystem::path {
-    const auto ret = GetLogsDirectory() / "crashes";
+    const auto ret = GetLogsDirectory() / "Crashes";
     std::filesystem::create_directories(ret);
     return ret;
   }};

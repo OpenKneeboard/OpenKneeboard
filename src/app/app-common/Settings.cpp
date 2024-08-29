@@ -133,7 +133,7 @@ void Settings::Save(std::string_view profile) const {
     parentSettings = Settings::Load("default");
   }
 
-  const auto profileDir = std::filesystem::path {"profiles"} / profile;
+  const auto profileDir = std::filesystem::path {"Profiles"} / profile;
   if (parentSettings == *this && std::filesystem::is_directory(profileDir)) {
     // Ignore, e.g. if a file is open
     std::error_code ec;
@@ -178,7 +178,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
     } else { \
       m##name = Settings::Load("default").m##name; \
     } \
-    const auto path = Filesystem::GetSettingsDirectory() / "profiles" \
+    const auto path = Filesystem::GetSettingsDirectory() / "Profiles" \
       / profileID / #name ".json"; \
     if (std::filesystem::exists(path)) { \
       std::filesystem::remove(path); \
@@ -190,7 +190,7 @@ OPENKNEEBOARD_SETTINGS_SECTIONS
 // v1.2 -> v1.3
 static void MigrateToProfiles(Settings& settings) {
   if (std::filesystem::exists(
-        Filesystem::GetSettingsDirectory() / "profiles")) {
+        Filesystem::GetSettingsDirectory() / "Profiles")) {
     return;
   }
 
@@ -258,7 +258,7 @@ Settings Settings::Load(std::string_view profile) {
   }
 
   const auto profileDir
-    = Filesystem::GetSettingsDirectory() / "profiles" / profile;
+    = Filesystem::GetSettingsDirectory() / "Profiles" / profile;
 
 #define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, profileDir / #x ".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
