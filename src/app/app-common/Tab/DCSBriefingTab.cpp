@@ -59,10 +59,9 @@ task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
   KneeboardState* kbs,
   winrt::guid persistentID,
   std::string_view title) {
-  std::shared_ptr<DCSBriefingTab> ret{
+  std::shared_ptr<DCSBriefingTab> ret {
     new DCSBriefingTab(dxr, kbs, persistentID, title)};
-  co_await ret->SetDelegates(
-  {
+  co_await ret->SetDelegates({
     std::static_pointer_cast<IPageSource>(ret->mTextPages),
     std::static_pointer_cast<IPageSource>(ret->mImagePages),
   });
@@ -82,12 +81,11 @@ std::string DCSBriefingTab::GetStaticGlyph() {
 }
 
 task<void> DCSBriefingTab::Reload() noexcept {
-  const scope_exit emitEvents(
-    [this]() {
-      this->evContentChangedEvent.Emit();
-      this->evAvailableFeaturesChangedEvent.Emit();
-      this->evNeedsRepaintEvent.Emit();
-    });
+  const scope_exit emitEvents([this]() {
+    this->evContentChangedEvent.Emit();
+    this->evAvailableFeaturesChangedEvent.Emit();
+    this->evNeedsRepaintEvent.Emit();
+  });
   mImagePages->SetPaths({});
   mTextPages->ClearText();
 
@@ -116,7 +114,7 @@ task<void> DCSBriefingTab::Reload() noexcept {
   const auto mapResource = lua.GetGlobal("mapResource");
 
   std::vector<std::pair<std::string_view, std::function<void()>>>
-    sectionLoaders{
+    sectionLoaders {
       {
         "SetMissionImages",
         std::bind_front(
@@ -129,26 +127,17 @@ task<void> DCSBriefingTab::Reload() noexcept {
       {
         "PushMissionOverview",
         std::bind_front(
-          &DCSBriefingTab::PushMissionOverview,
-          this,
-          mission,
-          dictionary),
+          &DCSBriefingTab::PushMissionOverview, this, mission, dictionary),
       },
       {
         "PushMissionSituation",
         std::bind_front(
-          &DCSBriefingTab::PushMissionSituation,
-          this,
-          mission,
-          dictionary),
+          &DCSBriefingTab::PushMissionSituation, this, mission, dictionary),
       },
       {
         "PushMissionObjective",
         std::bind_front(
-          &DCSBriefingTab::PushMissionObjective,
-          this,
-          mission,
-          dictionary),
+          &DCSBriefingTab::PushMissionObjective, this, mission, dictionary),
       },
       {
         "PushMissionWeather",
@@ -202,12 +191,13 @@ OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
   auto state = mDCSState;
   if (event.name == DCS::EVT_SELF_DATA) {
     auto raw = nlohmann::json::parse(event.value);
-    state.mCoalition = raw.at("CoalitionID"),
-      state.mCountry = raw.at("Country");
+    state.mCoalition = static_cast<DCSWorld::Coalition>(
+      raw.at("CoalitionID").get<std::underlying_type_t<DCSWorld::Coalition>>()),
+    state.mCountry = raw.at("Country");
     state.mAircraft = raw.at("Name");
   } else if (event.name == DCS::EVT_ORIGIN) {
     auto raw = nlohmann::json::parse(event.value);
-    state.mOrigin = LatLong{
+    state.mOrigin = LatLong {
       .mLat = raw["latitude"],
       .mLong = raw["longitude"],
     };
@@ -231,8 +221,7 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
   const auto textCount = mTextPages->GetPageCount();
   const auto textIDs = mTextPages->GetPageIDs();
   for (PageIndex i = 0; i < textCount; ++i) {
-    entries.push_back(
-    {
+    entries.push_back({
       std::format(_("Transcription {}/{}"), i + 1, textCount),
       textIDs.at(i),
     });
@@ -242,8 +231,7 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
   const auto imageIDs = mImagePages->GetPageIDs();
 
   for (PageIndex i = 0; i < paths.size(); ++i) {
-    entries.push_back(
-    {
+    entries.push_back({
       to_utf8(paths.at(i).stem()),
       imageIDs.at(i),
     });
