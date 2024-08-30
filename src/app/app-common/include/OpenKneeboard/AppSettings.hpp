@@ -19,8 +19,9 @@
  */
 #pragma once
 
-#include <shims/Windows.h>
 #include <shims/optional>
+
+#include <Windows.h>
 
 #include <OpenKneeboard/json_fwd.hpp>
 

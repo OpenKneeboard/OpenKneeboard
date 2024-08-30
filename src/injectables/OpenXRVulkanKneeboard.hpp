@@ -29,12 +29,11 @@
 
 #include <OpenKneeboard/config.hpp>
 
-#include <d3d11_4.h>
-
-// clang-format off
 #include <shims/vulkan/vulkan.h>
+
 #include <openxr/openxr_platform.h>
-// clang-format on
+
+#include <d3d11_4.h>
 
 namespace OpenKneeboard {
 

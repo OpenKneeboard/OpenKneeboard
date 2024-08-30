@@ -19,19 +19,17 @@
  */
 #pragma once
 
-// clang-format off
-#include <combaseapi.h>
-#include <ctxtcall.h>
-// clang-format on
-
 #include <OpenKneeboard/StateMachine.hpp>
-
-#include <shims/winrt/base.h>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <combaseapi.h>
+#include <ctxtcall.h>
 
 #include <atomic>
 #include <coroutine>

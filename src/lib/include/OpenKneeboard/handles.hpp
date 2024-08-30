@@ -19,7 +19,8 @@
  */
 #pragma once
 
-#include <shims/Windows.h>
+#include <Windows.h>
+#include <objbase.h>
 
 #include <memory>
 

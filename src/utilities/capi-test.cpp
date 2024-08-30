@@ -23,12 +23,11 @@
  * files for more information.
  */
 
-// clang-format off
 #include <Windows.h>
 #include <ShlObj_core.h>
 #include <libloaderapi.h>
+
 #include <winrt/base.h>
-// clang-format on
 
 #include <filesystem>
 #include <iostream>

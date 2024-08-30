@@ -24,22 +24,19 @@
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+
 #include <shims/winrt/base.h>
 
-#include <OpenKneeboard/dprint.hpp>
+#include <Windows.h>
+#include <CommCtrl.h>
+#include <Dbt.h>
+#include <Rpc.h>
+#include <dinput.h>
 
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-
-#include <CommCtrl.h>
-
-// clang-format off
-#include <Windows.h>
-#include <Dbt.h>
-#include <Rpc.h>
-#include <dinput.h>
-// clang-format on
 
 using namespace OpenKneeboard;
 

@@ -24,10 +24,8 @@
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
-// clang-format off
 #include <Windows.h>
 #include <winternl.h>
-// clang-format on
 
 #include <d3dkmthk.h>
 #include <dxgi1_6.h>

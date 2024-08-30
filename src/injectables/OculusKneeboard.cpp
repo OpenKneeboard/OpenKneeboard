@@ -19,16 +19,15 @@
  */
 #include "OculusKneeboard.hpp"
 
+#include "OVRProxy.hpp"
+
 #include <OpenKneeboard/Spriting.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 
-// clang-format off
-#include <windows.h>
-#include <detours.h>
-// clang-format on
+#include <Windows.h>
 
-#include "OVRProxy.hpp"
+#include <detours.h>
 
 using namespace DirectX::SimpleMath;
 

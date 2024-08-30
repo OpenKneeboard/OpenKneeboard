@@ -19,13 +19,11 @@
  */
 #pragma once
 
-// clang-format off
-#include <Windows.h>
-#include <winmeta.h>
-// clang-format on
-
 #include <OpenKneeboard/macros.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <Windows.h>
+#include <winmeta.h>
 
 #include <exception>
 #include <source_location>

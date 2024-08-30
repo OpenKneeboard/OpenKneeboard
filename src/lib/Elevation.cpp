@@ -23,12 +23,11 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
-#include <thread>
-
-// clang-format off
 #include <shims/winrt/base.h>
+
 #include <shellapi.h>
-// clang-format on
+
+#include <thread>
 
 namespace OpenKneeboard {
 

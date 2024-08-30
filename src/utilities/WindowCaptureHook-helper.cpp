@@ -20,7 +20,7 @@
 #include <OpenKneeboard/ConsoleLoopCondition.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
-#include <shims/Windows.h>
+#include <Windows.h>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>

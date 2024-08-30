@@ -30,25 +30,23 @@
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
 #include <OpenKneeboard/WintabTablet.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>
+
+#include <shims/nlohmann/json.hpp>
+
+#include <CommCtrl.h>
+#include <KnownFolders.h>
+
+#include <WinTrust.h>
+#include <SoftPub.h>
 
 #include <atomic>
 #include <bit>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-
-#include <CommCtrl.h>
-#include <KnownFolders.h>
-
-// clang-format off
-#include <WinTrust.h>
-#include <SoftPub.h>
-// clang-format on
 
 namespace OpenKneeboard {
 

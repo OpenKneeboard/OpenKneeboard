@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
-#include <shims/Windows.h>
+#include <Windows.h>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>

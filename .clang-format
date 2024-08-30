@@ -27,7 +27,7 @@ IncludeCategories:
   - Regex: '^<OpenKneeboard/[A-Z].+.+'
     CaseSensitive: true
     Priority: 10
-  - Regex: '^<OpenKneeboard/[a-z0-9_]+\.h>$'
+  - Regex: '^<OpenKneeboard/[a-z0-9_/]+\.h(pp)?>$'
     CaseSensitive: true
     Priority: 11
   - Regex: '^<shims/.+'
@@ -35,15 +35,26 @@ IncludeCategories:
   - Regex: '^<Windows\.h>$'
     Priority: 30
   - Regex: '^<Unknwn\.h>'
-    Priority: 31
+    Priority: 30
+    SortPriority: 31
+  - Regex: '^<(Psapi|shellapi|TlHelp32|ShlObj(_core)?|Shlwapi|libloaderapi|WtsApi32|Dbt|Rpc|dinput|CommCtrl|objbase|KnownFolders|SubAuth|d3d11|d3d12|winternl|winmeta)\.h>'
+    Priority: 30
+    SortPriority: 32
+  - Regex: '^<WinTrust.h>$'
+    Priority: 32
+  - Regex: '^<SoftPub.h>$'
+    Priority: 32
+    SortPriority: 33
+  - Regex: '^<combaseapi.h>$'
+    Priority: 33
+  - Regex: '^<ctxtcall.h>$'
+    Priority: 33
+    SortPriority: 34
   - Regex: '^<ppl[a-z]+\.h>'
     Priority: 33
   - Regex: '^<wil/cppwinrt_helpers\.h>$' # Must be included after various other headers
     Priority: 1
     SortPriority: 100
-  - Regex: '^<shims/winrt/.+'
-    Priority: 1
-    SortPriority: 34
   - Regex: '^<winrt/.+'
     Priority: 35
   - Regex: '^<wil/.+'

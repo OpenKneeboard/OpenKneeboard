@@ -22,10 +22,9 @@
  * The majority of OpenKneeboard is under a different license; check specific
  * files for more information.
  */
-// clang-format off
 #include <Windows.h>
+
 #include <combaseapi.h>
-// clang-format on
 
 #include <wil/com.h>
 #include <wil/resource.h>

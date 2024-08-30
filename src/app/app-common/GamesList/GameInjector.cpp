@@ -17,15 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-// clang-format off
-#include <Windows.h>
-#include <TlHelp32.h>
-#include <ShlObj.h>
-#include <Shlwapi.h>
-#include <Psapi.h>
-#include <WtsApi32.h>
-// clang-format on
-
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/GameInjector.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
@@ -34,10 +25,17 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/TabletInputAdapter.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
+#include <Psapi.h>
+#include <ShlObj.h>
+#include <Shlwapi.h>
+#include <TlHelp32.h>
+#include <WtsApi32.h>
 
 #include <chrono>
 #include <mutex>

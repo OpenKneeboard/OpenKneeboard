@@ -21,10 +21,8 @@
 
 #include <OpenKneeboard/dprint.hpp>
 
-// clang-format off
 #include <Windows.h>
 #include <Psapi.h>
-// clang-format on
 
 namespace OpenKneeboard {
 

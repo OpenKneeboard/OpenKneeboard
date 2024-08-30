@@ -18,15 +18,6 @@
  * USA.
  */
 
-// clang-format off
-#include <shims/winrt/base.h>
-#include <windows.h>
-#include <psapi.h>
-#include <d3d11.h>
-#include <d3d12.h>
-// clang-format on
-
-#include <OpenKneeboard/format/filesystem.hpp>
 #include "IDXGISwapChainHook.hpp"
 #include "IVRCompositorWaitGetPosesHook.hpp"
 #include "InjectedDLLMain.hpp"
@@ -35,6 +26,14 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
+#include <Psapi.h>
+#include <d3d11.h>
+#include <d3d12.h>
 
 using namespace OpenKneeboard;
 

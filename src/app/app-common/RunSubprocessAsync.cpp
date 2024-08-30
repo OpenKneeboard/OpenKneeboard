@@ -18,15 +18,13 @@
  * USA.
  */
 #include <OpenKneeboard/RunSubprocessAsync.hpp>
+
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 
-// clang-format off
-#include <shims/Windows.h>
+#include <Windows.h>
 #include <Psapi.h>
 #include <shellapi.h>
-// clang-format on
-
 
 namespace OpenKneeboard {
 task<SubprocessResult> RunSubprocessAsync(
@@ -39,7 +37,7 @@ task<SubprocessResult> RunSubprocessAsync(
 
   const auto pathStr = path.wstring();
 
-  SHELLEXECUTEINFOW shellExecuteInfo{
+  SHELLEXECUTEINFOW shellExecuteInfo {
     .cbSize = sizeof(SHELLEXECUTEINFOW),
     .fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_NO_CONSOLE,
     .lpVerb = runAs == RunAs::CurrentUser ? L"open" : L"runas",
@@ -59,13 +57,13 @@ task<SubprocessResult> RunSubprocessAsync(
     co_return SubprocessResult::NoProcessHandle;
   }
 
-  winrt::handle handle{shellExecuteInfo.hProcess};
+  winrt::handle handle {shellExecuteInfo.hProcess};
   const auto exeName = path.filename();
   const auto pid = GetProcessId(handle.get());
   dprintf("Waiting for subprocess '{}' ({})...", exeName, pid);
   co_await winrt::resume_on_signal(handle.get());
 
-  DWORD exitCode{};
+  DWORD exitCode {};
   if (!GetExitCodeProcess(handle.get(), &exitCode)) {
     dprintf("Failed to get exit code for process: {}", GetLastError());
     co_return SubprocessResult::NonZeroExit;

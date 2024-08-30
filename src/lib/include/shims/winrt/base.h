@@ -19,11 +19,9 @@
  */
 #pragma once
 
-// clang-format off
 // <Unknwn.h> must be included before <winrt/base.h> for com_ptr::as<> to work
 // correctly
 #include <Unknwn.h>
-// clang-format on
 
 #include <pplawait.h>
 #include <ppltasks.h>
@@ -38,12 +36,12 @@
 #include <winrt/base.h>
 #pragma warning(pop)
 
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.System.h>
-
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/source_location.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.System.h>
 
 #include <stop_token>
 

@@ -21,16 +21,13 @@
 
 #include "detours-ext.hpp"
 
-// clang-format off
-#include <Windows.h>
-#include <SubAuth.h>
-// clang-format on
-
-#include "detours-ext.hpp"
+#include <OpenKneeboard/dprint.hpp>
 
 #include <shims/winrt/base.h>
 
-#include <OpenKneeboard/dprint.hpp>
+#include <Windows.h>
+
+#include <SubAuth.h>
 
 // There's a header for this, but only in the DDK
 typedef const UNICODE_STRING* PCUNICODE_STRING;

@@ -20,19 +20,17 @@
 
 #pragma once
 
-// clang-format off
-#include <Windows.h>
-#include <d3d11.h>
-// clang-format on
-
 #include <OpenKneeboard/VRKneeboard.hpp>
-
-#include <shims/openxr/openxr.h>
-#include <source_location>
 
 #include <OpenKneeboard/config.hpp>
 
+#include <shims/openxr/openxr.h>
+
+#include <Windows.h>
+#include <d3d11.h>
+
 #include <format>
+#include <source_location>
 #include <span>
 
 template <class CharT>

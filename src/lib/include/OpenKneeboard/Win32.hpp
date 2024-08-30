@@ -19,8 +19,9 @@
  */
 #pragma once
 
-#include <shims/Windows.h>
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <FredEmmott/bindline.hpp>
 
@@ -252,8 +253,10 @@ struct basic_winapi {
   using handle_or_null_type = typename TTraits::handle_or_null_type;
   using handle_or_invalid_type = typename TTraits::handle_or_invalid_type;
 
-  using returns_handle_or_null = basic_returns_handle<handle_or_null_type, nullptr>;
-  using returns_handle_or_invalid = basic_returns_handle<handle_or_invalid_type, INVALID_HANDLE_VALUE>;
+  using returns_handle_or_null
+    = basic_returns_handle<handle_or_null_type, nullptr>;
+  using returns_handle_or_invalid
+    = basic_returns_handle<handle_or_invalid_type, INVALID_HANDLE_VALUE>;
 
   using or_throw = basic_winapi<TTraits, or_throw<TTraits>, TStringTraits>;
   using or_default = basic_winapi<TTraits, or_default, TStringTraits>;
@@ -327,7 +330,8 @@ struct basic_winapi {
       return make_error<handle_or_null_type>(name.error());
     }
 
-    return (&::CreateWaitableTimerW | returns_handle_or_null() | TErrorMapper())(
+    return (
+      &::CreateWaitableTimerW | returns_handle_or_null() | TErrorMapper())(
       lpTimerAttributes, bManualReset, nullable_cstr(name));
   }
 
