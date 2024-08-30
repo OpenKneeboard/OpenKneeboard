@@ -180,7 +180,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   picker.SuggestedStartLocation(FOLDERID_Desktop);
   picker.AppendFileType(_(L"Zip archive"), {L".zip"});
   picker.SuggestedFileName(std::format(
-    L"OpenKneeboard-v{}.{}.{}.{}-{:%F-%H-%M}.zip",
+    L"OpenKneeboard-v{}.{}.{}.{}-{:%Y%m%dT%H%M}.zip",
     Version::Major,
     Version::Minor,
     Version::Patch,
@@ -258,7 +258,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
     zip_file_add(
       zip.get(),
       ("settings/" + relative).c_str(),
-      zip_source_file(zip.get(), to_utf8(path).c_str(), 0, -1),
+      zip_source_file(zip.get(), to_utf8(path).c_str(), 0, ZIP_LENGTH_TO_END),
       ZIP_FL_ENC_UTF_8);
   }
 
