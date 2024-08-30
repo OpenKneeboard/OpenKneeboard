@@ -31,8 +31,8 @@ static constexpr uint16_t Minor = @VERSION_MINOR@;
 static constexpr uint16_t Patch = @VERSION_PATCH@;
 static constexpr uint16_t Build = @VERSION_BUILD@;
 
-static constexpr std::string_view ReleaseName {"@RELEASE_NAME@"};
-static constexpr std::wstring_view ReleaseNameW {L"@RELEASE_NAME@"};
+static constexpr auto ReleaseName {"@RELEASE_NAME@"};
+static constexpr auto ReleaseNameW {L"@RELEASE_NAME@"};
 static constexpr std::string_view TagName {"@MATCHING_TAG@"};
 static constexpr bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
 static constexpr bool IsTaggedVersion = @IS_TAGGED_VERSION@;

@@ -58,6 +58,7 @@
 #include <ShlObj.h>
 #include <shellapi.h>
 #include <signal.h>
+#include <zip.h>
 
 using namespace winrt;
 using namespace winrt::Windows::Foundation;
@@ -125,6 +126,61 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
   auto window = make<MainWindow>();
   mWindow = window;
   co_await winrt::get_self<implementation::MainWindow>(window)->Init();
+}
+
+static void BackupSettings() {
+  const auto settingsPath = Filesystem::GetSettingsDirectory();
+  if (std::filesystem::is_empty(settingsPath)) {
+    return;
+  }
+
+  const auto lastVersion = wil::reg::try_get_value_string(
+    HKEY_CURRENT_USER, Config::RegistrySubKey, L"AppVersionAtLastBackup");
+  if (lastVersion == Version::ReleaseNameW) {
+    return;
+  }
+
+  const auto backupsDirectory
+    = Filesystem::GetLocalAppDataDirectory() / "Backups";
+  std::filesystem::create_directories(backupsDirectory);
+
+  const auto now = std::chrono::zoned_time(
+    std::chrono::current_zone(),
+    std::chrono::time_point_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now()));
+  const auto backupFile = backupsDirectory
+    / std::format("OpenKneeboard-Settings-{:%Y%m%dT%H%M}.zip", now);
+
+  scope_success updateLastRun([backupFile]() {
+    wil::reg::set_value_string(
+      HKEY_CURRENT_USER,
+      Config::RegistrySubKey,
+      L"AppVersionAtLastBackup",
+      Version::ReleaseNameW);
+    dprintf("🦺 Saved settings backup to `{}`", backupFile);
+  });
+
+  using unique_zip = std::unique_ptr<zip_t, decltype(&zip_close)>;
+  int zipError {};
+  unique_zip zip {
+    zip_open(backupFile.string().c_str(), ZIP_CREATE | ZIP_TRUNCATE, &zipError),
+    &zip_close};
+
+  for (auto&& it: std::filesystem::recursive_directory_iterator(settingsPath)) {
+    if (it.is_directory()) {
+      continue;
+    }
+    if (it.path().extension() != ".json") {
+      continue;
+    }
+    const auto relative = std::filesystem::relative(it.path(), settingsPath);
+    zip_file_add(
+      zip.get(),
+      relative.string().c_str(),
+      zip_source_file(
+        zip.get(), it.path().string().c_str(), 0, ZIP_LENGTH_TO_END),
+      ZIP_FL_ENC_UTF_8);
+  }
 }
 
 static void LogSystemInformation() {
@@ -423,6 +479,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   Filesystem::CleanupTemporaryDirectories();
 
   Filesystem::MigrateSettingsDirectory();
+  BackupSettings();
+
   for (auto&& dir:
        {Filesystem::GetLocalAppDataDirectory(),
         Filesystem::GetSettingsDirectory()}) {
