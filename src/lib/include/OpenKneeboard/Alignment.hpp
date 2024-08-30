@@ -20,9 +20,6 @@
 #pragma once
 
 #include <cstdint>
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <OpenKneeboard/json.hpp>
-#endif
 
 namespace OpenKneeboard::Alignment {
 
@@ -31,27 +28,11 @@ enum class Horizontal : uint8_t {
   Center,
   Right,
 };
+
 enum class Vertical : uint8_t {
   Top,
   Middle,
   Bottom,
 };
 
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  Horizontal,
-  {
-    {Horizontal::Left, "Left"},
-    {Horizontal::Center, "Center"},
-    {Horizontal::Right, "Right"},
-  });
-
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  Vertical,
-  {
-    {Vertical::Top, "Top"},
-    {Vertical::Middle, "Middle"},
-    {Vertical::Bottom, "Bottom"},
-  });
-#endif
 }// namespace OpenKneeboard::Alignment

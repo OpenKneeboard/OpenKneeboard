@@ -17,20 +17,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/NonVRConstrainedPosition.hpp>
+#pragma once
 
 #include <OpenKneeboard/json/Alignment.hpp>
-#include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
 
 #include <OpenKneeboard/json.hpp>
 
-namespace OpenKneeboard {
+namespace OpenKneeboard::Alignment {
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  NonVRConstrainedPosition,
-  mHeightPercent,
-  mPaddingPixels,
-  mHorizontalAlignment,
-  mVerticalAlignment)
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  Horizontal,
+  {
+    {Horizontal::Left, "Left"},
+    {Horizontal::Center, "Center"},
+    {Horizontal::Right, "Right"},
+  });
 
-}// namespace OpenKneeboard
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  Vertical,
+  {
+    {Vertical::Top, "Top"},
+    {Vertical::Middle, "Middle"},
+    {Vertical::Bottom, "Bottom"},
+  });
+}// namespace OpenKneeboard::Alignment
