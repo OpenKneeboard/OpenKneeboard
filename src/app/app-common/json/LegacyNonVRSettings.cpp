@@ -17,24 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FlatConfig.hpp>
+#include <OpenKneeboard/LegacyNonVRSettings.hpp>
+
+#include <OpenKneeboard/json/LegacyNonVRSettings.hpp>
+#include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
 
 #include <OpenKneeboard/json.hpp>
 
 namespace OpenKneeboard {
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  NonVRConstrainedPosition,
-  mHeightPercent,
-  mPaddingPixels,
-  mHorizontalAlignment,
-  mVerticalAlignment)
-
-void to_json(nlohmann::json& j, const LegacyNonVRConfig& v) {
+void to_json(nlohmann::json& j, const LegacyNonVRSettings& v) {
   to_json(j, static_cast<const NonVRConstrainedPosition&>(v));
   j["Opacity"] = v.mOpacity;
 }
-void from_json(const nlohmann::json& j, LegacyNonVRConfig& v) {
+void from_json(const nlohmann::json& j, LegacyNonVRSettings& v) {
   from_json(j, static_cast<NonVRConstrainedPosition&>(v));
   if (j.contains("Opacity")) {
     v.mOpacity = j.at("Opacity");

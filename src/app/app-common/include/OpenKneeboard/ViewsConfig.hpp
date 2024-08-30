@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include <OpenKneeboard/FlatConfig.hpp>
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/VRSettings.hpp>
 

@@ -20,11 +20,13 @@
 #include <OpenKneeboard/PreferredSize.hpp>
 #include <OpenKneeboard/ViewsConfig.hpp>
 
-#include <Windows.h>
+#include <OpenKneeboard/json/Geometry2D.hpp>
+#include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
 
 #include <OpenKneeboard/json.hpp>
-#include <OpenKneeboard/json/Geometry2D.hpp>
 #include <OpenKneeboard/utf8.hpp>
+
+#include <Windows.h>
 
 #include <algorithm>
 

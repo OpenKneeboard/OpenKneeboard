@@ -243,7 +243,7 @@ ok_add_library(
   STATIC
   SHM.cpp
   SHM/ActiveConsumers.cpp
-  FlatConfig.cpp
+  NonVRConstrainedPosition.cpp
 )
 target_link_libraries(
   OpenKneeboard-SHM

@@ -22,7 +22,7 @@
 #include <OpenKneeboard/AppSettings.hpp>
 #include <OpenKneeboard/DirectInputSettings.hpp>
 #include <OpenKneeboard/DoodleSettings.hpp>
-#include <OpenKneeboard/FlatConfig.hpp>
+#include <OpenKneeboard/LegacyNonVRSettings.hpp>
 #include <OpenKneeboard/TabletSettings.hpp>
 #include <OpenKneeboard/TextSettings.hpp>
 #include <OpenKneeboard/VRSettings.hpp>
@@ -47,7 +47,7 @@ struct Settings final {
 #define IT(cpptype, name) cpptype m##name {};
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
-  LegacyNonVRConfig mDeprecatedNonVR {};
+  LegacyNonVRSettings mDeprecatedNonVR {};
 
   static Settings Load(std::string_view profileID);
   void Save(std::string_view profileID) const;

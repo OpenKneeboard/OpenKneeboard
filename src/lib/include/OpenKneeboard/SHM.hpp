@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "FlatConfig.hpp"
+#include "NonVRConstrainedPosition.hpp"
 #include "VRSettings.hpp"
 
 #include <OpenKneeboard/Pixels.hpp>

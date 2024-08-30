@@ -20,11 +20,13 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Settings.hpp>
 
-#include <shims/winrt/base.h>
+#include <OpenKneeboard/json/LegacyNonVRSettings.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/utf8.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <chrono>
 #include <filesystem>

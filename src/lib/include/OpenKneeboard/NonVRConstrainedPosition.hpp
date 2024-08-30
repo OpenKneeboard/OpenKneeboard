@@ -19,11 +19,6 @@
  */
 #pragma once
 
-// Don't include in OpenKneeboard-SHM library
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <OpenKneeboard/json_fwd.hpp>
-#endif
-
 #include <OpenKneeboard/Alignment.hpp>
 #include <OpenKneeboard/Pixels.hpp>
 
@@ -45,18 +40,5 @@ struct NonVRConstrainedPosition {
   constexpr bool operator==(const NonVRConstrainedPosition&) const = default;
 };
 static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
-
-// Replaced by `ViewConfig` in v1.7+
-struct LegacyNonVRConfig : NonVRConstrainedPosition {
-  // In case it covers up menus etc
-  float mOpacity = 0.8f;
-  constexpr bool operator==(const LegacyNonVRConfig&) const = default;
-};
-
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-void to_json(nlohmann::json& j, const LegacyNonVRConfig&);
-void from_json(const nlohmann::json& j, LegacyNonVRConfig&);
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(NonVRConstrainedPosition);
-#endif
 
 }// namespace OpenKneeboard
