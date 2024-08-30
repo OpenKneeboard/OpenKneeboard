@@ -117,7 +117,7 @@ HelpPage::~HelpPage() {
 void HelpPage::PopulateVersion() {
   auto details = std::format(
     "OpenKneeboard {}\n\n"
-    "Copyright © 2021-2022 Frederick Emmott.\n\n"
+    "Copyright © 2021-2024 Frederick Emmott.\n\n"
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
     "artwork.\n\n"
     "Build: {}-{}-{}\n"
