@@ -112,10 +112,6 @@ struct AdvancedSettingsPage
   OpenKneeboard::fire_and_forget Quirk_OculusSDK_DiscardDepthInformation(
     bool value) noexcept;
 
-  bool Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept;
-  OpenKneeboard::fire_and_forget Quirk_OpenXR_AlwaysUpdateSwapchain(
-    bool value) noexcept;
-
   uint8_t Quirk_OpenXR_Upscaling() const noexcept;
   OpenKneeboard::fire_and_forget Quirk_OpenXR_Upscaling(uint8_t value) noexcept;
 

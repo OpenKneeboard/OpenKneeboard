@@ -72,7 +72,6 @@ struct VROpacityConfig {
 struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {false};
-    bool mOpenXR_AlwaysUpdateSwapchain {false};
 
     enum class Upscaling {
       Automatic,// Varjo-only

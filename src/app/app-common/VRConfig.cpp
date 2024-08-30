@@ -46,7 +46,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,
   mOculusSDK_DiscardDepthInformation,
-  mOpenXR_AlwaysUpdateSwapchain,
   mOpenXR_Upscaling)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);

@@ -297,7 +297,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   std::vector<SHM::LayerSprite> layerSprites;
   std::vector<uint64_t> cacheKeys;
   std::vector<XrCompositionLayerQuad> addedXRLayers;
@@ -357,10 +356,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_TraceLoggingRect(layerSprites.back().mDestRect, "DestRect"),
       TraceLoggingValue(layerSprites.back().mOpacity, "Opacity"));
 
-    if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
-      needRender = true;
-    }
-
     if (params.mIsLookingAtKneeboard) {
       topMost = layerIndex;
     }
@@ -392,37 +387,35 @@ XrResult OpenXRKneeboard::xrEndFrame(
     std::swap(addedXRLayers.back(), addedXRLayers.at(topMost));
   }
 
-  if (needRender) {
-    uint32_t swapchainTextureIndex {~(0ui32)};
-    {
-      OPENKNEEBOARD_TraceLoggingScope("AcquireSwapchainImage");
-      check_xrresult(mOpenXR->xrAcquireSwapchainImage(
-        mSwapchain, nullptr, &swapchainTextureIndex));
-    }
+  uint32_t swapchainTextureIndex {~(0ui32)};
+  {
+    OPENKNEEBOARD_TraceLoggingScope("AcquireSwapchainImage");
+    check_xrresult(mOpenXR->xrAcquireSwapchainImage(
+      mSwapchain, nullptr, &swapchainTextureIndex));
+  }
 
-    {
-      OPENKNEEBOARD_TraceLoggingScope("WaitSwapchainImage");
-      XrSwapchainImageWaitInfo waitInfo {
-        .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-        .timeout = XR_INFINITE_DURATION,
-      };
-      check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
-    }
+  {
+    OPENKNEEBOARD_TraceLoggingScope("WaitSwapchainImage");
+    XrSwapchainImageWaitInfo waitInfo {
+      .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+      .timeout = XR_INFINITE_DURATION,
+    };
+    check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
+  }
 
-    {
-      OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
-      this->RenderLayers(
-        mSwapchain, swapchainTextureIndex, snapshot, layerSprites);
-    }
+  {
+    OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
+    this->RenderLayers(
+      mSwapchain, swapchainTextureIndex, snapshot, layerSprites);
+  }
 
-    {
-      OPENKNEEBOARD_TraceLoggingScope("xrReleaseSwapchainImage()");
-      check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
-    }
+  {
+    OPENKNEEBOARD_TraceLoggingScope("xrReleaseSwapchainImage()");
+    check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
+  }
 
-    for (size_t i = 0; i < cacheKeys.size(); ++i) {
-      mRenderCacheKeys[i] = cacheKeys.at(i);
-    }
+  for (size_t i = 0; i < cacheKeys.size(); ++i) {
+    mRenderCacheKeys[i] = cacheKeys.at(i);
   }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};

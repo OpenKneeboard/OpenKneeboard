@@ -319,21 +319,6 @@ AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
   co_await mKneeboard->SetVRSettings(vrc);
 }
 
-bool AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept {
-  return mKneeboard->GetVRSettings().mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-}
-
-OpenKneeboard::fire_and_forget
-AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept {
-  auto vrc = mKneeboard->GetVRSettings();
-  auto& vrcValue = vrc.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  if (value == vrcValue) {
-    co_return;
-  }
-  vrcValue = value;
-  co_await mKneeboard->SetVRSettings(vrc);
-}
-
 uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {
   return static_cast<uint8_t>(
     mKneeboard->GetVRSettings().mQuirks.mOpenXR_Upscaling);

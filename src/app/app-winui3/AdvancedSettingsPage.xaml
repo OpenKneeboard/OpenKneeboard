@@ -323,11 +323,6 @@
           <x:String>Run elevated</x:String>
           <x:String>Run as normal user</x:String>
         </ComboBox>
-        <ToggleSwitch
-          Header="OpenXR: Always update swapchains"
-          OffContent="Disabled - swapchains are only updated when changed"
-          OnContent="Enabled - swapchains are updated on every game frame"
-          IsOn="{x:Bind Quirk_OpenXR_AlwaysUpdateSwapchain}"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
