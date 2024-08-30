@@ -63,3 +63,5 @@ If you do not, OpenKneeboard is crashing on startup.
 Try renaming `Saved Games\OpenKneeboard` to anything else; this will remove your OpenKneeboard settings.
 
 If that fixes the issue, please [report the crash](#reporting-crashes-or-freezes), and also attach or send a copy of the original OpenKneeboard saved games folder
+
+*v1.9 and above*: Settings are now in `%LOCALAPPDATA%\OpenKneeboard\Settings`, not `Saved Games\OpenKneeboard`.

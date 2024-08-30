@@ -76,4 +76,4 @@ This will show any *image files* from:
 
 **Most DCS maps do not include any kneeboard images**.
 
-DCS's built-in kneeboard will only load kneeboard images from the DCS installation path; OpenKneeboard also will load any from saved games for convenience.
+DCS's built-in kneeboard will only load kneeboard images for maps from the DCS installation path; OpenKneeboard also will load any from saved games for convenience.
