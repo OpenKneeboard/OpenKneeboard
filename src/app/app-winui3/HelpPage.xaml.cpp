@@ -47,6 +47,7 @@
 #include <OpenKneeboard/utf8.hpp>
 #include <OpenKneeboard/version.hpp>
 
+#include <expected>
 #include <format>
 #include <fstream>
 #include <string>
@@ -64,7 +65,7 @@ enum class RegistryView {
   Wow64_32 = 32,
 };
 
-std::wstring GetRegistryStringValue(
+std::expected<std::wstring, LSTATUS> GetRegistryStringValue(
   RegistryView view,
   HKEY hkey,
   LPCWSTR subKey,
@@ -77,8 +78,7 @@ std::wstring GetRegistryStringValue(
   const auto getSizeResult
     = RegGetValueW(hkey, subKey, value, flags, nullptr, nullptr, &byteCount);
   if (getSizeResult != ERROR_SUCCESS) {
-    OPENKNEEBOARD_BREAK;
-    return {};
+    return std::unexpected {getSizeResult};
   }
 
   std::wstring buffer(byteCount / sizeof(wchar_t), L'\0');
@@ -86,9 +86,9 @@ std::wstring GetRegistryStringValue(
     hkey, subKey, value, flags, nullptr, buffer.data(), &byteCount);
   if (result != ERROR_SUCCESS) {
     OPENKNEEBOARD_BREAK;
-    return {};
+    return std::unexpected {result};
   }
-  return buffer;
+  return {buffer};
 }
 }// namespace
 
@@ -497,15 +497,17 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
   std::string ret = std::format(
     "Active {}-bit Runtime\n--------------\n\n", static_cast<int>(view));
 
-  try {
-    const auto activeRuntime = GetRegistryStringValue(
-      view,
-      HKEY_LOCAL_MACHINE,
-      L"SOFTWARE\\Khronos\\OpenXR\\1",
-      L"ActiveRuntime");
-    ret += to_utf8(activeRuntime) + "\n\n";
-  } catch (const std::exception& e) {
-    ret += std::format("FAILED TO READ FROM REGISTRY: {}\n\n", e.what());
+  const auto activeRuntime = GetRegistryStringValue(
+    view,
+    HKEY_LOCAL_MACHINE,
+    L"SOFTWARE\\Khronos\\OpenXR\\1",
+    L"ActiveRuntime");
+  if (activeRuntime.has_value()) {
+    ret += to_utf8(activeRuntime.value()) + "\n\n";
+  } else {
+    ret += std::format(
+      "FAILED TO READ FROM REGISTRY: {:#x}\n\n",
+      static_cast<uint32_t>(activeRuntime.error()));
   }
 
   ret += std::format(
