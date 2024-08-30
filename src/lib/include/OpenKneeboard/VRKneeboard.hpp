@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.hpp>
-#include <OpenKneeboard/VRConfig.hpp>
+#include <OpenKneeboard/VRSettings.hpp>
 
 #include <directxtk/SimpleMath.h>
 
@@ -71,7 +71,7 @@ class VRKneeboard {
   std::optional<float> mEyeHeight;
 
   Pose GetKneeboardPose(
-    const VRRenderConfig& vr,
+    const VRRenderSettings& vr,
     const SHM::LayerConfig&,
     const Pose& hmdPose);
 
@@ -86,10 +86,10 @@ class VRKneeboard {
     const Pose& hmdPose,
     const Pose& kneeboardPose);
 
-  Sizes GetSizes(const VRRenderConfig&, const SHM::LayerConfig&) const;
+  Sizes GetSizes(const VRRenderSettings&, const SHM::LayerConfig&) const;
 
-  void MaybeRecenter(const VRRenderConfig& vr, const Pose& hmdPose);
-  void Recenter(const VRRenderConfig& vr, const Pose& hmdPose);
+  void MaybeRecenter(const VRRenderSettings& vr, const Pose& hmdPose);
+  void Recenter(const VRRenderSettings& vr, const Pose& hmdPose);
 };
 
 }// namespace OpenKneeboard

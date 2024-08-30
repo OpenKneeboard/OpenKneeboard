@@ -127,7 +127,7 @@ void InterprocessRenderer::SubmitFrame(
   SHM::Config config {
     .mGlobalInputLayerID
     = mKneeboard->GetActiveInGameView()->GetRuntimeID().GetTemporaryValue(),
-    .mVR = static_cast<const VRRenderConfig&>(mKneeboard->GetVRSettings()),
+    .mVR = static_cast<const VRRenderSettings&>(mKneeboard->GetVRSettings()),
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };

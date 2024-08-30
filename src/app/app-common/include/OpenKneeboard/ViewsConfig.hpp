@@ -21,13 +21,13 @@
 
 #include <OpenKneeboard/FlatConfig.hpp>
 #include <OpenKneeboard/SHM.hpp>
-#include <OpenKneeboard/VRConfig.hpp>
-
-#include <shims/winrt/base.h>
+#include <OpenKneeboard/VRSettings.hpp>
 
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/json_fwd.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <variant>
 
@@ -56,7 +56,7 @@ struct IndependentViewVRConfig {
   bool mEnableGazeZoom {true};
   float mZoomScale = 2.0f;
   GazeTargetScale mGazeTargetScale {};
-  VROpacityConfig mOpacity {};
+  VROpacitySettings mOpacity {};
   ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
   constexpr bool operator==(const IndependentViewVRConfig&) const noexcept

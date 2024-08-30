@@ -28,15 +28,15 @@
 #include <OpenKneeboard/RunnerThread.hpp>
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/Settings.hpp>
-#include <OpenKneeboard/VRConfig.hpp>
-
-#include <shims/winrt/base.h>
-
-#include <winrt/Windows.Foundation.h>
+#include <OpenKneeboard/VRSettings.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/single_threaded_lockable.hpp>
 #include <OpenKneeboard/task.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Foundation.h>
 
 #include <memory>
 #include <queue>
@@ -91,8 +91,7 @@ class KneeboardState final
     HWND mainWindow,
     audited_ptr<DXResources>);
   ~KneeboardState() noexcept;
-  [[nodiscard]]
-  virtual task<void> DisposeAsync() noexcept override;
+  [[nodiscard]] virtual task<void> DisposeAsync() noexcept override;
 
   static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<KneeboardState>);
@@ -126,8 +125,7 @@ class KneeboardState final
   std::shared_ptr<TabletInputAdapter> GetTabletInputAdapter() const;
 
   ProfileSettings GetProfileSettings() const;
-  [[nodiscard]]
-  task<void> SetProfileSettings(const ProfileSettings&);
+  [[nodiscard]] task<void> SetProfileSettings(const ProfileSettings&);
 
   void NotifyAppWindowIsForeground(bool isForeground);
 
@@ -146,8 +144,7 @@ class KneeboardState final
 
   void SaveSettings();
 
-  [[nodiscard]]
-  task<void> PostUserAction(UserAction action);
+  [[nodiscard]] task<void> PostUserAction(UserAction action);
 
   bool IsRepaintNeeded() const;
   void SetRepaintNeeded();
@@ -180,8 +177,7 @@ class KneeboardState final
 
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
-  [[nodiscard]]
-  task<void> Init();
+  [[nodiscard]] task<void> Init();
 
   DisposalState mDisposal;
 
@@ -223,8 +219,7 @@ class KneeboardState final
   void OnGameChangedEvent(
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
-  [[nodiscard]]
-  void OnAPIEvent(APIEvent) noexcept;
+  [[nodiscard]] void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();
@@ -241,8 +236,7 @@ class KneeboardState final
     Previous,
     Next,
   };
-  [[nodiscard]]
-  task<void> SwitchProfile(Direction);
+  [[nodiscard]] task<void> SwitchProfile(Direction);
 
   void InitializeViews();
 };

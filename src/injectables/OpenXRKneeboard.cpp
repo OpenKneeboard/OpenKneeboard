@@ -29,13 +29,13 @@
 #include <OpenKneeboard/Spriting.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
-#include <shims/vulkan/vulkan.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <shims/vulkan/vulkan.h>
 
 #include <memory>
 #include <string>
@@ -103,9 +103,7 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return { \
-      #enum_name \
-    }; \
+    return {#enum_name}; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -319,7 +317,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       Spriting::GetOffset(layerIndex, snapshot.GetLayerCount()),
       layer->mVR.mLocationOnTexture.mSize,
     };
-    using Upscaling = VRConfig::Quirks::Upscaling;
+    using Upscaling = VRSettings::Quirks::Upscaling;
     switch (config.mVR.mQuirks.mOpenXR_Upscaling) {
       case Upscaling::Automatic:
         if (!mIsVarjoRuntime) {

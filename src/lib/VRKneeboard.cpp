@@ -28,7 +28,7 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
-  const VRRenderConfig& vr,
+  const VRRenderSettings& vr,
   const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
   if (!mEyeHeight) {
@@ -64,7 +64,7 @@ Vector2 VRKneeboard::GetKneeboardSize(
 }
 
 VRKneeboard::Sizes VRKneeboard::GetSizes(
-  const VRRenderConfig& vrc,
+  const VRRenderSettings& vrc,
   const SHM::LayerConfig& layer) const {
   const auto& physicalSize = layer.mVR.mPhysicalSize;
   const auto virtualWidth = physicalSize.mWidth;
@@ -77,14 +77,16 @@ VRKneeboard::Sizes VRKneeboard::GetSizes(
   };
 }
 
-void VRKneeboard::MaybeRecenter(const VRRenderConfig& vr, const Pose& hmdPose) {
+void VRKneeboard::MaybeRecenter(
+  const VRRenderSettings& vr,
+  const Pose& hmdPose) {
   if (vr.mRecenterCount == mRecenterCount) {
     return;
   }
   this->Recenter(vr, hmdPose);
 }
 
-void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
+void VRKneeboard::Recenter(const VRRenderSettings& vr, const Pose& hmdPose) {
   auto pos = hmdPose.mPosition;
   mEyeHeight = {pos.y};
   pos.y = 0;

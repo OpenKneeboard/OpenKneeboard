@@ -20,15 +20,15 @@
 #pragma once
 
 #include "FlatConfig.hpp"
-#include "VRConfig.hpp"
+#include "VRSettings.hpp"
 
 #include <OpenKneeboard/Pixels.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/dprint.hpp>
 
 #include <concepts>
 #include <cstddef>
@@ -58,7 +58,7 @@ struct VRLayer {
   bool mEnableGazeZoom {true};
   float mZoomScale = 2.0f;
   GazeTargetScale mGazeTargetScale {};
-  VROpacityConfig mOpacity {};
+  VROpacitySettings mOpacity {};
   PixelRect mLocationOnTexture {};
 };
 
@@ -139,7 +139,7 @@ class ConsumerPattern final {
 
 struct Config final {
   uint64_t mGlobalInputLayerID {};
-  VRRenderConfig mVR {};
+  VRRenderSettings mVR {};
   ConsumerPattern mTarget {};
   PixelSize mTextureSize {};
   std::array<float, 4> mTint {1, 1, 1, 1};

@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/VRConfig.hpp>
+#include <OpenKneeboard/VRSettings.hpp>
 
 #include <OpenKneeboard/json.hpp>
 
@@ -36,27 +36,30 @@ VRPose VRPose::GetHorizontalMirror() const {
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRPose, mX, mEyeY, mZ, mRX, mRY, mRZ)
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  VRRenderConfig::Quirks::Upscaling,
+  VRRenderSettings::Quirks::Upscaling,
   {
-    {VRRenderConfig::Quirks::Upscaling::Automatic, "Automatic"},
-    {VRRenderConfig::Quirks::Upscaling::AlwaysOff, "AlwaysOff"},
-    {VRRenderConfig::Quirks::Upscaling::AlwaysOn, "AlwaysOn"},
+    {VRRenderSettings::Quirks::Upscaling::Automatic, "Automatic"},
+    {VRRenderSettings::Quirks::Upscaling::AlwaysOff, "AlwaysOff"},
+    {VRRenderSettings::Quirks::Upscaling::AlwaysOn, "AlwaysOn"},
   });
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRRenderConfig::Quirks,
+  VRRenderSettings::Quirks,
   mOculusSDK_DiscardDepthInformation,
   mOpenXR_Upscaling)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VROpacityConfig, mNormal, mGaze);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VROpacitySettings, mNormal, mGaze);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRRenderConfig, mQuirks, mEnableGazeInputFocus)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRRenderSettings,
+  mQuirks,
+  mEnableGazeInputFocus)
 
 template <>
-void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
-  from_json(j, static_cast<VRRenderConfig&>(v));
+void from_json_postprocess<VRSettings>(const nlohmann::json& j, VRSettings& v) {
+  from_json(j, static_cast<VRRenderSettings&>(v));
   from_json(j, v.mDeprecated.mPrimaryLayer);
 
   // Backwards compatibility
@@ -69,26 +72,26 @@ void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
 }
 
 template <>
-void to_json_postprocess<VRConfig>(
+void to_json_postprocess<VRSettings>(
   nlohmann::json& j,
-  const VRConfig& parent_v,
-  const VRConfig& v) {
+  const VRSettings& parent_v,
+  const VRSettings& v) {
   to_json_with_default(
     j,
-    static_cast<const VRRenderConfig&>(parent_v),
-    static_cast<const VRRenderConfig&>(v));
+    static_cast<const VRRenderSettings&>(parent_v),
+    static_cast<const VRRenderSettings&>(v));
   to_json_with_default(
     j, parent_v.mDeprecated.mPrimaryLayer, v.mDeprecated.mPrimaryLayer);
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRConfig::Deprecated,
+  VRSettings::Deprecated,
   mMaxWidth,
   mMaxHeight,
   mEnableGazeZoom,
   mZoomScale,
   mGazeTargetScale,
   mOpacity)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig, mEnableSteamVR)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRSettings, mEnableSteamVR)
 
 }// namespace OpenKneeboard

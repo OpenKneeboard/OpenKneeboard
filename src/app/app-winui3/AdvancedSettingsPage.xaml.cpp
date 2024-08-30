@@ -33,15 +33,15 @@
 #include <OpenKneeboard/RunSubprocessAsync.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
-#include <OpenKneeboard/VRConfig.hpp>
+#include <OpenKneeboard/VRSettings.hpp>
 #include <OpenKneeboard/ViewsConfig.hpp>
 #include <OpenKneeboard/Win32.hpp>
-
-#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
+
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml;
@@ -326,7 +326,7 @@ uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {
 
 OpenKneeboard::fire_and_forget AdvancedSettingsPage::Quirk_OpenXR_Upscaling(
   uint8_t rawValue) noexcept {
-  const auto value = static_cast<VRConfig::Quirks::Upscaling>(rawValue);
+  const auto value = static_cast<VRSettings::Quirks::Upscaling>(rawValue);
   auto vrs = mKneeboard->GetVRSettings();
   auto& vrsValue = vrs.mQuirks.mOpenXR_Upscaling;
   if (vrsValue == value) {

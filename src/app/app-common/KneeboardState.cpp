@@ -388,8 +388,7 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-void KneeboardState::OnAPIEvent(
-  APIEvent ev) noexcept {
+void KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
   if (winrt::apartment_context() != mUIThread) {
     dprint("Game event in wrong thread!");
     OPENKNEEBOARD_BREAK;
@@ -608,7 +607,7 @@ task<void> KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   co_return;
 }
 
-task<void> KneeboardState::SetVRSettings(const VRConfig& value) {
+task<void> KneeboardState::SetVRSettings(const VRSettings& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 

@@ -55,21 +55,21 @@ struct GazeTargetScale {
   constexpr bool operator==(const GazeTargetScale&) const noexcept = default;
 };
 
-struct VROpacityConfig {
+struct VROpacitySettings {
   float mNormal {1.0f};
   float mGaze {1.0f};
-  constexpr bool operator==(const VROpacityConfig&) const noexcept = default;
+  constexpr bool operator==(const VROpacitySettings&) const noexcept = default;
 };
 
 /** VR settings that apply to every view/layer.
  *
  * Per-view settings are in `ViewVRConfig`
  *
- * This ends up in the SHM; it is extended by `VRConfig` for
+ * This ends up in the SHM; it is extended by `VRSettings` for
  * values that are stored in the config file but need further processing before
  * being put in SHM.
  */
-struct VRRenderConfig {
+struct VRRenderSettings {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {false};
 
@@ -91,12 +91,12 @@ struct VRRenderConfig {
   // Increment every time binding is pressed
   uint64_t mRecenterCount = 0;
 
-  constexpr bool operator==(const VRRenderConfig&) const noexcept = default;
+  constexpr bool operator==(const VRRenderSettings&) const noexcept = default;
 };
-static_assert(std::is_standard_layout_v<VRRenderConfig>);
+static_assert(std::is_standard_layout_v<VRRenderSettings>);
 
 /// VR settings, including ones that are not directly sent in SHM
-struct VRConfig : public VRRenderConfig {
+struct VRSettings : public VRRenderSettings {
   bool mEnableSteamVR = true;
 
   // replaced with 'ViewConfig' and `IndependentViewVRConfig` in v1.7
@@ -108,21 +108,21 @@ struct VRConfig : public VRRenderConfig {
     bool mEnableGazeZoom {true};
     float mZoomScale = 2.0f;
     GazeTargetScale mGazeTargetScale {};
-    VROpacityConfig mOpacity {};
+    VROpacitySettings mOpacity {};
 
     constexpr bool operator==(const Deprecated&) const noexcept = default;
   };
 
   Deprecated mDeprecated;
 
-  constexpr bool operator==(const VRConfig&) const noexcept = default;
+  constexpr bool operator==(const VRSettings&) const noexcept = default;
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(GazeTargetScale)
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(VROpacityConfig)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VROpacitySettings)
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRPose)
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRConfig)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRSettings)
 #endif
 
 }// namespace OpenKneeboard
