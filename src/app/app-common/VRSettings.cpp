@@ -19,6 +19,8 @@
  */
 #include <OpenKneeboard/VRSettings.hpp>
 
+#include <OpenKneeboard/json/VRSettings.hpp>
+
 #include <OpenKneeboard/json.hpp>
 
 namespace OpenKneeboard {

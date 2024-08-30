@@ -26,10 +26,6 @@
 #include <cstdint>
 #include <numbers>
 
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <OpenKneeboard/json_fwd.hpp>
-#endif
-
 namespace OpenKneeboard {
 
 /** Position and orientation.
@@ -117,12 +113,5 @@ struct VRSettings : public VRRenderSettings {
 
   constexpr bool operator==(const VRSettings&) const noexcept = default;
 };
-
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(GazeTargetScale)
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(VROpacitySettings)
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRPose)
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRSettings)
-#endif
 
 }// namespace OpenKneeboard

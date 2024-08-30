@@ -21,6 +21,7 @@
 #include <OpenKneeboard/Settings.hpp>
 
 #include <OpenKneeboard/json/LegacyNonVRSettings.hpp>
+#include <OpenKneeboard/json/VRSettings.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/json.hpp>

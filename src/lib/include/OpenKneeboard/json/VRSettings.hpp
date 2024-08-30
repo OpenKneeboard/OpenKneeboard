@@ -19,25 +19,18 @@
  */
 #pragma once
 
-#include <OpenKneeboard/json/Alignment.hpp>
+#include <OpenKneeboard/json_fwd.hpp>
 
-#include <OpenKneeboard/json.hpp>
+namespace OpenKneeboard {
 
-namespace OpenKneeboard::Alignment {
+struct GazeTargetScale;
+struct VROpacitySettings;
+struct VRPose;
+struct VRSettings;
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  Horizontal,
-  {
-    {Horizontal::Left, "Left"},
-    {Horizontal::Center, "Center"},
-    {Horizontal::Right, "Right"},
-  });
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(GazeTargetScale)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VROpacitySettings)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRPose)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRSettings)
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  Vertical,
-  {
-    {Vertical::Top, "Top"},
-    {Vertical::Middle, "Middle"},
-    {Vertical::Bottom, "Bottom"},
-  });
-}// namespace OpenKneeboard::Alignment
+}// namespace OpenKneeboard

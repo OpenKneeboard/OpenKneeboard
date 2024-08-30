@@ -22,6 +22,7 @@
 
 #include <OpenKneeboard/json/Geometry2D.hpp>
 #include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
+#include <OpenKneeboard/json/VRSettings.hpp>
 
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/utf8.hpp>
