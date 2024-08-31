@@ -28,7 +28,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 
 #include <OpenKneeboard/utf8.hpp>
 

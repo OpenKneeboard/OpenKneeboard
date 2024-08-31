@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/PreferredSize.hpp>
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 
 #include <OpenKneeboard/json/Geometry2D.hpp>
 #include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
@@ -246,5 +246,5 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {AppWindowViewMode::ActiveView, "ActiveView"},
   });
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews, mAppWindowMode);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsSettings, mViews, mAppWindowMode);
 };// namespace OpenKneeboard

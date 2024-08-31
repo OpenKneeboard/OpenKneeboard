@@ -180,13 +180,13 @@ enum class AppWindowViewMode {
   Independent,
 };
 
-struct ViewsConfig {
+struct ViewsSettings {
   std::vector<ViewSettings> mViews;
 
   AppWindowViewMode mAppWindowMode {AppWindowViewMode::NoDecision};
 
-  constexpr bool operator==(const ViewsConfig&) const noexcept = default;
+  constexpr bool operator==(const ViewsSettings&) const noexcept = default;
 };
 
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(ViewsConfig);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(ViewsSettings);
 };// namespace OpenKneeboard

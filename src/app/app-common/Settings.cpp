@@ -211,8 +211,8 @@ static void MigrateToProfiles(Settings& settings) {
   settings.Save("default");
 }
 
-// v1.7 introduced 'ViewsConfig'
-static void MigrateToViewsConfig(Settings& settings) {
+// v1.7 introduced 'ViewsSettings'
+static void MigrateToViewsSettings(Settings& settings) {
   const auto& oldVR = settings.mVR.mDeprecated;
 
   IndependentViewVRSettings vrConfig {
@@ -274,7 +274,7 @@ Settings Settings::Load(std::string_view profile) {
     && settings.mApp.mDeprecated.mDualKneeboards != parentSettings->mApp.mDeprecated.mDualKneeboards
     &&
     (!std::filesystem::exists(profileDir / "Views.json")))) {
-    MigrateToViewsConfig(settings);
+    MigrateToViewsSettings(settings);
   }
 
   return settings;

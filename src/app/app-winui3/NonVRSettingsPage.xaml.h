@@ -25,7 +25,7 @@
 
 #include "WithPropertyChangedEvent.h"
 
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;

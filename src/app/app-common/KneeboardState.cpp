@@ -595,7 +595,7 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-task<void> KneeboardState::SetViewsSettings(const ViewsConfig& view) {
+task<void> KneeboardState::SetViewsSettings(const ViewsSettings& view) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 

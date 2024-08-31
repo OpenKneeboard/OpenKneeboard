@@ -34,7 +34,7 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 #include <OpenKneeboard/VRSettings.hpp>
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/config.hpp>

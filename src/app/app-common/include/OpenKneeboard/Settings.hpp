@@ -26,7 +26,7 @@
 #include <OpenKneeboard/TabletSettings.hpp>
 #include <OpenKneeboard/TextSettings.hpp>
 #include <OpenKneeboard/VRSettings.hpp>
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 
 #include <filesystem>
 
@@ -40,7 +40,7 @@ namespace OpenKneeboard {
   IT(nlohmann::json, Games) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
-  IT(ViewsConfig, Views) \
+  IT(ViewsSettings, Views) \
   IT(VRSettings, VR)
 
 struct Settings final {

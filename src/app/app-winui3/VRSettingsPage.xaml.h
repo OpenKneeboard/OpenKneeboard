@@ -26,7 +26,7 @@
 #include "WithPropertyChangedEvent.h"
 
 #include <OpenKneeboard/Events.hpp>
-#include <OpenKneeboard/ViewsConfig.hpp>
+#include <OpenKneeboard/ViewsSettings.hpp>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 
