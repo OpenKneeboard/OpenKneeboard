@@ -35,22 +35,10 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mSkipVersion,
   mChannel,
   mTesting)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::DualKneeboardSettings, mEnabled)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::BookmarkSettings, mEnabled, mLoop)
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  AppSettings::InGameUISettings,
-  mHeaderEnabled,
-  mFooterEnabled,
-  mFooterFrameCountEnabled,
-  mBookmarksBarEnabled);
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  AppSettings::TintSettings,
-  mEnabled,
-  mBrightness,
-  mBrightnessStep,
-  mRed,
-  mGreen,
-  mBlue)
+  AppSettings::Deprecated::DualKneeboardSettings,
+  mEnabled)
 
 template <>
 void from_json_postprocess<AppSettings>(
@@ -99,14 +87,6 @@ void to_json_postprocess<AppSettings>(
 }
 
 // mWindowRect is handled by `*_json_postprocess` functions above
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  AppSettings,
-  mLoopPages,
-  mLoopTabs,
-  mAutoUpdate,
-  mBookmarks,
-  mInGameUI,
-  mTint,
-  mLastRunVersion)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings, mAutoUpdate, mLastRunVersion)
 
 }// namespace OpenKneeboard

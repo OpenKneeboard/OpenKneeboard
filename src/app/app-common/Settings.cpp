@@ -277,6 +277,10 @@ Settings Settings::Load(std::string_view profile) {
     MigrateToViewsSettings(settings);
   }
 
+  if (!std::filesystem::exists(profileDir / "UI.json")) {
+    MaybeSetFromJSON(settings.mUI, profileDir / "App.json");
+  }
+
   return settings;
 }
 

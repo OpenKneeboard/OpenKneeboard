@@ -131,7 +131,7 @@ void InterprocessRenderer::SubmitFrame(
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };
-  const auto tint = mKneeboard->GetAppSettings().mTint;
+  const auto tint = mKneeboard->GetUISettings().mTint;
   if (tint.mEnabled) {
     config.mTint = {
       tint.mRed * tint.mBrightness,

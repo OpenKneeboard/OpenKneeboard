@@ -332,16 +332,15 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       co_await this->SwitchProfile(Direction::Next);
       co_return;
     case UserAction::ENABLE_TINT:
-      this->mSettings.mApp.mTint.mEnabled = true;
+      this->mSettings.mUI.mTint.mEnabled = true;
       this->SaveSettings();
       co_return;
     case UserAction::DISABLE_TINT:
-      this->mSettings.mApp.mTint.mEnabled = false;
+      this->mSettings.mUI.mTint.mEnabled = false;
       this->SaveSettings();
       co_return;
     case UserAction::TOGGLE_TINT:
-      this->mSettings.mApp.mTint.mEnabled
-        = !this->mSettings.mApp.mTint.mEnabled;
+      this->mSettings.mUI.mTint.mEnabled = !this->mSettings.mUI.mTint.mEnabled;
       this->SaveSettings();
       co_return;
     case UserAction::CYCLE_ACTIVE_VIEW:
@@ -353,7 +352,7 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       this->SetRepaintNeeded();
       co_return;
     case UserAction::INCREASE_BRIGHTNESS: {
-      auto& tint = this->mSettings.mApp.mTint;
+      auto& tint = this->mSettings.mUI.mTint;
       tint.mEnabled = true;
       tint.mBrightness
         = std::clamp(tint.mBrightness + tint.mBrightnessStep, 0.0f, 1.0f);
@@ -361,7 +360,7 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       co_return;
     }
     case UserAction::DECREASE_BRIGHTNESS: {
-      auto& tint = this->mSettings.mApp.mTint;
+      auto& tint = this->mSettings.mUI.mTint;
       tint.mEnabled = true;
       tint.mBrightness
         = std::clamp(tint.mBrightness - tint.mBrightnessStep, 0.0f, 1.0f);
@@ -520,7 +519,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
 
   if (ev.name == APIEvent::EVT_SET_BRIGHTNESS) {
     const auto parsed = ev.ParsedValue<SetBrightnessEvent>();
-    auto& tint = this->mSettings.mApp.mTint;
+    auto& tint = this->mSettings.mUI.mTint;
     tint.mEnabled = true;
     switch (parsed.mMode) {
       case SetBrightnessEvent::Mode::Absolute:
@@ -604,6 +603,17 @@ task<void> KneeboardState::SetViewsSettings(const ViewsSettings& view) {
 
   this->SaveSettings();
   this->SetRepaintNeeded();
+  co_return;
+}
+
+task<void> KneeboardState::SetUISettings(const UISettings& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+  mSettings.mUI = value;
+  this->SaveSettings();
+
+  this->SetRepaintNeeded();
+
   co_return;
 }
 

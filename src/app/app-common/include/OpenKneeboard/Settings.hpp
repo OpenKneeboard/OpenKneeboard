@@ -25,6 +25,7 @@
 #include <OpenKneeboard/LegacyNonVRSettings.hpp>
 #include <OpenKneeboard/TabletSettings.hpp>
 #include <OpenKneeboard/TextSettings.hpp>
+#include <OpenKneeboard/UISettings.hpp>
 #include <OpenKneeboard/VRSettings.hpp>
 #include <OpenKneeboard/ViewsSettings.hpp>
 
@@ -40,6 +41,7 @@ namespace OpenKneeboard {
   IT(nlohmann::json, Games) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
+  IT(UISettings, UI) \
   IT(ViewsSettings, Views) \
   IT(VRSettings, VR)
 

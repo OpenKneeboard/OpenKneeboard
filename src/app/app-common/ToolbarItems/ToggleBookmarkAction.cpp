@@ -43,7 +43,7 @@ ToggleBookmarkAction::~ToggleBookmarkAction() {
 }
 
 bool ToggleBookmarkAction::IsVisible() const {
-  return mKneeboardState->GetAppSettings().mBookmarks.mEnabled;
+  return mKneeboardState->GetUISettings().mBookmarks.mEnabled;
 }
 
 bool ToggleBookmarkAction::IsEnabled() const {

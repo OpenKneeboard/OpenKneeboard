@@ -31,12 +31,13 @@
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
 #include <OpenKneeboard/UserInputDevice.hpp>
 
-#include <microsoft.ui.xaml.window.h>
-
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
 #include <dinput.h>
+
+#include <microsoft.ui.xaml.window.h>
+
 #include <shobjidl.h>
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -62,7 +63,7 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::INCREASE_BRIGHTNESS, _(L"Increase brightness"));
   AppendUIRow(UserAction::DECREASE_BRIGHTNESS, _(L"Decrease brightness"));
 
-  if (gKneeboard.lock()->GetAppSettings().mBookmarks.mEnabled) {
+  if (gKneeboard.lock()->GetUISettings().mBookmarks.mEnabled) {
     AppendUIRow(UserAction::PREVIOUS_BOOKMARK, _(L"Previous bookmark"));
     AppendUIRow(UserAction::NEXT_BOOKMARK, _(L"Next bookmark"));
     AppendUIRow(UserAction::TOGGLE_BOOKMARK, _(L"Add/remove bookmark"));

@@ -55,7 +55,7 @@ bool PreviousTabAction::IsEnabled() const {
     return false;
   }
 
-  return mKneeboardState->GetAppSettings().mLoopTabs;
+  return mKneeboardState->GetUISettings().mLoopTabs;
 }
 
 task<void> PreviousTabAction::Execute() {

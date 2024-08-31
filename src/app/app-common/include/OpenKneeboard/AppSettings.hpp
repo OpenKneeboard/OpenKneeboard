@@ -19,11 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/UISettings.hpp>
+
+#include <OpenKneeboard/json_fwd.hpp>
+
 #include <shims/optional>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/json_fwd.hpp>
 
 namespace OpenKneeboard {
 
@@ -50,53 +52,18 @@ struct AutoUpdateSettings final {
 };
 
 struct AppSettings final {
-  struct DualKneeboardSettings final {
-    bool mEnabled = false;
-    constexpr bool operator==(const DualKneeboardSettings&) const noexcept
-      = default;
-  };
-
-  struct BookmarkSettings final {
-    bool mEnabled = true;
-    bool mLoop = false;
-
-    constexpr bool operator==(const BookmarkSettings&) const noexcept = default;
-  };
-
-  struct InGameUISettings final {
-    bool mHeaderEnabled = true;
-    bool mFooterEnabled = true;
-    bool mFooterFrameCountEnabled = false;
-    bool mBookmarksBarEnabled = true;
-
-    constexpr bool operator==(const InGameUISettings&) const noexcept = default;
-  };
-
-  struct TintSettings final {
-    bool mEnabled = false;
-    float mBrightness = 1.0f;
-    float mBrightnessStep = 0.1f;
-    float mRed = 1.0f;
-    float mGreen = 1.0f;
-    float mBlue = 1.0f;
-
-    // No alpha given there are separate VR- and Non-VR-
-    // settings for alpha.
-
-    constexpr bool operator==(const TintSettings&) const noexcept = default;
-  };
-
   std::optional<RECT> mWindowRect;
-  bool mLoopPages {false};
-  bool mLoopTabs {false};
   AutoUpdateSettings mAutoUpdate {};
-  BookmarkSettings mBookmarks {};
-  InGameUISettings mInGameUI {};
-  TintSettings mTint {};
   std::string mLastRunVersion;
 
   struct Deprecated {
+    struct DualKneeboardSettings final {
+      bool mEnabled = false;
+      constexpr bool operator==(const DualKneeboardSettings&) const noexcept
+        = default;
+    };
     DualKneeboardSettings mDualKneeboards {};
+
     constexpr bool operator==(const Deprecated&) const noexcept = default;
   };
   Deprecated mDeprecated;

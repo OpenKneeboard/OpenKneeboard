@@ -243,7 +243,7 @@ task<void> BookmarksUILayer::Render(
 }
 
 bool BookmarksUILayer::IsEnabled() const {
-  return mKneeboardState->GetAppSettings().mBookmarks.mEnabled
+  return mKneeboardState->GetUISettings().mBookmarks.mEnabled
     && !mKneeboardView->GetBookmarks().empty();
 }
 

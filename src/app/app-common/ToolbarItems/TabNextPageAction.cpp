@@ -53,7 +53,7 @@ bool TabNextPageAction::IsEnabled() const {
     return false;
   }
 
-  if (mKneeboard->GetAppSettings().mLoopPages) {
+  if (mKneeboard->GetUISettings().mLoopPages) {
     return true;
   }
 
@@ -79,7 +79,7 @@ task<void> TabNextPageAction::Execute() {
 
   it++;
   if (it == pages.end()) {
-    if (mKneeboard->GetAppSettings().mLoopPages) {
+    if (mKneeboard->GetUISettings().mLoopPages) {
       it = pages.begin();
     } else {
       co_return;

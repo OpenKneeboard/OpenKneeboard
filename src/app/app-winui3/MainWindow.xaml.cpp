@@ -1013,7 +1013,7 @@ MainWindow::NavigationItems() noexcept {
   navItems.Clear();
 
   decltype(mKneeboardView->GetBookmarks()) bookmarks;
-  if (mKneeboardView && mKneeboard->GetAppSettings().mBookmarks.mEnabled) {
+  if (mKneeboardView && mKneeboard->GetUISettings().mBookmarks.mEnabled) {
     bookmarks = mKneeboardView->GetBookmarks();
   }
   auto bookmark = bookmarks.begin();

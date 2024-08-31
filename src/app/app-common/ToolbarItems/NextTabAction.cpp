@@ -47,7 +47,7 @@ bool NextTabAction::IsEnabled() const {
     return false;
   }
 
-  if (mKneeboardState->GetAppSettings().mLoopTabs) {
+  if (mKneeboardState->GetUISettings().mLoopTabs) {
     return true;
   }
 

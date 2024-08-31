@@ -91,7 +91,7 @@ std::shared_ptr<KneeboardView> KneeboardView::Create(
 void KneeboardView::UpdateUILayers() {
   decltype(mUILayers) layers;
 
-  const auto settings = mKneeboard->GetAppSettings().mInGameUI;
+  const auto settings = mKneeboard->GetUISettings().mInGameUI;
   if (settings.mBookmarksBarEnabled) {
     layers.push_back(mBookmarksUILayer.get());
   }
@@ -205,7 +205,7 @@ void KneeboardView::PreviousTab() {
     return;
   }
 
-  if (mKneeboard->GetAppSettings().mLoopTabs) {
+  if (mKneeboard->GetUISettings().mLoopTabs) {
     SetCurrentTabByIndex(count - 1);
   }
 }
@@ -222,7 +222,7 @@ void KneeboardView::NextTab() {
     return;
   }
 
-  if (mKneeboard->GetAppSettings().mLoopTabs) {
+  if (mKneeboard->GetUISettings().mLoopTabs) {
     SetCurrentTabByIndex(0);
     return;
   }
@@ -677,7 +677,7 @@ void KneeboardView::SetBookmark(RelativePosition pos) {
     return;
   }
 
-  if (!mKneeboard->GetAppSettings().mBookmarks.mLoop) {
+  if (!mKneeboard->GetUISettings().mBookmarks.mLoop) {
     return;
   }
 
