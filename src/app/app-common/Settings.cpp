@@ -146,7 +146,11 @@ void Settings::Save(std::string_view profile) const {
 
 #define IT(cpptype, x) \
   MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x ".json");
-  OPENKNEEBOARD_SETTINGS_SECTIONS
+  OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
+#undef IT
+#define IT(cpptype, x) \
+  MaybeSaveJSON(parentSettings.m##x, this->m##x, #x ".json");
+  OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
 #undef IT
 }
 
@@ -174,21 +178,26 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mViews,
   mVR)
 
-#define IT(cpptype, name) \
+#define RESET_IT(cpptype, name, path_suffix) \
   void Settings::Reset##name##Section(std::string_view profileID) { \
     if (profileID == "default") { \
       m##name = {}; \
     } else { \
       m##name = Settings::Load("default").m##name; \
     } \
-    const auto path = Filesystem::GetSettingsDirectory() / "Profiles" \
-      / profileID / #name ".json"; \
+    const auto path = Filesystem::GetSettingsDirectory() / path_suffix; \
     if (std::filesystem::exists(path)) { \
       std::filesystem::remove(path); \
     } \
   }
-OPENKNEEBOARD_SETTINGS_SECTIONS
+#define IT(cpptype, name) \
+  RESET_IT(cpptype, name, "Profiles" / profileID / #name ".json")
+OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
 #undef IT
+#define IT(cpptype, name) RESET_IT(cpptype, name, #name ".json")
+OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
+#undef IT
+#undef RESET_IT
 
 // v1.2 -> v1.3
 static void MigrateToProfiles(Settings& settings) {
@@ -264,9 +273,12 @@ Settings Settings::Load(std::string_view profile) {
     = Filesystem::GetSettingsDirectory() / "Profiles" / profile;
 
 #define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, profileDir / #x ".json");
-  OPENKNEEBOARD_SETTINGS_SECTIONS
+  OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
 #undef IT
   MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");
+#define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, #x ".json");
+  OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
+#undef IT
 
   if (settings.mViews.mViews.empty() ||
   (
@@ -277,8 +289,14 @@ Settings Settings::Load(std::string_view profile) {
     MigrateToViewsSettings(settings);
   }
 
-  if (!std::filesystem::exists(profileDir / "UI.json")) {
-    MaybeSetFromJSON(settings.mUI, profileDir / "App.json");
+  // Split up and moved out of profiles in v1.9 (#547)
+  const auto perProfileAppSettings = profileDir / "App.json";
+  if (std::filesystem::exists(perProfileAppSettings)) {
+    if (!std::filesystem::exists(profileDir / "UI.json")) {
+      MaybeSetFromJSON(settings.mUI, perProfileAppSettings);
+    }
+    MaybeSetFromJSON(settings.mApp, perProfileAppSettings);
+    std::filesystem::remove(perProfileAppSettings);
   }
 
   return settings;

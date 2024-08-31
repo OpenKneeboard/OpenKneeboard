@@ -33,8 +33,9 @@
 
 namespace OpenKneeboard {
 
-#define OPENKNEEBOARD_SETTINGS_SECTIONS \
-  IT(AppSettings, App) \
+#define OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS IT(AppSettings, App)
+
+#define OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS \
   IT(DirectInputSettings, DirectInput) \
   IT(DoodleSettings, Doodles) \
   IT(TextSettings, Text) \
@@ -44,6 +45,10 @@ namespace OpenKneeboard {
   IT(UISettings, UI) \
   IT(ViewsSettings, Views) \
   IT(VRSettings, VR)
+
+#define OPENKNEEBOARD_SETTINGS_SECTIONS \
+  OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS \
+  OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
 
 struct Settings final {
 #define IT(cpptype, name) cpptype m##name {};
