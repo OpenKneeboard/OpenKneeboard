@@ -177,8 +177,9 @@ task<void> MainWindow::Init() {
   if (hwndFile.has_value()) {
     mHwndFile = std::move(hwndFile).value();
   } else {
+    OPENKNEEBOARD_BREAK;
     dprintf(
-      "Failed to open hwnd file: {} {:#010x}",
+      "⚠️ ERROR: Failed to open hwnd file: {} {:#010x}",
       hwndMappingName,
       static_cast<uint32_t>(hwndFile.error()));
     co_return;
