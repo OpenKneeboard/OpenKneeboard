@@ -51,6 +51,8 @@ auto GetKnownFolderPath() {
 
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 
+/// Migrate from `Saved Games\OpenKneeboard` to
+/// `%LOCALAPPDATA%\OpenKneeboard\Settings`
 void MigrateSettingsDirectory();
 
 void CleanupTemporaryDirectories();
