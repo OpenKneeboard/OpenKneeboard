@@ -113,13 +113,14 @@ void from_json(const nlohmann::json& j, ProfileSettings& v) {
 
   std::vector<std::filesystem::path> toRemove;
   if (j.contains("Profiles")) {
-    if (j.type() == nlohmann::json::value_t::array) {
+    auto jj = j.at("Profiles");
+    if (jj.type() == nlohmann::json::value_t::array) {
       // v1.9+
-      v.mProfiles = j.at("Profiles");
+      v.mProfiles = jj;
     } else {
       // v1.8: map of folder name -> Profile
       std::unordered_map<std::string, ProfileSettings::Profile> oldValue;
-      oldValue = j.at("Profiles");
+      oldValue = jj;
 
       const auto baseDir = Filesystem::GetSettingsDirectory() / "Profiles";
       for (auto&& [subfolder, profile]: oldValue) {
