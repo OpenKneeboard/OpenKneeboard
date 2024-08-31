@@ -31,20 +31,17 @@
 namespace OpenKneeboard {
 
 ProfileSettings::Profile ProfileSettings::GetActiveProfile() const {
-  return mProfiles.at(mActiveProfile);
+  return *std::ranges::find(mProfiles, mActiveProfile, &Profile::mGuid);
 }
 
 std::vector<ProfileSettings::Profile> ProfileSettings::GetSortedProfiles()
   const {
-  std::vector<ProfileSettings::Profile> ret;
-  for (const auto& [id, profile]: mProfiles) {
-    ret.push_back(profile);
-  }
-  std::ranges::sort(ret, [](const auto& a, const auto& b) {
-    if (a.mID == "default") {
+  std::vector<ProfileSettings::Profile> ret = mProfiles;
+  std::ranges::sort(ret, [this](const auto& a, const auto& b) {
+    if (a.mGuid == mDefaultProfile) {
       return true;
     }
-    if (b.mID == "default") {
+    if (b.mGuid == mDefaultProfile) {
       return false;
     }
     return a.mName < b.mName;
@@ -52,33 +49,7 @@ std::vector<ProfileSettings::Profile> ProfileSettings::GetSortedProfiles()
   return ret;
 }
 
-std::string ProfileSettings::MakeID(const std::string& name) const {
-  std::string id;
-  for (char it: name) {
-    it = std::tolower(it);
-    if ((it >= 'a' && it <= 'z') || (it >= '0' && it <= '9')) {
-      id += it;
-    }
-  }
-
-  if (id.empty()) {
-    id = "empty";
-  }
-  if (!mProfiles.contains(id)) {
-    return id;
-  }
-
-  size_t i = 1;
-  while (true) {
-    const auto nextID = std::format("{}_{}", id, i++);
-    if (!mProfiles.contains(nextID)) {
-      return nextID;
-    }
-  }
-}
-
 ProfileSettings ProfileSettings::Load() {
-  bool migrated = false;
   ProfileSettings ret;
 
   const auto path = Filesystem::GetSettingsDirectory() / "Profiles.json";
@@ -90,24 +61,29 @@ ProfileSettings ProfileSettings::Load() {
 
     for (const auto& profile: json.at("Profiles")) {
       if (!profile.contains("Guid")) {
-        migrated = true;
+        ret.mMigrated = true;
         break;
       }
     }
   }
 
-  if (!ret.mProfiles.contains("default")) {
-    ret.mProfiles["default"] = {
-      .mID = "default",
-      .mName = _("Default"),
-    };
-    migrated = true;
-  }
-  if (!ret.mProfiles.contains(ret.mActiveProfile)) {
-    ret.mActiveProfile = "default";
+  if (
+    ret.mDefaultProfile == winrt::guid {}
+    || !std::ranges::contains(
+      ret.mProfiles, ret.mDefaultProfile, &Profile::mGuid)) {
+    Profile profile {_("Default")};
+    ret.mActiveProfile = profile.mGuid;
+    ret.mDefaultProfile = profile.mGuid;
+    ret.mProfiles.push_back(std::move(profile));
+    ret.mMigrated = true;
   }
 
-  if (migrated) {
+  if (!std::ranges::contains(
+        ret.mProfiles, ret.mActiveProfile, &Profile::mGuid)) {
+    ret.mActiveProfile = ret.mDefaultProfile;
+  }
+
+  if (ret.mMigrated) {
     ret.Save();
   }
 
@@ -125,12 +101,67 @@ void ProfileSettings::Save() {
   f << std::setw(2) << j << std::endl;
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mID, mName, mGuid)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  ProfileSettings,
-  mActiveProfile,
-  mProfiles,
-  mLoopProfiles,
-  mEnabled)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mName, mGuid)
+
+void from_json(const nlohmann::json& j, ProfileSettings& v) {
+  if (j.contains("LoopProfiles")) {
+    v.mLoopProfiles = j.at("LoopProfiles");
+  }
+  if (j.contains("Enabled")) {
+    v.mEnabled = j.at("Enabled");
+  }
+
+  std::vector<std::filesystem::path> toRemove;
+  if (j.contains("Profiles")) {
+    if (j.type() == nlohmann::json::value_t::array) {
+      // v1.9+
+      v.mProfiles = j.at("Profiles");
+    } else {
+      // v1.8: map of folder name -> Profile
+      std::unordered_map<std::string, ProfileSettings::Profile> oldValue;
+      oldValue = j.at("Profiles");
+
+      const auto baseDir = Filesystem::GetSettingsDirectory() / "Profiles";
+      for (auto&& [subfolder, profile]: oldValue) {
+        const auto oldPath = baseDir / subfolder;
+        const auto newPath = baseDir / profile.GetDirectoryName();
+        std::filesystem::copy(
+          oldPath, newPath, std::filesystem::copy_options::recursive);
+        toRemove.push_back(oldPath);
+        v.mProfiles.push_back(profile);
+      }
+      v.mDefaultProfile = oldValue.at("default").mGuid;
+      v.mActiveProfile
+        = oldValue.at(j.at("ActiveProfile").get<std::string>()).mGuid;
+      v.mMigrated = true;
+    }
+  }
+
+  if (j.contains("ActiveProfile")) {
+    try {
+      v.mActiveProfile = j.at("ActiveProfile");
+    } catch (...) {
+      // Versions < 1.9 used folder name rather than GUID; this is handled above
+    }
+  }
+
+  if (j.contains("DefaultProfile")) {
+    v.mDefaultProfile = j.at("DefaultProfile");
+  }
+
+  for (auto&& it: toRemove) {
+    std::filesystem::remove_all(it);
+  }
+}
+
+void to_json(nlohmann::json& j, const ProfileSettings& v) {
+  j.update({
+    {"LoopProfiles", v.mLoopProfiles},
+    {"Enabled", v.mEnabled},
+    {"Profiles", v.mProfiles},
+    {"ActiveProfile", v.mActiveProfile},
+    {"DefaultProfile", v.mDefaultProfile},
+  });
+}
 
 }// namespace OpenKneeboard

@@ -50,7 +50,16 @@
 #include <OpenKneeboard/TryEnqueue.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/tracing.hpp>
+#include <OpenKneeboard/version.hpp>
+
 #include <shims/winrt/Microsoft.UI.Interop.h>
+
+#include <Shellapi.h>
 
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Animation.h>
@@ -63,17 +72,8 @@
 
 #include <microsoft.ui.xaml.window.h>
 
-#include <OpenKneeboard/config.hpp>
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/json.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-#include <OpenKneeboard/tracing.hpp>
-#include <OpenKneeboard/version.hpp>
-
 #include <fstream>
 #include <mutex>
-
-#include <Shellapi.h>
 
 using namespace winrt;
 using namespace winrt::Microsoft::UI::Xaml;
@@ -726,26 +726,25 @@ OpenKneeboard::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
     ToggleMenuFlyoutItem item;
     auto wname = to_hstring(profile.mName);
     item.Text(wname);
-    item.Tag(box_value(to_hstring(profile.mID)));
     uiProfiles.Append(item);
 
     auto weakItem = make_weak(item);
     item.Click(
       [](auto self, auto item, auto profile) -> OpenKneeboard::fire_and_forget {
         auto settings = self->mKneeboard->GetProfileSettings();
-        if (settings.mActiveProfile == profile.mID) {
+        if (settings.mActiveProfile == profile.mGuid) {
           item.IsChecked(true);
           co_return;
         }
 
         self->mTabSwitchReason = TabSwitchReason::ProfileSwitched;
 
-        settings.mActiveProfile = profile.mID;
+        settings.mActiveProfile = profile.mGuid;
         co_await self->mKneeboard->SetProfileSettings(settings);
       } | bind_refs_front(this, item)
         | bind_front(profile) | drop_winrt_event_args());
 
-    if (profile.mID == settings.mActiveProfile) {
+    if (profile.mGuid == settings.mActiveProfile) {
       item.IsChecked(true);
       ProfileSwitcherLabel().Text(wname);
 

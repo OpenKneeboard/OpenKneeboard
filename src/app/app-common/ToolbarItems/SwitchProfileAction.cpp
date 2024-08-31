@@ -24,7 +24,7 @@ namespace OpenKneeboard {
 
 SwitchProfileAction::SwitchProfileAction(
   KneeboardState* kbs,
-  const std::string& profileID,
+  const winrt::guid& profileID,
   const std::string& profileName)
   : ToolbarAction({}, profileName),
     mKneeboardState(kbs),

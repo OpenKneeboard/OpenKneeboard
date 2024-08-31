@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include <shims/nlohmann/json.hpp>
-
 #include <OpenKneeboard/json_fwd.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 

@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/ProfileSettings.hpp>
 #include <OpenKneeboard/Settings.hpp>
 
 #include <OpenKneeboard/json/LegacyNonVRSettings.hpp>
@@ -122,27 +123,23 @@ void MaybeSaveJSON<nlohmann::json>(
   f << std::setw(2) << value << std::endl;
 }
 
-void Settings::Save(std::string_view profile) const {
-  const Settings previousSettings = Settings::Load(profile);
+void Settings::Save(
+  const winrt::guid defaultProfile,
+  const winrt::guid activeProfile) const {
+  const Settings previousSettings
+    = Settings::Load(defaultProfile, activeProfile);
 
   if (previousSettings == *this) {
     return;
   }
 
   Settings parentSettings;
-  if (profile.empty()) {
-    profile = "default";
-  } else if (profile != "default") {
-    parentSettings = Settings::Load("default");
+  if (activeProfile != defaultProfile) {
+    parentSettings = Settings::Load(defaultProfile, defaultProfile);
   }
 
-  const auto profileDir = std::filesystem::path {"Profiles"} / profile;
-  if (parentSettings == *this && std::filesystem::is_directory(profileDir)) {
-    // Ignore, e.g. if a file is open
-    std::error_code ec;
-    std::filesystem::remove_all(profileDir, ec);
-    return;
-  }
+  const auto profileDir = std::filesystem::path {"Profiles"}
+    / ProfileSettings::Profile::GetDirectoryName(activeProfile);
 
 #define IT(cpptype, x) \
   MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x ".json");
@@ -179,11 +176,12 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mVR)
 
 #define RESET_IT(cpptype, name, path_suffix) \
-  void Settings::Reset##name##Section(std::string_view profileID) { \
-    if (profileID == "default") { \
+  void Settings::Reset##name##Section( \
+    const winrt::guid defaultProfile, const winrt::guid activeProfile) { \
+    if (defaultProfile == activeProfile) { \
       m##name = {}; \
     } else { \
-      m##name = Settings::Load("default").m##name; \
+      m##name = Settings::Load(defaultProfile, defaultProfile).m##name; \
     } \
     const auto path = Filesystem::GetSettingsDirectory() / path_suffix; \
     if (std::filesystem::exists(path)) { \
@@ -191,7 +189,11 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
     } \
   }
 #define IT(cpptype, name) \
-  RESET_IT(cpptype, name, "Profiles" / profileID / #name ".json")
+  RESET_IT( \
+    cpptype, \
+    name, \
+    "Profiles" / ProfileSettings::Profile::GetDirectoryName(activeProfile) \
+      / #name ".json")
 OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
 #undef IT
 #define IT(cpptype, name) RESET_IT(cpptype, name, #name ".json")
@@ -200,7 +202,14 @@ OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
 #undef RESET_IT
 
 // v1.2 -> v1.3
-static void MigrateToProfiles(Settings& settings) {
+static void MigrateToProfiles(
+  Settings& settings,
+  const winrt::guid defaultProfile,
+  const winrt::guid activeProfile) {
+  if (defaultProfile != activeProfile) {
+    return;
+  }
+
   if (std::filesystem::exists(
         Filesystem::GetSettingsDirectory() / "Profiles")) {
     return;
@@ -214,10 +223,8 @@ static void MigrateToProfiles(Settings& settings) {
 
   dprint("Migrating from legacy Settings.json");
   MaybeSetFromJSON(settings, legacySettingsFile);
-  std::filesystem::rename(
-    legacySettingsFile,
-    Filesystem::GetSettingsDirectory() / "LegacySettings.json.bak");
-  settings.Save("default");
+  std::filesystem::remove(legacySettingsFile);
+  settings.Save(defaultProfile, defaultProfile);
 }
 
 // v1.7 introduced 'ViewsSettings'
@@ -257,20 +264,22 @@ static void MigrateToViewsSettings(Settings& settings) {
   }
 }
 
-Settings Settings::Load(std::string_view profile) {
-  dprintf("Loading profile: '{}'", profile);
+Settings Settings::Load(
+  const winrt::guid defaultProfile,
+  const winrt::guid activeProfile) {
+  dprintf("Loading profile: '{}'", activeProfile);
   std::optional<Settings> parentSettings;
   Settings settings;
 
-  MigrateToProfiles(settings);
+  MigrateToProfiles(settings, defaultProfile, activeProfile);
 
-  if (profile != "default") {
-    settings = Settings::Load("default");
+  if (activeProfile != defaultProfile) {
+    settings = Settings::Load(defaultProfile, defaultProfile);
     parentSettings = settings;
   }
 
-  const auto profileDir
-    = Filesystem::GetSettingsDirectory() / "Profiles" / profile;
+  const auto profileDir = Filesystem::GetSettingsDirectory() / "Profiles"
+    / ProfileSettings::Profile::GetDirectoryName(activeProfile);
 
 #define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, profileDir / #x ".json");
   OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS

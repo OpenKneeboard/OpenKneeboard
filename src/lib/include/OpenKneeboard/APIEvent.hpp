@@ -81,8 +81,8 @@ struct APIEvent final {
   /// struct SetTabByIndexEvent
   static constexpr char EVT_SET_TAB_BY_INDEX[] = "SetTabByIndex";
 
-  /// struct SetProfileByIDEvent
-  static constexpr char EVT_SET_PROFILE_BY_ID[] = "SetProfileByID";
+  /// struct SetProfileByGUIDEvent
+  static constexpr char EVT_SET_PROFILE_BY_GUID[] = "SetProfileByGUID";
   /// struct SetProfileByNameEvent
   static constexpr char EVT_SET_PROFILE_BY_NAME[] = "SetProfileByName";
   // struct SetBrightnessEvent
@@ -130,11 +130,11 @@ struct SetTabByIndexEvent : public BaseSetTabEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIndexEvent);
 
-struct SetProfileByIDEvent {
-  static constexpr auto ID {APIEvent::EVT_SET_PROFILE_BY_ID};
-  std::string mID;
+struct SetProfileByGUIDEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_PROFILE_BY_GUID};
+  std::string mGUID;
 };
-OPENKNEEBOARD_DECLARE_JSON(SetProfileByIDEvent);
+OPENKNEEBOARD_DECLARE_JSON(SetProfileByGUIDEvent);
 
 struct SetProfileByNameEvent {
   static constexpr auto ID {APIEvent::EVT_SET_PROFILE_BY_NAME};

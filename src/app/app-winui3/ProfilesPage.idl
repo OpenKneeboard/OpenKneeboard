@@ -10,7 +10,7 @@ namespace OpenKneeboardApp
     unsealed runtimeclass ProfileUIData
     {
         ProfileUIData();
-        String ID;
+        Guid ID;
         String Name;
         Boolean CanDelete;
     }

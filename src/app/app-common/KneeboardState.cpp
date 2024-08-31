@@ -480,19 +480,21 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_SET_PROFILE_BY_ID) {
-    const auto parsed = ev.ParsedValue<SetProfileByIDEvent>();
+  using Profile = ProfileSettings::Profile;
+  if (ev.name == APIEvent::EVT_SET_PROFILE_BY_GUID) {
+    const auto parsed = ev.ParsedValue<SetProfileByGUIDEvent>();
     if (!mProfiles.mEnabled) {
       dprint("Asked to switch profiles, but profiles are disabled");
     }
-    if (!mProfiles.mProfiles.contains(parsed.mID)) {
+    const winrt::guid guid {parsed.mGUID};
+    auto it = std::ranges::find(mProfiles.mProfiles, guid, &Profile::mGuid);
+    if (it == mProfiles.mProfiles.end()) {
       dprintf(
-        "Asked to switch to profile with ID '{}', but it doesn't exist",
-        parsed.mID);
+        "Asked to switch to profile with GUID {}, but it doesn't exist", guid);
       co_return;
     }
     ProfileSettings newSettings(mProfiles);
-    newSettings.mActiveProfile = parsed.mID;
+    newSettings.mActiveProfile = guid;
     co_await this->SetProfileSettings(newSettings);
     co_return;
   }
@@ -502,9 +504,8 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     if (!mProfiles.mEnabled) {
       dprint("Asked to switch profiles, but profiles are disabled");
     }
-    auto it = std::ranges::find_if(
-      mProfiles.mProfiles,
-      [name = parsed.mName](const auto& p) { return p.second.mName == name; });
+    auto it
+      = std::ranges::find(mProfiles.mProfiles, parsed.mName, &Profile::mName);
     if (it == mProfiles.mProfiles.end()) {
       dprintf(
         "Asked to switch to profile with ID '{}', but it doesn't exist",
@@ -512,7 +513,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
       co_return;
     }
     ProfileSettings newSettings(mProfiles);
-    newSettings.mActiveProfile = it->first;
+    newSettings.mActiveProfile = it->mGuid;
     co_await this->SetProfileSettings(newSettings);
     co_return;
   }
@@ -696,7 +697,7 @@ task<void> KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   const auto oldID = mProfiles.mActiveProfile;
   mProfiles = profiles;
   if (!mProfiles.mEnabled) {
-    mProfiles.mActiveProfile = "default";
+    mProfiles.mActiveProfile = profiles.mDefaultProfile;
   }
   mProfiles.Save();
 
@@ -705,7 +706,8 @@ task<void> KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
     co_return;
   }
 
-  const auto newSettings = Settings::Load(newID);
+  const auto newSettings
+    = Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile);
   mSettings = newSettings;
   lock.unlock();
 
@@ -744,7 +746,7 @@ void KneeboardState::SaveSettings() {
     mSettings.mDirectInput = mDirectInput->GetSettings();
   }
 
-  mSettings.Save(mProfiles.mActiveProfile);
+  mSettings.Save(mProfiles.mDefaultProfile, mProfiles.mActiveProfile);
   evSettingsChangedEvent.Emit();
 }
 
@@ -853,9 +855,9 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
     co_return;
   }
   const auto profiles = mProfiles.GetSortedProfiles();
-  const auto it = std::ranges::find_if(
-    profiles,
-    [id = mProfiles.mActiveProfile](const auto& it) { return it.mID == id; });
+  using Profile = ProfileSettings::Profile;
+  const auto it
+    = std::ranges::find(profiles, mProfiles.mActiveProfile, &Profile::mGuid);
   if (it == profiles.end()) {
     dprintf(
       "Current profile '{}' is not in profiles list.",
@@ -873,7 +875,8 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
   }
 
   auto settings = mProfiles;
-  settings.mActiveProfile = profiles.at((nextIdx + count) % count).mID;
+  settings.mActiveProfile
+    = (profiles.begin() + ((nextIdx + count) % count))->mGuid;
   co_await this->SetProfileSettings(settings);
 }
 
@@ -1030,7 +1033,8 @@ void KneeboardState::AfterFrame(FramePostEventKind) {
   } \
   task<void> KneeboardState::Reset##name##Settings() { \
     auto newSettings = mSettings; \
-    newSettings.Reset##name##Section(mProfiles.mActiveProfile); \
+    newSettings.Reset##name##Section( \
+      mProfiles.mDefaultProfile, mProfiles.mActiveProfile); \
     co_await this->Set##name##Settings(newSettings.m##name); \
   }
 OPENKNEEBOARD_SETTINGS_SECTIONS

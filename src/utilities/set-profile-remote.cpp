@@ -24,10 +24,9 @@
 using namespace OpenKneeboard;
 
 #include <Windows.h>
+#include <shellapi.h>
 
 #include <cstdlib>
-
-#include <shellapi.h>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -44,7 +43,7 @@ int WINAPI wWinMain(
   auto argv = CommandLineToArgvW(pCmdLine, &argc);
 
   if (argc < 2 || argc > 4) {
-    dprint("Usage: (id|name) IDENTIFIER");
+    dprint("Usage: (guid|name) IDENTIFIER");
     return 0;
   }
 
@@ -52,7 +51,12 @@ int WINAPI wWinMain(
   const auto identifier = winrt::to_string(std::wstring_view(argv[1]));
 
   if (kind == L"id") {
-    APIEvent::FromStruct(SetProfileByIDEvent {identifier}).Send();
+    dprint("support for ID has been removed; use GUID instead");
+    return 1;
+  }
+
+  if (kind == L"guid") {
+    APIEvent::FromStruct(SetProfileByGUIDEvent {identifier}).Send();
     return 0;
   }
 
@@ -62,6 +66,6 @@ int WINAPI wWinMain(
   }
 
   dprintf(
-    L"Error: first argument must be 'id' or 'name', but '{}' given", kind);
+    L"Error: first argument must be 'guid' or 'name', but '{}' given", kind);
   return 1;
 }

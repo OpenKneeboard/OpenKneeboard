@@ -58,7 +58,7 @@ std::vector<std::shared_ptr<IToolbarItem>> SwitchProfileFlyout::GetSubItems()
   for (const auto& profile:
        mKneeboardState->GetProfileSettings().GetSortedProfiles()) {
     ret.push_back(std::make_shared<SwitchProfileAction>(
-      mKneeboardState, profile.mID, profile.mName));
+      mKneeboardState, profile.mGuid, profile.mName));
   }
   return ret;
 }

@@ -8,7 +8,8 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <DataTemplate x:Key="ProfileTemplate" x:DataType="local:ProfileUIData">
+    <DataTemplate x:Key="ProfileTemplate"
+        x:DataType="local:ProfileUIData">
       <Grid
         ColumnDefinitions="*,Auto"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -20,23 +21,26 @@
           Grid.Column="0"
           Style="{StaticResource BodyStrongTextBlockStyle}"
           Text="{x:Bind Name}"
-          VerticalAlignment="Center"
-        />
-        <Button Grid.Column="1" Tag="{x:Bind ID}" IsEnabled="{x:Bind CanDelete}" Click="RemoveProfile">
-          <SymbolIcon Symbol="Delete" />
+          VerticalAlignment="Center"/>
+        <Button Grid.Column="1"
+            Tag="{x:Bind ID}"
+            IsEnabled="{x:Bind CanDelete}"
+            Click="RemoveProfile">
+          <SymbolIcon Symbol="Delete"/>
         </Button>
       </Grid>
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
   <ScrollViewer Padding="24">
-    <StackPanel Orientation="Vertical" Spacing="12">
-      <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+    <StackPanel Orientation="Vertical"
+        Spacing="12">
+      <Grid ColumnDefinitions="*,Auto"
+          Margin="0,0,0,8">
         <TextBlock
           Grid.Column="0"
           Style="{StaticResource TitleTextBlockStyle}"
-          Text="Profiles"
-        />
+          Text="Profiles"/>
         <Button
           Grid.Column="1"
           HorizontalAlignment="Center"
@@ -46,8 +50,7 @@
             <FontIcon
               Grid.Column="0"
               Glyph="&#xE710;"
-              FontFamily="{StaticResource SymbolThemeFontFamily}"
-            />
+              FontFamily="{StaticResource SymbolThemeFontFamily}"/>
             <TextBlock
               Margin="4,0,0,0"
               Grid.Column="1">
@@ -56,22 +59,21 @@
           </Grid>
         </Button>
       </Grid>
-			<TextBlock
-				Style="{ThemeResource CaptionTextBlockStyle}"
-				Foreground="{ThemeResource TextFillColorSecondary}"
+      <TextBlock
+        Style="{ThemeResource CaptionTextBlockStyle}"
+        Foreground="{ThemeResource TextFillColorSecondary}"
         Margin="16,0,16,0"
         TextWrapping="Wrap">
 				Changes to the "Default" profile will affect all other profiles, except
 				for profiles that already change the same setting.
-			</TextBlock>
+      </TextBlock>
       <ListView
         Grid.Row="1"
         Grid.ColumnSpan="2"
         x:Name="List"
         SelectionMode="Single"
         SelectionChanged="OnList_SelectionChanged"
-        ItemTemplate="{StaticResource ProfileTemplate}"
-      />
+        ItemTemplate="{StaticResource ProfileTemplate}"/>
       <Button
         Margin="0,24,0,0"
         HorizontalAlignment="Center"
@@ -81,8 +83,7 @@
           <FontIcon
             Grid.Column="0"
             Glyph="&#xE710;"
-            FontFamily="{StaticResource SymbolThemeFontFamily}"
-          />
+            FontFamily="{StaticResource SymbolThemeFontFamily}"/>
           <TextBlock
             Margin="8,4,4,4"
             Grid.Column="1">

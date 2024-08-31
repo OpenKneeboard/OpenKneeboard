@@ -62,8 +62,8 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
 struct ProfileUIData : ProfileUIDataT<ProfileUIData> {
   ProfileUIData() = default;
 
-  hstring ID();
-  void ID(hstring);
+  winrt::guid ID();
+  void ID(winrt::guid);
 
   hstring Name();
   void Name(hstring);
@@ -72,7 +72,7 @@ struct ProfileUIData : ProfileUIDataT<ProfileUIData> {
   void CanDelete(bool);
 
  private:
-  hstring mID;
+  winrt::guid mGuid;
   hstring mName;
   bool mCanDelete {true};
 };

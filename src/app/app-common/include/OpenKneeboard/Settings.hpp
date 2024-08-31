@@ -56,9 +56,11 @@ struct Settings final {
 #undef IT
   LegacyNonVRSettings mDeprecatedNonVR {};
 
-  static Settings Load(std::string_view profileID);
-  void Save(std::string_view profileID) const;
-#define IT(cpptype, name) void Reset##name##Section(std::string_view profileID);
+  static Settings Load(winrt::guid defaultProfile, winrt::guid activeProfile);
+  void Save(winrt::guid defaultProfile, winrt::guid activeProfile) const;
+#define IT(cpptype, name) \
+  void Reset##name##Section( \
+    winrt::guid defaultProfile, winrt::guid activeProfile);
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 

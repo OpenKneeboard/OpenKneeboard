@@ -188,7 +188,7 @@ class KneeboardState final
   HWND mHwnd;
   audited_ptr<DXResources> mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};
-  Settings mSettings {Settings::Load(mProfiles.mActiveProfile)};
+  Settings mSettings {Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile)};
 
   uint8_t mInputViewIndex = 0;
   std::vector<std::shared_ptr<KneeboardView>> mViews;

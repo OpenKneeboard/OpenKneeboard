@@ -20,14 +20,14 @@
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <Windows.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <charconv>
 #include <chrono>
@@ -177,7 +177,7 @@ const wchar_t* APIEvent::GetMailslotPath() {
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIDEvent, mID, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByNameEvent, mName, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIndexEvent, mIndex, mPageNumber, mKneeboard);
-OPENKNEEBOARD_DEFINE_JSON(SetProfileByIDEvent, mID);
+OPENKNEEBOARD_DEFINE_JSON(SetProfileByGUIDEvent, mGUID);
 OPENKNEEBOARD_DEFINE_JSON(SetProfileByNameEvent, mName);
 
 NLOHMANN_JSON_SERIALIZE_ENUM(

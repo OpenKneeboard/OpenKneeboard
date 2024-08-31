@@ -38,12 +38,16 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
+enum class ProfileKind { DefaultProfile, AdditionalProfile };
+using Profile = ProfileSettings::Profile;
+
 static OpenKneeboardApp::ProfileUIData CreateProfileUIData(
-  const ProfileSettings::Profile& profile) {
+  const Profile& profile,
+  const ProfileKind kind) {
   auto ret = winrt::make<ProfileUIData>();
-  ret.ID(to_hstring(profile.mID));
+  ret.ID(profile.mGuid);
   ret.Name(to_hstring(profile.mName));
-  ret.CanDelete(profile.mID != "default");
+  ret.CanDelete(kind == ProfileKind::AdditionalProfile);
   return ret;
 }
 
@@ -60,7 +64,7 @@ ProfilesPage::ProfilesPage() {
       static_cast<int32_t>(sorted.size()),
       static_cast<int32_t>(List().Items().Size()));
     for (int32_t i = 0; i < size; ++i) {
-      if (sorted.at(i).mID != settings.mActiveProfile) {
+      if (sorted.at(i).mGuid != settings.mActiveProfile) {
         continue;
       }
       List().SelectedIndex(i);
@@ -80,12 +84,16 @@ void ProfilesPage::UpdateList() {
   mUIProfiles.Clear();
 
   for (const auto& profile: profiles) {
-    mUIProfiles.Append(CreateProfileUIData(profile));
+    mUIProfiles.Append(CreateProfileUIData(
+      profile,
+      profile.mGuid == profileSettings.mDefaultProfile
+        ? ProfileKind::DefaultProfile
+        : ProfileKind::AdditionalProfile));
   }
   List().ItemsSource(mUIProfiles);
   // Using int32_t to match SelectedIndex
   for (int32_t i = 0; i < profiles.size(); ++i) {
-    if (profiles.at(i).mID == profileSettings.mActiveProfile) {
+    if (profiles.at(i).mGuid == profileSettings.mActiveProfile) {
       List().SelectedIndex(i);
       return;
     }
@@ -99,7 +107,7 @@ OpenKneeboard::fire_and_forget ProfilesPage::OnList_SelectionChanged(
   if (!it.HasCurrent()) {
     co_return;
   }
-  const auto selectedID {to_string(it.Current().as<ProfileUIData>()->ID())};
+  const auto selectedID {it.Current().as<ProfileUIData>()->ID()};
 
   auto profileSettings = mKneeboard->GetProfileSettings();
   if (profileSettings.mActiveProfile == selectedID) {
@@ -112,9 +120,10 @@ OpenKneeboard::fire_and_forget ProfilesPage::OnList_SelectionChanged(
 OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
   IInspectable sender,
   RoutedEventArgs) {
-  const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
+  const auto id {unbox_value<winrt::guid>(sender.as<Button>().Tag())};
   auto profileSettings = mKneeboard->GetProfileSettings();
-  const auto profile = profileSettings.mProfiles.at(id);
+  const auto profile
+    = *std::ranges::find(profileSettings.mProfiles, id, &Profile::mGuid);
   const auto sorted = profileSettings.GetSortedProfiles();
   const auto index = std::ranges::find(sorted, profile) - sorted.begin();
 
@@ -133,15 +142,19 @@ OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
     co_return;
   }
 
-  // Actually erase the settings
-  const auto parentSettings = Settings::Load("default");
-  parentSettings.Save(id);
-
-  // ... and remove from the list
   if (id == profileSettings.mActiveProfile) {
-    profileSettings.mActiveProfile = "default";
+    profileSettings.mActiveProfile = profileSettings.mDefaultProfile;
   }
-  profileSettings.mProfiles.erase(id);
+
+  // Actually erase the settings
+  const auto parentSettings = Settings::Load(
+    profileSettings.mDefaultProfile, profileSettings.mDefaultProfile);
+  parentSettings.Save(
+    profileSettings.mDefaultProfile, profileSettings.mActiveProfile);
+  // ... and remove from the list
+  profileSettings.mProfiles.erase(
+    std::ranges::find(profileSettings.mProfiles, id, &Profile::mGuid));
+
   co_await mKneeboard->SetProfileSettings(profileSettings);
   mUIProfiles.RemoveAt(static_cast<uint32_t>(index));
   List().SelectedIndex(0);
@@ -179,33 +192,38 @@ OpenKneeboard::fire_and_forget ProfilesPage::CreateProfile(
 
   auto profileSettings = mKneeboard->GetProfileSettings();
   const auto name = to_string(textBox.Text());
-  const ProfileSettings::Profile profile {
-    .mID = profileSettings.MakeID(name),
+  const Profile profile {
     .mName = name,
   };
 
-  profileSettings.mActiveProfile = profile.mID;
-  profileSettings.mProfiles[profile.mID] = profile;
+  profileSettings.mActiveProfile = profile.mGuid;
+  profileSettings.mProfiles.push_back(profile);
   co_await mKneeboard->SetProfileSettings(profileSettings);
 
   const auto sorted = profileSettings.GetSortedProfiles();
   for (int32_t i = 0; i < sorted.size(); ++i) {
     const auto& it = sorted.at(i);
-    if (it.mID != profile.mID) {
+    if (it.mGuid != profile.mGuid) {
       continue;
     }
-    mUIProfiles.InsertAt(i, CreateProfileUIData(profile));
+    mUIProfiles.InsertAt(
+      i,
+      CreateProfileUIData(
+        profile,
+        profile.mGuid == profileSettings.mDefaultProfile
+          ? ProfileKind::DefaultProfile
+          : ProfileKind::AdditionalProfile));
     List().SelectedIndex(i);
     break;
   }
 }
 
-hstring ProfileUIData::ID() {
-  return mID;
+winrt::guid ProfileUIData::ID() {
+  return mGuid;
 }
 
-void ProfileUIData::ID(hstring value) {
-  mID = value;
+void ProfileUIData::ID(winrt::guid value) {
+  mGuid = value;
 }
 
 hstring ProfileUIData::Name() {

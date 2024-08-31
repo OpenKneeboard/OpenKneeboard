@@ -53,9 +53,11 @@ These simple ones optionally take an argument to repeat the event - for example,
 This must be ran with parameters:
 
 - set profile by name: `OpenKneeboard-RemoteControl-SET_PROFILE.exe name "My Profile"`
-- set profile by ID: `OpenKneeboard-RemoteControl-SET_PROFILE.exe id myprofile` (doesn't change if the profile is renamed)
+- *removed in v1.9*: set profile by ID: `OpenKneeboard-RemoteControl-SET_PROFILE.exe id myprofile` (doesn't change if the profile is renamed)
+- *added in v1.9* set profile by GUID : `OpenKneeboard-RemoteControl-SET_PROFILE.exe guid GUID_GOES_HERE` (doesn't change if the profile is renamed)
 
-You can find IDs by looking in `Saved Games\OpenKneeboard\profiles.json` or the folder names inside `Saved Games\OpenKneeboard\profiles\`.
+
+You can find IDs/GUIDs by looking in `Saved Games\OpenKneeboard\profiles.json` or the folder names inside `Saved Games\OpenKneeboard\profiles\`.
 
 ## `OpenKneeboard-RemoteControl-SET_TAB.exe`
 

@@ -32,7 +32,7 @@ class SwitchProfileAction final : public ToolbarAction,
  public:
   SwitchProfileAction(
     KneeboardState*,
-    const std::string& profileID,
+    const winrt::guid& profileID,
     const std::string& profileName);
   ~SwitchProfileAction();
 
@@ -45,7 +45,7 @@ class SwitchProfileAction final : public ToolbarAction,
 
  private:
   KneeboardState* mKneeboardState;
-  std::string mProfileID;
+  winrt::guid mProfileID;
 };
 
 }// namespace OpenKneeboard

@@ -19,10 +19,11 @@
  */
 #pragma once
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/json_fwd.hpp>
 
+#include <shims/winrt/base.h>
+
+#include <format>
 #include <string>
 #include <unordered_map>
 
@@ -30,33 +31,42 @@ namespace OpenKneeboard {
 
 struct ProfileSettings final {
   struct Profile final {
-    std::string mID;
-    // We store 1 profiles in folders, but a profile name might not be a valid
-    // folder name, e.g 'F/A-18C', so we need to store the actual name
     std::string mName;
-
     winrt::guid mGuid = random_guid();
+
+    static inline auto GetDirectoryName(const winrt::guid guid) {
+      return std::format("{:nobraces}", guid);
+    }
+
+    inline auto GetDirectoryName() const {
+      return Profile::GetDirectoryName(mGuid);
+    }
 
     bool operator==(const Profile&) const noexcept = default;
   };
 
-  std::string mActiveProfile;
-  std::unordered_map<std::string, Profile> mProfiles;
   bool mEnabled {false};
   // If you're on the first profile and press 'previous', do you go to the last
   // profile?
   bool mLoopProfiles {false};
 
+  /// Migrated from an old version in this app launch; not saved in JSON
+  bool mMigrated {false};
+
   std::vector<Profile> GetSortedProfiles() const;
   Profile GetActiveProfile() const;
-  std::string MakeID(const std::string& name) const;
 
   static ProfileSettings Load();
   void Save();
 
   bool operator==(const ProfileSettings&) const noexcept = default;
+
+  winrt::guid mActiveProfile;
+  winrt::guid mDefaultProfile;
+  std::vector<Profile> mProfiles;
 };
 
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(ProfileSettings)
+void from_json(const nlohmann::json& j, ProfileSettings& v);
+void to_json(nlohmann::json& j, const ProfileSettings& v);
 
 }// namespace OpenKneeboard
