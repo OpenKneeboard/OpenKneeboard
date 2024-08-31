@@ -24,6 +24,10 @@
 #include "SettingsSubpageData.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
+#include <OpenKneeboard/KneeboardState.hpp>
+
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -34,16 +38,9 @@ using namespace OpenKneeboard;
 SettingsPage::SettingsPage() {
   InitializeComponent();
 
-  DWORD showDeveloperTools {Version::IsTaggedVersion ? 0 : 1};
-  DWORD sizeOfDword {sizeof(DWORD)};
-  RegGetValueW(
-    HKEY_CURRENT_USER,
-    Config::RegistrySubKey,
-    L"ShowOKBDeveloperTools",
-    RRF_RT_DWORD,
-    nullptr,
-    &showDeveloperTools,
-    &sizeOfDword);
+  const bool showDeveloperTools = (!Version::IsTaggedVersion)
+    || gKneeboard.lock()->GetAppSettings().mAlwaysShowDeveloperTools;
+
   if (!showDeveloperTools) {
     auto items = Grid().Items();
     uint32_t index {};

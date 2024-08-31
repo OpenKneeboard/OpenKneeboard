@@ -87,6 +87,10 @@ void to_json_postprocess<AppSettings>(
 }
 
 // mWindowRect is handled by `*_json_postprocess` functions above
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings, mAutoUpdate, mLastRunVersion)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AppSettings,
+  mAutoUpdate,
+  mLastRunVersion,
+  mAlwaysShowDeveloperTools)
 
 }// namespace OpenKneeboard

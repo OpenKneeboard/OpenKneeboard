@@ -55,6 +55,7 @@ struct AppSettings final {
   std::optional<RECT> mWindowRect;
   AutoUpdateSettings mAutoUpdate {};
   std::string mLastRunVersion;
+  bool mAlwaysShowDeveloperTools {false};
 
   struct Deprecated {
     struct DualKneeboardSettings final {
