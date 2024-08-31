@@ -150,8 +150,8 @@ bool RelaunchWithDesiredElevation(DesiredElevation desired, int showCommand) {
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     for (int i = 0; i < argc; ++i) {
       if (std::wstring_view {argv[i]} == L"--do-not-relaunch") {
-        dprint(
-          "⚠️ WARNING: Keeping running with incorrect elevation because "
+        dprint.Warning(
+          "Keeping running with incorrect elevation because "
           "--do-not-relaunch specified");
         return false;
       }

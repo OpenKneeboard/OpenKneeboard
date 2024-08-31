@@ -159,7 +159,7 @@ void OculusEndFrameHook::Impl::InstallHook(
     if (handle) {
       wchar_t path[1024];
       const auto pathLength = GetModuleFileNameW(handle, path, std::size(path));
-      dprintf(L"LibOVR runtime path: {}", std::wstring_view {path, pathLength});
+      dprint(L"LibOVR runtime path: {}", std::wstring_view {path, pathLength});
     } else {
       dprint("Have LibOVR runtime, but couldn't determine path");
     }

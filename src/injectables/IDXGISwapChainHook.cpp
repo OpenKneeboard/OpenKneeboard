@@ -24,15 +24,15 @@
 #include "dxgi-offsets.h"
 #include "function-patterns.hpp"
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
 
-#include <bit>
-#include <utility>
+#include <shims/winrt/base.h>
 
 #include <d3d11.h>
 #include <psapi.h>
+
+#include <bit>
+#include <utility>
 
 namespace OpenKneeboard {
 
@@ -124,7 +124,7 @@ void IDXGISwapChainHook::InstallHook(const Callbacks& cb) {
 }
 
 IDXGISwapChainHook::~IDXGISwapChainHook() {
-  dprintf("{} {:#018x}", __FUNCTION__, (int64_t)this);
+  dprint("{} {:#018x}", __FUNCTION__, (int64_t)this);
   this->UninstallHook();
 }
 
@@ -159,7 +159,7 @@ IDXGISwapChainHook::Impl::Impl(const Callbacks& callbacks)
 
   auto addr = Find_SteamOverlay_IDXGISwapChain_Present();
   if (addr) {
-    dprintf(
+    dprint(
       "Installing IDXGISwapChain::Present hook via Steam overlay at "
       "{:#018x}...",
       (int64_t)addr);
@@ -232,23 +232,21 @@ bool IDXGISwapChainHook::Impl::InstallVTableHookOnce() {
     nullptr,
     nullptr);
   if (!(device && swapchain)) {
-    dprintf(" - failed to get D3D11 device and swapchain: {}", error);
+    dprint(" - failed to get D3D11 device and swapchain: {}", error);
     return false;
   }
 
-  dprintf(" - got a temporary device at {:#018x}", (intptr_t)device.get());
-  dprintf(
-    " - got a temporary SwapChain at {:#018x}", (intptr_t)swapchain.get());
+  dprint(" - got a temporary device at {:#018x}", (intptr_t)device.get());
+  dprint(" - got a temporary SwapChain at {:#018x}", (intptr_t)swapchain.get());
 
   auto presentFPP = reinterpret_cast<void**>(&Next_IDXGISwapChain_Present);
   *presentFPP = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
-  dprintf(
-    " - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*presentFPP);
+  dprint(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*presentFPP);
   auto resizeBuffersFPP
     = reinterpret_cast<void**>(&Next_IDXGISwapChain_ResizeBuffers);
   *resizeBuffersFPP
     = VTable_Lookup_IDXGISwapChain_ResizeBuffers(swapchain.get());
-  dprintf(
+  dprint(
     " - found IDXGISwapChain::ResizeBuffers at {:#018x}",
     (intptr_t)*resizeBuffersFPP);
 
@@ -259,7 +257,7 @@ bool IDXGISwapChainHook::Impl::InstallVTableHookOnce() {
     if (err == 0) {
       dprint(" - hooked IDXGISwapChain::Present().");
     } else {
-      dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
+      dprint(" - failed to hook IDXGISwapChain::Present(): {}", err);
       return true;
     }
 
@@ -269,7 +267,7 @@ bool IDXGISwapChainHook::Impl::InstallVTableHookOnce() {
     if (err == 0) {
       dprint(" - hooked IDXGISwapChain::ResizeBuffers().");
     } else {
-      dprintf(" - failed to hook IDXGISwapChain::ResizeBuffers(): {}", err);
+      dprint(" - failed to hook IDXGISwapChain::ResizeBuffers(): {}", err);
       return true;
     }
   }
@@ -280,13 +278,13 @@ bool IDXGISwapChainHook::Impl::InstallVTableHookOnce() {
 void IDXGISwapChainHook::Impl::InstallSteamOverlayHook(void* steamHookAddress) {
   auto fpp = reinterpret_cast<void**>(&Next_IDXGISwapChain_Present);
   *fpp = steamHookAddress;
-  dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
+  dprint("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
   auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprint(" - hooked Steam Overlay IDXGISwapChain::Present hook.");
   } else {
-    dprintf(" - failed to hook Steam Overlay: {}", err);
+    dprint(" - failed to hook Steam Overlay: {}", err);
   }
 }
 

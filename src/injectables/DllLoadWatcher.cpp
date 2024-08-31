@@ -26,7 +26,6 @@
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
 #include <SubAuth.h>
 
 // There's a header for this, but only in the DDK
@@ -118,11 +117,10 @@ void DllLoadWatcher::InstallHook(const Callbacks& callbacks) {
   auto status = f(
     0, &Impl::OnNotification, reinterpret_cast<void*>(p.get()), &p->mCookie);
   if (status != STATUS_SUCCESS) {
-    dprintf(
-      "Failed to LdrRegisterDllNotification for {}: {}", p->mName, status);
+    dprint("Failed to LdrRegisterDllNotification for {}: {}", p->mName, status);
     return;
   }
-  dprintf("DllLoadWatcher++ {}", p->mName);
+  dprint("DllLoadWatcher++ {}", p->mName);
   if (callbacks.onHookInstalled) {
     callbacks.onHookInstalled();
   }
@@ -145,10 +143,10 @@ void DllLoadWatcher::UninstallHook() {
   }
   auto status = f(p->mCookie);
   if (status != STATUS_SUCCESS) {
-    dprintf("Failed to unload watcher for {}: {}", p->mName, status);
+    dprint("Failed to unload watcher for {}: {}", p->mName, status);
     return;
   }
-  dprintf("DllLoadWatcher-- {}", p->mName);
+  dprint("DllLoadWatcher-- {}", p->mName);
   p->mCookie = nullptr;
 }
 

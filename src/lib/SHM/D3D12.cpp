@@ -21,10 +21,10 @@
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/SHM/D3D12.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <Windows.h>
 
 #include <DirectXColors.h>
 
@@ -229,7 +229,7 @@ void CachedReader::InitializeCache(
     // go via IDXGIFactory, however an app "shouldn't" use both IDXGIFactory
     // and IDXGIFactory1 (or later) in the same process, and we don't know
     // which the app picked
-    dprintf(
+    dprint(
       "SHM reader using adapter LUID {:#x}",
       std::bit_cast<uint64_t>(device->GetAdapterLuid()));
 

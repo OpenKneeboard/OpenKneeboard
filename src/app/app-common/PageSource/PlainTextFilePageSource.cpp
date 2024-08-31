@@ -20,11 +20,11 @@
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
+#include <OpenKneeboard/scope_exit.hpp>
+
 #include <shims/nlohmann/json.hpp>
 
 #include <winrt/Windows.Foundation.h>
-
-#include <OpenKneeboard/scope_exit.hpp>
 
 #include <fstream>
 
@@ -127,7 +127,7 @@ std::string PlainTextFilePageSource::GetFileContent() const {
 
   std::ifstream f(mPath, std::ios::in | std::ios::binary);
   if (!f.is_open()) {
-    dprintf(L"Failed to open {}", mPath.wstring());
+    dprint(L"Failed to open {}", mPath.wstring());
     mPageSource->ClearText();
     return {};
   }

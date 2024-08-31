@@ -61,7 +61,7 @@ MAGtype_MagneticModel* DCSMagneticModel::GetModel(
 
   for (auto model: mModels) {
     if (year < model->epoch) {
-      dprintf(
+      dprint(
         "No WMM model for historical year {}, using incorrect {:.0f} model",
         date.year(),
         model->epoch);
@@ -69,7 +69,7 @@ MAGtype_MagneticModel* DCSMagneticModel::GetModel(
     }
 
     if (year - model->epoch <= 5) {
-      dprintf(
+      dprint(
         "Using correct WMM {:0.0f} model for year {}",
         model->epoch,
         date.year());
@@ -79,7 +79,7 @@ MAGtype_MagneticModel* DCSMagneticModel::GetModel(
 
   auto model = mModels.back();
 
-  dprintf(
+  dprint(
     "No WMM model found for future year {}, using incorrect {:.0f} model",
     date.year(),
     model->epoch);

@@ -20,14 +20,14 @@
 #include <OpenKneeboard/APIEventServer.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <Windows.h>
 
 #include <thread>
 
@@ -50,7 +50,7 @@ OpenKneeboard::fire_and_forget APIEventServer::final_release(
 
 APIEventServer::APIEventServer() {
   OPENKNEEBOARD_TraceLoggingScope("APIEventServer::APIEventServer()");
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
 }
 
 void APIEventServer::Start() {
@@ -60,7 +60,7 @@ void APIEventServer::Start() {
 
 APIEventServer::~APIEventServer() {
   OPENKNEEBOARD_TraceLoggingScope("APIEventServer::~APIEventServer()");
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
 }
 
 task<void> APIEventServer::Run() {
@@ -69,13 +69,13 @@ task<void> APIEventServer::Run() {
   const auto mailslot = Win32::CreateMailslot(
     APIEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
   if (!mailslot) {
-    dprintf("Failed to create APIEvent mailslot: {}", mailslot.error());
+    dprint("Failed to create APIEvent mailslot: {}", mailslot.error());
     co_return;
   }
 
   dprint("Started listening for API events");
   const scope_exit logOnExit([]() {
-    dprintf(
+    dprint(
       "APIEventServer shutting down with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
@@ -128,7 +128,7 @@ task<bool> APIEventServer::RunSingle(
     &overlapped);
   const auto readFileError = GetLastError();
   if ((!readFileResult) && readFileError != ERROR_IO_PENDING) {
-    dprintf("APIEvent ReadFile failed: {}", GetLastError());
+    dprint("APIEvent ReadFile failed: {}", GetLastError());
     co_return true;
   }
 

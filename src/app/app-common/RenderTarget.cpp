@@ -158,7 +158,7 @@ void RenderTarget::D2D::Release() {
     return;
   }
   if (mReleased) {
-    dprintf("{}: double-release", __FUNCTION__);
+    dprint("{}: double-release", __FUNCTION__);
     OPENKNEEBOARD_BREAK;
     return;
   }

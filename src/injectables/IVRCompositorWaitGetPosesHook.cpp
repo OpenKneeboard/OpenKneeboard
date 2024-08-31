@@ -109,7 +109,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
   *reinterpret_cast<void**>(&Real_IVRCompositor_WaitGetPoses)
     = mVTable->mWaitGetPoses;
 
-  dprintf("Found WaitGetPoses at: {:#018x}", (uint64_t)mVTable->mWaitGetPoses);
+  dprint("Found WaitGetPoses at: {:#018x}", (uint64_t)mVTable->mWaitGetPoses);
 
   {
     ScopedRWX rwx(mVTable);
@@ -137,7 +137,7 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_VR_GetGenericInterface(
     return ret;
   }
 
-  dprintf("Requested OpenVR interface: {}", pchInterfaceVersion);
+  dprint("Requested OpenVR interface: {}", pchInterfaceVersion);
 
   if (std::string_view(pchInterfaceVersion).starts_with("IVRCompositor_")) {
     auto p = gInstance;
@@ -234,7 +234,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   auto compositor = reinterpret_cast<vr::IVRCompositor*>(
     Real_VR_GetGenericInterface(vr::IVRCompositor_Version, &vrError));
   if (!compositor) {
-    dprintf("No OpenVR compositor found: {}", static_cast<int>(vrError));
+    dprint("No OpenVR compositor found: {}", static_cast<int>(vrError));
     dprint("Waiting to see if we get one...");
     this->InstallVRGetGenericInterfaceHook();
     return;

@@ -20,8 +20,9 @@
 
 #include <OpenKneeboard/DCSGrid.hpp>
 
-#include <GeographicLib/UTMUPS.hpp>
 #include <OpenKneeboard/dprint.hpp>
+
+#include <GeographicLib/UTMUPS.hpp>
 
 namespace OpenKneeboard {
 
@@ -36,7 +37,7 @@ DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
 
   sModel.Forward(mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
 
-  dprintf(
+  dprint(
     "DCS (0, 0) is in UTM zone {}, with meridian at {} and a UTM offset of "
     "({}, {})",
     zone,

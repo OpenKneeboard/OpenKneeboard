@@ -153,11 +153,11 @@ task<void> DCSBriefingTab::Reload() noexcept {
     try {
       loader();
     } catch (const LuaIndexError& e) {
-      dprintf("LuaIndexError in {}: {}", name, e.what());
+      dprint("LuaIndexError in {}: {}", name, e.what());
     } catch (const LuaTypeError& e) {
-      dprintf("LuaTypeError in {}: {}", name, e.what());
+      dprint("LuaTypeError in {}: {}", name, e.what());
     } catch (const LuaError& e) {
-      dprintf("LuaError in {}: {}", name, e.what());
+      dprint("LuaError in {}: {}", name, e.what());
     }
   }
 
@@ -172,7 +172,7 @@ OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
   if (event.name == DCS::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
-      dprintf("Briefing tab: mission '{}' does not exist", event.value);
+      dprint("Briefing tab: mission '{}' does not exist", event.value);
       co_return;
     }
 
@@ -184,7 +184,7 @@ OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
     // up the old extraction folder
     mImagePages->SetPaths({});
     mMission = DCSExtractedMission::Get(missionZip);
-    dprintf("Briefing tab: loading {}", missionZip);
+    dprint("Briefing tab: loading {}", missionZip);
     co_await this->Reload();
   }
 

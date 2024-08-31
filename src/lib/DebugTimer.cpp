@@ -39,7 +39,7 @@ void DebugTimer::End() {
   }
 
   mFinished = true;
-  dprintf(
+  dprint(
     "Timer: {} = {}",
     mLabel,
     std::chrono::duration_cast<std::chrono::milliseconds>(

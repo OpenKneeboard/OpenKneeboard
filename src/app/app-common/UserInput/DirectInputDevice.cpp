@@ -22,9 +22,9 @@
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/utf8.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <format>
 
@@ -153,7 +153,7 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     };
   }
 
-  dprintf("Unable to resolve label for DI button {:#016x}", button);
+  dprint("Unable to resolve label for DI button {:#016x}", button);
   OPENKNEEBOARD_BREAK;
   return std::format("INVALID {:#016x}", button);
 }

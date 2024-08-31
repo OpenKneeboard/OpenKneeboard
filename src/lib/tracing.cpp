@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <source_location>
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
 
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/tracing.hpp>
-
+#include <source_location>
 #include <thread>
 
 #include <processthreadsapi.h>
@@ -45,7 +45,7 @@ wchar_t* GetFullPathForCurrentExecutable() {
     winrt::handle process {OpenProcess(
       PROCESS_QUERY_LIMITED_INFORMATION, false, GetCurrentProcessId())};
     if (!process) {
-      dprintf(
+      dprint(
         "OpenProcess(..., GetCurrentProcessID()) failed: {} @ {}",
         GetLastError(),
         std::source_location::current());
@@ -55,7 +55,7 @@ wchar_t* GetFullPathForCurrentExecutable() {
     const auto result
       = QueryFullProcessImageNameW(process.get(), 0, buffer, &characterCount);
     if (result == 0) {
-      dprintf(
+      dprint(
         "QueryFullProcessImageNameW() returned {}, failed with {:#018x} @ {}",
         result,
         GetLastError(),

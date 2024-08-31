@@ -20,11 +20,10 @@
 
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 
-#include <source_location>
-
 #include <OpenKneeboard/dprint.hpp>
 
 #include <atomic>
+#include <source_location>
 #include <unordered_map>
 
 namespace OpenKneeboard {
@@ -54,7 +53,7 @@ struct ShutdownData {
       std::unique_lock lock(mMutex);
       if (mShuttingDown.test()) {
         const auto loc = mActiveBlocks.at(id);
-        dprintf("Shutdown cleanup @ {}", loc);
+        dprint("Shutdown cleanup @ {}", loc);
       }
       mActiveBlocks.erase(id);
     }
@@ -62,7 +61,7 @@ struct ShutdownData {
     const auto remaining = mBlockCount.fetch_sub(1) - 1;
 
     if (mShuttingDown.test()) {
-      dprintf("{} shutdown items remaining.", remaining);
+      dprint("{} shutdown items remaining.", remaining);
     }
 
     if (remaining == 0) {
@@ -90,9 +89,9 @@ struct ShutdownData {
 
   void DumpActiveBlocks() noexcept {
     std::unique_lock lock(mMutex, std::try_to_lock);
-    dprintf("Waiting for {} shutdown blockers:", mActiveBlocks.size());
+    dprint("Waiting for {} shutdown blockers:", mActiveBlocks.size());
     for (const auto& [id, location]: mActiveBlocks) {
-      dprintf("- {}", location);
+      dprint("- {}", location);
     }
   }
 

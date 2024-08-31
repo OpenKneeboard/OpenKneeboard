@@ -23,15 +23,15 @@
 
 #include <OpenKneeboard/KneeboardViewID.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <winrt/Windows.Foundation.h>
-
 #include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/task.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Foundation.h>
 
 #include <cstdint>
 #include <functional>
@@ -228,10 +228,10 @@ class EventConnection final
       try {
         handler(args...);
       } catch (const std::exception& e) {
-        dprintf("Uncaught std::exception from event handler: {}", e.what());
+        dprint("Uncaught std::exception from event handler: {}", e.what());
         OPENKNEEBOARD_BREAK;
       } catch (const winrt::hresult_error& e) {
-        dprintf(
+        dprint(
           L"Uncaught hresult error from event handler: {} - {}",
           e.code().value,
           std::wstring_view {e.message()});

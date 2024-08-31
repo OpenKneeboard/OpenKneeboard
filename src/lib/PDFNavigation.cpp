@@ -22,19 +22,18 @@
 #include <OpenKneeboard/PDFNavigation.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/utf8.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/utf8.hpp>
+#include <shellapi.h>
 
 #include <filesystem>
 #include <fstream>
 #include <map>
 #include <optional>
-
-#include <shellapi.h>
 
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
@@ -287,7 +286,7 @@ static std::vector<std::vector<Link>> ExtractLinks(
 
 PDF::Impl::Impl(const std::filesystem::path& path) {
   if (!std::filesystem::is_regular_file(path)) {
-    dprintf(L"Can't find PDF file {}", path.wstring());
+    dprint(L"Can't find PDF file {}", path.wstring());
     return;
   }
 

@@ -196,10 +196,10 @@ task<void> TabletInputAdapter::SetWintabMode(WintabMode mode) {
   try {
     StartWintab();
   } catch (const winrt::hresult_error& e) {
-    dprintf("Failed to initialize wintab: {}", winrt::to_string(e.message()));
+    dprint("Failed to initialize wintab: {}", winrt::to_string(e.message()));
     co_return;
   } catch (const std::exception& e) {
-    dprintf("Failed to initialize wintab: {}", e.what());
+    dprint("Failed to initialize wintab: {}", e.what());
     co_return;
   }
   if (!mWintabTablet) {

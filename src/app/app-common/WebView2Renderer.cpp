@@ -24,13 +24,14 @@
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/WebView2Renderer.hpp>
 
+#include <OpenKneeboard/json/Geometry2D.hpp>
+
+#include <OpenKneeboard/format/json.hpp>
+#include <OpenKneeboard/version.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
-
-#include <OpenKneeboard/format/json.hpp>
-#include <OpenKneeboard/json/Geometry2D.hpp>
-#include <OpenKneeboard/version.hpp>
 
 #include <format>
 #include <fstream>
@@ -147,7 +148,7 @@ void WebView2Renderer::CreateBrowserWindow() {
   if (!mBrowserWindow) {
     const auto code = GetLastError();
     auto e = std::system_category().default_error_condition(code);
-    dprintf(
+    dprint(
       "Failed to create browser window: {:#x} - {}",
       std::bit_cast<uint32_t>(code),
       e.message());
@@ -561,11 +562,11 @@ OpenKneeboard::fire_and_forget WebView2Renderer::OnWebMessageReceived(
     OPENKNEEBOARD_JSAPI_METHODS(OKB_INVOKE_JSAPI)
 #undef OKB_CALL_JSAPI
   } catch (const nlohmann::json::exception& e) {
-    dprintf("JSAPI ERROR: JSON error: {} ({})", e.what(), e.id);
+    dprint("JSAPI ERROR: JSON error: {} ({})", e.what(), e.id);
     respond(jsapi_error("JSON error: {} ({})", e.what(), e.id));
     co_return;
   } catch (const std::exception& e) {
-    dprintf("JSAPI ERROR - std::exception: {}", e.what());
+    dprint("JSAPI ERROR - std::exception: {}", e.what());
     respond(jsapi_error("C++ exception: {}", e.what()));
     co_return;
   }
@@ -585,7 +586,7 @@ jsapi_task WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
   if (
     size.mWidth > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
     || size.mHeight > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
-    dprintf(
+    dprint(
       "WebView2 requested size {}x{} is outside of D3D11 limits",
       size.mWidth,
       size.mHeight);
@@ -599,7 +600,7 @@ jsapi_task WebView2Renderer::JSAPI_SetPreferredPixelSize(nlohmann::json args) {
       co_return jsapi_error(
         "Requested size scales down to < 1px in at least 1 dimension");
     }
-    dprintf("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
+    dprint("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
 
   const auto success = [&size](auto result) {
@@ -858,7 +859,7 @@ jsapi_task WebView2Renderer::JSAPI_EnableExperimentalFeatures(
   auto& pageApi = mDocumentResources;
 
   const auto EnableFeature = [&](const ExperimentalFeature& feature) {
-    dprintf("WARNING: JS enabled experimental feature {}", feature);
+    dprint("WARNING: JS enabled experimental feature {}", feature);
     pageApi.mEnabledExperimentalFeatures.push_back(feature);
     enabledFeatures.push_back(feature);
   };
@@ -1069,7 +1070,7 @@ OpenKneeboard::fire_and_forget WebView2Renderer::SendJSResponse(
     }
   } else {
     response.emplace("error", result.error());
-    dprintf("WARNING: WebView2 API error: {}", result.error());
+    dprint("WARNING: WebView2 API error: {}", result.error());
     if constexpr (!Version::IsStableRelease) {
       mWebView.OpenDevToolsWindow();
     }

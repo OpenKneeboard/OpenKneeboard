@@ -31,7 +31,7 @@
 namespace OpenKneeboard {
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() {
-  dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
+  dprint("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
   mOculusKneeboard.InstallHook(this);
   mDXGIHook.InstallHook({
     .onPresent
@@ -40,7 +40,7 @@ OculusD3D11Kneeboard::OculusD3D11Kneeboard() {
 }
 
 OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
-  dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
+  dprint("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
   this->UninstallHook();
 }
 
@@ -90,7 +90,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
   if (length < 1) {
-    dprintf("Got an invalid swapchain length of {}", length);
+    dprint("Got an invalid swapchain length of {}", length);
     OPENKNEEBOARD_BREAK;
     return nullptr;
   }

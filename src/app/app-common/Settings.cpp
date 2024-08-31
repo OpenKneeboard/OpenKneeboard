@@ -55,7 +55,7 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
       OpenKneeboard::from_json(json, out);
     }
   } catch (const nlohmann::json::exception& e) {
-    dprintf(
+    dprint(
       "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
     OPENKNEEBOARD_BREAK;
   }
@@ -77,7 +77,7 @@ static void MaybeSaveJSON(
     try {
       f >> j;
     } catch (const nlohmann::json::exception& e) {
-      dprintf(
+      dprint(
         "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
     }
   }
@@ -267,7 +267,7 @@ static void MigrateToViewsSettings(Settings& settings) {
 Settings Settings::Load(
   const winrt::guid defaultProfile,
   const winrt::guid activeProfile) {
-  dprintf("Loading profile: '{}'", activeProfile);
+  dprint("Loading profile: '{}'", activeProfile);
   std::optional<Settings> parentSettings;
   Settings settings;
 

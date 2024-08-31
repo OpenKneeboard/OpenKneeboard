@@ -21,9 +21,9 @@
 
 #include <OpenKneeboard/dprint.hpp>
 
-#include <vector>
-
 #include <TlHelp32.h>
+
+#include <vector>
 
 using namespace OpenKneeboard;
 
@@ -84,7 +84,7 @@ DetourTransaction::DetourTransaction() : p(std::make_unique<Impl>()) {
   }
   Impl::mActive = true;
   if (!HeapLock(p->mHeap)) {
-    dprintf("Failed to lock heap: {:#x}", GetLastError());
+    dprint("Failed to lock heap: {:#x}", GetLastError());
     OPENKNEEBOARD_BREAK;
     return;
   }
@@ -115,13 +115,13 @@ DetourTransaction::~DetourTransaction() noexcept {
   }
   Impl::mActive = false;
   if (!HeapUnlock(p->mHeap)) {
-    dprintf("Failed to unlock heap: {:#x}", GetLastError());
+    dprint("Failed to unlock heap: {:#x}", GetLastError());
     OPENKNEEBOARD_BREAK;
   }
   // We need to resume the threads before doing *anything* else:
   // dprint/dprintf can malloc/new, which will deadlock
   if (err) {
-    dprintf("Committing detour transaction failed: {}", err);
+    dprint("Committing detour transaction failed: {}", err);
   }
   dprint("DetourTransaction--");
 }

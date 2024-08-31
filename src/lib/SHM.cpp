@@ -25,14 +25,14 @@
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <Windows.h>
 
 #include <bit>
 #include <concepts>
@@ -315,7 +315,7 @@ class Impl {
     // For debugging 32-bit/64-bit interop stuff
     static std::once_flag sDumpLayoutOnce;
     std::call_once(sDumpLayoutOnce, []() {
-      dprintf(
+      dprint(
         "SHM information:\n"
         L"- Path: {}\n"
         L"- Size: {}\n"
@@ -344,21 +344,21 @@ class Impl {
                        // integer values
       SHMPath().c_str());
     if (!fileHandle) {
-      dprintf("CreateFileMapping failed: {}", static_cast<int>(GetLastError()));
+      dprint("CreateFileMapping failed: {}", static_cast<int>(GetLastError()));
       return;
     }
 
     auto mutexHandle
       = Win32::or_default::CreateMutex(nullptr, FALSE, MutexPath().c_str());
     if (!mutexHandle) {
-      dprintf("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
+      dprint("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
       return;
     }
 
     mMapping = reinterpret_cast<std::byte*>(
       MapViewOfFile(fileHandle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
     if (!mMapping) {
-      dprintf(
+      dprint(
         "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
       return;
     }
@@ -401,7 +401,7 @@ class Impl {
         mState.template Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
-        dprintf(
+        dprint(
           "Unexpected result from SHM WaitForSingleObject in lock(): "
           "{:#016x}",
           static_cast<uint64_t>(result));
@@ -437,7 +437,7 @@ class Impl {
           activity,
           "SHM::Impl::try_lock()",
           TraceLoggingValue(result, "Error"));
-        dprintf(
+        dprint(
           "Unexpected result from SHM WaitForSingleObject in try_lock(): {}",
           result);
         OPENKNEEBOARD_BREAK;
@@ -498,7 +498,7 @@ void Writer::Detach() {
   FlushViewOfFile(p->mMapping, NULL);
 
   p->Transition<State::Detaching, State::Locked>();
-  dprintf(
+  dprint(
     "Writer::Detach(): Session ID {:#018x} replaced with {:#018x}",
     oldID,
     p->mHeader->mSessionID);

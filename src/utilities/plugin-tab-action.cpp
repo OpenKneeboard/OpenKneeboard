@@ -25,13 +25,12 @@
 
 using namespace OpenKneeboard;
 
-#include <Windows.h>
-
 #include <OpenKneeboard/scope_exit.hpp>
 
-#include <cstdlib>
-
+#include <Windows.h>
 #include <shellapi.h>
+
+#include <cstdlib>
 
 namespace OpenKneeboard {
 /* PS >
@@ -79,7 +78,7 @@ int WINAPI wWinMain(
     try {
       ev.mExtraData = nlohmann::json::parse(winrt::to_string(argv[1]));
     } catch (const nlohmann::json::exception& e) {
-      dprintf("Failed to parse JSON customData: {}", e.what());
+      dprint("Failed to parse JSON customData: {}", e.what());
       return 1;
     }
   }

@@ -21,10 +21,10 @@
 
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
+
+#include <Windows.h>
 
 #include <atomic>
 #include <cstdlib>
@@ -308,14 +308,14 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
       TraceLoggingRegister(gTraceProvider);
       DPrintSettings::Set({.prefix = "WindowCaptureHook"});
 
-      dprintf(
+      dprint(
         L"Attached to {}-bit process {} ({})",
         sizeof(void*) * 8,
         GetProgramPath(),
         GetCurrentProcessId());
       break;
     case DLL_PROCESS_DETACH:
-      dprintf(
+      dprint(
         L"Detaching from process {} ({})",
         GetProgramPath(),
         GetCurrentProcessId());

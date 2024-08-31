@@ -23,17 +23,18 @@
 #include "OpenXRD3D11Kneeboard.hpp"
 #include "OpenXRNext.hpp"
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
-#include <string>
+#include <shims/winrt/base.h>
 
 #include <d3d11.h>
-#include <d3d11on12.h>
 #include <d3d12.h>
+
+#include <string>
+
+#include <d3d11on12.h>
 
 #include <directxtk12/RenderTargetState.h>
 #include <directxtk12/ResourceUploadBatch.h>
@@ -51,7 +52,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
   : OpenXRKneeboard(instance, systemID, session, runtimeID, next) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
 
   mGraphicsMemory = std::make_unique<DirectX::GraphicsMemory>(binding.device);
 
@@ -68,13 +69,13 @@ OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::CreateSwapchain");
 
   auto oxr = this->GetOpenXR();
 
   auto formats = OpenXRD3D11Kneeboard::GetDXGIFormats(oxr, session);
-  dprintf(
+  dprint(
     "Creating swapchain with format {}",
     static_cast<INT>(formats.mTextureFormat));
 
@@ -94,7 +95,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
 
   auto nextResult = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
   if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create swapchain: {}", nextResult);
+    dprint("Failed to create swapchain: {}", nextResult);
     return nullptr;
   }
 
@@ -102,11 +103,11 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   nextResult
     = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
   if (imageCount == 0 || nextResult != XR_SUCCESS) {
-    dprintf("No images in swapchain: {}", nextResult);
+    dprint("No images in swapchain: {}", nextResult);
     return nullptr;
   }
 
-  dprintf("{} images in swapchain", imageCount);
+  dprint("{} images in swapchain", imageCount);
   mSHM.InitializeCache(
     mDevice.get(), mCommandQueue.get(), static_cast<uint8_t>(imageCount));
 
@@ -123,7 +124,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     &imageCount,
     reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
   if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to enumerate images in swapchain: {}", nextResult);
+    dprint("Failed to enumerate images in swapchain: {}", nextResult);
     oxr->xrDestroySwapchain(swapchain);
     return nullptr;
   }

@@ -25,6 +25,7 @@
 
 #include <Psapi.h>
 #include <Shlwapi.h>
+
 #include <dwmapi.h>
 
 namespace OpenKneeboard {
@@ -169,7 +170,7 @@ task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     co_return false;
   }
 
-  dprintf(
+  dprint(
     "Attaching to {:016x} with parent {:016x} (desktop {:016x})",
     reinterpret_cast<uint64_t>(hwnd),
     reinterpret_cast<uint64_t>(GetParent(hwnd)),

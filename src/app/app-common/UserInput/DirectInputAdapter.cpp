@@ -136,7 +136,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       continue;
     }
 
-    dprintf(
+    dprint(
       L"DirectInput device removed: {} ('{}')",
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
@@ -151,7 +151,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       continue;
     }
 
-    dprintf(
+    dprint(
       "DirectInput device added: {} ('{}')",
       winrt::to_string(instance.tszInstanceName),
       id);

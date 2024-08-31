@@ -39,7 +39,7 @@ std::unique_ptr<OculusD3D12Kneeboard> gInstance;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
   gInstance = std::make_unique<OculusD3D12Kneeboard>();
-  dprintf(
+  dprint(
     "----- OculusD3D12Kneeboard active at {:#018x} -----",
     (intptr_t)gInstance.get());
   return S_OK;

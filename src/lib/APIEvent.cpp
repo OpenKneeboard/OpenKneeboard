@@ -73,7 +73,7 @@ namespace OpenKneeboard {
 
 #define CHECK_PACKET(condition) \
   if (!(condition)) { \
-    dprintf("Check failed at {}:{}: {}", __FILE__, __LINE__, #condition); \
+    dprint("Check failed at {}:{}: {}", __FILE__, __LINE__, #condition); \
     return {}; \
   }
 

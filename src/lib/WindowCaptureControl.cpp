@@ -20,9 +20,9 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
+
+#include <Windows.h>
 
 namespace OpenKneeboard::WindowCaptureControl {
 
@@ -44,22 +44,22 @@ Handles InstallHooks(HWND hwnd) {
                          / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
                           .wstring();
 
-  dprintf(L"Loading hook library: {}", hookPath);
+  dprint(L"Loading hook library: {}", hookPath);
 
   ret.mLibrary.reset(LoadLibraryW(hookPath.c_str()));
   if (!ret.mLibrary) {
-    dprintf("Failed to load hook library: {}", GetLastError());
+    dprint("Failed to load hook library: {}", GetLastError());
   }
 
   auto msgProc
     = GetProcAddress(ret.mLibrary.get(), "GetMsgProc_WindowCaptureHook");
   if (!msgProc) {
-    dprintf("Failed to find msgProc hook address: {}", GetLastError());
+    dprint("Failed to find msgProc hook address: {}", GetLastError());
   }
   auto wndProc
     = GetProcAddress(ret.mLibrary.get(), "CallWndProc_WindowCaptureHook");
   if (!msgProc) {
-    dprintf("Failed to find wndProc hook address: {}", GetLastError());
+    dprint("Failed to find wndProc hook address: {}", GetLastError());
   }
 
   ret.mMessageHook.reset(SetWindowsHookExW(
@@ -68,7 +68,7 @@ Handles InstallHooks(HWND hwnd) {
     ret.mLibrary.get(),
     threadID));
   if (!ret.mMessageHook) {
-    dprintf("Failed to set WH_GETMESSAGE: {}", GetLastError());
+    dprint("Failed to set WH_GETMESSAGE: {}", GetLastError());
   }
   ret.mWindowProcHook.reset(SetWindowsHookExW(
     WH_CALLWNDPROC,
@@ -76,7 +76,7 @@ Handles InstallHooks(HWND hwnd) {
     ret.mLibrary.get(),
     threadID));
   if (!ret.mWindowProcHook) {
-    dprintf("Failed to set WH_CALLWNDPROC: {}", GetLastError());
+    dprint("Failed to set WH_CALLWNDPROC: {}", GetLastError());
   }
   return ret;
 }

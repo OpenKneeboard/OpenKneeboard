@@ -34,10 +34,10 @@ static void init() {
   wchar_t buf[1024];
   const auto length = GetModuleFileNameW(NULL, buf, std::size(buf));
   if (length) {
-    OpenKneeboard::dprintf(
+    OpenKneeboard::dprint(
       L"new API client: {}", std::wstring_view {buf, length});
   } else {
-    OpenKneeboard::dprintf(
+    OpenKneeboard::dprint(
       "new API client - failed to get client path: {:#018x}",
       static_cast<uint64_t>(GetLastError()));
   }

@@ -117,7 +117,7 @@ OpenKneeboard::fire_and_forget DCSMissionTab::OnAPIEvent(
   if (event.name == DCS::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
-      dprintf("MissionTab: mission '{}' does not exist", event.value);
+      dprint("MissionTab: mission '{}' does not exist", event.value);
       co_return;
     }
 

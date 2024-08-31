@@ -24,15 +24,16 @@
 
 #include <OpenKneeboard/D3D11.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
-#include <directxtk/SpriteBatch.h>
+
+#include <shims/winrt/base.h>
 
 #include <d3d11.h>
+
+#include <directxtk/SpriteBatch.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
@@ -49,7 +50,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D11KHR& binding)
   : OpenXRKneeboard(instance, systemID, session, runtimeID, next) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard()");
 
   mDevice.copy_from(binding.device);
@@ -83,7 +84,7 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
     return {};
   }
   for (const auto it: formats) {
-    dprintf("Runtime supports swapchain format: {}", it);
+    dprint("Runtime supports swapchain format: {}", it);
   }
   // If this changes, we probably want to change the preference list below
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
@@ -105,13 +106,13 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::CreateSwapchain()");
 
   auto oxr = this->GetOpenXR();
 
   auto formats = GetDXGIFormats(oxr, session);
-  dprintf(
+  dprint(
     "Creating swapchain with format {}",
     static_cast<int>(formats.mTextureFormat));
 
@@ -131,7 +132,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
 
   auto nextResult = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
   if (XR_FAILED(nextResult)) {
-    dprintf("Failed to create swapchain: {}", nextResult);
+    dprint("Failed to create swapchain: {}", nextResult);
     return nullptr;
   }
 
@@ -139,11 +140,11 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   nextResult
     = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
   if (imageCount == 0 || XR_FAILED(nextResult)) {
-    dprintf("No images in swapchain: {}", nextResult);
+    dprint("No images in swapchain: {}", nextResult);
     return nullptr;
   }
 
-  dprintf("{} images in swapchain", imageCount);
+  dprint("{} images in swapchain", imageCount);
   mSHM.InitializeCache(mDevice.get(), static_cast<uint8_t>(imageCount));
 
   std::vector<XrSwapchainImageD3D11KHR> images;
@@ -158,7 +159,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
     &imageCount,
     reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
   if (XR_FAILED(nextResult)) {
-    dprintf("Failed to enumerate images in swapchain: {}", nextResult);
+    dprint("Failed to enumerate images in swapchain: {}", nextResult);
     oxr->xrDestroySwapchain(swapchain);
     return nullptr;
   }

@@ -38,7 +38,7 @@ OculusKneeboard::OculusKneeboard() {
 }
 
 void OculusKneeboard::InstallHook(Renderer* renderer) {
-  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
+  dprint("{} {:#018x}", __FUNCTION__, (uint64_t)this);
   mRenderer = renderer;
   mEndFrameHook.InstallHook({
     .onEndFrame = std::bind_front(&OculusKneeboard::OnOVREndFrame, this),
@@ -225,7 +225,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     ovr->ovr_GetTextureSwapChainCurrentIndex(
       session, mSwapchain, &swapchainTextureIndex);
     if (swapchainTextureIndex < 0) {
-      dprintf(" - invalid swap chain index ({})", swapchainTextureIndex);
+      dprint(" - invalid swap chain index ({})", swapchainTextureIndex);
       OPENKNEEBOARD_BREAK;
       return passthrough();
     }
@@ -250,7 +250,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     if (topMost < addedOVRLayers.size()) [[likely]] {
       std::swap(addedOVRLayers.back(), addedOVRLayers.at(topMost));
     } else {
-      dprintf(
+      dprint(
         "topMost layer has index {}, but count is {}",
         topMost,
         addedOVRLayers.size());

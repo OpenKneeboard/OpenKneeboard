@@ -19,12 +19,12 @@
  */
 #include <OpenKneeboard/APIEvent.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/tracing.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/tracing.hpp>
 
 #include <cinttypes>
 #include <cstdlib>
@@ -36,7 +36,6 @@ extern "C" {
 }
 
 using OpenKneeboard::dprint;
-using OpenKneeboard::dprintf;
 
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");

@@ -103,7 +103,9 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return { \
+      #enum_name \
+    }; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -137,7 +139,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
 
   XrSystemProperties systemProperties {
@@ -147,7 +149,7 @@ OpenXRKneeboard::OpenXRKneeboard(
     next->xrGetSystemProperties(instance, system, &systemProperties));
   mMaxLayerCount = systemProperties.graphicsProperties.maxLayerCount;
 
-  dprintf("XR system: {}", std::string_view {systemProperties.systemName});
+  dprint("XR system: {}", std::string_view {systemProperties.systemName});
   // 'Max' appears to be a recommendation for the eyebox:
   // - ignoring it for quads appears to be widely compatible, and is common
   //   practice with other tools
@@ -155,7 +157,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   //   graphics API's limits, not this one
   // - some runtimes (e.g. SteamVR) have a *really* small size here that
   //   prevents spriting.
-  dprintf(
+  dprint(
     "System supports up to {} layers, with a suggested resolution of {}x{}",
     mMaxLayerCount,
     systemProperties.graphicsProperties.maxSwapchainImageWidth,
@@ -257,7 +259,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     }
     mSwapchainDimensions = swapchainDimensions;
     mSessionID = snapshot.GetSessionID();
-    dprintf(
+    dprint(
       "Created {}x{} swapchain",
       swapchainDimensions.mWidth,
       swapchainDimensions.mHeight);
@@ -429,9 +431,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
     const auto codeAsString = xrresult_to_string(nextResult);
 
     if (codeAsString.empty()) {
-      dprintf("next_xrEndFrame() failed: {}", static_cast<int>(nextResult));
+      dprint("next_xrEndFrame() failed: {}", static_cast<int>(nextResult));
     } else {
-      dprintf(
+      dprint(
         "next_xrEndFrame() failed: {} ({})",
         codeAsString,
         static_cast<int>(nextResult));
@@ -518,11 +520,11 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
     sizeof(gRuntime.mName),
     instanceProps.runtimeName,
     XR_MAX_RUNTIME_NAME_SIZE);
-  dprintf("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
+  dprint("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
 
   const auto ret = gNext->xrCreateSession(instance, createInfo, session);
   if (XR_FAILED(ret)) {
-    dprintf("next xrCreateSession failed: {}", static_cast<int>(ret));
+    dprint("next xrCreateSession failed: {}", static_cast<int>(ret));
     return ret;
   }
 
@@ -569,7 +571,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
           "creation");
         break;
       default:
-        dprintf(
+        dprint(
           "ERROR: Unrecognized VulkanXRState: {}",
           std::to_underlying(gVulkanXRState.Get()));
         OPENKNEEBOARD_BREAK;
@@ -623,7 +625,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanInstanceKHR(
   const XrVulkanInstanceCreateInfoKHR* origCreateInfo,
   VkInstance* vulkanInstance,
   VkResult* vulkanResult) {
-  dprintf("{}()", __FUNCTION__);
+  dprint("{}()", __FUNCTION__);
 
   const OpenXRVulkanKneeboard::VkInstanceCreateInfo vkCreateInfo(
     *origCreateInfo->vulkanCreateInfo);
@@ -653,7 +655,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanDeviceKHR(
   const XrVulkanDeviceCreateInfoKHR* origCreateInfo,
   VkDevice* vulkanDevice,
   VkResult* vulkanResult) {
-  dprintf("{}()", __FUNCTION__);
+  dprint("{}()", __FUNCTION__);
 
   const OpenXRVulkanKneeboard::VkDeviceCreateInfo vkCreateInfo(
     *origCreateInfo->vulkanCreateInfo);
@@ -821,7 +823,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
     return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
   }
 
-  dprintf(
+  dprint(
     "Unsupported OpenXR call '{}' with instance {:#018x} and no next",
     name,
     std::bit_cast<uint64_t>(instance));
@@ -832,7 +834,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   const XrInstanceCreateInfo* info,
   const struct XrApiLayerCreateInfo* layerInfo,
   XrInstance* instance) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   // TODO: check version fields etc in layerInfo
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
@@ -870,7 +872,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
       DPrintSettings::Set({
         .prefix = "OpenKneeboard-OpenXR",
       });
-      dprintf(
+      dprint(
         "{} {}, {}",
         __FUNCTION__,
         Version::ReleaseName,
@@ -888,10 +890,10 @@ OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
   const XrNegotiateLoaderInfo* loaderInfo,
   const char* layerName,
   XrNegotiateApiLayerRequest* apiLayerRequest) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
 
   if (layerName != OpenXRApiLayerName) {
-    dprintf("Layer name mismatch:\n -{}\n +{}", OpenXRApiLayerName, layerName);
+    dprint("Layer name mismatch:\n -{}\n +{}", OpenXRApiLayerName, layerName);
     return XR_ERROR_INITIALIZATION_FAILED;
   }
 

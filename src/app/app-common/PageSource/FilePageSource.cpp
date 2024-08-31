@@ -24,10 +24,10 @@
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <algorithm>
 #include <ranges>
@@ -37,11 +37,11 @@
 namespace OpenKneeboard {
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
   const audited_ptr<DXResources>& dxr) noexcept {
-  std::vector<std::string> ret{".txt", ".pdf", ".htm", ".html"};
+  std::vector<std::string> ret {".txt", ".pdf", ".htm", ".html"};
 
   auto images = ImageFilePageSource::GetFileFormatProviders(dxr->mWIC.get())
     | std::views::transform(
-      &ImageFilePageSource::FileFormatProvider::mExtensions)
+                  &ImageFilePageSource::FileFormatProvider::mExtensions)
     | std::views::join;
 
   std::ranges::unique_copy(images, std::back_inserter(ret));
@@ -55,11 +55,11 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
   std::filesystem::path path) noexcept {
   try {
     if (!std::filesystem::is_regular_file(path)) {
-      dprintf("FilePageSource file '{}' is not a regular file", path);
+      dprint("FilePageSource file '{}' is not a regular file", path);
       co_return nullptr;
     }
   } catch (const std::filesystem::filesystem_error& e) {
-    dprintf(
+    dprint(
       "FilePageSource failed to get status of file '{}': {} ({})",
       path,
       e.what(),
@@ -87,11 +87,10 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {
     co_return ImageFilePageSource::Create(
-      dxr,
-      std::vector<std::filesystem::path>{path});
+      dxr, std::vector<std::filesystem::path> {path});
   }
 
-  dprintf("Couldn't find handler for {}", path);
+  dprint("Couldn't find handler for {}", path);
 
   co_return nullptr;
 }

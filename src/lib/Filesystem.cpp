@@ -21,22 +21,21 @@
 #include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <Windows.h>
-
-#include <wil/resource.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
+#include <ShlObj.h>
+
+#include <wil/resource.h>
+
 #include <format>
 #include <fstream>
 #include <mutex>
-
-#include <ShlObj.h>
 
 namespace OpenKneeboard::Filesystem {
 namespace {
@@ -110,7 +109,7 @@ void CleanupTemporaryDirectories() {
     TemporaryDirectoryState::Uninitialized,
     TemporaryDirectoryState::Cleaned>();
   const auto root = GetTemporaryDirectoryRoot();
-  dprintf("Cleaning temporary directory root: {}", root);
+  dprint("Cleaning temporary directory root: {}", root);
   if (!std::filesystem::exists(root)) {
     return;
   }
@@ -120,7 +119,7 @@ void CleanupTemporaryDirectories() {
     std::filesystem::remove_all(it.path(), ignored);
   }
 
-  dprintf("New temporary directory: {}", Filesystem::GetTemporaryDirectory());
+  dprint("New temporary directory: {}", Filesystem::GetTemporaryDirectory());
 }
 
 std::filesystem::path GetCurrentExecutablePath() {
@@ -171,7 +170,7 @@ void MigrateSettingsDirectory() {
     return;
   }
 
-  dprintf("🚚 moving settings from `{}` to `{}`", oldPath, newPath);
+  dprint("🚚 moving settings from `{}` to `{}`", oldPath, newPath);
 
   bool canDelete = true;
 
@@ -212,7 +211,7 @@ void MigrateSettingsDirectory() {
       }
     }
 
-    dprintf("🚚 `{}` -> `{}`", src, dest);
+    dprint("🚚 `{}` -> `{}`", src, dest);
     std::filesystem::create_directories(dest.parent_path());
     std::filesystem::rename(src, dest);
   }
@@ -235,7 +234,7 @@ void MigrateSettingsDirectory() {
         << std::endl;
     }
   }
-  dprintf("✅ moved, and created warning file at `{}`", warningFile);
+  dprint("✅ moved, and created warning file at `{}`", warningFile);
 }
 
 std::filesystem::path GetLocalAppDataDirectory() {
@@ -280,12 +279,12 @@ std::filesystem::path GetInstalledPluginsDirectory() {
 
 void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
   if (!std::filesystem::exists(path)) {
-    dprintf("{} - path '{}' does not exist (yet?)", __FUNCTION__, path);
+    dprint("{} - path '{}' does not exist (yet?)", __FUNCTION__, path);
     OPENKNEEBOARD_BREAK;
     return;
   }
   if (!std::filesystem::is_regular_file(path)) {
-    dprintf("{} - path '{}' is not a file", __FUNCTION__, path);
+    dprint("{} - path '{}' is not a file", __FUNCTION__, path);
     OPENKNEEBOARD_BREAK;
     return;
   }

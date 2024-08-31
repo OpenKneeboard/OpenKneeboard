@@ -46,13 +46,13 @@
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
 
-#include <winrt/Windows.ApplicationModel.DataTransfer.h>
-
-#include <microsoft.ui.xaml.window.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/inttypes.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
+
+#include <microsoft.ui.xaml.window.h>
 
 #include <ranges>
 #include <regex>
@@ -370,7 +370,7 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateTab(
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
     default:
-      dprintf("Adding tab with kind {}", std::to_underlying(tabType));
+      dprint("Adding tab with kind {}", std::to_underlying(tabType));
   }
 
   switch (tabType) {

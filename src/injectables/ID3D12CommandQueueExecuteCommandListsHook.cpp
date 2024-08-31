@@ -22,9 +22,9 @@
 #include "d3d12-offsets.h"
 #include "detours-ext.hpp"
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
+
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 
@@ -101,7 +101,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::Impl::InstallHook(
   if (err == 0) {
     dprint(" - hooked ID3D12CommandQueue::ExecuteCommandLists().");
   } else {
-    dprintf(
+    dprint(
       " - failed to hook ID3D12CommandQueue::ExecuteCommandLists(): {}", err);
   }
 

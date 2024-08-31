@@ -19,16 +19,16 @@
  */
 #pragma once
 
-#include <source_location>
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
+#include <shims/winrt/base.h>
+
 #include <format>
 #include <functional>
 #include <ostream>
+#include <source_location>
 #include <stop_token>
 #include <string>
 
@@ -39,19 +39,126 @@ using DPrintDumper = std::function<std::string()>;
 DPrintDumper GetDPrintDumper();
 void SetDPrintDumper(const DPrintDumper&);
 
-void dprint(std::string_view s);
-void dprint(std::wstring_view s);
+class DebugPrinter {
+  static void Write(std::string_view);
+  static void Write(std::wstring_view);
 
-template <typename... Args>
-  requires(sizeof...(Args) >= 1)
-void dprintf(std::format_string<Args...> fmt, Args&&... args) {
-  dprint(std::format(fmt, std::forward<Args>(args)...));
-}
+  enum class BreakWhen {
+    Never,
+    DebugBuilds,
+    Always,
+  };
 
-template <typename... Args>
-  requires(sizeof...(Args) >= 1)
-void dprintf(std::wformat_string<Args...> fmt, Args&&... args) {
-  dprint(std::format(fmt, std::forward<Args>(args)...));
+  template <class TDerived, BreakWhen TBreakWhen>
+  struct Level {
+    void operator()(std::string_view s) const noexcept {
+      Write(TDerived::Transform(s));
+      this->MaybeBreak();
+    }
+
+    void operator()(std::wstring_view s) const noexcept {
+      Write(TDerived::Transform(s));
+      this->MaybeBreak();
+    }
+
+    template <class... Args>
+      requires(sizeof...(Args) >= 1)
+    void operator()(std::format_string<Args...> fmt, Args&&... args)
+      const noexcept {
+      this->operator()(std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template <class... Args>
+      requires(sizeof...(Args) >= 1)
+    void operator()(std::wformat_string<Args...> fmt, Args&&... args)
+      const noexcept {
+      this->operator()(std::format(fmt, std::forward<Args>(args)...));
+    }
+
+   private:
+    template <class CharT>
+    static auto Transform(std::basic_string_view<CharT> in) noexcept {
+      return in;
+    }
+
+    void MaybeBreak() const {
+      switch (TBreakWhen) {
+        case BreakWhen::Never:
+          break;
+        case BreakWhen::Always:
+          if (IsDebuggerPresent()) {
+            __debugbreak();
+          } else {
+            OPENKNEEBOARD_BREAK;
+          }
+          break;
+        case BreakWhen::DebugBuilds:
+          OPENKNEEBOARD_BREAK;
+          break;
+      }
+    }
+  };
+
+  struct VerboseLevel : Level<VerboseLevel, BreakWhen::Never> {};
+
+  struct WarningLevel : Level<WarningLevel, BreakWhen::Never> {
+   public:
+    static auto Transform(std::string_view in) {
+      return std::format("⚠️ WARNING: {}", in);
+    }
+
+    static auto Transform(std::wstring_view in) {
+      return std::format(L"⚠️ WARNING: {}", in);
+    }
+  };
+
+  struct ErrorLevel : Level<ErrorLevel, BreakWhen::Always> {
+   public:
+    static auto Transform(std::string_view in) {
+      return std::format("⚠️ ERROR: {}", in);
+    }
+
+    static auto Transform(std::wstring_view in) {
+      return std::format(L"⚠️ ERROR: {}", in);
+    }
+  };
+
+ public:
+  const VerboseLevel Verbose;
+  const WarningLevel Warning;
+  const ErrorLevel Error;
+
+  void operator()(std::string_view what) const noexcept {
+    Verbose(what);
+  }
+
+  void operator()(std::wstring_view what) const noexcept {
+    Verbose(what);
+  }
+
+  template <class... Args>
+    requires(sizeof...(Args) >= 1)
+  void operator()(std::format_string<Args...> fmt, Args&&... args)
+    const noexcept {
+    Verbose(fmt, std::forward<Args>(args)...);
+  }
+
+  template <class... Args>
+    requires(sizeof...(Args) >= 1)
+  void operator()(std::wformat_string<Args...> fmt, Args&&... args)
+    const noexcept {
+    Verbose(fmt, std::forward<Args>(args)...);
+  }
+};
+
+namespace detail {
+// TODO: remove once MSVC supports C++23 static operator()
+template <class T>
+constexpr T static_const {};
+};// namespace detail
+
+namespace {
+constexpr auto const& dprint = detail::static_const<DebugPrinter>;
 }
 
 /** Utility for logging object lifetime.
@@ -77,7 +184,7 @@ class DPrintLifetime final {
       mWhat(what),
       mLoc(loc),
       mUncaughtExceptions(std::uncaught_exceptions()) {
-    dprintf(
+    dprint(
       "{} in {}() @ {}:{}",
       mWhat,
       loc.function_name(),
@@ -86,7 +193,7 @@ class DPrintLifetime final {
   }
 
   ~DPrintLifetime() {
-    dprintf(
+    dprint(
       "~{} with {} new exceptions in {}() @ {}:{}",
       mWhat,
       std::uncaught_exceptions() - mUncaughtExceptions,

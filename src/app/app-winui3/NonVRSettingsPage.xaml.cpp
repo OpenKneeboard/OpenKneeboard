@@ -128,7 +128,7 @@ void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
 ViewNonVRSettings NonVRSettingsPage::GetViewConfig() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {
-    dprintf("View {} >= count {}", mCurrentView, views.size());
+    dprint("View {} >= count {}", mCurrentView, views.size());
     OPENKNEEBOARD_BREAK;
     // TODO: uncomment when > 1 non-VR view is supported.
     // mCurrentView = 0;
@@ -142,7 +142,7 @@ OpenKneeboard::fire_and_forget NonVRSettingsPage::SetViewConfig(
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {
-    dprintf("View {} >= count {}", mCurrentView, views.size());
+    dprint("View {} >= count {}", mCurrentView, views.size());
     OPENKNEEBOARD_BREAK;
     co_return;
   }

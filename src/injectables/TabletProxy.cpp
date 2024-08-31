@@ -23,11 +23,11 @@
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/WintabTablet.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <Windows.h>
 
 #include <functional>
 #include <stop_token>
@@ -118,7 +118,7 @@ void TabletProxy::Initialize() {
 
   char title[256];
   auto titleLen = GetWindowTextA(mTargetWindow, title, sizeof(title));
-  dprintf("Main window: {}", std::string_view(title, titleLen));
+  dprint("Main window: {}", std::string_view(title, titleLen));
 
   mTablet = std::make_unique<WintabTablet>(
     mTargetWindow, WintabTablet::Priority::ForegroundOnly);
@@ -135,7 +135,7 @@ void TabletProxy::Initialize() {
     if (err == ERROR_INVALID_WINDOW_HANDLE) {
       return;
     }
-    dprintf("Failed to install windowproc: {}", err);
+    dprint("Failed to install windowproc: {}", err);
     OPENKNEEBOARD_BREAK;
     return;
   }

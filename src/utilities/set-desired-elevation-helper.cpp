@@ -26,10 +26,9 @@
 
 #include <OpenKneeboard/Elevation.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 
+#include <Windows.h>
 #include <shellapi.h>
 
 using namespace OpenKneeboard;
@@ -54,14 +53,14 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   int argc = 0;
   auto argv = CommandLineToArgvW(commandLine, &argc);
   if (argc != 1) {
-    dprintf("Invalid arguments ({}):", argc);
+    dprint("Invalid arguments ({}):", argc);
     for (int i = 0; i < argc; ++i) {
-      dprintf(L"argv[{}]: {}", i, argv[i]);
+      dprint(L"argv[{}]: {}", i, argv[i]);
     }
     return 1;
   }
   const auto mode = wcstoul(argv[0], nullptr, 10);
-  dprintf("Setting desired elevation to {}", mode);
+  dprint("Setting desired elevation to {}", mode);
   SetDesiredElevation(static_cast<DesiredElevation>(mode));
   return 0;
 }

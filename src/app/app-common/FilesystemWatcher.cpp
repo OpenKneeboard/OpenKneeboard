@@ -46,7 +46,7 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME
       | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
   if (handle == INVALID_HANDLE_VALUE) {
-    dprintf("Invalid handle: {}", GetLastError());
+    dprint("Invalid handle: {}", GetLastError());
     OPENKNEEBOARD_BREAK;
     return;
   }
@@ -98,7 +98,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
   } catch (const std::filesystem::filesystem_error& e) {
     // Do nothing: assume an operation is in progress, so we'll get a further
     // notification when it's done - or just torn down and a new watcher created
-    dprintf("Error checking if path exists or is directory: {}", e.what());
+    dprint("Error checking if path exists or is directory: {}", e.what());
     co_return;
   }
 
@@ -125,7 +125,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       lastWriteTime = std::filesystem::last_write_time(mPath);
     } catch (const std::filesystem::filesystem_error& e) {
       // Probably deleted
-      dprintf(
+      dprint(
         "Getting last write time for path '{}' failed: {:#08x} - {}",
         mPath,
         static_cast<uint32_t>(e.code().value()),
@@ -155,7 +155,7 @@ OpenKneeboard::fire_and_forget FilesystemWatcher::OnContentsChanged() {
           co_await winrt::resume_after(std::chrono::milliseconds(100));
           continue;
         } else {
-          dprintf(
+          dprint(
             L"Failed to open modified file '{}': {}", mPath.wstring(), error);
           co_return;
         }

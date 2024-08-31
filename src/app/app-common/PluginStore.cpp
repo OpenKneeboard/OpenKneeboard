@@ -22,13 +22,13 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/Registry.hpp>
-#include <OpenKneeboard/format/filesystem.hpp>
-
-#include <wil/registry.h>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/json.hpp>
+
+#include <wil/registry.h>
 
 #include <algorithm>
 #include <expected>
@@ -62,20 +62,19 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
   const auto hkey = expected.value().get();
 
   using VIT = wil::reg::value_iterator;
-  for (const auto& value: wil::make_range(VIT{hkey}, VIT{})) {
+  for (const auto& value: wil::make_range(VIT {hkey}, VIT {})) {
     if (value.type != REG_DWORD) {
-      dprintf(
-        L"ERROR: Registry value for plugin `{}` is not a DWORD",
-        value.name);
+      dprint(
+        L"ERROR: Registry value for plugin `{}` is not a DWORD", value.name);
       continue;
     }
     const auto enabled = wil::reg::get_value_dword(hkey, value.name.c_str());
     switch (enabled) {
       case 0:
-        dprintf(L"Skipping plugin `{}` - disabled in registry", value.name);
+        dprint(L"Skipping plugin `{}` - disabled in registry", value.name);
         continue;
       case 1:
-        dprintf(L"Loading plugin `{}` from registry...", value.name);
+        dprint(L"Loading plugin `{}` from registry...", value.name);
         if (!std::filesystem::exists(value.name)) {
           dprint("... ERROR: file does not exist.");
           continue;
@@ -83,7 +82,7 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
         this->TryAppend(value.name);
         continue;
       default:
-        dprintf(
+        dprint(
           L"WARNING: skipping plugin `{}` from registry - invalid value {}",
           value.name,
           enabled);
@@ -94,7 +93,7 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
 
 void PluginStore::LoadPluginsFromFilesystem() {
   const auto root = Filesystem::GetInstalledPluginsDirectory();
-  for (const auto& entry: std::filesystem::directory_iterator{root}) {
+  for (const auto& entry: std::filesystem::directory_iterator {root}) {
     if (!entry.is_directory()) {
       continue;
     }
@@ -110,22 +109,22 @@ PluginStore::~PluginStore() {
 }
 
 void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
-  dprintf("Loading plugin from `{}`", jsonPath);
+  dprint("Loading plugin from `{}`", jsonPath);
   try {
     const auto plugin
-      = nlohmann::json::parse(std::ifstream{jsonPath, std::ios::binary})
-      .get<Plugin>();
-    dprintf(
+      = nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
+          .get<Plugin>();
+    dprint(
       "Parsed plugin ID `{}` (`{}`), version `{}`",
       plugin.mID,
       plugin.mMetadata.mPluginName,
       plugin.mMetadata.mPluginReadableVersion);
     this->Append(plugin);
   } catch (const nlohmann::json::exception& e) {
-    dprintf("ERROR: error {} when parsing plugin: {}", e.id, e.what());
+    dprint("ERROR: error {} when parsing plugin: {}", e.id, e.what());
     OPENKNEEBOARD_BREAK;
   } catch (const std::exception& e) {
-    dprintf("ERROR: C++ exception loading plugin: {}", e.what());
+    dprint("ERROR: C++ exception loading plugin: {}", e.what());
     OPENKNEEBOARD_BREAK;
   }
 }

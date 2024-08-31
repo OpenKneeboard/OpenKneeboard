@@ -105,7 +105,7 @@ class LuaStackCheck final {
 
     const auto newSize = lua_gettop(*mLua);
     if (mStackSize != newSize) {
-      dprintf("Lua stack size changed from {} to {}", mStackSize, newSize);
+      dprint("Lua stack size changed from {} to {}", mStackSize, newSize);
       OPENKNEEBOARD_BREAK;
       std::terminate();
     }

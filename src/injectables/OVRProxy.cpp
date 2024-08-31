@@ -45,7 +45,7 @@ static const char* GetActiveRuntimeDLLName() {
   std::call_once(sOnce, [&runtime = sActiveRuntime]() {
     for (const auto it: OVRRuntimeDLLNames) {
       if (GetModuleHandleA(it)) {
-        dprintf("OVRProxy found runtime: {}", it);
+        dprint("OVRProxy found runtime: {}", it);
         runtime = it;
         return;
       }

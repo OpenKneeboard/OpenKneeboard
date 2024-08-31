@@ -229,7 +229,7 @@ void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
   if (ev.name == DCSWorld::EVT_MISSION_TIME) {
     const auto times = ev.TryParsedValue<DCSWorld::MissionTimeEvent>();
     if (!times) {
-      dprintf("Failed to parse mission times: {}", times.error().what);
+      dprint("Failed to parse mission times: {}", times.error().what);
       return;
     }
     const auto currentTime

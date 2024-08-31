@@ -174,7 +174,7 @@ void GameInjector::CheckProcess(
       }
     }
     if (!processHandle) {
-      dprintf(
+      dprint(
         L"Failed to OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) for PID "
         L"{} "
         L"({}): {:#x}",
@@ -220,7 +220,7 @@ void GameInjector::CheckProcess(
         wantedDlls |= InjectedDlls::OculusD3D12;
         break;
       default:
-        dprintf(
+        dprint(
           "Unhandled OverlayAPI: {}", std::to_underlying(game->mOverlayAPI));
         OPENKNEEBOARD_BREAK;
         return;
@@ -234,14 +234,14 @@ void GameInjector::CheckProcess(
       nlohmann::json overlayAPI;
       to_json(overlayAPI, game->mOverlayAPI);
 
-      dprintf(
+      dprint(
         "Current game changed to {}, PID {}, configured rendering API {}",
         fullPath.string(),
         processID,
         overlayAPI.dump());
       const auto elevated = IsElevated(processHandle);
       if (IsElevated() != elevated) {
-        dprintf(
+        dprint(
           "WARNING: OpenKneeboard {} elevated, but PID {} {} elevated.",
           IsElevated() ? "is" : "is not",
           processID,
@@ -264,7 +264,7 @@ void GameInjector::CheckProcess(
     }
 
     if (process.mInjectionAccessState == InjectionAccessState::NotTried) {
-      dprintf("Reopening PID {} with VM and thread privileges", processID);
+      dprint("Reopening PID {} with VM and thread privileges", processID);
       processHandle = OpenProcess(
         PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ
           | PROCESS_VM_WRITE | PROCESS_CREATE_THREAD,
@@ -274,7 +274,7 @@ void GameInjector::CheckProcess(
         const auto code = GetLastError();
         const auto message
           = std::system_category().default_error_condition(code).message();
-        dprintf(
+        dprint(
           "ERROR: Failed to OpenProcess() with VM and thread privileges for "
           "PID {} ({}): "
           "{:#x} ({})",
@@ -300,7 +300,7 @@ void GameInjector::CheckProcess(
       std::vector<std::filesystem::path> sortedDLLs {dlls.begin(), dlls.end()};
       std::ranges::sort(sortedDLLs);
       for (const auto& dll: sortedDLLs) {
-        dprintf(
+        dprint(
           L"{} (PID {}) module: {}", exeBaseName, processID, dll.wstring());
       }
     }
@@ -312,7 +312,7 @@ void GameInjector::CheckProcess(
     if (missingDlls == InjectedDlls::None) {
       continue;
     }
-    dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
+    dprint("Injecting DLLs into PID {} ({})", processID, fullPath.string());
 
     const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
       if (!static_cast<bool>(missingDlls & dllID)) {
@@ -320,7 +320,7 @@ void GameInjector::CheckProcess(
       }
       if (dlls.contains(dllPath)) {
         currentDlls |= dllID;
-        dprintf("{} is already injected", dllPath.filename().string());
+        dprint("{} is already injected", dllPath.filename().string());
         return;
       }
       InjectDll(processHandle, dllPath);
@@ -353,7 +353,7 @@ std::unordered_set<std::filesystem::path> GameInjector::GetProcessCurrentDLLs(
       break;
     }
     const auto code = GetLastError();
-    dprintf(
+    dprint(
       "EnumProcessModules() failed: {:#x} ({})",
       std::bit_cast<uint32_t>(code),
       std::system_category().default_error_condition(code).message());
@@ -361,7 +361,7 @@ std::unordered_set<std::filesystem::path> GameInjector::GetProcessCurrentDLLs(
       break;
     }
     if (i == maxTries - 1) {
-      dprintf("Failed to EnumProcessModules {} times, giving up", maxTries);
+      dprint("Failed to EnumProcessModules {} times, giving up", maxTries);
       OPENKNEEBOARD_BREAK;
       return {};
     }
@@ -446,11 +446,11 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   // We fetch the full list again as thread exit code is a DWORD, and
   // sizeof(DWORD) < sizeof(HMODULE)
   if (!GetProcessCurrentDLLs(process).contains(dll)) {
-    dprintf("DLL {} not found in list after injection :'(", dll.string());
+    dprint("DLL {} not found in list after injection :'(", dll.string());
     return false;
   }
 
-  dprintf("Injected {}", dll.string());
+  dprint("Injected {}", dll.string());
   return true;
 }
 

@@ -29,16 +29,16 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
 
-#include <winrt/Microsoft.UI.Xaml.Controls.h>
-#include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Windows.Web.Http.Headers.h>
-#include <winrt/Windows.Web.Http.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Web.Http.Headers.h>
+#include <winrt/Windows.Web.Http.h>
 
 #include <filesystem>
 #include <format>
@@ -153,7 +153,7 @@ task<UpdateResult> CheckForUpdates(
     : testing.mBaseURI;
 
   const auto uri = std::format("{}/{}-msi.json", baseUri, settings.mChannel);
-  dprintf("Starting update check: {}", uri);
+  dprint("Starting update check: {}", uri);
 
   nlohmann::json releases;
   using namespace winrt::Windows::Storage::Streams;
@@ -199,7 +199,7 @@ task<UpdateResult> CheckForUpdates(
   }
 
   auto latestRelease = releases.front();
-  dprintf(
+  dprint(
     "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
   scope_exit oncePerDay(
@@ -224,7 +224,7 @@ task<UpdateResult> CheckForUpdates(
   const version::Semver200_version latestVersion(latestVersionSemverString);
 
   if (currentVersion >= latestVersion) {
-    dprintf(
+    dprint(
       "Current version '{}' >= latest '{}'",
       currentVersionSemverString,
       latestVersionSemverString);
@@ -234,7 +234,7 @@ task<UpdateResult> CheckForUpdates(
     }
     co_return UpdateResult::NotInstallingUpdate;
   } else {
-    dprintf(
+    dprint(
       "Current version '{}' < latest '{}'",
       currentVersionSemverString,
       latestVersionSemverString);
@@ -243,9 +243,9 @@ task<UpdateResult> CheckForUpdates(
   const auto oldName = currentVersionString;
   const auto newName = latestRelease.at("tag_name").get<std::string_view>();
 
-  dprintf("Found upgrade {} to {}", oldName, newName);
+  dprint("Found upgrade {} to {}", oldName, newName);
   if (newName == settings.mSkipVersion) {
-    dprintf("Skipping {} at user request.", newName);
+    dprint("Skipping {} at user request.", newName);
     co_return UpdateResult::NotInstallingUpdate;
   }
   const auto assets = latestRelease.at("assets");
@@ -275,7 +275,7 @@ task<UpdateResult> CheckForUpdates(
   }
   const auto updateURL
     = updateAsset->at("browser_download_url").get<std::string_view>();
-  dprintf("Update installer found at {}", updateURL);
+  dprint("Update installer found at {}", updateURL);
 
   ContentDialogResult result {};
   {

@@ -71,7 +71,7 @@ KneeboardView::KneeboardView(
     std::bind_front(&KneeboardView::UpdateUILayers, this));
 
   const auto id = this->GetRuntimeID().GetTemporaryValue();
-  dprintf("Created kneeboard view ID {:#018x} ({})", id, id);
+  dprint("Created kneeboard view ID {:#018x} ({})", id, id);
 }
 
 std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
@@ -167,7 +167,7 @@ void KneeboardView::SetCurrentTabByIndex(
   }
   mCurrentTabView = mTabViews.at(index);
 
-  dprintf(
+  dprint(
     "Current tab for kneeboard view {:#018x} changed to '{}' ({}) @ {}",
     this->GetRuntimeID().GetTemporaryValue(),
     mCurrentTabView->GetRootTab()->GetTitle(),
@@ -444,11 +444,11 @@ task<void> KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
       this->PreviousTab();
-      dprintf("Previous tab to '{}'", this->GetCurrentTab()->GetTitle());
+      dprint("Previous tab to '{}'", this->GetCurrentTab()->GetTitle());
       co_return;
     case UserAction::NEXT_TAB:
       this->NextTab();
-      dprintf("Next tab to '{}'", this->GetCurrentTab()->GetTitle());
+      dprint("Next tab to '{}'", this->GetCurrentTab()->GetTitle());
       co_return;
     case UserAction::PREVIOUS_BOOKMARK:
       this->GoToPreviousBookmark();
@@ -466,7 +466,7 @@ task<void> KneeboardView::PostUserAction(UserAction action) {
         co_await handler->Execute();
         co_return;
       }
-      dprintf(
+      dprint(
         "No KneeboardView action handler for action {}",
         static_cast<int>(action));
       OPENKNEEBOARD_BREAK;

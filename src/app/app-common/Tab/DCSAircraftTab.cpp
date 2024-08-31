@@ -101,7 +101,7 @@ OpenKneeboard::fire_and_forget DCSAircraftTab::OnAPIEvent(
     } else {
       message = "\u274c " + to_utf8(path);
     }
-    dprintf("Aircraft tab: {}", message);
+    dprint("Aircraft tab: {}", message);
     mDebugInformation += "\n" + message;
   }
 

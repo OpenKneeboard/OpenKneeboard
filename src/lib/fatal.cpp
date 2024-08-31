@@ -21,15 +21,15 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <atomic>
 #include <bit>
@@ -305,7 +305,7 @@ static std::string GetFatalLogContents(
   }
 
   // Let's just get the basics out early in case anything else goes wrong
-  dprintf("💀 FATAL: {} @ {}", fatal.mMessage, blameString);
+  dprint("💀 FATAL: {} @ {}", fatal.mMessage, blameString);
 
   std::stringstream f;
 

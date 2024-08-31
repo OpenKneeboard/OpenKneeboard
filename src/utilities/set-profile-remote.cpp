@@ -65,7 +65,7 @@ int WINAPI wWinMain(
     return 0;
   }
 
-  dprintf(
+  dprint(
     L"Error: first argument must be 'guid' or 'name', but '{}' given", kind);
   return 1;
 }

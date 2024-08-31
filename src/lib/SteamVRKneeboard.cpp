@@ -24,20 +24,22 @@
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/SteamVRKneeboard.hpp>
 
-#include <source_location>
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
-#include <directxtk/SimpleMath.h>
 
-#include <filesystem>
-#include <thread>
+#include <shims/winrt/base.h>
 
 #include <TlHelp32.h>
 #include <WtsApi32.h>
 #include <d3d11.h>
+
+#include <directxtk/SimpleMath.h>
+
+#include <filesystem>
+#include <source_location>
+#include <thread>
+
 #include <d3d11_1.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
@@ -53,7 +55,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     mSHM.InitializeCache(d3d, /* swapchainLength = */ 2);
     DXGI_ADAPTER_DESC desc;
     mDXR.mDXGIAdapter->GetDesc(&desc);
-    dprintf(
+    dprint(
       L"SteamVR client running on adapter '{}' (LUID {:#x})",
       desc.Description,
       mDXR.mAdapterLUID);
@@ -123,7 +125,7 @@ static bool overlay_check(
   if (err == vr::VROverlayError_None) {
     return true;
   }
-  dprintf(
+  dprint(
     "OpenVR error in IVROverlay::{}: {} @ {}",
     method,
     vr::VROverlay()->GetOverlayErrorNameFromEnum(err),
@@ -147,11 +149,11 @@ bool SteamVRKneeboard::InitializeOpenVR() {
   if (!mIVRSystem) {
     mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
     if (!mIVRSystem) {
-      dprintf("Failed to get an OpenVR IVRSystem: {}", static_cast<int>(err));
+      dprint("Failed to get an OpenVR IVRSystem: {}", static_cast<int>(err));
       return false;
     }
 
-    dprintf("Initialized OpenVR, runtime v{}", mIVRSystem->GetRuntimeVersion());
+    dprint("Initialized OpenVR, runtime v{}", mIVRSystem->GetRuntimeVersion());
 
     uint64_t luid {};
     mIVRSystem->GetOutputDevice(&luid, vr::ETextureType::TextureType_DirectX);
@@ -161,10 +163,10 @@ bool SteamVRKneeboard::InitializeOpenVR() {
     DXGI_ADAPTER_DESC desc;
     winrt::check_hresult(adapter->GetDesc(&desc));
 
-    dprintf(
+    dprint(
       L"OpenVR requested adapter '{}' (LUID {:#x})", desc.Description, luid);
     if (luid != mDXR.mAdapterLUID) {
-      dprintf(
+      dprint(
         "WARNING: SteamVR adapter {:#x} != OKB adapter {:#x}",
         luid,
         mDXR.mAdapterLUID);
@@ -536,7 +538,7 @@ void SteamVRKneeboard::InitializeLayer(size_t layerIndex) {
 
   OVERLAY_CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerState.mOverlay);
 
-  dprintf("Created OpenVR overlay {}", layerIndex);
+  dprint("Created OpenVR overlay {}", layerIndex);
 
   vr::Texture_t vrt {
     .handle = layerState.mSharedHandle,

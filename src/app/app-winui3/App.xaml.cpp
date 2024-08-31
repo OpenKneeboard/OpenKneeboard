@@ -39,8 +39,6 @@
 #include <OpenKneeboard/WebView2PageSource.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
-#include <wil/registry.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
@@ -48,15 +46,18 @@
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
+#include <Psapi.h>
+#include <ShlObj.h>
+#include <shellapi.h>
+
+#include <wil/registry.h>
+
 #include <chrono>
 #include <exception>
 #include <filesystem>
 #include <set>
 
 #include <Dbghelp.h>
-#include <Psapi.h>
-#include <ShlObj.h>
-#include <shellapi.h>
 #include <signal.h>
 #include <zip.h>
 
@@ -157,7 +158,7 @@ static void BackupSettings() {
       Config::RegistrySubKey,
       L"AppVersionAtLastBackup",
       Version::ReleaseNameW);
-    dprintf("🦺 Saved settings backup to `{}`", backupFile);
+    dprint("🦺 Saved settings backup to `{}`", backupFile);
   });
 
   using unique_zip = std::unique_ptr<zip_t, decltype(&zip_close)>;
@@ -184,12 +185,12 @@ static void BackupSettings() {
 }
 
 static void LogSystemInformation() {
-  dprintf("{} {}", ProjectReverseDomainA, Version::ReleaseName);
-  dprintf(L"Full path: {}", GetFullPathForCurrentExecutable());
-  dprintf(L"Command line: {}", GetCommandLineW());
+  dprint("{} {}", ProjectReverseDomainA, Version::ReleaseName);
+  dprint(L"Full path: {}", GetFullPathForCurrentExecutable());
+  dprint(L"Command line: {}", GetCommandLineW());
   dprint("----------");
-  dprintf("  Elevated: {}", IsElevated());
-  dprintf("  Shell Elevated: {}", IsShellElevated());
+  dprint("  Elevated: {}", IsElevated());
+  dprint("  Shell Elevated: {}", IsShellElevated());
   // Log UAC settings because lower values aren't just "do not prompt" - they
   // will automatically run some things as administrator that otherwise would
   // be ran as a normal user. This causes problems.
@@ -217,7 +218,7 @@ static void LogSystemInformation() {
             &data,
             &dataSize)
           == ERROR_SUCCESS) {
-          dprintf(
+          dprint(
             L"  UAC {}: {:#010x} ({})",
             name,
             static_cast<uint32_t>(data),
@@ -231,14 +232,14 @@ static void LogSystemInformation() {
 
   if (WebView2PageSource::IsAvailable()) {
     const auto webView2 = WebView2PageSource::GetVersion();
-    dprintf("  WebView2: v{}", webView2);
+    dprint("  WebView2: v{}", webView2);
   } else {
     dprint("  WebView2: NOT FOUND");
   }
 
   CPINFOEXW codePageInfo;
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
-  dprintf(L"  Active code page: {}", codePageInfo.CodePageName);
+  dprint(L"  Active code page: {}", codePageInfo.CodePageName);
 
   DWORD codePage {};
   GetLocaleInfoW(
@@ -247,22 +248,22 @@ static void LogSystemInformation() {
     reinterpret_cast<LPWSTR>(&codePage),
     sizeof(codePage));
   GetCPInfoExW(codePage, 0, &codePageInfo);
-  dprintf(L"  System code page: {}", codePageInfo.CodePageName);
+  dprint(L"  System code page: {}", codePageInfo.CodePageName);
   GetLocaleInfoW(
     LOCALE_USER_DEFAULT,
     LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
     reinterpret_cast<LPWSTR>(&codePage),
     sizeof(codePage));
-  dprintf(L"  User code page: {}", codePageInfo.CodePageName);
+  dprint(L"  User code page: {}", codePageInfo.CodePageName);
   wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
   LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, localeName, sizeof(localeName), 0);
-  dprintf(L"  System locale: {}", localeName);
+  dprint(L"  System locale: {}", localeName);
   LCIDToLocaleName(LOCALE_USER_DEFAULT, localeName, sizeof(localeName), 0);
-  dprintf(L"  User locale: {}", localeName);
+  dprint(L"  User locale: {}", localeName);
 
   uint64_t totalMemoryKB {0};
   GetPhysicallyInstalledSystemMemory(&totalMemoryKB);
-  dprintf("  Total RAM: {}mb", totalMemoryKB / 1024);
+  dprint("  Total RAM: {}mb", totalMemoryKB / 1024);
   dprint("----------");
 }
 
@@ -289,7 +290,7 @@ static void SetRegistryValues() {
         const auto parent = utilitiesPath.parent_path();
         const auto subdir = parent / "utilities" / Config::BuildType;
         if (std::filesystem::exists(subdir)) {
-          dprintf("Found utilities path: {}", subdir);
+          dprint("Found utilities path: {}", subdir);
           utilitiesPath = subdir;
           break;
         }
@@ -309,7 +310,7 @@ static void LogInstallationInformation() {
   {
     const auto dir = Filesystem::GetSettingsDirectory();
     const auto dirStr = dir.wstring();
-    dprintf(L"Settings directory: {}", dirStr);
+    dprint(L"Settings directory: {}", dirStr);
     RegSetKeyValueW(
       HKEY_CURRENT_USER,
       Config::RegistrySubKey,
@@ -320,7 +321,7 @@ static void LogInstallationInformation() {
   }
 
   auto binDir = Filesystem::GetRuntimeDirectory();
-  dprintf(L"Runtime directory: {}", binDir);
+  dprint(L"Runtime directory: {}", binDir);
 
   for (const auto& entry: std::filesystem::directory_iterator(binDir)) {
     if (!entry.is_regular_file()) {
@@ -340,7 +341,7 @@ static void LogInstallationInformation() {
     const auto versionSize = GetFileVersionInfoSizeExW(
       FILE_VER_GET_NEUTRAL, pathStr.c_str(), &ignored);
     if (versionSize == 0) {
-      dprintf(
+      dprint(
         L"Failed to get version info size for {}: {}",
         path.filename().wstring(),
         GetLastError());
@@ -354,7 +355,7 @@ static void LogInstallationInformation() {
           NULL,
           static_cast<DWORD>(versionBuf.size()),
           versionBuf.data())) {
-      dprintf(
+      dprint(
         L"Failed to get version info for {}: {}",
         path.filename().wstring(),
         GetLastError());
@@ -368,14 +369,14 @@ static void LogInstallationInformation() {
           L"\\StringFileInfo\\040904E4\\FileVersion",
           reinterpret_cast<void**>(&versionStr),
           &versionStrSize)) {
-      dprintf(L"Failed to read FileVersion for {}", path.filename().wstring());
+      dprint(L"Failed to read FileVersion for {}", path.filename().wstring());
       continue;
     }
     const auto versionStrLen = versionStrSize - 1;
 
     const auto modifiedAt = std::filesystem::last_write_time(path);
 
-    dprintf(
+    dprint(
       L"{:<48s} v{}\t{}",
       path.filename().wstring(),
       std::wstring_view {versionStr, versionStrLen},

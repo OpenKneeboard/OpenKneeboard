@@ -117,7 +117,7 @@ OpenKneeboard::fire_and_forget DCSTerrainTab::OnAPIEvent(
     } else {
       message = std::format("\u274c {}", to_utf8(path));
     }
-    dprintf("Terrain tab: {}", message);
+    dprint("Terrain tab: {}", message);
     mDebugInformation += "\n" + message;
   }
 

@@ -25,7 +25,14 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+
 #include <shims/winrt/Microsoft.UI.Interop.h>
+
+#include <libloaderapi.h>
+#include <shellapi.h>
 
 #include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Windows.Foundation.Metadata.h>
@@ -40,15 +47,9 @@
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-
 #include <mutex>
 
 #include <dwmapi.h>
-#include <libloaderapi.h>
-#include <shellapi.h>
 #include <wow64apiset.h>
 
 #include <wil/cppwinrt_helpers.h>
@@ -71,7 +72,7 @@ task<std::shared_ptr<HWNDPageSource>> HWNDPageSource::Create(
     gControlMessage
       = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
     if (!gControlMessage) {
-      dprintf("Failed to Register a window message: {}", GetLastError());
+      dprint("Failed to Register a window message: {}", GetLastError());
     }
   }
   std::shared_ptr<HWNDPageSource> ret {
@@ -114,7 +115,7 @@ void HWNDPageSource::LogAdapter(HMONITOR monitor) {
         DXGI_ADAPTER_DESC adapterDesc;
         adapter->GetDesc(&adapterDesc);
 
-        dprintf(
+        dprint(
           L"Capturing on monitor '{}' connected to adapter '{}' (LUID {:#x})",
           std::wstring_view {outputDesc.DeviceName},
           std::wstring_view {adapterDesc.Description},
@@ -123,7 +124,7 @@ void HWNDPageSource::LogAdapter(HMONITOR monitor) {
         if (
           std::bit_cast<uint64_t>(adapterDesc.AdapterLuid)
           != mDXR->mAdapterLUID) {
-          dprintf(
+          dprint(
             "WARNING: Capture adapter LUID {:#x} != OKB adapter LUID {:#x}",
             std::bit_cast<uint64_t>(adapterDesc.AdapterLuid),
             mDXR->mAdapterLUID);
@@ -153,7 +154,7 @@ HWNDPageSource::CreateWGCaptureItem() {
       winrt::put_abi(item)));
     LogAdapter(mCaptureWindow);
   } catch (const winrt::hresult_error& e) {
-    dprintf(
+    dprint(
       "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
       "for window: "
       "{} ({})",
@@ -185,7 +186,7 @@ HWNDPageSource::CreateWGCaptureItem() {
         winrt::put_abi(item)));
       LogAdapter(monitor);
     } catch (const winrt::hresult_error& e) {
-      dprintf(
+      dprint(
         "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
         "for monitor: "
         "{} ({})",
@@ -333,7 +334,7 @@ PixelSize HWNDPageSource::GetSwapchainDimensions(
     = static_cast<uint32_t>(info.rcMonitor.right - info.rcMonitor.left);
   const auto monitorHeight
     = static_cast<uint32_t>(info.rcMonitor.bottom - info.rcMonitor.top);
-  dprintf(L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
+  dprint(L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
   return {
     std::max(contentSize.mWidth, monitorWidth),
     std::max(contentSize.mHeight, monitorHeight),
@@ -466,7 +467,7 @@ void HWNDPageSource::ClearUserInput() {
 std::optional<PixelRect> HWNDPageSource::GetClientArea(
   const PixelSize& captureSize) const {
   if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
-    dprintf("{} called, but capture area is not client area", __FUNCTION__);
+    dprint("{} called, but capture area is not client area", __FUNCTION__);
     OPENKNEEBOARD_BREAK;
     return {};
   }
@@ -572,10 +573,8 @@ PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();
 }
 
-task<void> HWNDPageSource::RenderPage(
-  RenderContext rc,
-  PageID,
-  PixelRect rect) {
+task<void>
+HWNDPageSource::RenderPage(RenderContext rc, PageID, PixelRect rect) {
   WGCRenderer::Render(rc.GetRenderTarget(), rect);
   co_return;
 }

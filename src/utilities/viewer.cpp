@@ -34,8 +34,6 @@
 #include <OpenKneeboard/SHM/D3D11.hpp>
 #include <OpenKneeboard/Shaders/D3D/Viewer.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
@@ -43,19 +41,22 @@
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
+#include <shims/winrt/base.h>
+
+#include <ShlObj_core.h>
+#include <d3d11.h>
+#include <shellapi.h>
+
 #include <format>
 #include <memory>
 #include <type_traits>
 
 #include <D2d1.h>
 #include <D2d1_3.h>
-#include <ShlObj_core.h>
-#include <d3d11.h>
 #include <d3d11_2.h>
 #include <dcomp.h>
 #include <dwrite.h>
 #include <dxgi1_6.h>
-#include <shellapi.h>
 
 #if OPENKNEEBOARD_32BIT_BUILD
 #define VIEWER_WINDOW_TITLE L"32-bit OpenKneeboard Viewer"
@@ -994,7 +995,7 @@ class TestViewerWindow final : private D3D11Resources {
           renderer = GraphicsAPI::Vulkan;
           continue;
         }
-        dprintf(L"Unrecognized graphics API {}", next);
+        dprint(L"Unrecognized graphics API {}", next);
 
         exit(0);// NOLINT(concurrency-mt-unsafe)
       }

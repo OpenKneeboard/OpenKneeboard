@@ -20,11 +20,11 @@
 
 #include <OpenKneeboard/OTDIPCClient.hpp>
 
-#include <wil/cppwinrt.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <wil/cppwinrt.h>
 
 #include <ranges>
 
@@ -46,12 +46,12 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
 }
 
 OTDIPCClient::OTDIPCClient() {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
 }
 
 OTDIPCClient::~OTDIPCClient() {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
 }
 
 OpenKneeboard::fire_and_forget OTDIPCClient::final_release(
@@ -74,7 +74,7 @@ task<void> OTDIPCClient::Run() {
   });
   dprint("Starting OTD-IPC client");
   const scope_exit exitMessage([]() {
-    dprintf(
+    dprint(
       "Tearing down OTD-IPC client with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
@@ -120,7 +120,7 @@ task<void> OTDIPCClient::RunSingle() {
 
   dprint("Connected to OTD-IPC server");
   const scope_exit exitMessage([]() {
-    dprintf(
+    dprint(
       "Tearing down OTD-IPC connection with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
@@ -147,7 +147,7 @@ task<void> OTDIPCClient::RunSingle() {
       connection.get(), buffer, sizeof(buffer), &bytesRead, &overlapped);
     const auto readFileError = GetLastError();
     if ((!readFileSuccess) && readFileError != ERROR_IO_PENDING) {
-      dprintf("OTD-IPC ReadFile failed: {}", readFileError);
+      dprint("OTD-IPC ReadFile failed: {}", readFileError);
       co_return;
     }
     if (readFileError == ERROR_IO_PENDING) {
@@ -190,17 +190,17 @@ task<void> OTDIPCClient::RunSingle() {
       }
       if (!GetOverlappedResult(
             connection.get(), &overlapped, &bytesRead, TRUE)) {
-        dprintf("OTD-IPC GetOverlappedResult() failed: {}", GetLastError());
+        dprint("OTD-IPC GetOverlappedResult() failed: {}", GetLastError());
       }
     }
 
     if (bytesRead < sizeof(Header)) {
-      dprintf("OTD-IPC packet smaller than header: {}", bytesRead);
+      dprint("OTD-IPC packet smaller than header: {}", bytesRead);
       co_return;
     }
 
     if (bytesRead < header->size) {
-      dprintf(
+      dprint(
         "OTD-IPC packet smaller than expected packet size: {} < {}",
         bytesRead,
         header->size);
@@ -281,7 +281,7 @@ void OTDIPCClient::ProcessMessage(
     .mDeviceID = MakeDeviceID(msg),
   };
 
-  dprintf(
+  dprint(
     "Received OTD-IPC device: '{}' - {}", info.mDeviceName, info.mDeviceID);
 
   mTablets[info.mDeviceID].mDevice = info;
@@ -300,7 +300,7 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State* const msg) {
 
   auto& tablet = mTablets[deviceID];
   if (!tablet.mState) {
-    dprintf("Received first packet for OTD-IPC device {}", deviceID);
+    dprint("Received first packet for OTD-IPC device {}", deviceID);
     tablet.mState = TabletState {};
   }
   auto& state = tablet.mState.value();

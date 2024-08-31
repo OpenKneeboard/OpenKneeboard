@@ -19,11 +19,11 @@
  */
 #include <OpenKneeboard/GetMainHWND.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <format>
 
@@ -70,7 +70,7 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   gCache.mInfo = *reinterpret_cast<MainWindowInfo*>(mapping);
   if (cached != gCache.mInfo) {
     const auto version = gCache.mInfo->mVersion;
-    dprintf(
+    dprint(
       "Found an existing window for v{}.{}.{}.{}",
       version.mMajor,
       version.mMinor,

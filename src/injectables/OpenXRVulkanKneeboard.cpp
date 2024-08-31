@@ -22,11 +22,11 @@
 
 #include "OpenXRNext.hpp"
 
-#include <shims/vulkan/vulkan.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <shims/vulkan/vulkan.h>
 
 #include <d3d11_4.h>
 #include <dxgi1_6.h>
@@ -48,7 +48,7 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   const VkAllocationCallbacks* vulkanAllocator,
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr)
   : OpenXRKneeboard(instance, systemID, session, runtimeID, next) {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
   mAllocator = vulkanAllocator;
@@ -116,7 +116,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     const auto ret
       = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
     if (XR_FAILED(ret)) {
-      dprintf("next->xrCreateSwapchain failed: {}", ret);
+      dprint("next->xrCreateSwapchain failed: {}", ret);
       return nullptr;
     }
   }
@@ -126,12 +126,12 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     const auto res
       = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
     if (XR_FAILED(res) || imageCount == 0) {
-      dprintf("No images in swapchain: {}", res);
+      dprint("No images in swapchain: {}", res);
       return nullptr;
     }
   }
 
-  dprintf("{} images in swapchain", imageCount);
+  dprint("{} images in swapchain", imageCount);
 
   std::vector<XrSwapchainImageVulkanKHR> images;
   images.resize(
@@ -146,7 +146,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
       &imageCount,
       reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
     if (XR_FAILED(res)) {
-      dprintf("Failed to enumerate images in swapchain: {}", res);
+      dprint("Failed to enumerate images in swapchain: {}", res);
       oxr->xrDestroySwapchain(swapchain);
       return nullptr;
     }

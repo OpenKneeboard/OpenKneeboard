@@ -66,7 +66,7 @@ D3D11Resources::D3D11Resources() {
     const scope_exit releaseIt([&]() { adapterIt = {nullptr}; });
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
-    dprintf(
+    dprint(
       L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb) {}",
       i,
       std::bit_cast<uint64_t>(desc.AdapterLuid),
@@ -125,12 +125,12 @@ D3D11Resources::D3D11Resources() {
         dprint("    HAGS: always on");
         break;
       case DXGK_FEATURE_SUPPORT_EXPERIMENTAL:
-        dprintf(
+        dprint(
           "    HAGS: {} (experimental)",
           caps.HwSchEnabled ? "enabled" : "disabled");
         break;
       case DXGK_FEATURE_SUPPORT_STABLE:
-        dprintf(
+        dprint(
           "    HAGS: {} (stable)", caps.HwSchEnabled ? "enabled" : "disabled");
         break;
     }
@@ -145,7 +145,7 @@ D3D11Resources::D3D11Resources() {
     DEVMODEW deviceMode {.dmSize = sizeof(DEVMODEW)};
     EnumDisplaySettingsW(
       displayDevice.DeviceName, ENUM_CURRENT_SETTINGS, &deviceMode);
-    dprintf(
+    dprint(
       L"  Monitor {} ('{}'): {}x{} @ {}hz",
       i,
       displayDevice.DeviceName,
@@ -262,8 +262,8 @@ void D2DResources::PushD2DDraw(std::source_location loc) {
     if (mLocks->mCurrentDraw) {
       const auto& prev = *mLocks->mCurrentDraw;
       dprint("Starting a D2D draw while one already in progress:");
-      dprintf("First: {} (thread ID {})", prev.mLocation, GetCurrentThreadId());
-      dprintf("Second: {} (thread ID {})", loc, prev.mThreadID);
+      dprint("First: {} (thread ID {})", prev.mLocation, GetCurrentThreadId());
+      dprint("Second: {} (thread ID {})", loc, prev.mThreadID);
       OPENKNEEBOARD_BREAK;
     } else {
       mLocks->mCurrentDraw = {loc, GetCurrentThreadId()};

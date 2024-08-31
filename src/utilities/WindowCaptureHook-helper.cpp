@@ -20,15 +20,14 @@
 #include <OpenKneeboard/ConsoleLoopCondition.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
-#include <cstdlib>
-
+#include <Windows.h>
 #include <shellapi.h>
+
+#include <cstdlib>
 
 using namespace OpenKneeboard;
 
@@ -76,7 +75,7 @@ int WINAPI wWinMain(
     return 1;
   }
 
-  dprintf(
+  dprint(
     "Attaching to HWND {:016x} from parent {}",
     reinterpret_cast<uint64_t>(hwnd),
     parentID);

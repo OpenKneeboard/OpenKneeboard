@@ -67,7 +67,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
     OPENKNEEBOARD_BREAK;
   }
 
-  dprintf(
+  dprint(
     "VK {} [{}]: {}",
     (pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "Debug"),
     severity,
@@ -161,7 +161,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     mVKInstance.get(), &debugCreateInfo, nullptr);
 #endif
 
-  dprintf("Looking for GPU with LUID {:#x}", luid);
+  dprint("Looking for GPU with LUID {:#x}", luid);
   uint32_t physicalDeviceCount = 0;
   check_vkresult(mVK->EnumeratePhysicalDevices(
     mVKInstance.get(), &physicalDeviceCount, nullptr));
@@ -180,7 +180,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     };
     mVK->GetPhysicalDeviceProperties2KHR(physicalDevice, &properties2);
     const auto& props = properties2.properties;
-    dprintf(
+    dprint(
       "Found GPU {:04x}:{:04x} with type {}: \"{}\"",
       props.vendorID,
       props.deviceID,
@@ -189,7 +189,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     if (id.deviceLUIDValid) {
       static_assert(VK_LUID_SIZE == sizeof(uint64_t));
       auto deviceLuid = std::bit_cast<uint64_t>(id.deviceLUID);
-      dprintf("- Device LUID: {:#018x}", deviceLuid);
+      dprint("- Device LUID: {:#018x}", deviceLuid);
       if (deviceLuid == luid) {
         dprint("- Matching LUID, selecting device");
         mVKPhysicalDevice = physicalDevice;

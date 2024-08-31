@@ -47,7 +47,7 @@ task<SubprocessResult> RunSubprocessAsync(
 
   if (!ShellExecuteExW(&shellExecuteInfo)) {
     auto error = GetLastError();
-    dprintf("Failed to spawn subprocess: {}", error);
+    dprint("Failed to spawn subprocess: {}", error);
     co_return SubprocessResult::FailedToSpawn;
   }
 
@@ -60,15 +60,15 @@ task<SubprocessResult> RunSubprocessAsync(
   winrt::handle handle {shellExecuteInfo.hProcess};
   const auto exeName = path.filename();
   const auto pid = GetProcessId(handle.get());
-  dprintf("Waiting for subprocess '{}' ({})...", exeName, pid);
+  dprint("Waiting for subprocess '{}' ({})...", exeName, pid);
   co_await winrt::resume_on_signal(handle.get());
 
   DWORD exitCode {};
   if (!GetExitCodeProcess(handle.get(), &exitCode)) {
-    dprintf("Failed to get exit code for process: {}", GetLastError());
+    dprint("Failed to get exit code for process: {}", GetLastError());
     co_return SubprocessResult::NonZeroExit;
   }
-  dprintf("Subprocess '{}' ({}) returned {}.", exeName, pid, exitCode);
+  dprint("Subprocess '{}' ({}) returned {}.", exeName, pid, exitCode);
 
   if (exitCode == 0) {
     co_return SubprocessResult::Success;

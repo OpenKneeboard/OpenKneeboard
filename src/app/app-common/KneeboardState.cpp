@@ -228,7 +228,7 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
       gTraceProvider,
       "KneeboardState::SetActiveInGameView()/SettingView",
       TraceLoggingGuid(mViews.at(i)->GetPersistentGUID(), "GUID"));
-    dprintf(
+    dprint(
       "Giving input focus to view {} at index {}",
       mViews.at(i)->GetPersistentGUID(),
       i);
@@ -237,7 +237,7 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
     evActiveViewChangedEvent.Emit();
     return;
   }
-  dprintf(
+  dprint(
     "Asked to give input focus to view {:#016x}, but couldn't find it",
     runtimeID.GetTemporaryValue());
 }
@@ -309,7 +309,7 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       if (mViews.size() >= 2) {
         mViews.at(0)->SwapState(*mViews.at(1));
       } else {
-        dprintf(
+        dprint(
           "Switching the first two views requires 2 views, but there are {} "
           "views",
           mViews.size());
@@ -439,13 +439,13 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     try {
       guid = winrt::guid {parsed.mID};
     } catch (const std::invalid_argument&) {
-      dprintf("Failed to set tab by ID: '{}' is not a valid GUID", parsed.mID);
+      dprint("Failed to set tab by ID: '{}' is not a valid GUID", parsed.mID);
       co_return;
     }
     const auto tab = std::ranges::find_if(
       tabs, [guid](const auto& tab) { return tab->GetPersistentID() == guid; });
     if (tab == tabs.end()) {
-      dprintf(
+      dprint(
         "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
       co_return;
     }
@@ -459,7 +459,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
       return parsed.mName == tab->GetTitle();
     });
     if (tab == tabs.end()) {
-      dprintf(
+      dprint(
         "Asked to switch to tab with name '{}', but can't find it",
         parsed.mName);
       co_return;
@@ -471,7 +471,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
   if (ev.name == APIEvent::EVT_SET_TAB_BY_INDEX) {
     const auto parsed = ev.ParsedValue<SetTabByIndexEvent>();
     if (parsed.mIndex >= tabs.size()) {
-      dprintf(
+      dprint(
         "Asked to switch to tab index {}, but there aren't that many tabs",
         parsed.mIndex);
       co_return;
@@ -489,7 +489,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     const winrt::guid guid {parsed.mGUID};
     auto it = std::ranges::find(mProfiles.mProfiles, guid, &Profile::mGuid);
     if (it == mProfiles.mProfiles.end()) {
-      dprintf(
+      dprint(
         "Asked to switch to profile with GUID {}, but it doesn't exist", guid);
       co_return;
     }
@@ -507,7 +507,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     auto it
       = std::ranges::find(mProfiles.mProfiles, parsed.mName, &Profile::mName);
     if (it == mProfiles.mProfiles.end()) {
-      dprintf(
+      dprint(
         "Asked to switch to profile with ID '{}', but it doesn't exist",
         parsed.mName);
       co_return;
@@ -525,7 +525,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     switch (parsed.mMode) {
       case SetBrightnessEvent::Mode::Absolute:
         if (parsed.mBrightness < 0 || parsed.mBrightness > 1) {
-          dprintf(
+          dprint(
             "Requested absolute brightness '{}' is outside of range 0 to 1",
             parsed.mBrightness);
           co_return;
@@ -534,7 +534,7 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
         break;
       case SetBrightnessEvent::Mode::Relative:
         if (parsed.mBrightness < -1 || parsed.mBrightness > 1) {
-          dprintf(
+          dprint(
             "Requested relative brightness '{}' is outside of range -1 to 1",
             parsed.mBrightness);
           co_return;
@@ -562,7 +562,7 @@ void KneeboardState::SetCurrentTab(
   } else if (extra.mKneeboard <= mViews.size()) {
     view = mViews.at(extra.mKneeboard - 1);
   } else {
-    dprintf(
+    dprint(
       "Requested kneeboard index {} does not exist, using active "
       "kneeboard",
       extra.mKneeboard);
@@ -577,7 +577,7 @@ void KneeboardState::SetCurrentTab(
       this->GetActiveViewForGlobalInput()->GetCurrentTabView()->SetPageID(
         pageIDs.at(pageIndex));
     } else {
-      dprintf("Requested page index {} >= count {}", pageIndex, pageCount);
+      dprint("Requested page index {} >= count {}", pageIndex, pageCount);
     }
   }
 }
@@ -680,7 +680,7 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
 
 task<void> KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
-    dprintf("Switching to profile: '{}'", profiles.mActiveProfile);
+    dprint("Switching to profile: '{}'", profiles.mActiveProfile);
   }
   // We want the evSettingsChanged event in particular to be emitted
   // first, so that we don't save
@@ -859,7 +859,7 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
   const auto it
     = std::ranges::find(profiles, mProfiles.mActiveProfile, &Profile::mGuid);
   if (it == profiles.end()) {
-    dprintf(
+    dprint(
       "Current profile '{}' is not in profiles list.",
       mProfiles.mActiveProfile);
     co_return;
@@ -945,7 +945,7 @@ void KneeboardState::InitializeViews() {
       auto tabIt
         = std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
       if (tabIt != tabs.end()) {
-        dprintf(
+        dprint(
           "Setting view '{}' ({}) to default tab '{}' ({})",
           config.mName,
           config.mGuid,
@@ -953,7 +953,7 @@ void KneeboardState::InitializeViews() {
           config.mDefaultTabID);
         view->SetCurrentTabByRuntimeID((*tabIt)->GetRuntimeID());
       } else {
-        dprintf(
+        dprint(
           "Couldn't find default tab {} for view '{}' ({})",
           config.mDefaultTabID,
           config.mName,

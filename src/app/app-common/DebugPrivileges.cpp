@@ -54,7 +54,7 @@ DebugPrivileges::DebugPrivileges() {
     const auto code = GetLastError();
     const auto message
       = std::system_category().default_error_condition(code).message();
-    dprintf(
+    dprint(
       "WARNING: Failed to acquire debug privileges: {:#x} ({})",
       std::bit_cast<uint32_t>(code),
       message);

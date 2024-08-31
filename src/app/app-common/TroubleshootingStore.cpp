@@ -112,7 +112,7 @@ TroubleshootingStore::TroubleshootingStore() {
 
   this->InitializeLogFile();
 
-  dprintf("{}()", __FUNCTION__);
+  dprint("{}()", __FUNCTION__);
 }
 
 void TroubleshootingStore::InitializeLogFile() {
@@ -170,13 +170,13 @@ void TroubleshootingStore::InitializeLogFile() {
     existingFiles.begin(),
     existingFiles.begin() + (existingFiles.size() + 1 - maxLogFiles)};
   for (const auto& it: toDelete) {
-    dprintf("Deleting stale log file {}", it.string());
+    dprint("Deleting stale log file {}", it.string());
     std::filesystem::remove(it);
   }
 }
 
 TroubleshootingStore::~TroubleshootingStore() {
-  dprintf("{}()", __FUNCTION__);
+  dprint("{}()", __FUNCTION__);
   this->RemoveAllEventListeners();
 }
 

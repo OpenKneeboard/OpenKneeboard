@@ -383,7 +383,7 @@ void CachedReader::InitializeCache(
   static_assert(sizeof(uint64_t) == sizeof(id.deviceLUID));
   mGPULUID = std::bit_cast<uint64_t>(id.deviceLUID);
 
-  dprintf(
+  dprint(
     "Vulkan SHM reader using adapter '{}' (LUID {:#x})",
     properties2.properties.deviceName,
     mGPULUID);

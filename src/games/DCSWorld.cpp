@@ -20,20 +20,19 @@
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/DCSWorldInstance.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/utf8.hpp>
+#include <ShlObj.h>
 
 #include <format>
 #include <fstream>
 #include <unordered_map>
-
-#include <ShlObj.h>
 
 namespace OpenKneeboard {
 
@@ -58,7 +57,7 @@ std::string DCSWorld::GetModuleNameForLuaAircraft(const std::string& luaName) {
   dprint("Loading DCS aircraft mapping...");
   for (const auto& dir: dirs) {
     const auto path = dir / fileName;
-    dprintf("Trying {}...", path);
+    dprint("Trying {}...", path);
     if (!std::filesystem::exists(path)) {
       dprint("... not found.");
       continue;
@@ -75,9 +74,9 @@ std::string DCSWorld::GetModuleNameForLuaAircraft(const std::string& luaName) {
       dprint("... done.");
       break;
     } catch (const nlohmann::json::exception& e) {
-      dprintf("... JSON exception: {}", e.what());
+      dprint("... JSON exception: {}", e.what());
     } catch (const std::exception& e) {
-      dprintf("... standard exception: {}", e.what());
+      dprint("... standard exception: {}", e.what());
     }
   }
 
@@ -92,7 +91,7 @@ std::string DCSWorld::GetModuleNameForLuaAircraft(const std::string& luaName) {
 
   dprint("Aircraft mapping:");
   for (const auto& [key, value]: *sMapping) {
-    dprintf("- {} -> {}", key, value);
+    dprint("- {} -> {}", key, value);
   }
 
   return luaName;

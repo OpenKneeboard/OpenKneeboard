@@ -90,11 +90,11 @@ class InjectionBootstrapper final {
       for (const auto hookDll: {L"d3d11.dll", L"dxgi.dll"}) {
         if (_wcsicmp(filename.c_str(), hookDll) == 0) {
           if (haveSteamOverlay) {
-            dprintf("Found third-party dll: {}", path);
+            dprint("Found third-party dll: {}", path);
             dprint(
               "Ignoring because Steam overlay is present - can piggy-back");
           } else {
-            dprintf("Refusing to hook because found third-party dll: {}", path);
+            dprint("Refusing to hook because found third-party dll: {}", path);
             return;
           }
         }
@@ -245,7 +245,7 @@ class InjectionBootstrapper final {
       return;
     }
 
-    dprintf(
+    dprint(
       "Don't know how to create a kneeboard from detection flags {:#b}",
       mFlags);
   }
@@ -261,7 +261,7 @@ class InjectionBootstrapper final {
     modules.resize(bytesNeeded / sizeof(HMODULE));
     if (!EnumProcessModules(
           process, modules.data(), bytesNeeded, &bytesNeeded)) {
-      dprintf(
+      dprint(
         "Failed to get process module list: {}",
         static_cast<int64_t>(GetLastError()));
       return {};
@@ -303,9 +303,9 @@ class InjectionBootstrapper final {
       next = std::filesystem::path(buf).parent_path() / _next;
     }
 
-    dprintf("----- Loading next: {} -----", next.string());
+    dprint("----- Loading next: {} -----", next.string());
     if (!LoadLibraryW(next.wstring().c_str())) {
-      dprintf(
+      dprint(
         "----- Load failed: {:#x} -----",
         std::bit_cast<uint32_t>(GetLastError()));
     }

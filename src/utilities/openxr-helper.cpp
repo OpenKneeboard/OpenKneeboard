@@ -26,16 +26,15 @@
 
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <Windows.h>
+#include <shellapi.h>
 
 #include <filesystem>
 #include <functional>
 #include <string>
-
-#include <shellapi.h>
 
 using namespace OpenKneeboard;
 
@@ -58,7 +57,7 @@ static HKEY OpenOrCreateImplicitLayerRegistryKey(RegistryView view, HKEY root) {
     &openXRKey,
     nullptr);
   if (result != ERROR_SUCCESS) {
-    dprintf("Failed to open OpenXR implicit layer key: {}", result);
+    dprint("Failed to open OpenXR implicit layer key: {}", result);
   }
   return openXRKey;
 }
@@ -141,7 +140,7 @@ static void EnableOpenXRLayer(
     reinterpret_cast<const BYTE*>(&disabled),
     sizeof(disabled));
   if (success != ERROR_SUCCESS) {
-    dprintf("Failed to set OpenXR key: {}", success);
+    dprint("Failed to set OpenXR key: {}", success);
   }
 
   RegCloseKey(openXRKey);
@@ -170,13 +169,13 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   int argc = 0;
   auto argv = CommandLineToArgvW(commandLine, &argc);
   if (argc != 2) {
-    dprintf("Invalid arguments ({}):", argc);
+    dprint("Invalid arguments ({}):", argc);
     for (int i = 0; i < argc; ++i) {
-      dprintf(L"argv[{}]: {}", i, argv[i]);
+      dprint(L"argv[{}]: {}", i, argv[i]);
     }
     return 1;
   }
-  dprintf(L"OpenXR: {} -> {}", argv[0], argv[1]);
+  dprint(L"OpenXR: {} -> {}", argv[0], argv[1]);
   const auto command = std::wstring_view(argv[0]);
   const std::filesystem::path directory {std::wstring_view(argv[1])};
 
@@ -200,6 +199,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
     return 0;
   }
 
-  dprintf(L"Invalid command: {}", command);
+  dprint(L"Invalid command: {}", command);
   return 1;
 }

@@ -19,13 +19,13 @@
  */
 #include <OpenKneeboard/Win32.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <Windows.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <filesystem>
 #include <iostream>
@@ -166,12 +166,11 @@ static inline bool IsConsoleOutputEnabled() {
   return gSettings.consoleOutput == DPrintSettings::ConsoleOutputMode::ALWAYS;
 }
 
-void dprint(std::string_view message) {
-  auto w = winrt::to_hstring(message);
-  dprint(w);
+void DebugPrinter::Write(std::string_view message) {
+  Write(winrt::to_hstring(message));
 }
 
-void dprint(std::wstring_view message) {
+void DebugPrinter::Write(std::wstring_view message) {
   TraceLoggingWrite(
     gTraceProvider,
     "dprint",

@@ -21,11 +21,11 @@
 
 #include "detours-ext.hpp"
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <Windows.h>
 
 namespace OpenKneeboard {
 
@@ -51,7 +51,7 @@ BOOL InjectedDLLMain(
         = GetModuleFileNameW(hinst, fullDllPath.data(), fullDllPath.size());
       fullDllPath.resize(len);
     }
-    dprintf(
+    dprint(
       L"Attached {} to process: {} -> {}",
       Version::ReleaseNameW,
       fullDllPath,

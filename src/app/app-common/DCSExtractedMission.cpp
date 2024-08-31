@@ -21,10 +21,10 @@
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>
+
+#include <Windows.h>
 
 #include <array>
 #include <fstream>
@@ -43,7 +43,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
 
   mTempDir = Filesystem::GetTemporaryDirectory()
     / std::format("{:016x}-{}", randDist(randDevice), zipPath.stem().string());
-  dprintf(
+  dprint(
     L"Extracting DCS mission {} to {}", zipPath.wstring(), mTempDir.wstring());
   std::filesystem::create_directories(mTempDir);
   int err = 0;
@@ -52,7 +52,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   using unique_zip_ptr = std::unique_ptr<zip_t, CPtrDeleter<zip_t, &zip_close>>;
   unique_zip_ptr zip {zip_open(zipPathString.c_str(), ZIP_RDONLY, &err)};
   if (err) {
-    dprintf("Failed to open zip '{}': {}", zipPathString, err);
+    dprint("Failed to open zip '{}': {}", zipPathString, err);
     return;
   }
 
@@ -72,7 +72,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
       = std::unique_ptr<zip_file_t, CPtrDeleter<zip_file_t, &zip_fclose>>;
     unique_zip_file_ptr zipFile {zip_fopen_index(zip.get(), i, 0)};
     if (!zipFile) {
-      dprintf("Failed to open zip index {}", i);
+      dprint("Failed to open zip index {}", i);
       continue;
     }
 
@@ -99,7 +99,7 @@ DCSExtractedMission::~DCSExtractedMission() noexcept {
   std::filesystem::remove_all(mTempDir, ec);
   if (ec) {
     // Expected if e.g. antivirus is looking at the folder
-    dprintf(
+    dprint(
       "Error removing extracted mission directory: {} ({})",
       ec.message(),
       ec.value());

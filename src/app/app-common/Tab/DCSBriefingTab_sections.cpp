@@ -101,7 +101,7 @@ void DCSBriefingTab::SetMissionImages(
   }
   mImagePages->SetPaths(images);
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading images: {}", e.what());
+  dprint("LuaIndexError when loading images: {}", e.what());
 }
 
 void DCSBriefingTab::PushMissionOverview(
@@ -158,7 +158,7 @@ void DCSBriefingTab::PushMissionOverview(
     alliedCountries,
     enemyCountries));
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading mission overview: {}", e.what());
+  dprint("LuaIndexError when loading mission overview: {}", e.what());
 }
 
 void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
@@ -197,7 +197,7 @@ void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
     windAt8000.mStandardDirection));
 
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading mission weather: {}", e.what());
+  dprint("LuaIndexError when loading mission weather: {}", e.what());
 }
 
 void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
@@ -291,7 +291,7 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
     windAt8000.mSpeedInKnots,
     temperature - (2 * 26)));
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading mission bullseye data: {}", e.what());
+  dprint("LuaIndexError when loading mission bullseye data: {}", e.what());
 }
 
 std::string DCSBriefingTab::GetMissionText(
@@ -315,7 +315,7 @@ void DCSBriefingTab::PushMissionSituation(
       "{}"),
     GetMissionText(mission, dictionary, "descriptionText")));
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading mission situation: {}", e.what());
+  dprint("LuaIndexError when loading mission situation: {}", e.what());
 }
 
 void DCSBriefingTab::PushMissionObjective(
@@ -333,7 +333,7 @@ void DCSBriefingTab::PushMissionObjective(
         "descriptionRedTask",
         "descriptionBlueTask"))));
 } catch (const LuaIndexError& e) {
-  dprintf("LuaIndexError when loading mission objective: {}", e.what());
+  dprint("LuaIndexError when loading mission objective: {}", e.what());
 }
 
 }// namespace OpenKneeboard

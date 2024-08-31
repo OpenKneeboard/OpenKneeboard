@@ -102,9 +102,9 @@ class audited_ptr {
 
   void dump_refs(std::string_view debugLabel) const {
     const auto refs = mRefData->mRefs;
-    dprintf("DEBUG: {} references remaining to `{}`", refs.size(), debugLabel);
+    dprint("DEBUG: {} references remaining to `{}`", refs.size(), debugLabel);
     for (const auto& [id, loc]: refs) {
-      dprintf(
+      dprint(
         "- {} @ {}:{}:{}",
         loc.function_name(),
         loc.file_name(),

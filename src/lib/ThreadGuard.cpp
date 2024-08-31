@@ -36,14 +36,14 @@ void ThreadGuard::CheckThread(const std::source_location& loc) const {
   if (thisThread == mThreadID) {
     return;
   }
-  dprintf(
+  dprint(
     "ThreadGuard mismatch: was {} ({:#x}), now {} ({:#x})",
     mThreadID,
     mThreadID,
     thisThread,
     thisThread);
-  dprintf("Created at {}", mLocation);
-  dprintf("Checking at {}", loc);
+  dprint("Created at {}", mLocation);
+  dprint("Checking at {}", loc);
   OPENKNEEBOARD_BREAK;
 #endif
 }

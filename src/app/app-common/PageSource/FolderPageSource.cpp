@@ -20,13 +20,13 @@
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+
 #include <shims/nlohmann/json.hpp>
 
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
-
-#include <OpenKneeboard/dprint.hpp>
 
 namespace OpenKneeboard {
 
@@ -114,10 +114,10 @@ OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
   }
 
   if (newContents.size() == mContents.size() && !modifiedOrNew) {
-    dprintf(L"No actual change to {}", mPath.wstring());
+    dprint(L"No actual change to {}", mPath.wstring());
     co_return;
   }
-  dprintf(L"Real change to {}", mPath.wstring());
+  dprint(L"Real change to {}", mPath.wstring());
 
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (const auto& [path, info]: newContents) {

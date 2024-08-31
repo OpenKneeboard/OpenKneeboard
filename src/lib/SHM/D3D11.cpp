@@ -128,7 +128,7 @@ void CachedReader::InitializeCache(
     check_hresult(dxgiAdapter->GetDesc(&desc));
 
     mDeviceLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
-    dprintf(
+    dprint(
       L"D3D11 SHM reader using adapter '{}' (LUID {:#x})",
       desc.Description,
       std::bit_cast<uint64_t>(mDeviceLUID));

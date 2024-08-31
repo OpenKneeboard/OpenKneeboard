@@ -29,9 +29,9 @@
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
 #include <OpenKneeboard/dprint.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 #include <algorithm>
 
@@ -112,7 +112,7 @@ task<void> TabsList::LoadSettings(const nlohmann::json& config) {
       tabs.push_back(instance);
       continue;
     }
-    dprintf("Couldn't load tab with type {}", rawType);
+    dprint("Couldn't load tab with type {}", rawType);
     OPENKNEEBOARD_BREAK;
   }
   co_await this->SetTabs(tabs);
@@ -157,7 +157,7 @@ nlohmann::json TabsList::GetSettings() const {
       type = "Plugin";
     }
     if (type.empty()) {
-      dprintf("Unknown type for tab {}", tab->GetTitle());
+      dprint("Unknown type for tab {}", tab->GetTitle());
       OPENKNEEBOARD_BREAK;
       continue;
     }

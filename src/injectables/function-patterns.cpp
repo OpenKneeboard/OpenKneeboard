@@ -50,7 +50,7 @@ std::vector<BytePattern> ComputeFunctionPatterns(
 
   dprint("Code search pattern:");
   for (auto& pattern: patterns) {
-    dprintf(
+    dprint(
       "{:016x} (mask {:016x})",
       std::byteswap(pattern.value),
       std::byteswap(pattern.mask));
@@ -65,7 +65,7 @@ void* FindFunctionPattern(
   void* _end) {
   auto begin = reinterpret_cast<uint64_t*>(_begin);
   auto end = reinterpret_cast<uint64_t*>(_end);
-  dprintf(
+  dprint(
     "Code search range: {:#018x}-{:#018x}", (uint64_t)begin, (uint64_t)end);
 
   const uint64_t firstPattern = allPatterns.front().value,
@@ -104,13 +104,13 @@ void* FindFunctionPatternInModule(
   bool* foundMultiple) {
   auto hModule = GetModuleHandleA(moduleName);
   if (!hModule) {
-    dprintf("Module {} is not loaded.", moduleName);
+    dprint("Module {} is not loaded.", moduleName);
     return nullptr;
   }
   MODULEINFO info;
   if (!GetModuleInformation(
         GetCurrentProcess(), hModule, &info, sizeof(info))) {
-    dprintf("Failed to GetModuleInformation() for {}", moduleName);
+    dprint("Failed to GetModuleInformation() for {}", moduleName);
     return 0;
   }
 

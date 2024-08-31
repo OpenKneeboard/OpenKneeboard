@@ -99,11 +99,11 @@ task<void> DirectInputListener::Run() noexcept {
   }
 
   auto deviceName = mDevice->GetName();
-  dprintf("Starting DirectInputListener::Run() for {}", deviceName);
+  dprint("Starting DirectInputListener::Run() for {}", deviceName);
   // not a coroutine, also not a reference or a parameter
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-reference-coroutine-parameters)
   const scope_exit logOnExit([deviceName]() {
-    dprintf(
+    dprint(
       "Exiting DirectInputListener::Run() for {}, with {} uncaught exceptions",
       deviceName,
       std::uncaught_exceptions());
@@ -119,7 +119,7 @@ task<void> DirectInputListener::Run() noexcept {
 
     const auto pollResult = mDIDevice->Poll();
     if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
-      dprintf(
+      dprint(
         "Abandoning DI device '{}' due to DI poll error {} ({:#08x})",
         mDevice->GetName(),
         pollResult,
@@ -129,7 +129,7 @@ task<void> DirectInputListener::Run() noexcept {
     try {
       this->Poll();
     } catch (const winrt::hresult_error& e) {
-      dprintf(
+      dprint(
         "Abandoning DI device '{}' due to implementation poll error {} "
         "({:#08x})",
         mDevice->GetName(),

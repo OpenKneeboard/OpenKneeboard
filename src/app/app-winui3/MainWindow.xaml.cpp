@@ -178,8 +178,8 @@ task<void> MainWindow::Init() {
     mHwndFile = std::move(hwndFile).value();
   } else {
     OPENKNEEBOARD_BREAK;
-    dprintf(
-      "⚠️ ERROR: Failed to open hwnd file: {} {:#010x}",
+    dprint.Error(
+      "Failed to open hwnd file: {} {:#010x}",
       hwndMappingName,
       static_cast<uint32_t>(hwndFile.error()));
     co_return;
@@ -320,8 +320,8 @@ OpenKneeboard::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   dialog.PrimaryButtonText(_(L"OK"));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
-  dprintf(
-    "⚠️ WARNING: Showing game elevation warning dialog for PID {} ({})",
+  dprint.Warning(
+    "Showing game elevation warning dialog for PID {} ({})",
     pid,
     path.filename().string());
   co_await dialog.ShowAsync();
@@ -500,7 +500,7 @@ task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
     co_return;
   }
 
-  dprint("⚠️ WARNING: OTD-IPC configured but not usable");
+  dprint.Warning("OTD-IPC configured but not usable");
 
   ContentDialog dialog;
   dialog.XamlRoot(Navigation().XamlRoot());
@@ -595,7 +595,7 @@ task<void> MainWindow::ShowSelfElevationWarning() {
   dialog.PrimaryButtonText(to_hstring(_(L"OK")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
-  dprint("⚠️ WARNING: Showing self elevation warning");
+  dprint.Warning("Showing self elevation warning");
   co_await dialog.ShowAsync();
   dprint("Self elevation warning closed");
 }
@@ -679,7 +679,7 @@ task<void> MainWindow::WriteInstanceData() {
 }
 
 MainWindow::~MainWindow() {
-  dprintf("{}", __FUNCTION__);
+  dprint("{}", __FUNCTION__);
   gMainWindow = {};
 }
 

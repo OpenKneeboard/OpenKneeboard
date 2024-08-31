@@ -86,7 +86,7 @@ task<void> PluginTab::Reload() {
     tabTypes, mSettings.mPluginTabTypeID, &Plugin::TabType::mID);
 
   if (it == tabTypes.end()) {
-    dprintf(
+    dprint(
       "WARNING: couldn't find plugin for tab type `{}`",
       mSettings.mPluginTabTypeID);
     co_return;
@@ -131,7 +131,7 @@ void PluginTab::PostCustomAction(
   const auto actions = mTabType->mCustomActions;
   const auto it = std::ranges::find(actions, id, &Plugin::CustomAction::mID);
   if (it == actions.end()) {
-    dprintf(
+    dprint(
       "Action ID `{}` seems to be for tab `{}`, but action ID is not "
       "recognized",
       mTabType->mID,

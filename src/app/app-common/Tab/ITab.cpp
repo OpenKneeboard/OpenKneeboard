@@ -30,7 +30,7 @@ static std::atomic_size_t gTabCount {0};
 static const scope_exit gCheckForTabLeaks([]() {
   const auto count = gTabCount.load();
   if (count > 0) {
-    dprintf("Leaking {} tabs", count);
+    dprint("Leaking {} tabs", count);
     OPENKNEEBOARD_BREAK;
   }
 });

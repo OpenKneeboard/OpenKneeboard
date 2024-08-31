@@ -24,10 +24,9 @@
 using namespace OpenKneeboard;
 
 #include <Windows.h>
+#include <shellapi.h>
 
 #include <cstdlib>
-
-#include <shellapi.h>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -80,7 +79,6 @@ int WINAPI wWinMain(
     return 0;
   }
 
-  dprintf(
-    L"Error: first argument must be 'id' or 'name', but '{}' given", kind);
+  dprint(L"Error: first argument must be 'id' or 'name', but '{}' given", kind);
   return 1;
 }
