@@ -155,7 +155,7 @@ std::expected<std::wstring, HRESULT> narrow_to_wide(std::string_view narrow) {
     [](auto x) { return x > 0; }> {}(
     std::tuple {
       TCodePage,
-      WC_ERR_INVALID_CHARS,
+      MB_ERR_INVALID_CHARS,
       const_cast<char*>(narrow.data()),
       static_cast<int>(narrow.size()),
     },
