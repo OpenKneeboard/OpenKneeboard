@@ -49,8 +49,8 @@ winrt::guid VRViewSettingsControl::ViewID() {
 
 IInspectable VRViewSettingsControl::SelectedKind() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
-  using Type = ViewVRConfig::Type;
+  const auto it = std::ranges::find(views, mViewID, &ViewSettings::mGuid);
+  using Type = ViewVRSettings::Type;
   const auto type = it->mVR.GetType();
 
   for (const auto& item: Kind().Items()) {
@@ -72,27 +72,27 @@ IInspectable VRViewSettingsControl::SelectedKind() {
 OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedKind(
   IInspectable item) {
   auto settings = mKneeboard->GetViewsSettings();
-  auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
+  auto it = std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
   const auto type = it->mVR.GetType();
 
   if (item.try_as<IndependentVRViewUIKind>()) {
     if (type == Type::Independent) {
       co_return;
     }
-    IndependentViewVRConfig config {};
+    IndependentViewVRSettings config {};
     if (type == Type::HorizontalMirror) {
       auto other = std::ranges::find(
-        settings.mViews, it->mVR.GetMirrorOfGUID(), &ViewConfig::mGuid);
+        settings.mViews, it->mVR.GetMirrorOfGUID(), &ViewSettings::mGuid);
       if (
         (other != settings.mViews.end())
         && other->mVR.GetType() == Type::Independent) {
-        config = other->mVR.GetIndependentConfig();
+        config = other->mVR.GetIndependentSettings();
         config.mPose = config.mPose.GetHorizontalMirror();
       }
     }
-    it->mVR.SetIndependentConfig(config);
+    it->mVR.SetIndependentSettings(config);
   } else if (const auto mirror = item.try_as<HorizontalMirrorVRViewUIKind>()) {
     it->mVR.SetHorizontalMirrorOf(mirror.MirrorOf());
   } else {
@@ -104,11 +104,11 @@ OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedKind(
   this->PopulateSubcontrol(it->mVR);
 }
 
-void VRViewSettingsControl::PopulateKind(const ViewVRConfig& view) {
+void VRViewSettingsControl::PopulateKind(const ViewVRSettings& view) {
   auto items = Kind().Items();
   items.Clear();
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
   const auto type = view.GetType();
 
   items.Append(IndependentVRViewUIKind {});
@@ -150,14 +150,14 @@ void VRViewSettingsControl::PopulateDefaultTab() {
 
 bool VRViewSettingsControl::IsEnabledInVR() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
+  auto it = std::ranges::find(views, mViewID, &ViewSettings::mGuid);
   return it->mVR.mEnabled;
 }
 
 OpenKneeboard::fire_and_forget VRViewSettingsControl::IsEnabledInVR(
   bool value) {
   auto settings = mKneeboard->GetViewsSettings();
-  auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
+  auto it = std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
   if (it->mVR.mEnabled == value) {
     co_return;
   }
@@ -174,7 +174,7 @@ void VRViewSettingsControl::ViewID(const winrt::guid& guid) {
   mViewID = guid;
 
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  auto it = std::ranges::find(views, guid, &ViewConfig::mGuid);
+  auto it = std::ranges::find(views, guid, &ViewSettings::mGuid);
   if (it == views.end()) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -185,13 +185,13 @@ void VRViewSettingsControl::ViewID(const winrt::guid& guid) {
   this->PopulateSubcontrol(it->mVR);
 }
 
-void VRViewSettingsControl::PopulateSubcontrol(const ViewVRConfig& vr) {
+void VRViewSettingsControl::PopulateSubcontrol(const ViewVRSettings& vr) {
   if (mSubControl) {
     Container().Children().RemoveAtEnd();
     mSubControl = {nullptr};
   }
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
   switch (vr.GetType()) {
     case Type::Independent: {
       IndependentVRViewSettingsControl settings;
@@ -207,7 +207,7 @@ void VRViewSettingsControl::PopulateSubcontrol(const ViewVRConfig& vr) {
 
 IInspectable VRViewSettingsControl::SelectedDefaultTab() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
+  const auto it = std::ranges::find(views, mViewID, &ViewSettings::mGuid);
 
   const auto items = DefaultTab().Items();
   const auto tabID = it->mDefaultTabID;
@@ -229,7 +229,7 @@ OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
 
   {
     auto settings = mKneeboard->GetViewsSettings();
-    auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
+    auto it = std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
     it->mDefaultTabID = guid;
     co_await mKneeboard->SetViewsSettings(settings);
   }

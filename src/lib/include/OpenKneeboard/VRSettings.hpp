@@ -59,7 +59,7 @@ struct VROpacitySettings {
 
 /** VR settings that apply to every view/layer.
  *
- * Per-view settings are in `ViewVRConfig`
+ * Per-view settings are in `ViewVRSettings`
  *
  * This ends up in the SHM; it is extended by `VRSettings` for
  * values that are stored in the config file but need further processing before
@@ -95,7 +95,7 @@ static_assert(std::is_standard_layout_v<VRRenderSettings>);
 struct VRSettings : public VRRenderSettings {
   bool mEnableSteamVR = true;
 
-  // replaced with 'ViewConfig' and `IndependentViewVRConfig` in v1.7
+  // replaced with 'ViewSettings' and `IndependentViewVRSettings` in v1.7
   struct Deprecated {
     VRPose mPrimaryLayer {};
     float mMaxWidth = 0.15f;

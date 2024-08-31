@@ -215,7 +215,7 @@ static void MigrateToProfiles(Settings& settings) {
 static void MigrateToViewsConfig(Settings& settings) {
   const auto& oldVR = settings.mVR.mDeprecated;
 
-  IndependentViewVRConfig vrConfig {
+  IndependentViewVRSettings vrConfig {
     .mPose = oldVR.mPrimaryLayer,
     .mMaximumPhysicalSize = {
       oldVR.mMaxWidth,
@@ -227,10 +227,10 @@ static void MigrateToViewsConfig(Settings& settings) {
     .mOpacity = oldVR.mOpacity,
   };
 
-  const ViewConfig primary {
+  const ViewSettings primary {
     .mName = _("Kneeboard 1"),
-    .mVR = ViewVRConfig::Independent(vrConfig),
-    .mNonVR = ViewNonVRConfig {
+    .mVR = ViewVRSettings::Independent(vrConfig),
+    .mNonVR = ViewNonVRSettings {
       .mEnabled = true,
       .mConstraints = static_cast<const NonVRConstrainedPosition&>(settings.mDeprecatedNonVR),
       .mOpacity = settings.mDeprecatedNonVR.mOpacity,
@@ -238,9 +238,9 @@ static void MigrateToViewsConfig(Settings& settings) {
   };
 
   if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
-    const ViewConfig secondary {
+    const ViewSettings secondary {
       .mName = _("Kneeboard 2"),
-      .mVR = ViewVRConfig::HorizontalMirrorOf(primary.mGuid),
+      .mVR = ViewVRSettings::HorizontalMirrorOf(primary.mGuid),
     };
     settings.mViews.mViews = {primary, secondary};
   } else {

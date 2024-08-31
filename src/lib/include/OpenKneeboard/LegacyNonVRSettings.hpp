@@ -23,7 +23,7 @@
 
 namespace OpenKneeboard {
 
-// Replaced by `ViewConfig` in v1.7+
+// Replaced by `ViewSettings` in v1.7+
 struct LegacyNonVRSettings : NonVRConstrainedPosition {
   // In case it covers up menus etc
   float mOpacity = 0.8f;

@@ -44,11 +44,11 @@ enum class ResolveViewFlags : uint8_t {
 template <>
 constexpr bool is_bitflags_v<ResolveViewFlags> = true;
 
-struct ViewConfig;
+struct ViewSettings;
 struct PreferredSize;
 
 /// Configuration of a VR view that is not a mirror of another.
-struct IndependentViewVRConfig {
+struct IndependentViewVRSettings {
   VRPose mPose;
   Geometry2D::Size<float> mMaximumPhysicalSize {0.15f, 0.25f};
 
@@ -58,17 +58,17 @@ struct IndependentViewVRConfig {
   VROpacitySettings mOpacity {};
   ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
-  constexpr bool operator==(const IndependentViewVRConfig&) const noexcept
+  constexpr bool operator==(const IndependentViewVRSettings&) const noexcept
     = default;
 };
 
 /** VR configuration of a view.
  *
  * This might be an 'independent' view, in which case it has its'
- * own `IndependentViewVRConfig`, or a mirror of another, in which
+ * own `IndependentViewVRSettings`, or a mirror of another, in which
  * case it just stores the GUID of the view it's mirroring.
  */
-struct ViewVRConfig {
+struct ViewVRSettings {
   enum class Type {
     Empty,
     Independent,
@@ -81,14 +81,14 @@ struct ViewVRConfig {
     return mType;
   }
 
-  constexpr auto GetIndependentConfig() const {
+  constexpr auto GetIndependentSettings() const {
     if (mType != Type::Independent) [[unlikely]] {
       fatal("Can't get an independent view for {:#}", mType);
     }
-    return std::get<IndependentViewVRConfig>(mData);
+    return std::get<IndependentViewVRSettings>(mData);
   }
 
-  constexpr auto SetIndependentConfig(const IndependentViewVRConfig& v) {
+  constexpr auto SetIndependentSettings(const IndependentViewVRSettings& v) {
     mType = Type::Independent;
     mData = v;
   }
@@ -105,14 +105,14 @@ struct ViewVRConfig {
     mData = v;
   }
 
-  static ViewVRConfig Independent(const IndependentViewVRConfig& v) {
-    ViewVRConfig ret;
-    ret.SetIndependentConfig(v);
+  static ViewVRSettings Independent(const IndependentViewVRSettings& v) {
+    ViewVRSettings ret;
+    ret.SetIndependentSettings(v);
     return ret;
   };
 
-  static ViewVRConfig HorizontalMirrorOf(const winrt::guid& v) {
-    ViewVRConfig ret;
+  static ViewVRSettings HorizontalMirrorOf(const winrt::guid& v) {
+    ViewVRSettings ret;
     ret.SetHorizontalMirrorOf(v);
     return ret;
   };
@@ -121,42 +121,42 @@ struct ViewVRConfig {
     const PreferredSize& preferredSize,
     const PixelRect& fullRect,
     const PixelRect& contentRect,
-    const std::vector<ViewConfig>& others,
+    const std::vector<ViewSettings>& others,
     ResolveViewFlags flags = ResolveViewFlags::Default) const;
 
-  constexpr bool operator==(const ViewVRConfig&) const noexcept = default;
+  constexpr bool operator==(const ViewVRSettings&) const noexcept = default;
 
  private:
   Type mType {Type::Empty};
-  std::variant<IndependentViewVRConfig, winrt::guid> mData;
+  std::variant<IndependentViewVRSettings, winrt::guid> mData;
 };
 
 /// Non-VR configuration of a view
-struct ViewNonVRConfig {
+struct ViewNonVRSettings {
   bool mEnabled {false};
   NonVRConstrainedPosition mConstraints;
   float mOpacity = 0.8f;
 
-  constexpr bool operator==(const ViewNonVRConfig&) const noexcept = default;
+  constexpr bool operator==(const ViewNonVRSettings&) const noexcept = default;
 
   std::optional<SHM::NonVRLayer> Resolve(
     const PreferredSize& contentSize,
     const PixelRect& fullRect,
     const PixelRect& contentRect,
-    const std::vector<ViewConfig>& others,
+    const std::vector<ViewSettings>& others,
     ResolveViewFlags flags = ResolveViewFlags::Default) const;
 };
 
-struct ViewConfig {
+struct ViewSettings {
   winrt::guid mGuid = random_guid();
   std::string mName;
 
-  ViewVRConfig mVR;
-  ViewNonVRConfig mNonVR;
+  ViewVRSettings mVR;
+  ViewNonVRSettings mNonVR;
 
   winrt::guid mDefaultTabID;
 
-  bool operator==(const ViewConfig&) const noexcept = default;
+  bool operator==(const ViewSettings&) const noexcept = default;
 };
 
 enum class AppWindowViewMode {
@@ -181,7 +181,7 @@ enum class AppWindowViewMode {
 };
 
 struct ViewsConfig {
-  std::vector<ViewConfig> mViews;
+  std::vector<ViewSettings> mViews;
 
   AppWindowViewMode mAppWindowMode {AppWindowViewMode::NoDecision};
 

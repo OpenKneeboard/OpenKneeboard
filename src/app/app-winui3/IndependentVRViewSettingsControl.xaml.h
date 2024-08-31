@@ -93,9 +93,9 @@ struct IndependentVRViewSettingsControl
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
-  OpenKneeboard::IndependentViewVRConfig GetViewConfig();
+  OpenKneeboard::IndependentViewVRSettings GetViewConfig();
   OpenKneeboard::fire_and_forget SetViewConfig(
-    OpenKneeboard::IndependentViewVRConfig);
+    OpenKneeboard::IndependentViewVRSettings);
 
   winrt::guid mViewID;
   bool mHaveRecentered {false};

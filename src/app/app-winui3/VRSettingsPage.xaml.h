@@ -69,7 +69,7 @@ struct VRSettingsPage
   std::shared_ptr<KneeboardState> mKneeboard;
   void PopulateViews() noexcept;
 
-  void AppendViewTab(const ViewConfig& view) noexcept;
+  void AppendViewTab(const ViewSettings& view) noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

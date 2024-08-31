@@ -33,11 +33,11 @@
 
 namespace OpenKneeboard {
 
-std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
+std::optional<SHM::VRLayer> ViewVRSettings::Resolve(
   const PreferredSize& contentSize,
   const PixelRect& fullRect,
   const PixelRect& contentRect,
-  const std::vector<ViewConfig>& others,
+  const std::vector<ViewSettings>& others,
   ResolveViewFlags flags) const {
   if (
     (!mEnabled)
@@ -51,7 +51,7 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   }
 
   if (mType == Type::Independent) {
-    auto config = this->GetIndependentConfig();
+    auto config = this->GetIndependentSettings();
 
     auto size = contentSize.mPixelSize.StaticCast<float>().ScaledToFit(
       config.mMaximumPhysicalSize);
@@ -97,7 +97,7 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   winrt::check_bool(mType == Type::HorizontalMirror);
 
   const auto it
-    = std::ranges::find(others, GetMirrorOfGUID(), &ViewConfig::mGuid);
+    = std::ranges::find(others, GetMirrorOfGUID(), &ViewSettings::mGuid);
   if (it == others.end()) {
     return {};
   }
@@ -118,11 +118,11 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   return ret;
 }
 
-std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
+std::optional<SHM::NonVRLayer> ViewNonVRSettings::Resolve(
   [[maybe_unused]] const PreferredSize& contentSize,
   const PixelRect& fullRect,
   [[maybe_unused]] const PixelRect& contentRect,
-  [[maybe_unused]] const std::vector<ViewConfig>& others,
+  [[maybe_unused]] const std::vector<ViewSettings>& others,
   ResolveViewFlags flags) const {
   if (
     (!mEnabled)
@@ -163,7 +163,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   })
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  IndependentViewVRConfig,
+  IndependentViewVRSettings,
   mPose,
   mMaximumPhysicalSize,
   mEnableGazeZoom,
@@ -173,27 +173,28 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mOpacity)
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  ViewVRConfig::Type,
+  ViewVRSettings::Type,
   {
-    {ViewVRConfig::Type::Independent, "Independent"},
-    {ViewVRConfig::Type::Empty, "Empty"},
-    {ViewVRConfig::Type::HorizontalMirror, "HorizontalMirror"},
+    {ViewVRSettings::Type::Independent, "Independent"},
+    {ViewVRSettings::Type::Empty, "Empty"},
+    {ViewVRSettings::Type::HorizontalMirror, "HorizontalMirror"},
   })
 
-void from_json(const nlohmann::json& j, ViewVRConfig& v) {
+void from_json(const nlohmann::json& j, ViewVRSettings& v) {
   if (!j.contains("Type")) {
     return;
   }
 
   v.mEnabled = MaybeGet<bool>(j, "Enabled", v.mEnabled);
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
   const Type type = j.at("Type");
   switch (type) {
     case Type::Empty:
       return;
     case Type::Independent:
-      v.SetIndependentConfig(MaybeGet<IndependentViewVRConfig>(j, "Config"));
+      v.SetIndependentSettings(
+        MaybeGet<IndependentViewVRSettings>(j, "Config"));
       return;
     case Type::HorizontalMirror:
       v.SetHorizontalMirrorOf(MaybeGet<winrt::guid>(j, "MirrorOf"));
@@ -203,17 +204,17 @@ void from_json(const nlohmann::json& j, ViewVRConfig& v) {
   }
 }
 
-void to_json(nlohmann::json& j, const ViewVRConfig& v) {
+void to_json(nlohmann::json& j, const ViewVRSettings& v) {
   j["Type"] = v.GetType();
 
   j["Enabled"] = v.mEnabled;
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
   switch (v.GetType()) {
     case Type::Empty:
       return;
     case Type::Independent:
-      MaybeSet(j, "Config", v.GetIndependentConfig());
+      MaybeSet(j, "Config", v.GetIndependentSettings());
       return;
     case Type::HorizontalMirror:
       MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());
@@ -224,13 +225,13 @@ void to_json(nlohmann::json& j, const ViewVRConfig& v) {
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  ViewNonVRConfig,
+  ViewNonVRSettings,
   mEnabled,
   mConstraints,
   mOpacity);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  ViewConfig,
+  ViewSettings,
   mGuid,
   mName,
   mVR,

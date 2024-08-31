@@ -141,7 +141,7 @@ OpenKneeboard::fire_and_forget VRSettingsPage::AddView(
   kinds.Append(IndependentVRViewUIKind {});
   AddViewKind().SelectedIndex(0);
 
-  using Type = ViewVRConfig::Type;
+  using Type = ViewVRSettings::Type;
 
   std::unordered_set<winrt::guid> mirrored;
   std::unordered_map<winrt::guid, uint32_t> indices;
@@ -184,21 +184,21 @@ OpenKneeboard::fire_and_forget VRSettingsPage::AddView(
     co_return;
   }
 
-  ViewVRConfig vr;
+  ViewVRSettings vr;
   vr.mEnabled = true;
 
   auto item = AddViewKind().SelectedItem();
   if (item.try_as<IndependentVRViewUIKind>()) {
-    vr = ViewVRConfig::Independent({});
+    vr = ViewVRSettings::Independent({});
   } else {
     auto mirror = item.as<HorizontalMirrorVRViewUIKind>();
-    vr = ViewVRConfig::HorizontalMirrorOf(mirror.MirrorOf());
+    vr = ViewVRSettings::HorizontalMirrorOf(mirror.MirrorOf());
   }
 
   std::string name;
   for (size_t i = settings.mViews.size() + 1; true; ++i) {
     name = std::format(_("Kneeboard {}"), i);
-    auto it = std::ranges::find(settings.mViews, name, &ViewConfig::mName);
+    auto it = std::ranges::find(settings.mViews, name, &ViewSettings::mName);
     if (it == settings.mViews.end()) {
       break;
     }
@@ -230,7 +230,7 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
 
   {
     const auto views = mKneeboard->GetViewsSettings().mViews;
-    const auto it = std::ranges::find(views, guid, &ViewConfig::mGuid);
+    const auto it = std::ranges::find(views, guid, &ViewSettings::mGuid);
 
     const auto message = std::format(
       _("Do you want to completely remove \"{}\" and delete all its' "
@@ -253,11 +253,11 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
   // While it was modal and nothing else 'should' have changed things in the
   // mean time, re-fetch just in case
   auto settings = mKneeboard->GetViewsSettings();
-  std::erase_if(settings.mViews, [guid](const ViewConfig& view) {
+  std::erase_if(settings.mViews, [guid](const ViewSettings& view) {
     if (view.mGuid == guid) {
       return true;
     }
-    if (view.mVR.GetType() != ViewVRConfig::Type::HorizontalMirror) {
+    if (view.mVR.GetType() != ViewVRSettings::Type::HorizontalMirror) {
       return false;
     }
     return view.mVR.GetMirrorOfGUID() == guid;
@@ -272,7 +272,7 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
     const auto itemView
       = unbox_value<winrt::guid>(item.as<TabViewItem>().Tag());
     const auto it = std::ranges::find(
-      settings.mViews, itemView, [](const ViewConfig& view) {
+      settings.mViews, itemView, [](const ViewSettings& view) {
         return view.mGuid;
       });
     if (it == settings.mViews.end()) {
@@ -286,7 +286,7 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
   }
 }
 
-void VRSettingsPage::AppendViewTab(const ViewConfig& view) noexcept {
+void VRSettingsPage::AppendViewTab(const ViewSettings& view) noexcept {
   auto items = TabView().TabItems();
   TabViewItem tab;
   tab.Tag(winrt::box_value(view.mGuid));

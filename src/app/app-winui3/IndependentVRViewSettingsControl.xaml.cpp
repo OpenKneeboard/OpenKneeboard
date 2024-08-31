@@ -92,26 +92,26 @@ IndependentVRViewSettingsControl::RestoreDefaults(
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
-IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
+IndependentViewVRSettings IndependentVRViewSettingsControl::GetViewConfig() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
 
-  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
+  const auto it = std::ranges::find(views, mViewID, &ViewSettings::mGuid);
   if (it == views.end()) [[unlikely]] {
     fatal("Requested view not found");
   }
 
-  return it->mVR.GetIndependentConfig();
+  return it->mVR.GetIndependentSettings();
 }
 
 OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::SetViewConfig(
-  IndependentViewVRConfig config) {
+  IndependentViewVRSettings config) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
-  auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
+  auto it = std::ranges::find(views, mViewID, &ViewSettings::mGuid);
   if (it == views.end()) [[unlikely]] {
     fatal("Requested view not found");
   }
-  it->mVR.SetIndependentConfig(config);
+  it->mVR.SetIndependentSettings(config);
   co_await mKneeboard->SetViewsSettings(viewsConfig);
 }
 
