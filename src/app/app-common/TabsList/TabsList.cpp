@@ -66,55 +66,68 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-task<void> TabsList::LoadSettings(const nlohmann::json& config) {
-  if (config.is_null()) {
-    co_await LoadDefaultSettings();
-    co_return;
+task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
+  const nlohmann::json tab) {
+  if (!(tab.contains("Type") && tab.contains("Title"))) {
+    co_return nullptr;
   }
-  std::vector<nlohmann::json> jsonTabs = config;
 
-  decltype(mTabs) tabs;
-  for (const auto& tab: jsonTabs) {
-    if (!(tab.contains("Type") && tab.contains("Title"))) {
-      continue;
-    }
+  const std::string title = tab.at("Title");
+  const std::string rawType = tab.at("Type");
 
-    const std::string title = tab.at("Title");
-    const std::string rawType = tab.at("Type");
+  nlohmann::json rawSettings;
+  if (tab.contains("Settings")) {
+    rawSettings = tab.at("Settings");
+  }
 
-    nlohmann::json rawSettings;
-    if (tab.contains("Settings")) {
-      rawSettings = tab.at("Settings");
-    }
+  const auto [type, settings] = MigrateTab(rawType, rawSettings);
 
-    const auto [type, settings] = MigrateTab(rawType, rawSettings);
-
-    winrt::guid persistentID {};
-    if (tab.contains("ID")) {
-      persistentID = winrt::guid {tab.at("ID").get<std::string>()};
-      // else handled by TabBase
-    }
+  winrt::guid persistentID {};
+  if (tab.contains("ID")) {
+    persistentID = winrt::guid {tab.at("ID").get<std::string>()};
+    // else handled by TabBase
+  }
 
 #define IT(_, it) \
   if (type == #it) { \
     auto instance = co_await load_tab<it##Tab>( \
       mDXR, mKneeboard, persistentID, title, settings); \
     if (instance) { \
-      tabs.push_back(instance); \
-      continue; \
+      co_return instance; \
     } \
   }
-    OPENKNEEBOARD_TAB_TYPES
+  OPENKNEEBOARD_TAB_TYPES
 #undef IT
-    if (type == "Plugin") {
-      auto instance = co_await PluginTab::Create(
-        mDXR, mKneeboard, persistentID, title, settings);
-      tabs.push_back(instance);
-      continue;
-    }
-    dprint("Couldn't load tab with type {}", rawType);
-    OPENKNEEBOARD_BREAK;
+  if (type == "Plugin") {
+    auto instance = co_await PluginTab::Create(
+      mDXR, mKneeboard, persistentID, title, settings);
+    co_return instance;
   }
+  dprint("Couldn't load tab with type {}", rawType);
+  OPENKNEEBOARD_BREAK;
+  co_return nullptr;
+}
+
+task<void> TabsList::LoadSettings(nlohmann::json config) {
+  if (config.is_null()) {
+    co_await LoadDefaultSettings();
+    co_return;
+  }
+  const std::vector<nlohmann::json> jsonTabs = config;
+
+  std::vector<task<std::shared_ptr<ITab>>> awaitables;
+  for (auto&& tab: jsonTabs) {
+    awaitables.push_back(this->LoadTabFromJSON(tab));
+  }
+
+  decltype(mTabs) tabs;
+  for (auto&& it: awaitables) {
+    auto tab = co_await std::move(it);
+    if (tab) {
+      tabs.push_back(std::move(tab));
+    }
+  }
+
   co_await this->SetTabs(tabs);
 }
 

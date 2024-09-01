@@ -22,11 +22,11 @@
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/ITab.hpp>
 
-#include <shims/nlohmann/json_fwd.hpp>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/inttypes.hpp>
 #include <OpenKneeboard/task.hpp>
+
+#include <shims/nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;
@@ -50,7 +50,7 @@ class TabsList final : private EventReceiver {
 
   nlohmann::json GetSettings() const;
   [[nodiscard]]
-  task<void> LoadSettings(const nlohmann::json&);
+  task<void> LoadSettings(nlohmann::json);
 
   Event<> evSettingsChangedEvent;
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
@@ -62,6 +62,8 @@ class TabsList final : private EventReceiver {
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITab>> mTabs;
   std::vector<EventHandlerToken> mTabEvents;
+
+  task<std::shared_ptr<ITab>> LoadTabFromJSON(nlohmann::json tab);
 
   [[nodiscard]]
   task<void> LoadDefaultSettings();
