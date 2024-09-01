@@ -70,7 +70,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
 }
 
 task<void> KneeboardState::Init() {
-  const scope_exit saveMigratedSettings([this]() { this->SaveSettings(); });
+  const scope_success saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
     this->evFrameTimerPreEvent,
