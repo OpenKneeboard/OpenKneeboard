@@ -70,6 +70,8 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
 }
 
 task<void> KneeboardState::Init() {
+  OPENKNEEBOARD_TraceLoggingCoro("KneeboardState::Init()");
+
   const scope_success saveMigratedSettings([this]() { this->SaveSettings(); });
 
   AddEventListener(
