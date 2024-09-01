@@ -263,10 +263,12 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
     ##__VA_ARGS__)
 
 #define OPENKNEEBOARD_TraceLoggingCoro(OKBTL_NAME, ...) \
-  OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME##"/coroStart", ##__VA_ARGS__); \
+  OPENKNEEBOARD_TraceLoggingWrite( \
+    OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_START), ##__VA_ARGS__); \
   const ::OpenKneeboard::scope_exit OPENKNEEBOARD_CONCAT2( \
     _okbtllcoro__, _COUNTER__) {[&]() { \
-    OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME##"/coroStop", ##__VA_ARGS__); \
+    OPENKNEEBOARD_TraceLoggingWrite( \
+      OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_STOP), ##__VA_ARGS__); \
   }};
 
 #endif
