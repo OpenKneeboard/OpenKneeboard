@@ -41,18 +41,17 @@
 #include <OpenKneeboard/ToolbarSeparator.hpp>
 #include <OpenKneeboard/ToolbarToggleAction.hpp>
 
-#include <source_location>
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
 #include <microsoft.ui.xaml.media.dxinterop.h>
 
-#include <OpenKneeboard/config.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-
 #include <mutex>
 #include <ranges>
+#include <source_location>
 
 using namespace ::OpenKneeboard;
 
@@ -533,23 +532,23 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
     TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
     co_return;
   }
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity,
+  OPENKNEEBOARD_TraceLoggingCoro(
+    /*activity,*/
     "TabPage::PaintNow()",
     TraceLoggingPointer(this, "this"),
     TraceLoggingValue(mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
     TraceLoggingValue(
       to_hstring(mTabView->GetRootTab()->GetPersistentID()).c_str(), "TabGUID"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
+  // TODO: support 'stop with result' for coros
   if (!mPanelDimensions) {
-    activity.StopWithResult("Invalid panel dimensions");
     co_return;
   }
 
   if (!mSwapChain) {
     this->InitializeSwapChain();
     if (!mSwapChain) {
-      activity.StopWithResult("No swap chain");
+      // activity.StopWithResult("No swap chain");
       co_return;
     }
   }
@@ -582,7 +581,7 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
           static_cast<FLOAT>(desc.Width),
           static_cast<FLOAT>(desc.Height),
         });
-      activity.StopWithResult("No TabView");
+      // activity.StopWithResult("No TabView");
       co_return;
     }
   }
@@ -601,12 +600,12 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
         static_cast<FLOAT>(desc.Width),
         static_cast<FLOAT>(desc.Height),
       });
-    activity.StopWithResult("Render width or height is 0");
+    // activity.StopWithResult("Render width or height is 0");
     co_return;
   }
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
-    OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
+    OPENKNEEBOARD_TraceLoggingCoro("TabPage/RenderPage");
     co_await tab->RenderPage(
       RenderContext {
         mRenderTarget.get(),
@@ -623,13 +622,13 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
   }
 
   if (!mDrawCursor) {
-    activity.StopWithResult("RenderedWithoutCursor");
+    // activity.StopWithResult("RenderedWithoutCursor");
     co_return;
   }
 
   auto maybePoint = mKneeboardView->GetCursorContentPoint();
   if (!maybePoint) {
-    activity.StopWithResult("RenderedWithoutCursorPoint");
+    // activity.StopWithResult("RenderedWithoutCursorPoint");
     co_return;
   }
   Geometry2D::Point<float> point {maybePoint->x, maybePoint->y};
@@ -642,7 +641,7 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
     mCursorRenderer->Render(
       d2d, point.Rounded<uint32_t>(), metrics.mRenderSize);
   }
-  activity.StopWithResult("RenderedWithCursor");
+  // activity.StopWithResult("RenderedWithCursor");
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
