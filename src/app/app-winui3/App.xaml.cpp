@@ -419,15 +419,13 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 0;
   }
 
+  // CreateMutex can set ERROR_ALREADY_EXISTS on success, so we need to
+  // have a known-succeeding initial state.
+  SetLastError(ERROR_SUCCESS);
   auto mutex
     = Win32::CreateMutex(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
-  if (mutex.has_value()) {
-    gMutex = std::move(mutex).value();
-  } else if (mutex.error() != ERROR_ALREADY_EXISTS) {
-    fatal(
-      "Unexpected error creaitng mutex: {:#018x}",
-      static_cast<uint32_t>(mutex.error()));
-  } else {
+  if (GetLastError() == ERROR_ALREADY_EXISTS) {
+    // This can still be success
     const auto hwnd = GetMainHWND();
     if (!hwnd) {
       MessageBoxW(
@@ -458,6 +456,12 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
         MB_OK | MB_ICONERROR);
     }
     return 0;
+  } else if (mutex.has_value()) {
+    gMutex = std::move(mutex).value();
+  } else if (mutex.error()) {
+    fatal(
+      "Unexpected error creating mutex: {:#018x}",
+      static_cast<uint32_t>(mutex.error()));
   }
 
   DPrintSettings::Set({
