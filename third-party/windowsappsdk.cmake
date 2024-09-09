@@ -2,9 +2,10 @@
 # ##### REMEMBER TO UPDATE CPPWINRT and WIL VERSIONS #####
 # ########################################################
 
-# This is 'v1.5.4'
-set(WINDOWS_APP_SDK_VERSION "1.5.240607001" CACHE INTERNAL "")
+# This is 'v1.6.0'
+set(WINDOWS_APP_SDK_VERSION "1.6.240829007" CACHE INTERNAL "")
 set(WINDOWS_SDK_BUILDTOOLS_VERSION "10.0.22621.756" CACHE INTERNAL "")
+set(WEBVIEW2_VERSION "1.0.2739.15" CACHE INTERNAL "")
 
 function(target_link_nuget_packages TARGET)
   set_property(
@@ -25,5 +26,6 @@ function(target_link_windows_app_sdk TARGET)
     "Microsoft.WindowsAppSDK_${WINDOWS_APP_SDK_VERSION}"
     "Microsoft.Windows.SDK.BuildTools_${WINDOWS_SDK_BUILDTOOLS_VERSION}"
     "Microsoft.Windows.ImplementationLibrary_${WINDOWS_IMPLEMENTATION_LIBRARY_VERSION}"
+    "Microsoft.Web.WebView2_${WEBVIEW2_VERSION}"
   )
 endfunction()
