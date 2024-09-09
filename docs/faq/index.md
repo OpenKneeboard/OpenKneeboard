@@ -141,6 +141,14 @@ As a user, your best way forward is to look for help from the other tool, and co
 
 I choose what the defaults are, so, the defaults ;)
 
+## Where are OpenKneeboard's settings saved?
+
+On v1.8 and below, OpenKneeboard's settings are in the 'OpenKneeboard' subfolder of your 'Saved Games' folder; this is *usually* `C:\Users\YOUR_USERNAME_HERE\Saved Games`, but it is possible that you have moved it.
+
+On v1.9 and above, OpenKneeboard's settings are in `%LOCALAPPDATA%\OpenKneeboard\Settings`.
+
+*OpenKneeboard's settings files are for its' own use only*; no help is available for modifying them, and you should not create or use any tools that modify them. OpenKneeboard makes no attempt to handle settings files that have been altered by anything other than OpenKneeboard itself. Any issues will be assumed to be your fault, and you are on your own for fixing them.
+
 ## My framerate improves when I hide OpenKneeboard when the app is still running; what's up?
 
 When OpenKneeboard is hidden, it keeps doing 99.9% of what it does when it's visible; the biggest change when you hide OpenKnebeoard is that your VR runtime no longer needs to combine the 3D and 2D content.
