@@ -120,7 +120,7 @@ A `CustomAction` is a JSON object of this form:
 - `ID` **MUST** start with the tab type ID followed by a semicolon
 - `ID` **MUST** be unique for each custom action
 
-In future versions of OpenKneeboard, custom actions *may* be bindable via the settings UI; for now, they can be invoked via [exe files, or OpenKneeboard's C and LUA APIs](#invoking-custom-actions).
+In future versions of OpenKneeboard, custom actions *may* be bindable via the settings UI; for now, they can be invoked via [exe files, or OpenKneeboard's C and LUA APIs](#invoking-custom-actions). The JSON format and API is designed to make this possible without needing any changes to plugins.
 
 ## Invoking custom actions
 
