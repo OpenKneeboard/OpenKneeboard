@@ -21,21 +21,21 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <Windows.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/format/json.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/version.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <Windows.h>
+#include <shlwapi.h>
 
 #include <fstream>
 #include <sstream>
 #include <system_error>
 
 #include <WebView2.h>
-#include <shlwapi.h>
 #include <wininet.h>
 #include <wrl.h>
 
@@ -46,11 +46,12 @@ namespace OpenKneeboard {
 task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  Settings settings) {
+  const Kind kind,
+  const Settings settings) {
   OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::Create(..., settings)");
 
   auto ret = std::shared_ptr<WebView2PageSource>(
-    new WebView2PageSource(dxr, kbs, settings));
+    new WebView2PageSource(dxr, kbs, kind, settings));
   co_await ret->Init();
   co_return ret;
 }
@@ -58,6 +59,7 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
 task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
+  const Kind kind,
   const std::filesystem::path& path) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::Create(..., path)");
 
@@ -72,7 +74,7 @@ task<std::shared_ptr<WebView2PageSource>> WebView2PageSource::Create(
     .mURI = {buffer, charCount},
   };
 
-  return Create(dxr, kbs, settings);
+  return Create(dxr, kbs, kind, settings);
 }
 
 task<void> WebView2PageSource::Init() {
@@ -126,6 +128,7 @@ task<void> WebView2PageSource::Init() {
   auto renderer = co_await WebView2Renderer::Create(
     mDXResources,
     mKneeboard,
+    mKind,
     mSettings,
     mDocumentResources.mDoodles,
     mWorkerDQC,
@@ -143,8 +146,9 @@ task<void> WebView2PageSource::Init() {
 WebView2PageSource::WebView2PageSource(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
+  const Kind kind,
   const Settings& settings)
-  : mDXResources(dxr), mKneeboard(kbs), mSettings(settings) {
+  : mDXResources(dxr), mKneeboard(kbs), mKind(kind), mSettings(settings) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::WebView2PageSource()");
   if (!IsAvailable()) {
     return;
@@ -332,6 +336,7 @@ task<void> WebView2PageSource::RenderPage(
     auto renderer = co_await WebView2Renderer::Create(
       mDXResources,
       mKneeboard,
+      mKind,
       mSettings,
       mDocumentResources.mDoodles,
       mWorkerDQC,

@@ -101,6 +101,7 @@ task<void> PluginTab::Reload() {
       mDelegate = co_await WebView2PageSource::Create(
         mDXResources,
         mKneeboard,
+        WebView2PageSource::Kind::Plugin,
         WebView2PageSource::Settings {
           .mInitialSize = args.mInitialSize,
           .mIntegrateWithSimHub = false,

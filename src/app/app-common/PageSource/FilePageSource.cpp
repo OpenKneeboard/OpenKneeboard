@@ -82,7 +82,8 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
   }
 
   if (hasExtension(u".htm") || hasExtension(u".html")) {
-    co_return co_await WebView2PageSource::Create(dxr, kbs, path);
+    co_return co_await WebView2PageSource::Create(
+      dxr, kbs, WebView2Renderer::Kind::File, path);
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {

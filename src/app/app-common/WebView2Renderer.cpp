@@ -532,6 +532,8 @@ OpenKneeboard::fire_and_forget WebView2Renderer::FlushCursorEvents() {
         EVKind::RightButtonUp, keys, 0, {event.mX, event.mY});
     }
   }
+
+  mLastCursorEventAt = std::chrono::system_clock::now();
 }
 
 OpenKneeboard::fire_and_forget WebView2Renderer::OnWebMessageReceived(
@@ -836,6 +838,15 @@ jsapi_task WebView2Renderer::JSAPI_RequestPageChange(nlohmann::json args) {
       "Content mode is not page-based; call GetPages() and SetPages() first");
   }
 
+  if (
+    mKind != Kind::Plugin
+    && (std::chrono::system_clock::now() - mLastCursorEventAt)
+      > std::chrono::milliseconds(100)) {
+    co_return jsapi_error(
+      "Web Dashboards can only call `RequestPageChange()` shortly after a "
+      "CursorEvent; to remove this limit, create an OpenKneeboard plugin.");
+  }
+
   const auto guid = args.get<winrt::guid>();
   const auto& pages = mDocumentResources.mPages;
   const auto it = std::ranges::find(pages, guid, &APIPage::mGuid);
@@ -990,6 +1001,7 @@ void WebView2Renderer::InitializeComposition() noexcept {
 task<std::shared_ptr<WebView2Renderer>> WebView2Renderer::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
+  const Kind kind,
   const Settings& settings,
   const std::shared_ptr<DoodleRenderer>& doodles,
   const WorkerDQC& workerDQC,
@@ -998,7 +1010,7 @@ task<std::shared_ptr<WebView2Renderer>> WebView2Renderer::Create(
   KneeboardView* view,
   const std::vector<APIPage>& apiPages) {
   std::shared_ptr<WebView2Renderer> ret {new WebView2Renderer(
-    dxr, kbs, settings, doodles, workerDQC, environment, view, apiPages)};
+    dxr, kbs, kind, settings, doodles, workerDQC, environment, view, apiPages)};
   co_await ret->Init();
   co_return ret;
 }
@@ -1006,6 +1018,7 @@ task<std::shared_ptr<WebView2Renderer>> WebView2Renderer::Create(
 WebView2Renderer::WebView2Renderer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
+  const Kind kind,
   const Settings& settings,
   const std::shared_ptr<DoodleRenderer>& doodles,
   const WorkerDQC& workerDQC,
@@ -1016,6 +1029,7 @@ WebView2Renderer::WebView2Renderer(
   : WGCRenderer(dxr, kbs, {}),
     mDXResources(dxr),
     mKneeboard(kbs),
+    mKind(kind),
     mSettings(settings),
     mSize(settings.mInitialSize),
     mDoodles(doodles),

@@ -26,11 +26,11 @@
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/WebView2Renderer.hpp>
 
-#include <winrt/Microsoft.Web.WebView2.Core.h>
-#include <winrt/Windows.UI.Composition.h>
-
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/task.hpp>
+
+#include <winrt/Microsoft.Web.WebView2.Core.h>
+#include <winrt/Windows.UI.Composition.h>
 
 #include <expected>
 #include <mutex>
@@ -55,6 +55,7 @@ class WebView2PageSource final
     public EventReceiver,
     public std::enable_shared_from_this<WebView2PageSource> {
  public:
+  using Kind = WebView2Renderer::Kind;
   using Settings = WebView2Renderer::Settings;
 
   WebView2PageSource() = delete;
@@ -66,17 +67,17 @@ class WebView2PageSource final
   static std::string GetVersion();
 
   static task<std::shared_ptr<WebView2PageSource>>
-  Create(audited_ptr<DXResources>, KneeboardState*, Settings);
+  Create(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
 
   static task<std::shared_ptr<WebView2PageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
+    Kind,
     const std::filesystem::path&);
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;
-  task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
@@ -103,6 +104,7 @@ class WebView2PageSource final
   WebView2PageSource(
     const audited_ptr<DXResources>&,
     KneeboardState*,
+    Kind,
     const Settings&);
 
   DisposalState mDisposal;
@@ -111,6 +113,7 @@ class WebView2PageSource final
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
+  Kind mKind;
   Settings mSettings;
 
   enum class RenderersState {

@@ -23,14 +23,14 @@
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/WGCRenderer.hpp>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.Web.WebView2.Core.h>
 #include <winrt/Windows.UI.Composition.h>
 
 #include <wil/cppwinrt.h>
-
-#include <OpenKneeboard/task.hpp>
 
 #include <expected>
 #include <queue>
@@ -69,6 +69,12 @@ class WebView2Renderer final : public WGCRenderer {
   using worker_task = basic_task<WorkerDQ, T>;
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
   using jsapi_task = worker_task<JSAPIResult>;
+
+  enum class Kind {
+    WebDashboard,
+    File,// from SingleFileTab or FolderTab
+    Plugin,
+  };
 
   struct Settings {
     PixelSize mInitialSize {1024, 768};
@@ -113,6 +119,7 @@ class WebView2Renderer final : public WGCRenderer {
   static task<std::shared_ptr<WebView2Renderer>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
+    Kind,
     const Settings&,
     const std::shared_ptr<DoodleRenderer>&,
     const WorkerDQC& workerDQC,
@@ -163,6 +170,7 @@ class WebView2Renderer final : public WGCRenderer {
   WebView2Renderer(
     const audited_ptr<DXResources>&,
     KneeboardState*,
+    Kind,
     const Settings&,
     const std::shared_ptr<DoodleRenderer>&,
     const WorkerDQC& workerDQC,
@@ -171,6 +179,7 @@ class WebView2Renderer final : public WGCRenderer {
     const std::vector<APIPage>&);
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
+  Kind mKind;
   Settings mSettings;
   PixelSize mSize;
   std::shared_ptr<DoodleRenderer> mDoodles;
@@ -217,6 +226,7 @@ class WebView2Renderer final : public WGCRenderer {
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2 mWebView {nullptr};
 
   std::mutex mCursorEventsMutex;
+  std::chrono::system_clock::time_point mLastCursorEventAt;
   std::queue<CursorEvent> mCursorEvents;
   uint32_t mMouseButtons {};
   OpenKneeboard::fire_and_forget FlushCursorEvents();
