@@ -88,6 +88,7 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
     // else handled by TabBase
   }
 
+  try {
 #define IT(_, it) \
   if (type == #it) { \
     auto instance = co_await load_tab<it##Tab>( \
@@ -96,12 +97,25 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
       co_return instance; \
     } \
   }
-  OPENKNEEBOARD_TAB_TYPES
+    OPENKNEEBOARD_TAB_TYPES
 #undef IT
-  if (type == "Plugin") {
-    auto instance = co_await PluginTab::Create(
-      mDXR, mKneeboard, persistentID, title, settings);
-    co_return instance;
+    if (type == "Plugin") {
+      auto instance = co_await PluginTab::Create(
+        mDXR, mKneeboard, persistentID, title, settings);
+      co_return instance;
+    }
+  } catch (const std::exception& e) {
+    dprint.Error(
+      "Failed to load tab {} with std::exception: {}",
+      tab.value<std::string>("ID", "<no GUID>"),
+      e.what());
+    throw;
+  } catch (const winrt::hresult_error& e) {
+    dprint.Error(
+      "Failed to load tab {} with HRESULT: {}",
+      tab.value<std::string>("ID", "<no GUID>"),
+      winrt::to_string(e.message()));
+    throw;
   }
   dprint("Couldn't load tab with type {}", rawType);
   OPENKNEEBOARD_BREAK;
