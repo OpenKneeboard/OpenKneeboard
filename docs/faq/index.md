@@ -78,6 +78,8 @@ The downside of increasing this limit is that the kneeboard is likely to interfe
 
 If you have a non-image source (for example, a Word document, spreadsheet, or so on), export it directly as PDF, or use 'Print to PDF'; this will get the best quality. If you only have an image, do not convert it to PDF - this will lower the quality.
 
+If you include pre-rendered text, disable sub-pixel anti-aliasing: sub-pixel antialiasing will look better on your monitor, but will look worse in headsets. Even if the headset subpixel layout matches, when rendered in 3D in VR and projected for lense distortion, the image pixel grid will *never* line up with the headset pixels.
+
 For images, if the kneeboard - including OpenKneeboard's header and footer - is larger than 2048x2048 pixels or (when non-VR is active) the configured maximum on-screen size, it will be resized to fit, which will lower the quality.
 
 To give space for header, footer, bookmarks bar etc, aim for any images to have heights and widths that are less than 1600px for VR, or 100px less than the configured maximum size for non-VR.
