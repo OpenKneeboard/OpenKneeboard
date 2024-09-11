@@ -140,7 +140,7 @@ jobs:
           $zip = $zip -replace '\\','/'
           cd $prefix
           Compress-Archive `
-            -Path *.pdb `
+            -Path * `
             -DestinationPath $zip
           Add-Content $Env:GITHUB_OUTPUT "ZIP_PATH=$zip"
           echo "::endgroup::"
