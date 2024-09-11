@@ -20,9 +20,9 @@
 #include <OpenKneeboard/FolderPageSource.hpp>
 #include <OpenKneeboard/FolderTab.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
 #include <OpenKneeboard/dprint.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 
@@ -53,8 +53,7 @@ task<std::shared_ptr<FolderTab>> FolderTab::Create(
   const winrt::guid& persistentID,
   std::string_view title,
   const nlohmann::json& settings) {
-  std::shared_ptr<FolderTab> ret {
-    new FolderTab(dxr, kbs, persistentID, settings)};
+  std::shared_ptr<FolderTab> ret {new FolderTab(dxr, kbs, persistentID, title)};
   co_await ret->SetPath(settings.at("Path").get<std::filesystem::path>());
   co_return ret;
 }
