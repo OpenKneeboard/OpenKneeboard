@@ -156,25 +156,27 @@ task<bool> APIEventServer::RunSingle(
 
 OpenKneeboard::fire_and_forget APIEventServer::DispatchEvent(
   std::string_view ref) {
-  const std::string buffer(ref);
-
   const auto stayingAlive = shared_from_this();
-  co_await winrt::resume_background();
-
+  const std::string buffer(ref);
   auto event = APIEvent::Unserialize(buffer);
+
+  co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingCoro(
     "APIEvent", TraceLoggingValue(event.name.c_str(), "Name"));
   if (event.name != APIEvent::EVT_MULTI_EVENT) {
-    this->evAPIEvent.EnqueueForContext(mUIThread, event);
+    this->evAPIEvent.Emit(event);
     co_return;
   }
 
   std::vector<std::tuple<std::string, std::string>> events;
   events = nlohmann::json::parse(event.value);
-  for (const auto& [name, value]: events) {
+  auto dq = DispatcherQueue::GetForCurrentThread();
+  for (auto&& [name, value]: events) {
     OPENKNEEBOARD_TraceLoggingCoro(
       "APIEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
-    co_await this->evAPIEvent.EmitFromContextAsync(mUIThread, {name, value});
+    this->evAPIEvent.Emit({name, value});
+    // Re-enter event loop, even if not switching threads
+    co_await wil::resume_foreground(dq);
   }
 
   co_return;

@@ -283,19 +283,6 @@ class Event final : public EventBase {
     }
   }
 
-  task<void> EmitFromContextAsync(
-    auto context,
-    Args... args,
-    std::source_location location = std::source_location::current()) {
-    auto weakImpl = std::weak_ptr(mImpl);
-    winrt::apartment_context originalContext;
-    co_await context;
-    if (auto impl = weakImpl.lock()) {
-      impl->Emit(args..., location);
-    }
-    co_await originalContext;
-  }
-
   EventHookToken AddHook(Hook, EventHookToken token = {}) noexcept;
   void RemoveHook(EventHookToken) noexcept;
 
