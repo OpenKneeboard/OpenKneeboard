@@ -23,14 +23,23 @@ else()
   set(RELEASE_NAME "v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}+${BUILD_TYPE}")
 endif()
 
+math(EXPR IS_DEVELOPMENT_BRANCH "${VERSION_MINOR} % 2")
+if(IS_DEVELOPMENT_BRANCH)
+  message(DEBUG "${RELEASE_NAME} is on a development branch.")
+else()
+  message(DEBUG "${RELEASE_NAME} is on a stable branch.")
+endif()
+
 if(
   IS_TAGGED_VERSION STREQUAL "true"
   AND IS_GITHUB_ACTIONS_BUILD
-  AND NOT "${RELEASE_NAME}" MATCHES "-")
+  AND NOT "${RELEASE_NAME}" MATCHES "-"
+  AND NOT IS_DEVELOPMENT_BRANCH)
   set(IS_STABLE_RELEASE true)
 else()
   set(IS_STABLE_RELEASE false)
 endif()
+message(DEBUG "Stable release: ${IS_STABLE_RELEASE}")
 
 if(INPUT_CPP_FILE)
   configure_file(

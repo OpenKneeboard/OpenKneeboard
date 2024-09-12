@@ -702,7 +702,7 @@ OpenKneeboard::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
     if (!Version::IsStableRelease) {
       if (Version::IsTaggedVersion) {
-        title += std::format(L" - {}", to_hstring(Version::TagName));
+        title += std::format(L" - PRERELEASE {}", to_hstring(Version::TagName));
       } else if (Version::IsGithubActionsBuild) {
         title += std::format(L" - UNRELEASED VERSION #GHA{}", Version::Build);
       } else {
