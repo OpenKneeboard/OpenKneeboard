@@ -37,6 +37,7 @@
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.UI.Text.h>
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Web.Http.h>
 
@@ -290,18 +291,35 @@ task<UpdateResult> CheckForUpdates(
       std::format(_("Would you like to upgrade from {}?"), oldName)));
     promptText.TextWrapping(TextWrapping::WrapWholeWords);
 
+    const auto isPrerelease = latestRelease.at("prerelease").get<bool>();
+
     StackPanel layout;
     layout.Margin({8, 8, 8, 8});
     layout.Spacing(4);
     layout.Orientation(Orientation::Vertical);
     layout.Children().Append(releaseNotesLink);
+    if (isPrerelease) {
+      TextBlock prereleaseText;
+      prereleaseText.Text(
+        _(L"This version is intended for developers and testers, and has had "
+          L"significantly less testing than stable releases. You are being "
+          L"shown this version because you previously installed a development "
+          L"or test version."));
+      prereleaseText.TextWrapping(TextWrapping::WrapWholeWords);
+      prereleaseText.FontWeight(winrt::Windows::UI::Text::FontWeights::Bold());
+      layout.Children().Append(prereleaseText);
+    }
     layout.Children().Append(promptText);
 
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
     dialog.Title(box_value(to_hstring(_(L"Update OpenKneeboard"))));
     dialog.Content(layout);
-    dialog.PrimaryButtonText(_(L"Update Now"));
+    if (isPrerelease) {
+      dialog.PrimaryButtonText(_(L"Install Test Version"));
+    } else {
+      dialog.PrimaryButtonText(_(L"Update Now"));
+    }
     dialog.SecondaryButtonText(_(L"Skip This Version"));
     dialog.CloseButtonText(_(L"Not Now"));
     dialog.DefaultButton(ContentDialogButton::Primary);
