@@ -100,7 +100,7 @@ else()
   set(VERSION_BUILD 0)
 endif()
 
-project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.9.5.${VERSION_BUILD} LANGUAGES CXX C)
+project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.9.6.${VERSION_BUILD} LANGUAGES CXX C)
 
 # The "implementation_version" field of the layer's JSON file is a string, but it should
 # match the `uint32_t` field of XrApiLayerProperties.
