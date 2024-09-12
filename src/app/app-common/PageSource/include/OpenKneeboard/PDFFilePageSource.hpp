@@ -23,11 +23,11 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 
+#include <OpenKneeboard/audited_ptr.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
-
-#include <OpenKneeboard/audited_ptr.hpp>
 
 #include <filesystem>
 #include <memory>
@@ -53,19 +53,19 @@ class PDFFilePageSource final
   static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<PDFFilePageSource>);
 
-  static std::shared_ptr<PDFFilePageSource> Create(
+  static task<std::shared_ptr<PDFFilePageSource>> Create(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});
 
-  virtual OpenKneeboard::fire_and_forget Reload();
+  virtual task<void> Reload();
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;
   virtual PreferredSize GetPreferredSize(PageID) final override;
 
   std::filesystem::path GetPath() const;
-  virtual void SetPath(const std::filesystem::path& path);
+  task<void> SetPath(const std::filesystem::path& path);
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
@@ -95,12 +95,10 @@ class PDFFilePageSource final
   struct DocumentResources;
   std::shared_ptr<DocumentResources> mDocumentResources;
 
-  OpenKneeboard::fire_and_forget ReloadRenderer(
-    std::weak_ptr<DocumentResources>);
-  OpenKneeboard::fire_and_forget ReloadNavigation(
-    std::weak_ptr<DocumentResources>);
+  task<void> ReloadRenderer(std::weak_ptr<DocumentResources>);
+  task<void> ReloadNavigation(std::weak_ptr<DocumentResources>);
 
-  void OnFileModified(const std::filesystem::path& path);
+  fire_and_forget OnFileModified(const std::filesystem::path& path);
 
   void RenderPageContent(
     RenderTarget* rt,

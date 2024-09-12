@@ -158,7 +158,7 @@ PDFFilePageSource::~PDFFilePageSource() {
   this->RemoveAllEventListeners();
 }
 
-std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
+task<std::shared_ptr<PDFFilePageSource>> PDFFilePageSource::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
@@ -171,13 +171,13 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   // 3) so, we need the shared_ptr before we call `SetPath()`...
   // 4) so, we can't call `SetPath()` or `Reload()` from the constructor
   if (!path.empty()) {
-    ret->SetPath(path);
+    co_await ret->SetPath(path);
   }
 
-  return ret;
+  co_return ret;
 }
 
-OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
+task<void> PDFFilePageSource::ReloadRenderer(
   std::weak_ptr<DocumentResources> weakDoc) {
   auto weak = weak_from_this();
 
@@ -242,7 +242,7 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadRenderer(
   }
 }
 
-OpenKneeboard::fire_and_forget PDFFilePageSource::ReloadNavigation(
+task<void> PDFFilePageSource::ReloadNavigation(
   std::weak_ptr<DocumentResources> weakDoc) {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
@@ -355,7 +355,7 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   return mDocumentResources->mPageIDs.back();
 }
 
-OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
+task<void> PDFFilePageSource::Reload() try {
   static uint64_t sCount = 0;
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
@@ -402,8 +402,10 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
 
   co_await uiThread;
 
-  this->ReloadRenderer(weakDoc);
-  this->ReloadNavigation(weakDoc);
+  for (auto&& it: std::array<task<void>, 2> {
+         this->ReloadRenderer(weakDoc), this->ReloadNavigation(weakDoc)}) {
+    co_await std::move(it);
+  }
 } catch (const std::exception& e) {
   dprint.Warning("Exception reloading PDFFilePageSource: {}", e.what());
   OPENKNEEBOARD_BREAK;
@@ -596,9 +598,9 @@ std::filesystem::path PDFFilePageSource::GetPath() const {
   return mDocumentResources->mPath;
 }
 
-void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
+task<void> PDFFilePageSource::SetPath(const std::filesystem::path& path) {
   if (mDocumentResources && path == mDocumentResources->mPath) {
-    return;
+    co_return;
   }
 
   mDocumentResources
@@ -606,12 +608,8 @@ void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
 
   AddEventListener(
     mDocumentResources->mWatcher->evFilesystemModifiedEvent,
-    [weak = weak_from_this()](auto path) {
-      if (auto self = weak.lock()) {
-        self->OnFileModified(path);
-      }
-    });
-  Reload();
+    &PDFFilePageSource::OnFileModified | bind_refs_front(this));
+  co_await this->Reload();
 }
 
 bool PDFFilePageSource::IsNavigationAvailable() const {
@@ -661,9 +659,11 @@ PDFFilePageSource::RenderPage(RenderContext rc, PageID pageID, PixelRect rect) {
   this->RenderOverDoodles(d2d, pageID, rect);
 }
 
-void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {
+fire_and_forget PDFFilePageSource::OnFileModified(
+  const std::filesystem::path& path) {
   if (mDocumentResources && path == mDocumentResources->mPath) {
-    this->Reload();
+    auto keepAlive = shared_from_this();
+    co_await this->Reload();
   }
 }
 }// namespace OpenKneeboard

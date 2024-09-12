@@ -74,7 +74,7 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
   };
 
   if (hasExtension(u".pdf")) {
-    co_return PDFFilePageSource::Create(dxr, kbs, path);
+    co_return co_await PDFFilePageSource::Create(dxr, kbs, path);
   }
 
   if (hasExtension(u".txt")) {
