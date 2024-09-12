@@ -53,7 +53,7 @@ class TabsList final : private EventReceiver {
   task<void> LoadSettings(nlohmann::json);
 
   Event<> evSettingsChangedEvent;
-  Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
+  Event<> evTabsChangedEvent;
 
  private:
   TabsList(const audited_ptr<DXResources>&, KneeboardState* kneeboard);

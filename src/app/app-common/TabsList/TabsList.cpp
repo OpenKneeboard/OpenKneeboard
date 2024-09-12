@@ -245,7 +245,7 @@ task<void> TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
       tab->evSettingsChangedEvent, this->evSettingsChangedEvent));
   }
 
-  evTabsChangedEvent.Emit(mTabs);
+  evTabsChangedEvent.Emit();
   evSettingsChangedEvent.Emit();
 }
 

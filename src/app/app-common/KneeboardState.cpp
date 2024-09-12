@@ -95,7 +95,9 @@ task<void> KneeboardState::Init() {
   AddEventListener(
     mTabsList->evSettingsChangedEvent,
     std::bind_front(&KneeboardState::SaveSettings, this));
-  AddEventListener(mTabsList->evTabsChangedEvent, [this](const auto& tabs) {
+  AddEventListener(mTabsList->evTabsChangedEvent, [this]() {
+    const auto tabs = mTabsList->GetTabs();
+
     for (auto& view: mViews) {
       view->SetTabs(tabs);
     }
