@@ -237,14 +237,10 @@ task<void> MainWindow::FrameLoop() {
     const auto start = std::chrono::steady_clock::now();
     const auto nextGoal = start + interval;
 
-    this->FrameTick();
-    // Finish any pending UI stuff before figuring out how long to wait
-    co_await winrt::resume_after(std::chrono::milliseconds(1));
-    co_await mUIThread;
-    co_await mKneeboard->FlushOrderedEventQueue(nextGoal);
+    co_await this->FrameTick(nextGoal);
 
-    const auto wait
-      = std::chrono::duration_cast<std::chrono::milliseconds>(nextGoal - start);
+    const auto wait = std::chrono::duration_cast<std::chrono::milliseconds>(
+      nextGoal - std::chrono::steady_clock::now());
     if (wait < std::chrono::milliseconds::zero()) {
       TraceLoggingWrite(
         gTraceProvider, "MainWindow::FrameLoop()/FrameDurationExceeded");
@@ -328,7 +324,8 @@ OpenKneeboard::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   dprint("Game elevation warning dialog closed.");
 }
 
-OpenKneeboard::fire_and_forget MainWindow::FrameTick() {
+task<void> MainWindow::FrameTick(
+  std::chrono::steady_clock::time_point nextFrameAt) {
   TraceLoggingActivity<gTraceProvider> activity;
   // Including the build number just to make sure it's in every trace
   TraceLoggingWriteStart(
@@ -381,6 +378,10 @@ OpenKneeboard::fire_and_forget MainWindow::FrameTick() {
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
     mKneeboard->evFrameTimerPostEvent.Emit(FramePostEventKind::WithRepaint);
   }
+
+  // Finish any pending UI stuff
+  co_await wil::resume_foreground(this->DispatcherQueue());
+  co_await mKneeboard->FlushOrderedEventQueue(nextFrameAt);
 }
 
 OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {

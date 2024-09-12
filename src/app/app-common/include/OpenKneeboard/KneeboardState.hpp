@@ -173,7 +173,7 @@ class KneeboardState final
 
   task<void> FlushOrderedEventQueue(
     std::chrono::time_point<std::chrono::steady_clock> stopAt);
-  void EnqueueOrderedEvent(task<void>&&);
+  void EnqueueOrderedEvent(std::function<task<void>()>);
 
  private:
   KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
@@ -188,7 +188,8 @@ class KneeboardState final
   HWND mHwnd;
   audited_ptr<DXResources> mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};
-  Settings mSettings {Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile)};
+  Settings mSettings {
+    Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile)};
 
   uint8_t mInputViewIndex = 0;
   std::vector<std::shared_ptr<KneeboardView>> mViews;
@@ -212,7 +213,7 @@ class KneeboardState final
   RunnerThread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
 
-  std::queue<task<void>> mOrderedEventQueue;
+  std::queue<std::function<task<void>()>> mOrderedEventQueue;
 
   bool mSaveSettingsEnabled = true;
 

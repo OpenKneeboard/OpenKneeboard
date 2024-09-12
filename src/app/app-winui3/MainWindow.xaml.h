@@ -109,7 +109,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   // avoids building up a massive backlog of overdue scheduled
   // events.
   task<void> FrameLoop();
-  OpenKneeboard::fire_and_forget FrameTick();
+  task<void> FrameTick(std::chrono::steady_clock::time_point nextFrameAt);
   single_threaded_lockable mFrameInProgress;
 
   OpenKneeboard::fire_and_forget LaunchOpenKneeboardURI(std::string_view);

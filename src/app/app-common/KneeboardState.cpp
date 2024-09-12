@@ -108,7 +108,8 @@ task<void> KneeboardState::Init() {
 
   mDirectInput = DirectInputAdapter::Create(mHwnd, mSettings.mDirectInput);
   AddEventListener(mDirectInput->evUserActionEvent, [this](auto action) {
-    this->EnqueueOrderedEvent(this->PostUserAction(action));
+    this->EnqueueOrderedEvent(
+      std::bind_front(&KneeboardState::PostUserAction, this, action));
   });
   AddEventListener(
     mDirectInput->evSettingsChangedEvent,
@@ -398,11 +399,12 @@ void KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
   }
   TroubleshootingStore::Get()->OnAPIEvent(ev);
 
-  mOrderedEventQueue.push(ProcessAPIEvent(ev));
+  mOrderedEventQueue.push(
+    std::bind_front(&KneeboardState::ProcessAPIEvent, this, ev));
 }
 
-void KneeboardState::EnqueueOrderedEvent(task<void>&& handler) {
-  mOrderedEventQueue.push(std::move(handler));
+void KneeboardState::EnqueueOrderedEvent(std::function<task<void>()> event) {
+  mOrderedEventQueue.push(event);
 }
 
 task<void> KneeboardState::FlushOrderedEventQueue(
@@ -411,7 +413,7 @@ task<void> KneeboardState::FlushOrderedEventQueue(
          && !mOrderedEventQueue.empty()) {
     auto it = std::move(mOrderedEventQueue.front());
     mOrderedEventQueue.pop();
-    co_await std::move(it);
+    co_await it();
   }
 }
 
@@ -790,7 +792,8 @@ void KneeboardState::StartTabletInput() {
   AddEventListener(
     mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
   AddEventListener(mTabletInput->evUserActionEvent, [this](auto action) {
-    this->EnqueueOrderedEvent(this->PostUserAction(action));
+    this->EnqueueOrderedEvent(
+      std::bind_front(&KneeboardState::PostUserAction, this, action));
   });
   AddEventListener(
     mTabletInput->evSettingsChangedEvent,
