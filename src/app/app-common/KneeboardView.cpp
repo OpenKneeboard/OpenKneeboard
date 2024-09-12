@@ -535,6 +535,9 @@ bool KneeboardView::CurrentPageHasBookmark() const {
     return false;
   }
   auto tab = view->GetRootTab();
+  if (!tab) {
+    return false;
+  }
   auto page = view->GetPageID();
 
   auto bookmarks = tab->GetBookmarks();
