@@ -405,7 +405,12 @@ OpenKneeboard::fire_and_forget PDFFilePageSource::Reload() try {
   this->ReloadRenderer(weakDoc);
   this->ReloadNavigation(weakDoc);
 } catch (const std::exception& e) {
-  dprint("WARNING: Exception reloading PDFFilePageSource: {}", e.what());
+  dprint.Warning("Exception reloading PDFFilePageSource: {}", e.what());
+  OPENKNEEBOARD_BREAK;
+} catch (const winrt::hresult_error& e) {
+  dprint.Warning(
+    "HRESULT Exception reloading PDFFilePageSource: {}",
+    winrt::to_string(e.message()));
   OPENKNEEBOARD_BREAK;
 }
 
