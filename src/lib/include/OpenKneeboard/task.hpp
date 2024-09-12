@@ -217,7 +217,7 @@ struct TaskFinalAwaiter {
 
     ComCallData comData {.pUserDefined = resumeData.get()};
     const auto result = resumeData->mContext.mCOMCallback->ContextCallback(
-      &TaskFinalAwaiter<TTraits>::resume_on_thread_pool,
+      &TaskFinalAwaiter<TTraits>::resume_from_thread_pool,
       &comData,
       IID_ICallbackWithNoReentrancyToApplicationSTA,
       5,
@@ -231,15 +231,17 @@ struct TaskFinalAwaiter {
       static_cast<uint32_t>(result));
   }
 
-  static HRESULT resume_on_thread_pool(ComCallData* comData) noexcept {
+  static HRESULT resume_from_thread_pool(ComCallData* comData) noexcept {
     const auto& resumeData
       = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
     if (std::this_thread::get_id() != resumeData.mContext.mThreadID)
       [[unlikely]] {
       fatal(
-        "Expected to resume task in thread {}, but resumed in thread {}",
+        "Expected to resume task in thread {}, but resumed in thread {}; "
+        "caller: {}",
         resumeData.mContext.mThreadID,
-        std::this_thread::get_id());
+        std::this_thread::get_id(),
+        resumeData.mContext.mCaller.to_string());
     }
     resumeData.mCoro.resume();
     return S_OK;

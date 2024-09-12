@@ -216,7 +216,9 @@ static void CreateDump(
   };
 
   EXCEPTION_RECORD exceptionRecord {};
-  CONTEXT exceptionContext {};
+  CONTEXT exceptionContext {
+    .ContextFlags = CONTEXT_ALL,
+  };
   EXCEPTION_POINTERS fakeExceptionPointers;
   if (!exceptionPointers) {
     ::RtlCaptureContext(&exceptionContext);
