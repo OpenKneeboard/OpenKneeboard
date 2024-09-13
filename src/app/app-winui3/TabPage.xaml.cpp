@@ -374,7 +374,11 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 }
 
 void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
+  static const TabView::RuntimeID FakeViewForErrors {};
   if (state == mTabView) {
+    if (!mRenderTarget) {
+      mRenderTarget = GetRenderTarget(mDXR, FakeViewForErrors);
+    }
     return;
   }
   if (mTabView) {
@@ -387,7 +391,7 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
     mTabViewRepaintToken = AddEventListener(
       state->evNeedsRepaintEvent, {this, &TabPage::PaintLater});
   } else {
-    mRenderTarget = nullptr;
+    mRenderTarget = GetRenderTarget(mDXR, FakeViewForErrors);
   }
   this->PaintLater();
 

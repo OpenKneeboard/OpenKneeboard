@@ -934,6 +934,9 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabChanged() noexcept {
     OPENKNEEBOARD_BREAK;
   }
   if (!tab) {
+    this->Frame().Navigate(
+      xaml_typename<TabPage_WinRT>(),
+      winrt::box_value(ITab::RuntimeID(nullptr).GetTemporaryValue()));
     co_return;
   }
 
