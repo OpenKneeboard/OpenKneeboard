@@ -377,9 +377,18 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   if (state == mTabView) {
     return;
   }
+  if (mTabView) {
+    this->RemoveEventListener(this->mTabViewRepaintToken);
+  }
+
   mTabView = state;
+  if (state) {
   mRenderTarget = GetRenderTarget(mDXR, state->GetRuntimeID());
-  AddEventListener(state->evNeedsRepaintEvent, {this, &TabPage::PaintLater});
+    mTabViewRepaintToken = AddEventListener(
+      state->evNeedsRepaintEvent, {this, &TabPage::PaintLater});
+  } else {
+    mRenderTarget = nullptr;
+  }
   this->PaintLater();
 
   this->UpdateToolbar();
@@ -387,6 +396,16 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
 
 OpenKneeboard::fire_and_forget TabPage::UpdateToolbar() {
   co_await mUIThread;
+
+  auto primary = CommandBar().PrimaryCommands();
+  auto secondary = CommandBar().SecondaryCommands();
+  primary.Clear();
+  secondary.Clear();
+
+  if (!mTabView) {
+    co_return;
+  }
+
   auto actions
     = InAppActions::Create(mKneeboard.get(), mKneeboardView, mTabView);
   {
@@ -396,8 +415,6 @@ OpenKneeboard::fire_and_forget TabPage::UpdateToolbar() {
     mToolbarItems = keepAlive;
   }
 
-  auto primary = CommandBar().PrimaryCommands();
-  primary.Clear();
   for (const auto& item: actions.mPrimary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
@@ -406,8 +423,6 @@ OpenKneeboard::fire_and_forget TabPage::UpdateToolbar() {
     }
   }
 
-  auto secondary = CommandBar().SecondaryCommands();
-  secondary.Clear();
   for (const auto& item: actions.mSecondary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
@@ -528,10 +543,6 @@ void TabPage::PaintLater() {
 }
 
 task<void> TabPage::PaintNow(std::source_location loc) noexcept {
-  if (!mTabView) {
-    TraceLoggingWrite(gTraceProvider, "TabPage::PaintNow()/NoTab");
-    co_return;
-  }
   OPENKNEEBOARD_TraceLoggingCoro(
     /*activity,*/
     "TabPage::PaintNow()",
@@ -574,7 +585,7 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
       mCanvas->GetDesc(&desc);
       mErrorRenderer->Render(
         ctx,
-        _("Missing or Deleted Tab"),
+        _("No Active Tab"),
         {
           0,
           0,
