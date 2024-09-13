@@ -287,11 +287,12 @@ std::vector<PageID> WebView2PageSource::GetPageIDs() const {
   fatal("Invalid content mode in WebView2PageSource::GetPageIDs()");
 }
 
-PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
+std::optional<PreferredSize> WebView2PageSource::GetPreferredSize(
+  PageID pageID) {
   if (mDocumentResources.mContentMode == ContentMode::Scrollable) {
     auto it = mDocumentResources.mRenderers.find(mScrollableContentRendererKey);
     if (it == mDocumentResources.mRenderers.end()) {
-      return {mSettings.mInitialSize, ScalingKind::Bitmap};
+      return PreferredSize {mSettings.mInitialSize, ScalingKind::Bitmap};
     }
     return it->second->GetPreferredSize();
   }
@@ -301,12 +302,12 @@ PreferredSize WebView2PageSource::GetPreferredSize(PageID pageID) {
   auto it
     = std::ranges::find(mDocumentResources.mPages, pageID, &APIPage::mPageID);
   if (it != mDocumentResources.mPages.end()) {
-    return {
+    return PreferredSize {
       it->mPixelSize,
       ScalingKind::Bitmap,
     };
   }
-  return {};
+  return std::nullopt;
 }
 
 task<void> WebView2PageSource::RenderPage(

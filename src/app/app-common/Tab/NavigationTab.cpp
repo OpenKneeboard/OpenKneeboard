@@ -104,7 +104,7 @@ NavigationTab::NavigationTab(
   const auto rowHeight = PaddingRatio * metrics.height;
   const auto padding = rowHeight / 2;
 
-  const auto size = this->GetPreferredSize({}).mPixelSize;
+  const auto size = this->GetPreferredSize({nullptr})->mPixelSize;
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = 2 * padding,
@@ -165,8 +165,8 @@ PageIndex NavigationTab::GetPageCount() const {
   return static_cast<PageIndex>(mButtonTrackers.size());
 }
 
-PreferredSize NavigationTab::GetPreferredSize(PageID) {
-  return {mPreferredSize, ScalingKind::Vector};
+std::optional<PreferredSize> NavigationTab::GetPreferredSize(PageID) {
+  return PreferredSize {mPreferredSize, ScalingKind::Vector};
 }
 
 std::vector<PageID> NavigationTab::GetPageIDs() const {
@@ -323,7 +323,7 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
     const auto height
       = (button.mRect.bottom - button.mRect.top) + (2 * m.mBleed);
     const auto nativeSize
-      = mRootTab->GetPreferredSize(button.mPageID).mPixelSize;
+      = mRootTab->GetPreferredSize(button.mPageID)->mPixelSize;
     const auto contentScale = height / nativeSize.mHeight;
 
     m.mRects.at(i) = PixelRect {
@@ -348,7 +348,7 @@ task<void> NavigationTab::RenderPreviewLayer(
   const auto buttons = mButtonTrackers.at(pageID)->GetButtons();
 
   const auto scale
-    = size.Height<float>() / this->GetPreferredSize(pageID).mPixelSize.mHeight;
+    = size.Height<float>() / this->GetPreferredSize(pageID)->mPixelSize.mHeight;
 
   const RenderContext rc {rt, nullptr};
 

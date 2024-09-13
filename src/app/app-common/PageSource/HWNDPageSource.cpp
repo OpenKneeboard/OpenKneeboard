@@ -569,7 +569,7 @@ std::vector<PageID> HWNDPageSource::GetPageIDs() const {
   return {mPageID};
 }
 
-PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
+std::optional<PreferredSize> HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();
 }
 

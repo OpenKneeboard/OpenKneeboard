@@ -26,14 +26,14 @@
 #include <OpenKneeboard/WGCRenderer.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
+#include <OpenKneeboard/audited_ptr.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/task.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Graphics.Capture.h>
 #include <winrt/Windows.System.h>
-
-#include <OpenKneeboard/audited_ptr.hpp>
-#include <OpenKneeboard/handles.hpp>
-#include <OpenKneeboard/task.hpp>
 
 #include <memory>
 
@@ -82,9 +82,8 @@ class HWNDPageSource final : public WGCRenderer,
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
-  virtual PreferredSize GetPreferredSize(PageID) override;
-  task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   Event<> evWindowClosedEvent;
 

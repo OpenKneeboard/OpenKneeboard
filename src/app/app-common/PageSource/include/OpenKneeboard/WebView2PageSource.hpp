@@ -91,7 +91,7 @@ class WebView2PageSource final
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
-  virtual PreferredSize GetPreferredSize(PageID) override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
 
  private:
   using APIPage = WebView2Renderer::APIPage;

@@ -22,11 +22,11 @@
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
-#include <Unknwn.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <Unknwn.h>
 
 #include <algorithm>
 #include <format>
@@ -64,7 +64,7 @@ PlainTextPageSource::PlainTextPageSource(
 void PlainTextPageSource::UpdateLayoutLimits() {
   auto dwf = mDXR->mDWriteFactory;
 
-  const auto size = this->GetPreferredSize({}).mPixelSize;
+  const auto size = this->GetPreferredSize({nullptr})->mPixelSize;
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
     L"m", 1, mTextFormat.get(), size.mWidth, size.mHeight, textLayout.put());
@@ -144,8 +144,11 @@ std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
   return mPageIDs;
 }
 
-PreferredSize PlainTextPageSource::GetPreferredSize(PageID) {
-  return {{768 * RENDER_SCALE, 1024 * RENDER_SCALE}, ScalingKind::Vector};
+std::optional<PreferredSize> PlainTextPageSource::GetPreferredSize(PageID) {
+  return PreferredSize {
+    {768 * RENDER_SCALE, 1024 * RENDER_SCALE},
+    ScalingKind::Vector,
+  };
 }
 
 std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
@@ -163,7 +166,7 @@ task<void> PlainTextPageSource::RenderPage(
   PixelRect rect) {
   std::unique_lock lock(mMutex);
 
-  const auto virtualSize = this->GetPreferredSize(pageID).mPixelSize;
+  const auto virtualSize = this->GetPreferredSize(pageID)->mPixelSize;
   const auto renderSize = virtualSize.ScaledToFit(rect.mSize);
 
   const float renderLeft

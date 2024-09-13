@@ -59,9 +59,8 @@ class PageSourceWithDelegates
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
-  virtual PreferredSize GetPreferredSize(PageID) override;
-  task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override;

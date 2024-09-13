@@ -160,10 +160,11 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   return *delegate;
 }
 
-PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
+std::optional<PreferredSize> PageSourceWithDelegates::GetPreferredSize(
+  PageID pageID) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
-    return ErrorPreferredSize;
+    return std::nullopt;
   }
   return delegate->GetPreferredSize(pageID);
 }
@@ -257,8 +258,12 @@ void PageSourceWithDelegates::PostCursorEvent(
     return;
   }
 
-  mDoodles->PostCursorEvent(
-    ctx, event, pageID, delegate->GetPreferredSize(pageID).mPixelSize);
+  const auto contentSize = delegate->GetPreferredSize(pageID);
+  if (!contentSize.has_value()) {
+    return;
+  }
+
+  mDoodles->PostCursorEvent(ctx, event, pageID, contentSize->mPixelSize);
 }
 
 void PageSourceWithDelegates::ClearUserInput(PageID pageID) {

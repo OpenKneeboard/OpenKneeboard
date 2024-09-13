@@ -458,19 +458,19 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
   return mDocumentResources->mPageIDs;
 }
 
-PreferredSize PDFFilePageSource::GetPreferredSize(PageID id) {
+std::optional<PreferredSize> PDFFilePageSource::GetPreferredSize(PageID id) {
   if (!mDocumentResources) {
-    return {};
+    return std::nullopt;
   }
 
   auto it = std::ranges::find(mDocumentResources->mPageIDs, id);
   if (it == mDocumentResources->mPageIDs.end()) {
-    return {};
+    return std::nullopt;
   }
   const auto index = it - mDocumentResources->mPageIDs.begin();
   auto size = mDocumentResources->mPDFDocument.GetPage(index).Size();
 
-  return {
+  return PreferredSize {
     {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)},
     ScalingKind::Vector,
   };
@@ -519,10 +519,14 @@ void PDFFilePageSource::PostCursorEvent(
   KneeboardViewID ctx,
   const CursorEvent& ev,
   PageID pageID) {
-  const auto contentSize = this->GetPreferredSize(pageID).mPixelSize;
+  const auto contentSize = this->GetPreferredSize(pageID);
+  if (!contentSize) {
+    return;
+  }
+  const auto& pixelSize = contentSize->mPixelSize;
 
   if (!mDocumentResources->mLinks.contains(pageID)) {
-    mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
+    mDoodles->PostCursorEvent(ctx, ev, pageID, pixelSize);
     return;
   }
 
@@ -534,8 +538,8 @@ void PDFFilePageSource::PostCursorEvent(
   scope_exit repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
   CursorEvent pageEvent {ev};
-  pageEvent.mX /= contentSize.mWidth;
-  pageEvent.mY /= contentSize.mHeight;
+  pageEvent.mX /= pixelSize.mWidth;
+  pageEvent.mY /= pixelSize.mHeight;
 
   links->PostCursorEvent(ctx, pageEvent);
 
@@ -543,7 +547,7 @@ void PDFFilePageSource::PostCursorEvent(
     return;
   }
 
-  mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
+  mDoodles->PostCursorEvent(ctx, ev, pageID, pixelSize);
 }
 
 bool PDFFilePageSource::CanClearUserInput(PageID id) const {
@@ -641,9 +645,14 @@ PDFFilePageSource::RenderPage(RenderContext rc, PageID pageID, PixelRect rect) {
   if (!mDocumentResources->mCache.contains(rtid)) {
     mDocumentResources->mCache[rtid] = std::make_unique<CachedLayer>(mDXR);
   }
+
+  const auto preferredSize = this->GetPreferredSize(pageID);
+  if (!preferredSize) {
+    co_return;
+  }
+
   const auto cacheDimensions
-    = this->GetPreferredSize(pageID).mPixelSize.IntegerScaledToFit(
-      MaxViewRenderSize);
+    = preferredSize->mPixelSize.IntegerScaledToFit(MaxViewRenderSize);
   co_await mDocumentResources->mCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),

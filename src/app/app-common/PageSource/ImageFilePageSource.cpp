@@ -288,15 +288,16 @@ std::vector<PageID> ImageFilePageSource::GetPageIDs() const {
   return ret;
 }
 
-PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
+std::optional<PreferredSize> ImageFilePageSource::GetPreferredSize(
+  PageID pageID) {
   auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
-    return {};
+    return std::nullopt;
   }
 
   const auto size = bitmap->GetPixelSize();
 
-  return {{size.width, size.height}, ScalingKind::Bitmap};
+  return PreferredSize {{size.width, size.height}, ScalingKind::Bitmap};
 }
 
 task<void> ImageFilePageSource::RenderPage(

@@ -50,9 +50,8 @@ class IPageSource {
   virtual PageIndex GetPageCount() const = 0;
   virtual std::vector<PageID> GetPageIDs() const = 0;
 
-  virtual PreferredSize GetPreferredSize(PageID) = 0;
-  virtual task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) = 0;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) = 0;
+  virtual task<void> RenderPage(RenderContext, PageID, PixelRect rect) = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;

@@ -62,7 +62,7 @@ class PDFFilePageSource final
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;
-  virtual PreferredSize GetPreferredSize(PageID) final override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) final override;
 
   std::filesystem::path GetPath() const;
   task<void> SetPath(const std::filesystem::path& path);

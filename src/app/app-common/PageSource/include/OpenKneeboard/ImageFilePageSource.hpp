@@ -25,9 +25,9 @@
 #include <OpenKneeboard/IPageSource.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <filesystem>
 
@@ -49,7 +49,7 @@ class ImageFilePageSource final
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;
-  virtual PreferredSize GetPreferredSize(PageID) final override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) final override;
 
   bool CanOpenFile(const std::filesystem::path&) const;
   static bool CanOpenFile(

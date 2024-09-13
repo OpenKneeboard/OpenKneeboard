@@ -25,10 +25,10 @@
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/utf8.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <memory>
 #include <mutex>
@@ -57,9 +57,8 @@ class PlainTextPageSource final : public IPageSource,
 
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
-  virtual PreferredSize GetPreferredSize(PageID) override;
-  task<void>
-  RenderPage(RenderContext, PageID, PixelRect rect) override;
+  virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
  private:
   static constexpr int RENDER_SCALE = 1;
