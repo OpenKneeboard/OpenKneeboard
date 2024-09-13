@@ -80,6 +80,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
   std::shared_ptr<TabView> mTabView;
+  EventHandlerToken mTabViewRepaintToken;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   D2D1_COLOR_F mBackgroundColor;

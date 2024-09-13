@@ -65,14 +65,18 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
     return errorMapping;
   }
   const auto nextSize = tabView->GetPreferredSize();
-  const auto& ps = nextSize.mPixelSize;
+  if (!nextSize.has_value()) {
+    return errorMapping;
+  }
+
+  const auto& ps = nextSize->mPixelSize;
 
   if (ps.mWidth == 0 || ps.mHeight == 0) {
     return errorMapping;
   }
 
   return {
-    nextSize,
+    nextSize.value(),
     {{}, ps},
     {{}, ps},
   };

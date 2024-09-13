@@ -367,10 +367,11 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
 }
 
 PreferredSize KneeboardView::GetPreferredSize() const {
+  constexpr PreferredSize errorSize {ErrorRenderSize, ScalingKind::Vector};
   if (!mCurrentTabView) {
-    return {ErrorRenderSize, ScalingKind::Vector};
+    return errorSize;
   }
-  return mCurrentTabView->GetPreferredSize();
+  return mCurrentTabView->GetPreferredSize().value_or(errorSize);
 }
 
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {

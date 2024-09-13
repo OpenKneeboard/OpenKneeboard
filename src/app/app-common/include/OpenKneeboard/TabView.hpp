@@ -67,7 +67,7 @@ class TabView final : private EventReceiver {
 
   std::shared_ptr<ITab> GetTab() const;
 
-  PreferredSize GetPreferredSize() const;
+  std::optional<PreferredSize> GetPreferredSize() const;
 
   void PostCursorEvent(const CursorEvent&);
 

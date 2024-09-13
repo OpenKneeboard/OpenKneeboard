@@ -25,12 +25,11 @@
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/ThreadGuard.hpp>
 
-#include <source_location>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/inttypes.hpp>
 
 #include <memory>
+#include <source_location>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -85,7 +84,11 @@ class KneeboardView final : private EventReceiver,
   };
 
   IPCRenderLayout GetIPCRenderLayout() const;
-  /// ContentRenderRect may be scaled; this is the 'real' size.
+  /** ContentRenderRect may be scaled; this is the 'real' size.
+   *
+   * This is *not* an `std::optional<>`, as even without a tab/page, a real size
+   * is needed to map tablet input to toolbars/menus.
+   */
   PreferredSize GetPreferredSize() const;
 
   [[nodiscard]] task<void> RenderWithChrome(

@@ -383,7 +383,7 @@ void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
 
   mTabView = state;
   if (state) {
-  mRenderTarget = GetRenderTarget(mDXR, state->GetRuntimeID());
+    mRenderTarget = GetRenderTarget(mDXR, state->GetRuntimeID());
     mTabViewRepaintToken = AddEventListener(
       state->evNeedsRepaintEvent, {this, &TabPage::PaintLater});
   } else {
@@ -656,12 +656,11 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
-  if (!mTabView) {
-    throw std::logic_error("Attempt to fetch Page Metrics without a tab");
-  }
-  const auto preferredSize = mTabView->GetPageIDs().size() == 0
-    ? PreferredSize {mPanelDimensions}
-    : mTabView->GetPreferredSize();
+  OPENKNEEBOARD_ASSERT(
+    mTabView, "Attempt to fetch Page Metrics without a TabView");
+
+  const auto preferredSize
+    = mTabView->GetPreferredSize().value_or(PreferredSize {mPanelDimensions});
 
   const auto& contentNativeSize = preferredSize.mPixelSize;
 

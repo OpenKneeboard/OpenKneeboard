@@ -110,13 +110,13 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
   if (!receiver) {
     return;
   }
-  const auto size = this->GetPreferredSize().mPixelSize;
-  if (size == PixelSize {}) {
+  const auto size = this->GetPreferredSize();
+  if (!size.has_value()) {
     return;
   }
   CursorEvent tabEvent {ev};
-  tabEvent.mX *= size.mWidth;
-  tabEvent.mY *= size.mHeight;
+  tabEvent.mX *= size->mPixelSize.mWidth;
+  tabEvent.mY *= size->mPixelSize.mHeight;
   receiver->PostCursorEvent(mKneeboardViewID, tabEvent, this->GetPageID());
 }
 
@@ -219,8 +219,16 @@ void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
   evNeedsRepaintEvent.Emit();
 }
 
-PreferredSize TabView::GetPreferredSize() const {
-  return GetTab()->GetPreferredSize(GetPageID());
+std::optional<PreferredSize> TabView::GetPreferredSize() const {
+  auto tab = this->GetTab();
+  if (!tab) {
+    return std::nullopt;
+  }
+  const auto currentPage = this->GetPageID();
+  if (!std::ranges::contains(tab->GetPageIDs(), currentPage)) {
+    return std::nullopt;
+  }
+  return tab->GetPreferredSize(currentPage);
 }
 
 TabMode TabView::GetTabMode() const {
