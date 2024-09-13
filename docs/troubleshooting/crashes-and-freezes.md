@@ -29,6 +29,8 @@ If you have an unsupported tablet driver, you might want to [try OpenTabletDrive
 
 ### Getting a dump file for a crash
 
+**If you are on v1.9 or above:** send the txt and dmp file from `%LOCALAPPDATA%\OpenKneeboard\Logs\Crashes` instead of following the instructions below.
+
 If you are able to reproduce the issue or it repeats itself over time:
 
 1. Enable full dumps; this may create files > 200mb in size. Run `%PROGRAMFILES%\OpenKneeboard\scripts\enable-full-dumps.reg`
