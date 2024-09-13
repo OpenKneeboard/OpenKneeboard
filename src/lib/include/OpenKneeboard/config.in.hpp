@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Pixels.hpp>
+#include <OpenKneeboard/PreferredSize.hpp>
 
 #include <OpenKneeboard/detail/config.hpp>
 
@@ -40,9 +41,14 @@ constexpr bool Is64BitBuild = (BuildBitness == 64);
 // go backwards is a very easy way to diagnose issues :)
 constexpr unsigned int SHMSwapchainLength = 2;
 constexpr PixelSize MaxViewRenderSize {2048, 2048};
-constexpr PixelSize ErrorRenderSize {768, 1024};
 constexpr unsigned char MaxViewCount = 16;
 constexpr unsigned int FramesPerSecond = 90;
+
+constexpr PixelSize ErrorPixelSize {768, 1024};
+constexpr PreferredSize ErrorPreferredSize {
+  ErrorPixelSize,
+  ScalingKind::Vector,
+};
 
 constexpr float CursorRadiusDivisor = 400.0f;
 constexpr float CursorStrokeDivisor = CursorRadiusDivisor;

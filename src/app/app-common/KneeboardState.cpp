@@ -166,9 +166,9 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
     const auto layout = view->GetIPCRenderLayout();
     const auto layoutSize
-      = (layout.mSize == PixelSize {}) ? ErrorRenderSize : layout.mSize;
+      = (layout.mSize == PixelSize {}) ? ErrorPixelSize : layout.mSize;
     const auto contentLocation = (layout.mSize == PixelSize {})
-      ? PixelRect {{0, 0}, ErrorRenderSize}
+      ? PixelRect {{0, 0}, ErrorPixelSize}
       : layout.mContent;
     const PixelRect fullLocation {
       {0, 0},

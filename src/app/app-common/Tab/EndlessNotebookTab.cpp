@@ -21,10 +21,10 @@
 #include <OpenKneeboard/EndlessNotebookTab.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 
@@ -158,10 +158,7 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
     return mSource->GetPreferredSize(mSourcePageID);
   }
 
-  return {
-    ErrorRenderSize,
-    ScalingKind::Vector,
-  };
+  return ErrorPreferredSize;
 }
 
 task<void> EndlessNotebookTab::RenderPage(

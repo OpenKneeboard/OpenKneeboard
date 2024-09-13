@@ -163,7 +163,7 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
 PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
-    return {ErrorRenderSize, ScalingKind::Vector};
+    return ErrorPreferredSize;
   }
   return delegate->GetPreferredSize(pageID);
 }
