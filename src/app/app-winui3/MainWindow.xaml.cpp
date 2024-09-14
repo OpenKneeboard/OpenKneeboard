@@ -996,6 +996,17 @@ OpenKneeboard::fire_and_forget MainWindow::OnAPIEvent(APIEvent ev) {
 OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
   OPENKNEEBOARD_TraceLoggingScope("MainWindow::OnTabsChanged()");
+
+  for (auto&& token: mTabsEvents) {
+    this->RemoveEventListener(token);
+  }
+  mTabsEvents.clear();
+  for (auto&& tab: mKneeboard->GetTabsList()->GetTabs()) {
+    mTabsEvents.push_back(this->AddEventListener(
+      tab->evSettingsChangedEvent,
+      &MainWindow::OnTabsChanged | bind_refs_front(this)));
+  }
+
   // In theory, we could directly mutate Navigation().MenuItems();
   // unfortunately, NavigationView contains a race condition, so
   // `MenuItems().Clear()` is unsafe.

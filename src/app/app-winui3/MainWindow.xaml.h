@@ -112,6 +112,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   task<void> FrameTick(std::chrono::steady_clock::time_point nextFrameAt);
   single_threaded_lockable mFrameInProgress;
 
+  std::vector<EventHandlerToken> mTabsEvents;
+
   OpenKneeboard::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   OpenKneeboard::fire_and_forget OnTabChanged() noexcept;
   OpenKneeboard::fire_and_forget OnTabsChanged();
