@@ -31,11 +31,14 @@ BrowserTab::BrowserTab(
   const winrt::guid& persistentID,
   std::string_view title,
   const Settings& settings)
-  : TabBase(persistentID, title),
+  : TabBase(
+      persistentID,
+      title.empty() ? std::string_view {_("Web Dashboard")} : title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs),
-    mSettings(settings) {
+    mSettings(settings),
+    mHaveTitle(!title.empty()) {
 }
 
 task<std::shared_ptr<BrowserTab>> BrowserTab::Create(
@@ -72,6 +75,20 @@ task<void> BrowserTab::Reload() {
   co_await this->SetDelegates({});
   mDelegate = co_await WebView2PageSource::Create(
     mDXR, mKneeboard, WebView2PageSource::Kind::WebDashboard, mSettings);
+  this->RemoveAllEventListeners();
+  AddEventListener(
+    mDelegate->evDocumentTitleChangedEvent,
+    {
+      this,
+      [](auto self, auto title) -> fire_and_forget {
+        if (self->mHaveTitle) {
+          co_return;
+        }
+        co_await self->mUIThread;
+        self->SetTitle(title);
+        self->mHaveTitle = true;
+      },
+    });
   co_await this->SetDelegates({mDelegate});
 }
 

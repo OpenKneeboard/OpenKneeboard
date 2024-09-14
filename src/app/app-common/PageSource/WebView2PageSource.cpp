@@ -363,6 +363,8 @@ void WebView2PageSource::ConnectRenderer(WebView2Renderer* renderer) {
   AddEventListener(renderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     renderer->evJSAPI_PageChangeRequested, this->evPageChangeRequestedEvent);
+  AddEventListener(
+    renderer->evDocumentTitleChangedEvent, this->evDocumentTitleChangedEvent);
 }
 
 OpenKneeboard::fire_and_forget WebView2PageSource::OnJSAPI_SetPages(

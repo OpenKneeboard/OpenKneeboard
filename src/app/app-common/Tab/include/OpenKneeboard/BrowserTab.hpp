@@ -81,6 +81,7 @@ class BrowserTab final : public TabBase,
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;
+  bool mHaveTitle {false};
 
   std::shared_ptr<WebView2PageSource> mDelegate;
 };

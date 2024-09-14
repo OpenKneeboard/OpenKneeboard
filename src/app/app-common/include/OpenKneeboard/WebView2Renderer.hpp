@@ -153,6 +153,8 @@ class WebView2Renderer final : public WGCRenderer {
     const InstanceID&,
     const nlohmann::json&);
 
+  Event<std::string> evDocumentTitleChangedEvent;
+
  protected:
   virtual task<void> InitializeContentToCapture() override;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const override;

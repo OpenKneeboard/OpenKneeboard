@@ -93,6 +93,8 @@ class WebView2PageSource final
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
 
+  Event<std::string> evDocumentTitleChangedEvent;
+
  private:
   using APIPage = WebView2Renderer::APIPage;
   using InstanceID = WebView2Renderer::InstanceID;

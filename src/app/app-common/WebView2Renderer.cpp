@@ -212,6 +212,10 @@ task<void> WebView2Renderer::InitializeContentToCapture() {
       self->mDocumentResources.mPages = self->mInitialPages;
     }
   } | bind_refs_front(this));
+  mWebView.DocumentTitleChanged([](auto self) {
+    self->evDocumentTitleChangedEvent.Emit(
+      winrt::to_string(self->mWebView.DocumentTitle()));
+  } | bind_refs_front(this) | drop_winrt_event_args());
 
   co_await this->ImportJavascriptFile(
     Filesystem::GetImmutableDataDirectory() / "WebView2.js");
