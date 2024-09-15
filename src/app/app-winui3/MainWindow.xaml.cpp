@@ -1002,6 +1002,9 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
   }
   mTabsEvents.clear();
   for (auto&& tab: mKneeboard->GetTabsList()->GetTabs()) {
+    if (!tab) {
+      continue;
+    }
     mTabsEvents.push_back(this->AddEventListener(
       tab->evSettingsChangedEvent,
       &MainWindow::OnTabsChanged | bind_refs_front(this)));
