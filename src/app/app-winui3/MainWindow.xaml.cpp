@@ -1016,6 +1016,8 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
   //
   // Work around this by using a property instead.
 
+  TraceLoggingWrite(
+    gTraceProvider, "MainWindow::OnTabsChanged()/EmittingPropertyChanged");
   this->mPropertyChangedEvent(
     *this,
     Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"NavigationItems"));
@@ -1026,7 +1028,10 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
 winrt::Windows::Foundation::Collections::IVector<
   winrt::Windows::Foundation::IInspectable>
 MainWindow::NavigationItems() noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("MainWindow::NavigationItems()");
   const std::shared_lock lock(*mKneeboard);
+  TraceLoggingWrite(
+    gTraceProvider, "OpenKneeboard::NavigationItems()/HaveLock");
   auto navItems = winrt::single_threaded_vector<IInspectable>();
   navItems.Clear();
 
