@@ -28,9 +28,7 @@
 
 #include <intrin.h>
 
-namespace OpenKneeboard {
-
-inline namespace Config {
+namespace OpenKneeboard::inline Config {
 
 constexpr auto BuildBitness = sizeof(void*) * 8;
 constexpr bool Is32BitBuild = (BuildBitness == 32);
@@ -74,25 +72,7 @@ constexpr const wchar_t GlyphFont[] {L"Segoe MDL2 Assets"};
 constexpr const wchar_t FixedWidthUIFont[] {L"Consolas"};
 constexpr const wchar_t FixedWidthContentFont[] {L"Consolas"};
 
-}// namespace Config
-
-namespace Detail {
-/* TODO (C++23): this should be inlined into OPENKNEEBOARD_FATAL, but with
- * C++20, need a real function instead of a lambda for [[noreturn]].
- *
- * The wrapper shouldn't be necessary at all given the definition has
- * __declspec(noreturn), but MSVC isn't treating that as equivalent to
- * [[noreturn]]
- */
-inline void fatal [[noreturn]] () {
-  // The FAST_FAIL_FATAL_APP_EXIT macro is defined in winnt.h, but we don't want
-  // to pull that in here...
-  constexpr unsigned int fast_fail_fatal_app_exit = 7;
-  __fastfail(fast_fail_fatal_app_exit);
-}
-}// namespace Detail
-
-}// namespace OpenKneeboard
+}// namespace OpenKneeboard::inline Config
 
 #ifdef DEBUG
 #define OPENKNEEBOARD_BREAK __debugbreak()
