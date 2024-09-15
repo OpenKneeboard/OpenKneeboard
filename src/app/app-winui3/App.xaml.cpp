@@ -129,21 +129,73 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
   co_await winrt::get_self<implementation::MainWindow>(window)->Init();
 }
 
+static void MigrateBackups(const std::filesystem::path& backupsDirectory) {
+  const auto oldBackupsDirectory
+    = Filesystem::GetLocalAppDataDirectory() / "Backups";
+  if (!std::filesystem::exists(oldBackupsDirectory)) {
+    return;
+  }
+
+  // Is it a shortcut to the new backups directory?
+  {
+    const auto shortcut
+      = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
+    const auto file = shortcut.as<IPersistFile>();
+    if (SUCCEEDED(
+          file->Load(oldBackupsDirectory.wstring().c_str(), STGM_READ))) {
+      return;
+    }
+  }
+
+  for (auto&& it:
+       std::filesystem::recursive_directory_iterator(oldBackupsDirectory)) {
+    if (!it.is_regular_file()) {
+      continue;
+    }
+    const auto relative
+      = std::filesystem::relative(it.path(), oldBackupsDirectory);
+    std::filesystem::rename(it.path(), backupsDirectory / relative);
+  }
+  std::filesystem::remove_all(oldBackupsDirectory);
+}
+
+static void CreateBackupsShortcut(
+  const std::filesystem::path& backupsDirectory) {
+  const auto shortcutFrom = Filesystem::GetLocalAppDataDirectory() / "Backups";
+  if (std::filesystem::exists(shortcutFrom)) {
+    return;
+  }
+
+  auto shortcut = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
+  shortcut->SetPath(backupsDirectory.wstring().c_str());
+  shortcut->SetDescription(
+    std::format(L"Shortcut to {}", backupsDirectory).c_str());
+
+  auto persist = shortcut.as<IPersistFile>();
+  persist->Save(shortcutFrom.wstring().c_str(), TRUE);
+}
+
 static void BackupSettings() {
   const auto settingsPath = Filesystem::GetSettingsDirectory();
   if (std::filesystem::is_empty(settingsPath)) {
     return;
   }
 
+  // Now we create backups outside of that so that people who manually delete
+  // the entire `%LOCALAPPDATA%\OpenKneeboard` folder don't *accidentally*
+  // delete the backups too
+  const auto backupsDirectory
+    = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>()
+    / "OpenKneeboard Backups";
+  std::filesystem::create_directories(backupsDirectory);
+  MigrateBackups(backupsDirectory);
+  CreateBackupsShortcut(backupsDirectory);
+
   const auto lastVersion = wil::reg::try_get_value_string(
     HKEY_CURRENT_USER, Config::RegistrySubKey, L"AppVersionAtLastBackup");
   if (lastVersion == Version::ReleaseNameW) {
     return;
   }
-
-  const auto backupsDirectory
-    = Filesystem::GetLocalAppDataDirectory() / "Backups";
-  std::filesystem::create_directories(backupsDirectory);
 
   const auto now = std::chrono::zoned_time(
     std::chrono::current_zone(),
