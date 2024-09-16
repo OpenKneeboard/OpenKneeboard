@@ -88,7 +88,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   FrameworkElement mProfileSwitcher {nullptr};
 
   std::vector<EventHandlerToken> mKneeboardViewEvents;
-  DispatcherQueueTimer mFrameTimer {nullptr};
   std::stop_source mFrameLoopStopSource;
   std::optional<task<void>> mFrameLoop;
 
