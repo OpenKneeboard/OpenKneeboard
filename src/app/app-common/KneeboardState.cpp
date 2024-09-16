@@ -425,6 +425,10 @@ task<void> KneeboardState::FlushOrderedEventQueue(
     co_await winrt::resume_on_signal(mQueueFlushedEvent.get());
     co_return;
   }
+  if (mOrderedEventQueue.empty()) {
+    co_return;
+  }
+
   mFlushingQueue = true;
 
   ResetEvent(mQueueFlushedEvent.get());
@@ -433,12 +437,19 @@ task<void> KneeboardState::FlushOrderedEventQueue(
     mFlushingQueue = false;
   });
 
+  size_t processed = 0;
   while (std::chrono::steady_clock::now() < stopAt
          && !mOrderedEventQueue.empty()) {
     auto it = std::move(mOrderedEventQueue.front());
     mOrderedEventQueue.pop();
     co_await it();
+    ++processed;
   }
+
+  OPENKNEEBOARD_TraceLoggingWrite(
+    "KneeboardState::FlushOrderedEventQueue()",
+    TraceLoggingValue(processed, "Processed"),
+    TraceLoggingValue(mOrderedEventQueue.size(), "Remaining"));
 }
 
 task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
