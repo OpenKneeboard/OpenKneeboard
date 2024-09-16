@@ -269,6 +269,10 @@ int main(int argc, char** argv) {
 
       wil::verify_hresult(diaSession->findSymbolByAddr(
         frame->mSection, frame->mOffset, SymTagFunction, symbol.put()));
+      if (!symbol) {
+        std::println("{}", line);
+        continue;
+      }
       DWORD functionBaseOffset {};
       symbol->get_addressOffset(&functionBaseOffset);
 
@@ -278,13 +282,25 @@ int main(int argc, char** argv) {
 
       wil::com_ptr<IDiaEnumLineNumbers> linesEnum;
       wil::verify_hresult(diaSession->findLinesByAddr(
-        frame->mSection, frame->mOffset, 1, linesEnum.put()));
+        frame->mSection, frame->mOffset, sizeof(void*), linesEnum.put()));
 
       wil::com_ptr<IDiaLineNumber> diaLine;
-      linesEnum->Item(0, diaLine.put());
+      wil::verify_hresult(linesEnum->Item(0, diaLine.put()));
+
+      if (!diaLine) {
+        std::println(
+          "{}> \x1b[33m{}\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
+          counter.str(),
+          "no source",
+          module,
+          symbolName,
+          frame->mOffset - functionBaseOffset);
+        continue;
+      }
 
       wil::com_ptr<IDiaSourceFile> diaFile;
       wil::verify_hresult(diaLine->get_sourceFile(diaFile.put()));
+
       wil::unique_bstr fileNameW;
       diaFile->get_fileName(fileNameW.put());
       const auto fileName = wide_to_utf8(fileNameW.get());
