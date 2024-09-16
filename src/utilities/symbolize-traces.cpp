@@ -162,7 +162,9 @@ int main(int argc, char** argv) {
   //
   // 0> OpenKneeboardApp+0x85B5
   // 5> OpenKneeboardApp!VSDesignerDllMain+0x5A394
-  const std::regex entry_regex {"^(\\d+)> (\\w+)(!(\\w+))?\\+0x([A-Z0-9]+)$"};
+  // Blame frame: :0:0 - OpenKneeboardApp!VSDesignerDllMain+0x226F2
+  const std::regex entry_regex {
+    "^(\\d+>|Blame frame: [^ ]+ -) (\\w+)(!(\\w+))?\\+0x([A-Z0-9]+)$"};
   std::smatch entry_match;
 
   if (pdbDirectory.empty()) {
@@ -181,7 +183,7 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    const auto counter = entry_match[1];
+    const auto prefix = entry_match[1];
     const auto module = entry_match[2].str();
     const auto function = entry_match[4].str();
     const auto raw_offset = std::stoi(entry_match[5], nullptr, 16);
@@ -289,8 +291,8 @@ int main(int argc, char** argv) {
 
       if (!diaLine) {
         std::println(
-          "{}> \x1b[33m{}\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
-          counter.str(),
+          "{} \x1b[33m{}\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
+          prefix.str(),
           "no source",
           module,
           symbolName,
@@ -311,8 +313,8 @@ int main(int argc, char** argv) {
       diaLine->get_lineNumberEnd(&lastLine);
 
       std::println(
-        "{}> \x1b[33m{}({})\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
-        counter.str(),
+        "{} \x1b[33m{}({})\x1b[0m: {}!\x1b[32m{}\x1b[0m+0x{:0X}",
+        prefix.str(),
         fileName,
         firstLine,
         module,
