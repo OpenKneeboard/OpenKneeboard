@@ -75,13 +75,42 @@ std::string wide_to_utf8(std::wstring_view wide) {
   return ret;
 }
 
+static void usage(int argc, char** argv) {
+  std::println(
+    stderr, "Usage: {} [--pdb-path FOLDER_PATH] CRASH_TEXT_FILE", argv[0]);
+}
+
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    std::println(stderr, "Usage: {} CRASH_TEXT_FILE", argv[0]);
+  std::filesystem::path pdbDirectory;
+  std::filesystem::path logFile;
+  for (int i = 1; i < argc; ++i) {
+    const std::string_view arg {argv[i]};
+    if (arg == "--help" || arg == "/?") {
+      usage(argc, argv);
+      return EXIT_FAILURE;
+    }
+    if (arg == "--pdb-path") {
+      if (i + 1 >= argc) {
+        usage(argc, argv);
+        return EXIT_FAILURE;
+      }
+      pdbDirectory = {argv[++i]};
+      continue;
+    }
+
+    if (!logFile.empty()) {
+      usage(argc, argv);
+      return EXIT_FAILURE;
+    }
+
+    logFile = {arg};
+  }
+
+  if (logFile.empty()) {
+    usage(argc, argv);
     return EXIT_FAILURE;
   }
 
-  const std::filesystem::path logFile {argv[1]};
   if (!(std::filesystem::exists(logFile)
         && std::filesystem::is_regular_file(logFile))) {
     std::println(
@@ -136,12 +165,12 @@ int main(int argc, char** argv) {
   const std::regex entry_regex {"^(\\d+)> (\\w+)(!(\\w+))?\\+0x([A-Z0-9]+)$"};
   std::smatch entry_match;
 
-  std::filesystem::path exeFolder;
-  {
+  if (pdbDirectory.empty()) {
     wchar_t buf[MAX_PATH];
     auto charCount = GetModuleFileNameW(nullptr, buf, MAX_PATH);
-    exeFolder = std::filesystem::path {std::wstring_view {buf, charCount - 1}}
-                  .parent_path();
+    pdbDirectory
+      = std::filesystem::path {std::wstring_view {buf, charCount - 1}}
+          .parent_path();
   }
 
   std::ifstream f(logFile, std::ios::binary);
@@ -160,7 +189,7 @@ int main(int argc, char** argv) {
     bool loadedPdb = false;
     if (!seenModules.contains(module)) {
       seenModules[module] = {};
-      const auto pdbPath = (exeFolder / module).replace_extension(".pdb");
+      const auto pdbPath = (pdbDirectory / module).replace_extension(".pdb");
       if (std::filesystem::exists(pdbPath)) {
         wil::verify_hresult(
           diaSource->loadDataFromPdb(pdbPath.wstring().c_str()));
