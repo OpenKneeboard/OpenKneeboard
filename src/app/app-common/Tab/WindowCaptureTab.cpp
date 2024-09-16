@@ -497,11 +497,16 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
     }
   }
 
-  [](auto hwnd, auto weak) -> OpenKneeboard::fire_and_forget {
-    if (auto instance = weak.lock()) {
-      co_await instance->OnNewWindow(hwnd);
-    }
-  }(hwnd, std::weak_ptr(instance));
+  instance->mKneeboard->EnqueueOrderedEvent(std::bind_front(
+    [](auto weak, auto hwnd) -> task<void> {
+      auto self = weak.lock();
+      if (!self) {
+        co_return;
+      }
+      co_await self->OnNewWindow(hwnd);
+    },
+    std::weak_ptr {instance},
+    hwnd));
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
