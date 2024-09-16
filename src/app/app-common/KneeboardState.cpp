@@ -912,18 +912,15 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
 }
 
 bool KneeboardState::IsRepaintNeeded() const {
-  return mNeedsRepaint.test();
+  return mNeedsRepaint;
 }
 
 void KneeboardState::SetRepaintNeeded() {
-  if (mNeedsRepaint.test_and_set()) {
-    return;
-  }
-  this->SetRepaintNeeded();
+  mNeedsRepaint = true;
 }
 
 void KneeboardState::Repainted() {
-  mNeedsRepaint.clear();
+  mNeedsRepaint = false;
 }
 
 void KneeboardState::lock() {

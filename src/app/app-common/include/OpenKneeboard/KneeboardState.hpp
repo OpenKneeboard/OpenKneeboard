@@ -183,7 +183,7 @@ class KneeboardState final
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;
-  std::atomic_flag mNeedsRepaint;
+  bool mNeedsRepaint;
   winrt::apartment_context mUIThread;
   HWND mHwnd;
   audited_ptr<DXResources> mDXResources;
