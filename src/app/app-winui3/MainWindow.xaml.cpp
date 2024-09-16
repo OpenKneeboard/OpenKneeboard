@@ -368,7 +368,9 @@ task<void> MainWindow::FrameTick(
     activity, "FrameTick", TraceLoggingValue(repainted, "Repainted"));
   {
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
-    mKneeboard->evFrameTimerPostEvent.Emit(FramePostEventKind::WithRepaint);
+    mKneeboard->evFrameTimerPostEvent.Emit(
+      repainted ? FramePostEventKind::WithRepaint
+                : FramePostEventKind::WithoutRepaint);
   }
 
   // Finish any pending UI stuff
