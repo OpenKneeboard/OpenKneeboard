@@ -26,6 +26,14 @@ struct _GUID;
 
 namespace OpenKneeboard::Filesystem {
 
+// Using shortcuts rather than symlinks because symlinks require admin
+
+bool IsDirectoryShortcut(const std::filesystem::path&) noexcept;
+// Argument order matches std::filesystem::create_directory_symlink()
+void CreateDirectoryShortcut(
+  const std::filesystem::path& target,
+  const std::filesystem::path& link) noexcept;
+
 /** Differs from std::filesystem::temp_directory_path() in that
  * it guarantees to be in canonical form */
 std::filesystem::path GetTemporaryDirectory();

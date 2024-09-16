@@ -99,6 +99,29 @@ static std::filesystem::path GetTemporaryDirectoryImpl() {
   return std::filesystem::canonical(tempDir);
 }
 
+bool IsDirectoryShortcut(const std::filesystem::path& link) noexcept {
+  if (!std::filesystem::exists(link)) {
+    return false;
+  }
+
+  const auto shortcut
+    = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
+  const auto persist = shortcut.as<IPersistFile>();
+  return SUCCEEDED(persist->Load(link.wstring().c_str(), STGM_READ));
+}
+
+// Argument order matches std::filesystem::create_directory_symlink()
+void CreateDirectoryShortcut(
+  const std::filesystem::path& target,
+  const std::filesystem::path& link) noexcept {
+  auto shortcut = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
+  shortcut->SetPath(target.wstring().c_str());
+  shortcut->SetDescription(std::format(L"Shortcut to {}", target).c_str());
+
+  auto persist = shortcut.as<IPersistFile>();
+  winrt::check_hresult(persist->Save(link.wstring().c_str(), TRUE));
+}
+
 std::filesystem::path GetTemporaryDirectory() {
   static LazyPath sPath {[]() { return GetTemporaryDirectoryImpl(); }};
   return sPath;
@@ -252,9 +275,23 @@ std::filesystem::path GetLocalAppDataDirectory() {
 
 std::filesystem::path GetLogsDirectory() {
   static LazyPath sPath {[]() -> std::filesystem::path {
-    const auto ret = GetLocalAppDataDirectory() / "Logs";
-    std::filesystem::create_directories(ret);
-    return ret;
+    const auto oldPath = GetLocalAppDataDirectory() / "Logs";
+    const auto path
+      = GetKnownFolderPath<FOLDERID_LocalAppData>() / "OpenKneeboard Logs";
+
+    if (std::filesystem::exists(oldPath) && !std::filesystem::exists(path)) {
+      std::filesystem::rename(oldPath, path);
+    }
+
+    std::filesystem::create_directories(path);
+
+    if (!Filesystem::IsDirectoryShortcut(oldPath)) {
+      if (std::filesystem::exists(oldPath)) {
+        std::filesystem::remove_all(oldPath);
+      }
+      Filesystem::CreateDirectoryShortcut(path, oldPath);
+    }
+    return path;
   }};
   return sPath;
 }

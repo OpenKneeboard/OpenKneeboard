@@ -137,14 +137,8 @@ static void MigrateBackups(const std::filesystem::path& backupsDirectory) {
   }
 
   // Is it a shortcut to the new backups directory?
-  {
-    const auto shortcut
-      = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
-    const auto file = shortcut.as<IPersistFile>();
-    if (SUCCEEDED(
-          file->Load(oldBackupsDirectory.wstring().c_str(), STGM_READ))) {
-      return;
-    }
+  if (Filesystem::IsDirectoryShortcut(oldBackupsDirectory)) {
+    return;
   }
 
   for (auto&& it:
@@ -166,13 +160,7 @@ static void CreateBackupsShortcut(
     return;
   }
 
-  auto shortcut = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
-  shortcut->SetPath(backupsDirectory.wstring().c_str());
-  shortcut->SetDescription(
-    std::format(L"Shortcut to {}", backupsDirectory).c_str());
-
-  auto persist = shortcut.as<IPersistFile>();
-  persist->Save(shortcutFrom.wstring().c_str(), TRUE);
+  Filesystem::CreateDirectoryShortcut(backupsDirectory, shortcutFrom);
 }
 
 static void BackupSettings() {
