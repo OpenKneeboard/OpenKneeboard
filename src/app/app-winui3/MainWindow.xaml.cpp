@@ -417,6 +417,9 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   }
   co_await mUIThread;
 
+  if (mShuttingDown.test()) {
+    co_return;
+  }
   mFrameLoop = this->FrameLoop();
 
   co_await ShowSelfElevationWarning();
@@ -847,6 +850,11 @@ void MainWindow::SaveWindowPosition() {
 
 OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
+  if (mShuttingDown.test_and_set()) {
+    dprint.Error("Shutdown() called twice");
+    OPENKNEEBOARD_BREAK;
+  }
+
   auto self = get_strong();
   self->RemoveAllEventListeners();
   mWinEventHook.reset();
@@ -873,7 +881,9 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
 
   dprint("Stopping frame loop...");
   self->mFrameLoopStopSource.request_stop();
-  co_await std::move(self->mFrameLoop).value();
+  if (self->mFrameLoop) {
+    co_await std::move(self->mFrameLoop).value();
+  }
 
   dprint("Stopping event system...");
   {

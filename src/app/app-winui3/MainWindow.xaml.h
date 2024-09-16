@@ -97,6 +97,7 @@ struct MainWindow : MainWindowT<MainWindow>,
     ProfileSwitched,
     Other,
   };
+  std::atomic_flag mShuttingDown;
   TabSwitchReason mTabSwitchReason {TabSwitchReason::Other};
 
   // Used to track whether or not we've shown an elevation warning
