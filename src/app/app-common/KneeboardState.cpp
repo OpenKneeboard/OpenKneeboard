@@ -916,6 +916,7 @@ bool KneeboardState::IsRepaintNeeded() const {
 }
 
 void KneeboardState::SetRepaintNeeded() {
+  OPENKNEEBOARD_TraceLoggingWrite("KneeboardState::SetRepaintNeeded()");
   mNeedsRepaint = true;
 }
 
