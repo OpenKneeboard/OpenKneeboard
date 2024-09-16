@@ -22,8 +22,6 @@
 #include "App.xaml.h"
 // clang-format on
 
-#include <OpenKneeboard/config.h>
-
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
@@ -40,6 +38,7 @@
 #include <OpenKneeboard/WebView2PageSource.h>
 #include <OpenKneeboard/Win32.h>
 
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
@@ -473,6 +472,11 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   });
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+  // Backup code is in v1.9+ and won't be backported, but let's let it detect a
+  // downgrade + re-upgrade has happened
+  RegDeleteKeyValueW(
+    HKEY_CURRENT_USER, Config::RegistrySubKey, L"AppVersionAtLastBackup");
 
   // Strong
   auto troubleshootingStore = TroubleshootingStore::Get();
