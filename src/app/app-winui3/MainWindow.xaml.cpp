@@ -405,9 +405,10 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   co_await this->WriteInstanceData();
 
   auto xamlRoot = this->Content().XamlRoot();
+  mFrameLoop = this->FrameLoop();
+
   const auto updateResult
     = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
-  co_await mUIThread;
   if (updateResult == UpdateResult::InstallingUpdate) {
     co_return;
   }
@@ -415,12 +416,6 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
     co_await InstallPlugin(mKneeboard, xamlRoot, GetCommandLineW());
     mKneeboard->GetGamesList()->StartInjector();
   }
-  co_await mUIThread;
-
-  if (mShuttingDown.test()) {
-    co_return;
-  }
-  mFrameLoop = this->FrameLoop();
 
   co_await ShowSelfElevationWarning();
   co_await CheckAllDCSHooks(xamlRoot);
@@ -850,10 +845,6 @@ void MainWindow::SaveWindowPosition() {
 
 OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
-  if (mShuttingDown.test_and_set()) {
-    dprint.Error("Shutdown() called twice");
-    OPENKNEEBOARD_BREAK;
-  }
 
   auto self = get_strong();
   self->RemoveAllEventListeners();
