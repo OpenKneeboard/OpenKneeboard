@@ -214,6 +214,8 @@ class KneeboardState final
   std::optional<RunningGame> mCurrentGame;
 
   std::queue<std::function<task<void>()>> mOrderedEventQueue;
+  bool mFlushingQueue = false;
+  winrt::handle mQueueFlushedEvent;
 
   bool mSaveSettingsEnabled = true;
 

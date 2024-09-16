@@ -36,6 +36,7 @@
 #include <OpenKneeboard/TabsList.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 #include <OpenKneeboard/UserAction.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
@@ -67,6 +68,11 @@ std::shared_ptr<PluginStore> KneeboardState::GetPluginStore() const {
 
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
+  mQueueFlushedEvent = Win32::or_throw::CreateEventW(
+    nullptr,
+    /* bManualReset = */ TRUE,
+    /* bInitialState = */ FALSE,
+    nullptr);
 }
 
 task<void> KneeboardState::Init() {
@@ -278,6 +284,12 @@ task<void> KneeboardState::DisposeAsync() noexcept {
   for (auto& child: children) {
     co_await std::move(child);
   }
+
+  // We don't particularly care about things that are still in the queue, but if
+  // something has been started, we need to wait for it to finish
+  if (mFlushingQueue) {
+    co_await winrt::resume_on_signal(mQueueFlushedEvent.get());
+  }
 }
 
 task<void> KneeboardState::PostUserAction(UserAction action) {
@@ -409,6 +421,18 @@ void KneeboardState::EnqueueOrderedEvent(std::function<task<void>()> event) {
 
 task<void> KneeboardState::FlushOrderedEventQueue(
   std::chrono::time_point<std::chrono::steady_clock> stopAt) {
+  if (mFlushingQueue) {
+    co_await winrt::resume_on_signal(mQueueFlushedEvent.get());
+    co_return;
+  }
+  mFlushingQueue = true;
+
+  ResetEvent(mQueueFlushedEvent.get());
+  scope_exit signalCompletion([this]() {
+    SetEvent(mQueueFlushedEvent.get());
+    mFlushingQueue = false;
+  });
+
   while (std::chrono::steady_clock::now() < stopAt
          && !mOrderedEventQueue.empty()) {
     auto it = std::move(mOrderedEventQueue.front());
