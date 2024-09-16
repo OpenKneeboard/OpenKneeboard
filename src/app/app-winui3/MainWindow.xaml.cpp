@@ -347,18 +347,8 @@ task<void> MainWindow::FrameTick(
     mKneeboard->evFrameTimerPreEvent.Emit();
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
-  if (!mKneeboard->IsRepaintNeeded()) {
-    {
-      OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
-      mKneeboard->evFrameTimerPostEvent.Emit(
-        FramePostEventKind::WithoutRepaint);
-    }
-    TraceLoggingWriteStop(
-      activity, "FrameTick", TraceLoggingValue("No repaint needed", "Result"));
-    co_return;
-  }
-
-  {
+  bool repainted = false;
+  if (mKneeboard->IsRepaintNeeded()) {
     std::shared_lock kbLock(*mKneeboard);
     TraceLoggingWriteTagged(activity, "Kneeboard relocked");
     const std::unique_lock dxLock(*mDXR);
@@ -370,10 +360,12 @@ task<void> MainWindow::FrameTick(
     if (auto tab = Frame().Content().try_as<TabPage_WinRT>()) {
       co_await get_self<TabPage_Implementation>(tab)->PaintNow();
     }
+    mKneeboard->Repainted();
+    repainted = true;
   }
-  mKneeboard->Repainted();
+
   TraceLoggingWriteStop(
-    activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
+    activity, "FrameTick", TraceLoggingValue(repainted, "Repainted"));
   {
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
     mKneeboard->evFrameTimerPostEvent.Emit(FramePostEventKind::WithRepaint);
