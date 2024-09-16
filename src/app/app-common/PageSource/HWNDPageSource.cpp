@@ -254,6 +254,8 @@ HWNDPageSource::HWNDPageSource(
     mDXR(dxr),
     mCaptureWindow(window),
     mOptions(options) {
+  this->AddEventListener(
+    WGCRenderer::evNeedsRepaintEvent, IPageSource::evNeedsRepaintEvent);
   // Handle UWP input
   if (
     HWND child
