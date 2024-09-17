@@ -234,17 +234,11 @@ task<void> PDFFilePageSource::ReloadRenderer(
     }
   }
 
-  auto uiThread = mUIThread;
-  co_await uiThread;
-
-  if (auto self = weak.lock()) {
-    evContentChangedEvent.Emit();
-  }
+  evContentChangedEvent.Emit();
 }
 
 task<void> PDFFilePageSource::ReloadNavigation(
   std::weak_ptr<DocumentResources> weakDoc) {
-  auto uiThread = mUIThread;
   auto weak = weak_from_this();
 
   {
@@ -324,11 +318,7 @@ task<void> PDFFilePageSource::ReloadNavigation(
     doc->mLinks = std::move(linkHandlers);
   }
 
-  stayingAlive.reset();
-  co_await uiThread;
-  if ((stayingAlive = weak.lock())) {
-    this->evAvailableFeaturesChangedEvent.Emit();
-  }
+  this->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
 }
 
 PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
