@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/174820414",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/174820414/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/174820414/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.6",
-    "id": 174820414,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175308019",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175308019/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175308019/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.8",
+    "id": 175308019,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Ka4w-",
-    "tag_name": "v1.9.6",
+    "node_id": "RE_kwDOGk0DR84Kcvzz",
+    "tag_name": "v1.9.8",
     "target_commitish": "master",
-    "name": "v1.9.6 - for developers and testers",
+    "name": "v1.9.8 - for developers and testers",
     "draft": false,
     "prerelease": true,
-    "created_at": "2024-09-12T17:27:44Z",
-    "published_at": "2024-09-12T18:07:23Z",
+    "created_at": "2024-09-16T18:41:45Z",
+    "published_at": "2024-09-16T20:26:55Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/192252263",
-        "id": 192252263,
-        "node_id": "RA_kwDOGk0DR84LdYln",
-        "name": "OpenKneeboard-v1.9.6-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/193000681",
+        "id": 193000681,
+        "node_id": "RA_kwDOGk0DR84LgPTp",
+        "name": "OpenKneeboard-v1.9.8-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 242028865,
+        "size": 242737754,
         "download_count": 0,
-        "created_at": "2024-09-12T18:04:52Z",
-        "updated_at": "2024-09-12T18:04:56Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.6/OpenKneeboard-v1.9.6-DebugSymbols.zip"
+        "created_at": "2024-09-16T19:18:39Z",
+        "updated_at": "2024-09-16T19:18:47Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.8/OpenKneeboard-v1.9.8-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/192252264",
-        "id": 192252264,
-        "node_id": "RA_kwDOGk0DR84LdYlo",
-        "name": "OpenKneeboard-v1.9.6.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/193000680",
+        "id": 193000680,
+        "node_id": "RA_kwDOGk0DR84LgPTo",
+        "name": "OpenKneeboard-v1.9.8.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 45027328,
+        "size": 45051904,
         "download_count": 0,
-        "created_at": "2024-09-12T18:04:52Z",
-        "updated_at": "2024-09-12T18:04:53Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.6/OpenKneeboard-v1.9.6.msi"
+        "created_at": "2024-09-16T19:18:39Z",
+        "updated_at": "2024-09-16T19:18:41Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.8/OpenKneeboard-v1.9.8.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.9.6",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.9.6",
-    "body": "Start by downloading [OpenKneeboard-v1.9.6.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.6/OpenKneeboard-v1.9.6.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Warning\r\n\r\nThis version of OpenKneeboard has not been thoroughly tested; you are more likely to encounter issues. **It is intended for developers and testers**.\r\n\r\nIt is *highly* recommended that you back up your `Saved Games\\OpenKneeboard` folder before using this version.\r\n\r\n# Changes since v1.9.4\r\n\r\n- 🐛 Fix C/Lua API (e.g. DCS) crash if OpenKneeboard is not running\r\n- 🐛 Improve efficiency and safety of remote controls and other API event handling (e.g. OpenKneeboad crashing in response to DCS activity)\r\n- 🐛 Fix intermittent crashes if PDFs are unloaded while they're still loading (e.g. when switching profiles very rapidly)\r\n- 🐛 Fix intermittent crashes if the list of tabs is changed while tabs are loading (e.g. when switching profiles very rapidly)\r\n- 🐛 Wait for one API event/remote control (e.g. profile switch) to be complete before starting processing the next\r\n- 📉 Revert Windows App SDK from v1.6 to v1.5; this re-introduces some mouse-handling bugs in Web Dashboards, but fixes scrolling and other core UI issues in the main app\r\n- 📝 Test releases are now more clearly marked\r\n- 📝 Added more debug information when a task is resumed on the wrong thread\r\n\r\n# Changes since v1.9.2\r\n\r\n- Fixed crash when loading folder tabs\r\n- Improved logging when tabs fail to load\r\n\r\n# Changes since v1.8\r\n\r\nSee [the release notes for v1.9.2](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.2).\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.9.8",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.9.8",
+    "body": "Start by downloading [OpenKneeboard-v1.9.8.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.8/OpenKneeboard-v1.9.8.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- ✨ New web dashboard tabs will automatically have their tab name set to the web page title\r\n- 🚚 Settings backups have been moved from `%LOCALAPPDATA%\\OpenKneeboard\\Backups` to `%LOCALAPPDATA%\\OpenKneeboard Backups`, so that if you manually delete the `%LOCALAPPDATA%\\OpenKneeboard` folder, you don't delete the backups too\r\n- 🚚 Moved OpenKneeboard crash logs from `%LOCALAPPDATA%\\OpenKneeboard\\Logs` to `%LOCALAPPDATA%\\OpenKneeboard Logs`\r\n- 🐛 User input (e.g. tab switches) are now handled on the next frame timer, even if a new frame is not currently scheduled\r\n- 🐛 Fixed window capture tabs not updating correctly\r\n- 🐛 Fixed crash when switching to a profile with no tabs\r\n- 🐛 Renaming a tab now instantly affects the left navigation bar in the OpenKneeboard app\r\n- 🐛 Fixed crash when moving the mouse cursor over the OpenKneeboard app window when there is no current tab; this can be both when there are no tabs configured, or while a profile is loading\r\n- 🐛 Fixed various crashes when closing OpenKneeboard immediately after starting it (before OpenKneeboard's frame loop starts)\r\n- 🐛 Fixed crash if window capture tabs are present and a new window is created while a profile change is in progress\r\n- 🛠️ `symbolize-traces.exe` now takes an optional `--pdb-path` parameter\r\n- 🛠️ `symbolize-traces.exe` now handles frames with an invalid offset; this probably means the wrong PDB files are being used\r\n- 🛠️ `symbolize-traces.exe` now looks up symbols for the 'Blame frame' in an OpenKneeboard crash log"
   }
 ]
