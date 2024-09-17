@@ -245,11 +245,11 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   button.IsChecked(action->IsActive());
   button.Checked(
-    &ToolbarToggleAction::Activate | drop_winrt_event_args()
-    | bind_refs_front(action));
+    &ToolbarToggleAction::Activate | task_bind_refs_front(action)
+    | bind_enqueue(mKneeboard.get()) | drop_winrt_event_args());
   button.Unchecked(
-    &ToolbarToggleAction::Deactivate | drop_winrt_event_args()
-    | bind_refs_front(action));
+    &ToolbarToggleAction::Deactivate | task_bind_refs_front(action)
+    | bind_enqueue(mKneeboard.get()) | drop_winrt_event_args());
 
   AddEventListener(
     action->evStateChangedEvent,
@@ -285,7 +285,7 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
   return button;
 }
 
-OpenKneeboard::fire_and_forget TabPage::OnToolbarActionClick(
+task<void> TabPage::OnToolbarActionClick(
   std::shared_ptr<ToolbarAction> action) {
   auto confirm
     = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
@@ -314,8 +314,8 @@ muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
   button.Click(
-    &TabPage::OnToolbarActionClick | drop_winrt_event_args()
-    | bind_refs_front(this, action));
+    &TabPage::OnToolbarActionClick | task_bind_refs_front(this, action)
+    | bind_enqueue(mKneeboard.get()) | drop_winrt_event_args());
   return button;
 }
 
@@ -342,9 +342,9 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
   }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
-  ret.Click([](auto self, auto action, const auto&...) {
-    self->OnToolbarActionClick(action);
-  } | bind_refs_front(this, action));
+  ret.Click(
+    &TabPage::OnToolbarActionClick | task_bind_refs_front(this, action)
+    | bind_enqueue(mKneeboard.get()) | drop_winrt_event_args());
 
   AddEventListener(
     action->evStateChangedEvent,

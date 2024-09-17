@@ -106,8 +106,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   bool mNeedsFrame = true;
   void PaintLater();
 
-  OpenKneeboard::fire_and_forget OnToolbarActionClick(
-    std::shared_ptr<ToolbarAction>);
+  task<void> OnToolbarActionClick(std::shared_ptr<ToolbarAction>);
 
   float mCompositionScaleX {1.0f};
   float mCompositionScaleY {1.0f};
