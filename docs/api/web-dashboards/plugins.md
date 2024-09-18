@@ -73,9 +73,9 @@ All other version fields are interpreted as SEMVER.
 
 ### OpenKneeboard versions
 
-OpenKneeboard versions can be specified with between 1 and 4 components, although just specifying '1' (equivalent to `1.0.0.0`) is probably a bad idea. I recommend using two components for the minimum version, and 4 for max-tested version.
+OpenKneeboard versions can be specified with between 1 and 4 components, although just specifying '1' (equivalent to `1.0.0`) is probably a bad idea. I recommend using two components for the minimum version, and the full version for maximum tested version.
 
-You can get the 4-component version from opening the file properties for `OpenKneeboardApp.exe` in Windows Explorer in the 'details' tab', or by using the 'GHA' number as the fourth component. For example, `1.2.3+GHA4` is `1.2.3.4`.
+As the version field is SEMVER, you **must not** use the 4-dotted-integers form; for example, use `1.2.3+GHA.4` instead of `1.2.3.4`. `1.2.3.4` is not valid in SEMVER.
 
 As only the latest version of OpenKneeboard version is supported, there is no need to truly determine the minimum version of OpenKneeboard that your plugin is compatible with. For `OKBMinimumVersion` I recommend:
 
