@@ -51,6 +51,20 @@ task<std::shared_ptr<EndlessNotebookTab>> EndlessNotebookTab::Create(
   co_return ret;
 }
 
+task<void> EndlessNotebookTab::DisposeAsync() noexcept {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
+
+  auto child = std::dynamic_pointer_cast<IHasDisposeAsync>(mSource);
+  if (!child) {
+    co_return;
+  }
+
+  co_await child->DisposeAsync();
+}
+
 task<std::shared_ptr<EndlessNotebookTab>> EndlessNotebookTab::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,

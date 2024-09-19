@@ -24,6 +24,7 @@
 #include "TabBase.hpp"
 
 #include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
 #include <OpenKneeboard/ITabWithSettings.hpp>
 #include <OpenKneeboard/TabBase.hpp>
@@ -40,6 +41,7 @@ class KneeboardState;
 
 class EndlessNotebookTab final
   : public TabBase,
+    public IHasDisposeAsync,
     public virtual ITabWithSettings,
     public virtual IPageSourceWithCursorEvents,
     public virtual EventReceiver,
@@ -56,6 +58,8 @@ class EndlessNotebookTab final
     std::string_view title,
     const nlohmann::json&);
   virtual ~EndlessNotebookTab();
+
+  task<void> DisposeAsync() noexcept override;
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
@@ -89,6 +93,8 @@ class EndlessNotebookTab final
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
+  DisposalState mDisposal;
+
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
