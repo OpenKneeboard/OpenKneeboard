@@ -23,6 +23,10 @@
 #include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
 
+#include <Shlwapi.h>
+
+#include <wininet.h>
+
 namespace OpenKneeboard {
 
 PluginTab::PluginTab(
@@ -81,23 +85,44 @@ task<void> PluginTab::Reload() {
   mTabType = std::nullopt;
   co_await this->SetDelegates({});
 
-  const auto tabTypes = mKneeboard->GetPluginStore()->GetTabTypes();
-  const auto it = std::ranges::find(
-    tabTypes, mSettings.mPluginTabTypeID, &Plugin::TabType::mID);
+  Plugin plugin {};
+  for (auto&& it: mKneeboard->GetPluginStore()->GetPlugins()) {
+    for (auto&& tabType: it.mTabTypes) {
+      if (tabType.mID == mSettings.mPluginTabTypeID) {
+        mTabType = tabType;
+        plugin = it;
+        break;
+      }
+    }
+  }
 
-  if (it == tabTypes.end()) {
+  if (!mTabType) {
     dprint(
-      "WARNING: couldn't find plugin for tab type `{}`",
+      "WARNING: couldn't find plugin and implementation for tab type `{}`",
       mSettings.mPluginTabTypeID);
     co_return;
   }
 
-  mTabType = *it;
   using Kind = Plugin::TabType::Implementation;
-  switch (it->mImplementation) {
+  switch (mTabType->mImplementation) {
     case Kind::WebBrowser: {
-      const auto args
-        = std::get<Plugin::TabType::WebBrowserArgs>(it->mImplementationArgs);
+      const auto args = std::get<Plugin::TabType::WebBrowserArgs>(
+        mTabType->mImplementationArgs);
+      auto uri = args.mURI;
+      const std::string_view pluginScheme {"plugin://"};
+      if (uri.starts_with(pluginScheme)) {
+        char buffer[INTERNET_MAX_URL_LENGTH];
+        DWORD charCount {std::size(buffer)};
+        winrt::check_hresult(UrlCreateFromPathA(
+          plugin.mJSONPath.parent_path().string().c_str(),
+          buffer,
+          &charCount,
+          NULL));
+        uri.replace(
+          0,
+          pluginScheme.size(),
+          std::format("{}/", std::string_view {buffer, charCount}));
+      }
       mDelegate = co_await WebView2PageSource::Create(
         mDXResources,
         mKneeboard,
@@ -105,7 +130,7 @@ task<void> PluginTab::Reload() {
         WebView2PageSource::Settings {
           .mInitialSize = args.mInitialSize,
           .mIntegrateWithSimHub = false,
-          .mURI = args.mURI,
+          .mURI = uri,
         });
       co_await this->SetDelegates({mDelegate});
       co_return;

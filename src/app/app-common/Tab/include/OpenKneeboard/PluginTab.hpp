@@ -76,6 +76,7 @@ class PluginTab final : public TabBase,
 
   std::shared_ptr<IPageSource> mDelegate;
 
+  std::optional<Plugin> mPlugin;
   std::optional<Plugin::TabType> mTabType;
 };
 

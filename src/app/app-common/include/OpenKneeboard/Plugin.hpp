@@ -21,8 +21,9 @@
 
 #include <OpenKneeboard/Pixels.hpp>
 
-#include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/json/Geometry2D.hpp>
+
+#include <OpenKneeboard/json.hpp>
 
 #include <string>
 #include <variant>
@@ -90,6 +91,8 @@ struct Plugin {
   std::string mID;
   Metadata mMetadata;
   std::vector<TabType> mTabTypes;
+
+  std::filesystem::path mJSONPath;
 
   bool operator==(const Plugin&) const noexcept = default;
 };

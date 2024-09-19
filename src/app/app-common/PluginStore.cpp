@@ -111,9 +111,10 @@ PluginStore::~PluginStore() {
 void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
   dprint("Loading plugin from `{}`", jsonPath);
   try {
-    const auto plugin
+    auto plugin
       = nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
           .get<Plugin>();
+    plugin.mJSONPath = jsonPath;
     dprint(
       "Parsed plugin ID `{}` (`{}`), version `{}`",
       plugin.mID,
@@ -127,6 +128,10 @@ void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
     dprint("ERROR: C++ exception loading plugin: {}", e.what());
     OPENKNEEBOARD_BREAK;
   }
+}
+
+std::vector<Plugin> PluginStore::GetPlugins() const noexcept {
+  return mPlugins;
 }
 
 std::vector<Plugin::TabType> PluginStore::GetTabTypes() const noexcept {

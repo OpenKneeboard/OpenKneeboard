@@ -29,6 +29,7 @@ class PluginStore final {
   PluginStore();
   ~PluginStore();
 
+  std::vector<Plugin> GetPlugins() const noexcept;
   std::vector<Plugin::TabType> GetTabTypes() const noexcept;
   void Append(const Plugin&);
 

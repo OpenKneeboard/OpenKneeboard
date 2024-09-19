@@ -62,6 +62,15 @@ using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt;
 
+namespace {
+using unique_zip_ptr
+  = wil::unique_any<zip_t*, decltype(&zip_close), &zip_close>;
+using unique_zip_error
+  = wil::unique_struct<zip_error_t, decltype(&zip_error_fini), &zip_error_fini>;
+using unique_zip_file
+  = wil::unique_any<zip_file_t*, decltype(&zip_fclose), &zip_fclose>;
+}// namespace
+
 namespace OpenKneeboard {
 static task<void> ShowPluginInstallationError(
   XamlRoot xamlRoot,
@@ -145,7 +154,8 @@ static task<void> InstallPlugin(
   std::weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
   std::filesystem::path path,
-  Plugin plugin) {
+  Plugin plugin,
+  zip_t* zip) {
   if (!co_await FieldIsNonEmpty(xamlRoot, path, "ID", plugin.mID)) {
     co_return;
   }
@@ -213,6 +223,61 @@ static task<void> InstallPlugin(
     OPENKNEEBOARD_BREAK;
     co_return;
   }
+
+  const auto extractRoot
+    = Filesystem::GetInstalledPluginsDirectory() / sha256_hex(plugin.mID);
+  dprint("Extracting `{}` to {}`", path, extractRoot);
+  std::filesystem::create_directories(extractRoot);
+
+  {
+    const auto entryCount = zip_get_num_entries(zip, 0);
+    zip_stat_t stat {};
+    for (zip_int64_t i = 0; i < entryCount; ++i) {
+      zip_stat_init(&stat);
+      zip_stat_index(zip, i, 0, &stat);
+      constexpr auto requiredFlags = ZIP_STAT_NAME | ZIP_STAT_SIZE;
+      if ((stat.valid & requiredFlags) != requiredFlags) {
+        dprint.Error("Entry {} in zip does not have required metadata", i);
+        OPENKNEEBOARD_BREAK;
+        co_return;
+      }
+
+      unique_zip_file zipFile(zip_fopen_index(zip, i, 0));
+      if (!zipFile) {
+        continue;
+      }
+      const auto outPath = extractRoot / stat.name;
+      if (outPath.filename().string().back() == '/') {
+        std::filesystem::create_directories(outPath);
+        continue;
+      }
+      std::filesystem::create_directories(outPath.parent_path());
+
+      std::ofstream f(outPath, std::ios::binary);
+
+      constexpr std::size_t chunkSize = 4 * 1024;// 4KB
+      char buffer[chunkSize];
+
+      decltype(stat.size) bytesRead = 0;
+      while (bytesRead < stat.size) {
+        const auto bytesReadThisChunk
+          = zip_fread(zipFile.get(), buffer, std::size(buffer));
+        if (bytesReadThisChunk <= 0) {
+          const auto zipError = zip_file_get_error(zipFile.get());
+          dprint.Error(
+            "Failed to read chunk from file in zip: {} ({})",
+            zip_error_strerror(zipError),
+            zip_error_code_zip(zipError));
+          OPENKNEEBOARD_BREAK;
+          co_return;
+        }
+        f << std::string_view(buffer, bytesReadThisChunk);
+        bytesRead += bytesReadThisChunk;
+      }
+    }
+  }
+
+  plugin.mJSONPath = extractRoot / "v1.json";
   auto store = kneeboard->GetPluginStore();
   if (!store) {
     dprint("ERROR: plugin store has gone away");
@@ -220,16 +285,6 @@ static task<void> InstallPlugin(
     co_return;
   }
   store->Append(plugin);
-
-  const auto copyPath = Filesystem::GetInstalledPluginsDirectory()
-    / sha256_hex(plugin.mID) / "v1.json";
-  dprint("Copying metadata from `{}` to {}`", path, copyPath);
-  std::filesystem::create_directories(copyPath.parent_path());
-  {
-    const nlohmann::json j = plugin;
-    std::ofstream f(copyPath, std::ios::binary);
-    f << std::setw(2) << j;
-  }
 
   {
     ContentDialog dialog;
@@ -323,11 +378,6 @@ static task<void> InstallPluginFromPath(
     co_return;
   }
 
-  using unique_zip_ptr
-    = wil::unique_any<zip_t*, decltype(&zip_close), &zip_close>;
-  using unique_zip_error = wil::
-    unique_struct<zip_error_t, decltype(&zip_error_fini), &zip_error_fini>;
-
   int zipErrorCode {};
   unique_zip_ptr zip {
     zip_open(path.string().c_str(), ZIP_RDONLY, &zipErrorCode)};
@@ -370,8 +420,6 @@ static task<void> InstallPluginFromPath(
     co_return;
   }
 
-  using unique_zip_file
-    = wil::unique_any<zip_file_t*, decltype(&zip_fclose), &zip_fclose>;
   unique_zip_file metadataFile {
     zip_fopen_index(zip.get(), metadataFileIndex, 0)};
 
@@ -437,7 +485,8 @@ static task<void> InstallPluginFromPath(
     const auto roundTripPlugin = roundTripJSON.get<Plugin>();
     if (roundTripPlugin != *parseResult) {
       dprint(
-        "Plugin JSON round-trip mismatch\nOriginal JSON: {}\nRound-trip JSON: "
+        "Plugin JSON round-trip mismatch\nOriginal JSON: {}\nRound-trip "
+        "JSON: "
         "{}",
         j.dump(2),
         roundTripJSON.dump(2));
@@ -449,7 +498,7 @@ static task<void> InstallPluginFromPath(
       std::format("Couldn't parse metadata file: {} ({})", e.what(), e.id)};
   }
   if (parseResult.has_value()) {
-    co_await InstallPlugin(kneeboard, xamlRoot, path, *parseResult);
+    co_await InstallPlugin(kneeboard, xamlRoot, path, *parseResult, zip.get());
   } else {
     co_await ShowPluginInstallationError(xamlRoot, path, parseResult.error());
     co_return;

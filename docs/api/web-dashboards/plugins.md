@@ -105,6 +105,7 @@ A `TabType` is a JSON object of this form:
 - `ID` **MUST** be unique for each tab type
 - `Name` is a human-readable name with no uniqueness constraints
 - `Glyph` is optional; if present, it is a string containing a single unicode character from [the Segoe MDL2 Asset icons](https://learn.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font)
+- `URI` can be any standard URI (e.g. `file://`, `https://example.com`, `http://localhost:1234`), or - in v1.9.9 and above - `plugin://foo.html` to reference an HTML file inside the plugin zip.
 
 ### Custom actions
 
