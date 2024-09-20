@@ -32,11 +32,12 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
+#include <OpenKneeboard/format/filesystem.hpp>
+#include <OpenKneeboard/utf8.hpp>
+
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 #include <microsoft.ui.xaml.window.h>
-
-#include <OpenKneeboard/utf8.hpp>
 
 #include <format>
 #include <set>
@@ -132,6 +133,11 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));
+      dprint.Error(
+        "DCS hook copy Lua failed: {} ({:#010x}) - {}",
+        ec.message(),
+        ec.value(),
+        luaDest);
       continue;
     }
 
@@ -146,9 +152,15 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));
+      dprint.Error(
+        "DCS hook copy DLL to failed: {} ({:#010x}) - {}",
+        ec.message(),
+        ec.value(),
+        dllDest);
       continue;
     }
 
+    dprint("✅ Updated DCS Lua hook in {}", savedGamesPath);
     co_return;
   } while (true);
 }
