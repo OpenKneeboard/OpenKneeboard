@@ -51,7 +51,7 @@ struct APIEvent final {
     // Intentionally not propagating the std::logic_error
     try {
       return ParsedValue<T>();
-    } catch (const nlohmann::json::parse_error& e) {
+    } catch (const nlohmann::json::exception& e) {
       return std::unexpected {JSONParseError {e.what()}};
     }
   }
