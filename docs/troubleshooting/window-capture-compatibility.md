@@ -16,15 +16,15 @@ Some applications choose not to update when the window is fully covered by other
 
 ### Chrome, Edge, and other Chromium-based browsers
 
-Change your shortcut to add `--disable-backgrounding-occluded-windows` after the `exe`. If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text. Close your browser and restart.
+Change your browser shortcut to add `--disable-backgrounding-occluded-windows` after the `exe`. If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text. Close your browser and restart.
 
 ### Discord
 
 Close Discord fully, including from the system tray.
 
-If your shortcut is to Discord's `Updater.exe`, change your shortcut to add `--process-start-args=--disable-backgrounding-occluded-windows --processStart=Discord.exe` after the `exe`; If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text.
+If your Discord shortcut is to Discord's `Updater.exe`, change your shortcut to add `--process-start-args=--disable-backgrounding-occluded-windows --processStart=Discord.exe` after the `exe`; If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text.
 
-If your shortcut is directly to `Discord.exe`, treat it [as a Chromium browser](#chrome-edge-and-other-chromium-based-browsers).
+If your Discord shortcut is directly to `Discord.exe`, treat it [as a Chromium browser](#chrome-edge-and-other-chromium-based-browsers).
 
 These steps *may* work for other Electron-based apps.
 
