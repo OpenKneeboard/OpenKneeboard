@@ -100,8 +100,11 @@ task<void> WebView2PageSource::Init() {
   const auto userData = Filesystem::GetLocalAppDataDirectory() / "WebView2";
   std::filesystem::create_directories(userData);
 
-  const auto edgeArgs
-    = std::format(L"--disable-gpu-vsync --max-gum-fps={}", FramesPerSecond);
+  const auto edgeArgs = std::format(
+    L"--disable-gpu-vsync "
+    L"--disable-backgrounding-occluded-windows "
+    L"--max-gum-fps={}",
+    FramesPerSecond);
   CoreWebView2EnvironmentOptions options;
   options.AdditionalBrowserArguments(edgeArgs);
 
