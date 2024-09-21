@@ -30,7 +30,7 @@ These steps *may* work for other Electron-based apps.
 
 ### Other apps
 
-Contact the developer of the other app for support; you may want to link them to this FAQ entry.
+You can try making it so that some portion of the app window is always visible on a monitor - and don't run the game full-screen. If this doesn't work or isn't practical for you, contact the developer of the other app for support; you may want to link them to this FAQ entry.
 
 ## Cursor
 
