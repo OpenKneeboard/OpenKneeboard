@@ -22,7 +22,7 @@ Change your browser shortcut to add `--disable-backgrounding-occluded-windows` a
 
 Close Discord fully, including from the system tray.
 
-If your Discord shortcut is to Discord's `Update.exe`, change your shortcut to add `--process-start-args=--disable-backgrounding-occluded-windows --processStart=Discord.exe` after the `exe`; If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text.
+If your Discord shortcut is to Discord's `Update.exe`, change your shortcut to add `--process-start-args=--disable-backgrounding-occluded-windows` after the `exe`, before `--processStart=Discord.exe` after `Update.exe`; If there is a quote after `Update.exe`, add a space after the quote then the extra text, otherwise, just add a space then the extra text.
 
 If your Discord shortcut is directly to `Discord.exe`, treat it [as a Chromium browser](#chrome-edge-and-other-chromium-based-browsers).
 
