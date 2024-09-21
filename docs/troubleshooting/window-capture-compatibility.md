@@ -6,9 +6,31 @@ parent: Troubleshooting
 
 Capture will work with most apps, but has limitations.
 
-## Capture
+## Dialog boxes and drop-down menus
 
-On apps using older frameworks, dialog boxes and drop-down menus may not be shown.
+On apps using older frameworks, dialog boxes and drop-down menus may not be shown. There is no fix or workaround.
+
+## The captured window doesn't update when it's not visible (e.g. when in-game)
+
+Some applications choose not to update when the window is fully covered by other windows, including full-screen games; OpenKneeboard can not change this behavior. You can ask the developer of the application to remove this optimization, or, some apps may have workarounds:
+
+### Chrome, Edge, and other Chromium-based browsers
+
+Change your shortcut to add `--disable-backgrounding-occluded-windows` after the `exe`. If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text. Close your browser and restart.
+
+### Discord
+
+Close Discord fully, including from the system tray.
+
+If your shortcut is to Discord's `Updater.exe`, change your shortcut to add ` --process-start-args=--disable-backgrounding-occluded-windows --processStart=Discord.exe` after the `exe`; If there is a quote after the .exe, add a space after the quote then the extra text, otherwise, just add a space then the extra text.
+
+If your shortcut is directly to `Discord.exe`, treat it [as a Chromium browser](#chrome-edge-and-other-chromium-based-browsers).
+
+These steps *may* work for other Electron-based apps.
+
+### Other apps
+
+Contact the developer of the other app for support; you may want to link them to this FAQ entry.
 
 ## Cursor
 
