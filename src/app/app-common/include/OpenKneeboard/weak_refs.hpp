@@ -24,6 +24,7 @@
 #include <FredEmmott/weak_refs.hpp>
 
 namespace OpenKneeboard {
+using namespace FredEmmott::weak_refs::weak_refs_reseaters;
 using namespace FredEmmott::weak_refs::weak_refs_concepts;
 using namespace FredEmmott::weak_refs::weak_refs_ref_types;
 }

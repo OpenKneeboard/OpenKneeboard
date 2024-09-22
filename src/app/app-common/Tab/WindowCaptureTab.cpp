@@ -22,6 +22,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/weak_refs.hpp>
 
 #include <Psapi.h>
 #include <Shlwapi.h>
@@ -425,8 +426,7 @@ task<void> WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
   co_await this->Reload();
 }
 
-task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
-  auto weak = weak_from_this();
+fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
   if (mHwnd) {
     co_return;
   }
@@ -439,25 +439,23 @@ task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
     }
   }
 
+  auto self = shared_from_this();
+
   if (!this->WindowMatches(hwnd)) {
     // Give new windows (especially UWP) a chance to settle before checking
     // if they match
-    co_await winrt::resume_after(std::chrono::seconds(1));
-    auto self = weak.lock();
-    if (!self) {
+    strong_ref_reseater reseater(&self);
+    co_await resume_after(std::chrono::seconds(1));
+    if (!reseater.reseat()) {
       co_return;
     }
+
     if (!this->WindowMatches(hwnd)) {
       co_return;
     }
   }
 
   if (!co_await this->TryToStartCapture(hwnd)) {
-    co_return;
-  }
-
-  auto self = weak.lock();
-  if (!self) {
     co_return;
   }
 
@@ -497,16 +495,7 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
     }
   }
 
-  instance->mKneeboard->EnqueueOrderedEvent(std::bind_front(
-    [](auto weak, auto hwnd) -> task<void> {
-      auto self = weak.lock();
-      if (!self) {
-        co_return;
-      }
-      co_await self->OnNewWindow(hwnd);
-    },
-    std::weak_ptr {instance},
-    hwnd));
+  instance->OnNewWindow(hwnd);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(

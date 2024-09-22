@@ -125,7 +125,8 @@ class WindowCaptureTab final : public TabBase,
     LONG idChild,
     DWORD idEventThread,
     DWORD dwmsEventTime);
-  task<void> OnNewWindow(HWND hwnd);
+  // **DO NOT** use OrderedEventQueue for this as it has a sleep
+  fire_and_forget OnNewWindow(HWND hwnd);
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;

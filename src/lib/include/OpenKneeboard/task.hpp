@@ -701,4 +701,9 @@ struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
   }
 };
 
+// Useful as - like all `task<>` - guarantees to return to the original thread
+task<void> resume_after(auto t) {
+  co_await winrt::resume_after(std::chrono::seconds(1));
+}
+
 }// namespace OpenKneeboard

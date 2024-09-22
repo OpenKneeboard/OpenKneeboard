@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
     bindline
     GIT_REPOSITORY "https://github.com/fredemmott/bindline.git"
-    GIT_TAG "f4548b4bc0d1de0c171bbc8fd270bd176d31d3d7"
+    GIT_TAG "6dfc86dbcbd8a16e5ac325dc736cadcee1b30dcc"
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(bindline)
