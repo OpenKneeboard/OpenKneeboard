@@ -176,6 +176,14 @@ The two forms of version number are used because:
 - Some Windows features only support the 4-numbers form
 - The string version is much more understandable to people than the 4-numbers form
 
+## OpenDeveloperToolsWindow
+
+Opens the MS Edge developer tools window; requires OpenKneeboard v1.9.
+
+```js
+OpenKneeboard.OpenDeveloperToolsWindow();
+```
+
 ## Experimental JavaScript APIs
 
 These features will be changed without notice, and in any update, including patch releases; you should avoid using them in released software if possible; reach out in `#code-talk` [on Discord](https://go.openkneeboard.com/discord) before releasing software that uses them.
