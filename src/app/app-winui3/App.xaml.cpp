@@ -342,7 +342,7 @@ static void SetRegistryValues() {
     savePath(
       L"InstallationUtilitiesPath", std::filesystem::canonical(utilitiesPath));
   } else {
-    dprint("WARNING: failed to find utilities path");
+    dprint.Error("failed to find utilities path");
   }
 }
 

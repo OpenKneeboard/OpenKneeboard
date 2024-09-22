@@ -241,8 +241,8 @@ void GameInjector::CheckProcess(
         overlayAPI.dump());
       const auto elevated = IsElevated(processHandle);
       if (IsElevated() != elevated) {
-        dprint(
-          "WARNING: OpenKneeboard {} elevated, but PID {} {} elevated.",
+        dprint.Warning(
+          "OpenKneeboard {} elevated, but PID {} {} elevated.",
           IsElevated() ? "is" : "is not",
           processID,
           elevated ? "is" : "is not");
@@ -274,8 +274,8 @@ void GameInjector::CheckProcess(
         const auto code = GetLastError();
         const auto message
           = std::system_category().default_error_condition(code).message();
-        dprint(
-          "ERROR: Failed to OpenProcess() with VM and thread privileges for "
+        dprint.Warning(
+          "Failed to OpenProcess() with VM and thread privileges for "
           "PID {} ({}): "
           "{:#x} ({})",
           processID,

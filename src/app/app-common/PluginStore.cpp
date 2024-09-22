@@ -39,8 +39,7 @@
 namespace OpenKneeboard {
 PluginStore::PluginStore() {
   if (OpenKneeboard::IsElevated() || OpenKneeboard::IsShellElevated()) {
-    dprint(
-      "WARNING: not loading any plugins because OpenKneeboard is elevated");
+    dprint.Warning("not loading any plugins because OpenKneeboard is elevated");
     return;
   }
   this->LoadPluginsFromFilesystem();
@@ -64,8 +63,8 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
   using VIT = wil::reg::value_iterator;
   for (const auto& value: wil::make_range(VIT {hkey}, VIT {})) {
     if (value.type != REG_DWORD) {
-      dprint(
-        L"ERROR: Registry value for plugin `{}` is not a DWORD", value.name);
+      dprint.Error(
+        L"Registry value for plugin `{}` is not a DWORD", value.name);
       continue;
     }
     const auto enabled = wil::reg::get_value_dword(hkey, value.name.c_str());
@@ -82,8 +81,8 @@ void PluginStore::LoadPluginsFromRegistry(HKEY root) {
         this->TryAppend(value.name);
         continue;
       default:
-        dprint(
-          L"WARNING: skipping plugin `{}` from registry - invalid value {}",
+        dprint.Warning(
+          L"skipping plugin `{}` from registry - invalid value {}",
           value.name,
           enabled);
         continue;
@@ -122,10 +121,9 @@ void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
       plugin.mMetadata.mPluginReadableVersion);
     this->Append(plugin);
   } catch (const nlohmann::json::exception& e) {
-    dprint("ERROR: error {} when parsing plugin: {}", e.id, e.what());
-    OPENKNEEBOARD_BREAK;
+    dprint.Error("Error {} when parsing plugin: {}", e.id, e.what());
   } catch (const std::exception& e) {
-    dprint("ERROR: C++ exception loading plugin: {}", e.what());
+    dprint.Error("C++ exception loading plugin: {}", e.what());
     OPENKNEEBOARD_BREAK;
   }
 }

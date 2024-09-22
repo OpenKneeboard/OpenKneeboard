@@ -85,7 +85,7 @@ static task<void> ShowPluginInstallationError(
   XamlRoot xamlRoot,
   std::filesystem::path path,
   std::string_view error) {
-  dprint("ERROR: Plugin installation error for `{}`: {}", path, error);
+  dprint.Error("Plugin installation error for `{}`: {}", path, error);
 
   StackPanel layout;
   layout.Margin({8, 8, 8, 8});
@@ -230,7 +230,7 @@ static task<void> InstallPlugin(
 
   auto kneeboard = weakKneeboard.lock();
   if (!kneeboard) {
-    dprint("ERROR: plugin store has gone away");
+    dprint.Error("plugin store has gone away");
     OPENKNEEBOARD_BREAK;
     co_return;
   }
@@ -392,7 +392,7 @@ static task<void> InstallPlugin(
   plugin.mJSONPath = extractRoot / "v1.json";
   auto store = kneeboard->GetPluginStore();
   if (!store) {
-    dprint("ERROR: plugin store has gone away");
+    dprint.Error("plugin store has gone away");
     OPENKNEEBOARD_BREAK;
     co_return;
   }
@@ -470,14 +470,12 @@ static task<void> InstallPluginFromPath(
   std::filesystem::path path) {
   dprint("Attempting to install plugin `{}`", path);
   if (!std::filesystem::exists(path)) {
-    dprint("ERROR: asked to install plugin `{}`, which does not exist", path);
-    OPENKNEEBOARD_BREAK;
+    dprint.Error("asked to install plugin `{}`, which does not exist", path);
     co_return;
   }
   if (!std::filesystem::is_regular_file(path)) {
-    dprint(
-      "ERROR: asked to install plugin `{}`, which is not a regular file", path);
-    OPENKNEEBOARD_BREAK;
+    dprint.Error(
+      "asked to install plugin `{}`, which is not a regular file", path);
     co_return;
   }
 
@@ -631,7 +629,7 @@ task<void> InstallPlugin(
       continue;
     }
     if (i == argc - 1) {
-      dprint("ERROR: `--plugin` passed, but no plugin specified.");
+      dprint.Error("`--plugin` passed, but no plugin specified.");
       OPENKNEEBOARD_BREAK;
       co_return;
     }

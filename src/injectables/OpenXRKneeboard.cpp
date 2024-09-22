@@ -103,9 +103,7 @@ static inline std::string_view xrresult_to_string(XrResult code) {
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return { \
-      #enum_name \
-    }; \
+    return {#enum_name}; \
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
     default:
@@ -555,14 +553,14 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
   if (vk) {
     switch (gVulkanXRState.Get()) {
       case VulkanXRState::NoVKEnable2:
-        dprint(
-          "WARNING: Got an XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, but "
+        dprint.Warning(
+          "Got an XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, but "
           "XR_KHR_vulkan_enable2 instance/device creation functions were not "
           "used; unsupported");
         return ret;
       case VulkanXRState::VKEnable2Instance:
-        dprint(
-          "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, "
+        dprint.Warning(
+          "XR_KHR_vulkan_enable2 was used for instance creation, "
           "but not device; unsupported");
         return ret;
       case VulkanXRState::VKEnable2InstanceAndDevice:
@@ -571,8 +569,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
           "creation");
         break;
       default:
-        dprint(
-          "ERROR: Unrecognized VulkanXRState: {}",
+        dprint.Error(
+          "Unrecognized VulkanXRState: {}",
           std::to_underlying(gVulkanXRState.Get()));
         OPENKNEEBOARD_BREAK;
         return ret;

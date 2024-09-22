@@ -78,8 +78,8 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       info, &IWICBitmapCodecInfo::GetFileExtensions);
 
     if (!(name && author && extensions)) {
-      dprint(
-        "WARNING: Failed to get necessary information for WIC component {}",
+      dprint.Warning(
+        "Failed to get necessary information for WIC component {}",
         winrt::guid {clsID});
       OPENKNEEBOARD_BREAK;
       continue;
@@ -107,8 +107,8 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     if (
       ((status & WICComponentSigned) == 0)
       && ((status & WICComponentSafe) == 0)) {
-      dprint(
-        "WARNING: Skipping codec - unsafe status {:#018x}",
+      dprint.Warning(
+        "Skipping codec - unsafe status {:#018x}",
         std::bit_cast<uint32_t>(status));
       continue;
     }

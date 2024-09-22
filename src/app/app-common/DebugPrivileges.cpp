@@ -33,7 +33,7 @@ DebugPrivileges::DebugPrivileges() {
         GetCurrentProcess(),
         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
         mToken.put())) {
-    dprint("WARNING: Failed to open own process token");
+    dprint.Error("Failed to open own process token");
     return;
   }
 
@@ -54,8 +54,8 @@ DebugPrivileges::DebugPrivileges() {
     const auto code = GetLastError();
     const auto message
       = std::system_category().default_error_condition(code).message();
-    dprint(
-      "WARNING: Failed to acquire debug privileges: {:#x} ({})",
+    dprint.Warning(
+      "Failed to acquire debug privileges: {:#x} ({})",
       std::bit_cast<uint32_t>(code),
       message);
   }

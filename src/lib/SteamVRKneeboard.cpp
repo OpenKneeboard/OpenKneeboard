@@ -166,10 +166,8 @@ bool SteamVRKneeboard::InitializeOpenVR() {
     dprint(
       L"OpenVR requested adapter '{}' (LUID {:#x})", desc.Description, luid);
     if (luid != mDXR.mAdapterLUID) {
-      dprint(
-        "WARNING: SteamVR adapter {:#x} != OKB adapter {:#x}",
-        luid,
-        mDXR.mAdapterLUID);
+      dprint.Warning(
+        "SteamVR adapter {:#x} != OKB adapter {:#x}", luid, mDXR.mAdapterLUID);
     }
   }
 

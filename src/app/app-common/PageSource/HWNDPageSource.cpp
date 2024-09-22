@@ -124,8 +124,8 @@ void HWNDPageSource::LogAdapter(HMONITOR monitor) {
         if (
           std::bit_cast<uint64_t>(adapterDesc.AdapterLuid)
           != mDXR->mAdapterLUID) {
-          dprint(
-            "WARNING: Capture adapter LUID {:#x} != OKB adapter LUID {:#x}",
+          dprint.Warning(
+            "Capture adapter LUID {:#x} != OKB adapter LUID {:#x}",
             std::bit_cast<uint64_t>(adapterDesc.AdapterLuid),
             mDXR->mAdapterLUID);
         }

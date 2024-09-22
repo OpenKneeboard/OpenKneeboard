@@ -97,8 +97,8 @@ task<void> PluginTab::Reload() {
   }
 
   if (!mTabType) {
-    dprint(
-      "WARNING: couldn't find plugin and implementation for tab type `{}`",
+    dprint.Error(
+      "Couldn't find plugin and implementation for tab type `{}`",
       mSettings.mPluginTabTypeID);
     co_return;
   }
