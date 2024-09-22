@@ -18,12 +18,15 @@
  * USA.
  */
 
+#include <OpenKneeboard/D2DErrorRenderer.hpp>
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
 
 #include <OpenKneeboard/format/filesystem.hpp>
+#include <OpenKneeboard/semver.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <Shlwapi.h>
 
@@ -42,6 +45,7 @@ PluginTab::PluginTab(
     mDXResources(dxr),
     mKneeboard(kbs),
     mSettings(settings) {
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
 }
 
 task<std::shared_ptr<PluginTab>> PluginTab::Create(
@@ -83,6 +87,8 @@ task<void> PluginTab::Reload() {
   if (disposable) {
     co_await disposable->DisposeAsync();
   }
+
+  mState = State::Uninit;
   mDelegate = nullptr;
   mTabType = std::nullopt;
   co_await this->SetDelegates({});
@@ -99,9 +105,18 @@ task<void> PluginTab::Reload() {
   }
 
   if (!mTabType) {
+    mState = State::PluginNotFound;
     dprint.Error(
       "Couldn't find plugin and implementation for tab type `{}`",
       mSettings.mPluginTabTypeID);
+    co_return;
+  }
+
+  if (
+    CompareVersions(plugin.mMetadata.mOKBMinimumVersion, Version::ReleaseName)
+    == ThreeWayCompareResult::GreaterThan) {
+    dprint.Warning("OpenKneeboard is too old for plugin `{}`", plugin.mID);
+    mState = State::OpenKneeboardTooOld;
     co_return;
   }
 
@@ -134,6 +149,7 @@ task<void> PluginTab::Reload() {
       mDelegate = co_await WebView2PageSource::Create(
         mDXResources, mKneeboard, WebView2PageSource::Kind::Plugin, settings);
       co_await this->SetDelegates({mDelegate});
+      mState = State::OK;
       co_return;
     }
     default:
@@ -175,6 +191,34 @@ void PluginTab::PostCustomAction(
 
 std::string PluginTab::GetPluginTabTypeID() const noexcept {
   return mSettings.mPluginTabTypeID;
+}
+
+PageIndex PluginTab::GetPageCount() const {
+  if (mState == State::OK) {
+    return PageSourceWithDelegates::GetPageCount();
+  }
+  return 1;
+}
+
+task<void>
+PluginTab::RenderPage(RenderContext ctx, PageID page, PixelRect rect) {
+  switch (mState) {
+    case State::OK:
+      co_await PageSourceWithDelegates::RenderPage(ctx, page, rect);
+      co_return;
+    case State::Uninit:
+      // Shouldn't get here :/
+      mErrorRenderer->Render(ctx.d2d(), _("💩"), rect);
+      co_return;
+    case State::PluginNotFound:
+      mErrorRenderer->Render(ctx.d2d(), _("Plugin Not Installed"), rect);
+      co_return;
+    case State::OpenKneeboardTooOld:
+      mErrorRenderer->Render(
+        ctx.d2d(), _("Plugin Requires Newer OpenKneeboard"), rect);
+      co_return;
+  }
+  std::unreachable();
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(PluginTab::Settings, mPluginTabTypeID);

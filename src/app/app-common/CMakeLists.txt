@@ -51,6 +51,7 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_exit
+  OpenKneeboard-semver
   OpenKneeboard-task
   System::D2d1
   System::Dinput8

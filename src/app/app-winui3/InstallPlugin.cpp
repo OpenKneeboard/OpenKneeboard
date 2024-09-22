@@ -36,7 +36,9 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
+#include <OpenKneeboard/semver.hpp>
 #include <OpenKneeboard/utf8.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -207,6 +209,14 @@ static task<void> InstallPlugin(
         co_return;
       }
     }
+  }
+
+  if (
+    CompareVersions(plugin.mMetadata.mOKBMinimumVersion, Version::ReleaseName)
+    == ThreeWayCompareResult::GreaterThan) {
+    co_await ShowPluginInstallationError(
+      xamlRoot, path, "This plugin requires a newer version of OpenKneeboard.");
+    co_return;
   }
 
   auto kneeboard = weakKneeboard.lock();

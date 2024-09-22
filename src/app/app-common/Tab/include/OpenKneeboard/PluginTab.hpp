@@ -30,6 +30,7 @@
 #include <optional>
 
 namespace OpenKneeboard {
+class D2DErrorRenderer;
 
 class PluginTab final : public TabBase,
                         public ITabWithSettings,
@@ -54,6 +55,8 @@ class PluginTab final : public TabBase,
   std::string GetGlyph() const override;
   task<void> Reload() final override;
   nlohmann::json GetSettings() const override;
+  PageIndex GetPageCount() const override;
+  task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
   std::string GetPluginTabTypeID() const noexcept;
 
@@ -63,6 +66,13 @@ class PluginTab final : public TabBase,
     const nlohmann::json& arg);
 
  private:
+  enum class State {
+    OK,
+    Uninit,
+    PluginNotFound,
+    OpenKneeboardTooOld,
+  };
+
   PluginTab(
     const audited_ptr<DXResources>&,
     KneeboardState*,
@@ -73,9 +83,11 @@ class PluginTab final : public TabBase,
   KneeboardState* mKneeboard {nullptr};
   Settings mSettings;
 
+  State mState {State::Uninit};
+  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+
   std::shared_ptr<IPageSource> mDelegate;
 
-  std::optional<Plugin> mPlugin;
   std::optional<Plugin::TabType> mTabType;
 };
 
