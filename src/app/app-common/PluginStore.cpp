@@ -124,7 +124,6 @@ void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
     dprint.Error("Error {} when parsing plugin: {}", e.id, e.what());
   } catch (const std::exception& e) {
     dprint.Error("C++ exception loading plugin: {}", e.what());
-    OPENKNEEBOARD_BREAK;
   }
 }
 
@@ -143,5 +142,11 @@ void PluginStore::Append(const Plugin& plugin) {
     mPlugins.erase(it);
   }
   mPlugins.push_back(plugin);
+  dprint(
+    "🧩 Loaded plugin '{}' ('{}') version '{}' from `{}`",
+    plugin.mMetadata.mPluginName,
+    plugin.mID,
+    plugin.mMetadata.mPluginReadableVersion,
+    plugin.mJSONPath);
 }
 }// namespace OpenKneeboard
