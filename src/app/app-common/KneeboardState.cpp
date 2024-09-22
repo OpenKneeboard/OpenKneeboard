@@ -406,7 +406,7 @@ void KneeboardState::OnGameChangedEvent(
 
 void KneeboardState::OnAPIEvent(APIEvent ev) noexcept {
   if (winrt::apartment_context() != mUIThread) {
-    dprint("Game event in wrong thread!");
+    dprint("API event in wrong thread!");
     OPENKNEEBOARD_BREAK;
   }
   TroubleshootingStore::Get()->OnAPIEvent(ev);
@@ -422,12 +422,18 @@ void KneeboardState::EnqueueOrderedEvent(std::function<task<void>()> event) {
 task<void> KneeboardState::FlushOrderedEventQueue(
   std::chrono::time_point<std::chrono::steady_clock> stopAt) {
   if (mFlushingQueue) {
+    OPENKNEEBOARD_TraceLoggingWrite(
+      "KneeboardState::FlushOrderedEventQueue()/AlreadyFlushing");
     co_await winrt::resume_on_signal(mQueueFlushedEvent.get());
     co_return;
   }
   if (mOrderedEventQueue.empty()) {
+    OPENKNEEBOARD_TraceLoggingWrite(
+      "KneeboardState::FlushOrderedEventQueue()/Empty");
     co_return;
   }
+  OPENKNEEBOARD_TraceLoggingCoro(
+    "KneeboardState::FlushOrderedEventQueue()/Flush");
 
   mFlushingQueue = true;
 
@@ -447,7 +453,7 @@ task<void> KneeboardState::FlushOrderedEventQueue(
   }
 
   OPENKNEEBOARD_TraceLoggingWrite(
-    "KneeboardState::FlushOrderedEventQueue()",
+    "KneeboardState::FlushOrderedEventQueue()/Stats",
     TraceLoggingValue(processed, "Processed"),
     TraceLoggingValue(mOrderedEventQueue.size(), "Remaining"));
 }
