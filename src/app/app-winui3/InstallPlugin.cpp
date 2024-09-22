@@ -28,6 +28,7 @@
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
 #include <OpenKneeboard/Plugin.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/PluginTab.hpp>
@@ -54,6 +55,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ranges>
+#include <unordered_set>
 
 #include <processenv.h>
 #include <zip.h>
@@ -63,6 +65,13 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt;
 
 namespace {
+
+enum class PluginInstallAction {
+  Install,
+  Update,
+  NothingToDo,// Already up to date.
+};
+
 using unique_zip_ptr
   = wil::unique_any<zip_t*, decltype(&zip_close), &zip_close>;
 using unique_zip_error
@@ -150,6 +159,24 @@ static std::string sha256_hex(std::string_view data) {
       EncodeToHexString(hashObj.GetValueAndReset()));
 }
 
+static PluginInstallAction GetPluginInstallAction(
+  KneeboardState* kneeboard,
+  const Plugin& plugin) {
+  const auto installedPlugins = kneeboard->GetPluginStore()->GetPlugins();
+  const auto it = std::ranges::find(installedPlugins, plugin.mID, &Plugin::mID);
+  if (it == installedPlugins.end()) {
+    return PluginInstallAction::Install;
+  }
+
+  if (
+    it->mMetadata.mPluginSemanticVersion
+    == plugin.mMetadata.mPluginSemanticVersion) {
+    return PluginInstallAction::NothingToDo;
+  }
+
+  return PluginInstallAction::Update;
+}
+
 static task<void> InstallPlugin(
   std::weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
@@ -201,22 +228,6 @@ static task<void> InstallPlugin(
     }
   }
 
-  {
-    ContentDialog dialog;
-    dialog.XamlRoot(xamlRoot);
-    dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
-    dialog.Content(winrt::box_value(to_hstring(std::format(
-      _("Do you want to install the plugin '{}'?"),
-      plugin.mMetadata.mPluginName))));
-    dialog.PrimaryButtonText(_(L"Install"));
-    dialog.CloseButtonText(_(L"Cancel"));
-    dialog.DefaultButton(ContentDialogButton::Close);
-
-    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-      co_return;
-    }
-  }
-
   auto kneeboard = weakKneeboard.lock();
   if (!kneeboard) {
     dprint("ERROR: plugin store has gone away");
@@ -224,8 +235,71 @@ static task<void> InstallPlugin(
     co_return;
   }
 
+  const auto action = GetPluginInstallAction(kneeboard.get(), plugin);
+  switch (action) {
+    case PluginInstallAction::NothingToDo: {
+      ContentDialog dialog;
+      dialog.XamlRoot(xamlRoot);
+      dialog.Title(
+        winrt::box_value(to_hstring(_(L"Plugin Already Installed"))));
+      dialog.Content(winrt::box_value(to_hstring(std::format(
+        _("Plugin '{}' v{} is already installed."),
+        plugin.mMetadata.mPluginName,
+        plugin.mMetadata.mPluginReadableVersion))));
+      dialog.PrimaryButtonText(_(L"Tab Settings"));
+      dialog.CloseButtonText(_(L"OK"));
+      dialog.DefaultButton(ContentDialogButton::Close);
+
+      if (co_await dialog.ShowAsync() == ContentDialogResult::Primary) {
+        co_await LaunchURI(std::format(
+          "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
+      }
+      co_return;
+    }
+    case PluginInstallAction::Install: {
+      ContentDialog dialog;
+      dialog.XamlRoot(xamlRoot);
+      dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
+      dialog.Content(winrt::box_value(to_hstring(std::format(
+        _("Do you want to install the plugin '{}'?"),
+        plugin.mMetadata.mPluginName))));
+      dialog.PrimaryButtonText(_(L"Install"));
+      dialog.CloseButtonText(_(L"Cancel"));
+      dialog.DefaultButton(ContentDialogButton::Close);
+
+      if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+        co_return;
+      }
+      break;
+    }
+
+    case PluginInstallAction::Update: {
+      ContentDialog dialog;
+      dialog.XamlRoot(xamlRoot);
+      dialog.Title(winrt::box_value(to_hstring(_(L"Update Plugin?"))));
+      dialog.Content(winrt::box_value(to_hstring(std::format(
+        _("Do you want to update the plugin '{}' to version {}? Any tabs from "
+          "this plugin will be reloaded."),
+        plugin.mMetadata.mPluginName,
+        plugin.mMetadata.mPluginReadableVersion))));
+      dialog.PrimaryButtonText(_(L"Update"));
+      dialog.CloseButtonText(_(L"Cancel"));
+      dialog.DefaultButton(ContentDialogButton::Primary);
+
+      if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+        co_return;
+      }
+      break;
+    }
+  }
+
   const auto extractRoot
     = Filesystem::GetInstalledPluginsDirectory() / sha256_hex(plugin.mID);
+  if (std::filesystem::exists(extractRoot)) {
+    dprint.Warning(
+      "Removing previous plugin installation from {}", extractRoot);
+    std::filesystem::remove_all(extractRoot);
+  }
   dprint("Extracting `{}` to {}`", path, extractRoot);
   std::filesystem::create_directories(extractRoot);
 
@@ -276,6 +350,44 @@ static task<void> InstallPlugin(
       }
     }
   }
+
+  if (action == PluginInstallAction::Update) {
+    const auto pluginTabIDs
+      = std::views::transform(plugin.mTabTypes, &Plugin::TabType::mID)
+      | std::ranges::to<std::unordered_set>();
+    auto reloads = kneeboard->GetTabsList()->GetTabs()
+      | std::views::transform([](auto tab) {
+                     return std::dynamic_pointer_cast<PluginTab>(tab);
+                   })
+      | std::views::filter([pluginTabIDs](auto tab) {
+                     if (!tab) {
+                       return false;
+                     }
+                     return pluginTabIDs.contains(tab->GetPluginTabTypeID());
+                   })
+      | std::views::transform(&ITab::Reload) | std::ranges::to<std::vector>();
+    for (auto&& reload: reloads) {
+      co_await std::move(reload);
+    }
+
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(winrt::box_value(to_hstring(_(L"Plugin Updated"))));
+    dialog.Content(winrt::box_value(to_hstring(std::format(
+      _("'{}' has been updated to v{}"),
+      plugin.mMetadata.mPluginName,
+      plugin.mMetadata.mPluginReadableVersion))));
+    dialog.PrimaryButtonText(_(L"Tab Settings"));
+    dialog.CloseButtonText(_(L"OK"));
+    dialog.DefaultButton(ContentDialogButton::Close);
+
+    if (co_await dialog.ShowAsync() == ContentDialogResult::Primary) {
+      co_await LaunchURI(std::format(
+        "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
+    }
+    co_return;
+  }
+  OPENKNEEBOARD_ASSERT(action == PluginInstallAction::Install);
 
   plugin.mJSONPath = extractRoot / "v1.json";
   auto store = kneeboard->GetPluginStore();

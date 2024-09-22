@@ -195,8 +195,9 @@ task<void> MainWindow::Init() {
 
   UpdateTitleBarMargins(nullptr, nullptr);
 
-  RegisterURIHandler(
-    "openkneeboard", [this](auto uri) { this->LaunchOpenKneeboardURI(uri); });
+  RegisterURIHandler(SpecialURIs::Scheme, [this](auto uri) {
+    this->LaunchOpenKneeboardURI(uri);
+  });
 
   mProfileSwitcher = this->ProfileSwitcher();
   this->UpdateProfileSwitcherVisibility();
@@ -1221,28 +1222,30 @@ void MainWindow::OnBackRequested(
 OpenKneeboard::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
   std::string_view uriStr) {
   auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
-  std::wstring_view path(uri.Path());
+  auto path = winrt::to_string(uri.Path());
 
-  if (path.starts_with(L'/')) {
-    path.remove_prefix(1);
+  if (path.starts_with('/')) {
+    path = {path.begin() + 1, path.end()};
   }
 
   co_await mUIThread;
 
-  if (path == L"Settings/Games") {
+  using namespace SpecialURIs::Paths;
+
+  if (path == SettingsGames) {
     Frame().Navigate(xaml_typename<GamesSettingsPage>());
     co_return;
   }
-  if (path == L"Settings/Input") {
+  if (path == SettingsInput) {
     Frame().Navigate(xaml_typename<InputSettingsPage>());
     co_return;
   }
-  if (path == L"Settings/Tabs") {
+  if (path == SettingsTabs) {
     Frame().Navigate(xaml_typename<TabsSettingsPage>());
     co_return;
   }
 
-  if (path == L"TeachingTips/ProfileSwitcher") {
+  if (path == "TeachingTips/ProfileSwitcher") {
     ProfileSwitcherTeachingTip().Target(mProfileSwitcher);
     ProfileSwitcherTeachingTip().IsOpen(true);
     co_return;

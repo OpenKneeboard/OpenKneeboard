@@ -172,6 +172,10 @@ void PluginTab::PostCustomAction(
   }
 }
 
+std::string PluginTab::GetPluginTabTypeID() const noexcept {
+  return mSettings.mPluginTabTypeID;
+}
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(PluginTab::Settings, mPluginTabTypeID);
 
 }// namespace OpenKneeboard

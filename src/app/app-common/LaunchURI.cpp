@@ -21,12 +21,12 @@
 
 #include <shims/winrt/base.h>
 
+#include <shellapi.h>
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
 
 #include <unordered_map>
-
-#include <shellapi.h>
 
 static std::unordered_map<std::wstring, std::function<void(std::string_view)>>
   gHandlers;
@@ -34,7 +34,7 @@ static std::unordered_map<std::wstring, std::function<void(std::string_view)>>
 namespace OpenKneeboard {
 
 void RegisterURIHandler(
-  const std::string& schemeName,
+  std::string_view schemeName,
   std::function<void(std::string_view)> handler) {
   gHandlers.insert_or_assign(
     std::wstring(winrt::to_hstring(schemeName)), handler);

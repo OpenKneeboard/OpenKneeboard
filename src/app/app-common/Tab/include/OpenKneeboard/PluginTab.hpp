@@ -51,12 +51,11 @@ class PluginTab final : public TabBase,
 
   ~PluginTab();
 
-  virtual std::string GetGlyph() const override;
-
-  [[nodiscard]]
-  virtual task<void> Reload() final override;
-
+  std::string GetGlyph() const override;
+  task<void> Reload() final override;
   nlohmann::json GetSettings() const override;
+
+  std::string GetPluginTabTypeID() const noexcept;
 
   void PostCustomAction(
     KneeboardViewID,

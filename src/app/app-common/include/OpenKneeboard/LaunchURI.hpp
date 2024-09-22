@@ -19,19 +19,30 @@
  */
 #pragma once
 
+#include <OpenKneeboard/task.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Foundation.h>
-
-#include <OpenKneeboard/task.hpp>
 
 #include <functional>
 #include <string>
 
 namespace OpenKneeboard {
 
+namespace SpecialURIs {
+constexpr std::string_view Scheme {"openkneeboard"};
+
+namespace Paths {
+constexpr std::string_view SettingsGames {"Settings/Games"};
+constexpr std::string_view SettingsInput {"Settings/Input"};
+constexpr std::string_view SettingsTabs {"Settings/Tabs"};
+}// namespace Paths
+
+};// namespace SpecialURIs
+
 void RegisterURIHandler(
-  const std::string& schemeName,
+  std::string_view schemeName,
   std::function<void(std::string_view)> handler);
 
 task<void> LaunchURI(std::string_view uri);
