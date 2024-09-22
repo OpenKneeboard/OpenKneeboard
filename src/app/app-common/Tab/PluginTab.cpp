@@ -23,6 +23,8 @@
 #include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/WebView2PageSource.hpp>
 
+#include <OpenKneeboard/format/filesystem.hpp>
+
 #include <Shlwapi.h>
 
 #include <wininet.h>
@@ -108,30 +110,29 @@ task<void> PluginTab::Reload() {
     case Kind::WebBrowser: {
       const auto args = std::get<Plugin::TabType::WebBrowserArgs>(
         mTabType->mImplementationArgs);
-      auto uri = args.mURI;
+      WebView2PageSource::Settings settings {
+        .mInitialSize = args.mInitialSize,
+        .mIntegrateWithSimHub = false,
+        .mURI = args.mURI,
+      };
+
       const std::string_view pluginScheme {"plugin://"};
-      if (uri.starts_with(pluginScheme)) {
-        char buffer[INTERNET_MAX_URL_LENGTH];
-        DWORD charCount {std::size(buffer)};
-        winrt::check_hresult(UrlCreateFromPathA(
-          plugin.mJSONPath.parent_path().string().c_str(),
-          buffer,
-          &charCount,
-          NULL));
-        uri.replace(
-          0,
-          pluginScheme.size(),
-          std::format("{}/", std::string_view {buffer, charCount}));
+      if (settings.mURI.starts_with(pluginScheme)) {
+        const auto vhost = std::format(
+          "{}.openkneeboardplugins.localhost", plugin.GetIDHash());
+        const auto path = plugin.mJSONPath.parent_path();
+        settings.mVirtualHosts.emplace(vhost, path);
+        settings.mURI.replace(
+          0, pluginScheme.size(), std::format("https://{}/", vhost));
+        dprint(
+          "🧩 Serving plugin '{}' from `https://{}` => `{}`",
+          plugin.mID,
+          vhost,
+          path);
       }
+
       mDelegate = co_await WebView2PageSource::Create(
-        mDXResources,
-        mKneeboard,
-        WebView2PageSource::Kind::Plugin,
-        WebView2PageSource::Settings {
-          .mInitialSize = args.mInitialSize,
-          .mIntegrateWithSimHub = false,
-          .mURI = uri,
-        });
+        mDXResources, mKneeboard, WebView2PageSource::Kind::Plugin, settings);
       co_await this->SetDelegates({mDelegate});
       co_return;
     }

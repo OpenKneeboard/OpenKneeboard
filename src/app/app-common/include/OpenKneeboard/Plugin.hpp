@@ -92,6 +92,7 @@ struct Plugin {
   Metadata mMetadata;
   std::vector<TabType> mTabTypes;
 
+  std::string GetIDHash() const noexcept;
   std::filesystem::path mJSONPath;
 
   bool operator==(const Plugin&) const noexcept = default;

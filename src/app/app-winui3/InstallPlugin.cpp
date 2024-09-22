@@ -43,8 +43,6 @@
 #include <shellapi.h>
 
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
-#include <winrt/Windows.Security.Cryptography.Core.h>
-#include <winrt/Windows.Storage.Streams.h>
 
 #include <wil/resource.h>
 
@@ -140,23 +138,6 @@ static task<bool> FieldIsNonEmpty(
     co_return false;
   }
   co_return true;
-}
-
-static std::string sha256_hex(std::string_view data) {
-  using namespace winrt::Windows::Security::Cryptography::Core;
-  using namespace winrt::Windows::Security::Cryptography;
-  const auto size = static_cast<uint32_t>(data.size());
-  winrt::Windows::Storage::Streams::Buffer buffer {size};
-  buffer.Length(size);
-  memcpy(buffer.data(), data.data(), data.size());
-
-  const auto hashProvider
-    = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Sha256());
-  auto hashObj = hashProvider.CreateHash();
-  hashObj.Append(buffer);
-  return winrt::to_string(
-    winrt::Windows::Security::Cryptography::CryptographicBuffer::
-      EncodeToHexString(hashObj.GetValueAndReset()));
 }
 
 static PluginInstallAction GetPluginInstallAction(
@@ -294,7 +275,7 @@ static task<void> InstallPlugin(
   }
 
   const auto extractRoot
-    = Filesystem::GetInstalledPluginsDirectory() / sha256_hex(plugin.mID);
+    = Filesystem::GetInstalledPluginsDirectory() / plugin.GetIDHash();
   if (std::filesystem::exists(extractRoot)) {
     dprint.Warning(
       "Removing previous plugin installation from {}", extractRoot);

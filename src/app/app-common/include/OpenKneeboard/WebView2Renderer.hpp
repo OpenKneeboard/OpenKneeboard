@@ -82,6 +82,10 @@ class WebView2Renderer final : public WGCRenderer {
     std::string mURI;
     bool mOpenDeveloperToolsWindow {false};
     bool mTransparentBackground {true};
+
+    ///// NOT SAVED - JUST FOR INTERNAL USE (e.g. PluginTab) /////
+    std::unordered_map<std::string, std::filesystem::path> mVirtualHosts;
+
     constexpr bool operator==(const Settings&) const noexcept = default;
   };
 

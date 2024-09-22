@@ -22,7 +22,30 @@
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/json.hpp>
 
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Security.Cryptography.Core.h>
+#include <winrt/Windows.Security.Cryptography.h>
+#include <winrt/Windows.Storage.Streams.h>
+
 namespace OpenKneeboard {
+
+std::string Plugin::GetIDHash() const noexcept {
+  using namespace winrt::Windows::Security::Cryptography::Core;
+  using namespace winrt::Windows::Security::Cryptography;
+  const auto size = static_cast<uint32_t>(mID.size());
+  winrt::Windows::Storage::Streams::Buffer buffer {size};
+  buffer.Length(size);
+  memcpy(buffer.data(), mID.data(), mID.size());
+
+  const auto hashProvider
+    = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Sha256());
+  auto hashObj = hashProvider.CreateHash();
+  hashObj.Append(buffer);
+  return winrt::to_string(
+    winrt::Windows::Security::Cryptography::CryptographicBuffer::
+      EncodeToHexString(hashObj.GetValueAndReset()));
+}
 
 OPENKNEEBOARD_DEFINE_JSON(
   Plugin::Metadata,

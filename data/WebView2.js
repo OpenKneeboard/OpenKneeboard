@@ -54,6 +54,13 @@ class OpenKneeboardAPI extends EventTarget {
         if (!runtimeData.Version.IsGitHubActionsBuild) {
             console.log("OpenKneeboard RuntimeData", runtimeData);
         }
+
+        for (const [vhost, path] of Object.entries(runtimeData.VirtualHosts)) {
+            if (window.location.href.startsWith('https://' + vhost + '/')) {
+                console.log(`OpenKneeboard: ℹ️ this plugin is being served from the virtual host '${window.location.href}', which is mapped to '${path}'`);
+            }
+            break;
+        }
     }
 
     SetPreferredPixelSize(width, height) {

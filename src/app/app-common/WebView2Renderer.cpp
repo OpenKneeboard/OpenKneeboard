@@ -240,7 +240,19 @@ task<void> WebView2Renderer::InitializeContentToCapture() {
       },
     },
     {"AvailableExperimentalFeatures", SupportedExperimentalFeatures},
+    {"VirtualHosts", nlohmann::json::object({})},
   };
+
+  if (!mSettings.mVirtualHosts.empty()) {
+    auto& jsonVHosts = initData["VirtualHosts"];
+    for (auto&& [vhost, path]: mSettings.mVirtualHosts) {
+      mWebView.SetVirtualHostNameToFolderMapping(
+        winrt::to_hstring(vhost),
+        winrt::to_hstring(path.string()),
+        CoreWebView2HostResourceAccessKind::Allow);
+      jsonVHosts[vhost] = to_utf8(path);
+    }
+  }
 
   if (mViewInfo) {
     initData.emplace(

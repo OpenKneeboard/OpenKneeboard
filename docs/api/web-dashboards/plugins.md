@@ -107,6 +107,8 @@ A `TabType` is a JSON object of this form:
 - `Glyph` is optional; if present, it is a string containing a single unicode character from [the Segoe MDL2 Asset icons](https://learn.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font)
 - `URI` can be any standard URI (e.g. `file://`, `https://example.com`, `http://localhost:1234`), or - in v1.9.9 and above - `plugin://foo.html` to reference an HTML file inside the plugin zip.
 
+`plugin://` URLs will be served from an `https://VARIES.openkneeboardplugins.localhost/` virtual host; no webserver is created, but your JavaScript will believe the domain exists and that HTTPS is being used.
+
 ### Custom actions
 
 A `CustomAction` is a JSON object of this form:
