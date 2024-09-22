@@ -317,6 +317,7 @@ ok_add_library(
   INCLUDE_DIRECTORIES
   include
 )
+
 target_link_libraries(
   OpenKneeboard-dprint
   PUBLIC
@@ -438,6 +439,16 @@ target_include_directories(
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
 add_dependencies(OpenKneeboard-version INTERFACE OpenKneeboard-version-sources)
+ok_add_library(
+  OpenKneeboard-semver
+  STATIC
+  semver.cpp
+  HEADERS
+  include/OpenKneeboard/semver.hpp
+  INCLUDE_DIRECTORIES 
+  include
+)
+target_link_libraries(OpenKneeboard-semver PRIVATE ThirdParty::SemVer)
 
 ok_add_library(OpenKneeboard-shims INTERFACE)
 target_include_directories(

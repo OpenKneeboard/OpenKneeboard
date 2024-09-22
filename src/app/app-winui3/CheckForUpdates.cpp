@@ -32,6 +32,7 @@
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/semver.hpp>
 #include <OpenKneeboard/utf8.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -44,9 +45,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <regex>
 
-#include <semver200.h>
 #include <shobjidl.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
@@ -56,24 +55,6 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt;
 
 namespace OpenKneeboard {
-
-static std::string ToSemVerString(std::string_view raw) {
-  // Remove leading v
-  std::string ret {(raw.front() == 'v') ? raw.substr(1) : raw};
-  // The .z in x.y.z is mandatory
-  ret = std::regex_replace(
-    ret,
-    std::regex {"^(\\d+\\.\\d+)(-|$)"},
-    "\\1.0\\2",
-    std::regex_constants::format_sed);
-  // 'beta3' should be 'beta.3' to get numeric comparisons
-  ret = std::regex_replace(
-    ret,
-    std::regex {"-([a-z]+)(\\d+)\\b"},
-    "-\\1.\\2",
-    std::regex_constants::format_sed);
-  return ret;
-}
 
 static OpenKneeboard::fire_and_forget ShowResultDialog(
   std::string_view message,
@@ -221,10 +202,9 @@ task<UpdateResult> CheckForUpdates(
       ? latestRelease.at("tag_name").get<std::string_view>()
       : testing.mFakeUpdateVersion);
 
-  const version::Semver200_version currentVersion(currentVersionSemverString);
-  const version::Semver200_version latestVersion(latestVersionSemverString);
-
-  if (currentVersion >= latestVersion) {
+  if (
+    CompareSemVer(currentVersionSemverString, latestVersionSemverString)
+    != ThreeWayCompareResult::LessThan) {
     dprint(
       "Current version '{}' >= latest '{}'",
       currentVersionSemverString,

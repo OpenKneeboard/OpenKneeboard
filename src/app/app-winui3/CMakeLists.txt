@@ -77,6 +77,7 @@ target_link_libraries(
   OpenKneeboard-fatal
   OpenKneeboard-games
   OpenKneeboard-handles
+  OpenKneeboard-semver
   OpenKneeboard-tracing
   OpenKneeboard-version
   System::Comctl32
@@ -84,7 +85,6 @@ target_link_libraries(
   System::Shell32
   System::User32
   ThirdParty::LibZip
-  ThirdParty::SemVer
 )
 
 target_include_directories(
