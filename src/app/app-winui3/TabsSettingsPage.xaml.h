@@ -164,25 +164,24 @@ struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
                                   OpenKneeboardApp::implementation::TabUIData> {
   WindowCaptureTabUIData() = default;
 
-  template <class T>
-  using task = OpenKneeboard::task<T>;
+  using fire_and_forget = OpenKneeboard::fire_and_forget;
 
   hstring WindowTitle();
-  task<void> WindowTitle(hstring const& value);
+  fire_and_forget WindowTitle(hstring const& value);
   bool MatchWindowClass();
-  task<void> MatchWindowClass(bool value);
+  fire_and_forget MatchWindowClass(bool value);
   uint8_t MatchWindowTitle();
-  task<void> MatchWindowTitle(uint8_t value);
+  fire_and_forget MatchWindowTitle(uint8_t value);
   bool IsInputEnabled() const;
   void IsInputEnabled(bool value);
   bool IsCursorCaptureEnabled() const;
-  task<void> IsCursorCaptureEnabled(bool value);
+  fire_and_forget IsCursorCaptureEnabled(bool value);
   bool CaptureClientArea() const;
-  task<void> CaptureClientArea(bool value);
+  fire_and_forget CaptureClientArea(bool value);
   hstring ExecutablePathPattern() const;
-  task<void> ExecutablePathPattern(hstring);
+  fire_and_forget ExecutablePathPattern(hstring);
   hstring WindowClass() const;
-  task<void> WindowClass(hstring);
+  fire_and_forget WindowClass(hstring);
 
  private:
   std::shared_ptr<OpenKneeboard::WindowCaptureTab> GetTab() const;

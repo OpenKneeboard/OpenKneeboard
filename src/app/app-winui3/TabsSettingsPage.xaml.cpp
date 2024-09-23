@@ -813,7 +813,8 @@ winrt::hstring WindowCaptureTabUIData::WindowTitle() {
   return to_hstring(GetTab()->GetMatchSpecification().mTitle);
 }
 
-task<void> WindowCaptureTabUIData::WindowTitle(const hstring& title) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::WindowTitle(
+  const hstring& title) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mTitle = to_string(title);
   co_await GetTab()->SetMatchSpecification(spec);
@@ -823,7 +824,8 @@ bool WindowCaptureTabUIData::MatchWindowClass() {
   return GetTab()->GetMatchSpecification().mMatchWindowClass;
 }
 
-task<void> WindowCaptureTabUIData::MatchWindowClass(bool value) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::MatchWindowClass(
+  bool value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mMatchWindowClass = value;
   co_await GetTab()->SetMatchSpecification(spec);
@@ -833,7 +835,8 @@ uint8_t WindowCaptureTabUIData::MatchWindowTitle() {
   return static_cast<uint8_t>(GetTab()->GetMatchSpecification().mMatchTitle);
 }
 
-task<void> WindowCaptureTabUIData::MatchWindowTitle(uint8_t value) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::MatchWindowTitle(
+  uint8_t value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mMatchTitle
     = static_cast<WindowCaptureTab::MatchSpecification::TitleMatchKind>(value);
@@ -852,7 +855,8 @@ bool WindowCaptureTabUIData::IsCursorCaptureEnabled() const {
   return GetTab()->IsCursorCaptureEnabled();
 }
 
-task<void> WindowCaptureTabUIData::IsCursorCaptureEnabled(bool value) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::IsCursorCaptureEnabled(
+  bool value) {
   co_await GetTab()->SetCursorCaptureEnabled(value);
 }
 
@@ -860,7 +864,8 @@ bool WindowCaptureTabUIData::CaptureClientArea() const {
   return GetTab()->GetCaptureArea() == HWNDPageSource::CaptureArea::ClientArea;
 }
 
-task<void> WindowCaptureTabUIData::CaptureClientArea(bool enabled) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::CaptureClientArea(
+  bool enabled) {
   co_await GetTab()->SetCaptureArea(
     enabled ? HWNDPageSource::CaptureArea::ClientArea
             : HWNDPageSource::CaptureArea::FullWindow);
@@ -870,7 +875,8 @@ hstring WindowCaptureTabUIData::ExecutablePathPattern() const {
   return to_hstring(GetTab()->GetMatchSpecification().mExecutablePathPattern);
 }
 
-task<void> WindowCaptureTabUIData::ExecutablePathPattern(hstring pattern) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::ExecutablePathPattern(
+  hstring pattern) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mExecutablePathPattern = to_string(pattern);
   co_await GetTab()->SetMatchSpecification(spec);
@@ -880,7 +886,8 @@ hstring WindowCaptureTabUIData::WindowClass() const {
   return to_hstring(GetTab()->GetMatchSpecification().mWindowClass);
 }
 
-task<void> WindowCaptureTabUIData::WindowClass(hstring value) {
+OpenKneeboard::fire_and_forget WindowCaptureTabUIData::WindowClass(
+  hstring value) {
   auto spec = GetTab()->GetMatchSpecification();
   spec.mWindowClass = to_string(value);
   co_await GetTab()->SetMatchSpecification(spec);
