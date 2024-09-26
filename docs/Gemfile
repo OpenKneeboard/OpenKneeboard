@@ -1,7 +1,11 @@
 source "https://rubygems.org"
-gem "github-pages", group: :jekyll_plugins
 gem "jekyll"
 gem "json"
-gem "just-the-docs", git: 'https://github.com/just-the-docs/just-the-docs.git', ref: 'a4e4e312aa3e3f41344e351bb1324ec462911515'
+
+gem "just-the-docs"
+
+# Intentionally not in `:jekyll_plugins` because it disables the `_plugins` directory
+gem "github-pages"
+
 
 gem "webrick", group: :development

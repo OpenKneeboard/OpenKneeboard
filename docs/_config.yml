@@ -4,6 +4,7 @@ description: Interactive information in your simulators
 theme: just-the-docs
 color_scheme: dark
 logo: /assets/logo.svg
+permalink: pretty
 favicon_ico: /assets/favicon.ico
 gh_edit_link: true
 gh_edit_link_text: "Edit this page on GitHub"
@@ -11,6 +12,7 @@ gh_edit_repository: https://github.com/OpenKneeboard/OpenKneeboard
 gh_edit_branch: master
 gh_edit_source: docs
 gh_edit_view_mode: edit
+safe: false
 aux_links:
   "Download":
     - "https://go.openkneeboard.com/download"
