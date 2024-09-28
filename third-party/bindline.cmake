@@ -5,8 +5,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     bindline
-    GIT_REPOSITORY "https://github.com/fredemmott/bindline.git"
-    GIT_TAG "6dfc86dbcbd8a16e5ac325dc736cadcee1b30dcc"
+    URL "https://github.com/fredemmott/bindline/archive/refs/tags/v0.1.zip"
+    URL_HASH "SHA256=765a1a5251d7901a99cc6663fe08cb751c09deca6740ed99b2d964d0af8ccbc6"
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(bindline)
