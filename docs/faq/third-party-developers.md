@@ -48,6 +48,12 @@ If you are using a framework that manages your window/swapchain/transparency, se
 
 If your application is written in JavaScript or similar but the app framework you are using does not support true RGBA windows, consider making the app available as a web page too (e.g. on a localhost server); this is commonly offered as an 'OBS URL' or 'overlay URL', or similar.
 
+## How can people capture my app without the title bar?
+
+Users must turn on the 'client area only' option in OpenKneeboard's tab settings; this uses the Win32 `GetClientRect()` function.
+
+You can add support for `GetClientRect()` to your app by implementing `WM_NCCALCSIZE`; if your window position is fully specified, you will need to call `SetWindowPos()` with `SWP_FRAMECHANGED` parameter to trigger this message.
+
 ## I haven't yet built an app; how do I get content into OpenKneeboard?
 
 The best way is to implement a new tab type in C++ with Direct3D11/Direct2D/DirectWrite.
