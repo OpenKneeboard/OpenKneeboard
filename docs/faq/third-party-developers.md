@@ -29,6 +29,15 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 
 Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
 
+## How do I support transparency?
+
+- for HTML files or web pages, use CSS; WebView2 is used (Chromium-based MS Edge), which includes support for `background-color: transparent;` and `rgba(...)`, including on the `body` tag.
+- for capturable Windows, Windows only supports composable RGBA via DirectComposition. If you are already using a DXGI swapchain, moving to a DirectComposition swapchain with `DXGI_ALPHA_MODE_PREMULTIPLIED` is [relatively straightforward](https://github.com/OpenKneeboard/OpenKneeboard/commit/694b87570f90d2d68ea9bcc596afc0cdefc23430). All other approaches resolve transparency within the app and provide Windows with RGB data, so the capture will not include transparency.
+
+If you are using a framework that manages your window/swapchain/transparency, see the documentation and support resources for that framework.
+
+If your application is written in JavaScript or similar but the app framework you are using does not support true RGBA windows, consider making the app available as a web page too (e.g. on a localhost server); this is commonly offered as an 'OBS URL' or 'overlay URL', or similar.
+
 ## I haven't yet built an app; how do I get content into OpenKneeboard?
 
 The best way is to implement a new tab type in C++ with Direct3D11/Direct2D/DirectWrite.
