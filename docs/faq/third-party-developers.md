@@ -52,7 +52,7 @@ If your application is written in JavaScript or similar but the app framework yo
 
 Users must turn on the 'client area only' option in OpenKneeboard's tab settings; this uses the Win32 `GetClientRect()` function.
 
-You can add support for `GetClientRect()` to your app by implementing `WM_NCCALCSIZE`; if your window position is fully specified, you will need to call `SetWindowPos()` with `SWP_FRAMECHANGED` parameter to trigger this message.
+If your app/framework does not support `GetClientRect()`, you can add support to your app by implementing `WM_NCCALCSIZE`; if your window position is fully specified, you will need to call `SetWindowPos()` with `SWP_FRAMECHANGED` parameter to trigger this message.
 
 ## I haven't yet built an app; how do I get content into OpenKneeboard?
 
