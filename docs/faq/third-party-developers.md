@@ -29,6 +29,16 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 
 Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
 
+## Why can't my window be captured?
+
+As if OBS Studio can capture your window with the 'Windows 10' method *when not elevated*, OpenKneeboard generally can; if this is not the case, please open a GitHub issue.
+
+The most common reasons for this failing are:
+- as OpenKneeboard does not support running elevated, it is not able to capture windows that belong to an elevated process
+- `Windows::Graphics::Capture` has undocumented limitations on window styles; in practical terms, your window is usually required to appear in the task bar
+  - if this is unwanted, consider adding an option for OpenKneeboard users and streamers
+  - if you are using the windows API directly, `WS_EX_TOOLWINDOW` removes items from the task bar
+
 ## How do I support transparency?
 
 - for HTML files or web pages, use CSS; WebView2 is used (Chromium-based MS Edge), which includes support for `background-color: transparent;` and `rgba(...)`, including on the `body` tag.
