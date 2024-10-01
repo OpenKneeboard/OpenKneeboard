@@ -72,7 +72,9 @@ void SettingsPage::OnItemClick(
 #undef IT
 
   if (item == OKBDeveloperToolsItem()) {
-    Frame().Navigate(xaml_typename<OKBDeveloperToolsPage>());
+    Frame().Navigate(
+      xaml_typename<WebViewBasedSettingsPage>(),
+      winrt::box_value(winrt::to_hstring("DeveloperTools")));
     return;
   }
 

@@ -568,4 +568,5 @@ target_link_libraries(
   OpenKneeboard-fatal
   OpenKneeboard-shims
   ThirdParty::CppWinRT
+  ThirdParty::magic_enum
 )

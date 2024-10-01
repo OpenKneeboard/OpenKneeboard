@@ -194,3 +194,7 @@ struct std::formatter<winrt::guid, char> {
  private:
   bool mWithBraces = true;
 };
+
+inline winrt::hstring operator""_hs(const char* str, std::size_t len) {
+  return winrt::to_hstring(std::string_view {str, len});
+}

@@ -1,6 +1,4 @@
 /*
- * OpenKneeboard
- *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -18,6 +16,7 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.hpp>
+#include <OpenKneeboard/Filesystem.hpp>
 
 #include <OpenKneeboard/json.hpp>
 
@@ -86,11 +85,28 @@ void to_json_postprocess<AppSettings>(
   }
 }
 
+std::filesystem::path AppSettings::GetAppWebViewSourcePath() const noexcept {
+  if (mAppWebViewSourcePath.empty()) {
+    return GetDefaultAppWebViewSourcePath();
+  }
+  return mAppWebViewSourcePath;
+}
+
+std::filesystem::path AppSettings::GetDefaultAppWebViewSourcePath() noexcept {
+  static std::filesystem::path sRet;
+  static std::once_flag sOnce;
+  std::call_once(sOnce, [&ret = *&sRet]() {
+    ret = Filesystem::GetRuntimeDirectory() / "webview-content";
+  });
+  return sRet;
+}
+
 // mWindowRect is handled by `*_json_postprocess` functions above
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings,
   mAutoUpdate,
   mLastRunVersion,
-  mAlwaysShowDeveloperTools)
+  mAlwaysShowDeveloperTools,
+  mAppWebViewSourcePath)
 
 }// namespace OpenKneeboard

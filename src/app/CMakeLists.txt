@@ -1,5 +1,6 @@
 add_subdirectory(app-common)
 add_subdirectory(app-winui3)
+add_subdirectory(app-webview)
 
 set(
   RUNTIME_FILES
@@ -82,3 +83,17 @@ if(BUILD_BITNESS EQUAL 64)
     add_dependencies(CopyRuntimeFiles "${TARGET}32")
   endforeach()
 endif()
+
+set(APP_JS_STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/webview-content-$<CONFIG>.stamp")
+set(APP_JS_DIR "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/webview-content")
+get_target_property(APP_JS_SOURCE_DIR generated-app-javascript OUTPUT_DIR)
+get_target_property(APP_JS_SOURCE_STAMP_FILE generated-app-javascript STAMP_FILE)
+add_custom_command(
+  OUTPUT "${APP_JS_STAMP_FILE}"
+  DEPENDS "${APP_JS_SOURCE_STAMP_FILE}"
+  COMMAND "${CMAKE_COMMAND}" -E rm -rf "${APP_JS_DIR}"
+  COMMAND "${CMAKE_COMMAND}" -E copy_directory "${APP_JS_SOURCE_DIR}" "${APP_JS_DIR}"
+  COMMAND "${CMAKE_COMMAND}" -E touch "${APP_JS_STAMP_FILE}"
+)
+add_custom_target(copy-webview-content DEPENDS "${APP_JS_STAMP_FILE}")
+add_dependencies(CopyRuntimeFiles copy-webview-content)

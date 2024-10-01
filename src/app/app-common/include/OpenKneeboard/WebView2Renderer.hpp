@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/AppSettings.hpp>
 #include <OpenKneeboard/Geometry2D.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/WGCRenderer.hpp>

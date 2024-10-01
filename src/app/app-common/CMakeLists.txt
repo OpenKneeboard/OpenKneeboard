@@ -29,6 +29,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-Events
   OpenKneeboard-StateMachine
+  ThirdParty::DirectXTK
   ThirdParty::JSON
   PRIVATE
   OpenKneeboard-D2DErrorRenderer
@@ -59,7 +60,6 @@ target_link_libraries(
   System::Dxguid
   System::Rpcrt4
   System::Wtsapi32
-  ThirdParty::DirectXTK
   ThirdParty::GeographicLib
   ThirdParty::LibZip
   ThirdParty::Lua

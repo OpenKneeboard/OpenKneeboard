@@ -21,11 +21,11 @@
 
 #include <shims/winrt/base.h>
 
-#include <filesystem>
-#include <string>
-
 #include <KnownFolders.h>
 #include <ShlObj_core.h>
+
+#include <filesystem>
+#include <string>
 
 namespace OpenKneeboard {
 

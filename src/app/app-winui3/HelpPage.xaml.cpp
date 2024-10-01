@@ -228,7 +228,8 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   }
 
   AddFile("debug-log.txt", GetDPrintMessagesAsString());
-  AddFile("api-events.txt", TroubleshootingStore::GetAPIEventsDebugLog());
+  AddFile(
+    "api-events.txt", TroubleshootingStore::Get()->GetAPIEventsDebugLog());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("renderers.txt", GetActiveConsumers());

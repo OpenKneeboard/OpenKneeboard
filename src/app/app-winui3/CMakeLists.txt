@@ -32,7 +32,6 @@ ok_add_executable(
   MetersNumberFormatter.cpp MetersNumberFormatter.h MetersNumberFormatter.idl
   MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
   NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
-  OKBDeveloperToolsPage.idl OKBDeveloperToolsPage.xaml OKBDeveloperToolsPage.xaml.cpp OKBDeveloperToolsPage.xaml.h
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
   ProcessPickerDialog.idl ProcessPickerDialog.xaml ProcessPickerDialog.xaml.cpp ProcessPickerDialog.xaml.h
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
@@ -44,6 +43,7 @@ ok_add_executable(
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
   VRViewUIKinds.idl
   VRViewSettingsControl.idl VRViewSettingsControl.xaml VRViewSettingsControl.xaml.cpp VRViewSettingsControl.xaml.h
+  WebViewBasedSettingsPage.idl WebViewBasedSettingsPage.xaml WebViewBasedSettingsPage.xaml.cpp WebViewBasedSettingsPage.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
   WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h
 )
@@ -67,6 +67,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-32bit-runtime-components
   OpenKneeboard-App-Common
+  OpenKneeboard-App-WebView
   OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND

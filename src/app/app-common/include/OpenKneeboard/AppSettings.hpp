@@ -27,6 +27,8 @@
 
 #include <Windows.h>
 
+#include <filesystem>
+
 namespace OpenKneeboard {
 
 struct AutoUpdateSettings final {
@@ -56,6 +58,10 @@ struct AppSettings final {
   AutoUpdateSettings mAutoUpdate {};
   std::string mLastRunVersion;
   bool mAlwaysShowDeveloperTools {false};
+
+  std::filesystem::path mAppWebViewSourcePath;
+  std::filesystem::path GetAppWebViewSourcePath() const noexcept;
+  static std::filesystem::path GetDefaultAppWebViewSourcePath() noexcept;
 
   struct Deprecated {
     struct DualKneeboardSettings final {
