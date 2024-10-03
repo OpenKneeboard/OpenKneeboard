@@ -1,13 +1,26 @@
 include(GNUInstallDirs)
 
 function(add_helper_executable TARGET)
-  ok_add_executable(${TARGET} ${ARGN})
+  set(options 32BIT_ONLY)
+  set(valueArgs)
+  set(multiValueArgs)
+  cmake_parse_arguments(HELPER_ARG "${options}" "${valueArgs}" "${multiValueArgs}" ${ARGN})
+
+  ok_add_executable(${TARGET} EXCLUDE_FROM_ALL RUNTIME_DEPENDENCY ${ARGN})
+  if(HELPER_ARG_32BIT_ONLY AND NOT BUILD_IS_32BIT)
+    return()
+  endif()
+
   install(TARGETS "${TARGET}")
 endfunction()
 
 function(add_utility_executable TARGET)
-  ok_add_executable(${TARGET} ${ARGN})
-  install(TARGETS "${TARGET}" DESTINATION "utilities")
+  ok_add_executable(
+    ${TARGET}
+    RUNTIME_EXE
+    OUTPUT_SUBDIR "utilities"
+    ${ARGN}
+  )
 endfunction()
 
 ok_add_executable(
@@ -198,6 +211,7 @@ target_link_libraries(
 add_helper_executable(
   OpenKneeboard-WindowCaptureHook-Helper
   WIN32
+  32BIT_ONLY
   WindowCaptureHook-helper.cpp
 )
 target_link_libraries(
@@ -227,14 +241,18 @@ target_link_libraries(
   ThirdParty::DIA
   ThirdParty::WIL
 )
+set_target_properties(
+  symbolize-traces
+  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_PDBDIR}"
+)
 add_custom_command(
   TARGET symbolize-traces
   POST_BUILD
   COMMAND
   "${CMAKE_COMMAND}" -E copy_if_different
   "${DIASDK_DLL}"
-  "$<TARGET_FILE:symbolize-traces>"
-  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/"
+  "$<TARGET_FILE_DIR:symbolize-traces>/"
 )
 install(
   TARGETS symbolize-traces

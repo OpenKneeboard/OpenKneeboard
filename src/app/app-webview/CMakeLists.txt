@@ -103,37 +103,27 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/typescript/*.js"
 )
 
-set(WEBVIEW_CONTENT_DIR "${CMAKE_CURRENT_BINARY_DIR}/webview-content/")
+set(WEBVIEW_CONTENT_DIR "${BUILD_OUT_BINDIR}/webview-content/")
 set(WEBPACK_OUT_DIR "${WEBVIEW_CONTENT_DIR}/dist")
-set(WEBPACK_STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/webpack.stamp")
+set(WEBPACK_STAMP_FILE "${WEBVIEW_CONTENT_DIR}/.stamp")
 
-set(COPY_OTHER_SOURCES_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/copy-other-sources.cmake")
-file(WRITE "${COPY_OTHER_SOURCES_SCRIPT}" "
-file(
-    COPY \"${CMAKE_CURRENT_SOURCE_DIR}/typescript/\"
-    DESTINATION \"${WEBVIEW_CONTENT_DIR}\"
-    FILES_MATCHING
-    PATTERN \"**/*.html\"
-    PATTERN \"**/*.css\"
-    PATTERN node_modules EXCLUDE
-)")
+set(COPY_STATIC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/copy-static-sources.cmake")
 
 add_custom_command(
     OUTPUT "${WEBPACK_STAMP_FILE}"
-    DEPENDS "${PRETTIER_STAMP_FILE}" "${TYPESCRIPT_SOURCES}" "${OTHER_SOURCES}"
+    DEPENDS "${PRETTIER_STAMP_FILE}" "${TYPESCRIPT_SOURCES}" "${OTHER_SOURCES}" "${COPY_STATIC_SOURCES}"
     COMMAND "${CMAKE_COMMAND}" -E rm -rf "${WEBPACK_OUT_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${COPY_OTHER_SOURCES_SCRIPT}"
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/typescript"
+        "-DDESTINATION=${WEBVIEW_CONTENT_DIR}"
+        -P "${COPY_STATIC_SOURCES}"
     COMMAND call "${YARN}" run webpack --mode "$<IF:$<CONFIG:Debug>,development,production>" -o "${WEBPACK_OUT_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E touch "${WEBPACK_STAMP_FILE}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/typescript"
     VERBATIM
 )
-add_custom_target(generated-app-javascript DEPENDS "${WEBPACK_STAMP_FILE}")
-set_target_properties(
-    generated-app-javascript
-    PROPERTIES
-    OUTPUT_DIR "${WEBVIEW_CONTENT_DIR}"
-    STAMP_FILE "${WEBPACK_STAMP_FILE}"
-)
+add_custom_target(webview-content DEPENDS "${WEBPACK_STAMP_FILE}")
+add_dependencies(runtime-dependencies webview-content)
 
 install(DIRECTORY "${WEBVIEW_CONTENT_DIR}" DESTINATION "bin/webview-content")

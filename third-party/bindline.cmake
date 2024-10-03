@@ -1,7 +1,8 @@
 # Copyright (C) 2024 Fred Emmott <fred@fredemmott.com>
 # SPDX-License-Identifier: MIT
-
 include(FetchContent)
+scoped_include("cppwinrt.cmake")
+scoped_include("wil.cmake")
 
 FetchContent_Declare(
     bindline

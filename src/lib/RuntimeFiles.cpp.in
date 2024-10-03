@@ -7,7 +7,7 @@ const std::filesystem::path DCSWORLD_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-lua-api>");
 
 const std::filesystem::path DCSWORLD_HOOK_LUA(
-  "$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>");
+  "$<TARGET_PROPERTY:dcs-lua-ext,OUTPUT_NAME>");
 
 const std::filesystem::path AUTODETECTION_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-AutoDetect>");

@@ -8,6 +8,7 @@ set(
 ok_add_executable(
   OpenKneeboard-App-WinUI3
   WIN32
+  RUNTIME_EXE
   Resource.rc app.manifest
   HelpPage.idl HelpPage.xaml HelpPage.xaml.cpp HelpPage.xaml.h
   AdvancedSettingsPage.idl AdvancedSettingsPage.xaml AdvancedSettingsPage.xaml.cpp AdvancedSettingsPage.xaml.h
@@ -65,7 +66,6 @@ set_property(
 target_link_libraries(
   OpenKneeboard-App-WinUI3
   PRIVATE
-  OpenKneeboard-32bit-runtime-components
   OpenKneeboard-App-Common
   OpenKneeboard-App-WebView
   OpenKneeboard-DXResources

@@ -1,6 +1,8 @@
 # Build from source because DCS needs `lua.dll`, not `lua51.dll`
 include(FetchContent)
 
+scoped_include(ok_add_library)
+
 FetchContent_Declare(
   lua
   URL "https://www.lua.org/ftp/lua-5.1.5.tar.gz"
@@ -23,7 +25,7 @@ if(NOT lua_POPULATED)
 		lauxlib.c lbaselib.c ldblib.c liolib.c lmathlib.c loslib.c
 		ltablib.c lstrlib.c loadlib.c linit.c)
 	list(TRANSFORM lualib_SOURCES PREPEND "${lualib_SOURCE_DIR}/")
-	add_library(lualib SHARED EXCLUDE_FROM_ALL ${lualib_SOURCES})
+	ok_add_library(lualib SHARED RUNTIME_DEPENDENCY EXCLUDE_FROM_ALL ${lualib_SOURCES})
 	target_compile_options(lualib PUBLIC "-DLUA_BUILD_AS_DLL")
 	target_include_directories(lualib PUBLIC "${lualib_SOURCE_DIR}")
 	set_target_properties(lualib
@@ -31,7 +33,6 @@ if(NOT lua_POPULATED)
 		OUTPUT_NAME lua
 		OUTPUT_NAME_Debug luad
 	)
-	sign_target(lualib)
 endif()
 
 install(

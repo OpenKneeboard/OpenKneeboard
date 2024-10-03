@@ -56,7 +56,7 @@ jobs:
           )
           if ( "${{steps.fetch-key.outputs.HAVE_KEY}}" -eq "true" ) {
             echo "::notice::Signing build targets"
-            $args += "-DSIGNTOOL_KEY_ARGS=/f;${{steps.fetch-key.outputs.PATH}}" `
+            $args += "-DSIGNTOOL_KEY_FILE=${{steps.fetch-key.outputs.PATH}}" `
           } else {
             echo "::warning::Not signing targets"
           }

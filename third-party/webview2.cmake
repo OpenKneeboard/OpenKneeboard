@@ -1,5 +1,7 @@
 include(ExternalProject)
 
+scoped_include("abiwinrt.cmake")
+
 ExternalProject_Add(
   WebView2EP
   URL "https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/1.0.2210.55"

@@ -28,108 +28,20 @@ add_compile_definitions(
 
 add_subdirectory(shaders)
 
-# Always link this so we never accidentally use the SDK version
+# Always link this so we never accidentally use the Windows SDK version (as opposed to the Windows App SDK version)
 link_libraries(ThirdParty::CppWinRT)
 
-function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC_FILE)
-  add_custom_target(
-    "${RC_TARGET}"
-    COMMAND
-    ${CMAKE_COMMAND}
-    -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
-    -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
-    -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
-    -DVERSION_BUILD=${CMAKE_PROJECT_VERSION_TWEAK}
-    "-DACTIVE_BUILD_MODE=$<CONFIG>"
-    "-DINPUT_RC_FILE=${CMAKE_SOURCE_DIR}/src/version.rc.in"
-    "-DOUTPUT_RC_FILE=${OUTPUT_RC_FILE}"
-    "-DFILE_DESCRIPTION=${ORIGINAL_TARGET}"
-    "-DORIGINAL_FILENAME=${ORIGINAL_FILENAME}"
-    "-P${CMAKE_SOURCE_DIR}/src/version.cmake"
-    DEPENDS
-    "${CMAKE_SOURCE_DIR}/src/version.cmake"
-    BYPRODUCTS "${OUTPUT_RC_FILE}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  )
-  disable_clang_tidy("${RC_TARGET}")
-endfunction()
-
-function(add_version_rc TARGET)
-  set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.version.rc")
-  create_version_rc(
-    "${TARGET}-version-rc"
-    "$<TARGET_FILE_BASE_NAME:${TARGET}>"
-    "$<TARGET_FILE_NAME:${TARGET}>"
-    "${VERSION_RC_FILE}"
-  )
-  target_sources("${TARGET}" PRIVATE "${VERSION_RC_FILE}")
-endfunction()
-
-function(ok_postprocess_target TARGET)
-  get_target_property(ALIAS "${TARGET}" ALIASED_TARGET)
-
-  if(ALIAS)
-    return()
-  endif()
-
-  get_target_property(TARGET_TYPE "${TARGET}" TYPE)
-
-  if(NOT TARGET_TYPE MATCHES "^(EXECUTABLE|(SHARED|MODULE)_LIBRARY)$")
-    return()
-  endif()
-
-  add_version_rc(${TARGET})
-  sign_target(${TARGET})
-  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
-endfunction()
-
-function(ok_add_library TARGET KIND)
-  set(options)
-  set(valueArgs)
-  set(multiValueArgs HEADERS INCLUDE_DIRECTORIES)
-  cmake_parse_arguments(LIBRARY_ARG "${options}" "${valueArgs}" "${multiValueArgs}" ${ARGN})
-
-  add_library("${TARGET}" "${KIND}" ${LIBRARY_ARG_UNPARSED_ARGUMENTS})
-  if(LIBRARY_ARG_HEADERS)
-    if("$KIND" STREQUAL "INTERFACE")
-      set(HEADER_KIND "INTERFACE")
-    else()
-      set(HEADER_KIND "PUBLIC")
-    endif()
-    target_sources(
-      "${TARGET}"
-      "${HEADER_KIND}"
-      FILE_SET HEADERS
-      TYPE HEADERS
-      BASE_DIRS ${LIBRARY_ARG_INCLUDE_DIRECTORIES}
-      FILES ${LIBRARY_ARG_HEADERS}
-    )
-  endif()
-
-  ok_postprocess_target("${TARGET}")
-
-  if("${KIND}" STREQUAL "INTERFACE" AND "$ENV{CLION_IDE}")
-    # Workaround https://youtrack.jetbrains.com/issue/CPP-11340
-    add_executable("${TARGET}-clion-helper" EXCLUDE_FROM_ALL "${CMAKE_SOURCE_DIR}/scripts/true.cpp")
-    target_link_libraries("${TARGET}-clion-helper" PRIVATE "${TARGET}")
-  endif()
-endfunction()
-
-function(ok_add_executable TARGET)
-  add_executable("${TARGET}" ${ARGN})
-  ok_postprocess_target("${TARGET}")
-endfunction()
-
-function(add_module_library TARGET)
-  ok_add_library(${TARGET} MODULE ${ARGN})
-endfunction()
+include(ok_add_runtime_files)
+include(ok_add_library)
+include(ok_add_executable)
 
 add_subdirectory(lib)
 add_subdirectory(api)
 
 add_subdirectory(dcs-hook)
 add_subdirectory(injectables)
-add_subdirectory(games)
 
+add_subdirectory(games)
 add_subdirectory(utilities)
+
 add_subdirectory(app)

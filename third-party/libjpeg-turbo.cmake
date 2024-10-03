@@ -1,5 +1,9 @@
+include_guard(GLOBAL)
+scoped_include(target_include_config_directories)
+scoped_include(set_target_config_properties)
+
 ExternalProject_Add(
-  libjpegTurboBuild
+  libjpeg-turbo-build
   URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.0.1.zip"
   URL_HASH "SHA256=D6D99E693366BC03897677650E8B2DFA76B5D6C54E2C9E70C03F0AF821B0A52F"
   CMAKE_ARGS
@@ -13,15 +17,19 @@ ExternalProject_Add(
   DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
-ExternalProject_Get_property(libjpegTurboBuild SOURCE_DIR)
-ExternalProject_Get_property(libjpegTurboBuild INSTALL_DIR)
+ExternalProject_Get_property(libjpeg-turbo-build SOURCE_DIR)
+ExternalProject_Get_property(libjpeg-turbo-build INSTALL_DIR)
 
-add_library(libjpegTurbo INTERFACE)
-add_dependencies(libjpegTurbo libjpegTurboBuild)
-target_link_libraries(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/jpeg-static.lib")
-target_include_directories(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
+set(LIBJPEG_INCLUDE_DIR "${INSTALL_DIR}/$<CONFIG>/include")
+scoped_include(make_config_directories)
+make_config_directories("${LIBJPEG_INCLUDE_DIR}")
 
-add_library(ThirdParty::LibJpeg ALIAS libjpegTurbo)
+add_library(libjpeg-turbo IMPORTED STATIC GLOBAL)
+add_dependencies(libjpeg-turbo libjpeg-turbo-build)
+target_include_config_directories(libjpeg-turbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
+set_target_config_properties(libjpeg-turbo IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/lib/jpeg-static.lib")
+
+add_library(ThirdParty::LibJpeg ALIAS libjpeg-turbo)
 
 install(
 	FILES "${SOURCE_DIR}/LICENSE.md"

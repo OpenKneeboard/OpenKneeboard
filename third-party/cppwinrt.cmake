@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 include(ExternalProject)
 
 # Used for nuget
@@ -33,8 +35,12 @@ add_dependencies(ThirdParty::CppWinRT::Exe CppWinRTNuget)
 set_target_properties(
   ThirdParty::CppWinRT::Exe
   PROPERTIES
-  IMPORTED_LOCATION
-  "${SOURCE_DIR}/bin/cppwinrt.exe"
+  IMPORTED_LOCATION "${SOURCE_DIR}/bin/cppwinrt.exe"
+)
+set_target_properties(
+  CppWinRT
+  PROPERTIES
+  VERSION "${CPPWINRT_VERSION}"
 )
 
 install(

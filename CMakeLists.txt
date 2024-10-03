@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
 set(PROJECT_REVERSE_DOMAIN "com.openkneeboard" CACHE STRING "Project reverse domain, e.g. com.example; used for IPC")
 set(PROJECT_OPENXR_API_LAYER_NAME "XR_APILAYER_FREDEMMOTT_OpenKneeboard" CACHE STRING "OpenXR API layer name")
@@ -102,6 +102,16 @@ endif()
 
 project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.9.11.${VERSION_BUILD} LANGUAGES CXX C)
 
+set(BUILD_OUT_PREFIX "${CMAKE_BINARY_DIR}/out" CACHE PATH "Location for final build artifacts")
+get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(GENERATOR_IS_MULTI_CONFIG)
+  set(BUILD_OUT_ROOT "${BUILD_OUT_PREFIX}/$<CONFIG>")
+else()
+  set(BUILD_OUT_ROOT "${BUILD_OUT_PREFIX}/${CMAKE_BUILD_TYPE}")
+endif()
+set(BUILD_OUT_BINDIR "${BUILD_OUT_ROOT}/bin")
+set(BUILD_OUT_PDBDIR "${BUILD_OUT_ROOT}/pdb")
+
 # The "implementation_version" field of the layer's JSON file is a string, but it should
 # match the `uint32_t` field of XrApiLayerProperties.
 #
@@ -193,9 +203,6 @@ add_compile_options(${COMMON_COMPILE_OPTIONS})
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
-include(windows_kits_dir.cmake)
-include(sign_target.cmake)
-
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"
   "${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props"
@@ -204,9 +211,13 @@ configure_file(
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(BUILD_BITNESS 32 CACHE INTERNAL "")
+  set(BUILD_IS_32BIT ON CACHE INTERNAL "")
 else()
   set(BUILD_BITNESS 64 CACHE INTERNAL "")
+  set(BUILD_IS_64BIT ON CACHE INTERNAL "")
 endif()
+
+add_subdirectory("cmake")
 
 add_subdirectory("scripts")
 add_subdirectory("third-party")
@@ -225,8 +236,6 @@ install(
   FILES gpl-2.0.txt
   TYPE DOC
 )
-
-include(dualarch.cmake)
 
 add_subdirectory("installer")
 

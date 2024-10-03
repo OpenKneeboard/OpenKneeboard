@@ -2,24 +2,26 @@
 # increased compatibility; in particular, LUA requires the DLL
 # name matches a C function name.
 
-add_module_library(
+ok_add_library(
 	OpenKneeboard-lua-api
+	MODULE
+	DUALARCH
+	OUTPUT_NAME "OpenKneeboard_LuaAPI"
 	OpenKneeboard_LuaAPI.cpp)
 target_link_libraries(OpenKneeboard-lua-api PUBLIC lualib)
 target_link_libraries(
 	OpenKneeboard-lua-api
 	PRIVATE
-	lualib
+	ThirdParty::Lua
 	OpenKneeboard-dprint
 	OpenKneeboard-tracing
 	OpenKneeboard-APIEvent)
-set_target_properties(
-	OpenKneeboard-lua-api
-	PROPERTIES
-	OUTPUT_NAME "OpenKneeboard_LuaAPI")
 
-add_module_library(
+ok_add_library(
 	OpenKneeboard-c-api
+	MODULE
+	DUALARCH
+	OUTPUT_NAME "OpenKneeboard_CAPI"
 	OpenKneeboard_CAPI.cpp)
 target_link_libraries(
 	OpenKneeboard-c-api
@@ -27,10 +29,6 @@ target_link_libraries(
 	OpenKneeboard-dprint
 	OpenKneeboard-tracing
 	OpenKneeboard-APIEvent)
-set_target_properties(
-	OpenKneeboard-c-api
-	PROPERTIES
-	OUTPUT_NAME "OpenKneeboard_CAPI")
 target_include_directories(
 	OpenKneeboard-c-api
 	PUBLIC

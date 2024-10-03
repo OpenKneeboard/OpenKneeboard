@@ -60,7 +60,7 @@ target_link_libraries(
   openvr-headers
   OpenKneeboard-dprint)
 
-add_module_library(OpenKneeboard-nonvr-d3d11 NonVRD3D11Kneeboard.cpp)
+ok_add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
   PRIVATE
@@ -75,8 +75,9 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-DllLoadWatcher)
 
-add_module_library(
+ok_add_library(
   OpenKneeboard-oculus-d3d11
+  MODULE
   OculusD3D11Kneeboard.cpp
   OculusD3D11Kneeboard_DllMain.cpp
 )
@@ -94,8 +95,9 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_module_library(
+ok_add_library(
   OpenKneeboard-oculus-d3d12
+  MODULE
   OculusD3D12Kneeboard.cpp
   OculusD3D12Kneeboard_DllMain.cpp
 )
@@ -123,6 +125,7 @@ configure_file(
 ok_add_library(
   OpenKneeboard-OpenXR
   MODULE
+  DUALARCH
   OpenKneeboard-OpenXR${BUILD_BITNESS}.def
   OpenXRKneeboard.cpp
   OpenXRD3D11Kneeboard.cpp
@@ -160,10 +163,14 @@ configure_file(
   OpenKneeboard-OpenXR.intermediate.json
   NEWLINE_STYLE UNIX
 )
-if(BUILD_BITNESS EQUAL 64)
-  set(OPENXR_JSON_OUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.json")
+
+# Keep the un-suffixed name to keep compatibility with previous installations
+set(64BIT_OPENXR_JSON "${BUILD_OUT_BINDIR}/OpenKneeboard-OpenXR.json")
+set(32BIT_OPENXR_JSON "${BUILD_OUT_BINDIR}/OpenKneeboard-OpenXR32.json")
+if(BUILD_IS_32BIT)
+  set(OPENXR_JSON_OUT "${32BIT_OPENXR_JSON}")
 else()
-  set(OPENXR_JSON_OUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR${BUILD_BITNESS}.json")
+  set(OPENXR_JSON_OUT "${64BIT_OPENXR_JSON}")
 endif()
 file(
   GENERATE
@@ -171,11 +178,14 @@ file(
   INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
   NEWLINE_STYLE UNIX
 )
-if(BUILD_BITNESS EQUAL 32)
-  install(FILES "${OPENXR_JSON_OUT}" TYPE BIN COMPONENT DualArch)
-endif()
+install(
+  FILES
+  "${32BIT_OPENXR_JSON}"
+  "${64BIT_OPENXR_JSON}"
+  DESTINATION bin
+)
 
-add_module_library(OpenKneeboard-AutoDetect InjectionBootstrapper.cpp)
+ok_add_library(OpenKneeboard-AutoDetect MODULE InjectionBootstrapper.cpp)
 target_link_libraries(
   OpenKneeboard-AutoDetect
   PRIVATE
@@ -187,7 +197,7 @@ target_link_libraries(
   oculus-hooks
   openvr-hooks)
 
-add_module_library(OpenKneeboard-TabletProxy TabletProxy.cpp)
+ok_add_library(OpenKneeboard-TabletProxy MODULE TabletProxy.cpp)
 target_link_libraries(
   OpenKneeboard-TabletProxy
   PRIVATE
@@ -200,7 +210,7 @@ target_link_libraries(
   OpenKneeboard-version
 )
 
-add_module_library(OpenKneeboard-WindowCaptureHook WindowCaptureHook.cpp)
+ok_add_library(OpenKneeboard-WindowCaptureHook MODULE DUALARCH WindowCaptureHook.cpp)
 target_link_libraries(
   OpenKneeboard-WindowCaptureHook
   PRIVATE

@@ -1,9 +1,14 @@
-set(LIB "lib/win64/openvr_api.lib")
+include(ExternalProject)
+include(ok_add_runtime_files)
+
+set(LIB_PATH "lib/win64/openvr_api.lib")
+set(DLL_PATH "bin/win64/openvr_api.dll")
+
 ExternalProject_Add(
   openvrBuild
   URL "https://github.com/ValveSoftware/openvr/archive/refs/tags/v1.23.7.zip"
   URL_HASH "SHA256=7ffc01fcda5914cdba555074aa334c2c30c4b07c576d651460420f26d9fb7c6a"
-  BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
+  BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB_PATH}" "<SOURCE_DIR>/${DLL_PATH}"
   PATCH_COMMAND
 
   # Stop IDEs (VSCode) from picking up the outdated Vulkan headers here
@@ -30,11 +35,13 @@ add_dependencies(openvr openvrBuild)
 set_target_properties(
   openvr
   PROPERTIES
-  IMPORTED_IMPLIB "${SOURCE_DIR}/${LIB}"
-  IMPORTED_LOCATION "${SOURCE_DIR}/bin/win64/openvr_api.dll")
+  IMPORTED_IMPLIB "${SOURCE_DIR}/${LIB_PATH}"
+  IMPORTED_LOCATION "${SOURCE_DIR}/${DLL_PATH}"
+)
 target_link_libraries(openvr INTERFACE openvr-headers)
 
 ExternalProject_Get_property(openvrBuild SOURCE_DIR)
+ok_add_runtime_files(copy-openvr-dll "${SOURCE_DIR}/${DLL_PATH}")
 install(
   FILES
   "${SOURCE_DIR}/LICENSE"

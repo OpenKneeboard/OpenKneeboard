@@ -28,6 +28,8 @@ foreach(LIBRARY ${SYSTEM_LIBRARIES})
   )
 endforeach()
 
+include(windows_kits_dir)
+
 find_program(
   FXC_EXE
   fxc

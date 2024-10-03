@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 include(FetchContent)
 
 # Used for nuget
@@ -21,8 +23,8 @@ add_library(ThirdParty::WIL INTERFACE IMPORTED GLOBAL)
 set_target_properties(
   ThirdParty::WIL
   PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES
-  "${wil_nuget_SOURCE_DIR}/include"
+  INTERFACE_INCLUDE_DIRECTORIES "${wil_nuget_SOURCE_DIR}/include"
+  VERSION "${WINDOWS_IMPLEMENTATION_LIBRARY_VERSION}"
 )
 
 install(

@@ -1,3 +1,4 @@
+include_guard(GLOBAL)
 get_filename_component(
   WINDOWS_10_KITS_ROOT
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]"
