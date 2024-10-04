@@ -67,17 +67,17 @@ add_custom_target(generated-app-typescript-unformatted DEPENDS ${TS_CPP_UNFORMAT
 
 find_program(YARN NAMES yarn REQUIRED)
 
-set(YARN_STAMP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/typescript/node_modules/.yarn-integrity")
+set(YARN_STAMP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/node_modules/.yarn-integrity")
 add_custom_command(
     OUTPUT "${YARN_STAMP_FILE}"
     COMMAND call "${YARN}" install
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/typescript/yarn.lock"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/typescript"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/yarn.lock"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/webview-content"
     VERBATIM
 )
 
-set(PRETTIER_STAMP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/typescript/generated/prettier.stamp")
-set(CPP_TS_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/typescript/generated")
+set(PRETTIER_STAMP_FILE "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/generated/prettier.stamp")
+set(CPP_TS_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/generated")
 list(TRANSFORM TS_CPP_CLASSES REPLACE "(.+)" "${CPP_TS_OUTPUT_DIR}/\\1Native.ts" OUTPUT_VARIABLE TS_CPP_OUTPUT)
 add_custom_command(
     OUTPUT "${PRETTIER_STAMP_FILE}" ${TS_CPP_OUTPUT}
@@ -86,19 +86,19 @@ add_custom_command(
     # `call` is needed due to https://gitlab.kitware.com/cmake/cmake/-/issues/26340
     COMMAND call "${YARN}" run prettier "${CPP_TS_OUTPUT_DIR}" --write
     COMMAND "${CMAKE_COMMAND}" -E touch "${PRETTIER_STAMP_FILE}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/typescript"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/webview-content"
     VERBATIM
 )
 add_custom_target(generated-app-typescript DEPENDS "${PRETTIER_STAMP_FILE}")
 
 file(
     GLOB_RECURSE TYPESCRIPT_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/typescript/src/*.ts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/src/*.ts"
 )
 file(
     GLOB_RECURSE OTHER_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/typescript/*.html"
-    "${CMAKE_CURRENT_SOURCE_DIR}/typescript/*.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/*.html"
+    "${CMAKE_CURRENT_SOURCE_DIR}/webview-content/*.js"
 )
 
 set(WEBVIEW_CONTENT_DIR "${BUILD_OUT_BINDIR}/webview-content/")
@@ -113,12 +113,12 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E rm -rf "${WEBPACK_OUT_DIR}"
     COMMAND
         "${CMAKE_COMMAND}"
-        "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/typescript"
+        "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/webview-content"
         "-DDESTINATION=${WEBVIEW_CONTENT_DIR}"
         -P "${COPY_STATIC_SOURCES}"
     COMMAND call "${YARN}" run webpack --mode "$<IF:$<CONFIG:Debug>,development,production>" -o "${WEBPACK_OUT_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E touch "${WEBPACK_STAMP_FILE}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/typescript"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/webview-content"
     VERBATIM
 )
 add_custom_target(webview-content DEPENDS "${WEBPACK_STAMP_FILE}")
