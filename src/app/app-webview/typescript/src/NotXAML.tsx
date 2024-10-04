@@ -31,11 +31,12 @@ interface TextBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "onChange
   onChange: (value: string) => void;
 }
 
-export function TextBox({onChange, ...rest}: TextBoxProps) {
+export function TextBox({onChange, className, ...rest}: TextBoxProps) {
+  className = [className, "nxTextBox nxInput nxWidget"].join(' ');
   return (
     <input
       type="text"
-      className="nxTextBox"
+      className={className}
       onChange={(e) => {
         if (onChange) {
           onChange(e.target.value);
@@ -43,6 +44,20 @@ export function TextBox({onChange, ...rest}: TextBoxProps) {
       }}
       {...rest}
     />
+  );
+}
+
+interface ComboBoxProps extends Omit<React.HTMLProps<HTMLSelectElement>, "onChange"> {
+  onChange: (value: string) => void;
+}
+export function ComboBox({onChange, ...rest}: ComboBoxProps) {
+  let className = [rest.className, "nxComboBox nxButton nxWidget"].join(' ');
+  return (
+   <select
+    className={className}
+    onChange={(e) => {
+    if (onChange) { onChange(e.target.value); }
+    }} {...rest} />
   );
 }
 
@@ -61,7 +76,7 @@ export function ToggleSwitch({isChecked, onChange, checkedContent, uncheckedCont
   return (
     <div
       className={`nxToggleSwitch nxToggleSwitch_${isChecked ? '' : 'un'}checked`}
-      onClick={(e) => {
+      onClick={() => {
         if (onChange) {
           onChange(!isChecked);
         }

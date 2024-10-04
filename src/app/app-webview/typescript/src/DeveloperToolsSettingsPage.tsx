@@ -102,27 +102,32 @@ export default function DeveloperToolsSettingsPage({id, initData}: { id: string,
           onChange={(v) => setIsHKCUPluginHandler(v)}
         />
         <nx.StackPanel orientation={"Horizontal"}>
-          <select
+          <nx.ComboBox
             value={crashKind}
-            onChange={(e) => {
-              setCrashKind(e.target.value as typeof crashKind);
+            onChange={(value) => {
+              setCrashKind(value as typeof crashKind);
             }}>
-            <option value={CrashKind.Fatal}>call fatal()</option>
-            <option value={CrashKind.Throw}>throw</option>
-            <option value={CrashKind.ThrowFromNoexcept}>throw from noexcept</option>
-            <option value={CrashKind.Terminate}>call std::terminate()</option>
-          </select>
-          <select
+            <option value={CrashKind.Fatal}>Call fatal()</option>
+            <option value={CrashKind.Throw}>Throw</option>
+            <option value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</option>
+            <option value={CrashKind.Terminate}>Call std::terminate()</option>
+          </nx.ComboBox>
+          <nx.ComboBox
             value={crashLocation}
-            onChange={(e) => {
-              setCrashLocation(e.target.value as typeof crashLocation);
+            onChange={(value) => {
+              setCrashLocation(value as typeof crashLocation);
             }}>
-            <option value={CrashLocation.UIThread}>from UI thread</option>
-            <option value={CrashLocation.MUITask}>from Microsoft.UI task</option>
-            <option value={CrashLocation.WindowsSystemTask}>from Windows.System task</option>
-          </select>
+            <option value={CrashLocation.UIThread}>in UI thread</option>
+            <option value={CrashLocation.MUITask}>in Microsoft.UI task</option>
+            <option value={CrashLocation.WindowsSystemTask}>in Windows.System task</option>
+          </nx.ComboBox>
           <nx.Button
-            onClick={() => native.TriggerCrash(crashKind, crashLocation)}
+            onClick={() => {
+              if (!confirm("Are you sure you want to crash the app?")) {
+                return;
+              }
+              native.TriggerCrash(crashKind, crashLocation)
+            }}
           >💥 Crash</nx.Button>
         </nx.StackPanel>
       </nx.StackPanel>

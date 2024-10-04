@@ -88,8 +88,13 @@ body {
   }
 }
 
-input {
+.nxWidget {
   background-color: var(--color-bg-widget);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.nxInput {
   border: none;
   border-bottom: 2px solid var(--color-accent-border);
   border-radius: 4px;
@@ -127,7 +132,6 @@ input::placeholder {
 
 .nxTextBox {
   width: 100%;
-  box-sizing: border-box;
 }
 
 .relatedWidgetSpacingLeft {
