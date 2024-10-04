@@ -60,6 +60,7 @@ class TroubleshootingStore final : private EventReceiver {
   void OnAPIEvent(const APIEvent&);
 
   std::vector<APIEventEntry> GetAPIEvents() const;
+  std::string GetAPIEventsDebugLog() const;
   std::vector<DPrintEntry> GetDPrintMessages() const;
 
   Event<APIEventEntry> evAPIEventReceived;

@@ -33,7 +33,15 @@
 #include <OpenKneeboard/Settings.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/utf8.hpp>
+#include <OpenKneeboard/version.hpp>
+
 #include <shims/winrt/base.h>
+
+#include <shellapi.h>
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
@@ -41,18 +49,11 @@
 
 #include <microsoft.ui.xaml.window.h>
 
-#include <OpenKneeboard/config.hpp>
-#include <OpenKneeboard/handles.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-#include <OpenKneeboard/utf8.hpp>
-#include <OpenKneeboard/version.hpp>
-
 #include <expected>
 #include <format>
 #include <fstream>
 #include <string>
 
-#include <shellapi.h>
 #include <shobjidl.h>
 #include <time.h>
 #include <zip.h>
@@ -227,7 +228,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   }
 
   AddFile("debug-log.txt", GetDPrintMessagesAsString());
-  AddFile("api-events.txt", GetAPIEventsAsString());
+  AddFile("api-events.txt", TroubleshootingStore::GetAPIEventsDebugLog());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("renderers.txt", GetActiveConsumers());
@@ -321,37 +322,6 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
     }
     AddFile("crashes/dumps.txt", buffer);
   }
-}
-
-std::string HelpPage::GetAPIEventsAsString() noexcept {
-  auto events = TroubleshootingStore::Get()->GetAPIEvents();
-
-  std::string ret;
-
-  if (events.empty()) {
-    ret = std::format(
-      "No events as of {}", ReadableTime(std::chrono::system_clock::now()));
-  }
-
-  for (const auto& event: events) {
-    ret += "\n\n";
-
-    ret += std::format(
-      "{}:\n"
-      "  Latest value:  '{}'\n"
-      "  First seen:    {}\n"
-      "  Last seen:     {}\n"
-      "  Receive count: {}\n"
-      "  Change count:  {}",
-      event.mName,
-      event.mValue,
-      ReadableTime(event.mFirstSeen),
-      ReadableTime(event.mLastSeen),
-      event.mReceiveCount,
-      event.mUpdateCount);
-  }
-
-  return ret;
 }
 
 std::string HelpPage::GetDPrintMessagesAsString() noexcept {

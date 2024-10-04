@@ -227,6 +227,39 @@ TroubleshootingStore::GetAPIEvents() const {
   return events;
 }
 
+template <class C, class T>
+static auto ReadableTime(const std::chrono::time_point<C, T>& time) {
+  return std::chrono::zoned_time(
+    std::chrono::current_zone(),
+    std::chrono::time_point_cast<std::chrono::seconds>(time));
+}
+
+std::string TroubleshootingStore::GetAPIEventsDebugLog() const {
+  const auto entries = mAPIEvents | std::views::values
+    | std::views::transform([](const auto& event) {
+                         return std::format(
+                           "{}:\n"
+                           "  Latest value:  '{}'\n"
+                           "  First seen:    {}\n"
+                           "  Last seen:     {}\n"
+                           "  Receive count: {}\n"
+                           "  Change count:  {}",
+                           event.mName,
+                           event.mValue,
+                           ReadableTime(event.mFirstSeen),
+                           ReadableTime(event.mLastSeen),
+                           event.mReceiveCount,
+                           event.mUpdateCount);
+                       });
+  return std::ranges::fold_left_first(
+           entries,
+           [](const auto& acc, const auto& it) {
+             return std::format("{}\n\n{}", acc, it);
+           })
+    .value_or(std::format(
+      "No events as of {}", ReadableTime(std::chrono::system_clock::now())));
+}
+
 TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {
 }
 
