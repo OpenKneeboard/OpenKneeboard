@@ -176,17 +176,13 @@ static inline void SetClipboardText(std::string_view text) {
 }
 
 fire_and_forget DeveloperToolsSettingsPage::CopyAPIEventsToClipboard() const {
-  SetClipboardText(TroubleshootingStore::Get()->GetAPIEventsDebugLog());
+  SetClipboardText(TroubleshootingStore::Get()->GetAPIEventsDebugLogAsString());
   co_return;
 }
 
 fire_and_forget DeveloperToolsSettingsPage::CopyDebugMessagesToClipboard()
   const {
-  const auto dumper = GetDPrintDumper();
-  if (!dumper) {
-    SetClipboardText("No API events");
-  }
-  SetClipboardText(dumper());
+  SetClipboardText(TroubleshootingStore::Get()->GetDPrintDebugLogAsString());
   co_return;
 }
 

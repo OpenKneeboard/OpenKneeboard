@@ -227,9 +227,10 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
     AddFile("timestamp.txt", buffer);
   }
 
-  AddFile("debug-log.txt", GetDPrintMessagesAsString());
-  AddFile(
-    "api-events.txt", TroubleshootingStore::Get()->GetAPIEventsDebugLog());
+  const auto ts = TroubleshootingStore::Get();
+
+  AddFile("debug-log.txt", ts->GetDPrintDebugLogAsString());
+  AddFile("api-events.txt", ts->GetAPIEventsDebugLogAsString());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("renderers.txt", GetActiveConsumers());
@@ -323,15 +324,6 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
     }
     AddFile("crashes/dumps.txt", buffer);
   }
-}
-
-std::string HelpPage::GetDPrintMessagesAsString() noexcept {
-  auto dumper = GetDPrintDumper();
-  if (!dumper) {
-    return "No log messages available.";
-  }
-
-  return dumper();
 }
 
 OpenKneeboard::fire_and_forget HelpPage::OnCheckForUpdatesClick(

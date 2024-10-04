@@ -27,17 +27,13 @@
 
 #include <format>
 #include <functional>
+#include <optional>
 #include <ostream>
 #include <source_location>
 #include <stop_token>
 #include <string>
 
 namespace OpenKneeboard {
-
-using DPrintDumper = std::function<std::string()>;
-[[nodiscard]]
-DPrintDumper GetDPrintDumper();
-void SetDPrintDumper(const DPrintDumper&);
 
 class DebugPrinter {
   static void Write(std::string_view);
@@ -149,6 +145,21 @@ class DebugPrinter {
     const noexcept {
     Verbose(fmt, std::forward<Args>(args)...);
   }
+
+  using HistoryProvider = std::function<std::string()>;
+  static void SetHistoryProvider(const HistoryProvider&);
+
+  /** Strongly prefer TroubleshootingStore::GetDPrintDebugLogAsString().
+   *
+   * This interface exists so the messages can be retrieved without a hard
+   * dependency on app-common, e.g. by lib/fatal
+   *
+   * @returns `std::nullopt` if outside the app
+   */
+  [[nodiscard,
+    deprecated(
+      "Use TroubleshootingStore::GetDPrintDebugLogAsString() instead")]]
+  static std::optional<std::string> MaybeGetHistory();
 };
 
 namespace detail {

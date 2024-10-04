@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Settings.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
+#include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/version.hpp>
@@ -33,46 +34,16 @@ namespace OpenKneeboard {
 
 static std::weak_ptr<TroubleshootingStore> gStore;
 
-static std::string GetMessagesAsString() {
-  auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
-
-  if (messages.empty()) {
-    return "No log messages (?!)";
-  }
-
-  std::wstring ret;
-  for (const auto& entry: messages) {
-    auto exe = std::wstring_view(entry.mExecutable);
-    {
-      auto dirSep = exe.find_last_of(L'\\');
-      if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
-        exe.remove_prefix(dirSep + 1);
-      }
-    }
-
-    ret += std::format(
-      L"[{:%F %T} {} ({})] {}: {}\n",
-      std::chrono::zoned_time(
-        std::chrono::current_zone(),
-        std::chrono::time_point_cast<std::chrono::seconds>(
-          std::chrono::system_clock::now())),
-      exe,
-      entry.mProcessID,
-      entry.mPrefix,
-      entry.mMessage);
-  }
-
-  return winrt::to_string(ret);
-}
-
 std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
   auto shared = gStore.lock();
   if (!shared) {
     shared.reset(new TroubleshootingStore());
     gStore = shared;
+
+    dprint.SetHistoryProvider([weak = std::weak_ptr {shared}]() {
+      return weak.lock()->GetDPrintDebugLogAsString();
+    });
   }
-  std::once_flag sOnce;
-  std::call_once(sOnce, []() { SetDPrintDumper(&GetMessagesAsString); });
 
   return shared;
 }
@@ -217,16 +188,6 @@ void TroubleshootingStore::OnAPIEvent(const APIEvent& ev) {
   evAPIEventReceived.Emit(entry);
 }
 
-std::vector<TroubleshootingStore::APIEventEntry>
-TroubleshootingStore::GetAPIEvents() const {
-  std::vector<APIEventEntry> events;
-  events.reserve(mAPIEvents.size());
-  for (const auto& [name, event]: mAPIEvents) {
-    events.push_back(event);
-  }
-  return events;
-}
-
 template <class C, class T>
 static auto ReadableTime(const std::chrono::time_point<C, T>& time) {
   return std::chrono::zoned_time(
@@ -234,7 +195,7 @@ static auto ReadableTime(const std::chrono::time_point<C, T>& time) {
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
-std::string TroubleshootingStore::GetAPIEventsDebugLog() const {
+std::string TroubleshootingStore::GetAPIEventsDebugLogAsString() const {
   const auto entries = mAPIEvents | std::views::values
     | std::views::transform([](const auto& event) {
                          return std::format(
@@ -269,11 +230,6 @@ TroubleshootingStore::DPrintReceiver::GetMessages() {
   return mMessages;
 }
 
-std::vector<TroubleshootingStore::DPrintEntry>
-TroubleshootingStore::GetDPrintMessages() const {
-  return mDPrint->GetMessages();
-}
-
 void TroubleshootingStore::DPrintReceiver::OnMessage(
   const DPrintMessage& message) {
   const DPrintEntry entry {
@@ -288,6 +244,38 @@ void TroubleshootingStore::DPrintReceiver::OnMessage(
     mMessages.push_back(entry);
   }
   evMessageReceived.Emit(entry);
+}
+
+std::string TroubleshootingStore::GetDPrintDebugLogAsString() const {
+  const auto messages = mDPrint->GetMessages();
+
+  if (messages.empty()) {
+    return "No log messages (?!)";
+  }
+
+  std::wstring ret;
+  for (const auto& entry: messages) {
+    auto exe = std::wstring_view(entry.mExecutable);
+    {
+      auto dirSep = exe.find_last_of(L'\\');
+      if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
+        exe.remove_prefix(dirSep + 1);
+      }
+    }
+
+    ret += std::format(
+      L"[{:%F %T} {} ({})] {}: {}\n",
+      std::chrono::zoned_time(
+        std::chrono::current_zone(),
+        std::chrono::time_point_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now())),
+      exe,
+      entry.mProcessID,
+      entry.mPrefix,
+      entry.mMessage);
+  }
+
+  return winrt::to_string(ret);
 }
 
 }// namespace OpenKneeboard

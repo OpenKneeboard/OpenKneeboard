@@ -33,13 +33,17 @@
 
 namespace OpenKneeboard {
 
-static DPrintDumper sDumper;
-DPrintDumper GetDPrintDumper() {
-  return sDumper;
+static DebugPrinter::HistoryProvider sHistoryProvider;
+
+void DebugPrinter::SetHistoryProvider(const HistoryProvider& provider) {
+  sHistoryProvider = provider;
 }
 
-void SetDPrintDumper(const DPrintDumper& value) {
-  sDumper = value;
+std::optional<std::string> DebugPrinter::MaybeGetHistory() {
+  if (sHistoryProvider) {
+    return sHistoryProvider();
+  }
+  return std::nullopt;
 }
 
 static std::wstring GetDPrintResourceName(std::wstring_view key) {

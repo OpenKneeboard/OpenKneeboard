@@ -369,12 +369,12 @@ static std::string GetFatalLogContents(
     }
   }
 
-  auto dumper = GetDPrintDumper();
-  if (dumper) {
+  const auto dprintHistory = dprint.MaybeGetHistory();
+  if (dprintHistory) {
     f << "\n"
       << "Logs\n"
       << "====\n\n"
-      << dumper() << "\n";
+      << *dprintHistory << "\n";
   }
 
   return f.str();

@@ -55,8 +55,6 @@ struct HelpPage : HelpPageT<HelpPage>,
   bool AgreedToPrivacyWarning() noexcept;
   bool AgreeButtonIsEnabled() noexcept;
 
-  static std::string GetDPrintMessagesAsString() noexcept;
-
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
