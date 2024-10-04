@@ -248,7 +248,7 @@ OpenKneeboard::fire_and_forget WebViewBasedSettingsPage::OnWebMessageReceived(
     }
     const std::string_view name = parsed.at("methodName");
     MetaInvoke(mPage, [&](auto& native, auto js) {
-      js.InvokeMethodByName(native, name);
+      js.InvokeMethodByName(native, name, parsed.at("methodArguments"));
     });
     co_return;
   }
@@ -328,84 +328,4 @@ WebViewBasedSettingsPage::JSAPI_NativeObjectToJSON(
   }));
 }
 
-#ifdef TODO_PORT_ME
-
-static constexpr const char TriggeredCrashMessage[]
-  = "'Trigger crash' clicked on developer tools page";
-
-OpenKneeboard::fire_and_forget WebViewBasedSettingsPage::OnTriggerCrashClick(
-  IInspectable,
-  Microsoft::UI::Xaml::RoutedEventArgs) {
-  enum class CrashKind {
-    Fatal = 0,
-    Throw = 1,
-    ThrowFromNoexcept = 2,
-  };
-  enum class CrashLocation {
-    UIThread = 0,
-    MUITask = 1,
-    WindowsSystemTask = 2,
-  };
-
-  // We need the unreachable co_return to make the functions coroutines, so we
-  // get task<void>'s exception handler
-  std::function<task<void>()> triggerCrash;
-  switch (static_cast<CrashKind>(this->CrashKind().SelectedIndex())) {
-    case CrashKind::Fatal:
-      triggerCrash = []() -> task<void> {
-        fatal("{}", TriggeredCrashMessage);
-        co_return;
-      };
-      break;
-    case CrashKind::Throw:
-      triggerCrash = []() -> task<void> {
-        throw std::runtime_error(TriggeredCrashMessage);
-        co_return;
-      };
-      break;
-    case CrashKind::ThrowFromNoexcept:
-      triggerCrash = []() noexcept -> task<void> {
-        throw std::runtime_error(TriggeredCrashMessage);
-        co_return;
-      };
-      break;
-    default:
-      OPENKNEEBOARD_BREAK;
-      // Error: task failed successfully 🤷
-      fatal("Invalid CrashKind selected from dev tools page");
-  }
-
-  if (!triggerCrash) {
-    OPENKNEEBOARD_BREAK;
-    fatal("triggerCrash not set");
-  }
-
-  const auto location
-    = static_cast<CrashLocation>(this->CrashLocation().SelectedIndex());
-  if (location == CrashLocation::UIThread) {
-    co_await triggerCrash();
-    std::unreachable();
-  }
-  if (location == CrashLocation::MUITask) {
-    auto dqc = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
-      CreateOnDedicatedThread();
-    co_await wil::resume_foreground(dqc.DispatcherQueue());
-    co_await triggerCrash();
-    std::unreachable();
-  }
-
-  if (location == CrashLocation::WindowsSystemTask) {
-    auto dqc = winrt::Windows::System::DispatcherQueueController::
-      CreateOnDedicatedThread();
-    co_await wil::resume_foreground(dqc.DispatcherQueue());
-    co_await triggerCrash();
-    std::unreachable();
-  }
-
-  OPENKNEEBOARD_BREAK;
-  fatal(
-    "Unhandled CrashLocation from devtools page: {}",
-    std::to_underlying(location));
-}
-#endif
 }// namespace winrt::OpenKneeboardApp::implementation

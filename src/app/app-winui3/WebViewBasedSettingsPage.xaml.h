@@ -29,7 +29,6 @@
 
 namespace OpenKneeboard {
 struct JSNativeData;
-struct AnyJSClass;
 }// namespace OpenKneeboard
 
 namespace winrt::OpenKneeboardApp::implementation {

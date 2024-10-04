@@ -23,6 +23,8 @@
 
 #include <OpenKneeboard/json.hpp>
 
+#include <FredEmmott/magic_json_serialize_enum.hpp>
+
 #include <filesystem>
 #include <ranges>
 #include <unordered_map>
@@ -63,7 +65,18 @@ struct JSProp {
 
 template <class TObj, auto TMethodName, auto TMethod>
 struct JSMethod {
+ private:
+  template <class T>
+  struct arg_types;
+
+  template <class R, class... Args>
+  struct arg_types<R (TObj::*)(Args...) const> {
+    using type = std::tuple<Args...>;
+  };
+
+ public:
   static constexpr std::string_view name_v {TMethodName};
+  using arguments_t = typename arg_types<decltype(TMethod)>::type;
 
   static constexpr auto GetName() noexcept {
     return name_v;
@@ -71,23 +84,26 @@ struct JSMethod {
 
   template <class T>
     requires std::same_as<TObj, std::decay_t<T>>
-    && std::invocable<decltype(TMethod), T>
-  static void Invoke(T&& obj) {
-    std::invoke(TMethod, std::forward<T>(obj));
+  static void Invoke(T&& obj, const nlohmann::json& argsArray) {
+    static constexpr auto argCount = std::tuple_size_v<arguments_t>;
+
+    [&]<std::size_t... I>(std::index_sequence<I...>) {
+      std::invoke(TMethod, std::forward<T>(obj), argsArray.at(I)...);
+    }(std::make_index_sequence<argCount>());
   }
 };
 
-struct AnyJSClass {
-  virtual ~AnyJSClass() = default;
-};
-
 template <class Derived, class T, StringTemplateParameter TName>
-struct JSClassImpl : AnyJSClass {
+struct JSClassImpl {
   using cpp_type_t = T;
   static constexpr auto class_name_v = TName;
 
   static constexpr auto GetTypeName() noexcept {
     return std::string_view {TName};
+  }
+
+  static constexpr auto GetArgumentType() noexcept {
+    return GetTypeName();
   }
 
   template <class TFn>
@@ -113,13 +129,16 @@ struct JSClassImpl : AnyJSClass {
     IterateTuple(Derived::properties_v, visitor);
   }
 
-  static void InvokeMethodByName(auto& native, auto name) {
+  static void InvokeMethodByName(
+    auto& native,
+    auto name,
+    const nlohmann::json& argumentsArray) {
     const auto visitor = [&](auto method) constexpr -> IterationResult {
       using enum IterationResult;
       if (name != method.GetName()) {
         return Continue;
       }
-      method.Invoke(native);
+      method.Invoke(native, argumentsArray);
       return Break;
     };
 
@@ -165,6 +184,29 @@ struct JSClassImpl : AnyJSClass {
 template <class T>
 struct JSClass;
 
+template <class T>
+struct JSEnum;
+
+template <class Derived, class T, StringTemplateParameter TName>
+struct JSEnumImpl {
+  using cpp_type_t = T;
+  static constexpr auto enum_name_v = TName;
+
+  static constexpr std::string_view GetTypeName() noexcept {
+    return TName;
+  }
+
+  static constexpr std::string_view GetArgumentType() noexcept {
+    return argument_type_v;
+  }
+
+ private:
+  // We need some (compile-time) storage so we don't return an
+  // `std::string_view` referring to a temporary, even if it's a compile-time
+  // temporary.
+  static constexpr auto argument_type_v = "keyof typeof "_tp + TName;
+};
+
 namespace detail {
 template <class... T>
 constexpr auto tuple_drop_back_fn(std::tuple<T...> v) {
@@ -206,5 +248,14 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
     StringTemplateParameter {#JS_METHOD_NAME}, \
     &cpp_type_t::JS_METHOD_NAME>()
 #define DECLARE_JS_METHODS static constexpr auto methods_v = std::tuple
+
+#define DECLARE_JS_NAMED_ENUM(JS_ENUM_NAME, CPP_TYPE) \
+  template <> \
+  struct JSEnum<CPP_TYPE> \
+    : JSEnumImpl<JSEnum<CPP_TYPE>, CPP_TYPE, JS_ENUM_NAME> {}; \
+  FREDEMMOTT_MAGIC_JSON_SERIALIZE_ENUM(CPP_TYPE);
+
+#define DECLARE_JS_MEMBER_ENUM(CPP_CLASS, ENUM_NAME) \
+  DECLARE_JS_NAMED_ENUM(#CPP_CLASS "Native_" #ENUM_NAME, CPP_CLASS::ENUM_NAME);
 
 }// namespace OpenKneeboard

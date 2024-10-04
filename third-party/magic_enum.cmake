@@ -1,5 +1,6 @@
 # Copyright (C) 2024 Fred Emmott <fred@fredemmott.com>
 # SPDX-License-Identifier: MIT
+include_guard(GLOBAL)
 
 include(FetchContent)
 

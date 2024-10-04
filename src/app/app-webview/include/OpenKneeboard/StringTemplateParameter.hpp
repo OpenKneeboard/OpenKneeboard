@@ -25,7 +25,8 @@
 namespace OpenKneeboard {
 template <size_t N>
 struct StringTemplateParameter {
-  StringTemplateParameter() = delete;
+  explicit consteval StringTemplateParameter() = default;
+
   consteval StringTemplateParameter(char const (&init)[N]) {
     std::ranges::copy(init, value);
   }
@@ -33,7 +34,33 @@ struct StringTemplateParameter {
   char value[N] {};
 
   constexpr operator std::string_view() const noexcept {
-    return std::string_view {value};
+    return std::string_view {value, N - 1};
+  }
+
+  static constexpr auto size() noexcept {
+    return N - 1;// null terminator
+  }
+
+  template <size_t M>
+  consteval auto operator+(char const (&rhs)[M]) const noexcept {
+    // Both inputs are null-terminated, but we only need one null-terminator
+    StringTemplateParameter<N + M - 1> ret;
+    std::ranges::copy(value, ret.value);
+    std::ranges::copy(rhs, ret.value + N - 1);
+    return ret;
+  }
+
+  template <size_t M>
+  consteval auto operator+(StringTemplateParameter<M> rhs) const noexcept {
+    return (*this) + rhs.value;
+  }
+
+  constexpr bool operator==(const StringTemplateParameter<N>&) const noexcept
+    = default;
+  template <size_t M>
+    requires(N != M)
+  constexpr bool operator==(const StringTemplateParameter<M>&) const noexcept {
+    return false;
   }
 };
 
@@ -44,4 +71,9 @@ template <StringTemplateParameter T>
 consteval auto operator""_tp() {
   return T;
 }
+
+static_assert("foo"_tp == "foo"_tp);
+static_assert("foo"_tp != "bar"_tp);
+static_assert(("foo"_tp + "bar"_tp) == "foobar"_tp);
+
 }// namespace OpenKneeboard

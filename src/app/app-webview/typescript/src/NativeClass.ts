@@ -1,4 +1,4 @@
-export default class OpenKneeboardNativeClass {
+export default class NativeClass {
   constructor(id: string) {
     this.#id = id;
     this.#class = new.target.name;
@@ -17,12 +17,13 @@ export default class OpenKneeboardNativeClass {
     });
   }
 
-  protected InvokeNativeMethod(name: string): void {
+  protected InvokeNativeMethod(name: string, args: any[]): void {
     window.chrome.webview.postMessage({
       message: "InvokeNativeMethod",
       class: this.#class,
       instanceID: this.#id,
       methodName: name,
+      methodArguments: args,
     })
   }
 }

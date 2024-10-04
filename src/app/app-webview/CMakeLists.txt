@@ -19,6 +19,7 @@ target_link_libraries(
     OpenKneeboard-App-WebView-Headers
     INTERFACE
     ThirdParty::JSON
+    ThirdParty::magic_json_serialize_enum
     OpenKneeboard-json
     OpenKneeboard-task
 )
@@ -51,19 +52,18 @@ target_link_libraries(
 )
 
 set(UNFORMATTED_TS_DIR "${CMAKE_CURRENT_BINARY_DIR}/unformatted-typescript")
-set(UNFORMATTED_TS_STAMP "${UNFORMATTED_TS_DIR}/stamp")
 list(TRANSFORM TS_CPP_CLASSES REPLACE "(.+)" "${UNFORMATTED_TS_DIR}/\\1Native.ts" OUTPUT_VARIABLE TS_CPP_UNFORMATTED)
 list(APPEND TS_CPP_UNFORMATTED "${UNFORMATTED_TS_DIR}/SystemTheme.d.ts")
 
 add_custom_command(
-    OUTPUT ${UNFORMATTED_TS_STAMP} ${TS_CPP_UNFORMATTED}
+    OUTPUT ${TS_CPP_UNFORMATTED}
     COMMAND "$<TARGET_FILE:dump-js-exports>"
     DEPENDS dump-js-exports ${TS_CPP_HEADERS}
     WORKING_DIRECTORY "${UNFORMATTED_TS_DIR}"
     VERBATIM
 )
 
-add_custom_target(generated-app-typescript-unformatted DEPENDS ${UNFORMATTED_TS_STAMP})
+add_custom_target(generated-app-typescript-unformatted DEPENDS ${TS_CPP_UNFORMATTED})
 
 find_program(YARN NAMES yarn REQUIRED)
 
@@ -81,10 +81,8 @@ set(CPP_TS_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/typescript/generated")
 list(TRANSFORM TS_CPP_CLASSES REPLACE "(.+)" "${CPP_TS_OUTPUT_DIR}/\\1Native.ts" OUTPUT_VARIABLE TS_CPP_OUTPUT)
 add_custom_command(
     OUTPUT "${PRETTIER_STAMP_FILE}" ${TS_CPP_OUTPUT}
-    DEPENDS "${UNFORMATTED_TS_STAMP}" "${YARN_STAMP_FILE}"
-    COMMAND "${CMAKE_COMMAND}" -E rm -rf "${CPP_TS_OUTPUT_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CPP_TS_OUTPUT_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E copy ${TS_CPP_UNFORMATTED} "${CPP_TS_OUTPUT_DIR}/"
+    DEPENDS "${TS_CPP_UNFORMATTED}" "${YARN_STAMP_FILE}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different "${UNFORMATTED_TS_DIR}" "${CPP_TS_OUTPUT_DIR}"
     # `call` is needed due to https://gitlab.kitware.com/cmake/cmake/-/issues/26340
     COMMAND call "${YARN}" run prettier "${CPP_TS_OUTPUT_DIR}" --write
     COMMAND "${CMAKE_COMMAND}" -E touch "${PRETTIER_STAMP_FILE}"

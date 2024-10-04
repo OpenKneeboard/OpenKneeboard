@@ -23,6 +23,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
+#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -184,6 +185,76 @@ fire_and_forget DeveloperToolsSettingsPage::CopyDebugMessagesToClipboard()
   const {
   SetClipboardText(TroubleshootingStore::Get()->GetDPrintDebugLogAsString());
   co_return;
+}
+
+fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
+  CrashKind kind,
+  CrashLocation location) const {
+  static constexpr const char TriggeredCrashMessage[]
+    = "'Trigger crash' clicked on developer tools page";
+
+  // We need the unreachable co_return to make the functions coroutines, so we
+  // get task<void>'s exception handler
+  std::function<task<void>()> triggerCrash;
+  switch (kind) {
+    case CrashKind::Fatal:
+      triggerCrash = []() -> task<void> {
+        fatal("{}", TriggeredCrashMessage);
+        co_return;
+      };
+      break;
+    case CrashKind::Throw:
+      triggerCrash = []() -> task<void> {
+        throw std::runtime_error(TriggeredCrashMessage);
+        co_return;
+      };
+      break;
+    case CrashKind::ThrowFromNoexcept:
+      triggerCrash = []() noexcept -> task<void> {
+        throw std::runtime_error(TriggeredCrashMessage);
+        co_return;
+      };
+      break;
+    case CrashKind::Terminate:
+      triggerCrash = []() -> task<void> {
+        std::terminate();
+        co_return;
+      };
+    default:
+      OPENKNEEBOARD_BREAK;
+      // Error: task failed successfully 🤷
+      fatal("Invalid CrashKind selected from dev tools page");
+  }
+
+  if (!triggerCrash) {
+    OPENKNEEBOARD_BREAK;
+    fatal("triggerCrash not set");
+  }
+
+  switch (location) {
+    case CrashLocation::UIThread: {
+      co_await triggerCrash();
+      std::unreachable();
+    }
+    case CrashLocation::MUITask: {
+      auto dqc = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
+        CreateOnDedicatedThread();
+      co_await wil::resume_foreground(dqc.DispatcherQueue());
+      co_await triggerCrash();
+      std::unreachable();
+    }
+    case CrashLocation::WindowsSystemTask: {
+      auto dqc = winrt::Windows::System::DispatcherQueueController::
+        CreateOnDedicatedThread();
+      co_await wil::resume_foreground(dqc.DispatcherQueue());
+      co_await triggerCrash();
+      std::unreachable();
+    }
+    default:
+      OPENKNEEBOARD_BREAK;
+      fatal("Unhandled CrashLocation from devtools page: {}", location);
+      co_return;
+  }
 }
 
 }// namespace OpenKneeboard

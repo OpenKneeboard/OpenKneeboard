@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 ExternalProject_Add(
   jsonFetch
   URL "https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip"

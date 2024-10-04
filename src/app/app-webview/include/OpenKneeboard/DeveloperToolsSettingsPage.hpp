@@ -54,26 +54,23 @@ class DeveloperToolsSettingsPage : public JSNativeData {
   fire_and_forget CopyAPIEventsToClipboard() const;
   fire_and_forget CopyDebugMessagesToClipboard() const;
 
-  // TODO: trigger crash
-  // ====================
-  //
-  // Probably want to support method parameters for this
-  //
-  // Method
-  // ------
-  //
-  // - fatal
-  // - throw
-  // - throw from noexcept
-  // - NEW: explicitly call std::terminate()
-  //
-  // Where
-  // -----
-  //
-  // - UI thread
-  // - Microsoft::UI::Dispatching::DispatcherQueue
-  // - Windows::System::DispatcherQueue
+  enum class CrashKind {
+    Fatal,
+    Throw,
+    ThrowFromNoexcept,
+    Terminate,
+  };
+  enum class CrashLocation {
+    UIThread,
+    MUITask,
+    WindowsSystemTask,
+  };
+
+  fire_and_forget TriggerCrash(CrashKind, CrashLocation) const;
 };
+
+DECLARE_JS_MEMBER_ENUM(DeveloperToolsSettingsPage, CrashKind)
+DECLARE_JS_MEMBER_ENUM(DeveloperToolsSettingsPage, CrashLocation)
 
 DECLARE_JS_CLASS(DeveloperToolsSettingsPage) {
   DECLARE_JS_PROPERTIES {
@@ -86,6 +83,7 @@ DECLARE_JS_CLASS(DeveloperToolsSettingsPage) {
   DECLARE_JS_METHODS {
     DECLARE_JS_METHOD(CopyAPIEventsToClipboard),
     DECLARE_JS_METHOD(CopyDebugMessagesToClipboard),
+    DECLARE_JS_METHOD(TriggerCrash),
   };
 };
 
