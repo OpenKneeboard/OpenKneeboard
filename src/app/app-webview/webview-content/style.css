@@ -34,50 +34,47 @@ body {
   background-color: var(--color-bg-frame);
   color: var(--system-color-Foreground);
   /* match `.bodyFont` */
-  font-size: 14pt;
+  font-size: 14px;
 }
 
 /* See https://learn.microsoft.com/en-us/windows/apps/design/style/xaml-theme-resources#the-xaml-type-ramp */
 
-.nxCaption,
-.nxToggleSwitch {
-  font-size: 12pt;
-  margin-bottom: 4px;
-  margin-top: 12px;
+.nxCaption {
+  font-size: 12px;
 }
 
 .body {
-  font-size: 14pt;
+  font-size: 14px;
 }
 
 .bodyStrong {
   font-weight: var(--semi-bold);
-  font-size: 14pt;
+  font-size: 14px;
 }
 
 .bodyLarge {
-  font-size: 18pt;
+  font-size: 18px;
 }
 
 .subtitle {
   font-weight: var(--semi-bold);
-  font-size: 20pt;
+  font-size: 20px;
 }
 
 .nxTitle {
   font-weight: var(--semi-bold);
-  font-size: 28pt;
+  font-size: 28px;
   margin-bottom: 24px;
 }
 
 .titleLarge {
   font-weight: var(--semi-bold);
-  font-size: 40pt;
+  font-size: 40px;
 }
 
 .display {
   font-weight: var(--semi-bold);
-  font-size: 68pt;
+  font-size: 68px;
 }
 
 .nxPage {
@@ -190,14 +187,15 @@ span.code {
 
 .nxStackPanel {
   display: flex;
-  gap: 8px;
 
   &.nxStackPanel_Vertical {
     flex-direction: column;
+    gap: 16px;
   }
 
   &.nxStackPanel_Horizontal {
     flex-direction: row;
+    gap: 8px;
   }
 }
 

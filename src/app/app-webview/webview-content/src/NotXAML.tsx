@@ -1,4 +1,5 @@
 import * as React from "react";
+import {ReactNode} from "react";
 
 export function Page({children}: { children: React.ReactNode }) {
   return <div className="nxPage">{children}</div>;
@@ -10,11 +11,24 @@ export function Title({children}: { children: React.ReactNode }) {
   );
 }
 
-export function StackPanel({orientation, children}: {
-  orientation: "Horizontal" | "Vertical",
-  children: React.ReactNode
-}) {
-  return <div className={`nxStackPanel nxStackPanel_${orientation}`}>{children}</div>;
+interface StackPanelProps {
+  orientation: "Horizontal" | "Vertical";
+  children: React.ReactNode;
+  spacing?: number;
+}
+
+export function StackPanel({orientation, children, spacing}: StackPanelProps) {
+  let style: React.CSSProperties = {};
+  if (spacing) {
+    style.gap = `${spacing}px`;
+  }
+
+  return (
+    <div
+      className={`nxStackPanel nxStackPanel_${orientation}`}
+      style={style}>
+      {children}
+    </div>);
 }
 
 export function Caption({children}: { children: React.ReactNode }) {
@@ -29,21 +43,23 @@ export function Button(props: React.JSX.IntrinsicAttributes & React.ClassAttribu
 
 interface TextBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "onChange"> {
   onChange: (value: string) => void;
+  header?: ReactNode;
 }
 
-export function TextBox({onChange, className, ...rest}: TextBoxProps) {
+export function TextBox({onChange, className, header, ...rest}: TextBoxProps) {
   className = [className, "nxTextBox nxInput nxWidget"].join(' ');
   return (
-    <input
-      type="text"
-      className={className}
-      onChange={(e) => {
-        if (onChange) {
-          onChange(e.target.value);
-        }
-      }}
-      {...rest}
-    />
+    <WithOptionalHeader header={header}>
+      <input
+        type="text"
+        className={className}
+        onChange={(e) => {
+          if (onChange) {
+            onChange(e.target.value);
+          }
+        }}
+        {...rest}
+      /></WithOptionalHeader>
   );
 }
 
@@ -92,24 +108,28 @@ interface ToggleSwitchProps {
   onChange?: (checked: boolean) => void,
   checkedContent?: React.ReactNode,
   uncheckedContent?: React.ReactNode,
+  header?: React.ReactNode,
 }
 
-export function ToggleSwitch({isChecked, onChange, checkedContent, uncheckedContent}: ToggleSwitchProps) {
+export function ToggleSwitch(props: ToggleSwitchProps) {
+  const {isChecked, onChange, checkedContent, uncheckedContent, header} = props;
   return (
-    <div
-      className={`nxToggleSwitch nxToggleSwitch_${isChecked ? '' : 'un'}checked`}
-      onClick={() => {
-        if (onChange) {
-          onChange(!isChecked);
-        }
-      }}>
-      <div className={"nxToggleSwitch_control"}>
-        <div className={"nxToggleSwitch_slider"}/>
+    <WithOptionalHeader header={header}>
+      <div
+        className={`nxToggleSwitch nxToggleSwitch_${isChecked ? '' : 'un'}checked`}
+        onClick={() => {
+          if (onChange) {
+            onChange(!isChecked);
+          }
+        }}>
+        <div className={"nxToggleSwitch_control"}>
+          <div className={"nxToggleSwitch_slider"}/>
+        </div>
+        <div className={"nxToggleSwitch_content"}>
+          {isChecked ? checkedContent : uncheckedContent}
+        </div>
       </div>
-      <div className={"nxToggleSwitch_content"}>
-        {isChecked ? checkedContent : uncheckedContent}
-      </div>
-    </div>
+    </WithOptionalHeader>
   );
 }
 
@@ -133,4 +153,29 @@ export function FontIcon({glyph}: { glyph: Glyph }) {
   return (
     <span className={"nxFontIcon"}>{GlyphMapping[glyph]}</span>
   );
+}
+
+interface WithOptionalHeaderProps {
+  header?: ReactNode;
+  children: ReactNode;
+}
+
+export function WithOptionalHeader({header, children}: WithOptionalHeaderProps) {
+  if (!header) {
+    return children;
+  }
+  return (
+    <StackPanel orientation={"Vertical"} spacing={8}>
+      <Caption>{header}</Caption>
+      <div>{children}</div>
+    </StackPanel>
+  );
+}
+
+interface WithHeaderProps extends WithOptionalHeaderProps {
+  header: ReactNode;
+}
+
+export function WithHeader(props: WithHeaderProps) {
+  return WithOptionalHeader(props);
 }

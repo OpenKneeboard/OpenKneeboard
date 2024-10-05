@@ -6,41 +6,44 @@ import {
 import * as React from "react";
 import * as nx from "./NotXAML";
 import NativeRequest from "./NativeRequest";
-import {useEffect, useState} from "react";
+import {ReactNode, useEffect, useState} from "react";
 import NativeClass from "./NativeClass";
 
-function FolderPicker({value, defaultValue, onChange, placeholder}: {
+function FolderPicker({header, value, defaultValue, onChange, placeholder}: {
+  header?: ReactNode;
   defaultValue?: string,
   value?: string,
   onChange?: (value: string) => void,
   placeholder: string
 }) {
   return (
-    <nx.StackPanel orientation={"Horizontal"}>
-      <nx.TextBox
-        value={value}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        style={{flexGrow: 1}}
-        onChange={(value) => {
-          if (onChange) {
-            onChange(value);
-          }
-        }}
-      />
-      <nx.Button
-        onClick={async () => {
-          try {
-            const path = await NativeRequest.Send("ShowFolderPicker", {}) as string;
+    <nx.WithOptionalHeader header={header}>
+      <nx.StackPanel orientation={"Horizontal"}>
+        <nx.TextBox
+          value={value}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          style={{flexGrow: 1}}
+          onChange={(value) => {
             if (onChange) {
-              onChange(path);
+              onChange(value);
             }
-          } catch (e) {
-          }
-        }}>
-        <nx.FontIcon glyph={"OpenFolderHorizontal"}/>
-      </nx.Button>
-    </nx.StackPanel>
+          }}
+        />
+        <nx.Button
+          onClick={async () => {
+            try {
+              const path = await NativeRequest.Send("ShowFolderPicker", {}) as string;
+              if (onChange) {
+                onChange(path);
+              }
+            } catch (e) {
+            }
+          }}>
+          <nx.FontIcon glyph={"OpenFolderHorizontal"}/>
+        </nx.Button>
+      </nx.StackPanel>
+    </nx.WithOptionalHeader>
   );
 }
 
@@ -86,81 +89,85 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
   return (
     <nx.Page>
       <nx.Title>Developer Tools</nx.Title>
-      <nx.Caption>Debug information</nx.Caption>
       <nx.StackPanel orientation={"Vertical"}>
-        <nx.StackPanel orientation={"Horizontal"}>
-          <nx.Button
-            onClick={() => native.CopyDebugMessagesToClipboard()}>
-            <nx.FontIcon glyph={"Copy"}/>
-            Copy debug log
-          </nx.Button>
-          <nx.Button
-            onClick={() => native.CopyAPIEventsToClipboard()}>
-            <nx.FontIcon glyph={"Copy"}/>
-            Copy API events
-          </nx.Button>
-        </nx.StackPanel>
-        <nx.Caption>Load app webview components from</nx.Caption>
+        <nx.WithHeader header={"Debug information"}>
+          <nx.StackPanel orientation={"Horizontal"}>
+            <nx.Button
+              onClick={() => native.CopyDebugMessagesToClipboard()}>
+              <nx.FontIcon glyph={"Copy"}/>
+              Copy debug log
+            </nx.Button>
+            <nx.Button
+              onClick={() => native.CopyAPIEventsToClipboard()}>
+              <nx.FontIcon glyph={"Copy"}/>
+              Copy API events
+            </nx.Button>
+          </nx.StackPanel>
+        </nx.WithHeader>
         <FolderPicker
+          header={"Load app webview components from"}
           value={sourcePath}
           placeholder={native.DefaultAppWebViewSourcePath}
           onChange={(path) => setSourcePath(path)}
         />
-        <nx.Caption>Current version for auto-update check</nx.Caption>
         <nx.TextBox
+          header={"Current version for auto-update check"}
           value={autoUpdateVersion}
           placeholder={native.ActualCurrentVersion}
           onChange={(value) => setAutoUpdateVersion(value)}
         />
-        <nx.Caption>
-          Use this executable for OpenKneeboardPlugin files via <span
-          className={"code"}>HKEY_CURRENT_USER</span>
-        </nx.Caption>
         <nx.ToggleSwitch
+          header={<React.Fragment>
+            Use this executable for OpenKneeboardPlugin files via <span
+            className={"code"}>HKEY_CURRENT_USER</span>
+          </React.Fragment>}
           isChecked={isHKCUPluginHandler}
           checkedContent={"HKCU override is active"}
           uncheckedContent={"Using another executable or HKLM"}
           onChange={(v) => setIsHKCUPluginHandler(v)}
         />
-        <nx.StackPanel orientation={"Horizontal"}>
-          <nx.ComboBox
-            value={crashKind}
-            onChange={(value) => {
-              setCrashKind(value);
-            }}>
-            <nx.ComboBoxItem value={CrashKind.Fatal}>Call Fatal</nx.ComboBoxItem>
-            <nx.ComboBoxItem value={CrashKind.Throw}>Throw</nx.ComboBoxItem>
-            <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
-            <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
-          </nx.ComboBox>
-          <nx.ComboBox
-            value={crashLocation}
-            onChange={(value) => {
-              setCrashLocation(value as typeof crashLocation);
-            }}>
-            <nx.ComboBoxItem value={CrashLocation.UIThread}>in UI thread</nx.ComboBoxItem>
-            <nx.ComboBoxItem value={CrashLocation.MUITask}>in Microsoft.UI task</nx.ComboBoxItem>
-            <nx.ComboBoxItem value={CrashLocation.WindowsSystemTask}>in Windows.System task</nx.ComboBoxItem>
-          </nx.ComboBox>
-          <nx.Button
-            onClick={() => {
-              if (!confirm("Are you sure you want to crash the app?")) {
-                return;
-              }
-              native.TriggerCrash(crashKind, crashLocation)
-            }}
-          >💥 Crash
-          </nx.Button>
-        </nx.StackPanel>
+        <nx.WithHeader header={"Trigger crash"}>
+          <nx.StackPanel orientation={"Horizontal"}>
+            <nx.ComboBox
+              value={crashKind}
+              onChange={(value) => {
+                setCrashKind(value);
+              }}>
+              <nx.ComboBoxItem value={CrashKind.Fatal}>Call Fatal</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.Throw}>Throw</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
+            </nx.ComboBox>
+            <nx.ComboBox
+              value={crashLocation}
+              onChange={(value) => {
+                setCrashLocation(value as typeof crashLocation);
+              }}>
+              <nx.ComboBoxItem value={CrashLocation.UIThread}>in UI thread</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashLocation.MUITask}>in Microsoft.UI task</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashLocation.WindowsSystemTask}>in Windows.System task</nx.ComboBoxItem>
+            </nx.ComboBox>
+            <nx.Button
+              onClick={() => {
+                if (!confirm("Are you sure you want to crash the app?")) {
+                  return;
+                }
+                native.TriggerCrash(crashKind, crashLocation)
+              }}
+            >💥 Crash
+            </nx.Button>
+          </nx.StackPanel>
+        </nx.WithHeader>
       </nx.StackPanel>
     </nx.Page>
-  );
+  )
+    ;
 }
 
 export default function ({instanceID}: { instanceID: string }) {
   const native = nativeState(DeveloperToolsSettingsPageNative, instanceID);
   if (native) {
-    return (<DeveloperToolsSettingsPage native={native} />);
+    return (<DeveloperToolsSettingsPage native={native}/>);
   } else {
     return <div className={"nativeLoading"}>Loading native data...</div>
   }
