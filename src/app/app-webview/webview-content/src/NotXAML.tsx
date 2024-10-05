@@ -47,17 +47,39 @@ export function TextBox({onChange, className, ...rest}: TextBoxProps) {
   );
 }
 
-interface ComboBoxProps extends Omit<React.HTMLProps<HTMLSelectElement>, "onChange"> {
-  onChange: (value: string) => void;
+interface ComboBoxItemProps<T extends string> {
+  value: T;
+  children: string;
 }
-export function ComboBox({onChange, ...rest}: ComboBoxProps) {
-  let className = [rest.className, "nxComboBox nxButton nxWidget"].join(' ');
+
+export function ComboBoxItem<T extends string>({value, children}: ComboBoxItemProps<T>) {
   return (
-   <select
-    className={className}
-    onChange={(e) => {
-    if (onChange) { onChange(e.target.value); }
-    }} {...rest} />
+    <option value={value}>{children}</option>
+  );
+}
+
+interface ComboBoxProps<T extends string> extends Omit<React.HTMLProps<HTMLSelectElement>, "onChange" | "value" | "initialValue" | "children"> {
+  onChange: (value: T) => void;
+  value?: T;
+  initialValue?: T;
+  children:
+    React.ReactElement<ComboBoxItemProps<T>> |
+    React.ReactElement<ComboBoxItemProps<T>>[];
+}
+
+export function ComboBox<T extends string>({onChange, className, children, ...rest}: ComboBoxProps<T>) {
+  className = [className, "nxComboBox nxButton nxWidget"].join(' ');
+  return (
+    <select
+      className={className}
+      onChange={(e) => {
+        if (onChange) {
+          onChange(e.target.value as T);
+        }
+      }}
+      {...rest}>
+      {children}
+    </select>
   );
 }
 
@@ -106,7 +128,8 @@ const GlyphMapping = {
   OpenFolderHorizontal: "\ued25",
 }
 export type Glyph = keyof typeof GlyphMapping;
-export function FontIcon({glyph}:{glyph: Glyph}) {
+
+export function FontIcon({glyph}: { glyph: Glyph }) {
   return (
     <span className={"nxFontIcon"}>{GlyphMapping[glyph]}</span>
   );

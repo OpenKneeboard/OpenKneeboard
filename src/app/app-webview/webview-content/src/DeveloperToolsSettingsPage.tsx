@@ -105,21 +105,21 @@ export default function DeveloperToolsSettingsPage({id, initData}: { id: string,
           <nx.ComboBox
             value={crashKind}
             onChange={(value) => {
-              setCrashKind(value as typeof crashKind);
+              setCrashKind(value);
             }}>
-            <option value={CrashKind.Fatal}>Call fatal()</option>
-            <option value={CrashKind.Throw}>Throw</option>
-            <option value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</option>
-            <option value={CrashKind.Terminate}>Call std::terminate()</option>
+            <nx.ComboBoxItem value={CrashKind.Fatal}>Call Fatal</nx.ComboBoxItem>
+            <nx.ComboBoxItem value={CrashKind.Throw}>Throw</nx.ComboBoxItem>
+            <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
+            <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
           </nx.ComboBox>
           <nx.ComboBox
             value={crashLocation}
             onChange={(value) => {
               setCrashLocation(value as typeof crashLocation);
             }}>
-            <option value={CrashLocation.UIThread}>in UI thread</option>
-            <option value={CrashLocation.MUITask}>in Microsoft.UI task</option>
-            <option value={CrashLocation.WindowsSystemTask}>in Windows.System task</option>
+            <nx.ComboBoxItem value={CrashLocation.UIThread}>in UI thread</nx.ComboBoxItem>
+            <nx.ComboBoxItem value={CrashLocation.MUITask}>in Microsoft.UI task</nx.ComboBoxItem>
+            <nx.ComboBoxItem value={CrashLocation.WindowsSystemTask}>in Windows.System task</nx.ComboBoxItem>
           </nx.ComboBox>
           <nx.Button
             onClick={() => {
