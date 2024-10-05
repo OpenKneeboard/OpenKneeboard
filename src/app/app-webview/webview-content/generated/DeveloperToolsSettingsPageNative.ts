@@ -6,7 +6,7 @@ import DeveloperToolsSettingsPageNative_CrashKind from "./DeveloperToolsSettings
 import DeveloperToolsSettingsPageNative_CrashLocation from "./DeveloperToolsSettingsPageNative_CrashLocation";
 
 export class DeveloperToolsSettingsPageNative extends NativeClass {
-  constructor(instanceID: string, instanceData: any) {
+  private constructor(instanceID: string, instanceData: any) {
     super(instanceID);
     this.#cpp_AppWebViewSourcePath = instanceData["AppWebViewSourcePath"];
     this.#cpp_DefaultAppWebViewSourcePath =
@@ -15,6 +15,15 @@ export class DeveloperToolsSettingsPageNative extends NativeClass {
     this.#cpp_AutoUpdateFakeCurrentVersion =
       instanceData["AutoUpdateFakeCurrentVersion"];
     this.#cpp_ActualCurrentVersion = instanceData["ActualCurrentVersion"];
+  }
+
+  static async load(
+    instanceID: string,
+  ): Promise<DeveloperToolsSettingsPageNative> {
+    return new DeveloperToolsSettingsPageNative(
+      instanceID,
+      await this.GetInstanceJSONData("DeveloperToolsSettingsPage", instanceID),
+    );
   }
   #cpp_AppWebViewSourcePath: string;
   #cpp_DefaultAppWebViewSourcePath: string;

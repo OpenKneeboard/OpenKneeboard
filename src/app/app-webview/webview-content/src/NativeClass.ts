@@ -1,17 +1,19 @@
+import NativeRequest from "./NativeRequest";
+
 export default class NativeClass {
   constructor(id: string) {
-    this.#id = id;
+    this.#instanceID = id;
     this.#class = new.target.name;
   }
 
-  readonly #id: string;
+  readonly #instanceID: string;
   readonly #class: string;
 
   protected NativePropertyChanged(name: string, value: any): void {
     window.chrome.webview.postMessage({
       message: "NativePropertyChanged",
       class: this.#class,
-      instanceID: this.#id,
+      instanceID: this.#instanceID,
       propertyName: name,
       propertyValue: value,
     });
@@ -21,9 +23,13 @@ export default class NativeClass {
     window.chrome.webview.postMessage({
       message: "InvokeNativeMethod",
       class: this.#class,
-      instanceID: this.#id,
+      instanceID: this.#instanceID,
       methodName: name,
       methodArguments: args,
     })
+  }
+
+  protected static async GetInstanceJSONData(klass: string, instanceID: string) {
+    return await NativeRequest.Send("NativeObjectToJSON", {class: klass, instanceID});
   }
 }

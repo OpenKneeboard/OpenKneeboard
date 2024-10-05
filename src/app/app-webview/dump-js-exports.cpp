@@ -54,10 +54,10 @@ static auto GetGeneratedHeader() {
     Filesystem::GetCurrentExecutablePath().filename());
 }
 
-template <StringTemplateParameter TName>
+template <StringTemplateParameter TJSName>
 struct BasicJSTypeInfo {
-  static constexpr std::string_view js_typename_v {TName};
-  static constexpr std::string_view js_argument_type_v {TName};
+  static constexpr std::string_view js_typename_v {TJSName};
+  static constexpr std::string_view js_argument_type_v {TJSName};
   static constexpr bool requires_import_v = false;
 };
 
@@ -71,18 +71,18 @@ template <>
 struct JSTypeInfo<bool> : BasicJSTypeInfo<"boolean"> {};
 
 template <class T>
-  requires requires { JSClass<T>::GetTypeName(); }
+  requires requires { JSClass<T>::GetJSTypeName(); }
 struct JSTypeInfo<T> {
-  static constexpr std::string_view js_typename_v {JSClass<T>::GetTypeName()};
+  static constexpr std::string_view js_typename_v {JSClass<T>::GetJSTypeName()};
   static constexpr std::string_view js_argument_type_v {
     JSClass<T>::GetArgumentType()};
   static constexpr bool requires_import_v = true;
 };
 
 template <class T>
-  requires requires { JSEnum<T>::GetTypeName(); }
+  requires requires { JSEnum<T>::GetJSTypeName(); }
 struct JSTypeInfo<T> {
-  static constexpr std::string_view js_typename_v {JSEnum<T>::GetTypeName()};
+  static constexpr std::string_view js_typename_v {JSEnum<T>::GetJSTypeName()};
   static constexpr std::string_view js_argument_type_v {
     JSEnum<T>::GetArgumentType()};
   static constexpr bool requires_import_v = true;
@@ -99,7 +99,7 @@ get {1}(): {0} {{
   return this.#cpp_{1};
 }}
 )TS",
-    prop.GetTypeName(),
+    prop.GetJSTypeName(),
     prop.GetName());
   if (prop.is_read_only_v) {
     return getter;
@@ -115,7 +115,7 @@ set {1}(value: {0}) {{
   this.NativePropertyChanged("{1}", value);
 }}
 )TS",
-    prop.GetTypeName(),
+    prop.GetJSTypeName(),
     prop.GetName());
 
   return getter + setter;
@@ -197,26 +197,32 @@ auto GetTypeScriptConstructor() {
 
   return std::format(
     R"TS(
-constructor(instanceID: string, instanceData: any) {{
+private constructor(instanceID: string, instanceData: any) {{
   super(instanceID);
   {0}
 }}
+
+static async load(instanceID: string): Promise<{1}> {{
+  return new {1}(instanceID, await this.GetInstanceJSONData("{2}", instanceID));
+}}
 )TS",
-    propAssignments);
+    propAssignments,
+    JSClass<T>::GetJSTypeName(),
+    JSClass<T>::GetCPPTypeName());
 }
 
 template <class T>
 auto GetTypeScriptPropertyStorage() {
   return JSClass<T>::MapProperties([](auto prop) {
            return std::format(
-             "#cpp_{}: {};", prop.GetName(), prop.GetTypeName());
+             "#cpp_{}: {};", prop.GetName(), prop.GetJSTypeName());
          })
     | std::views::join_with('\n') | std::ranges::to<std::string>();
 }
 
 template <class T>
 auto GetTypeScriptTypeAliases(const Dependencies& deps) {
-  static constexpr auto prefix = JSClass<T>::class_name_v + "_"_tp;
+  static constexpr auto prefix = JSClass<T>::js_type_name_v + "_"_tp;
   return deps
     | std::views::filter([](auto it) { return it.starts_with(prefix); })
     | std::views::transform([](auto it) {
@@ -244,7 +250,7 @@ export class {0} extends NativeClass {{
 }}
 export default {0};
 )TS",
-    std::string_view {JSClass<T>::class_name_v},
+    std::string_view {JSClass<T>::js_type_name_v},
     std::views::join(parts) | std::ranges::to<std::string>());
 
   const auto aliases = GetTypeScriptTypeAliases<T>(deps);
@@ -259,7 +265,7 @@ static constexpr auto EscReset = "\033[0m";
 
 template <class T>
 void ExportTypeScriptClass() {
-  const auto name = JSClass<T>::GetTypeName();
+  const auto name = JSClass<T>::GetJSTypeName();
   std::println("Exporting {}:{}", name, EscCursorSave);
   const auto path = std::format("{}.ts", name);
 
@@ -290,7 +296,7 @@ void ExportTypeScriptClass() {
 
 template <class T>
 void ExportTypeScriptEnum() {
-  const auto name = JSEnum<T>::GetTypeName();
+  const auto name = JSEnum<T>::GetJSTypeName();
   std::println("Exporting {}:{}", name, EscCursorSave);
   const auto path = std::format("{}.ts", name);
 

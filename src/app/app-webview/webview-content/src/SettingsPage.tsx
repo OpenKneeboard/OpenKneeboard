@@ -34,20 +34,13 @@ CreateThemedStylesheet(InitData.systemTheme);
 
 import * as React from "react";
 import * as ReactDOM from "react-dom/client";
-import "./DeveloperToolsSettingsPage";
 import DeveloperToolsSettingsPage from "./DeveloperToolsSettingsPage"
-import NativeRequest from "./NativeRequest";
 
 async function main() {
-  const instanceData = await NativeRequest.Send("NativeObjectToJSON", {
-    class: InitData.class,
-    instanceID: InitData.instanceID,
-  });
-
-  const root = ReactDOM.createRoot(document.getElementById("root"));
+  const root = ReactDOM.createRoot(document.getElementById("root")!);
   switch (InitData.class) {
     case "DeveloperToolsSettingsPage":
-      root.render(<DeveloperToolsSettingsPage id={InitData.instanceID} initData={instanceData} />);
+      root.render(<DeveloperToolsSettingsPage instanceID={InitData.instanceID} />);
       break;
     default:
       root.render(

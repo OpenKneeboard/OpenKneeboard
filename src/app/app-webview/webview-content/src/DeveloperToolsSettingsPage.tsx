@@ -6,7 +6,8 @@ import {
 import * as React from "react";
 import * as nx from "./NotXAML";
 import NativeRequest from "./NativeRequest";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import NativeClass from "./NativeClass";
 
 function FolderPicker({value, defaultValue, onChange, placeholder}: {
   defaultValue?: string,
@@ -43,24 +44,44 @@ function FolderPicker({value, defaultValue, onChange, placeholder}: {
   );
 }
 
-function propertyReactState<O, P extends keyof O>(o: O, prop: P) {
-  const initialValue = o[prop];
-  let [state, setReactState] = useState(initialValue);
-  let setState = (nextState: typeof state) => {
-    o[prop] = nextState;
+function propertyReactState<O extends {}, P extends keyof O>(o: O, p: P) {
+  let [reactState, setReactState] = useState<O[P]>(o[p]);
+
+  let setState = (nextState: O[P]) => {
+    o[p] = nextState;
     setReactState(nextState);
   };
-  return [state, setState] as const;
+
+  return [reactState, setState] as const;
 }
 
-export default function DeveloperToolsSettingsPage({id, initData}: { id: string, initData: any }) {
-  const [native, _] = useState(new DeveloperToolsSettingsPageNative(id, initData));
+interface NativeLoader<T extends NativeClass> {
+  load(instanceID: string): Promise<T>;
+}
+
+function nativeState<T extends NativeClass>(loader: NativeLoader<T>, instanceID: string): T | undefined {
+  const [native, setNative] = useState<T | undefined>(undefined);
+
+  useEffect(() => {
+    const load = async () => setNative(await loader.load(instanceID));
+
+    if (!native) {
+      // noinspection JSIgnoredPromiseFromCall
+      load();
+    }
+  });
+
+  return native;
+}
+
+
+function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPageNative }) {
   const [sourcePath, setSourcePath] = propertyReactState(native, "AppWebViewSourcePath");
   const [autoUpdateVersion, setAutoUpdateVersion] = propertyReactState(native, "AutoUpdateFakeCurrentVersion")
   const [isHKCUPluginHandler, setIsHKCUPluginHandler] = propertyReactState(native, "IsPluginFileTypeInHKCU")
 
-  const [crashKind, setCrashKind] = useState(Object.values(CrashKind).at(0));
-  const [crashLocation, setCrashLocation] = useState(Object.values(CrashLocation).at(0));
+  const [crashKind, setCrashKind] = useState(Object.values(CrashKind)[0]);
+  const [crashLocation, setCrashLocation] = useState(Object.values(CrashLocation)[0]);
 
   return (
     <nx.Page>
@@ -128,9 +149,19 @@ export default function DeveloperToolsSettingsPage({id, initData}: { id: string,
               }
               native.TriggerCrash(crashKind, crashLocation)
             }}
-          >💥 Crash</nx.Button>
+          >💥 Crash
+          </nx.Button>
         </nx.StackPanel>
       </nx.StackPanel>
     </nx.Page>
   );
+}
+
+export default function ({instanceID}: { instanceID: string }) {
+  const native = nativeState(DeveloperToolsSettingsPageNative, instanceID);
+  if (native) {
+    return (<DeveloperToolsSettingsPage native={native} />);
+  } else {
+    return <div className={"nativeLoading"}>Loading native data...</div>
+  }
 }

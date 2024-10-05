@@ -48,7 +48,7 @@ struct JSProp {
     return name_v;
   }
 
-  static constexpr auto GetTypeName() noexcept {
+  static constexpr auto GetJSTypeName() noexcept {
     return JSTypeInfo<value_type>::js_typename_v;
   }
 
@@ -93,17 +93,25 @@ struct JSMethod {
   }
 };
 
-template <class Derived, class T, StringTemplateParameter TName>
+template <
+  class Derived,
+  class T,
+  StringTemplateParameter TJSName,
+  StringTemplateParameter TCPPName>
 struct JSClassImpl {
   using cpp_type_t = T;
-  static constexpr auto class_name_v = TName;
+  static constexpr auto js_type_name_v = TJSName;
 
-  static constexpr auto GetTypeName() noexcept {
-    return std::string_view {TName};
+  static constexpr auto GetJSTypeName() noexcept {
+    return std::string_view {TJSName};
+  }
+
+  static constexpr auto GetCPPTypeName() noexcept {
+    return std::string_view {TCPPName};
   }
 
   static constexpr auto GetArgumentType() noexcept {
-    return GetTypeName();
+    return GetJSTypeName();
   }
 
   template <class TFn>
@@ -187,13 +195,13 @@ struct JSClass;
 template <class T>
 struct JSEnum;
 
-template <class Derived, class T, StringTemplateParameter TName>
+template <class Derived, class T, StringTemplateParameter TJSName>
 struct JSEnumImpl {
   using cpp_type_t = T;
-  static constexpr auto enum_name_v = TName;
+  static constexpr auto enum_name_v = TJSName;
 
-  static constexpr std::string_view GetTypeName() noexcept {
-    return TName;
+  static constexpr std::string_view GetJSTypeName() noexcept {
+    return TJSName;
   }
 
   static constexpr std::string_view GetArgumentType() noexcept {
@@ -204,7 +212,7 @@ struct JSEnumImpl {
   // We need some (compile-time) storage so we don't return an
   // `std::string_view` referring to a temporary, even if it's a compile-time
   // temporary.
-  static constexpr auto argument_type_v = "keyof typeof "_tp + TName;
+  static constexpr auto argument_type_v = "keyof typeof "_tp + TJSName;
 };
 
 namespace detail {
@@ -224,7 +232,8 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
   struct JSClass<JS_CLASS_NAME> : JSClassImpl< \
                                     JSClass<JS_CLASS_NAME>, \
                                     JS_CLASS_NAME, \
-                                    #JS_CLASS_NAME "Native">
+                                    #JS_CLASS_NAME "Native", \
+                                    #JS_CLASS_NAME>
 
 #define DECLARE_JS_PROPERTY(JS_PROP_NAME) \
   JSProp< \
