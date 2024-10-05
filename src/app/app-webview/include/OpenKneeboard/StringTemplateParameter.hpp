@@ -20,6 +20,7 @@
 #pragma once
 
 #include <algorithm>
+#include <ranges>
 #include <string_view>
 
 namespace OpenKneeboard {
@@ -42,17 +43,12 @@ struct StringTemplateParameter {
   }
 
   template <size_t M>
-  consteval auto operator+(char const (&rhs)[M]) const noexcept {
+  consteval auto operator+(StringTemplateParameter<M> rhs) const noexcept {
     // Both inputs are null-terminated, but we only need one null-terminator
     StringTemplateParameter<N + M - 1> ret;
     std::ranges::copy(value, ret.value);
-    std::ranges::copy(rhs, ret.value + N - 1);
+    std::ranges::copy(rhs.value, ret.value + N - 1);
     return ret;
-  }
-
-  template <size_t M>
-  consteval auto operator+(StringTemplateParameter<M> rhs) const noexcept {
-    return (*this) + rhs.value;
   }
 
   constexpr bool operator==(const StringTemplateParameter<N>&) const noexcept

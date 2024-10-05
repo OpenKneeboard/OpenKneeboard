@@ -1,6 +1,7 @@
 set(
     TS_CPP_CLASSES
     DeveloperToolsSettingsPage
+    PluginsSettingsPage
 )
 list(TRANSFORM TS_CPP_CLASSES APPEND ".cpp" OUTPUT_VARIABLE TS_CPP_SOURCES)
 list(TRANSFORM TS_CPP_CLASSES APPEND ".hpp" OUTPUT_VARIABLE TS_CPP_HEADERS)
@@ -20,6 +21,7 @@ target_link_libraries(
     INTERFACE
     ThirdParty::JSON
     ThirdParty::magic_json_serialize_enum
+    OpenKneeboard-App-Common
     OpenKneeboard-json
     OpenKneeboard-task
 )
@@ -32,8 +34,6 @@ target_link_libraries(
     OpenKneeboard-App-WebView
     PUBLIC
     OpenKneeboard-App-WebView-Headers
-    PRIVATE
-    OpenKneeboard-App-Common
 )
 target_link_windows_app_sdk(OpenKneeboard-App-WebView)
 

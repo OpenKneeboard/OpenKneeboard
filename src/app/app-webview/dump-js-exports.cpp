@@ -20,6 +20,7 @@
 #include <OpenKneeboard/DeveloperToolsSettingsPage.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/JSObject.hpp>
+#include <OpenKneeboard/PluginsSettingsPage.hpp>
 
 #include <OpenKneeboard/format/filesystem.hpp>
 
@@ -123,9 +124,13 @@ set {1}(value: {0}) {{
 
 template <class T>
 auto GetTypeScriptPropertyAccessors() {
-  return JSClass<T>::MapProperties(
-           [](auto p) { return GetTypeScriptPropertyAccessor(p); })
-    | std::views::join_with('\n') | std::ranges::to<std::string>();
+  if constexpr (has_js_properties<T>) {
+    return JSClass<T>::MapProperties(
+             [](auto p) { return GetTypeScriptPropertyAccessor(p); })
+      | std::views::join_with('\n') | std::ranges::to<std::string>();
+  } else {
+    return std::string {};
+  }
 }
 
 auto GetTypeScriptMethod(Dependencies& deps, auto method) {
@@ -178,23 +183,32 @@ auto GetTypeScriptMethod(Dependencies& deps, auto method) {
       })
       .value_or(""));
 }
+
 template <class T>
 auto GetTypeScriptMethods(Dependencies& deps) {
-  return JSClass<T>::MapMethods(
-           [&](auto m) { return GetTypeScriptMethod(deps, m); })
-    | std::views::join_with('\n') | std::ranges::to<std::string>();
+  if constexpr (has_js_methods<T>) {
+    return JSClass<T>::MapMethods(
+             [&](auto m) { return GetTypeScriptMethod(deps, m); })
+      | std::views::join_with('\n') | std::ranges::to<std::string>();
+  } else {
+    return std::string {};
+  }
+}
+
+template <class T>
+std::string GetTypeScriptPropertyAssignments() {
+  if constexpr (has_js_properties<T>) {
+    return JSClass<T>::MapProperties([](auto prop) {
+             return std::format(
+               "this.#cpp_{0} = instanceData['{0}'];", prop.GetName());
+           })
+      | std::views::join_with('\n') | std::ranges::to<std::string>();
+  }
+  return {};
 }
 
 template <class T>
 auto GetTypeScriptConstructor() {
-  const auto propAssignments
-    = JSClass<T>::MapProperties([](auto prop) {
-        return std::format(
-          "this.#cpp_{0} = instanceData['{0}'];", prop.GetName());
-      })
-    | std::views::join_with('\n') | std::ranges::to<std::string>();
-  ;
-
   return std::format(
     R"TS(
 private constructor(instanceID: string, instanceData: any) {{
@@ -206,18 +220,22 @@ static async load(instanceID: string): Promise<{1}> {{
   return new {1}(instanceID, await this.GetInstanceJSONData("{2}", instanceID));
 }}
 )TS",
-    propAssignments,
+    GetTypeScriptPropertyAssignments<T>(),
     JSClass<T>::GetJSTypeName(),
     JSClass<T>::GetCPPTypeName());
 }
 
 template <class T>
 auto GetTypeScriptPropertyStorage() {
-  return JSClass<T>::MapProperties([](auto prop) {
-           return std::format(
-             "#cpp_{}: {};", prop.GetName(), prop.GetJSTypeName());
-         })
-    | std::views::join_with('\n') | std::ranges::to<std::string>();
+  if constexpr (has_js_properties<T>) {
+    return JSClass<T>::MapProperties([](auto prop) {
+             return std::format(
+               "#cpp_{}: {};", prop.GetName(), prop.GetJSTypeName());
+           })
+      | std::views::join_with('\n') | std::ranges::to<std::string>();
+  } else {
+    return std::string {};
+  }
 }
 
 template <class T>
@@ -390,6 +408,9 @@ int main(int argc, char** argv) {
   ExportTypeScriptEnum<DeveloperToolsSettingsPage::CrashKind>();
   ExportTypeScriptEnum<DeveloperToolsSettingsPage::CrashLocation>();
   ExportTypeScriptClass<DeveloperToolsSettingsPage>();
+
+  ExportTypeScriptClass<PluginsSettingsPage>();
+  ExportTypeScriptClass<Plugin::Metadata>();
 
   return 0;
 }

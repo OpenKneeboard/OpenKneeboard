@@ -31,6 +31,10 @@
 
 namespace OpenKneeboard {
 
+struct JSNativeData {
+  virtual ~JSNativeData() = default;
+};
+
 template <class T>
 struct JSTypeInfo;
 
@@ -93,6 +97,15 @@ struct JSMethod {
   }
 };
 
+template <class T>
+struct JSClass;
+
+template <class T>
+concept has_js_methods = requires { JSClass<T>::template methods_v; };
+
+template <class T>
+concept has_js_properties = requires { JSClass<T>::template properties_v; };
+
 template <
   class Derived,
   class T,
@@ -140,7 +153,9 @@ struct JSClassImpl {
   static void InvokeMethodByName(
     auto& native,
     auto name,
-    const nlohmann::json& argumentsArray) {
+    const nlohmann::json& argumentsArray)
+    requires has_js_methods<T>
+  {
     const auto visitor = [&](auto method) constexpr -> IterationResult {
       using enum IterationResult;
       if (name != method.GetName()) {
@@ -155,7 +170,9 @@ struct JSClassImpl {
 
   template <class TFn>
   [[nodiscard]]
-  static constexpr auto MapMethods(TFn&& fn) {
+  static constexpr auto MapMethods(TFn&& fn)
+    requires has_js_methods<T>
+  {
     return MapTuple(Derived::methods_v, std::forward<TFn>(fn));
   }
 
@@ -188,9 +205,6 @@ struct JSClassImpl {
            std::make_index_sequence<std::tuple_size_v<decltype(container)>> {});
   }
 };
-
-template <class T>
-struct JSClass;
 
 template <class T>
 struct JSEnum;
@@ -266,5 +280,31 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
 
 #define DECLARE_JS_MEMBER_ENUM(CPP_CLASS, ENUM_NAME) \
   DECLARE_JS_NAMED_ENUM(#CPP_CLASS "Native_" #ENUM_NAME, CPP_CLASS::ENUM_NAME);
+
+#define DECLARE_JS_STRUCT_FIELD(JS_FIELD_NAME) \
+  JSProp< \
+    cpp_type_t, \
+    StringTemplateParameter {#JS_FIELD_NAME}, \
+    [](const cpp_type_t* o) { return o->JS_FIELD_NAME; }, \
+    [](cpp_type_t* o, const decltype(o->JS_FIELD_NAME)& value) { \
+      o->JS_FIELD_NAME = value; \
+    }>(),
+
+#define DECLARE_JS_NAMED_STRUCT(JS_STRUCT_NAME, CPP_TYPE, ...) \
+  template <> \
+  struct JSClass<CPP_TYPE> : JSClassImpl< \
+                               JSClass<CPP_TYPE>, \
+                               CPP_TYPE, \
+                               JS_STRUCT_NAME, \
+                               JS_STRUCT_NAME> { \
+    DECLARE_JS_PROPERTIES {NLOHMANN_JSON_EXPAND( \
+      NLOHMANN_JSON_PASTE(DECLARE_JS_STRUCT_FIELD, __VA_ARGS__))}; \
+  };
+
+#define DECLARE_JS_STRUCT_MEMBER_STRUCT(OUTER_STRUCT, INNER_STRUCT, ...) \
+  DECLARE_JS_NAMED_STRUCT( \
+    StringTemplateParameter {#OUTER_STRUCT "_" #INNER_STRUCT}, \
+    OUTER_STRUCT::INNER_STRUCT, \
+    __VA_ARGS__)
 
 }// namespace OpenKneeboard

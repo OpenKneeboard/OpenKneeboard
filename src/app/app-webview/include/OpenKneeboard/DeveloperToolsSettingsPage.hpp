@@ -27,10 +27,6 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 
-struct JSNativeData {
-  virtual ~JSNativeData() = default;
-};
-
 class DeveloperToolsSettingsPage : public JSNativeData {
  private:
   KneeboardState* mKneeboard {nullptr};
