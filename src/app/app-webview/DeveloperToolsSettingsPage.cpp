@@ -220,6 +220,7 @@ fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
         std::terminate();
         co_return;
       };
+      break;
     default:
       OPENKNEEBOARD_BREAK;
       // Error: task failed successfully 🤷
