@@ -134,6 +134,7 @@ class WindowCaptureTab final : public TabBase,
   MatchSpecification mSpec;
   bool mSendInput = false;
   HWND mHwnd {};
+  std::unordered_set<HWND> mPotentialHwnd;
   HWNDPageSource::Options mCaptureOptions {};
   std::shared_ptr<HWNDPageSource> mDelegate;
 

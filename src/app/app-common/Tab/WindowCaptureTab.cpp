@@ -427,6 +427,7 @@ task<void> WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
 }
 
 fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
+  const auto call_id = random_guid();
   if (mHwnd) {
     co_return;
   }
@@ -438,6 +439,14 @@ fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
       hwnd = parent;
     }
   }
+
+  if (mPotentialHwnd.contains(hwnd)) {
+    co_return;
+  }
+  mPotentialHwnd.emplace(hwnd);
+  const scope_exit releaser {[hwnd](auto self) {
+    self->mPotentialHwnd.erase(hwnd);
+  } | bind_refs_front(this) | bind_winrt_context(mUIThread)};
 
   auto self = shared_from_this();
 
