@@ -427,7 +427,6 @@ task<void> WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
 }
 
 fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
-  const auto call_id = random_guid();
   if (mHwnd) {
     co_return;
   }
