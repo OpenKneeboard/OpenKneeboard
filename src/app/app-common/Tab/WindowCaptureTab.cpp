@@ -181,6 +181,13 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) {
 }
 
 task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+  if (!hwnd) {
+    co_return false;
+  }
+  if (mHwnd) {
+    co_return false;
+  }
+
   if (mPotentialHwnd.contains(hwnd)) {
     co_return false;
   }
@@ -191,9 +198,6 @@ task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
 
   auto weak = weak_from_this();
 
-  if (!hwnd) {
-    co_return false;
-  }
   co_await mUIThread;
 
   auto self = weak.lock();
