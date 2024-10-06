@@ -24,7 +24,6 @@
 
 #include <shims/winrt/base.h>
 
-#include <directxtk/CommonStates.h>
 #include <directxtk/SpriteBatch.h>
 
 #include <memory>
@@ -120,7 +119,6 @@ class SpriteBatch {
   winrt::com_ptr<ID3D11DeviceContext> mDeviceContext;
 
   std::unique_ptr<DirectX::DX11::SpriteBatch> mDXTKSpriteBatch;
-  std::unique_ptr<DirectX::DX11::CommonStates> mDXTKCommonStates;
 
   ID3D11RenderTargetView* mTarget {nullptr};
 };
