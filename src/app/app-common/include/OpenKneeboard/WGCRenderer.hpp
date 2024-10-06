@@ -55,7 +55,7 @@ class WGCRenderer : public virtual EventReceiver,
   virtual ~WGCRenderer();
   virtual task<void> DisposeAsync() noexcept override;
 
-  PreferredSize GetPreferredSize() const;
+  std::optional<PreferredSize> GetPreferredSize() const;
 
   bool HaveCaptureItem() const;
   void Render(RenderTarget*, const PixelRect& rect);

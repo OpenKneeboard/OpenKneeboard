@@ -25,7 +25,14 @@
 #include <OpenKneeboard/WGCRenderer.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/handles.hpp>
+#include <OpenKneeboard/scope_exit.hpp>
+
 #include <shims/winrt/Microsoft.UI.Interop.h>
+
+#include <libloaderapi.h>
+#include <shellapi.h>
 
 #include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Windows.Foundation.Metadata.h>
@@ -40,15 +47,9 @@
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
-#include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
-
 #include <mutex>
 
 #include <dwmapi.h>
-#include <libloaderapi.h>
-#include <shellapi.h>
 #include <wow64apiset.h>
 
 #include <wil/cppwinrt_helpers.h>
@@ -166,15 +167,15 @@ task<void> WGCRenderer::DisposeAsync() noexcept {
 }
 
 bool WGCRenderer::HaveCaptureItem() const {
-  return !!mCaptureItem;
+  return static_cast<bool>(mCaptureItem);
 }
 
-PreferredSize WGCRenderer::GetPreferredSize() const {
-  if (!mTexture) {
-    return {};
+std::optional<PreferredSize> WGCRenderer::GetPreferredSize() const {
+  if (!(mCaptureItem && mTexture)) {
+    return std::nullopt;
   }
 
-  return {
+  return PreferredSize {
     this->GetContentRect(mCaptureSize).mSize,
     ScalingKind::Bitmap,
   };
