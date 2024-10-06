@@ -440,13 +440,15 @@ fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
     }
   }
 
+  // Duplicate check to early-exit and avoid enqueing up another check
+  //
+  // Don't add the HWND now so we attach sooner if:
+  // - we don't initially match
+  // - we do match when a child window is added, or when it is shown (rather
+  // than created)
   if (mPotentialHwnd.contains(hwnd)) {
     co_return;
   }
-  mPotentialHwnd.emplace(hwnd);
-  const scope_exit releaser {[hwnd](auto self) {
-    self->mPotentialHwnd.erase(hwnd);
-  } | bind_refs_front(this) | bind_winrt_context(mUIThread)};
 
   auto self = shared_from_this();
 
@@ -463,6 +465,14 @@ fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
       co_return;
     }
   }
+
+  if (mPotentialHwnd.contains(hwnd)) {
+    co_return;
+  }
+  mPotentialHwnd.emplace(hwnd);
+  const scope_exit releaser {[hwnd](auto self) {
+    self->mPotentialHwnd.erase(hwnd);
+  } | bind_refs_front(this) | bind_winrt_context(mUIThread)};
 
   if (!co_await this->TryToStartCapture(hwnd)) {
     co_return;
