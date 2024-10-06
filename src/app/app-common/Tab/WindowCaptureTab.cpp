@@ -35,9 +35,36 @@ using WindowSpecification = WindowCaptureTab::WindowSpecification;
 using MatchSpecification = WindowCaptureTab::MatchSpecification;
 using TitleMatchKind = MatchSpecification::TitleMatchKind;
 
-std::mutex WindowCaptureTab::gHookMutex;
-std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>>
-  WindowCaptureTab::gHooks;
+namespace {
+std::unordered_map<WindowCaptureTab*, std::weak_ptr<WindowCaptureTab>>
+  gInstances;
+
+struct WinEventHook {
+ public:
+  WinEventHook() {
+    mHook.reset(SetWinEventHook(
+      EVENT_OBJECT_CREATE,
+      EVENT_OBJECT_SHOW,
+      nullptr,
+      &WinEventHook::HookProc,
+      0,
+      0,
+      WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
+  }
+
+ private:
+  static void HookProc(
+    HWINEVENTHOOK,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD idEventThread,
+    DWORD dwmsEventTime);
+
+  unique_hwineventhook mHook;
+} gHook;
+}// namespace
 
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
@@ -51,10 +78,10 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const auto tabTitle = (spec.mMatchTitle == TitleMatchKind::Exact)
     ? spec.mTitle
     : spec.mExecutableLastSeenPath.stem().string();
-  auto ret = shared_with_final_release(
-    new WindowCaptureTab(dxr, kbs, {}, tabTitle, {.mSpec = spec}));
-  ret->TryToStartCapture();
-  return ret;
+  Settings settings {
+    .mSpec = spec,
+  };
+  return Create(dxr, kbs, random_guid(), tabTitle, settings);
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
@@ -67,6 +94,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
 
   auto ret = shared_with_final_release(
     new WindowCaptureTab(dxr, kbs, persistentID, title, settings));
+  gInstances.emplace(ret.get(), ret);
   ret->TryToStartCapture();
   return ret;
 }
@@ -207,27 +235,10 @@ OpenKneeboard::fire_and_forget WindowCaptureTab::TryToStartCapture() {
       co_return;
     }
   }
-
-  // No window :( let's set a hook
-  co_await mUIThread;
-  const std::unique_lock lock(gHookMutex);
-  mEventHook.reset(SetWinEventHook(
-    EVENT_OBJECT_CREATE,
-    EVENT_OBJECT_SHOW,
-    NULL,
-    &WindowCaptureTab::WinEventProc_NewWindowHook,
-    0,
-    0,
-    WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
-  gHooks[mEventHook.get()] = weak_from_this();
 }
 
 WindowCaptureTab::~WindowCaptureTab() {
   this->RemoveAllEventListeners();
-  std::unique_lock lock(gHookMutex);
-  if (mEventHook) {
-    gHooks.erase(mEventHook.get());
-  }
 }
 
 OpenKneeboard::fire_and_forget WindowCaptureTab::OnWindowClosed() {
@@ -242,6 +253,15 @@ OpenKneeboard::fire_and_forget WindowCaptureTab::OnWindowClosed() {
 
 std::string WindowCaptureTab::GetGlyph() const {
   return GetStaticGlyph();
+}
+
+task<void> WindowCaptureTab::DisposeAsync() noexcept {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
+  gInstances.erase(this);
+  co_await PageSourceWithDelegates::DisposeAsync();
 }
 
 std::string WindowCaptureTab::GetStaticGlyph() {
@@ -476,44 +496,6 @@ fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
   if (!co_await this->TryToStartCapture(hwnd)) {
     co_return;
   }
-
-  const std::unique_lock lock(gHookMutex);
-  gHooks.erase(mEventHook.get());
-  mEventHook.reset();
-}
-
-void WindowCaptureTab::WinEventProc_NewWindowHook(
-  HWINEVENTHOOK hook,
-  DWORD event,
-  HWND hwnd,
-  LONG idObject,
-  LONG idChild,
-  DWORD idEventThread,
-  DWORD dwmsEventTime) {
-  if (event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW) {
-    return;
-  }
-  if (idObject != OBJID_WINDOW) {
-    return;
-  }
-  if (idChild != CHILDID_SELF) {
-    return;
-  }
-
-  std::shared_ptr<WindowCaptureTab> instance;
-  {
-    std::unique_lock lock(gHookMutex);
-    auto it = gHooks.find(hook);
-    if (it == gHooks.end()) {
-      return;
-    }
-    instance = it->second.lock();
-    if (!instance) {
-      return;
-    }
-  }
-
-  instance->OnNewWindow(hwnd);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -566,5 +548,37 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mSpec,
   mSendInput,
   mCaptureOptions);
+
+namespace {
+void WinEventHook::HookProc(
+  HWINEVENTHOOK hook,
+  DWORD event,
+  HWND hwnd,
+  LONG idObject,
+  LONG idChild,
+  DWORD idEventThread,
+  DWORD dwmsEventTime) {
+  if (event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW) {
+    return;
+  }
+  if (idObject != OBJID_WINDOW) {
+    return;
+  }
+  if (idChild != CHILDID_SELF) {
+    return;
+  }
+
+  // Copy in case anything enters the windows event loop recursively and
+  // modifies the container while iterating
+  const auto instances = gInstances;
+  for (auto&& weak: instances | std::views::values) {
+    if (auto instance = weak.lock()) [[likely]] {
+      instance->OnNewWindow(hwnd);
+    } else {
+      dprint.Error("Have an expired WindowCaptureTab weak_ref in hook");
+    }
+  }
+}
+}// namespace
 
 }// namespace OpenKneeboard

@@ -27,15 +27,15 @@
 #include <OpenKneeboard/RenderTarget.hpp>
 #include <OpenKneeboard/ThreadGuard.hpp>
 
-#include <shims/winrt/base.h>
-
-#include <winrt/Windows.Graphics.Capture.h>
-#include <winrt/Windows.System.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/enable_shared_from_this.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/task.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <winrt/Windows.Graphics.Capture.h>
+#include <winrt/Windows.System.h>
 
 #include <memory>
 
@@ -92,6 +92,8 @@ class WGCRenderer : public virtual EventReceiver,
     = 0;
   virtual void PostFrame();
 
+  ThreadGuard mThreadGuard;
+
  private:
   ProcessShutdownBlock mBlockShutdownUntilDestroyed;
   static constexpr int32_t SwapchainLength = 3;
@@ -101,7 +103,6 @@ class WGCRenderer : public virtual EventReceiver,
   void OnWGCFrame();
 
   DisposalState mDisposal;
-  ThreadGuard mThreadGuard;
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
   Options mOptions;

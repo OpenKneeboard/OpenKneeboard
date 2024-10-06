@@ -58,6 +58,8 @@ class IPageSource {
   Event<> evContentChangedEvent;
   Event<KneeboardViewID, PageID> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
+
+ protected:
   ThreadGuard mThreadGuard;
 };
 

@@ -273,6 +273,8 @@ bool HWNDPageSource::HaveWindow() const {
 HWNDPageSource::~HWNDPageSource() = default;
 
 task<void> HWNDPageSource::DisposeAsync() noexcept {
+  IPageSource::mThreadGuard.CheckThread();
+
   const auto disposing = mDisposal.Start();
   if (!disposing) {
     co_return;

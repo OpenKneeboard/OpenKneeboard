@@ -81,6 +81,8 @@ class WindowCaptureTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
+  task<void> DisposeAsync() noexcept override;
+
   [[nodiscard]]
   virtual task<void> Reload() final override;
   virtual nlohmann::json GetSettings() const override;
@@ -104,6 +106,9 @@ class WindowCaptureTab final : public TabBase,
   virtual void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID)
     override final;
 
+  // **DO NOT** use OrderedEventQueue for this as it has a sleep
+  fire_and_forget OnNewWindow(HWND hwnd);
+
  private:
   WindowCaptureTab(
     const audited_ptr<DXResources>&,
@@ -117,16 +122,7 @@ class WindowCaptureTab final : public TabBase,
 
   OpenKneeboard::fire_and_forget OnWindowClosed();
 
-  static void WinEventProc_NewWindowHook(
-    HWINEVENTHOOK,
-    DWORD event,
-    HWND hwnd,
-    LONG idObject,
-    LONG idChild,
-    DWORD idEventThread,
-    DWORD dwmsEventTime);
-  // **DO NOT** use OrderedEventQueue for this as it has a sleep
-  fire_and_forget OnNewWindow(HWND hwnd);
+  DisposalState mDisposal;
 
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
@@ -139,8 +135,6 @@ class WindowCaptureTab final : public TabBase,
   std::shared_ptr<HWNDPageSource> mDelegate;
 
   unique_hwineventhook mEventHook;
-  static std::mutex gHookMutex;
-  static std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>> gHooks;
 };
 
 }// namespace OpenKneeboard
