@@ -181,6 +181,14 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) {
 }
 
 task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+  if (mPotentialHwnd.contains(hwnd)) {
+    co_return false;
+  }
+  mPotentialHwnd.emplace(hwnd);
+  const scope_exit releaser {[hwnd](auto self) {
+    self->mPotentialHwnd.erase(hwnd);
+  } | bind_refs_front(this) | bind_winrt_context(mUIThread)};
+
   auto weak = weak_from_this();
 
   if (!hwnd) {
@@ -485,17 +493,7 @@ fire_and_forget WindowCaptureTab::OnNewWindow(HWND hwnd) {
     }
   }
 
-  if (mPotentialHwnd.contains(hwnd)) {
-    co_return;
-  }
-  mPotentialHwnd.emplace(hwnd);
-  const scope_exit releaser {[hwnd](auto self) {
-    self->mPotentialHwnd.erase(hwnd);
-  } | bind_refs_front(this) | bind_winrt_context(mUIThread)};
-
-  if (!co_await this->TryToStartCapture(hwnd)) {
-    co_return;
-  }
+  [[maybe_unused]] auto _ = co_await this->TryToStartCapture(hwnd);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
