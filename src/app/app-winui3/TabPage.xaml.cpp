@@ -544,6 +544,7 @@ void TabPage::InitializeSwapChain() {
 void TabPage::PaintLater() {
   TraceLoggingWrite(gTraceProvider, "TabPage::PaintLater()");
   mNeedsFrame = true;
+  mKneeboard->SetRepaintNeeded();
 }
 
 task<void> TabPage::PaintNow(std::source_location loc) noexcept {
