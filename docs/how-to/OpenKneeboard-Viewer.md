@@ -10,6 +10,7 @@ of the kneeboard for streaming.
 ## Keyboard Shortcuts
 
 * `B`: **B**orderless mode - no window border or title bar
+* `C`: **C**apture screenshot
 * `I`: show **i**nformation, such as frame counter and layer (view)
 * `1`-`9`: show the nth layer (view).
 * `S`: Streamer Mode
