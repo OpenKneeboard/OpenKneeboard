@@ -177,6 +177,7 @@ void TabPage::InitializePointerSource() {
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs&) noexcept {
   this->UpdateKneeboardView();
+  this->PaintLater();
 }
 
 void TabPage::UpdateKneeboardView() {
