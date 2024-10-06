@@ -63,13 +63,13 @@ struct BasicJSTypeInfo {
 };
 
 template <>
-struct JSTypeInfo<std::string> : BasicJSTypeInfo<"string"> {};
+struct JSTypeInfo<std::string> : BasicJSTypeInfo<"string"_tp> {};
 
 template <>
-struct JSTypeInfo<std::filesystem::path> : BasicJSTypeInfo<"string"> {};
+struct JSTypeInfo<std::filesystem::path> : BasicJSTypeInfo<"string"_tp> {};
 
 template <>
-struct JSTypeInfo<bool> : BasicJSTypeInfo<"boolean"> {};
+struct JSTypeInfo<bool> : BasicJSTypeInfo<"boolean"_tp> {};
 
 template <class T>
   requires requires { JSClass<T>::GetJSTypeName(); }

@@ -106,11 +106,7 @@ concept has_js_methods = requires { JSClass<T>::template methods_v; };
 template <class T>
 concept has_js_properties = requires { JSClass<T>::template properties_v; };
 
-template <
-  class Derived,
-  class T,
-  StringTemplateParameter TJSName,
-  StringTemplateParameter TCPPName>
+template <class Derived, class T, auto TJSName, auto TCPPName>
 struct JSClassImpl {
   using cpp_type_t = T;
   static constexpr auto js_type_name_v = TJSName;
@@ -209,7 +205,7 @@ struct JSClassImpl {
 template <class T>
 struct JSEnum;
 
-template <class Derived, class T, StringTemplateParameter TJSName>
+template <class Derived, class T, auto TJSName>
 struct JSEnumImpl {
   using cpp_type_t = T;
   static constexpr auto enum_name_v = TJSName;
@@ -246,30 +242,27 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
   struct JSClass<JS_CLASS_NAME> : JSClassImpl< \
                                     JSClass<JS_CLASS_NAME>, \
                                     JS_CLASS_NAME, \
-                                    #JS_CLASS_NAME "Native", \
-                                    #JS_CLASS_NAME>
+                                    #JS_CLASS_NAME "Native"_tp, \
+                                    #JS_CLASS_NAME ""_tp>
 
 #define DECLARE_JS_PROPERTY(JS_PROP_NAME) \
   JSProp< \
     cpp_type_t, \
-    StringTemplateParameter {#JS_PROP_NAME}, \
+    #JS_PROP_NAME ""_tp, \
     &cpp_type_t::Get##JS_PROP_NAME, \
     &cpp_type_t::Set##JS_PROP_NAME>()
 
 #define DECLARE_READ_ONLY_JS_PROPERTY(JS_PROP_NAME) \
   JSProp< \
     cpp_type_t, \
-    StringTemplateParameter {#JS_PROP_NAME}, \
+    #JS_PROP_NAME ""_tp, \
     &cpp_type_t::Get##JS_PROP_NAME, \
     nullptr>()
 
 #define DECLARE_JS_PROPERTIES static constexpr auto properties_v = std::tuple
 
 #define DECLARE_JS_METHOD(JS_METHOD_NAME) \
-  JSMethod< \
-    cpp_type_t, \
-    StringTemplateParameter {#JS_METHOD_NAME}, \
-    &cpp_type_t::JS_METHOD_NAME>()
+  JSMethod<cpp_type_t, #JS_METHOD_NAME ""_tp, &cpp_type_t::JS_METHOD_NAME>()
 #define DECLARE_JS_METHODS static constexpr auto methods_v = std::tuple
 
 #define DECLARE_JS_NAMED_ENUM(JS_ENUM_NAME, CPP_TYPE) \
@@ -279,12 +272,13 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
   FREDEMMOTT_MAGIC_JSON_SERIALIZE_ENUM(CPP_TYPE);
 
 #define DECLARE_JS_MEMBER_ENUM(CPP_CLASS, ENUM_NAME) \
-  DECLARE_JS_NAMED_ENUM(#CPP_CLASS "Native_" #ENUM_NAME, CPP_CLASS::ENUM_NAME);
+  DECLARE_JS_NAMED_ENUM( \
+    #CPP_CLASS "Native_" #ENUM_NAME ""_tp, CPP_CLASS::ENUM_NAME);
 
 #define DECLARE_JS_STRUCT_FIELD(JS_FIELD_NAME) \
   JSProp< \
     cpp_type_t, \
-    StringTemplateParameter {#JS_FIELD_NAME}, \
+    (#JS_FIELD_NAME ""_tp).remove_prefix("m"_tp), \
     [](const cpp_type_t* o) { return o->JS_FIELD_NAME; }, \
     [](cpp_type_t* o, const decltype(o->JS_FIELD_NAME)& value) { \
       o->JS_FIELD_NAME = value; \
@@ -303,7 +297,7 @@ using tuple_drop_back_t = decltype(tuple_drop_back_fn(std::declval<T>()));
 
 #define DECLARE_JS_STRUCT_MEMBER_STRUCT(OUTER_STRUCT, INNER_STRUCT, ...) \
   DECLARE_JS_NAMED_STRUCT( \
-    StringTemplateParameter {#OUTER_STRUCT "_" #INNER_STRUCT}, \
+    #OUTER_STRUCT "_" #INNER_STRUCT ""_tp, \
     OUTER_STRUCT::INNER_STRUCT, \
     __VA_ARGS__)
 

@@ -6,8 +6,8 @@ import NativeClass from "../src/NativeClass";
 export class Plugin_Metadata extends NativeClass {
   private constructor(instanceID: string, instanceData: any) {
     super(instanceID);
-    this.#cpp_mPluginName = instanceData["mPluginName"];
-    this.#cpp_mPluginReadableVersion = instanceData["mPluginReadableVersion"];
+    this.#cpp_PluginName = instanceData["PluginName"];
+    this.#cpp_PluginReadableVersion = instanceData["PluginReadableVersion"];
   }
 
   static async load(instanceID: string): Promise<Plugin_Metadata> {
@@ -16,30 +16,30 @@ export class Plugin_Metadata extends NativeClass {
       await this.GetInstanceJSONData("Plugin_Metadata", instanceID),
     );
   }
-  #cpp_mPluginName: string;
-  #cpp_mPluginReadableVersion: string;
-  get mPluginName(): string {
-    return this.#cpp_mPluginName;
+  #cpp_PluginName: string;
+  #cpp_PluginReadableVersion: string;
+  get PluginName(): string {
+    return this.#cpp_PluginName;
   }
 
-  set mPluginName(value: string) {
-    if (this.#cpp_mPluginName === value) {
+  set PluginName(value: string) {
+    if (this.#cpp_PluginName === value) {
       return;
     }
-    this.#cpp_mPluginName = value;
-    this.NativePropertyChanged("mPluginName", value);
+    this.#cpp_PluginName = value;
+    this.NativePropertyChanged("PluginName", value);
   }
 
-  get mPluginReadableVersion(): string {
-    return this.#cpp_mPluginReadableVersion;
+  get PluginReadableVersion(): string {
+    return this.#cpp_PluginReadableVersion;
   }
 
-  set mPluginReadableVersion(value: string) {
-    if (this.#cpp_mPluginReadableVersion === value) {
+  set PluginReadableVersion(value: string) {
+    if (this.#cpp_PluginReadableVersion === value) {
       return;
     }
-    this.#cpp_mPluginReadableVersion = value;
-    this.NativePropertyChanged("mPluginReadableVersion", value);
+    this.#cpp_PluginReadableVersion = value;
+    this.NativePropertyChanged("PluginReadableVersion", value);
   }
 }
 export default Plugin_Metadata;
