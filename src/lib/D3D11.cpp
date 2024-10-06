@@ -19,11 +19,11 @@
  */
 #include <OpenKneeboard/D3D11.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <d3d11_3.h>
 
@@ -69,7 +69,8 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
   device->GetImmediateContext(mDeviceContext.put());
 
   mDXTKSpriteBatch
-    = std::make_unique<DirectX::SpriteBatch>(mDeviceContext.get());
+    = std::make_unique<DirectX::DX11::SpriteBatch>(mDeviceContext.get());
+  mDXTKCommonStates = std::make_unique<DirectX::DX11::CommonStates>(device);
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -119,7 +120,7 @@ void SpriteBatch::Begin(
   mDXTKSpriteBatch->Begin(
     DirectX::DX11::SpriteSortMode_Deferred,
     nullptr,
-    nullptr,
+    mDXTKCommonStates->PointClamp(),
     nullptr,
     nullptr,
     setCustomShaders);
