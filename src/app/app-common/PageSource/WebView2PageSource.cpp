@@ -297,7 +297,10 @@ std::optional<PreferredSize> WebView2PageSource::GetPreferredSize(
     if (it == mDocumentResources.mRenderers.end()) {
       return PreferredSize {mSettings.mInitialSize, ScalingKind::Bitmap};
     }
-    return it->second->GetPreferredSize();
+    if (it->second->HaveCaptureItem()) {
+      return it->second->GetPreferredSize();
+    }
+    return std::nullopt;
   }
 
   assert(mDocumentResources.mContentMode == ContentMode::PageBased);
