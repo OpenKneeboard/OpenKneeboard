@@ -369,7 +369,18 @@ static std::string GetFatalLogContents(
     }
   }
 
+  // This function is deprecated because anything with access to `app-common`
+  // should use TroubleShootingStore directly instead, but we can't here as we
+  // don't have/want that dependency
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
   const auto dprintHistory = dprint.MaybeGetHistory();
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
   if (dprintHistory) {
     f << "\n"
       << "Logs\n"
