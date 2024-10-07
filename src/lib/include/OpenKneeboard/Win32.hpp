@@ -54,12 +54,12 @@ struct result_transform_t : noarg_bindable_t<TDerived> {
   static auto transform_result(auto) = delete;
 };
 
-template <class THandle, HANDLE TErrorValue>
+template <class THandle, std::predicate<HANDLE> auto TIsValid>
 struct basic_returns_handle
-  : result_transform_t<basic_returns_handle<THandle, TErrorValue>> {
+  : result_transform_t<basic_returns_handle<THandle, TIsValid>> {
   constexpr static std::expected<THandle, HRESULT> transform_result(
     HANDLE handle) {
-    if (handle == TErrorValue) {
+    if (!TIsValid(handle)) {
       return std::unexpected(HRESULT_FROM_WIN32(GetLastError()));
     }
     return THandle {handle};
@@ -254,9 +254,11 @@ struct basic_winapi {
   using handle_or_invalid_type = typename TTraits::handle_or_invalid_type;
 
   using returns_handle_or_null
-    = basic_returns_handle<handle_or_null_type, nullptr>;
+    = basic_returns_handle<handle_or_null_type, std::identity {}>;
   using returns_handle_or_invalid
-    = basic_returns_handle<handle_or_invalid_type, INVALID_HANDLE_VALUE>;
+    = basic_returns_handle<handle_or_invalid_type, [](HANDLE handle) {
+        return handle != INVALID_HANDLE_VALUE;
+      }>;
 
   using or_throw = basic_winapi<TTraits, or_throw<TTraits>, TStringTraits>;
   using or_default = basic_winapi<TTraits, or_default, TStringTraits>;
