@@ -268,10 +268,13 @@ class TestViewerWindow final : private D3D11Resources {
     this->InitializeShaders();
     this->InitializeDirect2D();
 
+    if (HaveDirectComposition()) {
+      check_hresult(DCompositionCreateDevice(
+        mDXGIDevice.get(), IID_PPV_ARGS(mDComp.put())));
     check_hresult(
-      DCompositionCreateDevice(mDXGIDevice.get(), IID_PPV_ARGS(mDComp.put())));
-    check_hresult(mDComp->CreateTargetForHwnd(mHwnd, true, mDCompTarget.put()));
+        mDComp->CreateTargetForHwnd(mHwnd, true, mDCompTarget.put()));
     check_hresult(mDComp->CreateVisual(mDCompVisual.put()));
+    }
 
     check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
@@ -296,13 +299,27 @@ class TestViewerWindow final : private D3D11Resources {
     }
   }
 
+  bool HaveDirectComposition() {
+    // Incompatible due to Direct2D using undocumented
+    // DXGIAdapterInternal1 interface
+    if (RenderDoc::IsPresent()) {
+      static bool sHaveLogged {false};
+      if (!sHaveLogged) {
+        dprint.Warning(
+          "Disabling DirectComposition because RenderDoc is present");
+      }
+      return false;
+    }
+    return true;
+  }
+
   bool HaveDirect2D() const {
     // Incompatible due to Direct2D using undocumented
     // DXGIAdapterInternal1 interface
     if (RenderDoc::IsPresent()) {
       static bool sHaveLogged {false};
       if (!sHaveLogged) {
-        dprint("Disabling Direct2D because RenderDoc is present");
+        dprint.Warning("Disabling Direct2D because RenderDoc is present");
       }
       return false;
     }
@@ -547,8 +564,11 @@ class TestViewerWindow final : private D3D11Resources {
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 3,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED,
+      .AlphaMode = HaveDirectComposition() ? DXGI_ALPHA_MODE_PREMULTIPLIED
+                                           : DXGI_ALPHA_MODE_IGNORE,
     };
+
+    if (HaveDirectComposition()) {
     // We need DirectComposition in order to support
     // DXGI_ALPHA_MODE_PREMULTIPLIED
     check_hresult(mDXGIFactory->CreateSwapChainForComposition(
@@ -556,6 +576,15 @@ class TestViewerWindow final : private D3D11Resources {
     check_hresult(mDCompVisual->SetContent(mSwapChain.get()));
     check_hresult(mDCompTarget->SetRoot(mDCompVisual.get()));
     check_hresult(mDComp->Commit());
+    } else {
+      check_hresult(mDXGIFactory->CreateSwapChainForHwnd(
+        mD3D11Device.get(),
+        mHwnd,
+        &swapChainDesc,
+        nullptr,
+        nullptr,
+        mSwapChain.put()));
+    }
 
     mSwapChainSize = clientSize;
     mRenderer->Initialize(swapChainDesc.BufferCount);
