@@ -20,7 +20,7 @@ add_dependencies(json jsonFetch)
 
 ExternalProject_Get_property(jsonFetch INSTALL_DIR)
 target_include_directories(json SYSTEM INTERFACE "${INSTALL_DIR}/include")
-target_compile_definitions(json INTERFACE JSON_DISABLE_ENUM_SERIALIZATION 1)
+target_compile_definitions(json INTERFACE JSON_DISABLE_ENUM_SERIALIZATION=1)
 
 ExternalProject_Get_property(jsonFetch SOURCE_DIR)
 install(
