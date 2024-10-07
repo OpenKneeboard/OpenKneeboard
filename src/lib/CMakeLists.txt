@@ -280,11 +280,13 @@ ok_add_library(
   OpenKneeboard-SHM-Client-D3D12
   STATIC
   SHM/D3D12.cpp
+  D3D12/Renderer.cpp
 )
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D12
   PUBLIC
   OpenKneeboard-shims
+  OpenKneeboard-SHM
   System::D3d12
   ThirdParty::CppWinRT
   ThirdParty::DirectXTK12
