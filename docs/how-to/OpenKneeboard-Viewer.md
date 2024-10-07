@@ -16,6 +16,7 @@ of the kneeboard for streaming.
 * `S`: Streamer Mode
 * `F`: Switch background **F**ill: magenta, checkerboard, Windows default.
 * `V`: Toggle between mirroring **V**R and non-VR content
+* `U`: Unscaled
 
 ## Graphics API
 

@@ -113,6 +113,7 @@ class TestViewerWindow final : private D3D11Resources {
   static constexpr size_t MaxTriangles = MaxRectangles * 2;
   static constexpr size_t MaxVertices = MaxTriangles * 3;
 
+  bool mUnscaled = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   std::unique_ptr<Viewer::Renderer> mRenderer;
@@ -619,6 +620,11 @@ class TestViewerWindow final : private D3D11Resources {
         mShowInformationOverlay = !mShowInformationOverlay;
         this->PaintNow();
         return;
+      // Unscaled
+      case 'U':
+        mUnscaled = !mUnscaled;
+        this->PaintNow();
+        return;
       // Borderless
       case 'B': {
         if (mSettings.mStreamerMode) {
@@ -880,7 +886,7 @@ class TestViewerWindow final : private D3D11Resources {
     const auto& imageSize = sourceRect.mSize;
     const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
     const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
-    const auto scale = std::min(scalex, scaley);
+    const auto scale = mUnscaled ? 1.0f : std::min(scalex, scaley);
 
     const PixelRect destRect = GetDestRect(imageSize, scale);
 
