@@ -161,7 +161,6 @@ ok_add_library(
   OpenKneeboard-D3D11
   STATIC
   D3D11.cpp
-  D3D11/Renderer.cpp
 )
 target_link_libraries(
   OpenKneeboard-D3D11
@@ -180,7 +179,6 @@ ok_add_library(
   OpenKneeboard-D3D12
   STATIC
   D3D12.cpp
-  D3D12/Renderer.cpp
 )
 target_link_libraries(
   OpenKneeboard-D3D12
@@ -264,6 +262,7 @@ ok_add_library(
   OpenKneeboard-SHM-Client-D3D11
   STATIC
   SHM/D3D11.cpp
+  D3D11/Renderer.cpp
 )
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
