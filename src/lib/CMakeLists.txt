@@ -302,7 +302,7 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-SHM-Client-Vulkan
   PUBLIC
-  OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-SHM
   OpenKneeboard-Vulkan
   OpenKneeboard-shims
   ThirdParty::CppWinRT

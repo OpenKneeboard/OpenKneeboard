@@ -118,8 +118,14 @@ class SpriteBatch {
   // MUST MATCH SHADER
   constexpr static uint8_t MaxSpritesPerBatch = 16;
   struct BatchData {
+    template <class T>
+    struct alignas(16) HLSLArrayElement : T {};
+
+    using SourceClamp = HLSLArrayElement<std::array<float, 4>>;
+    using SourceDimensions = HLSLArrayElement<std::array<float, 2>>;
+    std::array<SourceClamp, MaxSpritesPerBatch> mSourceClamp;
+    std::array<SourceDimensions, MaxSpritesPerBatch> mSourceDimensions;
     std::array<float, 2> mTargetDimensions;
-    std::array<std::array<float, 2>, MaxSpritesPerBatch> mSourceDimensions;
   };
 
   // MUST MATCH SHADER
@@ -164,10 +170,25 @@ class SpriteBatch {
     unique_vk<VkBuffer> mBuffer;
     unique_vk<VkDeviceMemory> mMemory;
     MemoryMapping<T> mMapping;
+
+    Buffer() = default;
+
+    inline Buffer(Buffer<T>&& other) {
+      mBuffer = std::move(other.mBuffer);
+      mMemory = std::move(other.mMemory);
+      mMapping = std::move(other.mMapping);
+    }
+
+    Buffer& operator=(Buffer<T>&&) = default;
   };
 
   Buffer<Vertex> mVertexBuffer;
+  Buffer<BatchData> mUniformBuffer;
 
+  template <class T>
+  Buffer<T> CreateBuffer(VkBufferUsageFlags, VkDeviceSize size);
+
+  void CreateUniformBuffer();
   void CreateVertexBuffer();
 
   unique_vk<VkSampler> mSampler;

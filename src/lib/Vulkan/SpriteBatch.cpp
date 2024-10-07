@@ -62,8 +62,10 @@ SpriteBatch::SpriteBatch(
       = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
   }
 
+  this->CreateUniformBuffer();
   this->CreateVertexBuffer();
   this->CreateSampler();
+
   this->CreateDescriptorSet();
 
   this->CreatePipeline();
@@ -75,17 +77,10 @@ void SpriteBatch::CreatePipeline() {
       mDescriptorSet.mLayout.get(),
     };
 
-    VkPushConstantRange pushConstant {
-      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-      .size = sizeof(BatchData),
-    };
-
     VkPipelineLayoutCreateInfo createInfo {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .setLayoutCount = std::size(descriptorSetLayouts),
       .pSetLayouts = descriptorSetLayouts,
-      .pushConstantRangeCount = 1,
-      .pPushConstantRanges = &pushConstant,
     };
     mPipelineLayout
       = mVK->make_unique<VkPipelineLayout>(mDevice, &createInfo, mAllocator);
@@ -193,19 +188,22 @@ void SpriteBatch::CreatePipeline() {
     mDevice, VK_NULL_HANDLE, &createInfo, mAllocator);
 }
 
-void SpriteBatch::CreateVertexBuffer() {
+template <class T>
+SpriteBatch::Buffer<T> SpriteBatch::CreateBuffer(
+  VkBufferUsageFlags flags,
+  VkDeviceSize size) {
+  Buffer<T> ret {};
+
   VkBufferCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-    .size = sizeof(Vertex) * MaxVerticesPerBatch,
-    .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+    .size = size,
+    .usage = flags,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
   };
-  mVertexBuffer.mBuffer
-    = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
+  ret.mBuffer = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
 
   VkMemoryRequirements requirements;
-  mVK->GetBufferMemoryRequirements(
-    mDevice, mVertexBuffer.mBuffer.get(), &requirements);
+  mVK->GetBufferMemoryRequirements(mDevice, ret.mBuffer.get(), &requirements);
   const auto memoryType = FindMemoryType(
     mVK,
     mPhysicalDevice,
@@ -223,14 +221,26 @@ void SpriteBatch::CreateVertexBuffer() {
     .memoryTypeIndex = *memoryType,
   };
 
-  mVertexBuffer.mMemory
+  ret.mMemory
     = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
 
-  check_vkresult(mVK->BindBufferMemory(
-    mDevice, mVertexBuffer.mBuffer.get(), mVertexBuffer.mMemory.get(), 0));
+  check_vkresult(
+    mVK->BindBufferMemory(mDevice, ret.mBuffer.get(), ret.mMemory.get(), 0));
 
-  mVertexBuffer.mMapping = mVK->MemoryMapping<Vertex>(
-    mDevice, mVertexBuffer.mMemory.get(), 0, requirements.size, 0);
+  ret.mMapping = mVK->MemoryMapping<T>(
+    mDevice, ret.mMemory.get(), 0, requirements.size, 0);
+
+  return ret;
+}
+
+void SpriteBatch::CreateVertexBuffer() {
+  mVertexBuffer = this->CreateBuffer<Vertex>(
+    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, sizeof(Vertex) * MaxVerticesPerBatch);
+}
+
+void SpriteBatch::CreateUniformBuffer() {
+  mUniformBuffer = this->CreateBuffer<BatchData>(
+    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(BatchData));
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -310,9 +320,18 @@ void SpriteBatch::End(const std::source_location& loc) {
       sources.push_back(sprite.mSource);
       const auto i = sources.size() - 1;
       sourceIndices[sprite.mSource] = i;
+
       batchData.mSourceDimensions[i] = {
         sprite.mSourceSize.Width<float>(),
         sprite.mSourceSize.Height<float>(),
+      };
+
+      batchData.mSourceClamp[i] = {
+        (sprite.mSourceRect.Left<float>() + 0.5f) / sprite.mSourceSize.Width(),
+        (sprite.mSourceRect.Top<float>() + 0.5f) / sprite.mSourceSize.Height(),
+        (sprite.mSourceRect.Right<float>() - 0.5f) / sprite.mSourceSize.Width(),
+        (sprite.mSourceRect.Bottom<float>() - 0.5f)
+          / sprite.mSourceSize.Height(),
       };
     }
 
@@ -366,14 +385,7 @@ void SpriteBatch::End(const std::source_location& loc) {
 
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
   memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
-
-  mVK->CmdPushConstants(
-    mCommandBuffer,
-    mPipelineLayout.get(),
-    VK_SHADER_STAGE_VERTEX_BIT,
-    0,
-    sizeof(batchData),
-    &batchData);
+  memcpy(mUniformBuffer.mMapping.get(), &batchData, sizeof(batchData));
 
   {
     VkRenderingAttachmentInfoKHR colorAttachmentInfo {
@@ -431,19 +443,35 @@ void SpriteBatch::End(const std::source_location& loc) {
       });
     }
 
+    VkDescriptorBufferInfo uniformBufferInfo {
+      .buffer = mUniformBuffer.mBuffer.get(),
+      .range = sizeof(BatchData),
+    };
+
+    std::array descriptorWrites {
+      VkWriteDescriptorSet {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = mDescriptorSet.mDescriptorSet,
+        .dstBinding = 1,
+        .descriptorCount = static_cast<uint32_t>(sourceInfos.size()),
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .pImageInfo = sourceInfos.data(),
+      },
+      VkWriteDescriptorSet {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = mDescriptorSet.mDescriptorSet,
+        .dstBinding = 2,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &uniformBufferInfo,
+      },
+    };
+    mVK->UpdateDescriptorSets(
+      mDevice, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+
     VkDescriptorSet descriptors[] {
       mDescriptorSet.mDescriptorSet,
     };
-
-    VkWriteDescriptorSet descriptorWrite {
-      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = mDescriptorSet.mDescriptorSet,
-      .dstBinding = 1,
-      .descriptorCount = static_cast<uint32_t>(sourceInfos.size()),
-      .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-      .pImageInfo = sourceInfos.data(),
-    };
-    mVK->UpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
 
     mVK->CmdBindDescriptorSets(
       mCommandBuffer,
@@ -454,7 +482,7 @@ void SpriteBatch::End(const std::source_location& loc) {
       descriptors,
       0,
       nullptr);
-  }
+  }// namespace OpenKneeboard::Vulkan
 
   if (mClearColor) {
     VkClearAttachment clear {
@@ -530,8 +558,8 @@ void SpriteBatch::CreateSampler() {
     .magFilter = VK_FILTER_LINEAR,
     .minFilter = VK_FILTER_LINEAR,
     .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-    .addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
-    .addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+    .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
     .addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
     .maxLod = VK_LOD_CLAMP_NONE,
   };
@@ -554,12 +582,21 @@ void SpriteBatch::CreateDescriptorSet() {
       .descriptorCount = MaxSpritesPerBatch,
       .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
     },
+    VkDescriptorSetLayoutBinding {
+      .binding = 2,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+    },
   };
 
   VkDescriptorBindingFlags bindingFlags[] {
     0,
     VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT,
+    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT,
   };
+
+  static_assert(std::size(bindingFlags) == std::size(layoutBindings));
 
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
     .sType

@@ -32,6 +32,7 @@
   IT(CmdBindPipeline) \
   IT(CmdBlitImage) \
   IT(CmdClearAttachments) \
+  IT(CmdClearColorImage) \
   IT(CmdCopyImage) \
   IT(CmdDraw) \
   IT(CmdEndRenderingKHR) \
