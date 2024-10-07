@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <d3d11.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -26,7 +28,6 @@
 #include <concepts>
 
 #include <d2d1.h>
-#include <d3d11.h>
 
 namespace OpenKneeboard::Geometry2D {
 
@@ -212,6 +213,14 @@ struct Point {
     const Point<T>& rhs) noexcept {
     lhs += rhs;
     return lhs;
+  }
+
+  constexpr Point<T> operator-() const noexcept {
+    return (*this) * -1;
+  };
+
+  constexpr auto operator-(const Point<T>& other) const noexcept {
+    return *this + (-other);
   }
 
   constexpr bool operator==(const Point<T>&) const noexcept = default;
