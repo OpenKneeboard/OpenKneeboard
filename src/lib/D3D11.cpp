@@ -106,6 +106,20 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
       .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
       .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
     },
+    D3D11_INPUT_ELEMENT_DESC {
+      .SemanticName = "TEXCOORD",
+      .SemanticIndex = 1,
+      .Format = DXGI_FORMAT_R32G32_FLOAT,
+      .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+      .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+    },
+    D3D11_INPUT_ELEMENT_DESC {
+      .SemanticName = "TEXCOORD",
+      .SemanticIndex = 2,
+      .Format = DXGI_FORMAT_R32G32_FLOAT,
+      .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+      .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+    },
   };
   winrt::check_hresult(device->CreateInputLayout(
     vertexMembers.data(),
@@ -210,6 +224,9 @@ void SpriteBatch::Draw(
     fatal("target not set, call BeginFrame()");
   }
 
+  std::array<float, 2> texClampTL;
+  std::array<float, 2> texClampBR;
+
   {
     winrt::com_ptr<ID3D11Resource> resource;
     source->GetResource(resource.put());
@@ -218,17 +235,21 @@ void SpriteBatch::Draw(
     winrt::check_hresult(resource->QueryInterface(texture.put()));
     texture->GetDesc(&desc);
 
+    texClampTL = {
+      (sourceRect.Left() + 0.5f) / desc.Width,
+      (sourceRect.Top() + 0.5f) / desc.Height,
+    };
+    texClampBR = {
+      (sourceRect.Right() - 0.5f) / desc.Width,
+      (sourceRect.Bottom() - 0.5f) / desc.Height,
+    };
+
     D3D11_MAPPED_SUBRESOURCE mapping {};
     winrt::check_hresult(mDeviceContext->Map(
       mUniformBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
     const auto uniform = reinterpret_cast<ShaderData::Uniform*>(mapping.pData);
 
     *uniform = ShaderData::Uniform {
-      .mSourceClamp = { (sourceRect.Left() + 0.5f) / desc.Width,
-        (sourceRect.Top() + 0.5f) / desc.Height,
-        (sourceRect.Right() - 0.5f) / desc.Width,
-        (sourceRect.Bottom() - 0.5f) / desc.Height,
-      },
       .mSourceDimensions = {
         static_cast<float>(desc.Width),
         static_cast<float>(desc.Height),
@@ -264,6 +285,8 @@ void SpriteBatch::Draw(
         .mPosition = dst,
         .mColor = tint,
         .mTexCoord = src,
+        .mTexClampTL = texClampTL,
+        .mTexClampBR = texClampBR,
       };
     };
 

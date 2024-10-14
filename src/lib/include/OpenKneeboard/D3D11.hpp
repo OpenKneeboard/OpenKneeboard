@@ -129,7 +129,6 @@ class SpriteBatch {
 
   struct ShaderData {
     struct Uniform {
-      std::array<float, 4> mSourceClamp;
       std::array<float, 2> mSourceDimensions;
       std::array<float, 2> mDestDimensions;
     };
@@ -138,6 +137,8 @@ class SpriteBatch {
       std::array<float, 4> mPosition;
       DirectX::XMVECTORF32 mColor;
       std::array<float, 2> mTexCoord;
+      std::array<float, 2> mTexClampTL;
+      std::array<float, 2> mTexClampBR;
     };
   };
 };

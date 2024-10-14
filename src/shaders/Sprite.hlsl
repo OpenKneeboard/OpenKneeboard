@@ -12,7 +12,6 @@ sampler TextureSampler : register(s0);
 Texture2D<float4> Texture: register(t0);
 
 cbuffer UniformData: register(b0) {
-    float4 sourceClamp;
     float2 sourceDimensions;
     float2 destDimensions;
 };
@@ -20,7 +19,9 @@ cbuffer UniformData: register(b0) {
 void SpriteVertexShader(
     inout float4 position   : SV_Position,
     inout float4 color      : COLOR0,
-    inout float2 texCoord   : TEXCOORD0) {
+    inout float2 texCoord   : TEXCOORD0,
+    inout float2 clampTL    : TEXCOORD1,
+    inout float2 clampBR    : TEXCOORD2) {
 
     // Y axis is up in D3D, and that's all we care about for this shader; Vulkan
     // uses SpriteBatch instead.
@@ -30,12 +31,16 @@ void SpriteVertexShader(
     color = color;
 
     texCoord = texCoord / sourceDimensions;
+    clampTL = clampTL;
+    clampBR = clampBR;
 }
 
 float4 SpritePixelShader(
     float4 position   : SV_Position,
     float4 color      : COLOR0,
-    float2 texCoord   : TEXCOORD0): SV_Target0 {
-    texCoord = clamp(texCoord, sourceClamp.xy, sourceClamp.zw);
+    float2 texCoord   : TEXCOORD0,
+    float2 clampTL    : TEXCOORD1,
+    float2 clampBR    : TEXCOORD2): SV_Target0 {
+    texCoord = clamp(texCoord, clampTL, clampBR);
     return Texture.Sample(TextureSampler, texCoord) * color;
 }
