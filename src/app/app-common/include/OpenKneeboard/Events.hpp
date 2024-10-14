@@ -22,6 +22,7 @@
 #include "UniqueID.hpp"
 
 #include <OpenKneeboard/KneeboardViewID.hpp>
+#include <OpenKneeboard/ThreadGuard.hpp>
 
 #include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/dprint.hpp>
@@ -184,6 +185,7 @@ class EventDelay final {
   auto operator=(EventDelay&&) = delete;
 
  private:
+  ThreadGuard mThreadGuard;
   std::source_location mSourceLocation;
   EventsTraceLoggingThreadActivity mActivity;
 };
