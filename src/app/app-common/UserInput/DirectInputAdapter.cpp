@@ -121,6 +121,8 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
     co_return;
   }
 
+  winrt::apartment_context thread;
+
   auto instances
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
@@ -194,6 +196,10 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
   }
   this->evAttachedControllersChangedEvent.Emit();
+
+  // Make sure that the EventDelay and mutex lock are released in the same
+  // thread that they are acquired
+  co_await thread;
 }
 
 winrt::fire_and_forget DirectInputAdapter::final_release(
