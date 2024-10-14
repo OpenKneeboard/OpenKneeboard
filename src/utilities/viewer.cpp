@@ -32,7 +32,7 @@
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/SHM/D3D11.hpp>
-#include <OpenKneeboard/Shaders/D3D/Viewer.hpp>
+#include <OpenKneeboard/Shaders/DXBC/Viewer.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
@@ -271,9 +271,9 @@ class TestViewerWindow final : private D3D11Resources {
     if (HaveDirectComposition()) {
       check_hresult(DCompositionCreateDevice(
         mDXGIDevice.get(), IID_PPV_ARGS(mDComp.put())));
-    check_hresult(
+      check_hresult(
         mDComp->CreateTargetForHwnd(mHwnd, true, mDCompTarget.put()));
-    check_hresult(mDComp->CreateVisual(mDCompVisual.put()));
+      check_hresult(mDComp->CreateVisual(mDCompVisual.put()));
     }
 
     check_hresult(mD3D11Device->CreateFence(
@@ -382,8 +382,8 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void InitializeShaders() {
-    constexpr auto vs = Shaders::D3D::Viewer::VS;
-    constexpr auto ps = Shaders::D3D::Viewer::PS;
+    constexpr auto vs = Shaders::DXBC::Viewer::VS;
+    constexpr auto ps = Shaders::DXBC::Viewer::PS;
 
     auto dev = mD3D11Device.get();
 
@@ -569,13 +569,13 @@ class TestViewerWindow final : private D3D11Resources {
     };
 
     if (HaveDirectComposition()) {
-    // We need DirectComposition in order to support
-    // DXGI_ALPHA_MODE_PREMULTIPLIED
-    check_hresult(mDXGIFactory->CreateSwapChainForComposition(
-      mD3D11Device.get(), &swapChainDesc, nullptr, mSwapChain.put()));
-    check_hresult(mDCompVisual->SetContent(mSwapChain.get()));
-    check_hresult(mDCompTarget->SetRoot(mDCompVisual.get()));
-    check_hresult(mDComp->Commit());
+      // We need DirectComposition in order to support
+      // DXGI_ALPHA_MODE_PREMULTIPLIED
+      check_hresult(mDXGIFactory->CreateSwapChainForComposition(
+        mD3D11Device.get(), &swapChainDesc, nullptr, mSwapChain.put()));
+      check_hresult(mDCompVisual->SetContent(mSwapChain.get()));
+      check_hresult(mDCompTarget->SetRoot(mDCompVisual.get()));
+      check_hresult(mDComp->Commit());
     } else {
       check_hresult(mDXGIFactory->CreateSwapChainForHwnd(
         mD3D11Device.get(),

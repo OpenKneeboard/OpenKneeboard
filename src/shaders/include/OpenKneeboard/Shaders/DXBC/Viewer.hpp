@@ -21,14 +21,14 @@
 
 #include <string>
 
-namespace OpenKneeboard::Shaders::D3D::Viewer::Detail {
+namespace OpenKneeboard::Shaders::DXBC::Viewer::Detail {
 
-#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-D3D-PS.hpp>
-#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-D3D-VS.hpp>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-DXBC-PS.hpp>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-DXBC-VS.hpp>
 
-}// namespace OpenKneeboard::Shaders::D3D::Viewer::Detail
+}// namespace OpenKneeboard::Shaders::DXBC::Viewer::Detail
 
-namespace OpenKneeboard::Shaders::D3D::Viewer {
+namespace OpenKneeboard::Shaders::DXBC::Viewer {
 
 constexpr std::basic_string_view<unsigned char> PS {
   Detail::g_ViewerPixelShader,
@@ -38,4 +38,4 @@ constexpr std::basic_string_view<unsigned char> VS {
   Detail::g_ViewerVertexShader,
   std::size(Detail::g_ViewerVertexShader)};
 
-}// namespace OpenKneeboard::Shaders::D3D::Viewer
+}// namespace OpenKneeboard::Shaders::DXBC::Viewer

@@ -103,7 +103,7 @@ void SpriteBatch::CreatePipeline() {
   VkPipelineRasterizationStateCreateInfo rasterization {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
     .polygonMode = VK_POLYGON_MODE_FILL,
-    .cullMode = VK_CULL_MODE_NONE,
+    .cullMode = VK_CULL_MODE_NONE,// FIXME
     .frontFace = VK_FRONT_FACE_CLOCKWISE,
     .lineWidth = 1.0f,
   };
@@ -370,7 +370,7 @@ void SpriteBatch::End(const std::source_location& loc) {
     vertices.push_back(makeVertex(srcTL, dstTL));
     vertices.push_back(makeVertex(srcBR, dstBR));
 
-    // First triangle: excludes bottom left
+    // Second triangle: excludes bottom left
     vertices.push_back(makeVertex(srcTL, dstTL));
     vertices.push_back(makeVertex(srcTR, dstTR));
     vertices.push_back(makeVertex(srcBR, dstBR));

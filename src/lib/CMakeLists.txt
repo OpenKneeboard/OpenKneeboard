@@ -170,6 +170,7 @@ target_link_libraries(
   ThirdParty::DirectXTK
   ThirdParty::CppWinRT
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-Sprite-DXBC
   PRIVATE
   OpenKneeboard-dprint
   System::Dxguid

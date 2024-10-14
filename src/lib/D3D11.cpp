@@ -18,12 +18,15 @@
  * USA.
  */
 #include <OpenKneeboard/D3D11.hpp>
-
-#include <shims/winrt/base.h>
+#include <OpenKneeboard/Shaders/DXBC/Sprite.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/tracing.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <directxtk/CommonStates.h>
 
 #include <d3d11_3.h>
 
@@ -68,8 +71,57 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
   mDevice.copy_from(device);
   device->GetImmediateContext(mDeviceContext.put());
 
-  mDXTKSpriteBatch
-    = std::make_unique<DirectX::SpriteBatch>(mDeviceContext.get());
+  mCommonStates = std::make_unique<DirectX::DX11::CommonStates>(device);
+
+  namespace Sprite = OpenKneeboard::Shaders::DXBC::Sprite;
+  winrt::check_hresult(device->CreatePixelShader(
+    Sprite::PS.data(), Sprite::PS.size(), nullptr, mPixelShader.put()));
+  winrt::check_hresult(device->CreateVertexShader(
+    Sprite::VS.data(), Sprite::VS.size(), nullptr, mVertexShader.put()));
+
+  D3D11_BUFFER_DESC uniformDesc {
+    .ByteWidth = sizeof(ShaderData::Uniform),
+    .Usage = D3D11_USAGE_DYNAMIC,
+    .BindFlags = D3D11_BIND_CONSTANT_BUFFER,
+    .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+  };
+  winrt::check_hresult(
+    device->CreateBuffer(&uniformDesc, nullptr, mUniformBuffer.put()));
+
+  std::array vertexMembers {
+    D3D11_INPUT_ELEMENT_DESC {
+      .SemanticName = "SV_Position",
+      .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+      .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+    },
+    D3D11_INPUT_ELEMENT_DESC {
+      .SemanticName = "COLOR",
+      .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+      .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+      .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+    },
+    D3D11_INPUT_ELEMENT_DESC {
+      .SemanticName = "TEXCOORD",
+      .Format = DXGI_FORMAT_R32G32_FLOAT,
+      .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+      .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+    },
+  };
+  winrt::check_hresult(device->CreateInputLayout(
+    vertexMembers.data(),
+    std::size(vertexMembers),
+    Sprite::VS.data(),
+    Sprite::VS.size(),
+    mInputLayout.put()));
+
+  D3D11_BUFFER_DESC vertexDesc {
+    .ByteWidth = sizeof(ShaderData::Vertex) * 6,// Two triangles
+    .Usage = D3D11_USAGE_DYNAMIC,
+    .BindFlags = D3D11_BIND_VERTEX_BUFFER,
+    .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+  };
+  winrt::check_hresult(
+    device->CreateBuffer(&vertexDesc, nullptr, mVertexBuffer.put()));
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -80,10 +132,7 @@ SpriteBatch::~SpriteBatch() {
   }
 }
 
-void SpriteBatch::Begin(
-  ID3D11RenderTargetView* rtv,
-  const PixelSize& rtvSize,
-  std::function<void __cdecl()> setCustomShaders) {
+void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
   if (mTarget) [[unlikely]] {
     fatal("frame already in progress; did you call End()?");
@@ -106,25 +155,41 @@ void SpriteBatch::Begin(
 
   ID3D11ShaderResourceView* nullsrv {nullptr};
 
+  ID3D11Buffer* uniformBuffers[] {mUniformBuffer.get()};
+
+  ID3D11Buffer* vertexBuffers[] {mVertexBuffer.get()};
+  UINT vertexStrides[] = {sizeof(ShaderData::Vertex)};
+  UINT vertexOffsets[] = {0};
+
+  static_assert(std::size(vertexBuffers) == std::size(vertexStrides));
+  static_assert(std::size(vertexBuffers) == std::size(vertexOffsets));
+
   auto ctx = mDeviceContext.get();
-  ctx->IASetInputLayout(nullptr);
-  ctx->VSSetShader(nullptr, nullptr, 0);
+  ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  ctx->IASetInputLayout(mInputLayout.get());
+  ctx->IASetVertexBuffers(
+    0, std::size(vertexBuffers), vertexBuffers, vertexStrides, vertexOffsets);
+
+  ctx->VSSetConstantBuffers(0, std::size(uniformBuffers), uniformBuffers);
+  ctx->VSSetShader(mVertexShader.get(), nullptr, 0);
+
+  ctx->PSSetConstantBuffers(0, std::size(uniformBuffers), uniformBuffers);
+  ctx->PSSetShader(mPixelShader.get(), nullptr, 0);
+  ctx->PSSetShaderResources(0, 1, &nullsrv);
+  ID3D11SamplerState* samplers[] {mCommonStates->LinearClamp()};
+  ctx->PSSetSamplers(0, std::size(samplers), samplers);
+
+  ctx->RSSetState(mCommonStates->CullCounterClockwise());
   ctx->RSSetViewports(1, &viewport);
   ctx->RSSetScissorRects(1, &scissorRect);
-  ctx->PSSetShaderResources(0, 1, &nullsrv);
-  ctx->OMSetRenderTargets(1, &rtv, nullptr);
-  ctx->OMSetDepthStencilState(nullptr, 0);
-  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
 
-  mDXTKSpriteBatch->Begin(
-    DirectX::DX11::SpriteSortMode_Deferred,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    setCustomShaders);
+  ctx->OMSetRenderTargets(1, &rtv, nullptr);
+  ctx->OMSetDepthStencilState(mCommonStates->DepthNone(), 0);
+  ctx->OMSetBlendState(
+    mCommonStates->AlphaBlend(), DirectX::Colors::White, ~0ui32);
 
   mTarget = rtv;
+  mTargetDimensions = rtvSize.StaticCast<float, std::array<float, 2>>();
 }
 
 void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
@@ -145,10 +210,81 @@ void SpriteBatch::Draw(
     fatal("target not set, call BeginFrame()");
   }
 
-  const D3D11_RECT sourceD3DRect = sourceRect;
-  const D3D11_RECT destD3DRect = destRect;
+  {
+    winrt::com_ptr<ID3D11Resource> resource;
+    source->GetResource(resource.put());
+    D3D11_TEXTURE2D_DESC desc {};
+    winrt::com_ptr<ID3D11Texture2D> texture;
+    winrt::check_hresult(resource->QueryInterface(texture.put()));
+    texture->GetDesc(&desc);
 
-  mDXTKSpriteBatch->Draw(source, destD3DRect, &sourceD3DRect, tint);
+    D3D11_MAPPED_SUBRESOURCE mapping {};
+    winrt::check_hresult(mDeviceContext->Map(
+      mUniformBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+    const auto uniform = reinterpret_cast<ShaderData::Uniform*>(mapping.pData);
+
+    *uniform = ShaderData::Uniform {
+      .mSourceClamp = { (sourceRect.Left() + 0.5f) / desc.Width,
+        (sourceRect.Top() + 0.5f) / desc.Height,
+        (sourceRect.Right() - 0.5f) / desc.Width,
+        (sourceRect.Bottom() - 0.5f) / desc.Height,
+      },
+      .mSourceDimensions = {
+        static_cast<float>(desc.Width),
+        static_cast<float>(desc.Height),
+      },
+      .mDestDimensions = { mTargetDimensions[0], mTargetDimensions[1] },
+    };
+
+    mDeviceContext->Unmap(mUniformBuffer.get(), 0);
+  }
+
+  {
+    D3D11_MAPPED_SUBRESOURCE mapping {};
+    winrt::check_hresult(mDeviceContext->Map(
+      mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+
+    using TexCoord = decltype(ShaderData::Vertex::mTexCoord);
+    const TexCoord srcTL = sourceRect.TopLeft().StaticCast<float, TexCoord>();
+    const TexCoord srcBR
+      = sourceRect.BottomRight().StaticCast<float, TexCoord>();
+    const TexCoord srcBL {srcTL[0], srcBR[1]};
+    const TexCoord srcTR {srcBR[0], srcTL[1]};
+
+    using Position = decltype(ShaderData::Vertex::mPosition);
+    const Position dstTL {destRect.Left<float>(), destRect.Top<float>(), 0, 1};
+    const Position dstBR {
+      destRect.Right<float>(), destRect.Bottom<float>(), 0, 1};
+    const Position dstBL {
+      destRect.Left<float>(), destRect.Bottom<float>(), 0, 1};
+    const Position dstTR {destRect.Right<float>(), destRect.Top<float>(), 0, 1};
+
+    const auto makeVertex = [=](const auto& src, const auto& dst) {
+      return ShaderData::Vertex {
+        .mPosition = dst,
+        .mColor = tint,
+        .mTexCoord = src,
+      };
+    };
+
+    const auto vertices = std::array {
+      // First triangle: excludes top right
+      makeVertex(srcBL, dstBL),
+      makeVertex(srcTL, dstTL),
+      makeVertex(srcBR, dstBR),
+      // Second triangle: excludes bottom left
+      makeVertex(srcTL, dstTL),
+      makeVertex(srcTR, dstTR),
+      makeVertex(srcBR, dstBR),
+    };
+    memcpy(mapping.pData, vertices.data(), sizeof(ShaderData::Vertex) * 6);
+
+    mDeviceContext->Unmap(mVertexBuffer.get(), 0);
+  }
+
+  ID3D11ShaderResourceView* resources[] {source};
+  mDeviceContext->PSSetShaderResources(0, std::size(resources), resources);
+  mDeviceContext->Draw(6, 0);
 }
 
 void SpriteBatch::End() {
@@ -156,7 +292,7 @@ void SpriteBatch::End() {
   if (!mTarget) [[unlikely]] {
     fatal("target not set; double-End() or Begin() not called?");
   }
-  mDXTKSpriteBatch->End();
+
   ID3D11RenderTargetView* nullrtv {nullptr};
   mDeviceContext->OMSetRenderTargets(1, &nullrtv, nullptr);
   mTarget = nullptr;

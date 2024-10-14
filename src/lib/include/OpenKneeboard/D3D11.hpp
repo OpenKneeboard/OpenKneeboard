@@ -24,7 +24,7 @@
 
 #include <shims/winrt/base.h>
 
-#include <directxtk/SpriteBatch.h>
+#include <directxtk/CommonStates.h>
 
 #include <memory>
 
@@ -102,10 +102,7 @@ class SpriteBatch {
   SpriteBatch(ID3D11Device*);
   ~SpriteBatch();
 
-  void Begin(
-    ID3D11RenderTargetView*,
-    const PixelSize& rtvSize,
-    std::function<void __cdecl()> setCustomShaders = nullptr);
+  void Begin(ID3D11RenderTargetView*, const PixelSize& rtvSize);
   void Clear(DirectX::XMVECTORF32 color = DirectX::Colors::Transparent);
   void Draw(
     ID3D11ShaderResourceView* source,
@@ -118,9 +115,31 @@ class SpriteBatch {
   winrt::com_ptr<ID3D11Device> mDevice;
   winrt::com_ptr<ID3D11DeviceContext> mDeviceContext;
 
-  std::unique_ptr<DirectX::DX11::SpriteBatch> mDXTKSpriteBatch;
+  std::unique_ptr<DirectX::DX11::CommonStates> mCommonStates;
+
+  winrt::com_ptr<ID3D11VertexShader> mVertexShader;
+  winrt::com_ptr<ID3D11PixelShader> mPixelShader;
+  winrt::com_ptr<ID3D11Buffer> mUniformBuffer;
+
+  winrt::com_ptr<ID3D11InputLayout> mInputLayout;
+  winrt::com_ptr<ID3D11Buffer> mVertexBuffer;
 
   ID3D11RenderTargetView* mTarget {nullptr};
+  std::array<float, 2> mTargetDimensions;
+
+  struct ShaderData {
+    struct Uniform {
+      std::array<float, 4> mSourceClamp;
+      std::array<float, 2> mSourceDimensions;
+      std::array<float, 2> mDestDimensions;
+    };
+
+    struct Vertex {
+      std::array<float, 4> mPosition;
+      DirectX::XMVECTORF32 mColor;
+      std::array<float, 2> mTexCoord;
+    };
+  };
 };
 
 }// namespace OpenKneeboard::D3D11

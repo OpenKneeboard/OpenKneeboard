@@ -8,7 +8,8 @@
 // - take pixel coordinates and convert to normalized coordinates
 // - add VK annotations
 //
-// This means the shader now requires D3D11 or D3D12.
+// This means the shader now requires Shader Model 5.1, which despite some
+// documentation to the contrary, is not supported by Direct3D 11.
 
 // Limit MUST match C++
 #define MaxSpritesPerBatch 16

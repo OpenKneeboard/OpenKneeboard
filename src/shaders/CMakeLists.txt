@@ -56,15 +56,40 @@ target_include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+add_fxc_shader(
+    OpenKneeboard-Sprite-DXBC-PS
+    SpritePixelShader
+    Sprite.hlsl
+    -T ps_5_0 
+)
+add_fxc_shader(
+    OpenKneeboard-Sprite-DXBC-VS
+    SpriteVertexShader
+    Sprite.hlsl
+    -T vs_5_0 
+)
+add_library(OpenKneeboard-Sprite-DXBC INTERFACE)
+target_link_libraries(
+    OpenKneeboard-Sprite-DXBC
+    INTERFACE
+    OpenKneeboard-Sprite-DXBC-PS
+    OpenKneeboard-Sprite-DXBC-VS
+)
+target_include_directories(
+    OpenKneeboard-Sprite-DXBC
+    INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
 # Shader Model 5.0 targets D3D11.0 and above
 add_fxc_shader(
-    OpenKneeboard-Viewer-D3D-VS
+    OpenKneeboard-Viewer-DXBC-VS
     ViewerVertexShader
     Viewer.hlsl
     -T vs_5_0
 )
 add_fxc_shader(
-    OpenKneeboard-Viewer-D3D-PS
+    OpenKneeboard-Viewer-DXBC-PS
     ViewerPixelShader
     Viewer.hlsl
     -T ps_5_0
@@ -73,8 +98,8 @@ add_library(OpenKneeboard-Viewer-Shaders INTERFACE)
 target_link_libraries(
     OpenKneeboard-Viewer-Shaders
     INTERFACE
-    OpenKneeboard-Viewer-D3D-VS
-    OpenKneeboard-Viewer-D3D-PS
+    OpenKneeboard-Viewer-DXBC-VS
+    OpenKneeboard-Viewer-DXBC-PS
 )
 target_include_directories(
     OpenKneeboard-Viewer-Shaders
