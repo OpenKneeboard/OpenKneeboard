@@ -109,13 +109,14 @@ void SpriteBatch::CreatePipeline() {
   };
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
     .blendEnable = VK_TRUE,
-    .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
     .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
     .colorBlendOp = VK_BLEND_OP_ADD,
     .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
     .alphaBlendOp = VK_BLEND_OP_ADD,
-    .colorWriteMask = 0xf,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+      | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
   };
   VkPipelineColorBlendStateCreateInfo colorBlend {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -167,6 +168,10 @@ void SpriteBatch::CreatePipeline() {
     .pDynamicStates = dynamicStates,
   };
 
+  VkPipelineDepthStencilStateCreateInfo depthStencil {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+  };
+
   VkGraphicsPipelineCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
     .pNext = &renderingCreateInfo,
@@ -177,7 +182,7 @@ void SpriteBatch::CreatePipeline() {
     .pViewportState = &viewport,
     .pRasterizationState = &rasterization,
     .pMultisampleState = &multiplesample,
-    .pDepthStencilState = nullptr,
+    .pDepthStencilState = &depthStencil,
     .pColorBlendState = &colorBlend,
     .pDynamicState = &dynamicState,
     .layout = mPipelineLayout.get(),
