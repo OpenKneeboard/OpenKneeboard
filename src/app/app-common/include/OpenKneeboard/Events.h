@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <shims/winrt/base.h>
 
@@ -99,6 +100,7 @@ class EventDelay final {
   auto operator=(EventDelay&&) = delete;
 
  private:
+  ThreadGuard mThreadGuard;
   std::source_location mSourceLocation;
   TraceLoggingThreadActivity<gTraceProvider> mActivity;
 };
