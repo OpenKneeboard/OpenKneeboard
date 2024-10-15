@@ -89,9 +89,11 @@ winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
   dprint("DirectInputAdapter::ReleaseDevices()");
 
-  std::unique_lock lock(mDevicesMutex);
-  auto devices = std::move(mDevices);
-  lock.unlock();
+  auto devices = [this]() {
+    std::unique_lock lock(mDevicesMutex);
+    return std::move(mDevices);
+  }();
+  mDevices.clear();
 
   dprint("Requesting directinput listener stops");
   for (auto& [id, device]: devices) {
@@ -126,6 +128,8 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   auto instances
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
+  std::vector<winrt::handle> stoppingListeners;
+
   for (auto dit = mDevices.begin(); dit != mDevices.end(); /* no increment */) {
     auto& device = dit->second.mDevice;
     const winrt::guid guid {device->GetID()};
@@ -135,7 +139,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
           return guid == winrt::guid {instance.guidInstance};
         });
     if (iit != instances.end()) {
-      dit++;
+      ++dit;
       continue;
     }
 
@@ -144,8 +148,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
     dit->second.mStop.request_stop();
-    co_await winrt::resume_on_signal(
-      dit->second.mListenerCompletionHandle.get());
+    stoppingListeners.push_back(std::move(dit->second.mListenerCompletionHandle));
     dit = mDevices.erase(dit);
   }
 
@@ -195,11 +198,22 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
     AddEventListener(
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
   }
-  this->evAttachedControllersChangedEvent.Emit();
+
+  lock.unlock();
+
+  if (!stoppingListeners.empty()) {
+    dprint("Waiting for DirectInput listeners to stop...");
+    for (auto&& listener: stoppingListeners) {
+      co_await winrt::resume_on_signal(listener.get());
+    }
+    dprint("DirectInput listeners stopped.");
+  }
 
   // Make sure that the EventDelay and mutex lock are released in the same
   // thread that they are acquired
   co_await thread;
+
+  this->evAttachedControllersChangedEvent.Emit();
 }
 
 winrt::fire_and_forget DirectInputAdapter::final_release(
