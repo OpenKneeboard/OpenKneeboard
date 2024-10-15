@@ -32,9 +32,10 @@ class DirectInputJoystickListener final : public DirectInputListener {
   ~DirectInputJoystickListener();
 
  protected:
-  virtual void Poll() override;
-  virtual void SetDataFormat() noexcept override;
-  virtual void OnAcquired() noexcept override;
+  [[nodiscard]]
+  std::expected<void, HRESULT> Poll() override;
+  void SetDataFormat() noexcept override;
+  void OnAcquired() noexcept override;
 
  private:
   DIJOYSTATE2 mState;

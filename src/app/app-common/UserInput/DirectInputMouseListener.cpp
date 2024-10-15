@@ -34,9 +34,14 @@ DirectInputMouseListener::DirectInputMouseListener(
 
 DirectInputMouseListener::~DirectInputMouseListener() = default;
 
-void DirectInputMouseListener::Poll() {
+std::expected<void, HRESULT> DirectInputMouseListener::Poll() {
   decltype(mState) newState {};
-  this->GetState(sizeof(mState), &newState);
+  {
+    const auto pollResult = this->GetState(sizeof(mState), &newState);
+    if (!pollResult.has_value()) {
+      return pollResult;
+    }
+  }
   scope_exit updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
@@ -51,15 +56,17 @@ void DirectInputMouseListener::Poll() {
     for (LONG i = 0; i < mState.lZ; i += WHEEL_DELTA) {
       device->PostVScroll(DirectInputDevice::VScrollDirection::Up);
     }
-    return;
+    return {};
   }
 
   if (mState.lZ < 0) {
     for (LONG i = 0; i > mState.lZ; i -= WHEEL_DELTA) {
       device->PostVScroll(DirectInputDevice::VScrollDirection::Down);
     }
-    return;
+    return {};
   }
+
+  return {};
 }
 
 void DirectInputMouseListener::SetDataFormat() noexcept {
@@ -67,7 +74,10 @@ void DirectInputMouseListener::SetDataFormat() noexcept {
 }
 
 void DirectInputMouseListener::OnAcquired() noexcept {
-  this->GetState(sizeof(mState), &mState);
+  const auto initResult = this->GetState(sizeof(mState), &mState);
+  if (!initResult.has_value()) {
+    winrt::throw_hresult(initResult.error());
+  }
 }
 
 }// namespace OpenKneeboard

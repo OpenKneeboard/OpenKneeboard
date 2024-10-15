@@ -117,25 +117,29 @@ task<void> DirectInputListener::Run() noexcept {
       co_return;
     }
 
-    const auto pollResult = mDIDevice->Poll();
-    if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
-      dprint(
-        "Abandoning DI device '{}' due to DI poll error {} ({:#08x})",
-        mDevice->GetName(),
-        pollResult,
-        std::bit_cast<uint32_t>(pollResult));
-      co_return;
+    {
+      const auto diResult = mDIDevice->Poll();
+      if (diResult != DI_OK && diResult != DI_NOEFFECT) {
+        dprint(
+          "Abandoning DI device '{}' due to DI poll error {} ({:#08x})",
+          mDevice->GetName(),
+          diResult,
+          std::bit_cast<uint32_t>(diResult));
+        co_return;
+      }
     }
-    try {
-      this->Poll();
-    } catch (const winrt::hresult_error& e) {
-      dprint(
-        "Abandoning DI device '{}' due to implementation poll error {} "
-        "({:#08x})",
-        mDevice->GetName(),
-        e.code().value,
-        std::bit_cast<uint32_t>(e.code().value));
-      co_return;
+
+    {
+      const auto implementationResult = this->Poll();
+      if (!implementationResult.has_value()) {
+        dprint(
+          "Abandoning DI device '{}' due to implementation poll error {} "
+          "({:#08x})",
+          mDevice->GetName(),
+          implementationResult.error(),
+          std::bit_cast<uint32_t>(implementationResult.error()));
+        co_return;
+      }
     }
   }
 }

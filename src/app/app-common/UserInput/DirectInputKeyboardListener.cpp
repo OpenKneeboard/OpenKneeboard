@@ -34,9 +34,14 @@ DirectInputKeyboardListener::DirectInputKeyboardListener(
 
 DirectInputKeyboardListener::~DirectInputKeyboardListener() = default;
 
-void DirectInputKeyboardListener::Poll() {
+std::expected<void, HRESULT> DirectInputKeyboardListener::Poll() {
   decltype(mState) newState {};
-  this->GetState(newState.size(), &newState);
+  {
+    const auto pollResult = this->GetState(newState.size(), &newState);
+    if (!pollResult.has_value()) {
+      return pollResult;
+    }
+  }
   scope_exit updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
@@ -46,6 +51,8 @@ void DirectInputKeyboardListener::Poll() {
         i, static_cast<bool>(newState[i] & (1 << 7)));
     }
   }
+
+  return {};
 }
 
 void DirectInputKeyboardListener::SetDataFormat() noexcept {
@@ -53,7 +60,10 @@ void DirectInputKeyboardListener::SetDataFormat() noexcept {
 }
 
 void DirectInputKeyboardListener::OnAcquired() noexcept {
-  this->GetState(sizeof(mState), &mState);
+  const auto result = this->GetState(sizeof(mState), &mState);
+  if (!result.has_value()) {
+    winrt::throw_hresult(result.error());
+  }
 }
 
 }// namespace OpenKneeboard

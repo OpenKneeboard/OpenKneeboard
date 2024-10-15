@@ -32,9 +32,9 @@ class DirectInputMouseListener final : public DirectInputListener {
   ~DirectInputMouseListener();
 
  protected:
-  virtual void Poll() override;
-  virtual void SetDataFormat() noexcept override;
-  virtual void OnAcquired() noexcept override;
+  std::expected<void, HRESULT> Poll() override;
+  void SetDataFormat() noexcept override;
+  void OnAcquired() noexcept override;
 
  private:
   DIMOUSESTATE2 mState;

@@ -34,9 +34,14 @@ DirectInputJoystickListener::DirectInputJoystickListener(
 
 DirectInputJoystickListener::~DirectInputJoystickListener() = default;
 
-void DirectInputJoystickListener::Poll() {
+std::expected<void, HRESULT> DirectInputJoystickListener::Poll() {
   decltype(mState) newState {};
-  this->GetState(sizeof(mState), &newState);
+  {
+    const auto pollResult = this->GetState(sizeof(mState), &newState);
+    if (!pollResult.has_value()) {
+      return pollResult;
+    }
+  }
   scope_exit updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
@@ -53,6 +58,8 @@ void DirectInputJoystickListener::Poll() {
       device->PostHatStateChange(i, mState.rgdwPOV[i], newState.rgdwPOV[i]);
     }
   }
+
+  return {};
 }
 
 void DirectInputJoystickListener::SetDataFormat() noexcept {
@@ -60,7 +67,10 @@ void DirectInputJoystickListener::SetDataFormat() noexcept {
 }
 
 void DirectInputJoystickListener::OnAcquired() noexcept {
-  this->GetState(sizeof(mState), &mState);
+  const auto initResult = this->GetState(sizeof(mState), &mState);
+  if (!initResult.has_value()) {
+    winrt::throw_hresult(initResult.error());
+  }
 }
 
 }// namespace OpenKneeboard
