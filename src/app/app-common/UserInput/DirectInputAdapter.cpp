@@ -122,8 +122,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
   for (auto dit = mDevices.begin(); dit != mDevices.end(); /* no increment */) {
-    // Copy as we move the state below
-    auto device = dit->second.mDevice;
+    auto& device = dit->second.mDevice;
     const winrt::guid guid {device->GetID()};
 
     const auto iit
@@ -137,15 +136,13 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       continue;
     }
 
-    auto state = std::move(dit->second);
-    dit = mDevices.erase(dit);
-
     dprint(
       L"DirectInput device removed: {} ('{}')",
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
-    state.mStop.request_stop();
-    co_await std::move(state.mListener);
+    dit->second.mStop.request_stop();
+    co_await std::move(dit->second).mListener;
+    dit = mDevices.erase(dit);
   }
 
   for (const auto& instance: instances) {
