@@ -86,9 +86,11 @@ task<void> DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
   dprint("DirectInputAdapter::ReleaseDevices()");
 
-  std::unique_lock lock(mDevicesMutex);
-  auto devices = std::move(mDevices);
-  lock.unlock();
+  auto devices = [this]() {
+    std::unique_lock lock(mDevicesMutex);
+    return std::move(mDevices);
+  }();
+  mDevices.clear();
 
   dprint("Requesting directinput listener stops");
   for (auto&& [id, device]: devices) {
@@ -121,6 +123,8 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
   auto instances
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
+  std::vector<task<void>> stoppingListeners;
+
   for (auto dit = mDevices.begin(); dit != mDevices.end(); /* no increment */) {
     auto& device = dit->second.mDevice;
     const winrt::guid guid {device->GetID()};
@@ -132,7 +136,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
           return guid == winrt::guid {instance.guidInstance};
         });
     if (iit != instances.end()) {
-      dit++;
+      ++dit;
       continue;
     }
 
@@ -141,7 +145,7 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
     dit->second.mStop.request_stop();
-    co_await std::move(dit->second).mListener;
+    stoppingListeners.push_back(std::move(dit->second.mListener));
     dit = mDevices.erase(dit);
   }
 
@@ -187,6 +191,17 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
     AddEventListener(
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
   }
+
+  lock.unlock();
+
+  if (!stoppingListeners.empty()) {
+    dprint("Waiting for DirectInput listeners to stop...");
+    for (auto&& listener: stoppingListeners) {
+      co_await std::move(listener);
+    }
+    dprint("DirectInput listeners stopped.");
+  }
+
   this->evAttachedControllersChangedEvent.Emit();
 }
 
