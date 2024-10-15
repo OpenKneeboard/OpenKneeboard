@@ -112,6 +112,21 @@ class SpriteBatch {
   void End();
 
  private:
+  struct ShaderData {
+    struct Uniform {
+      std::array<float, 2> mSourceDimensions;
+      std::array<float, 2> mDestDimensions;
+    };
+
+    struct Vertex {
+      std::array<float, 4> mPosition;
+      DirectX::XMVECTORF32 mColor;
+      std::array<float, 2> mTexCoord;
+      std::array<float, 2> mTexClampTL;
+      std::array<float, 2> mTexClampBR;
+    };
+  };
+
   winrt::com_ptr<ID3D11Device> mDevice;
   winrt::com_ptr<ID3D11DeviceContext> mDeviceContext;
 
@@ -127,20 +142,13 @@ class SpriteBatch {
   ID3D11RenderTargetView* mTarget {nullptr};
   std::array<float, 2> mTargetDimensions;
 
-  struct ShaderData {
-    struct Uniform {
-      std::array<float, 2> mSourceDimensions;
-      std::array<float, 2> mDestDimensions;
-    };
+  // View is a rectangle, which needs two triangles, which each need 3 points
+  static constexpr size_t MaxVertices = 6 * MaxViewCount;
+  ID3D11ShaderResourceView* mPendingSource {nullptr};
+  D3D11_TEXTURE2D_DESC mPendingSourceDesc {};
+  std::vector<ShaderData::Vertex> mPendingVertices;
 
-    struct Vertex {
-      std::array<float, 4> mPosition;
-      DirectX::XMVECTORF32 mColor;
-      std::array<float, 2> mTexCoord;
-      std::array<float, 2> mTexClampTL;
-      std::array<float, 2> mTexClampBR;
-    };
-  };
+  void DrawPendingVertices();
 };
 
 }// namespace OpenKneeboard::D3D11

@@ -129,13 +129,15 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
     mInputLayout.put()));
 
   D3D11_BUFFER_DESC vertexDesc {
-    .ByteWidth = sizeof(ShaderData::Vertex) * 6,// Two triangles
+    .ByteWidth = sizeof(ShaderData::Vertex) * MaxVertices,// Two triangles
     .Usage = D3D11_USAGE_DYNAMIC,
     .BindFlags = D3D11_BIND_VERTEX_BUFFER,
     .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
   };
   winrt::check_hresult(
     device->CreateBuffer(&vertexDesc, nullptr, mVertexBuffer.put()));
+
+  mPendingVertices.reserve(MaxVertices);
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -224,73 +226,56 @@ void SpriteBatch::Draw(
     fatal("target not set, call BeginFrame()");
   }
 
-  std::array<float, 2> texClampTL;
-  std::array<float, 2> texClampBR;
+  auto& desc = mPendingSourceDesc;
 
-  {
+  if (source != mPendingSource) {
+    this->DrawPendingVertices();
+    mPendingSource = source;
     winrt::com_ptr<ID3D11Resource> resource;
     source->GetResource(resource.put());
-    D3D11_TEXTURE2D_DESC desc {};
     winrt::com_ptr<ID3D11Texture2D> texture;
     winrt::check_hresult(resource->QueryInterface(texture.put()));
     texture->GetDesc(&desc);
-
-    texClampTL = {
-      (sourceRect.Left() + 0.5f) / desc.Width,
-      (sourceRect.Top() + 0.5f) / desc.Height,
-    };
-    texClampBR = {
-      (sourceRect.Right() - 0.5f) / desc.Width,
-      (sourceRect.Bottom() - 0.5f) / desc.Height,
-    };
-
-    D3D11_MAPPED_SUBRESOURCE mapping {};
-    winrt::check_hresult(mDeviceContext->Map(
-      mUniformBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
-    const auto uniform = reinterpret_cast<ShaderData::Uniform*>(mapping.pData);
-
-    *uniform = ShaderData::Uniform {
-      .mSourceDimensions = {
-        static_cast<float>(desc.Width),
-        static_cast<float>(desc.Height),
-      },
-      .mDestDimensions = { mTargetDimensions[0], mTargetDimensions[1] },
-    };
-
-    mDeviceContext->Unmap(mUniformBuffer.get(), 0);
   }
 
-  {
-    D3D11_MAPPED_SUBRESOURCE mapping {};
-    winrt::check_hresult(mDeviceContext->Map(
-      mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+  using TexCoord = decltype(ShaderData::Vertex::mTexCoord);
 
-    using TexCoord = decltype(ShaderData::Vertex::mTexCoord);
-    const TexCoord srcTL = sourceRect.TopLeft().StaticCast<float, TexCoord>();
-    const TexCoord srcBR
-      = sourceRect.BottomRight().StaticCast<float, TexCoord>();
-    const TexCoord srcBL {srcTL[0], srcBR[1]};
-    const TexCoord srcTR {srcBR[0], srcTL[1]};
+  const TexCoord texClampTL {
+    (sourceRect.Left() + 0.5f) / desc.Width,
+    (sourceRect.Top() + 0.5f) / desc.Height,
+  };
 
-    using Position = decltype(ShaderData::Vertex::mPosition);
-    const Position dstTL {destRect.Left<float>(), destRect.Top<float>(), 0, 1};
-    const Position dstBR {
-      destRect.Right<float>(), destRect.Bottom<float>(), 0, 1};
-    const Position dstBL {
-      destRect.Left<float>(), destRect.Bottom<float>(), 0, 1};
-    const Position dstTR {destRect.Right<float>(), destRect.Top<float>(), 0, 1};
+  const TexCoord texClampBR {
+    (sourceRect.Right() - 0.5f) / desc.Width,
+    (sourceRect.Bottom() - 0.5f) / desc.Height,
+  };
 
-    const auto makeVertex = [=](const auto& src, const auto& dst) {
-      return ShaderData::Vertex {
-        .mPosition = dst,
-        .mColor = tint,
-        .mTexCoord = src,
-        .mTexClampTL = texClampTL,
-        .mTexClampBR = texClampBR,
-      };
+  using TexCoord = decltype(ShaderData::Vertex::mTexCoord);
+  const TexCoord srcTL = sourceRect.TopLeft().StaticCast<float, TexCoord>();
+  const TexCoord srcBR = sourceRect.BottomRight().StaticCast<float, TexCoord>();
+  const TexCoord srcBL {srcTL[0], srcBR[1]};
+  const TexCoord srcTR {srcBR[0], srcTL[1]};
+
+  using Position = decltype(ShaderData::Vertex::mPosition);
+  const Position dstTL {destRect.Left<float>(), destRect.Top<float>(), 0, 1};
+  const Position dstBR {
+    destRect.Right<float>(), destRect.Bottom<float>(), 0, 1};
+  const Position dstBL {destRect.Left<float>(), destRect.Bottom<float>(), 0, 1};
+  const Position dstTR {destRect.Right<float>(), destRect.Top<float>(), 0, 1};
+
+  const auto makeVertex = [=](const auto& src, const auto& dst) {
+    return ShaderData::Vertex {
+      .mPosition = dst,
+      .mColor = tint,
+      .mTexCoord = src,
+      .mTexClampTL = texClampTL,
+      .mTexClampBR = texClampBR,
     };
+  };
 
-    const auto vertices = std::array {
+  std::ranges::copy(
+
+    std::array {
       // First triangle: excludes top right
       makeVertex(srcBL, dstBL),
       makeVertex(srcTL, dstTL),
@@ -299,15 +284,8 @@ void SpriteBatch::Draw(
       makeVertex(srcTL, dstTL),
       makeVertex(srcTR, dstTR),
       makeVertex(srcBR, dstBR),
-    };
-    memcpy(mapping.pData, vertices.data(), sizeof(ShaderData::Vertex) * 6);
-
-    mDeviceContext->Unmap(mVertexBuffer.get(), 0);
-  }
-
-  ID3D11ShaderResourceView* resources[] {source};
-  mDeviceContext->PSSetShaderResources(0, std::size(resources), resources);
-  mDeviceContext->Draw(6, 0);
+    },
+    std::back_inserter(mPendingVertices));
 }
 
 void SpriteBatch::End() {
@@ -316,9 +294,61 @@ void SpriteBatch::End() {
     fatal("target not set; double-End() or Begin() not called?");
   }
 
+  this->DrawPendingVertices();
+
   ID3D11RenderTargetView* nullrtv {nullptr};
   mDeviceContext->OMSetRenderTargets(1, &nullrtv, nullptr);
   mTarget = nullptr;
+}
+
+void SpriteBatch::DrawPendingVertices() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "D3D11::SpriteBatch::DrawPendingVertices()",
+    TraceLoggingValue(mPendingVertices.size(), "Count"));
+  if (mPendingVertices.empty()) {
+    return;
+  }
+
+#pragma region Uniform buffer
+  {
+    D3D11_MAPPED_SUBRESOURCE mapping {};
+    winrt::check_hresult(mDeviceContext->Map(
+      mUniformBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+    const auto uniform = reinterpret_cast<ShaderData::Uniform*>(mapping.pData);
+
+    *uniform = ShaderData::Uniform {
+      .mSourceDimensions = {
+        static_cast<float>(mPendingSourceDesc.Width),
+        static_cast<float>(mPendingSourceDesc.Height),
+      },
+      .mDestDimensions = {mTargetDimensions[0], mTargetDimensions[1]},
+    };
+
+    mDeviceContext->Unmap(mUniformBuffer.get(), 0);
+  }
+#pragma endregion// Uniform buffer
+
+#pragma region Vertex buffer
+  {
+    D3D11_MAPPED_SUBRESOURCE mapping {};
+    winrt::check_hresult(mDeviceContext->Map(
+      mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+    memcpy(
+      mapping.pData,
+      mPendingVertices.data(),
+      sizeof(decltype(mPendingVertices)::value_type) * mPendingVertices.size());
+    mDeviceContext->Unmap(mVertexBuffer.get(), 0);
+  }
+#pragma endregion// Vertex buffer
+
+  ID3D11ShaderResourceView* resources[] {mPendingSource};
+  mDeviceContext->PSSetShaderResources(0, std::size(resources), resources);
+  mDeviceContext->Draw(mPendingVertices.size(), 0);
+
+#pragma region Cleanup
+  mPendingSource = nullptr;
+  mPendingVertices.clear();
+#pragma endregion// cleanup
 }
 
 }// namespace OpenKneeboard::D3D11
