@@ -19,40 +19,11 @@
  */
 #pragma once
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/dprint.hpp>
 
+#include <shims/winrt/base.h>
+
 #include <format>
-
-template <class CharT>
-struct std::formatter<winrt::hresult, CharT>
-  : std::formatter<std::basic_string_view<CharT>, CharT> {
-  template <class FormatContext>
-  auto format(const winrt::hresult& hresult, FormatContext& fc) const {
-    char* message = nullptr;
-    FormatMessageA(
-      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-        | FORMAT_MESSAGE_IGNORE_INSERTS,
-      nullptr,
-      hresult,
-      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      reinterpret_cast<char*>(&message),
-      0,
-      nullptr);
-    std::basic_string<CharT> converted;
-    if (!message) {
-      converted = std::format("{:#010x}", static_cast<uint32_t>(hresult.value));
-      OPENKNEEBOARD_BREAK;
-    } else {
-      converted = std::format(
-        "{:#010x} (\"{}\")", static_cast<uint32_t>(hresult.value), message);
-    }
-
-    return std::formatter<std::basic_string_view<CharT>, CharT>::format(
-      std::basic_string_view<CharT> {converted}, fc);
-  }
-};
 
 namespace OpenKneeboard {
 
