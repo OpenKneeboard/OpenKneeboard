@@ -23,6 +23,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/task/resume_after.hpp>
 
 #include <wil/cppwinrt.h>
 
@@ -85,7 +86,7 @@ task<void> OTDIPCClient::Run() {
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
     co_await wil::resume_foreground(workThread);
-    co_await resume_after(mStopper.get_token(), std::chrono::seconds(1));
+    co_await resume_after(std::chrono::seconds(1), mStopper.get_token());
   }
 }
 

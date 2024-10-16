@@ -27,6 +27,7 @@
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/task/resume_after.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -497,7 +498,8 @@ task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
   }
 
   const auto inactiveSleep = std::chrono::seconds(1);
-  const auto frameSleep = std::chrono::milliseconds(1000 / FramesPerSecond);
+  const auto frameSleep
+    = std::chrono::microseconds((1000 * 1000) / FramesPerSecond);
 
   dprint("Initializing OpenVR support");
 
@@ -511,12 +513,12 @@ task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
       if (this->mIVROverlay) {
         this->mIVROverlay->WaitFrameSync(frameSleep.count());
       } else {
-        co_await resume_after(stopToken, frameSleep);
+        co_await resume_after(frameSleep, stopToken);
       }
       continue;
     }
 
-    co_await resume_after(stopToken, inactiveSleep);
+    co_await resume_after(inactiveSleep, stopToken);
   }
   dprint("Shutting down OpenVR support - stop requested");
 

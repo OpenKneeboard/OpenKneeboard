@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/task/resume_after.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -89,7 +90,7 @@ task<void> GameInjector::Run(std::stop_token stopToken) {
 
   dprint("Watching for game processes");
   do {
-    co_await resume_after(stopToken, std::chrono::milliseconds(200));
+    co_await resume_after(std::chrono::milliseconds(200), stopToken);
     if (stopToken.stop_requested()) {
       co_return;
     }

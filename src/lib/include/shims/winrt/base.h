@@ -125,14 +125,6 @@ inline winrt::Windows::Foundation::IAsyncAction resume_on_signal(
     loc);
 }
 
-inline winrt::Windows::Foundation::IAsyncAction resume_after(
-  std::stop_token token,
-  winrt::Windows::Foundation::TimeSpan timeout,
-  std::source_location loc = std::source_location::current()) {
-  return detail::make_stoppable(
-    token, [timeout]() { return winrt::resume_after(timeout); }, loc);
-}
-
 }// namespace OpenKneeboard
 
 template <class CharT>

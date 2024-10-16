@@ -54,6 +54,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/task/resume_after.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -231,8 +232,8 @@ task<void> MainWindow::Init() {
 
 task<void> MainWindow::FrameLoop() {
   auto stop = mFrameLoopStopSource.get_token();
-  const auto interval = std::chrono::milliseconds(
-    static_cast<unsigned int>(1000 / FramesPerSecond));
+  const auto interval = std::chrono::microseconds(
+    static_cast<uint32_t>((1000 * 1000) / FramesPerSecond));
 
   while (!stop.stop_requested()) {
     const auto start = std::chrono::steady_clock::now();
@@ -240,9 +241,8 @@ task<void> MainWindow::FrameLoop() {
 
     co_await this->FrameTick(nextGoal);
 
-    const auto wait = std::chrono::duration_cast<std::chrono::milliseconds>(
-      nextGoal - std::chrono::steady_clock::now());
-    if (wait < std::chrono::milliseconds::zero()) {
+    const auto wait = nextGoal - std::chrono::steady_clock::now();
+    if (wait < decltype(wait)::zero()) {
       TraceLoggingWrite(
         gTraceProvider, "MainWindow::FrameLoop()/FrameDurationExceeded");
       continue;
@@ -251,9 +251,10 @@ task<void> MainWindow::FrameLoop() {
     TraceLoggingWrite(
       gTraceProvider,
       "MainWindow::FrameLoop()/Wait",
-      TraceLoggingValue(wait.count(), "ms"));
-    co_await OpenKneeboard::resume_after(stop, wait);
-    co_await mUIThread;
+      TraceLoggingValue(wait.count(), "interval"));
+    if (wait > decltype(wait)::zero()) {
+      co_await OpenKneeboard::resume_after(wait, stop);
+    }
   }
   co_return;
 }
