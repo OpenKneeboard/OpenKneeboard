@@ -161,6 +161,7 @@ ok_add_library(
   OpenKneeboard-D3D11
   STATIC
   D3D11.cpp
+  D3D11/SpriteBatch.cpp
 )
 target_link_libraries(
   OpenKneeboard-D3D11
