@@ -25,6 +25,7 @@
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/task/resume_on_signal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
 #include <Windows.h>
@@ -133,7 +134,7 @@ task<bool> APIEventServer::RunSingle(
   }
 
   TraceLoggingWrite(gTraceProvider, "APIEventServer::RunSingle()/Wait");
-  co_await resume_on_signal(stop, notifyEvent);
+  co_await resume_on_signal(notifyEvent, stop);
   if (stop.stop_requested()) {
     co_return false;
   }

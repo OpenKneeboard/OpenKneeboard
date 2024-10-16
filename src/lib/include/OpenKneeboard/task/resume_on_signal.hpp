@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <coroutine>
+#include <expected>
 #include <functional>
 #include <optional>
 #include <stop_token>
@@ -34,42 +35,52 @@
 #include <winnt.h>
 
 namespace OpenKneeboard {
-enum class TimerResult {
+
+enum class ResumeOnSignalError {
   Timeout,
   Cancelled,
 };
-}
+using ResumeOnSignalResult = std::expected<void, ResumeOnSignalError>;
+
+}// namespace OpenKneeboard
 
 namespace OpenKneeboard::detail {
-struct TimerAwaitable {
+struct SignalAwaitable {
   template <class Rep, class Period = std::ratio<1>>
-  TimerAwaitable(
-    std::chrono::duration<Rep, Period> delay,
-    std::stop_token stopToken)
-    : mStopCallback(stopToken, std::bind_front(&TimerAwaitable::cancel, this)) {
+  SignalAwaitable(
+    HANDLE handle,
+    std::stop_token stopToken,
+    std::chrono::duration<Rep, Period> timeout)
+    : mHandle(handle),
+      mStopCallback(
+        stopToken,
+        std::bind_front(&SignalAwaitable::cancel, this)) {
+    if (timeout == decltype(timeout)::zero()) {
+      return;
+    }
     OPENKNEEBOARD_ASSERT(
-      delay > decltype(delay)::zero(), "Sleep duration must be > 0");
+      timeout > decltype(timeout)::zero(), "Sleep duration must be >= 0");
 
     // negative filetime = interval, positive = absolute
     const auto count = static_cast<int64_t>(
-      std::chrono::duration_cast<std::chrono::file_clock::duration>(delay)
+      std::chrono::duration_cast<std::chrono::file_clock::duration>(timeout)
         .count());
     ULARGE_INTEGER ulDuration {.QuadPart = std::bit_cast<uint64_t>(-count)};
-    mTime = {
+    mTimeout = FILETIME {
       .dwLowDateTime = ulDuration.LowPart,
       .dwHighDateTime = ulDuration.HighPart,
     };
   }
 
-  inline TimerResult result() const {
+  inline ResumeOnSignalResult result() const {
     OPENKNEEBOARD_ASSERT(mResult.has_value());
     return mResult.value();
   }
 
-  inline ~TimerAwaitable() {
-    OPENKNEEBOARD_ASSERT(mTPTimer);
+  inline ~SignalAwaitable() {
+    OPENKNEEBOARD_ASSERT(mTPSignal);
     OPENKNEEBOARD_ASSERT(mResult.has_value());
-    CloseThreadpoolTimer(mTPTimer);
+    CloseThreadpoolWait(mTPSignal);
   }
 
   inline bool await_ready() const {
@@ -81,49 +92,74 @@ struct TimerAwaitable {
 
   inline void await_suspend(std::coroutine_handle<> coro) {
     mCoro = std::move(coro);
-    mTPTimer = CreateThreadpoolTimer(
-      [](auto, auto rawThis, auto) {
-        auto self = reinterpret_cast<TimerAwaitable*>(rawThis);
-        self->mResult = TimerResult::Timeout;
+    mTPSignal = CreateThreadpoolWait(
+      [](auto, auto rawThis, auto, const TP_WAIT_RESULT result) {
+        auto self = reinterpret_cast<SignalAwaitable*>(rawThis);
+        if (result == WAIT_OBJECT_0) {
+          self->mResult = ResumeOnSignalResult {};
+        } else {
+          OPENKNEEBOARD_ASSERT(result == WAIT_TIMEOUT);
+          self->mResult = std::unexpected {ResumeOnSignalError::Timeout};
+        }
         self->mCoro.resume();
         self->mCoro = {};
       },
       this,
       nullptr);
-    SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
+    SetThreadpoolWait(
+      mTPSignal, mHandle, mTimeout ? &mTimeout.value() : nullptr);
   }
 
  private:
   std::stop_callback<std::function<void()>> mStopCallback;
 
   inline void cancel() {
-    OPENKNEEBOARD_ASSERT(mTPTimer);
+    OPENKNEEBOARD_ASSERT(mTPSignal);
 
-    if (SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0)) {
-      mResult = TimerResult::Cancelled;
+    if (SetThreadpoolWaitEx(mTPSignal, NULL, nullptr, 0)) {
+      mResult = std::unexpected {ResumeOnSignalError::Cancelled};
       mCoro.resume();
       mCoro = {};
     }
   }
 
-  FILETIME mTime {};
-  PTP_TIMER mTPTimer {nullptr};
+  HANDLE mHandle {};
+  std::optional<FILETIME> mTimeout {};
+  PTP_WAIT mTPSignal {nullptr};
   std::coroutine_handle<> mCoro;
-  std::optional<TimerResult> mResult;
+  std::optional<ResumeOnSignalResult> mResult;
 };
 
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
 
-/** Alternative to `winrt::resume_after()` that can cancel without exceptions.
+/** Alternative to `winrt::resume_on_signal()` that can cancel without
+ * exceptions.
  *
  * The primary benefit is that this makes breaking on all exceptions practical
  * when debugging program shutdown; as well as the irrelevant breakpoints,
  * it can also effect timing, making intermittent issues harder to reproduce.
  */
-inline task<TimerResult> resume_after(auto duration, std::stop_token token) {
-  detail::TimerAwaitable impl(duration, token);
+inline task<ResumeOnSignalResult>
+resume_on_signal(HANDLE handle, std::stop_token token, auto timeout) {
+  detail::SignalAwaitable impl(handle, token, timeout);
+  co_await impl;
+  co_return impl.result();
+}
+
+/** Alternative to `winrt::resume_on_signal()` that can cancel without
+ * exceptions.
+ *
+ * The primary benefit is that this makes breaking on all exceptions practical
+ * when debugging program shutdown; as well as the irrelevant breakpoints,
+ * it can also effect timing, making intermittent issues harder to reproduce.
+ */
+inline task<ResumeOnSignalResult> resume_on_signal(
+  HANDLE handle,
+  std::stop_token token) {
+  detail::SignalAwaitable impl(
+    handle, token, std::chrono::milliseconds::zero());
   co_await impl;
   co_return impl.result();
 }

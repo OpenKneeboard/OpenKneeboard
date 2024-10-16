@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+#include <OpenKneeboard/task/resume_on_signal.hpp>
 
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::Storage::Search;
@@ -74,7 +75,7 @@ task<void> FilesystemWatcher::Run() {
   auto stop = mStop.get_token();
   while (!stop.stop_requested()) {
     winrt::check_bool(FindNextChangeNotification(handle));
-    co_await resume_on_signal(stop, handle);
+    co_await resume_on_signal(handle, stop);
     if (stop.stop_requested()) {
       SetEvent(mShutdownHandle.get());
       co_return;

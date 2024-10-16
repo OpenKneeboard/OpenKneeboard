@@ -24,6 +24,7 @@
 #include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/task/resume_after.hpp>
+#include <OpenKneeboard/task/resume_on_signal.hpp>
 
 #include <wil/cppwinrt.h>
 
@@ -184,7 +185,7 @@ task<void> OTDIPCClient::RunSingle() {
 
       if (!haveEvent) {
         auto stop = mStopper.get_token();
-        co_await resume_on_signal(stop, event.get());
+        co_await resume_on_signal(event.get(), stop);
         if (stop.stop_requested()) {
           co_return;
         }
