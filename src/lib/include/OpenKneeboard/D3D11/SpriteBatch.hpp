@@ -33,10 +33,14 @@
 
 namespace OpenKneeboard::D3D11 {
 
-/** Wrapper around DirectXTK SpriteBatch which sets the required state on the
- * device first.
+/** Special-purpose alternative to DirectXTK SpriteBatch
  *
- * Handy instead of DirectXTK as all current OpenKneeboard clients either:
+ * This version:
+ * - sets the required state on device first
+ * - does not bleed on the edges of texture subregions
+ *
+ * Setting the state on the device is useful as all current OpenKneeboard
+ * clients either:
  * - pretty much use Direct2D with this being the only D3D, so set the state up
  * just for this
  * - hook into an exisiting render pipeline so can't make assumptions about the
