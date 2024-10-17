@@ -15,12 +15,12 @@ of the kneeboard for streaming.
 * `1`-`9`: show the nth layer (view).
 * `S`: Streamer Mode
 * `F`: Switch background **F**ill: transparent, checkerboard, Windows default.
-* `V`: Toggle between mirroring **V**R and non-VR content
+* `V`: Toggle between mirroring **V**R and non-VR content. This *only* affects the viewer, not the game or the rest of OpenKneeboard.
 * `U`: Unscaled
 
 ## Graphics API
 
-`OpenKneeboard-Viewer` can be launched with `-G D3D11`, `-G D3D12`, or `-G Vulkan`; this is a developer tool for debugging.
+`OpenKneeboard-Viewer` can be launched with `-G D3D11`, `-G D3D12`, or `-G Vulkan`; this is a developer tool for debugging. It does not need to match the game.
 
 ## Streamer Mode
 
