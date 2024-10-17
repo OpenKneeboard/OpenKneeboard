@@ -86,7 +86,6 @@ struct TimerAwaitable {
         auto self = reinterpret_cast<TimerAwaitable*>(rawThis);
         self->mResult = TimerResult::Timeout;
         self->mCoro.resume();
-        self->mCoro = {};
       },
       this,
       nullptr);
@@ -102,7 +101,6 @@ struct TimerAwaitable {
     if (SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0)) {
       mResult = TimerResult::Cancelled;
       mCoro.resume();
-      mCoro = {};
     }
   }
 

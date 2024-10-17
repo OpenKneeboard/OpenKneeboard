@@ -102,7 +102,6 @@ struct SignalAwaitable {
           self->mResult = std::unexpected {ResumeOnSignalError::Timeout};
         }
         self->mCoro.resume();
-        self->mCoro = {};
       },
       this,
       nullptr);
@@ -119,7 +118,6 @@ struct SignalAwaitable {
     if (SetThreadpoolWaitEx(mTPSignal, NULL, nullptr, 0)) {
       mResult = std::unexpected {ResumeOnSignalError::Cancelled};
       mCoro.resume();
-      mCoro = {};
     }
   }
 
