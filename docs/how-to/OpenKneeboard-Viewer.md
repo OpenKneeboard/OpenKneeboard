@@ -24,7 +24,7 @@ of the kneeboard for streaming.
 
 ## Streamer Mode
 
-This switches the background color to solid magenta, and
+This makes the background transparent, and
 disables the error message that is usually shown when
 OpenKneeboard isn't running or the kneeboard is hidden.
 
