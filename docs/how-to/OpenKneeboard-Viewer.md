@@ -14,7 +14,7 @@ of the kneeboard for streaming.
 * `I`: show **i**nformation, such as frame counter and layer (view)
 * `1`-`9`: show the nth layer (view).
 * `S`: Streamer Mode
-* `F`: Switch background **F**ill: magenta, checkerboard, Windows default.
+* `F`: Switch background **F**ill: transparent, checkerboard, Windows default.
 * `V`: Toggle between mirroring **V**R and non-VR content
 * `U`: Unscaled
 
