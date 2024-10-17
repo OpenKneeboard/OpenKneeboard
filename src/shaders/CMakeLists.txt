@@ -34,6 +34,7 @@ add_dxc_shader(
     SpritePixelShader
     SpriteBatch.hlsl
     -spirv -T ps_6_0
+    -D VK=1
 )
 
 add_dxc_shader(
@@ -41,6 +42,7 @@ add_dxc_shader(
     SpriteVertexShader
     SpriteBatch.hlsl
     -spirv -T vs_6_0
+    -D VK=1
 )
 
 add_library(OpenKneeboard-SpriteBatch-SPIRV INTERFACE)
@@ -52,6 +54,33 @@ target_link_libraries(
 )
 target_include_directories(
     OpenKneeboard-SpriteBatch-SPIRV
+    INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+add_dxc_shader(
+    OpenKneeboard-SpriteBatch-DXIL-PS
+    SpritePixelShader
+    SpriteBatch.hlsl
+    -T ps_5_1
+)
+
+add_dxc_shader(
+    OpenKneeboard-SpriteBatch-DXIL-VS
+    SpriteVertexShader
+    SpriteBatch.hlsl
+    -T vs_5_1
+)
+
+add_library(OpenKneeboard-SpriteBatch-DXIL INTERFACE)
+target_link_libraries(
+    OpenKneeboard-SpriteBatch-DXIL
+    INTERFACE
+    OpenKneeboard-SpriteBatch-DXIL-PS
+    OpenKneeboard-SpriteBatch-DXIL-VS
+)
+target_include_directories(
+    OpenKneeboard-SpriteBatch-DXIL
     INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )

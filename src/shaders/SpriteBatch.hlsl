@@ -13,10 +13,17 @@
 
 // Limit MUST match C++
 #define MaxSpritesPerBatch 16
-[[vk::binding(0)]] sampler TextureSampler : register(s0);
-[[vk::binding(1)]] Texture2D<float4> Textures[MaxSpritesPerBatch] : register(t0);
 
-[[vk::binding(2)]] cbuffer BatchData : register(b0) {
+#ifdef VK
+#define VK_BINDING(N) [[vk::binding(N)]]
+#else
+#define VK_BINDING(N)
+#endif
+
+VK_BINDING(0) sampler TextureSampler : register(s0);
+VK_BINDING(1) Texture2D<float4> Textures[MaxSpritesPerBatch] : register(t0);
+
+VK_BINDING(2) cbuffer BatchData : register(b0) {
     float4 sourceClamp[MaxSpritesPerBatch];
     float2 sourceDimensions[MaxSpritesPerBatch];
     float2 destDimensions;

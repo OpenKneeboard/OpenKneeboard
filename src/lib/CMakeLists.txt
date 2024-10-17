@@ -190,6 +190,7 @@ target_link_libraries(
   ThirdParty::DirectXTK12
   ThirdParty::CppWinRT
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-SpriteBatch-DXIL
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-RenderDoc
