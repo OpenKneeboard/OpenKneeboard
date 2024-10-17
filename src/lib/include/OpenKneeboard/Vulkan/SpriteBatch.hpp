@@ -24,6 +24,7 @@
 #include "smart-pointers.hpp"
 
 #include <OpenKneeboard/Pixels.hpp>
+#include <OpenKneeboard/Shaders/SpriteBatch.hpp>
 #include <OpenKneeboard/Vulkan/ExtendedCreateInfo.hpp>
 
 namespace OpenKneeboard::Vulkan {
@@ -115,39 +116,9 @@ class SpriteBatch {
   unique_vk<VkShaderModule> mPixelShader;
   unique_vk<VkShaderModule> mVertexShader;
 
-  // MUST MATCH SHADER
-  constexpr static uint8_t MaxSpritesPerBatch = 16;
-  struct BatchData {
-    template <class T>
-    struct alignas(16) HLSLArrayElement : T {};
-
-    using SourceClamp = HLSLArrayElement<std::array<float, 4>>;
-    using SourceDimensions = HLSLArrayElement<std::array<float, 2>>;
-    std::array<SourceClamp, MaxSpritesPerBatch> mSourceClamp;
-    std::array<SourceDimensions, MaxSpritesPerBatch> mSourceDimensions;
-    std::array<float, 2> mTargetDimensions;
-  };
-
-  // MUST MATCH SHADER
-  struct Vertex {
-    class Position : public std::array<float, 4> {
-     public:
-      constexpr Position(const std::array<float, 2>& pos_2d)
-        : std::array<float, 4> {pos_2d[0], pos_2d[0], 0, 1} {
-      }
-
-      constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {
-      }
-    };
-    Position mPosition;
-    Color mColor {};
-    std::array<float, 2> mTexCoord;
-    uint32_t mTextureIndex {~(0ui32)};
-
-    static VkVertexInputBindingDescription GetBindingDescription();
-    static std::array<VkVertexInputAttributeDescription, 4>
-    GetAttributeDescription();
-  };
+  static VkVertexInputBindingDescription GetVertexBindingDescription();
+  static std::array<VkVertexInputAttributeDescription, 4>
+  GetVertexAttributeDescription();
 
   struct Sprite {
     VkImageView mSource {nullptr};
@@ -157,8 +128,10 @@ class SpriteBatch {
     Color mColor;
   };
 
-  constexpr static uint8_t VerticesPerSprite = 6;
-  constexpr static uint8_t MaxVerticesPerBatch
+  static constexpr uint8_t MaxSpritesPerBatch
+    = Shaders::SpriteBatch::MaxSpritesPerBatch;
+  static constexpr uint8_t VerticesPerSprite = 6;
+  static constexpr uint8_t MaxVerticesPerBatch
     = VerticesPerSprite * MaxSpritesPerBatch;
 
   std::vector<Sprite> mSprites;
@@ -182,8 +155,11 @@ class SpriteBatch {
     Buffer& operator=(Buffer<T>&&) = default;
   };
 
+  using UniformBuffer = Shaders::SpriteBatch::UniformBuffer;
+  using Vertex = Shaders::SpriteBatch::Vertex;
+
   Buffer<Vertex> mVertexBuffer;
-  Buffer<BatchData> mUniformBuffer;
+  Buffer<UniformBuffer> mUniformBuffer;
 
   template <class T>
   Buffer<T> CreateBuffer(VkBufferUsageFlags, VkDeviceSize size);

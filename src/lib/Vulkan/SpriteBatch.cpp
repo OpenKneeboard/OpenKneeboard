@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.hpp>
+#include <OpenKneeboard/Shaders/SpriteBatch/SPIRV.hpp>
 #include <OpenKneeboard/Vulkan.hpp>
 
 #include <OpenKneeboard/tracing.hpp>
@@ -40,7 +40,7 @@ SpriteBatch::SpriteBatch(
 
   mVK->GetDeviceQueue(device, queueFamilyIndex, queue, &mQueue);
 
-  namespace Shaders = Shaders::SPIRV::SpriteBatch;
+  namespace Shaders = Shaders::SpriteBatch::SPIRV;
 
   {
     VkShaderModuleCreateInfo createInfo {
@@ -86,8 +86,8 @@ void SpriteBatch::CreatePipeline() {
       = mVK->make_unique<VkPipelineLayout>(mDevice, &createInfo, mAllocator);
   }
 
-  auto vertexDescription = Vertex::GetBindingDescription();
-  auto vertexAttributes = Vertex::GetAttributeDescription();
+  auto vertexDescription = GetVertexBindingDescription();
+  auto vertexAttributes = GetVertexAttributeDescription();
 
   VkPipelineVertexInputStateCreateInfo vertex {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -244,8 +244,8 @@ void SpriteBatch::CreateVertexBuffer() {
 }
 
 void SpriteBatch::CreateUniformBuffer() {
-  mUniformBuffer = this->CreateBuffer<BatchData>(
-    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(BatchData));
+  mUniformBuffer = this->CreateBuffer<UniformBuffer>(
+    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(UniformBuffer));
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -310,7 +310,7 @@ void SpriteBatch::End(const std::source_location& loc) {
     return;
   }
 
-  BatchData batchData {
+  UniformBuffer batchData {
     .mTargetDimensions
     = {mTargetDimensions.Width<float>(), mTargetDimensions.Height<float>()},
   };
@@ -450,7 +450,7 @@ void SpriteBatch::End(const std::source_location& loc) {
 
     VkDescriptorBufferInfo uniformBufferInfo {
       .buffer = mUniformBuffer.mBuffer.get(),
-      .range = sizeof(BatchData),
+      .range = sizeof(UniformBuffer),
     };
 
     std::array descriptorWrites {
@@ -524,7 +524,7 @@ void SpriteBatch::End(const std::source_location& loc) {
   mClearColor = {};
 }
 
-VkVertexInputBindingDescription SpriteBatch::Vertex::GetBindingDescription() {
+VkVertexInputBindingDescription SpriteBatch::GetVertexBindingDescription() {
   return VkVertexInputBindingDescription {
     .stride = sizeof(Vertex),
     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
@@ -532,7 +532,7 @@ VkVertexInputBindingDescription SpriteBatch::Vertex::GetBindingDescription() {
 }
 
 std::array<VkVertexInputAttributeDescription, 4>
-SpriteBatch::Vertex::GetAttributeDescription() {
+SpriteBatch::GetVertexAttributeDescription() {
   return {
     VkVertexInputAttributeDescription {
       .location = 0,

@@ -21,14 +21,14 @@
 
 #include <string>
 
-namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail {
+namespace OpenKneeboard::Shaders::SpriteBatch::SPIRV::Detail {
 
 #include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-PS.hpp>
 #include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-VS.hpp>
 
-}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail
+}// namespace OpenKneeboard::Shaders::SpriteBatch::SPIRV::Detail
 
-namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch {
+namespace OpenKneeboard::Shaders::SpriteBatch::SPIRV {
 
 constexpr std::basic_string_view<unsigned char> PS {
   Detail::g_SpritePixelShader,
@@ -38,4 +38,4 @@ constexpr std::basic_string_view<unsigned char> VS {
   Detail::g_SpriteVertexShader,
   std::size(Detail::g_SpriteVertexShader)};
 
-}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch
+}// namespace OpenKneeboard::Shaders::SpriteBatch::SPIRV
