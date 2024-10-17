@@ -44,4 +44,6 @@ add_subdirectory(injectables)
 add_subdirectory(games)
 add_subdirectory(utilities)
 
-add_subdirectory(app)
+if(BUILD_IS_64BIT)
+  add_subdirectory(app)
+endif()
