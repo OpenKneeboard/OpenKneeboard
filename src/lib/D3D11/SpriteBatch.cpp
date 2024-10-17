@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/D3D11/SpriteBatch.hpp>
-#include <OpenKneeboard/Shaders/DXBC/Sprite.hpp>
+#include <OpenKneeboard/Shaders/Sprite/DXBC.hpp>
 
 #include <OpenKneeboard/tracing.hpp>
 
@@ -33,7 +33,7 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
 
   mCommonStates = std::make_unique<DirectX::DX11::CommonStates>(device);
 
-  namespace Sprite = OpenKneeboard::Shaders::DXBC::Sprite;
+  namespace Sprite = OpenKneeboard::Shaders::Sprite::DXBC;
   winrt::check_hresult(device->CreatePixelShader(
     Sprite::PS.data(), Sprite::PS.size(), nullptr, mPixelShader.put()));
   winrt::check_hresult(device->CreateVertexShader(

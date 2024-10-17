@@ -21,21 +21,21 @@
 
 #include <string>
 
-namespace OpenKneeboard::Shaders::DXBC::Sprite::Detail {
+namespace OpenKneeboard::Shaders::Viewer::DXBC::Detail {
 
-#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Sprite-DXBC-PS.hpp>
-#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Sprite-DXBC-VS.hpp>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-DXBC-PS.hpp>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-Viewer-DXBC-VS.hpp>
 
-}// namespace OpenKneeboard::Shaders::DXBC::Sprite::Detail
+}// namespace OpenKneeboard::Shaders::Viewer::DXBC::Detail
 
-namespace OpenKneeboard::Shaders::DXBC::Sprite {
+namespace OpenKneeboard::Shaders::Viewer::DXBC {
 
 constexpr std::basic_string_view<unsigned char> PS {
-  Detail::g_SpritePixelShader,
-  std::size(Detail::g_SpritePixelShader)};
+  Detail::g_ViewerPixelShader,
+  std::size(Detail::g_ViewerPixelShader)};
 
 constexpr std::basic_string_view<unsigned char> VS {
-  Detail::g_SpriteVertexShader,
-  std::size(Detail::g_SpriteVertexShader)};
+  Detail::g_ViewerVertexShader,
+  std::size(Detail::g_ViewerVertexShader)};
 
-}// namespace OpenKneeboard::Shaders::DXBC::Sprite
+}// namespace OpenKneeboard::Shaders::Viewer::DXBC

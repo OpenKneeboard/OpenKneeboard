@@ -32,7 +32,7 @@
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/SHM/D3D11.hpp>
-#include <OpenKneeboard/Shaders/DXBC/Viewer.hpp>
+#include <OpenKneeboard/Shaders/Viewer/DXBC.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
@@ -382,8 +382,8 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void InitializeShaders() {
-    constexpr auto vs = Shaders::DXBC::Viewer::VS;
-    constexpr auto ps = Shaders::DXBC::Viewer::PS;
+    constexpr auto vs = Shaders::Viewer::DXBC::VS;
+    constexpr auto ps = Shaders::Viewer::DXBC::PS;
 
     auto dev = mD3D11Device.get();
 
