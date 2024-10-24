@@ -16,10 +16,26 @@ title: Feature Requests FAQ
 OpenKneeboard is a tool for displaying content in a world-locked position, and navigating it with pages and tabs. I will not accept feature requests or contributions that do not fit this model; for example, **do not ask** for the following features - the answer is no:
 
 - features related to mixed reality
-- attaching views/content to something that moves, such as your hand or controllers
+- attaching views/content to something that moves, such as your head, hand or controllers
 - 'workaround' feature requests for the above, e.g. 'recentering every frame'
 
 For other feature requests, search [GitHub Issues](https://github.com/OpenKneeboard/OpenKneeboard/issues?q=is%3Aissue); if a request for the specific feature already exists and is open, perhaps. If it exists and is closed, probably not - read the comments in the issue for details. If your request is not **exactly** the same, please open a second issue - don't add it as a comment to any existing ones.
+
+## Why won't you add features for mixed reality?
+
+OpenKneeboard is designed to solve specific problems, not to be a general-purpose tool. While for many people OpenKneeboard is the best current option for mixed reality, it is still not a *good* option, and can not become one without becoming worse at the problems it is intended to solve and drastically increasing the amount of time required for maintenance and testing.
+
+OpenKneeboard has *no* mixed reality features; feature requests for mixed reality are best directed at whatever software you are using to add them. If you are a developer, development time would be much better spent on creating a dedicated OpenXR API layer and configuration tool, without the majority of OpenKneeboard's features (and corresponding complexity), but with support for:
+
+- Chroma key composition layers (e.g. for virtual desktop)
+- Modifying the projection composition layer to directly include passthrough regions via `XR_ENVIRONMENT_BLEND_MODE_ADDITIVE` and `XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND`
+- webcam capture composition layers for DIY builds
+- Vendor-specific extensions such as `XR_FB_passthrough` (link developer mode, Vive Cosmos, and Pico 4), and `XR_HTC_passthrough` (Vive Focus)
+- Curved overlay regions via `XR_KHR_composition_layer_cylinder` 
+- True motion-compensated headlocked layers via `XR_REFERENCE_SPACE_TYPE_VIEW`
+- Composition layers locked to controllers or hand tracking
+
+A dedicated tool could be made simultaneously much easier to use and much more powerful than bolting on special-purpose features to OpenKneeboard, and adding these features to OpenKneeboard would drastically increase it's complexity, both for users and developers.
 
 ## How do I show support for a feature request?
 
