@@ -8,5 +8,6 @@ enum DeveloperToolsSettingsPageNative_CrashKind {
   ThrowFromNoexcept = "ThrowFromNoexcept",
   ThrowWithTaskFatal = "ThrowWithTaskFatal",
   Terminate = "Terminate",
+  TaskWithoutThread = "TaskWithoutThread",
 }
 export default DeveloperToolsSettingsPageNative_CrashKind;

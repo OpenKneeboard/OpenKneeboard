@@ -57,6 +57,7 @@ class DeveloperToolsSettingsPage : public JSNativeData {
     ThrowFromNoexcept,
     ThrowWithTaskFatal,
     Terminate,
+    TaskWithoutThread,
   };
   enum class CrashLocation {
     UIThread,

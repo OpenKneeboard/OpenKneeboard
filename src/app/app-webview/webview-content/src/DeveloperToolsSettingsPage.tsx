@@ -139,6 +139,7 @@ function DeveloperToolsSettingsPage({ native }: { native: DeveloperToolsSettings
               <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.ThrowWithTaskFatal}>Throw with this_task::fatal_on_uncaught_exception()</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.TaskWithoutThread}>Task with expired owner thread</nx.ComboBoxItem>
             </nx.ComboBox>
             <nx.ComboBox
               value={crashLocation}

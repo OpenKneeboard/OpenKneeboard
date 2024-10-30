@@ -238,6 +238,28 @@ fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
         co_return;
       };
       break;
+    case CrashKind::TaskWithoutThread:
+      triggerCrash = []() -> task<void> {
+        winrt::apartment_context uiThread;
+
+        winrt::handle event {CreateEventW(nullptr, 0, false, nullptr)};
+
+        auto dqc = winrt::Microsoft::UI::Dispatching::
+          DispatcherQueueController::CreateOnDedicatedThread();
+        co_await wil::resume_foreground(dqc.DispatcherQueue());
+        auto inner = [event = event.get()]() -> task<void> {
+          co_await winrt::resume_on_signal(event);
+        }();
+        co_await uiThread;
+        co_await dqc.ShutdownQueueAsync();
+        dqc = nullptr;
+
+        SetEvent(event.get());
+        co_await std::move(inner);
+
+        co_return;
+      };
+      break;
     default:
       OPENKNEEBOARD_BREAK;
       // Error: task failed successfully 🤷
