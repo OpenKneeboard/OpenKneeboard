@@ -564,6 +564,10 @@ void fatal_with_exception(std::exception_ptr ep) {
 }
 
 void divert_process_failure_to_fatal() {
+  static std::atomic_flag sInstalled;
+  if (sInstalled.test_and_set()) {
+    return;
+  }
   using namespace OpenKneeboard::detail;
 
   wil::SetResultMessageCallback(&OnWILResult);

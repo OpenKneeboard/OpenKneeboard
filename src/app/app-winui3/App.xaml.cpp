@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -424,6 +424,12 @@ static void LogInstallationInformation() {
   }
   dprint("----------");
 }
+
+static auto gCrashHandler = []() {
+  OpenKneeboard::divert_process_failure_to_fatal();
+  struct placeholder_t {};
+  return placeholder_t {};
+}();
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   TraceLoggingRegister(gTraceProvider);
