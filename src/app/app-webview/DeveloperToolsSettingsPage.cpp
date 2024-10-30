@@ -209,6 +209,15 @@ fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
         co_return;
       };
       break;
+    case CrashKind::ThrowFromFireAndForget:
+      triggerCrash = []() -> task<void> {
+        []() -> OpenKneeboard::fire_and_forget {
+          throw std::runtime_error(TriggeredCrashMessage);
+          co_return;
+        }();
+        co_return;
+      };
+      break;
     case CrashKind::ThrowFromNoexcept:
       triggerCrash = []() noexcept -> task<void> {
         throw std::runtime_error(TriggeredCrashMessage);

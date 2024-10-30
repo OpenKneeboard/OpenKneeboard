@@ -4,6 +4,7 @@
 enum DeveloperToolsSettingsPageNative_CrashKind {
   Fatal = "Fatal",
   Throw = "Throw",
+  ThrowFromFireAndForget = "ThrowFromFireAndForget",
   ThrowFromNoexcept = "ThrowFromNoexcept",
   Terminate = "Terminate",
 }

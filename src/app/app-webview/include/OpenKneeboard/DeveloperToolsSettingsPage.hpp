@@ -53,6 +53,7 @@ class DeveloperToolsSettingsPage : public JSNativeData {
   enum class CrashKind {
     Fatal,
     Throw,
+    ThrowFromFireAndForget,
     ThrowFromNoexcept,
     Terminate,
   };

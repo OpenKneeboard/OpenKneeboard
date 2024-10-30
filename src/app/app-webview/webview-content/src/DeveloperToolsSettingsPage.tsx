@@ -135,6 +135,7 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
               }}>
               <nx.ComboBoxItem value={CrashKind.Fatal}>Call Fatal</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.Throw}>Throw</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.ThrowFromFireAndForget}>Throw from OpenKneeboard::fire_and_forget</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
             </nx.ComboBox>
