@@ -6,6 +6,7 @@ enum DeveloperToolsSettingsPageNative_CrashKind {
   Throw = "Throw",
   ThrowFromFireAndForget = "ThrowFromFireAndForget",
   ThrowFromNoexcept = "ThrowFromNoexcept",
+  ThrowWithTaskFatal = "ThrowWithTaskFatal",
   Terminate = "Terminate",
 }
 export default DeveloperToolsSettingsPageNative_CrashKind;

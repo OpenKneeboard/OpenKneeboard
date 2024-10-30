@@ -135,6 +135,9 @@ struct FireAndForgetTraits {
   using result_type = void;
 };
 
+/// Sentinel marker type handled by await_transform
+struct noexcept_task_t {};
+
 template <class TTraits>
 struct TaskFinalAwaiter {
   TaskPromiseBase<TTraits>& mPromise;
@@ -276,6 +279,7 @@ struct TaskPromiseBase {
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
 
   TaskContext mContext;
+  TaskExceptionBehavior mOnException = TTraits::OnException;
 
   TaskPromiseBase() = delete;
   TaskPromiseBase(const TaskPromiseBase<TTraits>&) = delete;
@@ -317,12 +321,14 @@ struct TaskPromiseBase {
       TraceLoggingValue(
         std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
         "ResultState"));
-    if constexpr (
-      TTraits::OnException == TaskExceptionBehavior::StoreAndRethrow) {
+    // Might not actually be likely, but let's optimize the path that doesn't
+    // result in immediate program termination, as we don't really care about
+    // performance at that point :)
+    if (mOnException == TaskExceptionBehavior::StoreAndRethrow) [[likely]] {
       mUncaught = std::current_exception();
       mResultState.Transition<NoResult, HaveException>();
     } else {
-      static_assert(TTraits::OnException == TaskExceptionBehavior::Terminate);
+      OPENKNEEBOARD_ASSERT(mOnException == TaskExceptionBehavior::Terminate);
       fatal_with_exception(std::current_exception());
     }
   }
@@ -375,6 +381,16 @@ struct TaskPromiseBase {
         "ResultState"),
       TraceLoggingValue(std::uncaught_exceptions(), "UncaughtExceptions"));
     return {*this};
+  }
+
+  template <class TAwaitable>
+  TAwaitable&& await_transform(TAwaitable&& it) noexcept {
+    return static_cast<TAwaitable&&>(it);
+  }
+
+  auto await_transform(noexcept_task_t) noexcept {
+    mOnException = TaskExceptionBehavior::Terminate;
+    return std::suspend_never {};
   }
 };
 
@@ -687,6 +703,22 @@ template <class TIgnoredDispatcherQueue, class T>
 using basic_task = detail::Task<detail::TaskTraits<T>>;
 template <class T>
 using task = basic_task<DispatcherQueue, T>;
+
+namespace this_task {
+/** Call `OpenKneeboard::fatal()` if this task throws an exception.
+ *
+ * Usage: `co_await this_task::fatal_on_uncaught_exception()`.
+ *
+ * This is better than `noexcept` because more information can be preserved
+ * (and logged) about the exception. This allow allows the 'fatal-on-exception'
+ * behavior to be considered an implementation detail of the function, instead
+ * of part of the function signature.
+ */
+[[nodiscard]]
+constexpr detail::noexcept_task_t fatal_on_uncaught_exception() noexcept {
+  return {};
+}
+}// namespace this_task
 
 }// namespace OpenKneeboard::inline task_ns
 

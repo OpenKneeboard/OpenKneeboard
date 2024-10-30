@@ -6,10 +6,10 @@ import {
 import * as React from "react";
 import * as nx from "./NotXAML";
 import NativeRequest from "./NativeRequest";
-import {ReactNode, useEffect, useState} from "react";
+import { ReactNode, useEffect, useState } from "react";
 import NativeClass from "./NativeClass";
 
-function FolderPicker({header, value, defaultValue, onChange, placeholder}: {
+function FolderPicker({ header, value, defaultValue, onChange, placeholder }: {
   header?: ReactNode;
   defaultValue?: string,
   value?: string,
@@ -23,7 +23,7 @@ function FolderPicker({header, value, defaultValue, onChange, placeholder}: {
           value={value}
           defaultValue={defaultValue}
           placeholder={placeholder}
-          style={{flexGrow: 1}}
+          style={{ flexGrow: 1 }}
           onChange={(value) => {
             if (onChange) {
               onChange(value);
@@ -40,7 +40,7 @@ function FolderPicker({header, value, defaultValue, onChange, placeholder}: {
             } catch (e) {
             }
           }}>
-          <nx.FontIcon glyph={"OpenFolderHorizontal"}/>
+          <nx.FontIcon glyph={"OpenFolderHorizontal"} />
         </nx.Button>
       </nx.StackPanel>
     </nx.WithOptionalHeader>
@@ -78,7 +78,7 @@ function nativeState<T extends NativeClass>(loader: NativeLoader<T>, instanceID:
 }
 
 
-function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPageNative }) {
+function DeveloperToolsSettingsPage({ native }: { native: DeveloperToolsSettingsPageNative }) {
   const [sourcePath, setSourcePath] = propertyReactState(native, "AppWebViewSourcePath");
   const [autoUpdateVersion, setAutoUpdateVersion] = propertyReactState(native, "AutoUpdateFakeCurrentVersion")
   const [isHKCUPluginHandler, setIsHKCUPluginHandler] = propertyReactState(native, "IsPluginFileTypeInHKCU")
@@ -94,12 +94,12 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
           <nx.StackPanel orientation={"Horizontal"}>
             <nx.Button
               onClick={() => native.CopyDebugMessagesToClipboard()}>
-              <nx.FontIcon glyph={"Copy"}/>
+              <nx.FontIcon glyph={"Copy"} />
               Copy debug log
             </nx.Button>
             <nx.Button
               onClick={() => native.CopyAPIEventsToClipboard()}>
-              <nx.FontIcon glyph={"Copy"}/>
+              <nx.FontIcon glyph={"Copy"} />
               Copy API events
             </nx.Button>
           </nx.StackPanel>
@@ -119,7 +119,7 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
         <nx.ToggleSwitch
           header={<React.Fragment>
             Use this executable for OpenKneeboardPlugin files via <span
-            className={"code"}>HKEY_CURRENT_USER</span>
+              className={"code"}>HKEY_CURRENT_USER</span>
           </React.Fragment>}
           isChecked={isHKCUPluginHandler}
           checkedContent={"HKCU override is active"}
@@ -137,6 +137,7 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
               <nx.ComboBoxItem value={CrashKind.Throw}>Throw</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.ThrowFromFireAndForget}>Throw from OpenKneeboard::fire_and_forget</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.ThrowFromNoexcept}>Throw from noexcept</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.ThrowWithTaskFatal}>Throw with this_task::fatal_on_uncaught_exception()</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
             </nx.ComboBox>
             <nx.ComboBox
@@ -165,10 +166,10 @@ function DeveloperToolsSettingsPage({native}: { native: DeveloperToolsSettingsPa
     ;
 }
 
-export default function ({instanceID}: { instanceID: string }) {
+export default function ({ instanceID }: { instanceID: string }) {
   const native = nativeState(DeveloperToolsSettingsPageNative, instanceID);
   if (native) {
-    return (<DeveloperToolsSettingsPage native={native}/>);
+    return (<DeveloperToolsSettingsPage native={native} />);
   } else {
     return <div className={"nativeLoading"}>Loading native data...</div>
   }

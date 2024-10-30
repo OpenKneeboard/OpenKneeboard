@@ -55,6 +55,7 @@ class DeveloperToolsSettingsPage : public JSNativeData {
     Throw,
     ThrowFromFireAndForget,
     ThrowFromNoexcept,
+    ThrowWithTaskFatal,
     Terminate,
   };
   enum class CrashLocation {

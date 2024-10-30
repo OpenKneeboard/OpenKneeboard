@@ -224,6 +224,14 @@ fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
         co_return;
       };
       break;
+
+    case CrashKind::ThrowWithTaskFatal:
+      triggerCrash = []() noexcept -> task<void> {
+        co_await this_task::fatal_on_uncaught_exception();
+        throw std::runtime_error(TriggeredCrashMessage);
+        co_return;
+      };
+      break;
     case CrashKind::Terminate:
       triggerCrash = []() -> task<void> {
         std::terminate();
