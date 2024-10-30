@@ -25,6 +25,7 @@
 #include <exception>
 #include <format>
 #include <functional>
+#include <stacktrace>
 #include <string>
 #include <variant>
 
@@ -45,9 +46,22 @@ struct StackFramePointer {
   constexpr StackFramePointer(std::nullptr_t) noexcept {
   }
 
+  explicit constexpr StackFramePointer(std::stacktrace_entry entry) noexcept
+    : mValue(std::bit_cast<void*>(entry)) {
+  }
+
   explicit constexpr StackFramePointer(
     std::type_identity_t<void*> value) noexcept
     : mValue(value) {
+  }
+
+  OPENKNEEBOARD_FORCEINLINE
+  static StackFramePointer caller(size_t skip = 0) {
+    if (skip == 0) {
+      return StackFramePointer {_ReturnAddress()};
+    } else {
+      return StackFramePointer {std::stacktrace::current(skip + 1, 1).at(0)};
+    }
   }
 
   std::string to_string() const noexcept;

@@ -401,10 +401,8 @@ struct TaskPromiseBase {
 
 template <class TTraits>
 struct TaskPromise : TaskPromiseBase<TTraits> {
-  OPENKNEEBOARD_FORCEINLINE
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
-    : TaskPromiseBase<TTraits>(
-        caller.value_or(StackFramePointer {_ReturnAddress()})) {
+    : TaskPromiseBase<TTraits>(caller.value_or(StackFramePointer::caller(2))) {
   }
 
   typename TTraits::result_type mResult;
@@ -434,10 +432,8 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
 template <class TTraits>
   requires std::same_as<typename TTraits::result_type, void>
 struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
-  OPENKNEEBOARD_FORCEINLINE
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
-    : TaskPromiseBase<TTraits>(
-        caller.value_or(StackFramePointer {_ReturnAddress()})) {
+    : TaskPromiseBase<TTraits>(caller.value_or(StackFramePointer::caller(3))) {
   }
 
   void return_void() noexcept {
