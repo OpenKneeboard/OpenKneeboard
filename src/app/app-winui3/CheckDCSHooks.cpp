@@ -78,7 +78,17 @@ static DCSHookInstallState GetHookInstallState(
 }
 
 task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
-  if (!std::filesystem::exists(savedGamesPath)) {
+  std::error_code ec;
+  if (!std::filesystem::exists(savedGamesPath, ec)) {
+    // For example, junctions may have a pass traversal error:
+    // https://github.com/OpenKneeboard/OpenKneeboard/issues/681
+    if (ec) {
+      dprint.Warning(
+        "Failed to check if DCS saved games path `{}` exists: {} ({})",
+        savedGamesPath,
+        ec.message(),
+        ec.value());
+    }
     co_return;
   }
 
@@ -103,7 +113,6 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
   dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
   dialog.CloseButtonText(winrt::to_hstring(_("Ignore")));
 
-  std::error_code ec;
   do {
     if (ec) {
       auto result = co_await dialog.ShowAsync();
