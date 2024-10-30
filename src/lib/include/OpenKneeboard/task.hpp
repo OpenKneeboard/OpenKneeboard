@@ -533,7 +533,7 @@ struct TaskAwaiter {
     return oldState == TaskPromiseRunning;
   }
 
-  decltype(auto) await_resume() noexcept {
+  decltype(auto) await_resume() {
     const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
     OPENKNEEBOARD_ASSERT(waiting == TaskPromiseCompleted);
     TraceLoggingWrite(
