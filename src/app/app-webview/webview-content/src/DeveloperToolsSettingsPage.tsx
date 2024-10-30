@@ -140,6 +140,8 @@ function DeveloperToolsSettingsPage({ native }: { native: DeveloperToolsSettings
               <nx.ComboBoxItem value={CrashKind.ThrowWithTaskFatal}>Throw with this_task::fatal_on_uncaught_exception()</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.Terminate}>Call std::terminate</nx.ComboBoxItem>
               <nx.ComboBoxItem value={CrashKind.TaskWithoutThread}>Task with expired owner thread</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.TaskWithoutAwait}>Task without `co_await`</nx.ComboBoxItem>
+              <nx.ComboBoxItem value={CrashKind.TaskWithDoubleAwait}>Task that is awaited twice</nx.ComboBoxItem>
             </nx.ComboBox>
             <nx.ComboBox
               value={crashLocation}

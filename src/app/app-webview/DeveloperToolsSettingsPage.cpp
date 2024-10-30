@@ -260,6 +260,20 @@ fire_and_forget DeveloperToolsSettingsPage::TriggerCrash(
         co_return;
       };
       break;
+    case CrashKind::TaskWithoutAwait:
+      triggerCrash = []() -> task<void> {
+        [[maybe_unused]] auto inner = []() -> task<void> { co_return; }();
+        co_return;
+      };
+      break;
+    case CrashKind::TaskWithDoubleAwait:
+      triggerCrash = []() -> task<void> {
+        auto inner = []() -> task<void> { co_return; }();
+        co_await std::move(inner);
+        co_await std::move(inner);
+        co_return;
+      };
+      break;
     default:
       OPENKNEEBOARD_BREAK;
       // Error: task failed successfully 🤷
