@@ -98,8 +98,21 @@ struct TaskContext {
   inline TaskContext(StackFramePointer&& caller) : mCaller(std::move(caller)) {
     if (!SUCCEEDED(CoGetObjectContext(IID_PPV_ARGS(mCOMCallback.put()))))
       [[unlikely]] {
-      fatal("Attempted to create a task<> from thread without COM");
+      this->fatal("Attempted to create a task<> from thread without COM");
     }
+  }
+
+  template <class... Ts>
+  [[noreturn]]
+  void fatal(std::format_string<Ts...> fmt, Ts&&... values) const noexcept {
+    const auto message = std::format(fmt, std::forward<Ts>(values)...);
+    OpenKneeboard::fatal(
+      mCaller,
+      "{}\nCaller: {}\nCaller thread: {}\nFinal thread: {}",
+      message,
+      mCaller.to_string(),
+      mThreadID,
+      std::this_thread::get_id());
   }
 };
 
@@ -156,10 +169,7 @@ struct TaskFinalAwaiter {
       case HaveVoidResult:
         return;
       default:
-        fatal(
-          mPromise.mContext.mCaller,
-          "Invalid state for final awaiter: {:#}",
-          state);
+        mPromise.mContext.fatal("Invalid state for final awaiter: {:#}", state);
     }
   }
 
@@ -198,7 +208,7 @@ struct TaskFinalAwaiter {
     }
     const auto threadPoolError = GetLastError();
     delete resumeData;
-    fatal(
+    context.fatal(
       "Failed to enqueue resumption on thread pool: {:010x}",
       static_cast<uint32_t>(threadPoolError));
   }
@@ -228,7 +238,7 @@ struct TaskFinalAwaiter {
     if (SUCCEEDED(result)) [[likely]] {
       return;
     }
-    fatal(
+    resumeData->mContext.fatal(
       "Failed to enqueue coroutine resumption for the desired thread: "
       "{:#010x}",
       static_cast<uint32_t>(result));
@@ -239,12 +249,7 @@ struct TaskFinalAwaiter {
       = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
     if (std::this_thread::get_id() != resumeData.mContext.mThreadID)
       [[unlikely]] {
-      fatal(
-        "Expected to resume task in thread {}, but resumed in thread {}; "
-        "caller: {}",
-        resumeData.mContext.mThreadID,
-        std::this_thread::get_id(),
-        resumeData.mContext.mCaller.to_string());
+      resumeData.mContext.fatal("Resumed task in wrong thread.");
     }
     resumeData.mCoro.resume();
     return S_OK;
@@ -338,7 +343,7 @@ struct TaskPromiseBase {
       = mWaiting.exchange(TaskPromiseAbandoned, std::memory_order_acq_rel);
     if (oldState == TaskPromiseRunning) {
       if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
-        fatal(mContext.mCaller, "result *must* be awaited");
+        mContext.fatal("result *must* be awaited");
       }
       return;
     }
@@ -647,9 +652,7 @@ struct [[nodiscard]] Task {
       TraceLoggingPointer(mPromise.get(), "Promise"));
     if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
       if (mPromise) [[unlikely]] {
-        fatal(
-          mPromise->mContext.mCaller,
-          "all tasks must be either moved or awaited");
+        mPromise->mContext.fatal("all tasks must be either moved or awaited");
       }
     }
   }
