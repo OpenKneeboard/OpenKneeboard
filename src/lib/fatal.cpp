@@ -72,6 +72,9 @@ struct ExceptionRecord {
   std::stacktrace mCreationStack;
 };
 
+static std::mutex gThreadNamesMutex;
+static std::unordered_map<std::thread::id, std::wstring> gThreadNames {};
+
 static thread_local std::optional<ExceptionRecord> tLatestException {};
 
 struct WILFailureRecord {
@@ -369,6 +372,20 @@ static std::string GetFatalLogContents(
     }
   }
 
+  {
+    std::unique_lock threadNameLock {gThreadNamesMutex};
+    const auto names = gThreadNames;
+    threadNameLock.unlock();
+
+    f << "\n"
+      << "Threads\n"
+      << "=======\n"
+      << "\n";
+    for (auto&& [thread, name]: names) {
+      f << std::format("{}: {}\n", thread, to_utf8(name));
+    }
+  }
+
   // This function is deprecated because anything with access to `app-common`
   // should use TroubleShootingStore directly instead, but we can't here as we
   // don't have/want that dependency
@@ -479,7 +496,7 @@ struct ThreadFailureHook {
 
 static thread_local ThreadFailureHook tThreadFailureHook;
 
-static decltype(&_CxxThrowException) gCxxThrowException {&_CxxThrowException};
+static decltype(&_CxxThrowException) gCxxThrowException {nullptr};
 
 extern "C" void __stdcall CxxThrowExceptionHook(
   void* pExceptionObject,
@@ -493,6 +510,27 @@ extern "C" void __stdcall CxxThrowExceptionHook(
 
   gCxxThrowException(pExceptionObject, pThrowInfo);
 }
+
+static decltype(&SetThreadDescription) gSetThreadDescription {nullptr};
+
+extern "C" HRESULT __stdcall SetThreadDescriptionHook(
+  HANDLE hThread,
+  PCWSTR lpThreadDescription) {
+  std::unique_lock lock(gThreadNamesMutex);
+  if (hThread == GetCurrentThread()) [[likely]] {
+    OPENKNEEBOARD_ASSERT(
+      GetCurrentThreadId() == std::bit_cast<DWORD>(std::this_thread::get_id()));
+    // hThread is a pseudo-handle
+    gThreadNames[std::this_thread::get_id()] = lpThreadDescription;
+  } else {
+    // Depend on the assertion that windows thread IDs are the same as
+    // std::thread:ids
+    gThreadNames[std::bit_cast<std::thread::id>(GetThreadId(hThread))]
+      = lpThreadDescription;
+  }
+  return gSetThreadDescription(hThread, lpThreadDescription);
+}
+
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
@@ -573,9 +611,13 @@ void divert_process_failure_to_fatal() {
   wil::SetResultMessageCallback(&OnWILResult);
 
 #ifndef __clang__
-  // What could go wrong
+  gCxxThrowException = &_CxxThrowException;
+  gSetThreadDescription = &SetThreadDescription;
   winrt::check_win32(DetourTransactionBegin());
+  // What could go wrong
   winrt::check_win32(DetourAttach(&gCxxThrowException, &CxxThrowExceptionHook));
+  winrt::check_win32(
+    DetourAttach(&gSetThreadDescription, &SetThreadDescriptionHook));
   winrt::check_win32(DetourTransactionCommit());
 #endif
 
