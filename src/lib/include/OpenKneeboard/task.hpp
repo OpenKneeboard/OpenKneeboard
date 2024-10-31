@@ -245,13 +245,43 @@ struct TaskFinalAwaiter {
   }
 
   static HRESULT resume_from_thread_pool(ComCallData* comData) noexcept {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskFinalAwaiter<>::resume_from_thread_pool()",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(comData, "ComData"));
+
     const auto& resumeData
       = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
-    if (std::this_thread::get_id() != resumeData.mContext.mThreadID)
-      [[unlikely]] {
+    const auto& context = resumeData.mContext;
+
+    if (std::this_thread::get_id() != context.mThreadID) [[unlikely]] {
       resumeData.mContext.fatal("Resumed task in wrong thread.");
     }
-    resumeData.mCoro.resume();
+
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskFinalAwaiter<>::resume_from_thread_pool()/ResumeCoro",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(comData, "ComData"),
+      TraceLoggingCodePointer(context.mCaller.mValue, "Caller"));
+
+    try {
+      resumeData.mCoro.resume();
+    } catch (...) {
+      dprint.Warning("std::coroutine_handle<>::resume() threw an exception");
+      fatal_with_exception(std::current_exception());
+    }
+
+    TraceLoggingWrite(
+      gTraceProvider,
+      "TaskFinalAwaiter<>::resume_from_thread_pool()/CoroComplete",
+      TraceLoggingKeyword(
+        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
+      TraceLoggingPointer(comData, "ComData"),
+      TraceLoggingCodePointer(context.mCaller.mValue, "Caller"));
     return S_OK;
   }
 };

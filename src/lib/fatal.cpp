@@ -576,7 +576,7 @@ void fatal_with_exception(std::exception_ptr ep) {
   }
 
   try {
-    std::rethrow_exception(std::current_exception());
+    std::rethrow_exception(ep);
   } catch (const winrt::hresult_error& e) {
     FatalAndDump(
       meta,
