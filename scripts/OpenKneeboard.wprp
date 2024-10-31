@@ -42,7 +42,7 @@
                 <!-- Events - things like 'clicked the mouse'. very spammy -->
                 <!--<Keyword Value="0x4" />-->
                 <!-- TaskCoro - internal details of the coroutine implementation -->
-                <!--<Keyword Value="0x8" />-->
+                <Keyword Value="0x8" />
               </Keywords>
             </EventProviderId>
             <EventProviderId Value="EventProvider_OpenKneeboard.API.C" />
