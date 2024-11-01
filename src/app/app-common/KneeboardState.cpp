@@ -725,7 +725,7 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
   return mProfiles;
 }
 
-task<void> KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+task<void> KneeboardState::SetProfileSettings(ProfileSettings profiles) {
   if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
     dprint("Switching to profile: '{}'", profiles.mActiveProfile);
   }
