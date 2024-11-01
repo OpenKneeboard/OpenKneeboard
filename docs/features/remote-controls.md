@@ -123,16 +123,19 @@ If you don't specify a page number, or you specify '0', the tab will be selected
 
 **The Radio Log tab will have a different ID on your installation.**
 
-### Setting the tab/page for a particular kneeboard (dual kneeboards)
+### Setting the tab/page for a particular view (kneeboard)
 
 After the page number, you can also add:
 
-- 0: change the current active kneeboard (default)
-- 1: change the first (right) kneeboard
-- 2: change the second (left) kneeboard
+- 0: change the current active view (default)
+- 1: change the first view (e.g. 'left kneeboard')
+- 2: change the second view (e.g. 'right kneeboard')
+- 3...: etc
+
+The 'active' view is usually the one you have directly looked at most recently.
 
 For example:
 
     OpenKneeboard-RemoteControl-SET_TAB.exe name "Radio Log" 0 1
 
-In this example, `0` is the page number (0 is "don't change"), and 1 specifies the primary kneeboard.
+In this example, `0` is the page number (0 is "don't change"), and 1 specifies the first view.
