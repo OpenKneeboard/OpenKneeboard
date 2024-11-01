@@ -110,7 +110,8 @@ task<void> GameInjector::Run(std::stop_token stopToken) {
         if (code == ERROR_BAD_LENGTH) {
           continue;// ?! We're not providing a length...
         }
-        fatal("WTSEnumerateProcessesExW() failed with {}", code);
+        dprint.Error("WTSEnumerateProcessesExW() failed with {}", code);
+        continue;
       }
     }
 
