@@ -267,13 +267,17 @@ static void MigrateToViewsSettings(Settings& settings) {
 Settings Settings::Load(
   const winrt::guid defaultProfile,
   const winrt::guid activeProfile) {
-  dprint("Loading profile: '{}'", activeProfile);
+  dprint("Reading profile '{}' from disk", activeProfile);
   std::optional<Settings> parentSettings;
   Settings settings;
 
   MigrateToProfiles(settings, defaultProfile, activeProfile);
 
   if (activeProfile != defaultProfile) {
+    dprint(
+      "Recursing to profile {}'s parent profile {}",
+      activeProfile,
+      defaultProfile);
     settings = Settings::Load(defaultProfile, defaultProfile);
     parentSettings = settings;
   }
