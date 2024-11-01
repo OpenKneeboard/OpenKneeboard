@@ -125,7 +125,9 @@ class KneeboardState final
   std::shared_ptr<TabletInputAdapter> GetTabletInputAdapter() const;
 
   ProfileSettings GetProfileSettings() const;
-  [[nodiscard]] task<void> SetProfileSettings(ProfileSettings);
+  [[nodiscard]] task<void> SetProfileSettings(
+    ProfileSettings,
+    std::source_location caller = std::source_location::current());
 
   void NotifyAppWindowIsForeground(bool isForeground);
 

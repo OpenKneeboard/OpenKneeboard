@@ -725,9 +725,14 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
   return mProfiles;
 }
 
-task<void> KneeboardState::SetProfileSettings(ProfileSettings profiles) {
+task<void> KneeboardState::SetProfileSettings(
+  ProfileSettings profiles,
+  std::source_location caller) {
   if (profiles.mActiveProfile != mProfiles.mActiveProfile) {
-    dprint("Switching to profile: '{}'", profiles.mActiveProfile);
+    dprint(
+      "Switching to profile: '{}' - caller: {}",
+      profiles.mActiveProfile,
+      caller);
   }
   // We want the evSettingsChanged event in particular to be emitted
   // first, so that we don't save
