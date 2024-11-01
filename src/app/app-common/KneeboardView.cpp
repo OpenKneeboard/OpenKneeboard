@@ -107,6 +107,7 @@ void KneeboardView::UpdateUILayers() {
 }
 
 KneeboardView::~KneeboardView() {
+  mThreadGuard.CheckThread();
   this->RemoveAllEventListeners();
 }
 
@@ -123,6 +124,8 @@ std::string_view KneeboardView::GetName() const noexcept {
 }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+  mThreadGuard.CheckThread();
+
   if (std::ranges::equal(tabs, mTabViews, {}, {}, &TabView::GetRootTab)) {
     return;
   }
@@ -755,6 +758,7 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
 }
 
 void KneeboardView::SwapState(KneeboardView& other) {
+  mThreadGuard.CheckThread();
   auto otherViews = other.mTabViews;
   auto otherCurrent = other.mCurrentTabView;
   other.SetTabViews(std::move(mTabViews), mCurrentTabView);
@@ -766,6 +770,7 @@ void KneeboardView::SwapState(KneeboardView& other) {
 void KneeboardView::SetTabViews(
   std::vector<std::shared_ptr<TabView>>&& views,
   const std::shared_ptr<TabView>& currentView) {
+  mThreadGuard.CheckThread();
   mTabViews = std::move(views);
 
   for (const auto& event: mTabEvents) {
@@ -810,6 +815,7 @@ void KneeboardView::PostCustomAction(
 }
 
 std::vector<winrt::guid> KneeboardView::GetTabIDs() const noexcept {
+  mThreadGuard.CheckThread();
   std::vector<winrt::guid> ret;
   for (const auto& view: mTabViews) {
     ret.push_back(view->GetRootTab()->GetPersistentID());
