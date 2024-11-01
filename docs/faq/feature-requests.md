@@ -28,7 +28,7 @@ OpenKneeboard is designed to solve specific problems, not to be a general-purpos
 OpenKneeboard has *no* mixed reality features; feature requests for mixed reality are best directed at whatever software you are using to add them. If you are a developer, development time would be much better spent on creating a dedicated OpenXR API layer and configuration tool, without the majority of OpenKneeboard's features (and corresponding complexity), but with support for:
 
 - Chroma key composition layers (e.g. for virtual desktop)
-- Modifying the projection composition layer to directly include passthrough regions via `XR_ENVIRONMENT_BLEND_MODE_ADDITIVE` and `XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND`
+- Modifying the projection composition layer to directly include passthrough regions via `XR_ENVIRONMENT_BLEND_MODE_ADDITIVE` and `XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND` (e.g. for Varjo)
 - webcam capture composition layers for DIY builds
 - Vendor-specific extensions such as `XR_FB_passthrough` (link developer mode, Vive Cosmos, and Pico 4), and `XR_HTC_passthrough` (Vive Focus)
 - Curved overlay regions via `XR_KHR_composition_layer_cylinder` 
