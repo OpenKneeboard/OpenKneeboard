@@ -761,7 +761,6 @@ task<void> KneeboardState::SetProfileSettings(
   const auto newSettings
     = Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile);
   mSettings = newSettings;
-  lock.unlock();
 
   // Avoid partially overwriting the new profile with
   // the old profile
@@ -947,15 +946,34 @@ void KneeboardState::Repainted() {
 }
 
 void KneeboardState::lock() {
-  mMutex.lock();
+  if (mUniqueLockThread != std::this_thread::get_id()) {
+    mMutex.lock();
+    mUniqueLockThread = std::this_thread::get_id();
+    OPENKNEEBOARD_ASSERT(mUniqueLockDepth == 0);
+  }
+  ++mUniqueLockDepth;
 }
 
 bool KneeboardState::try_lock() {
-  return mMutex.try_lock();
+  if (mUniqueLockThread != std::this_thread::get_id()) {
+    const auto success = mMutex.try_lock();
+    if (!success) {
+      return false;
+    }
+    mUniqueLockThread = std::this_thread::get_id();
+    OPENKNEEBOARD_ASSERT(mUniqueLockDepth == 0);
+  }
+  ++mUniqueLockDepth;
+  return true;
 }
 
 void KneeboardState::unlock() {
-  mMutex.unlock();
+  OPENKNEEBOARD_ASSERT(mUniqueLockThread == std::this_thread::get_id());
+  OPENKNEEBOARD_ASSERT(mUniqueLockDepth > 0);
+  if (--mUniqueLockDepth == 0) {
+    mUniqueLockThread = std::nullopt;
+    mMutex.unlock();
+  }
 }
 
 void KneeboardState::lock_shared() {

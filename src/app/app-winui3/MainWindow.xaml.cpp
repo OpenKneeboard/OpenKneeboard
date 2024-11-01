@@ -342,17 +342,22 @@ task<void> MainWindow::FrameTick(
     co_return;
   }
 
-  this->CheckForElevatedConsumer();
-  {
-    std::shared_lock kbLock(*mKneeboard);
-    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
-    mKneeboard->evFrameTimerPreEvent.Emit();
+  std::shared_lock kbLock(*mKneeboard, std::try_to_lock);
+  if (!kbLock.owns_lock()) {
+    TraceLoggingWriteStop(
+      activity,
+      "FrameTick",
+      TraceLoggingValue("could not acquire kneeboard lock", "Result"));
+    co_return;
   }
+  TraceLoggingWriteTagged(activity, "Acquired shared kneeboard locked");
+
+  this->CheckForElevatedConsumer();
+  OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
+  mKneeboard->evFrameTimerPreEvent.Emit();
   TraceLoggingWriteTagged(activity, "Prepared to render");
   bool repainted = false;
   if (mKneeboard->IsRepaintNeeded()) {
-    std::shared_lock kbLock(*mKneeboard);
-    TraceLoggingWriteTagged(activity, "Kneeboard relocked");
     const std::unique_lock dxLock(*mDXR);
     TraceLoggingWriteTagged(activity, "DX locked");
     OPENKNEEBOARD_TraceLoggingCoro("Paint");
@@ -374,6 +379,7 @@ task<void> MainWindow::FrameTick(
       repainted ? FramePostEventKind::WithRepaint
                 : FramePostEventKind::WithoutRepaint);
   }
+  kbLock.unlock();
 
   // Finish any pending UI stuff
   co_await wil::resume_foreground(this->DispatcherQueue());

@@ -184,7 +184,12 @@ class KneeboardState final
   DisposalState mDisposal;
 
   std::shared_mutex mMutex;
-  bool mHaveUniqueLock = false;
+  // In `lock()`/`try_lock()`/`unlock()`, we allow multiple unique_locks in the
+  // same thread; this is so that `SetProfileSettings()` can call other
+  // `SetFooSettings()`.
+  std::optional<std::thread::id> mUniqueLockThread {};
+  std::size_t mUniqueLockDepth = 0;
+
   bool mNeedsRepaint;
   winrt::apartment_context mUIThread;
   HWND mHwnd;
