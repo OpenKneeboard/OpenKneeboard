@@ -22,6 +22,7 @@
 #include <OpenKneeboard/StateMachine.hpp>
 
 #include <OpenKneeboard/fatal.hpp>
+#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/task.hpp>
 
 #include <shims/winrt/base.h>
@@ -70,17 +71,16 @@ struct TimerAwaitable {
   }
 
   inline TimerResult result() const {
-    switch (mState.Get()) {
-      case State::Init:
-        fatal("Can't get result from uninitialized TimerAwaitable");
-      case State::Waiting:
-        fatal("Can't get result from TimerAwaitable that is still waiting");
+    const auto state = mState.Get();
+    switch (state) {
       case State::Timeout:
         return TimerResult::Timeout;
       case State::Cancelled:
+      case State::CancelledBeforeWait:
         return TimerResult::Cancelled;
+      default:
+        fatal("Can't get result from TimerAwaitable in state {}", state);
     }
-    std::unreachable();
   }
 
   inline ~TimerAwaitable() {
@@ -100,8 +100,8 @@ struct TimerAwaitable {
   }
 
   inline void await_suspend(std::coroutine_handle<> coro) {
-    if (!mState.TryTransition<State::Init, State::Waiting>()) {
-      mState.Assert(State::Cancelled);
+    if (!mState.TryTransition<State::Init, State::StartingWait>()) {
+      mState.Assert(State::CancelledBeforeWait);
       return;
     }
 
@@ -115,11 +115,14 @@ struct TimerAwaitable {
       this,
       nullptr);
     SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
+    mState.Transition<State::StartingWait, State::Waiting>();
   }
 
  private:
   enum class State {
     Init,
+    CancelledBeforeWait,
+    StartingWait,
     Waiting,
     Timeout,
     Cancelled,
@@ -128,15 +131,16 @@ struct TimerAwaitable {
     State,
     State::Init,
     std::array {
-      Transition {State::Init, State::Waiting},
-      Transition {State::Init, State::Cancelled},
+      Transition {State::Init, State::CancelledBeforeWait},
+      Transition {State::Init, State::StartingWait},
+      Transition {State::StartingWait, State::Waiting},
       Transition {State::Waiting, State::Timeout},
       Transition {State::Waiting, State::Cancelled},
     }>
     mState;
 
   inline void cancel() {
-    if (mState.TryTransition<State::Init, State::Cancelled>()) {
+    if (mState.TryTransition<State::Init, State::CancelledBeforeWait>()) {
       return;
     }
 
