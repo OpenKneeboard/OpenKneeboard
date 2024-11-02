@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/StateMachine.hpp>
+
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/task.hpp>
 
@@ -42,6 +44,12 @@ enum class TimerResult {
 
 namespace OpenKneeboard::detail {
 struct TimerAwaitable {
+  TimerAwaitable() = delete;
+  TimerAwaitable(const TimerAwaitable&) = delete;
+  TimerAwaitable(TimerAwaitable&&) = delete;
+  TimerAwaitable& operator=(const TimerAwaitable&) = delete;
+  TimerAwaitable& operator=(TimerAwaitable&&) = delete;
+
   template <class Rep, class Period = std::ratio<1>>
   TimerAwaitable(
     std::chrono::duration<Rep, Period> delay,
@@ -62,14 +70,26 @@ struct TimerAwaitable {
   }
 
   inline TimerResult result() const {
-    OPENKNEEBOARD_ASSERT(mResult.has_value());
-    return mResult.value();
+    switch (mState.Get()) {
+      case State::Init:
+        fatal("Can't get result from uninitialized TimerAwaitable");
+      case State::Waiting:
+        fatal("Can't get result from TimerAwaitable that is still waiting");
+      case State::Timeout:
+        return TimerResult::Timeout;
+      case State::Cancelled:
+        return TimerResult::Cancelled;
+    }
+    std::unreachable();
   }
 
   inline ~TimerAwaitable() {
-    OPENKNEEBOARD_ASSERT(mTPTimer);
-    OPENKNEEBOARD_ASSERT(mResult.has_value());
-    CloseThreadpoolTimer(mTPTimer);
+    if (mTPTimer) {
+      CloseThreadpoolTimer(mTPTimer);
+    }
+
+    const auto state = mState.Get();
+    OPENKNEEBOARD_ASSERT(state != State::Init && state != State::Waiting);
   }
 
   inline bool await_ready() const {
@@ -80,11 +100,16 @@ struct TimerAwaitable {
   }
 
   inline void await_suspend(std::coroutine_handle<> coro) {
+    if (!mState.TryTransition<State::Init, State::Waiting>()) {
+      mState.Assert(State::Cancelled);
+      return;
+    }
+
     mCoro = std::move(coro);
     mTPTimer = CreateThreadpoolTimer(
       [](auto, auto rawThis, auto) {
         auto self = reinterpret_cast<TimerAwaitable*>(rawThis);
-        self->mResult = TimerResult::Timeout;
+        self->mState.Transition<State::Waiting, State::Timeout>();
         self->mCoro.resume();
       },
       this,
@@ -93,13 +118,32 @@ struct TimerAwaitable {
   }
 
  private:
-  std::stop_callback<std::function<void()>> mStopCallback;
+  enum class State {
+    Init,
+    Waiting,
+    Timeout,
+    Cancelled,
+  };
+  AtomicStateMachine<
+    State,
+    State::Init,
+    std::array {
+      Transition {State::Init, State::Waiting},
+      Transition {State::Init, State::Cancelled},
+      Transition {State::Waiting, State::Timeout},
+      Transition {State::Waiting, State::Cancelled},
+    }>
+    mState;
 
   inline void cancel() {
+    if (mState.TryTransition<State::Init, State::Cancelled>()) {
+      return;
+    }
+
     OPENKNEEBOARD_ASSERT(mTPTimer);
 
     if (SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0)) {
-      mResult = TimerResult::Cancelled;
+      mState.Transition<State::Waiting, State::Cancelled>();
       mCoro.resume();
     }
   }
@@ -107,7 +151,8 @@ struct TimerAwaitable {
   FILETIME mTime {};
   PTP_TIMER mTPTimer {nullptr};
   std::coroutine_handle<> mCoro;
-  std::optional<TimerResult> mResult;
+
+  std::stop_callback<std::function<void()>> mStopCallback;
 };
 
 }// namespace OpenKneeboard::detail
