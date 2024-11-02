@@ -89,7 +89,9 @@ struct TimerAwaitable {
     }
 
     const auto state = mState.Get();
-    OPENKNEEBOARD_ASSERT(state != State::Init && state != State::Waiting);
+    OPENKNEEBOARD_ASSERT(
+      state != State::Init && state != State::StartingWait
+      && state != State::Waiting);
   }
 
   inline bool await_ready() const {

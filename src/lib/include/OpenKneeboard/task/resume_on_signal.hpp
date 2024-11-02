@@ -19,6 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/StateMachine.hpp>
+
+#include <OpenKNeeboard/format/enum.hpp>
+
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/task.hpp>
 
@@ -73,14 +77,29 @@ struct SignalAwaitable {
   }
 
   inline ResumeOnSignalResult result() const {
-    OPENKNEEBOARD_ASSERT(mResult.has_value());
-    return mResult.value();
+    const auto state = mState.Get();
+    switch (state) {
+      case State::Signalled:
+        return {};
+      case State::Timeout:
+        return std::unexpected {ResumeOnSignalError::Timeout};
+      case State::Cancelled:
+      case State::CancelledBeforeWait:
+        return std::unexpected {ResumeOnSignalError::Cancelled};
+      default:
+        fatal("Can't fetch result for a SignalAwaitable with state {}", state);
+    }
   }
 
   inline ~SignalAwaitable() {
-    OPENKNEEBOARD_ASSERT(mTPSignal);
-    OPENKNEEBOARD_ASSERT(mResult.has_value());
-    CloseThreadpoolWait(mTPSignal);
+    if (mTPSignal) {
+      CloseThreadpoolWait(mTPSignal);
+    }
+
+    const auto state = mState.Get();
+    OPENKNEEBOARD_ASSERT(
+      state != State::Init && state != State::StartingWait
+      && state != State::Waiting);
   }
 
   inline bool await_ready() const {
@@ -91,15 +110,20 @@ struct SignalAwaitable {
   }
 
   inline void await_suspend(std::coroutine_handle<> coro) {
+    if (!mState.TryTransition<State::Init, State::StartingWait>()) {
+      mState.Assert(State::CancelledBeforeWait);
+      return;
+    }
+
     mCoro = std::move(coro);
     mTPSignal = CreateThreadpoolWait(
       [](auto, auto rawThis, auto, const TP_WAIT_RESULT result) {
         auto self = reinterpret_cast<SignalAwaitable*>(rawThis);
         if (result == WAIT_OBJECT_0) {
-          self->mResult = ResumeOnSignalResult {};
+          self->mState.Transition<State::Waiting, State::Signalled>();
         } else {
           OPENKNEEBOARD_ASSERT(result == WAIT_TIMEOUT);
-          self->mResult = std::unexpected {ResumeOnSignalError::Timeout};
+          self->mState.Transition<State::Waiting, State::Timeout>();
         }
         self->mCoro.resume();
       },
@@ -107,16 +131,41 @@ struct SignalAwaitable {
       nullptr);
     SetThreadpoolWait(
       mTPSignal, mHandle, mTimeout ? &mTimeout.value() : nullptr);
+
+    mState.Transition<State::StartingWait, State::Waiting>();
   }
 
  private:
-  std::stop_callback<std::function<void()>> mStopCallback;
+  enum class State {
+    Init,
+    CancelledBeforeWait,
+    StartingWait,
+    Waiting,
+    Signalled,
+    Timeout,
+    Cancelled,
+  };
+  AtomicStateMachine<
+    State,
+    State::Init,
+    std::array {
+      Transition {State::Init, State::CancelledBeforeWait},
+      Transition {State::Init, State::StartingWait},
+      Transition {State::StartingWait, State::Waiting},
+      Transition {State::Waiting, State::Signalled},
+      Transition {State::Waiting, State::Timeout},
+      Transition {State::Waiting, State::Cancelled},
+    }>
+    mState;
 
   inline void cancel() {
+    if (mState.TryTransition<State::Init, State::CancelledBeforeWait>()) {
+      return;
+    }
     OPENKNEEBOARD_ASSERT(mTPSignal);
 
     if (SetThreadpoolWaitEx(mTPSignal, NULL, nullptr, 0)) {
-      mResult = std::unexpected {ResumeOnSignalError::Cancelled};
+      mState.Transition<State::Waiting, State::Cancelled>();
       mCoro.resume();
     }
   }
@@ -125,7 +174,8 @@ struct SignalAwaitable {
   std::optional<FILETIME> mTimeout {};
   PTP_WAIT mTPSignal {nullptr};
   std::coroutine_handle<> mCoro;
-  std::optional<ResumeOnSignalResult> mResult;
+
+  std::stop_callback<std::function<void()>> mStopCallback;
 };
 
 }// namespace OpenKneeboard::detail
