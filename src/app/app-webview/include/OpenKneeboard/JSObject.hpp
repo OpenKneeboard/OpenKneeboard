@@ -101,10 +101,10 @@ template <class T>
 struct JSClass;
 
 template <class T>
-concept has_js_methods = requires { JSClass<T>::template methods_v; };
+concept has_js_methods = requires { JSClass<T>::methods_v; };
 
 template <class T>
-concept has_js_properties = requires { JSClass<T>::template properties_v; };
+concept has_js_properties = requires { JSClass<T>::properties_v; };
 
 template <class Derived, class T, auto TJSName, auto TCPPName>
 struct JSClassImpl {

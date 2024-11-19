@@ -138,7 +138,7 @@ auto GetTypeScriptMethod(Dependencies& deps, auto method) {
 
   const auto makeArg = []<size_t I>() constexpr {
     return std::pair {
-      JSTypeInfo<std::tuple_element_t<I, Args>>::template js_argument_type_v,
+      JSTypeInfo<std::tuple_element_t<I, Args>>::js_argument_type_v,
       std::format("arg{}", I),
     };
   };
