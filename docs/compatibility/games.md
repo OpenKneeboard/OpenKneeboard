@@ -33,11 +33,12 @@ Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 |------|--------|---------------|------------|--------|
 | DCS World | ✅ | ✅ | ✅ | ✅ |
 | Falcon BMS | ✅ | n/a | n/a | ✅ |
-| iRacing | untested | ✅ | untested | ✅ |
+| iRacing | ❌ | ✅ | ❌ | ✅ |
 | MSFS 2020  | ✅ (D3D11 only) | ✅ | n/a | ✅ |
 | BeamNG.drive | untested | ❌  | n/a | ✅ |
 
 **BeamNG.drive:** as of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
+**iRacing:** support for other APIs is blocked by the anti-cheat software.
 
 ## OpenComposite
 
