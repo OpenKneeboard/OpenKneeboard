@@ -144,7 +144,7 @@ void divert_process_failure_to_fatal();
 
 namespace OpenKneeboard::detail {
 
-inline void assert_impl(bool value, std::string_view stringified) {
+inline constexpr void assert_impl(bool value, std::string_view stringified) {
   if (value) [[likely]] {
     return;
   }
@@ -153,7 +153,7 @@ inline void assert_impl(bool value, std::string_view stringified) {
 }
 
 template <class... Ts>
-inline void assert_impl(
+inline constexpr void assert_impl(
   bool value,
   std::string_view stringified,
   std::format_string<Ts...> fmt,
