@@ -34,6 +34,7 @@ OpenKneeboard has *no* mixed reality features; feature requests for mixed realit
 - Curved overlay regions via `XR_KHR_composition_layer_cylinder` 
 - True motion-compensated headlocked layers via `XR_REFERENCE_SPACE_TYPE_VIEW`
 - Composition layers locked to controllers or hand tracking
+- Spatial anchors for tying 'portals' to real-world objects
 
 A dedicated tool could be made simultaneously much easier to use and much more powerful than bolting on special-purpose features to OpenKneeboard, and adding these features to OpenKneeboard would drastically increase it's complexity, both for users and developers.
 
