@@ -22,18 +22,26 @@
 #include <OpenKneeboard/Pixels.hpp>
 
 #include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/fatal.hpp>
 
 #include <d3d11.h>
+
+#include <algorithm>
 
 namespace OpenKneeboard::Spriting {
 
 namespace Detail {
 
 constexpr uint8_t GetColumnCount(uint8_t maxSprites) {
-  return (maxSprites < 4) ? maxSprites : 4;
+  OPENKNEEBOARD_ASSERT(maxSprites > 0);
+  OPENKNEEBOARD_ASSERT(maxSprites <= Config::MaxViewCount);
+  return std::clamp(maxSprites, 1ui8, 4ui8);
 }
 
 constexpr uint8_t GetRowCount(uint8_t maxSprites) {
+  OPENKNEEBOARD_ASSERT(maxSprites > 0);
+  OPENKNEEBOARD_ASSERT(maxSprites <= Config::MaxViewCount);
+
   return ((maxSprites - 1) / GetColumnCount(maxSprites)) + 1;
 }
 
