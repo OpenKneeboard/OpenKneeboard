@@ -243,6 +243,7 @@ void CachedReader::InitializeCache(
       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
       D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
       swapchainLength);
+    mShaderResourceViewHeap->Heap()->SetName(L"OpenKneeboard::SHM::D3D12 SRV");
 
     mBufferResources.resize(swapchainLength);
     for (auto& br: mBufferResources) {
