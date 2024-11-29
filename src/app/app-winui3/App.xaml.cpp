@@ -229,8 +229,51 @@ static void LogSystemInformation() {
   dprint(L"Full path: {}", GetFullPathForCurrentExecutable());
   dprint(L"Command line: {}", GetCommandLineW());
   dprint("----------");
+
+  {
+    OSVERSIONINFOEXA osVersion {sizeof(OSVERSIONINFOEXA)};
+    winrt::check_bool(
+      GetVersionExA(reinterpret_cast<OSVERSIONINFOA*>(&osVersion)));
+    DWORD productType {};
+
+    std::string humanMajorVer = std::to_string(osVersion.dwMajorVersion);
+    if (osVersion.dwMajorVersion == 10 && osVersion.dwBuildNumber >= 22000) {
+      humanMajorVer = "11";
+    }
+
+    const auto numericVersion = std::format(
+      "v{}.{}.{}",
+      osVersion.dwMajorVersion,
+      osVersion.dwMinorVersion,
+      osVersion.dwBuildNumber);
+
+    winrt::check_bool(GetProductInfo(
+      osVersion.dwMajorVersion,
+      osVersion.dwMinorVersion,
+      osVersion.wServicePackMajor,
+      osVersion.wServicePackMinor,
+      &productType));
+
+    switch (productType) {
+      case PRODUCT_CORE:
+        dprint("Windows {} Home {}", humanMajorVer, numericVersion);
+        break;
+      case PRODUCT_PROFESSIONAL:
+        dprint("Windows {} Pro {}", humanMajorVer, numericVersion);
+        break;
+      default:
+        dprint.Warning(
+          "Windows {} product {:#010x} {}",
+          humanMajorVer,
+          productType,
+          numericVersion);
+    }
+  }
+
+  dprint("----------");
   dprint("  Elevated: {}", IsElevated());
   dprint("  Shell Elevated: {}", IsShellElevated());
+
   // Log UAC settings because lower values aren't just "do not prompt" - they
   // will automatically run some things as administrator that otherwise would
   // be ran as a normal user. This causes problems.
@@ -542,7 +585,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
     std::ofstream f(warningFile, std::ios::trunc | std::ios::binary);
     f << "Do not put any of your files here; this directory is for "
-         "OpenKneeboard's internal use, and OpenKneeboard may delete any files "
+         "OpenKneeboard's internal use, and OpenKneeboard may delete any "
+         "files "
          "you put here without warning.\n\n"
          "You might want to use the My Documents folder ("
       << Filesystem::GetKnownFolderPath<FOLDERID_Documents>().string()
