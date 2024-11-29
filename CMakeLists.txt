@@ -5,8 +5,13 @@ set(PROJECT_OPENXR_API_LAYER_NAME "XR_APILAYER_FREDEMMOTT_OpenKneeboard" CACHE S
 set(PROJECT_OPENXR_API_LAYER_DESCRIPTION "OpenKneeboard - https://github.com/OpenKneeboard/OpenKneeboard" CACHE STRING "Project description for API layer JSON")
 
 # Required for ID3D11On12Device2
+# SDK version below - actually need Win 10 Creators Update (15063)
 # set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
-# Required for GraphicsCaptureItem.TryCreateFromWindowId
+
+# Required for:
+# - GraphicsCaptureItem.TryCreateFromWindowId
+# - icu.dll
+# SDK version below - actually need Win 10 19H1 (18362) or later
 set(MINIMUM_WINDOWS_VERSION "10.0.20348.0")
 set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum Windows Version" FORCE)
 set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum windows version" FORCE)

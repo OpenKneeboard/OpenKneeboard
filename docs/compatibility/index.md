@@ -12,4 +12,4 @@ For up-to-date information on supported versions of Windows, see Microsoft's lif
 
 If you are running Windows 10 N, Windows 10 KN, Windows 11 N, or Windows 11 KN, you may need to [install the Media Feature Pack](https://support.microsoft.com/en-us/topic/media-feature-pack-list-for-windows-n-editions-c1c6fffa-d052-8338-7a79-a4bb980a700a). These versions of Windows are available in Europe and South Korea in order to comply with local regulations, and by default omit Windows components that are required by OpenKneeboard for image and other media handling.
 
-Enterprise, server, and other non-consumer editions of Windows are not supported, as they may be missing required Windows components.
+Enterprise, server, LTSC, and other non-consumer editions of Windows are not supported, as they may be missing required Windows components.
