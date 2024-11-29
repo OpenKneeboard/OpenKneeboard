@@ -304,6 +304,7 @@ task<void> ImageFilePageSource::RenderPage(
   RenderContext rc,
   PageID pageID,
   PixelRect rect) {
+  OPENKNEEBOARD_TraceLoggingCoro("ImageFilePageSource::RenderPage");
   auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     co_return;
@@ -327,7 +328,10 @@ task<void> ImageFilePageSource::RenderPage(
 }
 
 winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
+  OPENKNEEBOARD_TraceLoggingCoro("ImageFilePageSource::GetPageBitmap");
   std::unique_lock lock(mMutex);
+  TraceLoggingWrite(
+    gTraceProvider, "ImageFilePageSource::GetPageBitmap()/acquiredLock");
   auto it = std::ranges::find_if(
     mPages, [pageID](const auto& page) { return page.mID == pageID; });
   if (it == mPages.end()) [[unlikely]] {
@@ -341,13 +345,19 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
 
   auto wic = mDXR->mWIC.get();
   auto decoder = ImageFilePageSource::GetDecoderFromFileName(wic, page.mPath);
+  TraceLoggingWrite(
+    gTraceProvider, "ImageFilePageSource::GetPageBitmap()/haveDecoder");
 
   if (!decoder) {
     return {};
   }
 
   winrt::com_ptr<IWICBitmapFrameDecode> frame;
-  decoder->GetFrame(0, frame.put());
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "ImageFilePageSource::GetPageBitmap/GetFrame");
+    decoder->GetFrame(0, frame.put());
+  }
   if (!frame) {
     return {};
   }
@@ -388,7 +398,11 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
   winrt::check_hresult(mDXR->mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
 
-  ctx->CreateBitmapFromWicBitmap(converter.get(), sharedBitmap.put());
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "ImageFilePageSource::GetPageBitmap()/CreateBitmapFromWicBitmap");
+    ctx->CreateBitmapFromWicBitmap(converter.get(), sharedBitmap.put());
+  }
   if (!sharedBitmap) {
     return {};
   }
@@ -409,7 +423,11 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
   if (!page.mBitmap) {
     return {};
   }
-  page.mBitmap->CopyFromBitmap(nullptr, sharedBitmap.get(), nullptr);
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "ImageFilePageSource::GetPageBitmap()/CopyFromBitmap");
+    page.mBitmap->CopyFromBitmap(nullptr, sharedBitmap.get(), nullptr);
+  }
 
   return page.mBitmap;
 }
