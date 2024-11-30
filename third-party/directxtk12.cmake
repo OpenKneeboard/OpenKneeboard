@@ -1,8 +1,8 @@
 include(ExternalProject)
 ExternalProject_Add(
   directxtk12Build
-  URL "https://github.com/microsoft/DirectXTK12/archive/refs/tags/dec2023.zip"
-  URL_HASH "SHA256=5db73d32f82c1ed4b9b12a0868b4ae80481dbe9728aabda99a5617be4fcc4624"
+  URL "https://github.com/microsoft/DirectXTK12/archive/refs/tags/oct2024.zip"
+  URL_HASH "SHA256=f2393ef53584b2c1b29d4a734ef7c2a5acd356d8c38d97c1ea98a78ca452ded2"
   BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTK12.lib"
   CMAKE_ARGS
   "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
@@ -15,7 +15,7 @@ ExternalProject_Add(
   ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
   
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
 )
 
 add_library(directxtk12 INTERFACE)
