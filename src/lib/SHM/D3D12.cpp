@@ -103,6 +103,10 @@ void Texture::InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept {
     D3D12_RESOURCE_STATE_COMMON,
     &clearValue,
     IID_PPV_ARGS(mTexture.put())));
+  static std::atomic<uint64_t> sCacheTextureID {0};
+  mTexture->SetName(
+    std::format(L"SHM::D3D12::Texture cache texture #{}", sCacheTextureID++)
+      .c_str());
 
   mTextureDimensions
     = {static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};

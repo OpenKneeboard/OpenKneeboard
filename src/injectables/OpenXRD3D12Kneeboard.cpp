@@ -145,6 +145,9 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
       = {mDevice.get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, imageCount},
     });
 
+  static std::atomic<uint64_t> sSwapChainCount;
+  const auto thisSwapchain = sSwapChainCount++;
+
   auto& sr = mSwapchainResources.at(swapchain);
   for (const auto& image: images) {
     const auto imageIndex = sr.mBufferResources.size();
@@ -154,6 +157,12 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
       sr.mRenderTargetViewHeap.GetCpuHandle(imageIndex),
       formats.mRenderTargetViewFormat,
     });
+    image.texture->SetName(
+      std::format(
+        L"OpenKneeboard D3D12 OpenXR swapchain #{} subimage #{}",
+        thisSwapchain,
+        imageIndex)
+        .c_str());
   }
 
   return swapchain;
