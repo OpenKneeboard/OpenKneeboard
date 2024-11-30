@@ -181,13 +181,13 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   const std::span<SHM::LayerSprite>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
-
   mRenderer->RenderLayers(
     mSwapchainResources.at(swapchain),
     swapchainTextureIndex,
     snapshot,
     layers,
     RenderMode::ClearAndRender);
+  mGraphicsMemory->Commit(mCommandQueue.get());
 }
 
 SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {

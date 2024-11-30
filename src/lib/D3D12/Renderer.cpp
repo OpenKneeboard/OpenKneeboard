@@ -49,6 +49,8 @@ SwapchainBufferResources::SwapchainBufferResources(
   mCommandList->SetName(
     L"OpenKneeboard::D3D12::SwapchainBufferResources::"
     L"SwapchainBufferResources");
+  check_hresult(
+    device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 }
 
 Renderer::Renderer(
@@ -63,17 +65,26 @@ Renderer::Renderer(
 }
 
 void Renderer::RenderLayers(
-  const SwapchainResources& sr,
+  SwapchainResources& sr,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   const std::span<SHM::LayerSprite>& layers,
   RenderMode renderMode) {
-  OPENKNEEBOARD_TraceLoggingScope("D3D12::Renderer::RenderLayers()");
+  OPENKNEEBOARD_TraceLoggingScope(
+    "D3D12::Renderer::RenderLayers()",
+    TraceLoggingValue(swapchainTextureIndex, "swapchainTextureIndex"));
 
   auto source = snapshot.GetTexture<SHM::D3D12::Texture>();
   auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
   ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
+  if (br.mFenceValue) {
+    OPENKNEEBOARD_ALWAYS_ASSERT(
+      br.mFence->GetCompletedValue() >= br.mFenceValue);
+    check_hresult(br.mCommandAllocator->Reset());
+    check_hresult(br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  }
+
   br.mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
 
   mSpriteBatch->Begin(
@@ -105,7 +116,7 @@ void Renderer::RenderLayers(
   ID3D12CommandList* lists[] {br.mCommandList.get()};
 
   mQueue->ExecuteCommandLists(std::size(lists), lists);
-  check_hresult(br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  check_hresult(mQueue->Signal(br.mFence.get(), ++br.mFenceValue));
 }
 
 }// namespace OpenKneeboard::D3D12

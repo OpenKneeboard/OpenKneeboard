@@ -37,6 +37,8 @@ struct SwapchainBufferResources {
 
   winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
   winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
+  winrt::com_ptr<ID3D12Fence> mFence;
+  uint64_t mFenceValue {};
 
   D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
 };
@@ -53,7 +55,7 @@ class Renderer {
   Renderer(ID3D12Device*, ID3D12CommandQueue*, DXGI_FORMAT destFormat);
 
   void RenderLayers(
-    const SwapchainResources&,
+    SwapchainResources&,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     const std::span<SHM::LayerSprite>& layers,
