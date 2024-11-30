@@ -38,7 +38,10 @@ While OpenKneeboard's own cursor will move, it will not move the Windows mouse c
 
 ## Mouse/tablet forwarding
 
-If mouse/tablet forwarding does not work for you with a specific app, it is simply incompatible. There is no configuration, no troubleshooting, or anything else you can do to fix it, [unless you are the app developer, and familiar with Win32 and your framework](../faq/third-party-developers.md#why-doesnt-the-mouse-emulation-work-correctly-in-my-app-when-using-window-capture-tabs).
+- make sure that mouse/tablet forwarding is enabled in the tab settings
+- make sure the window being captured is not running as administrator
+
+If mouse/tablet forwarding does not work for you with a specific app or causes any other issues, it is simply incompatible. There is no configuration, no troubleshooting, or anything else you can do to fix it, [unless you are the app developer, and familiar with Win32 and your framework](../faq/third-party-developers.md#why-doesnt-the-mouse-emulation-work-correctly-in-my-app-when-using-window-capture-tabs).
 
 Apps, frameworks, and Windows itself try very hard to make it so mouse movement only affects active window; sometimes, despite OpenKneeboards' best efforts, they succeed.
 
