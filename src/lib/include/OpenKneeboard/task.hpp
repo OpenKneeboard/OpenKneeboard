@@ -133,10 +133,16 @@ enum class TaskAwaiting {
   NotSupported,
 };
 
+enum class TaskCompletionThread {
+  OriginalThread,
+  AnyThread,
+};
+
 template <class TResult>
 struct TaskTraits {
   static constexpr auto OnException = TaskExceptionBehavior::StoreAndRethrow;
   static constexpr auto Awaiting = TaskAwaiting::Required;
+  static constexpr auto CompletionThread = TaskCompletionThread::OriginalThread;
 
   using result_type = TResult;
 };
@@ -144,6 +150,7 @@ struct TaskTraits {
 struct FireAndForgetTraits {
   static constexpr auto OnException = TaskExceptionBehavior::Terminate;
   static constexpr auto Awaiting = TaskAwaiting::NotSupported;
+  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
 
   using result_type = void;
 };
@@ -191,6 +198,12 @@ struct TaskFinalAwaiter {
 
     // Must have a valid pointer, or we have corruption
     OPENKNEEBOARD_ASSERT(oldState != TaskPromiseCompleted);
+
+    if constexpr (
+      TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
+      oldState.mNext.resume();
+      return;
+    }
     const auto& context = mPromise.mContext;
     if (context.mThreadID == std::this_thread::get_id()) {
       oldState.mNext.resume();
