@@ -269,10 +269,6 @@ struct TaskFinalAwaiter {
       = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
     const auto& context = resumeData.mContext;
 
-    if (std::this_thread::get_id() != context.mThreadID) [[unlikely]] {
-      resumeData.mContext.fatal("Resumed task in wrong thread.");
-    }
-
     TraceLoggingWrite(
       gTraceProvider,
       "TaskFinalAwaiter<>::resume_from_thread_pool()/ResumeCoro",
