@@ -132,6 +132,7 @@ void Texture::CopyFrom(
       commandAllocator,
       nullptr,
       IID_PPV_ARGS(list.put())));
+    list->SetName(L"OpenKneeboard::SHM::D3D12::Texture::CopyFrom");
     mCommandLists.emplace(sourceTexture, list);
     this->PopulateCommandList(list.get(), sourceTexture);
   }

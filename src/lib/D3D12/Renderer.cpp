@@ -46,6 +46,9 @@ SwapchainBufferResources::SwapchainBufferResources(
     mCommandAllocator.get(),
     nullptr,
     IID_PPV_ARGS(mCommandList.put())));
+  mCommandList->SetName(
+    L"OpenKneeboard::D3D12::SwapchainBufferResources::"
+    L"SwapchainBufferResources");
 }
 
 Renderer::Renderer(
