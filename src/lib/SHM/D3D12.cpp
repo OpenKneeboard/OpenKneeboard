@@ -20,6 +20,7 @@
 #include <OpenKneeboard/D3D12.hpp>
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/SHM/D3D12.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
@@ -38,11 +39,15 @@ Texture::Texture(
   const PixelSize& dimensions,
   uint8_t swapchainIndex,
   const winrt::com_ptr<ID3D12Device>& device,
+  const winrt::com_ptr<ID3D12CommandQueue>& queue,
+  const winrt::com_ptr<ID3D12Fence>& fenceOut,
   ID3D12DescriptorHeap* shaderResourceViewHeap,
   const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
   const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle)
   : IPCClientTexture(dimensions, swapchainIndex),
     mDevice(device),
+    mCommandQueue(queue),
+    mFenceOut(fenceOut),
     mShaderResourceViewCPUHandle(shaderResourceViewCPUHandle),
     mShaderResourceViewGPUHandle(shaderResourceViewGPUHandle) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::Texture()");
@@ -52,6 +57,19 @@ Texture::Texture(
 
 Texture::~Texture() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::~Texture()");
+  this->ReleaseCommandLists();
+}
+
+void Texture::ReleaseCommandLists() {
+  if (mFenceOut) {
+    const auto event
+      = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    winrt::check_hresult(
+      mFenceOut->SetEventOnCompletion(mFenceOutValue, event.get()));
+    winrt::check_hresult(WaitForSingleObject(event.get(), INFINITE));
+  }
+
+  mCommandLists.clear();
 }
 
 ID3D12Resource* Texture::GetD3D12Texture() {
@@ -113,12 +131,10 @@ void Texture::InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept {
 }
 
 void Texture::CopyFrom(
-  ID3D12CommandQueue* queue,
   ID3D12CommandAllocator* commandAllocator,
   ID3D12Resource* sourceTexture,
   ID3D12Fence* fenceIn,
   uint64_t fenceInValue,
-  ID3D12Fence* fenceOut,
   uint64_t fenceOutValue) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::CopyFrom");
 
@@ -141,18 +157,19 @@ void Texture::CopyFrom(
 
   {
     OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/FenceIn");
-    check_hresult(queue->Wait(fenceIn, fenceInValue));
+    check_hresult(mCommandQueue->Wait(fenceIn, fenceInValue));
   }
 
   {
     OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/ExecuteCommandLists");
     ID3D12CommandList* lists[] {list};
-    queue->ExecuteCommandLists(std::size(lists), lists);
+    mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
   }
 
   {
     OPENKNEEBOARD_TraceLoggingScope("SHM/D3D12/FenceOut");
-    check_hresult(queue->Signal(fenceOut, fenceOutValue));
+    mFenceOutValue = fenceOutValue;
+    check_hresult(mCommandQueue->Signal(mFenceOut.get(), fenceOutValue));
   }
 }
 
@@ -275,6 +292,14 @@ void CachedReader::ReleaseIPCHandles() {
 
   this->WaitForPendingCopies();
 
+  for (auto&& weak: mCachedTextures) {
+    auto strong = weak.lock();
+    if (strong) {
+      strong->ReleaseCommandLists();
+    }
+  }
+  mCachedTextures.clear();
+
   std::vector<HANDLE> events;
   for (const auto& [fenceHandle, fenceAndValue]: mIPCFences) {
     const auto event = CreateEventEx(nullptr, nullptr, NULL, GENERIC_ALL);
@@ -297,13 +322,17 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::D3D12::CachedReader::CreateIPCClientTexture()");
 
-  return std::make_shared<SHM::D3D12::Texture>(
+  auto ret = std::make_shared<SHM::D3D12::Texture>(
     dimensions,
     swapchainIndex,
     mDevice,
+    mCommandQueue,
+    mCopyFence.mFence,
     mShaderResourceViewHeap->Heap(),
     mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),
     mShaderResourceViewHeap->GetGpuHandle(swapchainIndex));
+  mCachedTextures.push_back(ret);
+  return ret;
 }
 
 void CachedReader::Copy(
@@ -322,12 +351,10 @@ void CachedReader::Copy(
 
   reinterpret_cast<SHM::D3D12::Texture*>(destinationTexture)
     ->CopyFrom(
-      mCommandQueue.get(),
       br.mCommandAllocator.get(),
       source,
       fenceAndValue->mFence.get(),
       fenceValueIn,
-      mCopyFence.mFence.get(),
       ++mCopyFence.mValue);
 
   fenceAndValue->mValue = fenceValueIn;
