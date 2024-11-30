@@ -358,6 +358,10 @@ ID3D12Resource* CachedReader::GetIPCTexture(HANDLE handle) noexcept {
   winrt::com_ptr<ID3D12Resource> texture;
   check_hresult(mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(texture.put())));
   mIPCTextures.emplace(handle, texture);
+  texture->SetName(std::format(
+                     L"OpenKneeboard D3D12 IPC texture for handle {:#010x}",
+                     std::bit_cast<uintptr_t>(handle))
+                     .c_str());
   return texture.get();
 }
 
