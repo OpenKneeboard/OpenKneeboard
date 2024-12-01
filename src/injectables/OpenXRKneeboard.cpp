@@ -530,7 +530,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
 
   if (gKneeboard) {
     dprint("Already have a kneeboard, refusing to initialize twice");
-    return XR_ERROR_INITIALIZATION_FAILED;
+    return XR_ERROR_LIMIT_REACHED;
   }
 
   const auto system = createInfo->systemId;
