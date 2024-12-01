@@ -54,8 +54,10 @@ SwapchainBufferResources::~SwapchainBufferResources() {
   if (mFenceValue && mFence->GetCompletedValue() < mFenceValue) {
     winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
     check_hresult(mFence->SetEventOnCompletion(mFenceValue, event.get()));
-    OPENKNEEBOARD_ALWAYS_ASSERT(
-      WaitForSingleObject(event.get(), 5000) == WAIT_OBJECT_0);
+    const auto code = WaitForSingleObject(event.get(), 5000);
+    if (code != WAIT_OBJECT_0) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL("Waiting for fence failed with {:#010x}", static_cast<uintptr_t>(code));
+    }
   }
 }
 
