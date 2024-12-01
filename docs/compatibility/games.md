@@ -9,8 +9,10 @@ parent: Compatibility
 | -------------|--------|--------|--------|---------|
 | OpenGL       | ❌ | ❌ | ❌ | ✅ |
 | Direct3D 11  | ✅ | ✅ | ✅ | ✅ |
-| Direct3D 12  | ❌ | ✅ | ✅ | ✅ |
-| Vulkan       | ❌ | ✅ | ❌ | ✅ |
+| Direct3D 12  | ❌ | ✅ | 🧪 | ✅ |
+| Vulkan       | ❌ | 🧪 | ❌ | ✅ |
+
+🧪: support is experimental; problems (including crashes) should be expected
 
 OpenXR + Vulkan: the game must use `XR_KHR_vulkan_enable2` and the `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()` functions.
 
@@ -34,8 +36,12 @@ Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 | DCS World | ✅ | ✅ | ✅ | ✅ |
 | Falcon BMS | ✅ | n/a | n/a | ✅ |
 | iRacing | ❌ | ✅ | ❌ | ✅ |
-| MSFS 2020  | ✅ (D3D11 only) | ✅ | n/a | ✅ |
+| MSFS 2020 - D3D11 | ✅ | ✅ | n/a | ✅ |
+| MSFS 2020 - D3D12 | ❌ | 💥 | n/a | ✅ |
+| MSFS 2024 | ❌ | 💥 | n/a | ✅ |
 | BeamNG.drive | untested | ❌  | n/a | ✅ |
+
+💥: D3D12 support in OpenKneeboard is experimental, and is known to trigger crashes in these titles.
 
 **BeamNG.drive:** as of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
 
