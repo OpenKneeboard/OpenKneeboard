@@ -57,8 +57,11 @@ SwapchainBufferResources::~SwapchainBufferResources() {
   if (mFenceValue && mFence->GetCompletedValue() < mFenceValue) {
     winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
     check_hresult(mFence->SetEventOnCompletion(mFenceValue, event.get()));
+    const auto waitResult = WaitForSingleObject(event.get(), 5000);
     OPENKNEEBOARD_ALWAYS_ASSERT(
-      WaitForSingleObject(event.get(), 5000) == WAIT_OBJECT_0);
+      waitResult == WAIT_OBJECT_0,
+      "Wait result: {:#010x}",
+      static_cast<uintptr_t>(waitResult));
   }
 }
 
@@ -107,8 +110,13 @@ void Renderer::RenderLayers(
 
   ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
   if (br.mFenceValue) {
+    const auto minimumValue = br.mFenceValue;
+    const auto actualValue = br.mFence->GetCompletedValue();
     OPENKNEEBOARD_ALWAYS_ASSERT(
-      br.mFence->GetCompletedValue() >= br.mFenceValue);
+      actualValue >= minimumValue,
+      "Required {} >= {}",
+      actualValue,
+      minimumValue);
     check_hresult(br.mCommandAllocator->Reset());
     check_hresult(br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
   }
