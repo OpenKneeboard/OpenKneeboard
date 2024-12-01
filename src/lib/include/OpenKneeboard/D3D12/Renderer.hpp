@@ -29,18 +29,25 @@ namespace OpenKneeboard::D3D12 {
 
 struct SwapchainBufferResources {
   SwapchainBufferResources() = delete;
+  SwapchainBufferResources(const SwapchainBufferResources&) = delete;
+  SwapchainBufferResources& operator=(const SwapchainBufferResources&) = delete;
+
+  SwapchainBufferResources(SwapchainBufferResources&&);
+  SwapchainBufferResources& operator=(SwapchainBufferResources&&);
+
   SwapchainBufferResources(
     ID3D12Device*,
     ID3D12Resource* texture,
     D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
     DXGI_FORMAT renderTargetViewFormat);
+  ~SwapchainBufferResources();
 
   winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
   winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
   winrt::com_ptr<ID3D12Fence> mFence;
   uint64_t mFenceValue {};
 
-  D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
+  D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView {};
 };
 
 struct SwapchainResources {

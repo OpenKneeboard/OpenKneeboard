@@ -53,6 +53,34 @@ SwapchainBufferResources::SwapchainBufferResources(
     device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 }
 
+SwapchainBufferResources::~SwapchainBufferResources() {
+  if (mFenceValue && mFence->GetCompletedValue() < mFenceValue) {
+    winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+    check_hresult(mFence->SetEventOnCompletion(mFenceValue, event.get()));
+    OPENKNEEBOARD_ALWAYS_ASSERT(
+      WaitForSingleObject(event.get(), 5000) == WAIT_OBJECT_0);
+  }
+}
+
+SwapchainBufferResources::SwapchainBufferResources(
+  SwapchainBufferResources&& other) {
+  this->operator=(std::move(other));
+}
+
+SwapchainBufferResources& SwapchainBufferResources::operator=(
+  SwapchainBufferResources&& other) {
+  mCommandAllocator = std::move(other.mCommandAllocator);
+  mCommandList = std::move(other.mCommandList);
+  mFence = std::move(other.mFence);
+  mFenceValue = std::move(other.mFenceValue);
+  mRenderTargetView = std::move(other.mRenderTargetView);
+
+  other.mFenceValue = {};
+  other.mRenderTargetView = {};
+
+  return *this;
+}
+
 Renderer::Renderer(
   ID3D12Device* device,
   ID3D12CommandQueue* commandQueue,
