@@ -22,6 +22,7 @@
 #include <OpenKneeboard/SHM/D3D12.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
@@ -34,6 +35,27 @@
 #include <directxtk12/ResourceUploadBatch.h>
 
 namespace OpenKneeboard::SHM::D3D12 {
+
+static void WaitForFence(
+  auto fence,
+  uint64_t fenceValue,
+  const std::source_location& caller = std::source_location::current()) {
+  const auto actualValue = fence->GetCompletedValue();
+  if (actualValue > fenceValue) {
+    return;
+  }
+
+  const auto event
+    = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  check_hresult(fence->SetEventOnCompletion(fenceValue, event.get()));
+  const auto waitResult = WaitForSingleObject(event.get(), 5000);
+  if (waitResult == WAIT_OBJECT_0) [[likely]] {
+    return;
+  }
+
+  fatal(
+    caller, "Fence wait result: {:#010x}", static_cast<uint32_t>(waitResult));
+}
 
 Texture::Texture(
   const PixelSize& dimensions,
@@ -62,11 +84,7 @@ Texture::~Texture() {
 
 void Texture::ReleaseCommandLists() {
   if (mFenceOut) {
-    const auto event
-      = Win32::or_throw::CreateEventW(nullptr, FALSE, FALSE, nullptr);
-    winrt::check_hresult(
-      mFenceOut->SetEventOnCompletion(mFenceOutValue, event.get()));
-    winrt::check_hresult(WaitForSingleObject(event.get(), INFINITE));
+    WaitForFence(mFenceOut, mFenceOutValue);
   }
 
   mCommandLists.clear();
@@ -219,9 +237,7 @@ void CachedReader::WaitForPendingCopies() {
     return;
   }
 
-  winrt::handle event {CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL)};
-  mCopyFence.mFence->SetEventOnCompletion(mCopyFence.mValue, event.get());
-  WaitForSingleObject(event.get(), INFINITE);
+  WaitForFence(mCopyFence.mFence, mCopyFence.mValue);
 }
 
 Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
