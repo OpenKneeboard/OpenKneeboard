@@ -53,6 +53,10 @@
 namespace OpenKneeboard {
 
 namespace {
+
+// TODO: these should all be part of the instance, and reset when a new instance
+// is created
+
 enum class VulkanXRState {
   NoVKEnable2,
   VKEnable2Instance,
@@ -73,6 +77,8 @@ StateMachine<
     },
   }>
   gVulkanXRState {};
+
+bool gHaveXR_KHR_vulkan_enable2 {false};
 }// namespace
 
 static constexpr XrPosef XR_POSEF_IDENTITY {
@@ -776,36 +782,24 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
   PFN_xrVoidFunction* function) {
-  std::string_view name {name_cstr};
+  const std::string_view name {name_cstr};
 
-  if (name == "xrCreateSession") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateSession);
-    return XR_SUCCESS;
+#define HOOK_FUNC(x) \
+  if (name == #x) { \
+    *function = reinterpret_cast<PFN_xrVoidFunction>(&x); \
+    return XR_SUCCESS; \
   }
-  if (name == "xrDestroySession") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrDestroySession);
-    return XR_SUCCESS;
+#define HOOK_EXT_FUNC(ext, func) \
+  if (name == #func) { \
+    if (gHave##ext) [[likely]] { \
+      *function = reinterpret_cast<PFN_xrVoidFunction>(&func); \
+      return XR_SUCCESS; \
+    } \
+    return XR_ERROR_FUNCTION_UNSUPPORTED; \
   }
-  if (name == "xrDestroyInstance") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrDestroyInstance);
-    return XR_SUCCESS;
-  }
-  if (name == "xrEndFrame") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
-    return XR_SUCCESS;
-  }
-
-  ///// START XR_KHR_vulkan_enable2 /////
-  if (name == "xrCreateVulkanDeviceKHR") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanDeviceKHR);
-    return XR_SUCCESS;
-  }
-  if (name == "xrCreateVulkanInstanceKHR") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanInstanceKHR);
-    return XR_SUCCESS;
-  }
-  ///// END XR_KHR_vulkan_enable2 /////
+  OPENKNEEBOARD_HOOKED_OPENXR_FUNCS(HOOK_FUNC, HOOK_EXT_FUNC)
+#undef HOOK_FUNC
+#undef HOOK_EXT_FUNC
 
   if (name == "xrEnumerateApiLayerProperties") {
     *function
@@ -838,11 +832,22 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   // TODO: check version fields etc in layerInfo
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
-  auto nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
+  const auto nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
     info, &nextLayerInfo, instance);
-  if (nextResult != XR_SUCCESS) {
+  if (XR_FAILED(nextResult)) {
     dprint("Next failed.");
     return nextResult;
+  }
+
+  gHaveXR_KHR_vulkan_enable2 = false;
+
+  for (uint32_t i = 0; i < info->enabledExtensionCount; ++i) {
+    const std::string_view extensionName {info->enabledExtensionNames[i]};
+    dprint("Application enabled extension: {}", extensionName);
+    if (extensionName == XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME) {
+      gHaveXR_KHR_vulkan_enable2 = true;
+      continue;
+    }
   }
 
   gNext = std::make_shared<OpenXRNext>(

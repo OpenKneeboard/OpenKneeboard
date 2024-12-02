@@ -24,11 +24,13 @@ namespace OpenKneeboard {
 OpenXRNext::OpenXRNext(XrInstance instance, PFN_xrGetInstanceProcAddr getNext) {
   this->xrGetInstanceProcAddr = getNext;
 
-#define IT(func) \
+#define DEFINE_FN_PTR(func) \
   getNext(instance, #func, reinterpret_cast<PFN_xrVoidFunction*>(&this->func));
+#define DEFINE_EXT_FN_PTR(ext, func) DEFINE_FN_PTR(func)
 
-  OPENKNEEBOARD_NEXT_OPENXR_FUNCS
-#undef IT
+  OPENKNEEBOARD_NEXT_OPENXR_FUNCS(DEFINE_FN_PTR, DEFINE_EXT_FN_PTR)
+#undef DEFINE_FN_PTR
+#undef DEFINE_EXT_FN_PTR
 }
 
 }// namespace OpenKneeboard
