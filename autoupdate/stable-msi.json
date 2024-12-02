@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175303137",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175303137/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/175303137/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.12",
-    "id": 175303137,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188542537",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188542537/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188542537/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.8.14",
+    "id": 188542537,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -23,22 +23,23 @@
       "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
       "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
       "type": "Bot",
+      "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Kcunh",
-    "tag_name": "v1.8.12",
+    "node_id": "RE_kwDOGk0DR84LPO5J",
+    "tag_name": "v1.8.14",
     "target_commitish": "master",
-    "name": "v1.8.12 - elevation fix, updater improvements",
+    "name": "v1.8.14: bugfixes for D3D12 and controller hotplugging",
     "draft": false,
     "prerelease": false,
-    "created_at": "2024-09-16T18:23:29Z",
-    "published_at": "2024-09-16T20:26:24Z",
+    "created_at": "2024-12-02T17:30:01Z",
+    "published_at": "2024-12-02T18:06:24Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/192995365",
-        "id": 192995365,
-        "node_id": "RA_kwDOGk0DR84LgOAl",
-        "name": "OpenKneeboard-v1.8.12-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/210540094",
+        "id": 210540094,
+        "node_id": "RA_kwDOGk0DR84MjJY-",
+        "name": "OpenKneeboard-v1.8.14-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -58,21 +59,22 @@
           "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
           "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
           "type": "Bot",
+          "user_view_type": "public",
           "site_admin": false
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 175657235,
+        "size": 176444505,
         "download_count": 0,
-        "created_at": "2024-09-16T18:46:10Z",
-        "updated_at": "2024-09-16T18:46:16Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.12/OpenKneeboard-v1.8.12-DebugSymbols.zip"
+        "created_at": "2024-12-02T17:54:01Z",
+        "updated_at": "2024-12-02T17:54:07Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.14/OpenKneeboard-v1.8.14-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/192995364",
-        "id": 192995364,
-        "node_id": "RA_kwDOGk0DR84LgOAk",
-        "name": "OpenKneeboard-v1.8.12.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/210540095",
+        "id": 210540095,
+        "node_id": "RA_kwDOGk0DR84MjJY_",
+        "name": "OpenKneeboard-v1.8.14.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -92,19 +94,20 @@
           "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
           "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
           "type": "Bot",
+          "user_view_type": "public",
           "site_admin": false
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 40656896,
+        "size": 41324544,
         "download_count": 0,
-        "created_at": "2024-09-16T18:46:10Z",
-        "updated_at": "2024-09-16T18:46:12Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.12/OpenKneeboard-v1.8.12.msi"
+        "created_at": "2024-12-02T17:54:01Z",
+        "updated_at": "2024-12-02T17:54:03Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.14/OpenKneeboard-v1.8.14.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.12",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.12",
-    "body": "Start by downloading [OpenKneeboard-v1.8.12.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.12/OpenKneeboard-v1.8.12.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- 🐛 If OpenKneeboard is launched elevated and configured to relaunch without elevation, but it is still elevated afterwards, it will now log a failure rather than freeze\r\n- 🦺 The autoupdater will now show a warning if the new version is a development/test version\r\n- 🦺 v1.8 will delete a registry value used by v1.9+ to detect if a new backup is needed; this will cause v1.9+ to create a new settings backup if you downgrade to v1.8 then upgrade again, rather than just the first time you run a v1.9+ version\r\n- 📝 Debug logs now include the active OpenXR runtime if there is one, even if the list of installed/available runtimes is empty; it is possible for a runtime that is not in the list to be active, and this is common for older OpenXR runtimes\r\n- 📝 Debug logs now include the command line arguments when OpenKneeboard is started"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.8.14",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.8.14",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.8.14.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.8.14/OpenKneeboard-v1.8.14.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes\r\n\r\n- OpenXR+D3D12: fix RAM leak\r\n- OpenXR+D3D12: fix resources sometimes being freed before a frame has entirely finished rendering\r\n- DirectInput: fix intermittent crash when DirectInput controllers are unplugged\r\n- OpenXR conformance: return `XR_ERROR_LIMIT_REACHED` instead of `XR_ERROR_RUNTIME_FAILURE` if an `XrSession` is created while another is still active"
   }
 ]
