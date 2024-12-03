@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/176734490",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/176734490/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/176734490/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.10",
-    "id": 176734490,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188762889",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188762889/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/188762889/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.12",
+    "id": 188762889,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -23,22 +23,23 @@
       "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
       "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
       "type": "Bot",
+      "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84KiMEa",
-    "tag_name": "v1.9.10",
+    "node_id": "RE_kwDOGk0DR84LQEsJ",
+    "tag_name": "v1.9.12",
     "target_commitish": "master",
-    "name": "v1.9.10 - for developers and testers",
+    "name": "v1.9.12: for developers and testers",
     "draft": false,
     "prerelease": true,
-    "created_at": "2024-09-24T22:14:11Z",
-    "published_at": "2024-09-25T02:25:20Z",
+    "created_at": "2024-12-03T16:43:33Z",
+    "published_at": "2024-12-03T17:42:08Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/194699678",
-        "id": 194699678,
-        "node_id": "RA_kwDOGk0DR84LmuGe",
-        "name": "OpenKneeboard-v1.9.10-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/210785188",
+        "id": 210785188,
+        "node_id": "RA_kwDOGk0DR84MkFOk",
+        "name": "OpenKneeboard-v1.9.12-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -58,21 +59,22 @@
           "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
           "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
           "type": "Bot",
+          "user_view_type": "public",
           "site_admin": false
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 242882555,
+        "size": 225123941,
         "download_count": 0,
-        "created_at": "2024-09-24T22:51:26Z",
-        "updated_at": "2024-09-24T22:51:34Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.10/OpenKneeboard-v1.9.10-DebugSymbols.zip"
+        "created_at": "2024-12-03T17:18:57Z",
+        "updated_at": "2024-12-03T17:19:04Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.12/OpenKneeboard-v1.9.12-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/194699674",
-        "id": 194699674,
-        "node_id": "RA_kwDOGk0DR84LmuGa",
-        "name": "OpenKneeboard-v1.9.10.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/210785187",
+        "id": 210785187,
+        "node_id": "RA_kwDOGk0DR84MkFOj",
+        "name": "OpenKneeboard-v1.9.12.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -92,19 +94,20 @@
           "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
           "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
           "type": "Bot",
+          "user_view_type": "public",
           "site_admin": false
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 45076480,
+        "size": 44314624,
         "download_count": 0,
-        "created_at": "2024-09-24T22:51:26Z",
-        "updated_at": "2024-09-24T22:51:28Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.10/OpenKneeboard-v1.9.10.msi"
+        "created_at": "2024-12-03T17:18:57Z",
+        "updated_at": "2024-12-03T17:18:59Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.12/OpenKneeboard-v1.9.12.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.9.10",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.9.10",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.9.10.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.10/OpenKneeboard-v1.9.10.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes\r\n\r\n- ✨ Offline HTML/JavaScript plugins can now be entirely contained in a `.OpenKneeboardPlugin` file via a `plugin://` URI, like [the basic calculator plugin](https://github.com/OpenKneeboard/Calculator-Plugin)\r\n- ✨ Improved process when updating plugins\r\n- 🐛 Fix crash when triggering in-app toolbar toggle buttons (e.g. navigation mode)\r\n- 🐛 Fix crash when endless notebook tabs are cleaned up (e.g. when switching profiles, removing the tab, or closing the app)\r\n- 🐛 Fix the app becoming unresponsive for a *ridiculously* long time (multiple minutes) if a window capture tab can't find a matching window\r\n- 🐛 Fixed crash when changing window capture tab settings\r\n- 🐛 Fixed crash if DCS sends an invalid time for the 'mission time' clock\r\n\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.9.12",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.9.12",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.9.12.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.12/OpenKneeboard-v1.9.12.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n## Changes\r\n\r\n- 🐛 OpenXR+D3D12: fix RAM leak\r\n- 🐛 OpenXR+D3D12: fix resources sometimes being freed before a frame has entirely finished rendering\r\n- 🐛 Profile switching: fix several issues that could lead to crashes\r\n- 🐛 Window capture tabs: fix potential crash when switching profiles immediately after a matching window is created\r\n- ⚡ Window capture tabs: reduce time for capture to start after a matching window is opened\r\n- 🩹 Window capture tab: consistently show 'No pages' message when no matching window, isntead of 'width or hegiht is 0'\r\n- 🐛 DirectInput: fix intermittent crash when DirectInput controllers are unplugged\r\n- 🩹🚧: fix dark lines at top/bottom when header or footer are turned of per view. This is fixed for D3D11 and Vulkan, but not yet fixed for D3D12. As a workaround, you can turn off the header and footer for all views in advanced settings instead - [#658](https://github.com/OpenKneeboard/OpenKneeboard/issues/658)\r\n- ✨ OpenKneeboard-Viewer: support unscaled rendering - press 'U' to activate\r\n- 🩹 OpenXR conformance: return `XR_ERROR_LIMIT_REACHED` instead of `XR_ERROR_RUNTIME_FAILURE` if an `XrSession` is created while another is still active\r\n- 🩹 OpenXR conformance: return `XR_ERROR_FUNCTION_NOT_SUPPORTED` for Vulkan functions if the application has not enabled the relevant extensions\r\n- 👷 Improvements to crash logging and dumps\r\n- 🐛 Fix crash if a coroutine throws an exception that should be caught\r\n- 🐛 Fix crash if a timer is cancelled after it is created but before it is started\r\n- 🐛 Fix crash if Windows returns an error when checking if the DCS saved games folder exists\r\n- 🔊 Include Windows version and edition (e.g. Home, Pro, Enterprise) in debug logs\r\n- ⚡Stopped switching back to original thread for coroutines with discarded results (`fire_and_forget`)\r\n- 🐛 Remove assertion if a coroutine is returned on the same thread/COM context, but the thread ID has changed (e.g. for tasks on the windwos thread bool)\r\n- 🧑‍💻 Added debug names to various D3D12 resources\r\n- 🚧 Started replacing WinUI3 with WebView-based UI; 'Developer Tools' settings page is no longer using WinUI\r\n\r\nThe OpenXR+D3D12 changes primarily improve compatibility with MSFS 2024.\r\n\r\nSome bugfixes have not been applied to v1.8 as:\r\n- the bugs are unlikely to cause practical problems for most people\r\n- the fixes depend on invasive changes that carry the risk of reducing overall stability, so for now, are only suitable for test versions\r\n"
   }
 ]
