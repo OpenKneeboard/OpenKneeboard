@@ -14,7 +14,6 @@
     <EventProvider Id="EventProvider_OpenKneeboard.Elevation.Helper" Name="4cd19abb-3b31-5e4e-ca98-75e403061214" />
     <EventProvider Id="EventProvider_OpenKneeboard.NonVR.D3D11" Name="d301dc28-a6f4-5054-6786-5cdb46c0f270" />
     <EventProvider Id="EventProvider_OpenKneeboard.Oculus.D3D11" Name="bce0dd2f-2946-509d-0079-54a2eb7e4cf9" />
-    <EventProvider Id="EventProvider_OpenKneeboard.Oculus.D3D12" Name="b24892c5-ac28-5d62-844b-0c4798cd6357" />
     <EventProvider Id="EventProvider_OpenKneeboard.OpenXR" Name="a4308f76-39c8-5a50-4ede-32d104a8a78d" />
     <EventProvider Id="EventProvider_OpenKneeboard.OpenXR.Helper" Name="2489967e-a7f2-5db8-ba74-27c35b944d56" />
     <EventProvider Id="EventProvider_OpenKneeboard.PluginTabAction" Name="0d024362-97d7-5ba3-7e08-7870f0ea335" />
@@ -51,7 +50,6 @@
             <EventProviderId Value="EventProvider_OpenKneeboard.Elevation.Helper" />
             <EventProviderId Value="EventProvider_OpenKneeboard.NonVR.D3D11" />
             <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D11" />
-            <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D12" />
             <EventProviderId Value="EventProvider_OpenKneeboard.OpenXR" />
             <EventProviderId Value="EventProvider_OpenKneeboard.OpenXR.Helper" />
             <EventProviderId Value="EventProvider_OpenKneeboard.PluginTabAction" />

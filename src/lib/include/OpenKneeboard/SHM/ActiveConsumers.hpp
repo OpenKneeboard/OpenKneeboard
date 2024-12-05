@@ -32,7 +32,6 @@ struct ActiveConsumers final {
   T mSteamVR {};
   T mOpenXR {};
   T mOculusD3D11 {};
-  T mOculusD3D12 {};
   T mNonVRD3D11 {};
   T mViewer {};
 

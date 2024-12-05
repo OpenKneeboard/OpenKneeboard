@@ -117,7 +117,7 @@ enum class ConsumerKind : uint32_t {
   SteamVR = 1 << 0,
   OpenXR = 1 << 1,
   OculusD3D11 = 1 << 2,
-  OculusD3D12 = 1 << 3,
+  // OculusD3D12 = 1 << 3,
   NonVRD3D11 = 1 << 4,
   Viewer = ~(0ui32),
 };

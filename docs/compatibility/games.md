@@ -9,10 +9,11 @@ parent: Compatibility
 | -------------|--------|--------|--------|---------|
 | OpenGL       | ❌ | ❌ | ❌ | ✅ |
 | Direct3D 11  | ✅ | ✅ | ✅ | ✅ |
-| Direct3D 12  | ❌ | ✅ | 🧪 | ✅ |
+| Direct3D 12  | ❌ | 🧪 | ☠️ | ✅ |
 | Vulkan       | ❌ | 🧪 | ❌ | ✅ |
 
 🧪: support is experimental; problems (including crashes) should be expected
+☠️: support is being removed due to no known usage
 
 OpenXR + Vulkan: the game must use `XR_KHR_vulkan_enable2` and the `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()` functions.
 

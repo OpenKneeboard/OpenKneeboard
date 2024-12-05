@@ -95,27 +95,6 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-ok_add_library(
-  OpenKneeboard-oculus-d3d12
-  MODULE
-  OculusD3D12Kneeboard.cpp
-  OculusD3D12Kneeboard_DllMain.cpp
-)
-target_link_libraries(
-  OpenKneeboard-oculus-d3d12
-  PRIVATE
-  OpenKneeboard-D3D12
-  OpenKneeboard-SHM-Client-D3D12
-  OpenKneeboard-ScopedRWX
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  OpenKneeboard-tracing
-  OpenKneeboard-version
-  d3d12-hooks
-  detours-ext
-  oculus-hooks
-  oculus-sdk-headers)
-
 configure_file(
   OpenKneeboard-OpenXR.in.def
   OpenKneeboard-OpenXR${BUILD_BITNESS}.def

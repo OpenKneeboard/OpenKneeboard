@@ -20,12 +20,12 @@
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 
+#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/version.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
-
-#include <OpenKneeboard/config.hpp>
-#include <OpenKneeboard/version.hpp>
 
 #include <algorithm>
 #include <format>
@@ -137,9 +137,6 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
     case ConsumerKind::OculusD3D11:
       p->mOculusD3D11 = now;
       break;
-    case ConsumerKind::OculusD3D12:
-      p->mOculusD3D12 = now;
-      break;
     case ConsumerKind::NonVRD3D11:
       p->mNonVRD3D11 = now;
       break;
@@ -168,8 +165,8 @@ void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
 }
 
 ActiveConsumers::T ActiveConsumers::Any() const {
-  const auto ret = std::ranges::max(
-    {mSteamVR, mOpenXR, mOculusD3D11, mOculusD3D12, mNonVRD3D11});
+  const auto ret
+    = std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11, mNonVRD3D11});
   if (ret != T {}) {
     return ret;
   }
@@ -177,11 +174,11 @@ ActiveConsumers::T ActiveConsumers::Any() const {
 }
 
 ActiveConsumers::T ActiveConsumers::AnyVR() const {
-  return std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11, mOculusD3D12});
+  return std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11});
 }
 
 ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
-  return std::ranges::max({mOpenXR, mOculusD3D11, mOculusD3D12});
+  return std::ranges::max({mOpenXR, mOculusD3D11});
 }
 
 ActiveConsumers::T ActiveConsumers::NotVROrViewer() const {

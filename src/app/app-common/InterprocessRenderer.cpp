@@ -65,8 +65,6 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
       return {SHM::ConsumerKind::OpenXR};
     case OverlayAPI::OculusD3D11:
       return {SHM::ConsumerKind::OculusD3D11};
-    case OverlayAPI::OculusD3D12:
-      return {SHM::ConsumerKind::OculusD3D12};
     case OverlayAPI::NonVRD3D11:
       return {SHM::ConsumerKind::NonVRD3D11};
     default:

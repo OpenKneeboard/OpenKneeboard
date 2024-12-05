@@ -28,13 +28,16 @@
 namespace OpenKneeboard {
 
 // This must match the values in the Game Settings UI
+// 2024-12-05: Oculus+D3D12 support has been removed.
+// Should remove it here too in the future and handle settings migration if
+// there's not a compelling reason to bring it back.
 #define OPENKNEEBOARD_OVERLAY_APIS \
   IT(None) \
   IT(AutoDetect) \
   IT(SteamVR) \
   IT(OpenXR) \
   IT(OculusD3D11) \
-  IT(OculusD3D12) \
+  IT(OculusD3D12) /* TODO: remove later*/ \
   IT(NonVRD3D11)
 
 enum class OverlayAPI {

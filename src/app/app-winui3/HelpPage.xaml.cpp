@@ -444,7 +444,6 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   log("SteamVR", consumers.mSteamVR);
   log("OpenXR", consumers.mOpenXR);
   log("Oculus-D3D11", consumers.mOculusD3D11);
-  log("Oculus-D3D12", consumers.mOculusD3D12);
   log("NonVR-D3D11", consumers.mNonVRD3D11);
   log("Viewer", consumers.mViewer);
 

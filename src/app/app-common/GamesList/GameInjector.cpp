@@ -57,7 +57,6 @@ GameInjector::GameInjector(KneeboardState* state) : mKneeboardState(state) {
   mOverlayAutoDetectDll = dllPath / RuntimeFiles::AUTODETECTION_DLL;
   mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
   mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
-  mOverlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
 }
 
 GameInjector::~GameInjector() {
@@ -219,7 +218,7 @@ void GameInjector::CheckProcess(
         wantedDlls |= InjectedDlls::OculusD3D11;
         break;
       case OverlayAPI::OculusD3D12:
-        wantedDlls |= InjectedDlls::OculusD3D12;
+        dprint.Warning("Detected Oculus+D3D12, which is no longer supported");
         break;
       default:
         dprint(
@@ -333,7 +332,6 @@ void GameInjector::CheckProcess(
     injectIfNeeded(InjectedDlls::AutoDetection, mOverlayAutoDetectDll);
     injectIfNeeded(InjectedDlls::NonVRD3D11, mOverlayNonVRD3D11Dll);
     injectIfNeeded(InjectedDlls::OculusD3D11, mOverlayOculusD3D11Dll);
-    injectIfNeeded(InjectedDlls::OculusD3D12, mOverlayOculusD3D12Dll);
   }
 }
 

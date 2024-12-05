@@ -218,20 +218,20 @@ class InjectionBootstrapper final {
     // use the OpenVR overlay API to render from that process, so we don't need
     // to do anything here.
     if ((mFlags & FLAG_STEAMVR)) {
-      dprint("Doing nothing as SteamVR is in-process");
+      dprint.Warning("Doing nothing as SteamVR is in-process");
       return;
     }
 
     // Similarly, if the OpenKneeboard OpenXR API layer is loaded, that will
     // deal with the rendering.
     if ((mFlags & FLAG_OPENXR)) {
-      dprint("Doing nothing as the OpenXR API layer is in-process.");
+      dprint.Warning("Doing nothing as the OpenXR API layer is in-process.");
       return;
     }
 
     // Not looking for an exact match because mixing D3D11 and D3D12 is common
     if ((mFlags & FLAG_D3D12) && (mFlags & FLAG_OCULUS)) {
-      LoadNext(RuntimeFiles::OCULUS_D3D12_DLL);
+      dprint.Warning("Detected Oculus+D3D12, which is no longer supported");
       return;
     }
 
@@ -245,7 +245,7 @@ class InjectionBootstrapper final {
       return;
     }
 
-    dprint(
+    dprint.Warning(
       "Don't know how to create a kneeboard from detection flags {:#b}",
       mFlags);
   }

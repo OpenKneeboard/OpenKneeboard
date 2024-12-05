@@ -22,7 +22,7 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
 * Install in clean virtual machine
 * Gaze detection, zoomed and unzoomed, before and after centering
   * SteamVR
-  * Oculus: D3D11 and D3D12
+  * Oculus: D3D11
   * OpenXR: D3D11, D3D12, and Vulkan
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
@@ -32,7 +32,7 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
   * Drawing perf/feel in-game:
     * VR
       * SteamVR
-      * Oculus: D3D11 and D3D12
+      * Oculus: D3D11
       * 64-bit OpenXR: D3D11, D3D12, and Vulkan
       * 32-bit OpenXR: D3D11, D3D12, and Vulkan
     * Non-VR: D3D11

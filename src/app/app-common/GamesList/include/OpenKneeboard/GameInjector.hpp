@@ -22,9 +22,9 @@
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/WintabMode.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/bitflags.hpp>
+
+#include <Windows.h>
 
 #include <filesystem>
 #include <memory>
@@ -84,7 +84,6 @@ class GameInjector final : public EventReceiver,
   std::filesystem::path mOverlayAutoDetectDll;
   std::filesystem::path mOverlayNonVRD3D11Dll;
   std::filesystem::path mOverlayOculusD3D11Dll;
-  std::filesystem::path mOverlayOculusD3D12Dll;
 
   struct ProcessCacheEntry {
     enum class InjectionAccessState {

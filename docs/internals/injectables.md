@@ -30,7 +30,7 @@ This is the default injectable. It intercepts every known API to detect which ar
 This is also the only injectable that hooks OpenVR/SteamVR: if it
 detects SteamVR is in use, it will will not load any implementation, as the main OpenKneeboard application should be using the OpenVR overlay APIs.
 
-For example, if it detects Oculus and Direct3D 12 in use, it will load `OpenKneeboard-oculus-d3d12`; if it detects Direct3D 11, but does not detect any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
+For example, if it detects Oculus and Direct3D 11 in use, it will load `OpenKneeboard-oculus-d3d11`; if it detects Direct3D 11, but does not detect any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
 
 If both Direct3D 11 and Direct3D 12 are detected, Direct3D 12 takes priority: it is likely that the game is a Direct3D 12 application using https://docs.microsoft.com/en-us/windows/win32/direct3d12/direct3d-11-on-12
 
