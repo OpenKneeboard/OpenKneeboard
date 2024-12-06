@@ -24,22 +24,28 @@
 
 namespace OpenKneeboard::Shaders::SpriteBatch {
 
-constexpr static uint8_t MaxSpritesPerBatch = 16;
+constexpr uint8_t MaxSpritesPerBatch = 16;
+constexpr uint8_t VerticesPerSprite = 8;
+constexpr uint8_t MaxVerticesPerBatch = VerticesPerSprite * MaxSpritesPerBatch;
 
 struct UniformBuffer {
-  template <class T>
-  struct alignas(16) HLSLArrayElement : T {};
+  using SourceClamp = std::array<float, 4>;
+  using SourceDimensions = std::array<float, 2>;
 
-  using SourceClamp = HLSLArrayElement<std::array<float, 4>>;
-  using SourceDimensions = HLSLArrayElement<std::array<float, 2>>;
   std::array<SourceClamp, MaxSpritesPerBatch> mSourceClamp;
   std::array<SourceDimensions, MaxSpritesPerBatch> mSourceDimensions;
   std::array<float, 2> mTargetDimensions;
 };
+// These offsets are included in both the SPIR-V and DXIL generated headers
+// Check they match if you change anything
+static_assert(offsetof(UniformBuffer, mSourceClamp) == 0);
+static_assert(offsetof(UniformBuffer, mSourceDimensions) == 256);
+static_assert(offsetof(UniformBuffer, mTargetDimensions) == 384);
 
 struct Vertex {
   class Position : public std::array<float, 4> {
    public:
+    constexpr Position() = default;
     constexpr Position(const std::array<float, 2>& pos_2d)
       : std::array<float, 4> {pos_2d[0], pos_2d[0], 0, 1} {
     }

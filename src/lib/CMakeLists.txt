@@ -180,7 +180,7 @@ target_link_libraries(
 ok_add_library(
   OpenKneeboard-D3D12
   STATIC
-  D3D12.cpp
+  D3D12/SpriteBatch.cpp
 )
 target_link_libraries(
   OpenKneeboard-D3D12
@@ -290,6 +290,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-shims
   OpenKneeboard-SHM
+  OpenKneeboard-D3D12
   System::D3d12
   ThirdParty::CppWinRT
   ThirdParty::DirectXTK12

@@ -19,6 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Shaders/SpriteBatch.hpp>
+
+#include <d3d12.h>
+
 #include <string>
 
 namespace OpenKneeboard::Shaders::SpriteBatch::DXIL::Detail {
@@ -30,11 +34,11 @@ namespace OpenKneeboard::Shaders::SpriteBatch::DXIL::Detail {
 
 namespace OpenKneeboard::Shaders::SpriteBatch::DXIL {
 
-constexpr std::basic_string_view<unsigned char> PS {
+constexpr D3D12_SHADER_BYTECODE PS {
   Detail::g_SpritePixelShader,
   std::size(Detail::g_SpritePixelShader)};
 
-constexpr std::basic_string_view<unsigned char> VS {
+constexpr D3D12_SHADER_BYTECODE VS {
   Detail::g_SpriteVertexShader,
   std::size(Detail::g_SpriteVertexShader)};
 

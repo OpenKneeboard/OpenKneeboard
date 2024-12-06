@@ -139,7 +139,7 @@ void Renderer::RenderLayers(
       baseTint[3] * layer.mOpacity,
     };
     mSpriteBatch->Draw(
-      source->GetD3D12ShaderResourceViewGPUHandle(),
+      source->GetD3D12Texture(),
       source->GetDimensions(),
       layer.mSourceRect,
       layer.mDestRect,

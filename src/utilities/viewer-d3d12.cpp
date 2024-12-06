@@ -149,10 +149,7 @@ uint64_t D3D12Renderer::Render(
 
   mSpriteBatch->Begin(cl, dest, destTextureDimensions);
   mSpriteBatch->Draw(
-    source->GetD3D12ShaderResourceViewGPUHandle(),
-    source->GetDimensions(),
-    sourceRect,
-    destRect);
+    source->GetD3D12Texture(), source->GetDimensions(), sourceRect, destRect);
   mSpriteBatch->End();
 
   D3D12_RESOURCE_BARRIER outBarriers[] {
@@ -194,8 +191,9 @@ void D3D12Renderer::SaveTextureToFile(
 void D3D12Renderer::SaveTextureToFile(
   ID3D12Resource* texture,
   const std::filesystem::path& path) {
-  check_hresult(DirectX::SaveDDSTextureToFile(
-    mCommandQueue.get(), texture, path.wstring().c_str()));
+  check_hresult(
+    DirectX::SaveDDSTextureToFile(
+      mCommandQueue.get(), texture, path.wstring().c_str()));
 }
 
 }// namespace OpenKneeboard::Viewer

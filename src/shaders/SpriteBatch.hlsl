@@ -25,17 +25,25 @@ VK_BINDING(1) Texture2D<float4> Textures[MaxSpritesPerBatch] : register(t0);
 
 VK_BINDING(2) cbuffer BatchData : register(b0) {
     float4 sourceClamp[MaxSpritesPerBatch];
-    float2 sourceDimensions[MaxSpritesPerBatch];
+    float4 packedSourceDimensions[MaxSpritesPerBatch / 2];
     float2 destDimensions;
 };
+
+static const float2 sourceDimensions[MaxSpritesPerBatch] = (float2[MaxSpritesPerBatch]) packedSourceDimensions;
 
 void SpriteVertexShader(
     inout float4 position   : SV_Position,
     inout float4 color      : COLOR0,
     inout float2 texCoord   : TEXCOORD0,
     inout uint textureIndex : TEXTURE_INDEX) {
-        
-    position.xy = (2 * (position.xy / destDimensions)) - 1;
+
+#ifdef VK
+#define projection float2(1, 1);
+#else
+#define projection float2(1, -1);
+#endif
+
+    position.xy = ((2 * (position.xy / destDimensions)) - 1) * projection;
     position.zw = position.zw;
     color = color;
     textureIndex = textureIndex;

@@ -128,11 +128,12 @@ class SpriteBatch {
     Color mColor;
   };
 
-  static constexpr uint8_t MaxSpritesPerBatch
+  static constexpr auto MaxSpritesPerBatch
     = Shaders::SpriteBatch::MaxSpritesPerBatch;
-  static constexpr uint8_t VerticesPerSprite = 6;
-  static constexpr uint8_t MaxVerticesPerBatch
-    = VerticesPerSprite * MaxSpritesPerBatch;
+  static constexpr auto VerticesPerSprite
+    = Shaders::SpriteBatch::VerticesPerSprite;
+  static constexpr auto MaxVerticesPerBatch
+    = Shaders::SpriteBatch::MaxVerticesPerBatch;
 
   std::vector<Sprite> mSprites;
 
