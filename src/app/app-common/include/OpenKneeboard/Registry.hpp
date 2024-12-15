@@ -29,11 +29,13 @@ inline std::expected<::wil::unique_hkey, HRESULT> open_unique_key(
   HKEY key,
   _In_opt_ PCWSTR subKey,
   ::wil::reg::key_access access = ::wil::reg::key_access::read) {
-  try {
-    return wil::reg::open_unique_key(key, subKey, access);
-  } catch (const wil::ResultException& e) {
-    return std::unexpected {e.GetErrorCode()};
+  wil::unique_hkey ret;
+  const auto result
+    = wil::reg::open_unique_key_nothrow(key, subKey, ret, access);
+  if (SUCCEEDED(result)) {
+    return ret;
   }
+  return std::unexpected {result};
 }
 
 }// namespace OpenKneeboard::Registry
