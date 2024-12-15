@@ -1024,11 +1024,18 @@ task<std::shared_ptr<WebView2Renderer>> WebView2Renderer::Create(
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2Environment&
     environment,
   KneeboardView* view,
-  const std::vector<APIPage>& apiPages) {
+  const std::vector<APIPage>& apiPages) try {
   std::shared_ptr<WebView2Renderer> ret {new WebView2Renderer(
     dxr, kbs, kind, settings, doodles, workerDQC, environment, view, apiPages)};
   co_await ret->Init();
   co_return ret;
+} catch (const std::exception& e) {
+  dprint.Error("Failed to initialize WebView2Renderer: {}", e.what());
+  throw;
+} catch (const winrt::hresult_error& e) {
+  dprint.Error(
+    "Failed to initalize WebView2Renderer with hresult error: {}", e.message());
+  throw;
 }
 
 WebView2Renderer::WebView2Renderer(
