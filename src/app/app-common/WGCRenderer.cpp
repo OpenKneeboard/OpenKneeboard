@@ -124,8 +124,6 @@ task<void> WGCRenderer::Init() noexcept {
 
     mCaptureItem = item;
   }
-
-  co_await mUIThread;
 }
 
 WGCRenderer::WGCRenderer(
