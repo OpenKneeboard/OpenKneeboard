@@ -99,6 +99,7 @@ task<void> WGCRenderer::Init() noexcept {
 
     const auto size = item.Size();
     if (size.Width < 1 || size.Height < 1) {
+      dprint("WGC width ({}) or height ({}) < 1", size.Width, size.Height);
       OPENKNEEBOARD_BREAK;
       co_return;
     }
