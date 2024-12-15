@@ -271,8 +271,13 @@ static void LogSystemInformation() {
   }
 
   dprint("----------");
-  dprint("  Elevated: {}", IsElevated());
-  dprint("  Shell Elevated: {}", IsShellElevated());
+  for (const auto& [label, elevated]: {
+         std::tuple {"Elevated", IsElevated()},
+         std::tuple {"Shell Elevated", IsShellElevated()},
+       }) {
+    dprint(
+      "  {}: {} {}", label, elevated ? "⚠️" : "✅", elevated ? "yes" : "no");
+  }
 
   // Log UAC settings because lower values aren't just "do not prompt" - they
   // will automatically run some things as administrator that otherwise would
@@ -285,10 +290,11 @@ static void LogSystemInformation() {
         L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
         hkey.put())
       == ERROR_SUCCESS) {
-      for (const auto& name:
-           {L"EnableLUA",
-            L"PromptOnSecureDesktop",
-            L"ConsentPromptBehaviorAdmin"}) {
+      for (const auto& [name, expectedValue]: {
+             std::tuple {L"EnableLUA", 1},
+             std::tuple {L"PromptOnSecureDesktop", 1},
+             std::tuple {L"ConsentPromptBehaviorAdmin", 5},
+           }) {
         DWORD data {};
         DWORD dataSize {sizeof(data)};
         if (
@@ -301,11 +307,21 @@ static void LogSystemInformation() {
             &data,
             &dataSize)
           == ERROR_SUCCESS) {
-          dprint(
-            L"  UAC {}: {:#010x} ({})",
-            name,
-            static_cast<uint32_t>(data),
-            data);
+          if (data == expectedValue) {
+            dprint(
+              L"  UAC {}: ✅ {:#010x} ({})",
+              name,
+              static_cast<uint32_t>(data),
+              data);
+          } else {
+            dprint(
+              L"  UAC {}: ⚠️ {:#010x} ({}) - expected {:#010x} ({})",
+              name,
+              static_cast<uint32_t>(data),
+              data,
+              static_cast<uint32_t>(expectedValue),
+              expectedValue);
+          }
         }
       }
     } else {
@@ -317,12 +333,17 @@ static void LogSystemInformation() {
     const auto webView2 = WebView2PageSource::GetVersion();
     dprint("  WebView2: v{}", webView2);
   } else {
-    dprint("  WebView2: NOT FOUND");
+    dprint("  WebView2: ⚠️ NOT FOUND");
   }
 
   CPINFOEXW codePageInfo;
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
   dprint(L"  Active code page: {}", codePageInfo.CodePageName);
+  if (codePageInfo.CodePage != CP_UTF8) {
+    fatal(
+      "build error (executable manifest): active code page for process is not "
+      "UTF-8");
+  }
 
   DWORD codePage {};
   GetLocaleInfoW(
