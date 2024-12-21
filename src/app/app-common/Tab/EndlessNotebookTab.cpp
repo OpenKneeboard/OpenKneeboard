@@ -195,7 +195,7 @@ void EndlessNotebookTab::PostCursorEvent(
     return;
   }
 
-  const auto contentSize = mSource->GetPreferredSize(pageID);
+  const auto contentSize = mSource->GetPreferredSize(mSourcePageID);
   if (!contentSize.has_value()) {
     return;
   }
