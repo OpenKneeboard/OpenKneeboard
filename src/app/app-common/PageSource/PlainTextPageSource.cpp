@@ -49,7 +49,7 @@ PlainTextPageSource::PlainTextPageSource(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    mFontSize * RENDER_SCALE,
+    mFontSize,
     L"",
     mTextFormat.put());
 
@@ -100,7 +100,7 @@ void PlainTextPageSource::OnSettingsChanged() {
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    newFontSize * RENDER_SCALE,
+    newFontSize,
     L"",
     mTextFormat.put());
 
@@ -146,7 +146,7 @@ std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
 
 std::optional<PreferredSize> PlainTextPageSource::GetPreferredSize(PageID) {
   return PreferredSize {
-    {768 * RENDER_SCALE, 1024 * RENDER_SCALE},
+    DefaultPixelSize,
     ScalingKind::Vector,
   };
 }

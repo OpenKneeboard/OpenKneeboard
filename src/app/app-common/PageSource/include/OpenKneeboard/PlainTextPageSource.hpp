@@ -61,8 +61,6 @@ class PlainTextPageSource final : public IPageSource,
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
  private:
-  static constexpr int RENDER_SCALE = 1;
-
   mutable std::recursive_mutex mMutex;
   mutable std::vector<PageID> mPageIDs;
   std::vector<std::vector<winrt::hstring>> mCompletePages;

@@ -42,7 +42,9 @@ constexpr PixelSize MaxViewRenderSize {2048, 2048};
 constexpr unsigned char MaxViewCount = 16;
 constexpr unsigned int FramesPerSecond = 90;
 
-constexpr PixelSize ErrorPixelSize {768, 1024};
+// 5:8, matching entry-level Wacom and Huion tablets
+constexpr PixelSize DefaultPixelSize {540, 960};
+constexpr PixelSize ErrorPixelSize = DefaultPixelSize;
 constexpr PreferredSize ErrorPreferredSize {
   ErrorPixelSize,
   ScalingKind::Vector,
