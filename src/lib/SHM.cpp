@@ -20,6 +20,7 @@
 #include "SHM/ReaderState.hpp"
 #include "SHM/WriterState.hpp"
 
+#include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
@@ -166,28 +167,24 @@ struct Detail::IPCHandles {
 };
 using Detail::IPCHandles;
 
-static auto SHMPath() {
-  static std::wstring sCache;
-  if (!sCache.empty()) [[likely]] {
-    return sCache;
-  }
-  sCache = std::format(
-    L"{}/{}.{}.{}.{}-s{:x}",
-    ProjectReverseDomainW,
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    SHM_SIZE);
-  return sCache;
+static std::wstring SHMPath() {
+  static auto sRet = LazyOnceValue<std::wstring> {[] {
+    return std::format(
+      L"{}/{}.{}.{}.{}-s{:x}",
+      ProjectReverseDomainW,
+      Version::Major,
+      Version::Minor,
+      Version::Patch,
+      Version::Build,
+      SHM_SIZE);
+  }};
+  return sRet;
 }
 
-static auto MutexPath() {
-  static std::wstring sCache;
-  if (sCache.empty()) [[unlikely]] {
-    sCache = SHMPath() + L".mutex";
-  }
-  return sCache;
+static std::wstring MutexPath() {
+  static auto sRet
+    = LazyOnceValue<std::wstring> {[] { return SHMPath() + L".mutex"; }};
+  return sRet;
 }
 
 Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
