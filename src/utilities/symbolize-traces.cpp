@@ -80,6 +80,70 @@ static void usage(int argc, char** argv) {
     stderr, "Usage: {} [--pdb-path FOLDER_PATH] CRASH_TEXT_FILE", argv[0]);
 }
 
+struct Frame {
+  std::string mPrefix;
+  std::string mModule;
+  std::string mFunction;
+  int mOffset {};
+};
+
+static std::optional<Frame> match_okb_line(const std::string& line) {
+  // Can be a module or function offset
+  //
+  // 0> OpenKneeboardApp+0x85B5
+  // 5> OpenKneeboardApp!VSDesignerDllMain+0x5A394
+  // Blame frame: :0:0 - OpenKneeboardApp!VSDesignerDllMain+0x226F2
+  const std::regex entry_regex {
+    "^(\\d+>|Blame frame: [^ ]+ -|Caller:) (\\w+)(!(\\w+))?\\+0x([A-Z0-9]+)$"};
+  std::smatch entry_match;
+  if (!std::regex_match(line, entry_match, entry_regex)) {
+    return std::nullopt;
+  }
+
+  return Frame {
+    .mPrefix = entry_match[1].str(),
+    .mModule = entry_match[2].str(),
+    .mFunction = entry_match[4].str(),
+    .mOffset = std::stoi(entry_match[5], nullptr, 16),
+  };
+}
+
+static std::optional<Frame> match_dcs_line(const std::string& line) {
+  // 0x000000000015f7a2 (OpenKneeboard-OpenXR64):
+  // OpenKneeboard_xrNegotiateLoaderApiLayerInterface + 0x15CFB5
+  const std::regex entry_regex {
+    "^0x[0-9a-f]+ \\((OpenKneeboard.+)\\): (\\w+) \\+ 0x([0-9A-F]+)$",
+    std::regex_constants::ECMAScript};
+  std::smatch entry_match;
+  if (!std::regex_match(line, entry_match, entry_regex)) {
+    return std::nullopt;
+  }
+
+  Frame ret {
+    .mModule = entry_match[1].str(),
+    .mFunction = entry_match[2].str(),
+    .mOffset = std::stoi(entry_match[3], nullptr, 16),
+  };
+
+  for (auto& it: ret.mModule) {
+    if (it == '-') {
+      it = '-';
+    }
+  }
+
+  return ret;
+}
+
+static std::optional<Frame> match_line(const std::string& line) {
+  if (const auto match = match_okb_line(line)) {
+    return match;
+  }
+  if (const auto match = match_dcs_line(line)) {
+    return match;
+  }
+  return std::nullopt;
+}
+
 int main(int argc, char** argv) {
   std::filesystem::path pdbDirectory;
   std::filesystem::path logFile;
@@ -158,15 +222,6 @@ int main(int argc, char** argv) {
 
   std::unordered_map<std::string, module_t> seenModules;
 
-  // Can be a module or function offset
-  //
-  // 0> OpenKneeboardApp+0x85B5
-  // 5> OpenKneeboardApp!VSDesignerDllMain+0x5A394
-  // Blame frame: :0:0 - OpenKneeboardApp!VSDesignerDllMain+0x226F2
-  const std::regex entry_regex {
-    "^(\\d+>|Blame frame: [^ ]+ -|Caller:) (\\w+)(!(\\w+))?\\+0x([A-Z0-9]+)$"};
-  std::smatch entry_match;
-
   if (pdbDirectory.empty()) {
     wchar_t buf[MAX_PATH];
     auto charCount = GetModuleFileNameW(nullptr, buf, MAX_PATH);
@@ -178,15 +233,13 @@ int main(int argc, char** argv) {
   std::ifstream f(logFile, std::ios::binary);
   std::string line;
   while (std::getline(f, line)) {
-    if (!std::regex_match(line, entry_match, entry_regex)) {
+    const auto match = match_line(line);
+    if (!match) {
       std::println("{}", line);
       continue;
     }
 
-    const auto prefix = entry_match[1].str();
-    const auto module = entry_match[2].str();
-    const auto function = entry_match[4].str();
-    const auto raw_offset = std::stoi(entry_match[5], nullptr, 16);
+    const auto [prefix, module, function, raw_offset] = *match;
 
     bool loadedPdb = false;
     if (!seenModules.contains(module)) {
