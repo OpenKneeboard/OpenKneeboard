@@ -291,7 +291,11 @@ task<void> WebView2Renderer::InitializeContentToCapture() {
     mWebView.OpenDevToolsWindow();
   }
 
-  mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+  try {
+    mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+  } catch (const winrt::hresult_invalid_argument& e) {
+    dprint.Warning("Can't navigate to URI: {}", mSettings.mURI);
+  }
 
   mState.Transition<State::Constructed, State::InitializedComposition>();
 }
