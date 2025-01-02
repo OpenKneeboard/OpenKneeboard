@@ -59,7 +59,7 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-task<void> WGCRenderer::Init() noexcept {
+task<void> WGCRenderer::Init() {
   const auto keepAlive = shared_from_this();
 
   // Requires Windows 11
@@ -80,50 +80,49 @@ task<void> WGCRenderer::Init() noexcept {
 
   // Would switch threads here, but now we're using the UI thread for everything
   // :)
-  {
-    co_await this->InitializeContentToCapture();
-    co_await mUIThread;
-    const std::unique_lock d2dlock(*mDXR);
+  co_await this->InitializeContentToCapture();
+  co_await mUIThread;
+  const std::unique_lock d2dlock(*mDXR);
 
-    winrt::Windows::Graphics::Capture::GraphicsCaptureItem item {nullptr};
-    try {
-      item = this->CreateWGCaptureItem();
-    } catch (const winrt::hresult_error& e) {
-      OPENKNEEBOARD_BREAK;
-      co_return;
-    }
-    if (!item) {
-      dprint("Failed to create Windows::Graphics::CaptureItem");
-      co_return;
-    }
-
-    const auto size = item.Size();
-    if (size.Width < 1 || size.Height < 1) {
-      dprint("WGC width ({}) or height ({}) < 1", size.Width, size.Height);
-      OPENKNEEBOARD_BREAK;
-      co_return;
-    }
-
-    winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
-      mDXR->mDXGIDevice.get(),
-      reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
-
-    // WGC does not support direct capture of sRGB
-    mFramePool = WGC::Direct3D11CaptureFramePool::CreateFreeThreaded(
-      mWinRTD3DDevice,
-      this->GetPixelFormat(),
-      WGCRenderer::SwapchainLength,
-      size);
-
-    mCaptureSession = mFramePool.CreateCaptureSession(item);
-    mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
-    if (supportsBorderRemoval) {
-      mCaptureSession.IsBorderRequired(false);
-    }
-    mCaptureSession.StartCapture();
-
-    mCaptureItem = item;
+  winrt::Windows::Graphics::Capture::GraphicsCaptureItem item {nullptr};
+  try {
+    item = this->CreateWGCaptureItem();
+  } catch (const winrt::hresult_error& e) {
+    dprint.Warning(L"Failed to create WGCapture item: {}", e.message());
+    co_return;
   }
+  if (!item) {
+    dprint("Failed to create Windows::Graphics::CaptureItem");
+    co_return;
+  }
+
+  const auto size = item.Size();
+  if (size.Width < 1 || size.Height < 1) {
+    dprint.Warning(
+      "WGC width ({}) or height ({}) < 1", size.Width, size.Height);
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+
+  winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
+    mDXR->mDXGIDevice.get(),
+    reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
+
+  // WGC does not support direct capture of sRGB
+  mFramePool = WGC::Direct3D11CaptureFramePool::CreateFreeThreaded(
+    mWinRTD3DDevice,
+    this->GetPixelFormat(),
+    WGCRenderer::SwapchainLength,
+    size);
+
+  mCaptureSession = mFramePool.CreateCaptureSession(item);
+  mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
+  if (supportsBorderRemoval) {
+    mCaptureSession.IsBorderRequired(false);
+  }
+  mCaptureSession.StartCapture();
+
+  mCaptureItem = item;
 }
 
 WGCRenderer::WGCRenderer(

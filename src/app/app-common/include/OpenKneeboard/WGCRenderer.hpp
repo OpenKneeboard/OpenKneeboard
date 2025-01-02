@@ -77,7 +77,7 @@ class WGCRenderer : public virtual EventReceiver,
     KneeboardState*,
     const Options& options);
   [[nodiscard]]
-  task<void> Init() noexcept;
+  task<void> Init();
 
   virtual task<void> InitializeContentToCapture() = 0;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;
