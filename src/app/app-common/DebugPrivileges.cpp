@@ -33,7 +33,9 @@ DebugPrivileges::DebugPrivileges() {
         GetCurrentProcess(),
         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
         mToken.put())) {
-    dprint.Error("Failed to open own process token");
+    dprint.Error(
+      "Failed to open own process token : {:#018x}",
+      HRESULT_FROM_WIN32(GetLastError()));
     return;
   }
 
