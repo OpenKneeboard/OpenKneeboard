@@ -198,6 +198,7 @@ class Snapshot final {
     Empty,
     IncorrectKind,
     IncorrectGPU,
+    IPCHandleError,
     ValidWithoutTexture,
     ValidWithTexture,
   };
@@ -206,10 +207,13 @@ class Snapshot final {
   static constexpr const incorrect_kind_t incorrect_kind {};
   struct incorrect_gpu_t {};
   static constexpr const incorrect_gpu_t incorrect_gpu {};
+  struct ipc_handle_error_t {};
+  static constexpr const ipc_handle_error_t ipc_handle_error {};
 
   Snapshot(nullptr_t);
   Snapshot(incorrect_kind_t);
   Snapshot(incorrect_gpu_t);
+  Snapshot(ipc_handle_error_t);
 
   Snapshot(
     Detail::FrameMetadata*,

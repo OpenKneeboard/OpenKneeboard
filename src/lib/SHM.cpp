@@ -196,6 +196,9 @@ Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 Snapshot::Snapshot(incorrect_gpu_t) : mState(State::IncorrectGPU) {
 }
 
+Snapshot::Snapshot(ipc_handle_error_t) : mState(State::IPCHandleError) {
+}
+
 Snapshot::Snapshot(FrameMetadata* metadata) : mState(State::Empty) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Snapshot::Snapshot(FrameMetadata)");
   mHeader = std::make_shared<FrameMetadata>(*metadata);
@@ -680,8 +683,18 @@ Snapshot Reader::MaybeGetUncached(
     handles = {};
   }
   if (!handles) {
-    handles = std::make_unique<IPCHandles>(
-      p->mFeederProcessHandle.get(), *p->mHeader);
+    try {
+      handles = std::make_unique<IPCHandles>(
+        p->mFeederProcessHandle.get(), *p->mHeader);
+    } catch (const winrt::hresult_error& e) {
+      TraceLoggingWriteTagged(
+        activity,
+        "SHM::Reader::MaybeGetUncached/ipc_handle_error",
+        TraceLoggingValue(e.code().value, "HRESULT"),
+        TraceLoggingValue(e.message().c_str(), "Message"));
+      activity.StopWithResult("ipc_handle_error");
+      return {Snapshot::ipc_handle_error};
+    }
   }
 
   return Snapshot(p->mHeader, copier, handles.get(), dest);
