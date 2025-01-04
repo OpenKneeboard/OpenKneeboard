@@ -525,10 +525,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
         .value_or(0);
   SetDumpType(fullDumps ? DumpType::FullDump : DumpType::MiniDump);
 
-  if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {
-    return 0;
-  }
-
   // CreateMutex can set ERROR_ALREADY_EXISTS on success, so we need to
   // have a known-succeeding initial state.
   SetLastError(ERROR_SUCCESS);

@@ -28,17 +28,4 @@ bool IsElevated() noexcept;
 /// If the shell is elevated, we can't de-elevate, and UAC is probably disabled.
 bool IsShellElevated() noexcept;
 
-enum class DesiredElevation : int {
-  KeepInitialPrivileges = 0,
-  Elevated = 1,
-  NotElevated = 2,
-};
-
-DesiredElevation GetDesiredElevation() noexcept;
-
-// Throws unless elevated; should be called from an elevated helper.
-void SetDesiredElevation(DesiredElevation);
-
-bool RelaunchWithDesiredElevation(DesiredElevation, int showCommand);
-
 }// namespace OpenKneeboard

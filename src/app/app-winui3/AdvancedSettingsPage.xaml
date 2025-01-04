@@ -315,14 +315,6 @@
         BorderThickness="1"
         Padding="8"
         Spacing="12">
-        <ComboBox
-          Header="Elevation"
-          SelectedIndex="{x:Bind DesiredElevation}"
-          IsEnabled="{x:Bind CanChangeElevation,Mode=OneWay}">
-          <x:String>Run elevated if launched elevated</x:String>
-          <x:String>Run elevated</x:String>
-          <x:String>Run as normal user</x:String>
-        </ComboBox>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">

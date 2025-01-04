@@ -196,19 +196,6 @@ target_link_libraries(
 )
 
 add_helper_executable(
-  OpenKneeboard-Set-Desired-Elevation-Helper
-  WIN32
-  set-desired-elevation-helper.cpp
-  icon.rc
-)
-target_link_libraries(
-  OpenKneeboard-Set-Desired-Elevation-Helper
-  PRIVATE
-  OpenKneeboard-Elevation
-  OpenKneeboard-dprint
-)
-
-add_helper_executable(
   OpenKneeboard-WindowCaptureHook-Helper
   WIN32
   32BIT_ONLY
