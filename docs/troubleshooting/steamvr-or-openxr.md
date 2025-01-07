@@ -5,6 +5,11 @@ parent: Troubleshooting
 
 # Troubleshooting OpenXR or Legacy SteamVR API (OpenVR) Issues
 
+## If you have a Varjo headset and are using Varjo Base v1.4 or above
+
+Varjo Base v1.4 [have a bug](https://github.com/OpenKneeboard/OpenKneeboard/issues/698) which makes OpenKneeboard invisible or appear in an extremely incorrect position for some users. Downgrade Varjo Base to v1.3 or below. Varjo are aware of the issue.
+
+
 ## If you using the legacy SteamVR API but the game supports OpenXR
 
 If the game supports OpenXR without using OpenComposite, use OpenXR instead. OpenComposite is unsupported.
