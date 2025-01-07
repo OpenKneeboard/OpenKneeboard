@@ -17,6 +17,10 @@ It has also been heavily tested with the Quest 2, and is known to work with Pima
 
 It should work with any headset that is compatible with OpenXR or SteamVR.
 
+### Varjo headsets
+
+Varjo Base v4.4 and above [have a bug](https://github.com/OpenKneeboard/OpenKneeboard/issues/698) which makes OpenKneeboard invisible or appear in an extremely incorrect position for some users. If you encounter any issues, downgrade Varjo Base to v4.3 or below. Varjo are aware of the issue.
+
 ## XBox and other XInput Controllers
 
 These are only supported when OpenKneeboard is the active window; this is a Windows "feature" specific to XBox controllers.
