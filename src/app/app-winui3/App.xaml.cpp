@@ -279,6 +279,20 @@ static void LogSystemInformation() {
       "  {}: {} {}", label, elevated ? "⚠️" : "✅", elevated ? "yes" : "no");
   }
 
+  if (IsElevated()) {
+    dprint.Warning("Showing self elevation warning");
+    MessageBoxW(
+      nullptr,
+      L"OpenKneeboard is running elevated; this is very likely to cause "
+      L"problems.\n\nIt is STRONGLY recommended to run both OpenKneeboard and "
+      L"the games with normal permissions.\n\nRunning OpenKneeboard as "
+      L"administrator is unsupported;\n"
+      L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS.",
+      L"OpenKneeboard",
+      MB_OK | MB_ICONWARNING);
+    dprint("Self elevation warning closed");
+  }
+
   // Log UAC settings because lower values aren't just "do not prompt" - they
   // will automatically run some things as administrator that otherwise would
   // be ran as a normal user. This causes problems.

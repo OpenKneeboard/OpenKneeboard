@@ -118,7 +118,6 @@ struct MainWindow : MainWindowT<MainWindow>,
   OpenKneeboard::fire_and_forget OnTabsChanged();
   OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent);
   OpenKneeboard::fire_and_forget OnLoaded();
-  task<void> ShowSelfElevationWarning();
   task<void> PromptForViewMode();
   task<void> ShowWarningIfTabletConfiguredButUnusable();
   task<void> ShowWarningIfWintabConfiguredButUnusable();

@@ -419,7 +419,6 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
     mKneeboard->GetGamesList()->StartInjector();
   }
 
-  co_await ShowSelfElevationWarning();
   co_await CheckAllDCSHooks(xamlRoot);
   co_await PromptForViewMode();
   co_await ShowWarningIfTabletConfiguredButUnusable();
@@ -577,29 +576,6 @@ task<void> MainWindow::PromptForViewMode() {
 
   viewSettings.mAppWindowMode = mode;
   co_await self->mKneeboard->SetViewsSettings(viewSettings);
-}
-
-task<void> MainWindow::ShowSelfElevationWarning() {
-  if (!IsElevated()) {
-    co_return;
-  }
-
-  ContentDialog dialog;
-  dialog.XamlRoot(Navigation().XamlRoot());
-  dialog.Title(
-    box_value(to_hstring(_(L"OpenKneeboard is running as administrator"))));
-  dialog.Content(box_value(to_hstring(
-    _(L"OpenKneeboard is running elevated; this is very likely to cause "
-      L"problems.\n\nIt is STRONGLY recommended to run both OpenKneeboard and "
-      L"the games with normal permissions.\n\nRunning OpenKneeboard as "
-      L"administrator is unsupported;\n"
-      L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS."))));
-  dialog.PrimaryButtonText(to_hstring(_(L"OK")));
-  dialog.DefaultButton(ContentDialogButton::Primary);
-
-  dprint.Warning("Showing self elevation warning");
-  co_await dialog.ShowAsync();
-  dprint("Self elevation warning closed");
 }
 
 task<void> MainWindow::WriteInstanceData() {
