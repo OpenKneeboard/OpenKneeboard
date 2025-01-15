@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/TabletInfo.hpp>
 #include <OpenKneeboard/TabletState.hpp>
@@ -47,12 +48,12 @@ namespace OpenKneeboard {
  *
  * https://github.com/OpenKneeboard/OTD-IPC
  */
-class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
+class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
+                           public IHasDisposeAsync {
  public:
   static std::shared_ptr<OTDIPCClient> Create();
   ~OTDIPCClient();
-  static OpenKneeboard::fire_and_forget final_release(
-    std::unique_ptr<OTDIPCClient>);
+  task<void> DisposeAsync() noexcept override;
 
   std::optional<TabletState> GetState(const std::string& id) const;
   std::optional<TabletInfo> GetTablet(const std::string& id) const;
@@ -62,6 +63,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   Event<std::string, TabletState> evTabletInputEvent;
 
  private:
+  DisposalState mDisposal;
   ProcessShutdownBlock mShutdownBlock;
   winrt::apartment_context mUIThread;
 

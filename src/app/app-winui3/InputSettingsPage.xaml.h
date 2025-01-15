@@ -49,7 +49,7 @@ struct InputSettingsPage
   OpenKneeboard::fire_and_forget WintabMode(uint8_t);
 
   bool IsOpenTabletDriverEnabled() const;
-  void IsOpenTabletDriverEnabled(bool);
+  OpenKneeboard::fire_and_forget IsOpenTabletDriverEnabled(bool);
 
   bool IsWinTabSelectionEnabled() const;
   winrt::hstring WinTabAvailability() const;

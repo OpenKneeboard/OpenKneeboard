@@ -57,8 +57,8 @@ task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
 }
 
 task<void> KneeboardState::ReleaseHwndResources() {
-  mTabletInput = {};
   mDirectInput = {};
+  co_await this->StopTabletInput();
   co_return;
 }
 
@@ -879,9 +879,18 @@ task<void> KneeboardState::ReleaseExclusiveResources() {
   OPENKNEEBOARD_TraceLoggingCoro("ReleaseExclusiveResources");
   mOpenVRThread = {};
   mInterprocessRenderer = {};
-  mTabletInput = {};
   mAPIEventServer = {};
+
+  co_await this->StopTabletInput();
   co_return;
+}
+
+task<void> KneeboardState::StopTabletInput() {
+  OPENKNEEBOARD_TraceLoggingCoro("KneeboardState::StopTabletInput()");
+  if (mTabletInput) {
+    co_await mTabletInput->DisposeAsync();
+    mTabletInput = {};
+  }
 }
 
 void KneeboardState::AcquireExclusiveResources() {

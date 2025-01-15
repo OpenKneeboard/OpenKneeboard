@@ -135,6 +135,7 @@ class KneeboardState final
   InterprocessRenderer* GetInterprocessRenderer() const;
 
   task<void> ReleaseExclusiveResources();
+  task<void> StopTabletInput();
   task<void> ReleaseHwndResources();
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \

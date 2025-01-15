@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Events.hpp>
+#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/TabletSettings.hpp>
 
 #include <Windows.h>
@@ -52,11 +53,14 @@ enum class WinTabAvailability {
 
 class TabletInputAdapter final
   : private EventReceiver,
-    public std::enable_shared_from_this<TabletInputAdapter> {
+    public std::enable_shared_from_this<TabletInputAdapter>,
+    public IHasDisposeAsync {
  public:
   static std::shared_ptr<TabletInputAdapter>
   Create(HWND, KneeboardState*, const TabletSettings&);
   ~TabletInputAdapter();
+
+  task<void> DisposeAsync() noexcept override;
 
   TabletSettings GetSettings() const;
   void LoadSettings(const TabletSettings&);
@@ -68,7 +72,7 @@ class TabletInputAdapter final
   bool HaveAnyTablet() const;
 
   bool IsOTDIPCEnabled() const;
-  void SetIsOTDIPCEnabled(bool);
+  task<void> SetIsOTDIPCEnabled(bool);
 
   WinTabAvailability GetWinTabAvailability();
 
@@ -85,9 +89,10 @@ class TabletInputAdapter final
   void StartWintab();
   void StopWintab();
   void StartOTDIPC();
-  void StopOTDIPC();
+  task<void> StopOTDIPC();
 
   winrt::apartment_context mUIThread;
+  DisposalState mDisposal;
 
   KneeboardState* mKneeboard;
   TabletSettings mSettings;

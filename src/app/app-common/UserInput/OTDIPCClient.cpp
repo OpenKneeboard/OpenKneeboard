@@ -21,7 +21,6 @@
 #include <OpenKneeboard/OTDIPCClient.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/task/resume_after.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
@@ -42,7 +41,7 @@ using namespace OTDIPC::Messages;
 namespace OpenKneeboard {
 
 std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
-  auto ret = shared_with_final_release(new OTDIPCClient());
+  auto ret = std::shared_ptr<OTDIPCClient>(new OTDIPCClient());
   ret->mRunner = ret->Run();
   return ret;
 }
@@ -56,15 +55,18 @@ OTDIPCClient::~OTDIPCClient() {
   dprint("{}", __FUNCTION__);
 }
 
-OpenKneeboard::fire_and_forget OTDIPCClient::final_release(
-  std::unique_ptr<OTDIPCClient> self) {
+task<void> OTDIPCClient::DisposeAsync() noexcept {
+  const auto disposing = mDisposal.Start();
+  if (!disposing) {
+    co_return;
+  }
   dprint("Requesting OTDIPCClient stop");
-  self->mStopper.request_stop();
+  mStopper.request_stop();
   dprint("Waiting for OTDIPCClient coro");
-  co_await std::move(self->mRunner).value();
-  dprint("Shutting down DQC");
-  co_await self->mDQC.ShutdownQueueAsync();
-  dprint("Destroying OTDIPCClient");
+  co_await std::move(mRunner).value();
+  dprint("Shutting down OTDIPCClient DQC");
+  co_await mDQC.ShutdownQueueAsync();
+  dprint("OTDIPCClient::DisposeAsync() is complete");
 }
 
 task<void> OTDIPCClient::Run() {

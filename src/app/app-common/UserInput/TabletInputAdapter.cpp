@@ -96,16 +96,16 @@ bool TabletInputAdapter::IsOTDIPCEnabled() const {
   return mSettings.mOTDIPC;
 }
 
-void TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
+task<void> TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
   if (value == IsOTDIPCEnabled()) {
-    return;
+    co_return;
   }
 
   mSettings.mOTDIPC = value;
   if (value) {
     StartOTDIPC();
   } else {
-    StopOTDIPC();
+    co_await StopOTDIPC();
   }
   evSettingsChangedEvent.Emit();
 }
@@ -130,7 +130,10 @@ void TabletInputAdapter::StartOTDIPC() {
   }
 }
 
-void TabletInputAdapter::StopOTDIPC() {
+task<void> TabletInputAdapter::StopOTDIPC() {
+  if (mOTDIPC) {
+    co_await mOTDIPC->DisposeAsync();
+  }
   mOTDIPC.reset();
 }
 
@@ -307,10 +310,14 @@ void TabletInputAdapter::LoadSettings(
   tablet->SetButtonBindings(bindings);
 }
 
+task<void> TabletInputAdapter::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("TabletInputAdapter::DisposeAsync()");
+  co_await this->StopOTDIPC();
+}
+
 TabletInputAdapter::~TabletInputAdapter() {
   OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::~TabletInputAdapter()");
   StopWintab();
-  StopOTDIPC();
   this->RemoveAllEventListeners();
   gHaveInstance.clear();
 }

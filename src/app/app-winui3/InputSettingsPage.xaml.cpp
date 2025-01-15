@@ -168,8 +168,9 @@ winrt::hstring InputSettingsPage::WinTabAvailability() const {
   std::unreachable();
 }
 
-void InputSettingsPage::IsOpenTabletDriverEnabled(bool value) {
-  mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
+OpenKneeboard::fire_and_forget InputSettingsPage::IsOpenTabletDriverEnabled(
+  bool value) {
+  co_await mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
   this->EmitPropertyChangedEvent(L"IsWinTabSelectionEnabled");
   this->EmitPropertyChangedEvent(L"WinTabAvailability");
 }
