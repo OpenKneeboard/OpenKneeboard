@@ -279,6 +279,7 @@ static void LogSystemInformation() {
       "  {}: {} {}", label, elevated ? "⚠️" : "✅", elevated ? "yes" : "no");
   }
 
+  bool shownElevationWarning = false;
   if (IsElevated()) {
     dprint.Warning("Showing self elevation warning");
     MessageBoxW(
@@ -291,56 +292,56 @@ static void LogSystemInformation() {
       L"OpenKneeboard",
       MB_OK | MB_ICONWARNING);
     dprint("Self elevation warning closed");
+    shownElevationWarning = true;
   }
 
   // Log UAC settings because lower values aren't just "do not prompt" - they
   // will automatically run some things as administrator that otherwise would
   // be ran as a normal user. This causes problems.
-  {
-    wil::unique_hkey hkey;
-    if (
-      RegOpenKeyW(
+  if (wil::unique_hkey hkey;
+      wil::reg::open_unique_key_nothrow(
         HKEY_LOCAL_MACHINE,
         L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
-        hkey.put())
+        hkey)
       == ERROR_SUCCESS) {
-      for (const auto& [name, expectedValue]: {
-             std::tuple {L"EnableLUA", 1},
-             std::tuple {L"PromptOnSecureDesktop", 1},
-             std::tuple {L"ConsentPromptBehaviorAdmin", 5},
-           }) {
-        DWORD data {};
-        DWORD dataSize {sizeof(data)};
-        if (
-          RegGetValueW(
-            hkey.get(),
-            nullptr,
-            name,
-            RRF_RT_DWORD | RRF_ZEROONFAILURE,
-            nullptr,
-            &data,
-            &dataSize)
-          == ERROR_SUCCESS) {
-          if (data == expectedValue) {
-            dprint(
-              L"  UAC {}: ✅ {:#010x} ({})",
-              name,
-              static_cast<uint32_t>(data),
-              data);
-          } else {
-            dprint(
-              L"  UAC {}: ⚠️ {:#010x} ({}) - expected {:#010x} ({})",
-              name,
-              static_cast<uint32_t>(data),
-              data,
-              static_cast<uint32_t>(expectedValue),
-              expectedValue);
-          }
-        }
+    const auto enableLua
+      = wil::reg::try_get_value_dword(hkey.get(), L"EnableLUA").value_or(0);
+    const auto cpba
+      = wil::reg::try_get_value_dword(hkey.get(), L"ConsentPromptBehaviorAdmin")
+          .value_or(0);
+    bool badUAC = false;
+    for (auto&& [name, value, isValid]: {
+           std::tuple {"EnableLUA", enableLua, enableLua == 1},
+           std::tuple {
+             "ConsentPromptBehaviorAdmin", cpba, cpba >= 1 && cpba <= 5},
+         }) {
+      if (isValid) {
+        dprint("  UAC {0}: ✅ {1:#010x} ({1})", name, value);
+      } else {
+        dprint("  UAC {0}: ⚠️ {1:#010x} ({1})", name, value);
+        badUAC = true;
       }
-    } else {
-      dprint("  Failed to read UAC settings.");
     }
+
+    if (badUAC && !shownElevationWarning) {
+      dprint.Warning("Showing UAC warning");
+      shownElevationWarning = true;
+      MessageBoxW(
+        nullptr,
+        L"Your Windows User Account Control (UAC) settings effectively "
+        L"run programs as administrator even if you don't ask them to.\n\n"
+        L"It is STRONGLY recommended to run both OpenKneeboard and "
+        L"the games with normal permissions.\n\n"
+        L"Fix this by changing UAC to any option EXCEPT for the lowest "
+        L"setting, then rebooting.\n\n"
+        L"This configuration is unsupported; "
+        L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS.",
+        L"OpenKneeboard",
+        MB_OK | MB_ICONWARNING);
+      dprint("UAC warning dismissed");
+    }
+  } else {
+    dprint("  Failed to read UAC settings.");
   }
 
   if (WebView2PageSource::IsAvailable()) {
