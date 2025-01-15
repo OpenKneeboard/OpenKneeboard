@@ -101,6 +101,10 @@ task<void> TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
     co_return;
   }
 
+  if (!mSettings.mWarnIfOTDIPCUnusuable) {
+    mSettings.mWarnIfOTDIPCUnusuable = true;
+  }
+
   mSettings.mOTDIPC = value;
   if (value) {
     StartOTDIPC();
@@ -503,6 +507,10 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
 
 OpenKneeboard::fire_and_forget TabletInputAdapter::OnOTDDevice(
   TabletInfo tablet) {
+  if (!mSettings.mWarnIfOTDIPCUnusuable) {
+    mSettings.mWarnIfOTDIPCUnusuable = true;
+    this->evSettingsChangedEvent.Emit();
+  }
   auto weak = weak_from_this();
   co_await mUIThread;
   if (auto self = weak.lock()) {

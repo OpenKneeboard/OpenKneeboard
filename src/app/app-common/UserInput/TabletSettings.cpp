@@ -50,6 +50,11 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mName,
   mExpressKeyBindings,
   mOrientation)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(TabletSettings, mDevices, mWintab, mOTDIPC)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  TabletSettings,
+  mDevices,
+  mWintab,
+  mOTDIPC,
+  mWarnIfOTDIPCUnusuable)
 
 }// namespace OpenKneeboard

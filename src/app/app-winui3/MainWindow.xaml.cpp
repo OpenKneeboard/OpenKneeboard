@@ -493,11 +493,12 @@ task<void> MainWindow::ShowWarningIfWintabConfiguredButUnusable() {
 task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
   auto adapter = mKneeboard->GetTabletInputAdapter();
 
-  if ((!adapter) || !adapter->IsOTDIPCEnabled()) {
+  if ((!adapter) || (!adapter->IsOTDIPCEnabled()) || adapter->HaveAnyTablet()) {
     co_return;
   }
 
-  if (adapter->HaveAnyTablet()) {
+  if (!adapter->GetSettings().mWarnIfOTDIPCUnusuable) {
+    dprint("OTD-IPC is enabled and unusable, but has never been used");
     co_return;
   }
 

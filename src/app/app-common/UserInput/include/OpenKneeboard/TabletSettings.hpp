@@ -56,6 +56,7 @@ struct TabletSettings final {
 
   WintabMode mWintab {WintabMode::Disabled};
   bool mOTDIPC {true};
+  bool mWarnIfOTDIPCUnusuable {false};
 
   std::unordered_map<std::string, Device> mDevices;
 
