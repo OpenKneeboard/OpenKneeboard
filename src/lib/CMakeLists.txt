@@ -42,6 +42,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-config
   PRIVATE
+  OpenKneeboard-Elevation
   OpenKneeboard-dprint
   OpenKneeboard-shims
   OpenKneeboard-Filesystem

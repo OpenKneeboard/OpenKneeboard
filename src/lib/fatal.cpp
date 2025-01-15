@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/elevation.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/handles.hpp>
@@ -426,7 +427,9 @@ OPENKNEEBOARD_NOINLINE
     CreateDump(meta, logContents, dumpableExceptions);
 
     try {
-      Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
+      if (!IsElevated()) {
+        Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
+      }
     } catch (...) {
     }
 
