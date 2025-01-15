@@ -156,7 +156,7 @@ winrt::hstring InputSettingsPage::WinTabAvailability() const {
       }
     case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
       return _(
-        L"WinTab is disabled because you have enabled OpenTabletDriver.");
+        L"WinTab is disabled because OpenTabletDriver support is enabled.");
     case WinTabAvailability::Skipping_NoTrustedSignature:
       return _(
         L"WinTab is disabled because your manufacturer's WinTab driver is "
