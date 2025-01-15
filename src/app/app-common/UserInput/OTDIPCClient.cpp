@@ -60,8 +60,6 @@ OpenKneeboard::fire_and_forget OTDIPCClient::final_release(
   std::unique_ptr<OTDIPCClient> self) {
   dprint("Requesting OTDIPCClient stop");
   self->mStopper.request_stop();
-  dprint("Waiting for OTDIPCClient completion handle");
-  co_await winrt::resume_on_signal(self->mCompletionHandle.get());
   dprint("Waiting for OTDIPCClient coro");
   co_await std::move(self->mRunner).value();
   dprint("Shutting down DQC");
@@ -70,10 +68,6 @@ OpenKneeboard::fire_and_forget OTDIPCClient::final_release(
 }
 
 task<void> OTDIPCClient::Run() {
-  const scope_exit markCompletion([handle = mCompletionHandle.get()]() {
-    dprint("Setting OTDIPC completion handle");
-    SetEvent(handle);
-  });
   dprint("Starting OTD-IPC client");
   const scope_exit exitMessage([]() {
     dprint(
@@ -86,7 +80,6 @@ task<void> OTDIPCClient::Run() {
 
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
-    co_await wil::resume_foreground(workThread);
     co_await resume_after(std::chrono::seconds(1), mStopper.get_token());
   }
 }
