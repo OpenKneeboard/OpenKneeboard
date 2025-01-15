@@ -300,8 +300,8 @@ static task<void> InstallPlugin(
     for (zip_int64_t i = 0; i < entryCount; ++i) {
       zip_stat_init(&stat);
       zip_stat_index(zip, i, 0, &stat);
-      constexpr auto requiredFlags = ZIP_STAT_NAME | ZIP_STAT_SIZE;
-      if ((stat.valid & requiredFlags) != requiredFlags) {
+      constexpr auto requiredValid = ZIP_STAT_NAME | ZIP_STAT_SIZE;
+      if ((stat.valid & requiredValid) != requiredValid) {
         dprint.Error("Entry {} in zip does not have required metadata", i);
         OPENKNEEBOARD_BREAK;
         co_return;
@@ -506,7 +506,7 @@ static task<void> InstallPluginFromPath(
   zip_stat_init(&zstat);
   zip_stat_index(zip.get(), metadataFileIndex, 0, &zstat);
 
-  if ((zstat.flags & ZIP_STAT_SIZE) == 0) {
+  if ((zstat.valid & ZIP_STAT_SIZE) == 0) {
     co_await ShowPluginInstallationError(
       xamlRoot, path, _("Metadata file `v1.json` has an unknown size"));
     co_return;
