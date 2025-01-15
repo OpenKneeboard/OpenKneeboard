@@ -254,6 +254,11 @@ class AtomicStateMachine final : public Base {
     std::memory_order order = std::memory_order_seq_cst) const noexcept {
     return this->mState.load(order);
   }
+
+  void Wait(State old, std::memory_order order = std::memory_order_seq_cst)
+    const noexcept {
+    this->mState.wait(old, order);
+  }
 };
 
 template <class TStateMachine, auto pre, auto state, auto post>

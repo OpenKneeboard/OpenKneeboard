@@ -21,11 +21,11 @@
 
 #include <OpenKneeboard/StateMachine.hpp>
 
+#include <OpenKneeboard/task.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Foundation.h>
-
-#include <OpenKneeboard/task.hpp>
 
 namespace OpenKneeboard {
 class IHasDisposeAsync {
@@ -82,12 +82,19 @@ class DisposalState final {
 
   class UniqueDisposal {
    public:
-    UniqueDisposal() = delete;
+    UniqueDisposal() = default;
     UniqueDisposal(const UniqueDisposal&) = delete;
-    UniqueDisposal(UniqueDisposal&&) = delete;
-
     UniqueDisposal& operator=(const UniqueDisposal&) = delete;
-    UniqueDisposal& operator=(UniqueDisposal&&) = delete;
+
+    UniqueDisposal& operator=(UniqueDisposal&& other) {
+      mStateMachine = other.mStateMachine;
+      other.mStateMachine = nullptr;
+      return *this;
+    }
+
+    UniqueDisposal(UniqueDisposal&& other) {
+      *this = std::move(other);
+    }
 
     constexpr UniqueDisposal(StateMachine* impl) : mStateMachine(impl) {
     }
@@ -112,13 +119,18 @@ class DisposalState final {
     : mStateMachine(caller) {
   }
 
+  /** Start, wait or pending, or return immediately.
+   *
+   * Named for consistency with `std::call_once()`
+   */
   [[nodiscard]]
-  inline UniqueDisposal Start() noexcept {
-    if (mStateMachine.TryTransition<State::Live, State::Disposing>()) {
-      return {&mStateMachine};
-    } else {
-      return {nullptr};
+  inline task<UniqueDisposal> StartOnce() noexcept {
+    auto ret = this->Start();
+    if (!ret) {
+      co_await winrt::resume_background();
+      mStateMachine.Wait(State::Disposing);
     }
+    co_return std::move(ret);
   }
 
   constexpr bool HasStarted() const noexcept {
@@ -127,6 +139,15 @@ class DisposalState final {
 
  private:
   StateMachine mStateMachine;
+
+  [[nodiscard]]
+  inline UniqueDisposal Start() noexcept {
+    if (mStateMachine.TryTransition<State::Live, State::Disposing>()) {
+      return {&mStateMachine};
+    } else {
+      return {nullptr};
+    }
+  }
 };
 
 }// namespace OpenKneeboard

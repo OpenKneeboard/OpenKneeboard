@@ -187,7 +187,7 @@ WebView2PageSource::~WebView2PageSource() {
 
 task<void> WebView2PageSource::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("WebView2PageSource::DisposeAsync()");
-  const auto disposing = mDisposal.Start();
+  const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
   }

@@ -268,7 +268,7 @@ void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
 }
 
 task<void> KneeboardState::DisposeAsync() noexcept {
-  const auto disposing = mDisposal.Start();
+  const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
   }

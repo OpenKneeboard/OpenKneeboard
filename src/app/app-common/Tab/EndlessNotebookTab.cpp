@@ -52,7 +52,7 @@ task<std::shared_ptr<EndlessNotebookTab>> EndlessNotebookTab::Create(
 }
 
 task<void> EndlessNotebookTab::DisposeAsync() noexcept {
-  const auto disposing = mDisposal.Start();
+  const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
   }

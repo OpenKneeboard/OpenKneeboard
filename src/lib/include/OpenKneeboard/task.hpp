@@ -446,8 +446,7 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
 
   typename TTraits::result_type mResult;
 
-  template <class T>
-  void return_value(T&& result) noexcept {
+  void return_value(typename TTraits::result_type&& result) noexcept {
     TraceLoggingWrite(
       gTraceProvider,
       "TaskPromise<>::return_value()",
@@ -463,7 +462,7 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
           .c_str(),
         "ResultState"));
     using enum TaskPromiseResultState;
-    mResult = std::forward<T>(result);
+    mResult = std::move(result);
     this->mResultState.Transition<NoResult, HaveResult>();
   }
 };

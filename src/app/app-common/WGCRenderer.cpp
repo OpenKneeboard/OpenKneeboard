@@ -144,7 +144,7 @@ WGCRenderer::~WGCRenderer() {
 
 task<void> WGCRenderer::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("WGCRenderer::DisposeAsync");
-  const auto disposing = mDisposal.Start();
+  const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
   }

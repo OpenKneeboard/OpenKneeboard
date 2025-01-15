@@ -65,7 +65,7 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
 
 task<void> PageSourceWithDelegates::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("PageSourceWithDelegates::DisposeAsync()");
-  const auto disposing = mDisposal.Start();
+  const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
   }
