@@ -56,6 +56,7 @@ OTDIPCClient::~OTDIPCClient() {
 }
 
 task<void> OTDIPCClient::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("OTDIPCClient::DisposeAsync()");
   const auto disposing = co_await mDisposal.StartOnce();
   if (!disposing) {
     co_return;
@@ -103,6 +104,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 }
 
 task<void> OTDIPCClient::RunSingle() {
+  OPENKNEEBOARD_TraceLoggingCoro("OTDIPCClient::RunSingle()");
   const auto connection = Win32::or_default::CreateFile(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,

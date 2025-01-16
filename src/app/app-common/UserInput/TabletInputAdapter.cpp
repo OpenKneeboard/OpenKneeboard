@@ -135,6 +135,7 @@ void TabletInputAdapter::StartOTDIPC() {
 }
 
 task<void> TabletInputAdapter::StopOTDIPC() {
+  OPENKNEEBOARD_TraceLoggingCoro("TabletInputAdapter::StopOTDIPC()");
   if (mOTDIPC) {
     co_await mOTDIPC->DisposeAsync();
   }
