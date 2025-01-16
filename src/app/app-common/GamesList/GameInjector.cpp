@@ -71,8 +71,7 @@ void GameInjector::SetGameInstances(
 
 task<void> GameInjector::Run(std::stop_token stopToken) {
   this->RemoveEventListener(mTabletSettingsChangeToken);
-  auto tablet = mKneeboardState->GetTabletInputAdapter();
-  if (tablet) {
+  if (auto tablet = mKneeboardState->GetTabletInputAdapter()) {
     if (tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
       mWintabMode = tablet->GetWintabMode();
     }
