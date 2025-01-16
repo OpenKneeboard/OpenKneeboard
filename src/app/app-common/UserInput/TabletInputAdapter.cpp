@@ -316,6 +316,10 @@ void TabletInputAdapter::LoadSettings(
 
 task<void> TabletInputAdapter::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("TabletInputAdapter::DisposeAsync()");
+  const auto disposing = co_await mDisposal.StartOnce();
+  if (!disposing) {
+    co_return;
+  }
   co_await this->StopOTDIPC();
 }
 
