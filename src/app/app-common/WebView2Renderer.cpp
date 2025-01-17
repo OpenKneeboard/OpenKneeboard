@@ -985,10 +985,10 @@ task<void> WebView2Renderer::DisposeAsync() noexcept {
     co_return;
   }
 
+  mEnvironment = nullptr;
+  mController = nullptr;
   mDQC = nullptr;
   mWebView = nullptr;
-  mController = nullptr;
-  mEnvironment = nullptr;
   mWebViewVisual = nullptr;
   mRootVisual = nullptr;
   mCompositor = nullptr;

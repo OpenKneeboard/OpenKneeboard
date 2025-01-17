@@ -194,16 +194,13 @@ task<void> WebView2PageSource::DisposeAsync() noexcept {
 
   auto self = shared_from_this();
   if (mWorkerDQ) {
-    auto children = self->mDocumentResources.mRenderers | std::views::values
-      | std::views::transform([](auto it) { return it->DisposeAsync(); })
-      | std::ranges::to<std::vector>();
-    for (auto&& child: children) {
-      co_await std::move(child);
+    mEnvironment = nullptr;
+    // Webview tends to crash if we clean up these in parallel
+    for (auto&& child:
+         self->mDocumentResources.mRenderers | std::views::values) {
+      co_await child->DisposeAsync();
     }
 
-    co_await wil::resume_foreground(mWorkerDQ);
-
-    mEnvironment = nullptr;
     co_await mUIThread;
 
     mDocumentResources = {};
