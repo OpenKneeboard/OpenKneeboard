@@ -25,6 +25,7 @@
 #include <exception>
 #include <format>
 #include <functional>
+#include <span>
 #include <stacktrace>
 #include <string>
 #include <variant>
@@ -55,6 +56,16 @@ struct StackFramePointer {
     : mValue(value) {
   }
 
+  auto operator->() const noexcept {
+    struct wrapper_t {
+      std::stacktrace_entry mValue;
+      auto operator->() const noexcept {
+        return &mValue;
+      }
+    };
+    return wrapper_t(std::bit_cast<std::stacktrace_entry>(mValue));
+  }
+
   OPENKNEEBOARD_FORCEINLINE
   static StackFramePointer caller(size_t skip = 0) {
     if (skip == 0) {
@@ -71,6 +82,28 @@ struct StackFramePointer {
 
   std::string to_string() const noexcept;
 };
+
+struct StackTrace {
+  OPENKNEEBOARD_FORCEINLINE
+  static StackTrace Current(std::size_t skip = 0) noexcept;
+
+  friend std::ostream& operator<<(std::ostream&, const StackTrace&);
+
+  inline StackFramePointer at(std::size_t pos) const {
+    if (pos >= mSize) [[unlikely]] {
+      throw std::out_of_range(
+        std::format("Requested stack frame {} of {}", pos, mSize));
+    }
+    return GetEntries()[pos];
+  }
+
+ private:
+  std::shared_ptr<void> mData;
+  std::size_t mSize {0};
+
+  std::span<StackFramePointer> GetEntries() const;
+};
+
 }// namespace OpenKneeboard
 
 namespace OpenKneeboard::detail {

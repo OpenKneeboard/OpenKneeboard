@@ -55,6 +55,8 @@ extern "C" void __stdcall _CxxThrowException(void*, _ThrowInfo);
 
 using std::operator""s;
 
+using namespace OpenKneeboard;
+
 namespace {
 [[noreturn]] void fast_fail() {
   __fastfail(FAST_FAIL_FATAL_APP_EXIT);
@@ -70,7 +72,7 @@ struct SkipStacktraceEntries {
 };
 
 struct ExceptionRecord {
-  std::stacktrace mCreationStack;
+  StackTrace mCreationStack;
 };
 
 static std::mutex gThreadNamesMutex;
@@ -79,7 +81,7 @@ static std::unordered_map<std::thread::id, std::wstring> gThreadNames {};
 static thread_local std::optional<ExceptionRecord> tLatestException {};
 
 struct WILFailureRecord {
-  std::stacktrace mCreationStack;
+  StackTrace mCreationStack;
   HRESULT mHR {};
   std::wstring mMessage;
   // Used for ERROR_UNHANDLED_EXCEPTION
@@ -115,7 +117,7 @@ struct CrashMeta {
   // Stack trace with the second entry being the blame frame.
   //
   // This should be a direct stack trace, not a stored/attributed one.
-  std::stacktrace mStacktrace;
+  StackTrace mStacktrace;
 
   std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
     mNow {std::chrono::time_point_cast<std::chrono::seconds>(
@@ -127,7 +129,7 @@ struct CrashMeta {
   std::filesystem::path mCrashDumpPath;
 
   CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries {0})
-    : mStacktrace(std::stacktrace::current(skipCount.mCount + 1)),
+    : mStacktrace(StackTrace::Current(skipCount.mCount + 1)),
       mCrashLogPath(GetCrashFilePath(L"txt")),
       mCrashDumpPath(GetCrashFilePath(L"dmp")) {
   }
@@ -305,9 +307,9 @@ static std::string GetFatalLogContents(
     const auto& caller = meta.mStacktrace.at(1);
     blameString = std::format(
       "{}:{} - {}",
-      caller.source_file(),
-      caller.source_line(),
-      caller.description());
+      caller->source_file(),
+      caller->source_line(),
+      caller->description());
   }
 
   // Let's just get the basics out early in case anything else goes wrong
@@ -368,8 +370,8 @@ static std::string GetFatalLogContents(
            "Message: {}\n", winrt::to_string(tLatestWILFailure->mMessage));
 
     if (tLatestWILFailure->mException) {
-      f << std::format(
-        "\nException:\n\n{}\n", tLatestWILFailure->mException->mCreationStack);
+      f << "\nException:\n\n"
+        << tLatestWILFailure->mException->mCreationStack << "\n";
     }
   }
 
@@ -470,7 +472,7 @@ static void __stdcall OnWILResult(
   PWSTR debugMessage,
   size_t debugMessageChars) noexcept {
   tLatestWILFailure = {
-    .mCreationStack = std::stacktrace::current(),
+    .mCreationStack = StackTrace::Current(),
     .mHR = failure->hr,
     .mMessage
     = std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
@@ -507,7 +509,7 @@ extern "C" void __stdcall CxxThrowExceptionHook(
   if (pExceptionObject) {
     // Otherwise, it's a rethrow
     tLatestException = {
-      std::stacktrace::current(1),
+      StackTrace::Current(1),
     };
   }
 
@@ -537,6 +539,37 @@ extern "C" HRESULT __stdcall SetThreadDescriptionHook(
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
+
+std::span<StackFramePointer> StackTrace::GetEntries() const {
+  return std::span {reinterpret_cast<StackFramePointer*>(mData.get()), mSize};
+}
+
+OPENKNEEBOARD_FORCEINLINE
+StackTrace StackTrace::Current(std::size_t skip) noexcept {
+  // std::stacktrace::_Max_frames in the Microsoft STL as of 2025-01-16
+  void* buffer[0xFFFF];
+  // Function sporadically fails (as does std::stacktrace::current() on MS STL)
+  std::size_t frames = 0;
+  while (!(
+    frames = CaptureStackBackTrace(skip, std::size(buffer), buffer, nullptr))) {
+    // retry
+  }
+  static_assert(sizeof(StackFramePointer) == sizeof(void*));
+  // Not using a vector to avoid initialization overhead
+  StackTrace ret;
+  ret.mData = {malloc(sizeof(void*) * frames), &free};
+  memcpy(ret.mData.get(), buffer, sizeof(void*) * frames);
+  ret.mSize = frames;
+  return ret;
+}
+
+std::ostream& operator<<(std::ostream& lhs, const StackTrace& rhs) {
+  std::size_t counter = 0;
+  for (auto&& entry: rhs.GetEntries()) {
+    lhs << std::format("{}> {}\n", counter++, entry.to_string());
+  }
+  return lhs;
+}
 
 void SetDumpType(DumpType type) {
   constexpr auto miniDumpType = static_cast<MINIDUMP_TYPE>(
