@@ -71,11 +71,14 @@ task<void> OTDIPCClient::DisposeAsync() noexcept {
 }
 
 task<void> OTDIPCClient::Run() {
+  OPENKNEEBOARD_TraceLoggingCoro("OTDIPCClient::Run()");
   dprint("Starting OTD-IPC client");
-  const scope_exit exitMessage([]() {
-    dprint(
-      "Tearing down OTD-IPC client with {} uncaught exceptions",
-      std::uncaught_exceptions());
+  const scope_exit exitMessage([n = std::uncaught_exceptions()]() {
+    if (std::uncaught_exceptions() > n) {
+      dprint.Warning("Ending OTDIPClient::Run() with uncaught exceptions");
+    } else {
+      dprint("Ending OTDIPCClient::Run");
+    }
   });
   auto workThread = mDQC.DispatcherQueue();
   co_await wil::resume_foreground(workThread);
