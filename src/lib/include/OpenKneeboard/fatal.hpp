@@ -60,7 +60,12 @@ struct StackFramePointer {
     if (skip == 0) {
       return StackFramePointer {_ReturnAddress()};
     } else {
-      return StackFramePointer {std::stacktrace::current(skip + 1, 1).at(0)};
+      void* ptr {nullptr};
+      while (!CaptureStackBackTrace(skip + 1, 1, &ptr, nullptr)) {
+        // retry. Undocumented reliability issues:
+        // https://github.com/microsoft/STL/issues/3889
+      }
+      return StackFramePointer {ptr};
     }
   }
 
