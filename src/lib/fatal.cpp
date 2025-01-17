@@ -21,6 +21,7 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/elevation.hpp>
 #include <OpenKneeboard/fatal.hpp>
@@ -72,8 +73,18 @@ struct SkipStacktraceEntries {
 };
 
 struct ExceptionRecord {
+  enum class Flags : uint64_t {
+    None = 0,
+    ForceForNextException = 1,
+  };
+
   StackTrace mCreationStack;
+  Flags mFlags {};
 };
+
+consteval bool supports_bitflags(ExceptionRecord::Flags) {
+  return true;
+}
 
 static std::mutex gThreadNamesMutex;
 static std::unordered_map<std::thread::id, std::wstring> gThreadNames {};
@@ -506,7 +517,13 @@ static decltype(&_CxxThrowException) gCxxThrowException {nullptr};
 extern "C" void __stdcall CxxThrowExceptionHook(
   void* pExceptionObject,
   _ThrowInfo* pThrowInfo) {
-  if (pExceptionObject) {
+  using enum ExceptionRecord::Flags;
+  if (
+    tLatestException
+    && (tLatestException->mFlags & ForceForNextException)
+      == ForceForNextException) {
+    tLatestException->mFlags &= ~ForceForNextException;
+  } else if (pExceptionObject) {
     // Otherwise, it's a rethrow
     tLatestException = {
       StackTrace::Current(1),
@@ -561,6 +578,20 @@ StackTrace StackTrace::Current(std::size_t skip) noexcept {
   memcpy(ret.mData.get(), buffer, sizeof(void*) * frames);
   ret.mSize = frames;
   return ret;
+}
+
+StackTrace StackTrace::GetForMostRecentException() {
+  if (!tLatestException) {
+    return {};
+  }
+  return tLatestException->mCreationStack;
+}
+
+void StackTrace::SetForNextException(const StackTrace& v) {
+  tLatestException = ExceptionRecord {
+    v,
+    ExceptionRecord::Flags::ForceForNextException,
+  };
 }
 
 std::ostream& operator<<(std::ostream& lhs, const StackTrace& rhs) {

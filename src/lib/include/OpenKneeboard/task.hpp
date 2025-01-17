@@ -318,6 +318,7 @@ struct TaskPromiseBase {
     std::nullopt>
     mResultState;
 
+  StackTrace mUncaughtStack;
   std::exception_ptr mUncaught {};
 
   std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseRunning};
@@ -370,6 +371,7 @@ struct TaskPromiseBase {
     // performance at that point :)
     if (mOnException == TaskExceptionBehavior::StoreAndRethrow) [[likely]] {
       mUncaught = std::current_exception();
+      mUncaughtStack = StackTrace::GetForMostRecentException();
       mResultState.Transition<NoResult, HaveException>();
     } else {
       OPENKNEEBOARD_ASSERT(mOnException == TaskExceptionBehavior::Terminate);
@@ -607,6 +609,7 @@ struct TaskAwaiter {
     using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
       mPromise->mResultState.Transition<HaveException, ThrownException>();
+      StackTrace::SetForNextException(std::move(mPromise->mUncaughtStack));
       std::rethrow_exception(std::move(mPromise->mUncaught));
     }
 

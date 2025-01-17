@@ -30,8 +30,22 @@ template <class T>
   && std::unsigned_integral<std::underlying_type_t<T>>
 constexpr bool is_bitflags_v = false;
 
+namespace detail {
+
 template <class T>
-concept bitflags = is_bitflags_v<T>;
+  requires std::is_enum_v<T>
+  && std::unsigned_integral<std::underlying_type_t<T>>
+consteval bool supports_bitflags_adl(T) {
+  if constexpr (requires(T v) { supports_bitflags(v); }) {
+    return supports_bitflags(T {});
+  } else {
+    return is_bitflags_v<T>;
+  }
+}
+}// namespace detail
+
+template <class T>
+concept bitflags = std::is_enum_v<T> && detail::supports_bitflags_adl(T {});
 
 template <bitflags T>
 constexpr T operator|(T a, T b) {

@@ -97,6 +97,9 @@ struct StackTrace {
     return GetEntries()[pos];
   }
 
+  static StackTrace GetForMostRecentException();
+  static void SetForNextException(const StackTrace&);
+
  private:
   std::shared_ptr<void> mData;
   std::size_t mSize {0};
