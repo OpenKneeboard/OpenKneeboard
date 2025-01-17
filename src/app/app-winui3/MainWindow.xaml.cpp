@@ -1175,9 +1175,11 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
-  if (
-    tabID
-    != mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()) {
+  const auto tab = mKneeboardView->GetCurrentTabView()->GetRootTab().lock();
+  if (!tab) {
+    return;
+  }
+  if (tabID != tab->GetRuntimeID()) {
     mTabSwitchReason = TabSwitchReason::InAppNavSelection;
     mKneeboardView->SetCurrentTabByRuntimeID(tabID);
     return;

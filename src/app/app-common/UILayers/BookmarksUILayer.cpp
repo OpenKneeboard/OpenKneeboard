@@ -282,9 +282,8 @@ BookmarksUILayer::Buttons BookmarksUILayer::LayoutButtons() {
 }
 
 void BookmarksUILayer::OnClick(const Button& button) {
-  if (
-    mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()
-    != button.mBookmark.mTabID) {
+  const auto tab = mKneeboardView->GetCurrentTabView()->GetRootTab().lock();
+  if ((!tab) || (tab->GetRuntimeID() != button.mBookmark.mTabID)) {
     mKneeboardView->SetCurrentTabByRuntimeID(button.mBookmark.mTabID);
   }
   auto tabView = mKneeboardView->GetCurrentTabView();

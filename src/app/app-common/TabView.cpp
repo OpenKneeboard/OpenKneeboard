@@ -68,8 +68,8 @@ TabView::~TabView() {
   this->RemoveAllEventListeners();
 }
 
-std::shared_ptr<ITab> TabView::GetRootTab() const {
-  return mRootTab.lock();
+std::weak_ptr<ITab> TabView::GetRootTab() const {
+  return mRootTab;
 }
 
 std::shared_ptr<ITab> TabView::GetTab() const {

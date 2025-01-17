@@ -137,6 +137,7 @@ class KneeboardView final : private EventReceiver,
   };
   std::optional<Bookmark> GetBookmark(RelativePosition) const;
   void SetBookmark(RelativePosition);
+  std::vector<std::shared_ptr<ITab>> GetRootTabs() const;
 
   KneeboardView(
     const audited_ptr<DXResources>&,

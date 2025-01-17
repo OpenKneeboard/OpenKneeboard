@@ -63,7 +63,7 @@ class TabView final : private EventReceiver {
   PageID GetPageID() const;
   std::vector<PageID> GetPageIDs() const;
 
-  std::shared_ptr<ITab> GetRootTab() const;
+  std::weak_ptr<ITab> GetRootTab() const;
 
   std::shared_ptr<ITab> GetTab() const;
 

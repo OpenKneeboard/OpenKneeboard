@@ -44,7 +44,8 @@ bool SwitchTabAction::IsChecked() const {
   if (!kbv) {
     return false;
   }
-  return kbv->GetCurrentTabView()->GetRootTab()->GetRuntimeID() == mTabID;
+  const auto tab = kbv->GetCurrentTabView()->GetRootTab().lock();
+  return tab && tab->GetRuntimeID() == mTabID;
 }
 
 bool SwitchTabAction::IsEnabled() const {

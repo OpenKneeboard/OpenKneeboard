@@ -549,13 +549,18 @@ void TabPage::PaintLater() {
 }
 
 task<void> TabPage::PaintNow(std::source_location loc) noexcept {
+  const auto rootTab = mTabView->GetRootTab().lock();
+  if (!rootTab) {
+    OPENKNEEBOARD_TraceLoggingWrite("TabPage::PaintNow()/StaleTab");
+    co_return;
+  }
   OPENKNEEBOARD_TraceLoggingCoro(
     /*activity,*/
     "TabPage::PaintNow()",
     TraceLoggingPointer(this, "this"),
-    TraceLoggingValue(mTabView->GetRootTab()->GetTitle().c_str(), "TabTitle"),
+    TraceLoggingValue(rootTab->GetTitle().c_str(), "TabTitle"),
     TraceLoggingValue(
-      to_hstring(mTabView->GetRootTab()->GetPersistentID()).c_str(), "TabGUID"),
+      to_hstring(rootTab->GetPersistentID()).c_str(), "TabGUID"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(loc));
   // TODO: support 'stop with result' for coros
   if (!mPanelDimensions) {

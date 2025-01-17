@@ -448,7 +448,8 @@ void HeaderUILayer::DrawHeaderText(
     return;
   }
 
-  const auto tab = tabView ? tabView->GetRootTab().get() : nullptr;
+  const std::shared_ptr<ITab> tab
+    = tabView ? tabView->GetRootTab().lock() : nullptr;
   const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
   auto& dwf = mDXResources->mDWriteFactory;
 

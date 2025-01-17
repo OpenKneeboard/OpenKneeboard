@@ -126,7 +126,7 @@ std::string_view KneeboardView::GetName() const noexcept {
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   mThreadGuard.CheckThread();
 
-  if (std::ranges::equal(tabs, mTabViews, {}, {}, &TabView::GetRootTab)) {
+  if (tabs == this->GetRootTabs()) {
     return;
   }
 
@@ -170,30 +170,34 @@ void KneeboardView::SetCurrentTabByIndex(
   }
   mCurrentTabView = mTabViews.at(index);
 
-  dprint(
-    "Current tab for kneeboard view {:#018x} changed to '{}' ({}) @ {}",
-    this->GetRuntimeID().GetTemporaryValue(),
-    mCurrentTabView->GetRootTab()->GetTitle(),
-    mCurrentTabView->GetRootTab()->GetPersistentID(),
-    loc);
+  auto tab = mCurrentTabView->GetRootTab().lock();
+  if (tab) {
+    dprint(
+      "Current tab for kneeboard view {:#018x} changed to '{}' ({}) @ {}",
+      this->GetRuntimeID().GetTemporaryValue(),
+      tab->GetTitle(),
+      tab->GetPersistentID(),
+      loc);
+  } else {
+    dprint.Warning("Switched to TabView with nullptr tab");
+  }
   evCurrentTabChangedEvent.Emit(index);
 }
 
 void KneeboardView::SetCurrentTabByRuntimeID(
   ITab::RuntimeID id,
   const std::source_location& loc) {
-  const auto it = std::ranges::find(mTabViews, id, [](const auto& view) {
-    return view->GetRootTab()->GetRuntimeID();
-  });
-
-  if (it == mTabViews.end()) {
+  for (std::size_t i = 0; i < mTabViews.size(); ++i) {
+    const auto tab = mTabViews.at(i)->GetRootTab().lock();
+    if (!tab) {
+      continue;
+    }
+    if (tab->GetRuntimeID() != id) {
+      continue;
+    }
+    SetCurrentTabByIndex(i);
     return;
   }
-  if (*it == mCurrentTabView) {
-    return;
-  }
-
-  SetCurrentTabByIndex(it - mTabViews.begin(), loc);
 }
 
 void KneeboardView::PreviousTab() {
@@ -237,7 +241,8 @@ std::shared_ptr<TabView> KneeboardView::GetTabViewByID(
     if (tabView->GetTab()->GetRuntimeID() == id) {
       return tabView;
     }
-    if (tabView->GetRootTab()->GetRuntimeID() == id) {
+    const auto rootTab = tabView->GetRootTab().lock();
+    if (rootTab && rootTab->GetRuntimeID() == id) {
       return tabView;
     }
   }
@@ -537,7 +542,7 @@ bool KneeboardView::CurrentPageHasBookmark() const {
   if (!view) {
     return false;
   }
-  auto tab = view->GetRootTab();
+  auto tab = view->GetRootTab().lock();
   if (!tab) {
     return false;
   }
@@ -555,8 +560,12 @@ bool KneeboardView::CurrentPageHasBookmark() const {
 
 void KneeboardView::RemoveBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
-  auto tab = view->GetRootTab();
+  auto tab = view->GetRootTab().lock();
   auto page = view->GetPageID();
+
+  if (!tab) {
+    return;
+  }
 
   auto bookmarks = tab->GetBookmarks();
   auto it = std::ranges::find_if(bookmarks, [=](const auto& bm) {
@@ -581,7 +590,10 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
     return {};
   }
 
-  auto tab = view->GetRootTab();
+  auto tab = view->GetRootTab().lock();
+  if (!tab) {
+    return {};
+  }
 
   Bookmark ret {
     .mTabID = tab->GetRuntimeID(),
@@ -625,8 +637,20 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
 std::vector<Bookmark> KneeboardView::GetBookmarks() const {
   std::vector<Bookmark> ret;
   auto inserter = std::back_inserter(ret);
-  for (const auto& tv: mTabViews) {
-    std::ranges::copy(tv->GetRootTab()->GetBookmarks(), inserter);
+  for (auto&& tab: this->GetRootTabs()) {
+    std::ranges::copy(tab->GetBookmarks(), inserter);
+  }
+  return ret;
+}
+
+std::vector<std::shared_ptr<ITab>> KneeboardView::GetRootTabs() const {
+  std::vector<std::shared_ptr<ITab>> ret;
+  ret.reserve(mTabViews.size());
+  for (auto&& view: mTabViews) {
+    auto tab = view->GetRootTab().lock();
+    if (tab) {
+      ret.push_back(std::move(tab));
+    }
   }
   return ret;
 }
@@ -635,13 +659,14 @@ void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
   EventDelay delay;
   std::unique_lock lock(*mKneeboard);
 
-  auto tabIt = std::ranges::find_if(mTabViews, [&](const auto& tv) {
-    return tv->GetRootTab()->GetRuntimeID() == bookmark.mTabID;
+  const auto tabs = this->GetRootTabs();
+  auto tabIt = std::ranges::find_if(tabs, [&](const auto& tab) {
+    return tab->GetRuntimeID() == bookmark.mTabID;
   });
-  if (tabIt == mTabViews.end()) {
+  if (tabIt == tabs.end()) {
     return;
   }
-  auto tab = (*tabIt)->GetRootTab();
+  auto tab = *tabIt;
 
   auto bookmarks = tab->GetBookmarks();
   auto it = std::ranges::find(bookmarks, bookmark);
@@ -653,19 +678,22 @@ void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
 }
 
 void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
-  const auto it = std::ranges::find(
-    mTabViews, bookmark.mTabID, [](const auto& view) noexcept {
-      return view->GetRootTab()->GetRuntimeID();
-    });
-
-  if (it == mTabViews.end()) {
+  for (std::size_t i = 0; i < mTabViews.size(); ++i) {
+    const auto& view = mTabViews.at(i);
+    const auto tab = view->GetRootTab().lock();
+    if (!tab) {
+      continue;
+    }
+    if (tab->GetRuntimeID() != bookmark.mTabID) {
+      continue;
+    }
+    if (GetCurrentTabView() != view) {
+      SetCurrentTabByIndex(i);
+    }
+    view->SetTabMode(TabMode::Normal);
+    view->SetPageID(bookmark.mPageID);
     return;
   }
-  if (GetCurrentTabView() != *it) {
-    SetCurrentTabByIndex(it - mTabViews.begin());
-  }
-  (*it)->SetTabMode(TabMode::Normal);
-  (*it)->SetPageID(bookmark.mPageID);
 }
 
 void KneeboardView::GoToPreviousBookmark() {
@@ -700,7 +728,11 @@ void KneeboardView::SetBookmark(RelativePosition pos) {
 }
 
 std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
-  const auto currentTabID = mCurrentTabView->GetRootTab()->GetRuntimeID();
+  const auto tab = mCurrentTabView->GetRootTab().lock();
+  if (!tab) {
+    return {};
+  }
+  const auto currentTabID = tab->GetRuntimeID();
   const auto pages = mCurrentTabView->GetPageIDs();
   const auto currentPageIt
     = std::ranges::find(pages, mCurrentTabView->GetPageID());
@@ -779,6 +811,11 @@ void KneeboardView::SetTabViews(
   mTabEvents.clear();
 
   for (const auto& tabView: mTabViews) {
+    const auto tab = tabView->GetRootTab().lock();
+    if (!tab) {
+      continue;
+    }
+
     auto repaint = [](auto self, auto tabView) {
       if (self->GetCurrentTabView() != tabView) {
         return;
@@ -791,9 +828,8 @@ void KneeboardView::SetTabViews(
       {
         AddEventListener(tabView->evNeedsRepaintEvent, repaint),
         AddEventListener(
-          tabView->GetRootTab()->evAvailableFeaturesChangedEvent, repaint),
-        AddEventListener(
           tabView->evBookmarksChangedEvent, this->evBookmarksChangedEvent),
+        AddEventListener(tab->evAvailableFeaturesChangedEvent, repaint),
       });
   }
 
@@ -806,8 +842,8 @@ void KneeboardView::SetTabViews(
 void KneeboardView::PostCustomAction(
   std::string_view id,
   const nlohmann::json& arg) {
-  const auto it
-    = std::dynamic_pointer_cast<PluginTab>(mCurrentTabView->GetRootTab());
+  const auto it = std::dynamic_pointer_cast<PluginTab>(
+    mCurrentTabView->GetRootTab().lock());
   if (!it) {
     return;
   }
@@ -817,8 +853,8 @@ void KneeboardView::PostCustomAction(
 std::vector<winrt::guid> KneeboardView::GetTabIDs() const noexcept {
   mThreadGuard.CheckThread();
   std::vector<winrt::guid> ret;
-  for (const auto& view: mTabViews) {
-    ret.push_back(view->GetRootTab()->GetPersistentID());
+  for (auto&& tab: this->GetRootTabs()) {
+    ret.push_back(tab->GetPersistentID());
   }
   return ret;
 }
