@@ -1,0 +1,12 @@
+{
+  "components": {
+    "a": @VERSION_MAJOR@,
+    "b": @VERSION_MINOR@,
+    "c": @VERSION_PATCH@,
+    "d": @VERSION_BUILD@
+  },
+  "readable": "@RELEASE_NAME@",
+  "stable": @IS_STABLE_RELEASE@,
+  "tagged": @IS_TAGGED_VERSION@,
+  "tweakLabel": "@BUILD_TYPE@"
+}

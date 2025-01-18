@@ -1,0 +1,7 @@
+.idea
+.vs
+bin
+obj
+wix
+*.msi
+*.user

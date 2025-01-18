@@ -243,6 +243,7 @@ install(
 )
 
 add_subdirectory("installer")
+add_subdirectory(OpenKneeboard-Installer)
 
 macro(append_recursive_targets VAR SUBDIR)
   get_property(NON_RECURSIVE_TARGETS DIRECTORY "${SUBDIR}" PROPERTY BUILDSYSTEM_TARGETS)
