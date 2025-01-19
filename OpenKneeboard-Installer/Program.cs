@@ -1,16 +1,13 @@
 ﻿using System.CommandLine;
 using System.Diagnostics;
-using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.Marshalling;
 using WixSharp;
 using WixSharp.CommonTasks;
-using WixSharp.Controls;
 using File = WixSharp.File;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Xml.Linq;
-using WixToolset.Mba.Core;
+using Microsoft.Win32;
+using RegistryHive = WixSharp.RegistryHive;
 
 [assembly: InternalsVisibleTo(assemblyName: "OpenKneeboard-Installer.aot")] // assembly name + '.aot suffix
 
@@ -88,7 +85,8 @@ async Task<int> CreateInstaller(DirectoryInfo inputRoot, string? signingKeyId, s
 
     CreateShortcuts(inputRoot, project);
 
-    RegisterAPILayers(inputRoot, project);
+    RegisterApiLayers(inputRoot, project);
+    project.AfterInstall += DisableLegacyApiLayers;
 
     SignProject(project, signingKeyId, timestampServer);
     BuildMsi(project, stampFile);
@@ -216,7 +214,7 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
     return project;
 }
 
-void RegisterAPILayers(DirectoryInfo directoryInfo, ManagedProject managedProject)
+void RegisterApiLayers(DirectoryInfo directoryInfo, ManagedProject managedProject)
 {
     const string apiLayersKey = @"SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit";
     managedProject.AddRegValue(new RegValue(RegistryHive.LocalMachine, apiLayersKey,
@@ -225,6 +223,40 @@ void RegisterAPILayers(DirectoryInfo directoryInfo, ManagedProject managedProjec
         $"[INSTALLDIR]bin\\OpenKneeboard-OpenXR32.json", 0);
     value.Win64 = false;
     managedProject.AddRegValue(value);
+}
+
+void DisableLegacyApiLayers(SetupEventArgs args)
+{
+    if (!args.IsElevated)
+    {
+        return;
+    }
+    if (!args.IsInstalling)
+    {
+        return;
+    }
+    const string apiLayersKey = @"SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit";
+    var layers = Registry.LocalMachine.OpenSubKey(apiLayersKey, true);
+    if (layers == null)
+    {
+        return;
+    }
+
+    var installedPath = Path.GetFullPath(args.InstallDir + @"\bin\OpenKneeboard-OpenXR.json");
+
+    foreach (var jsonPath in layers.GetValueNames())
+    {
+        if (!jsonPath.Contains("OpenKneeboard"))
+        {
+            continue;
+        }
+
+        var regNormalized = Path.GetFullPath(jsonPath);
+        if (regNormalized != installedPath)
+        {
+            layers.SetValue(jsonPath, 1, RegistryValueKind.DWord);
+        }
+    }
 }
 
 void CreateShortcuts(DirectoryInfo directoryInfo, ManagedProject managedProject)
