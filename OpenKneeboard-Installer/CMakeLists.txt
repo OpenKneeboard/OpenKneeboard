@@ -1,3 +1,7 @@
+if(NOT BUILD_IS_64BIT)
+  return()
+endif()
+
 set(VERSION_JSON "${BUILD_OUT_ROOT}/installer/version.json")
 message(STATUS "Creating ${VERSION_JSON}")
 add_custom_target(
@@ -21,6 +25,14 @@ add_custom_target(
   "${VERSION_JSON}"
 )
 install(FILES "${VERSION_JSON}" DESTINATION "installer")
+
+ok_add_executable(remove-openkneeboard-msix WIN32 remove-msix.cpp)
+target_link_libraries(remove-openkneeboard-msix PRIVATE ThirdParty::CppWinRT)
+set_target_properties(
+  remove-openkneeboard-msix
+  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/installer"
+)
 
 add_custom_target(
   installer-assets

@@ -87,11 +87,23 @@ async Task<int> CreateInstaller(DirectoryInfo inputRoot, string? signingKeyId, s
 
     RegisterApiLayers(inputRoot, project);
     project.AfterInstall += DisableLegacyApiLayers;
+    project.AddAction(
+        new BinaryFileAction(GetMsixRemovalToolId().Value, "Removing legacy MSIX versions of OpenKneeboard...",
+            Return.check, When.After, Step.InstallFiles, Condition.Always)
+        {
+            Impersonate = false,
+            Execute = Execute.deferred,
+        });
 
     SignProject(project, signingKeyId, timestampServer);
     BuildMsi(project, stampFile);
 
     return 0;
+}
+
+Id GetMsixRemovalToolId()
+{
+    return new Id("Binary_remove_openkneeboard_msix_exe");
 }
 
 Id GetExecutableId()
@@ -193,7 +205,8 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
                     new Files("bin/*.*", f => !f.EndsWith("OpenKneeboardApp.exe"))),
                 new Dir("share", new Files("share/*.*")),
                 new Dir("utilities", new Files("utilities/*.*")),
-                new Files(installerResources, @"installer/*.*")));
+                new Files(installerResources, @"installer/*.*")),
+            new Binary(GetMsixRemovalToolId(), "installer/remove-openkneeboard-msix.exe"));
     project.SourceBaseDir = inputRoot.FullName;
     project.ResolveWildCards();
 
@@ -247,6 +260,7 @@ void DisableLegacyApiLayers(SetupEventArgs args)
         {
             continue;
         }
+
         DisableLegacyApiLayersInRoot(user, pathToKeep: installedPath);
     }
 }
