@@ -35,6 +35,5 @@ add_custom_target(
   "${CMAKE_SOURCE_DIR}/assets/icon.ico"
   "${CMAKE_SOURCE_DIR}/assets/WixUIBanner.png"
   "${CMAKE_SOURCE_DIR}/assets/WixUIDialog.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
   "${BUILD_OUT_ROOT}/installer/assets"
 )
