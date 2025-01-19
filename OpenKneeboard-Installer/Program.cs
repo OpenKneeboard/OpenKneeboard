@@ -231,18 +231,34 @@ void DisableLegacyApiLayers(SetupEventArgs args)
     {
         return;
     }
+
     if (!args.IsInstalling)
-    {
-        return;
-    }
-    const string apiLayersKey = @"SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit";
-    var layers = Registry.LocalMachine.OpenSubKey(apiLayersKey, true);
-    if (layers == null)
     {
         return;
     }
 
     var installedPath = Path.GetFullPath(args.InstallDir + @"\bin\OpenKneeboard-OpenXR.json");
+
+    DisableLegacyApiLayersInRoot(Registry.LocalMachine, pathToKeep: installedPath);
+    foreach (var name in Registry.Users.GetSubKeyNames())
+    {
+        var user = Registry.Users.OpenSubKey(name, writable: true);
+        if (user == null)
+        {
+            continue;
+        }
+        DisableLegacyApiLayersInRoot(user, pathToKeep: installedPath);
+    }
+}
+
+void DisableLegacyApiLayersInRoot(RegistryKey root, string pathToKeep)
+{
+    const string apiLayersKey = @"SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit";
+    var layers = root.OpenSubKey(apiLayersKey, writable: true);
+    if (layers == null)
+    {
+        return;
+    }
 
     foreach (var jsonPath in layers.GetValueNames())
     {
@@ -252,7 +268,7 @@ void DisableLegacyApiLayers(SetupEventArgs args)
         }
 
         var regNormalized = Path.GetFullPath(jsonPath);
-        if (regNormalized != installedPath)
+        if (regNormalized != pathToKeep)
         {
             layers.SetValue(jsonPath, 1, RegistryValueKind.DWord);
         }
