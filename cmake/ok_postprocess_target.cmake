@@ -1,7 +1,6 @@
 include_guard(GLOBAL)
 
 include(add_version_rc)
-include(sign_target)
 
 function(ok_postprocess_target TARGET)
   set(options RUNTIME_DEPENDENCY RUNTIME_EXE 32BIT_ONLY DUALARCH)
@@ -121,7 +120,6 @@ function(ok_postprocess_target TARGET)
     PDB_OUTPUT_DIRECTORY "${BUILD_OUT_PDBDIR}"
   )
   if (POSTPROCESS_ARG_RUNTIME_DEPENDENCY OR POSTPROCESS_ARG_RUNTIME_EXE)
-    sign_target(${TARGET})
     set_target_properties(
       ${TARGET}
       PROPERTIES

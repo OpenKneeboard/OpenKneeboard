@@ -4,7 +4,6 @@ if(BUILD_IS_32BIT)
 endif()
 
 include(ExternalProject)
-include(sign_target.cmake)
 
 ExternalProject_Add(
   build32 
@@ -24,8 +23,6 @@ ExternalProject_Add(
   -A Win32
   "-DBUILD_OUT_PREFIX=${BUILD_OUT_PREFIX}"
   -DWITH_ASAN=${WITH_ASAN}
-  "-DSIGNTOOL_EXE=${SIGNTOOL_EXE}"
-  "-DSIGNTOOL_KEY_FILE=${SIGNTOOL_KEY_FILE}"
   BUILD_COMMAND
   "${CMAKE_COMMAND}"
   --build "<BINARY_DIR>"
