@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using WixSharp;
@@ -210,7 +210,8 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
     project.SourceBaseDir = inputRoot.FullName;
     project.ResolveWildCards();
 
-    project.GUID = Guid.Parse("843c9331-0610-4ab1-9cf9-5305c896fb5b");
+    project.UpgradeCode = Guid.Parse("843c9331-0610-4ab1-9cf9-5305c896fb5b");
+    project.ProductId = Guid.NewGuid();
     project.Platform = Platform.x64;
 
     project.ControlPanelInfo.Manufacturer = "Fred Emmott";
@@ -224,6 +225,10 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
     project.ControlPanelInfo.InstallLocation = "[INSTALLDIR]";
     project.AddRegValue(new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\Fred Emmott\OpenKneeboard", "InstallDir",
         "[INSTALLDIR]"));
+    project.AddRegValue(new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\Fred Emmott\OpenKneeboard\Installer",
+        "ProductGuid", $"{{{project.ProductId?.ToString().ToUpper()}}}"));
+    project.AddRegValue(new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\Fred Emmott\OpenKneeboard\Installer",
+        "UpgradeGuid", $"{{{project.UpgradeCode?.ToString().ToUpper()}}}"));
     return project;
 }
 
