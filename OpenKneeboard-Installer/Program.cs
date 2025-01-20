@@ -7,6 +7,7 @@ using File = WixSharp.File;
 using System.Text.Json;
 using System.Xml.Linq;
 using Microsoft.Win32;
+using WixToolset.Dtf.WindowsInstaller;
 using RegistryHive = WixSharp.RegistryHive;
 
 [assembly: InternalsVisibleTo(assemblyName: "OpenKneeboard-Installer.aot")] // assembly name + '.aot suffix
@@ -229,6 +230,21 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
         "ProductGuid", $"{{{project.ProductId?.ToString().ToUpper()}}}"));
     project.AddRegValue(new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\Fred Emmott\OpenKneeboard\Installer",
         "UpgradeGuid", $"{{{project.UpgradeCode?.ToString().ToUpper()}}}"));
+
+    project.AddActions(
+        new ManagedAction(MyActions.FindAllRelatedProducts)
+        {
+            Condition = Condition.Always,
+            Sequence = Sequence.InstallExecuteSequence,
+            SequenceNumber = 5,
+        },
+        new ManagedAction(MyActions.FindAllRelatedProducts)
+        {
+            Condition = Condition.Always,
+            Sequence = Sequence.InstallUISequence,
+            SequenceNumber = 5,
+        }
+    );
     return project;
 }
 
@@ -318,4 +334,26 @@ class JsonVersionInfo
     public string TweakLabel { get; set; } = string.Empty;
     public bool Stable { get; set; }
     public bool Tagged { get; set; }
+}
+
+class MyActions
+{
+    [CustomAction]
+    public static ActionResult FindAllRelatedProducts(Session session)
+    {
+        // The standard MSI `FindRelatedProducts` action will ignore per-user installs if this is a per-machine
+        // install; old versions of CMake incorrecftly generated per-user, so we need to clean up.
+        var upgradeCode = session.QueryUpgradeCode();
+        var productCode = session.QueryProperty("ProductCode");
+        var packages = AppSearch.GetRelatedProducts(upgradeCode).Where(it => it != productCode).ToArray();
+        if (packages.Length >= 1)
+        {
+            var it = packages.First();
+            session.SetProperty("WIX_UPGRADE_DETECTED", it);
+            session.SetProperty("MIGRATE", it);
+            session.SetProperty("UPGRADINGPRODUCTCODE", it);
+        }
+        
+        return ActionResult.Success;
+    }
 }
