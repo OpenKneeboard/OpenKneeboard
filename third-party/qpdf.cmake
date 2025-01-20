@@ -46,7 +46,8 @@ ExternalProject_Add(
   INSTALL_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/qpdf.lib"
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(qpdf-build SOURCE_DIR)
@@ -64,8 +65,9 @@ target_compile_definitions(
 )
 add_library(ThirdParty::QPDF ALIAS libqpdf)
 
-install(
-  FILES "${SOURCE_DIR}/NOTICE.md"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-QPDF.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+  "${SOURCE_DIR}/NOTICE.md"
+  "LICENSE-ThirdParty-QPDF.txt"
+  DEPENDS qpdf-build-update
 )

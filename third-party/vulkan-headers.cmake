@@ -9,7 +9,8 @@ ExternalProject_Add(
   BUILD_IN_SOURCE ON
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(vulkanHeadersEP SOURCE_DIR)
@@ -19,10 +20,11 @@ add_dependencies(vulkan-headers vulkanHeadersEP)
 target_include_directories(vulkan-headers INTERFACE "${SOURCE_DIR}/include")
 target_compile_definitions(vulkan-headers INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE.txt"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-Vulkan-SDK.txt"
-)
 add_library(ThirdParty::VulkanHeaders ALIAS vulkan-headers)
+
+include(ok_add_license_file)
+ok_add_license_file(
+  "${SOURCE_DIR}/LICENSE.txt"
+  "LICENSE-ThirdParty-Vulkan-SDK.txt"
+  DEPENDS vulkanHeadersEP-update
+)

@@ -19,7 +19,8 @@ ExternalProject_Add(
   BUILD_IN_SOURCE ON
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(openvrBuild SOURCE_DIR)
@@ -42,11 +43,12 @@ target_link_libraries(openvr INTERFACE openvr-headers)
 
 ExternalProject_Get_property(openvrBuild SOURCE_DIR)
 ok_add_runtime_files(copy-openvr-dll "${SOURCE_DIR}/${DLL_PATH}")
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-OpenVR SDK.txt"
-)
 
 add_library(ThirdParty::OpenVR ALIAS openvr)
+
+include(ok_add_license_file)
+ok_add_license_file(
+  "${SOURCE_DIR}/LICENSE"
+  "LICENSE-ThirdParty-OpenVR SDK.txt"
+  DEPENDS openvrBuild-update
+)

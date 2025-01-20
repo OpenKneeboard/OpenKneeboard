@@ -34,6 +34,7 @@ link_libraries(ThirdParty::CppWinRT)
 include(ok_add_runtime_files)
 include(ok_add_library)
 include(ok_add_executable)
+include(ok_add_license_file)
 
 add_subdirectory(lib)
 add_subdirectory(api)

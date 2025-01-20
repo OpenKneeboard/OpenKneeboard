@@ -8,7 +8,7 @@ FetchContent_Declare(
   URL "https://www.lua.org/ftp/lua-5.1.5.tar.gz"
   # Using SHA1 as it's listed on the download page
   URL_HASH "SHA1=b3882111ad02ecc6b972f8c1241647905cb2e3fc"
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
 )
 
 FetchContent_GetProperties(lua)
@@ -35,11 +35,9 @@ if(NOT lua_POPULATED)
 	)
 endif()
 
-install(
-  FILES
-  "${lua_SOURCE_DIR}/COPYRIGHT"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-Lua.txt"
-)
-
 add_library(ThirdParty::Lua ALIAS lualib)
+
+ok_add_license_file(
+  "${lua_SOURCE_DIR}/COPYRIGHT"
+  "LICENSE-ThirdParty-Lua.txt"
+)

@@ -3,7 +3,7 @@ ExternalProject_Add(
   directxtexEP
   URL "https://github.com/microsoft/DirectXTex/archive/refs/tags/dec2023.zip"
   URL_HASH "SHA256=5f1332bb76ef5c9e8403f2c854c25e67d8c84fa42dc238e62ebadc62bca4287c"
-  BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTK.lib"
+  BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTex.lib"
   CMAKE_ARGS
   "-DBUILD_TOOLS=OFF"
   "-DBUILD_SAMPLE=OFF"
@@ -17,7 +17,8 @@ ExternalProject_Add(
   ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
   
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(directxtex INTERFACE)
@@ -28,11 +29,8 @@ target_include_directories(directxtex INTERFACE "${INSTALL_DIR}/$<CONFIG>/includ
 target_link_libraries(directxtex INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/DirectXTex.lib")
 
 ExternalProject_Get_property(directxtexEP SOURCE_DIR)
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-DirectXTex.txt"
-)
 
 add_library(ThirdParty::DirectXTex ALIAS directxtex)
+
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-DirectXTex.txt" DEPENDS directxtexEP-update)

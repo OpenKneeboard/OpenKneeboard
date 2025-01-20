@@ -12,7 +12,8 @@ ExternalProject_Add(
   "<SOURCE_DIR>/include" "<INSTALL_DIR>/include"
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(json INTERFACE)
@@ -23,11 +24,7 @@ target_include_directories(json SYSTEM INTERFACE "${INSTALL_DIR}/include")
 target_compile_definitions(json INTERFACE JSON_DISABLE_ENUM_SERIALIZATION=1)
 
 ExternalProject_Get_property(jsonFetch SOURCE_DIR)
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE.MIT"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-JSON for Modern CPP.txt"
-)
 
 add_library(ThirdParty::JSON ALIAS json)
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE.MIT" "LICENSE-ThirdParty-JSON for Modern CPP.txt" DEPENDS jsonFetch-update)

@@ -17,7 +17,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 message(STATUS "Windows target version: ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 
@@ -43,9 +44,5 @@ set_target_properties(
   VERSION "${CPPWINRT_VERSION}"
 )
 
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-CppWinRT.txt"
-)
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-CppWinRT.txt" DEPENDS CppWinRTNuget-update)

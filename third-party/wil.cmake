@@ -27,9 +27,8 @@ set_target_properties(
   VERSION "${WINDOWS_IMPLEMENTATION_LIBRARY_VERSION}"
 )
 
-install(
-  FILES
+include(ok_add_license_file)
+ok_add_license_file(
   "${wil_nuget_SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-Windows Implementation Library.txt"
+  "LICENSE-ThirdParty-Windows Implementation Library.txt"
 )

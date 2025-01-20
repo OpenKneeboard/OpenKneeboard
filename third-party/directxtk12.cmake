@@ -16,6 +16,7 @@ ExternalProject_Add(
   
   EXCLUDE_FROM_ALL
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(directxtk12 INTERFACE)
@@ -34,3 +35,7 @@ install(
 )
 
 add_library(ThirdParty::DirectXTK12 ALIAS directxtk12)
+
+
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-DirectXTK12.txt" DEPENDS directxtk12Build-update)

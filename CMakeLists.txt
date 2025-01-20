@@ -232,15 +232,8 @@ add_subdirectory("src")
 # MUST be set in this CMakeLists.txt to work, not a subfolder
 set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT OpenKneeboard-App-WinUI3)
 
-install(
-  FILES LICENSE
-  TYPE DOC
-  RENAME "LICENSE.txt"
-)
-install(
-  FILES gpl-2.0.txt
-  TYPE DOC
-)
+ok_add_license_file(LICENSE LICENSE.txt)
+ok_add_license_file(gpl-2.0.txt gpl-2.0.txt)
 
 add_subdirectory(OpenKneeboard-Installer)
 

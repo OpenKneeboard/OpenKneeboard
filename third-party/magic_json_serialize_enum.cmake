@@ -25,9 +25,8 @@ target_link_libraries(
 
 add_library(ThirdParty::magic_json_serialize_enum ALIAS magic_json_serialize_enum)
 
-install(
-  FILES
+include(ok_add_license_file)
+ok_add_license_file(
   "${magic_json_serialize_enum_SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-magic_json_serialize_enum.txt"
+  "LICENSE-ThirdParty-magic_json_serialize_enum.txt"
 )

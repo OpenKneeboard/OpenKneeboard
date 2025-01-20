@@ -11,7 +11,8 @@ ExternalProject_Add(
     ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(semver INTERFACE)
@@ -22,11 +23,11 @@ ExternalProject_Get_property(semverBuild BINARY_DIR)
 target_include_directories(semver INTERFACE "${SOURCE_DIR}/include")
 target_link_libraries(semver INTERFACE "${BINARY_DIR}/src/$<CONFIG>/semver.lib")
 
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-semver.txt"
-)
-
 add_library(ThirdParty::SemVer ALIAS semver)
+
+include(ok_add_license_file)
+ok_add_license_file(
+  "${SOURCE_DIR}/LICENSE"
+  "LICENSE-ThirdParty-semver.txt"
+  DEPENDS semverBuild-update
+)

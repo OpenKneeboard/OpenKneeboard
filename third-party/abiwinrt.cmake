@@ -11,7 +11,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(abiwinrtEP SOURCE_DIR)
@@ -24,9 +25,5 @@ set_target_properties(
   IMPORTED_LOCATION "${SOURCE_DIR}/bin/abi.exe"
 )
 
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-AbiWinRT.txt"
-)
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-AbiWinRT.txt" DEPENDS abiwinrtEP-update)

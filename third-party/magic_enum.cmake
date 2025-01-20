@@ -16,9 +16,8 @@ add_library(tp_magic_enum INTERFACE)
 target_link_libraries(tp_magic_enum INTERFACE magic_enum::magic_enum)
 add_library(ThirdParty::magic_enum ALIAS tp_magic_enum)
 
-install(
-    FILES
-    "${magic_enum_SOURCE_DIR}/LICENSE"
-    TYPE DOC
-    RENAME "LICENSE-ThirdParty-magic_enum.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+  "${magic_enum_SOURCE_DIR}/LICENSE"
+  "LICENSE-ThirdParty-magic_enum.txt"
 )

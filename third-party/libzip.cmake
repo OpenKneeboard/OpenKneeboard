@@ -34,7 +34,8 @@ ExternalProject_Add(
   DEPENDS ${LIBZIP_DEPENDENCIES}
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(libzip-ep INSTALL_DIR SOURCE_DIR)
@@ -47,8 +48,9 @@ target_include_config_directories(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/inc
 
 add_library(ThirdParty::LibZip ALIAS libzip)
 
-install(
-	FILES "${SOURCE_DIR}/LICENSE"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-libzip.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+	"${SOURCE_DIR}/LICENSE"
+	"LICENSE-ThirdParty-libzip.txt"
+  DEPENDS libzip-ep-update
 )

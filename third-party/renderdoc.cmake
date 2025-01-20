@@ -5,8 +5,8 @@ add_library(renderdoc INTERFACE)
 target_include_directories(renderdoc INTERFACE "${SOURCE_DIR}/include")
 add_library(ThirdParty::RenderDoc ALIAS renderdoc)
 
-install(
-	FILES "${SOURCE_DIR}/LICENSE.md"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-RenderDoc.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+	"${SOURCE_DIR}/LICENSE.md"
+	"LICENSE-ThirdParty-RenderDoc.txt"
 )

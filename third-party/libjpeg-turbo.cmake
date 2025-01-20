@@ -14,7 +14,8 @@ ExternalProject_Add(
     "${CMAKE_COMMAND}" --install . --prefix "<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(libjpeg-turbo-build SOURCE_DIR)
@@ -31,8 +32,9 @@ set_target_config_properties(libjpeg-turbo IMPORTED_LOCATION "${INSTALL_DIR}/$<C
 
 add_library(ThirdParty::LibJpeg ALIAS libjpeg-turbo)
 
-install(
-	FILES "${SOURCE_DIR}/LICENSE.md"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-libjpeg-turbo.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+	"${SOURCE_DIR}/LICENSE.md"
+	"LICENSE-ThirdParty-libjpeg-turbo.txt"
+  DEPENDS libjpeg-turbo-build-update
 )

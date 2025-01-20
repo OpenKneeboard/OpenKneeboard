@@ -37,8 +37,8 @@ set_target_properties(
 
 add_library(ThirdParty::ZLib ALIAS zlib)
 
-install(
-	FILES "${CMAKE_CURRENT_LIST_DIR}/zlib.COPYING.txt"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-zlib.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+	"${CMAKE_CURRENT_LIST_DIR}/zlib.COPYING.txt"
+	"LICENSE-ThirdParty-zlib.txt"
 )

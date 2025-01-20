@@ -32,7 +32,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(detours INTERFACE)
@@ -44,9 +45,5 @@ target_link_libraries(detours INTERFACE "${SOURCE_DIR}/${LIB}")
 
 add_library(ThirdParty::detours ALIAS detours)
 
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE.md"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-Detours.txt"
-)
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE.md" "LICENSE-ThirdParty-Detours.txt" DEPENDS detoursBuild-update)

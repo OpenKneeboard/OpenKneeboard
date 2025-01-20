@@ -7,7 +7,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(OTDIPCFetch SOURCE_DIR)
@@ -22,8 +23,9 @@ target_include_directories(
 
 add_library(ThirdParty::OTDIPC ALIAS OTDIPC)
 
-install(
-  FILES "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-OpenKneeboard-OTD-IPC.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+  "${SOURCE_DIR}/LICENSE"
+  "LICENSE-ThirdParty-OpenKneeboard-OTD-IPC.txt"
+  DEPENDS OTDIPCFetch-update
 )

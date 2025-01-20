@@ -7,7 +7,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(OpenXRSDKSource SOURCE_DIR)
@@ -23,8 +24,9 @@ target_include_directories(
 
 add_library(ThirdParty::OpenXR ALIAS OpenXRSDK)
 
-install(
-	FILES "${SOURCE_DIR}/LICENSE"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-OpenXR SDK.txt"
+include(ok_add_license_file)
+ok_add_license_file(
+	"${SOURCE_DIR}/LICENSE"
+	"LICENSE-ThirdParty-OpenXR SDK.txt"
+  DEPENDS OpenXRSDKSource-update
 )

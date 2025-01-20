@@ -25,9 +25,5 @@ target_link_libraries(
 
 add_library(ThirdParty::bindline ALIAS bindline_unified)
 
-install(
-    FILES
-    "${bindline_SOURCE_DIR}/LICENSE"
-    TYPE DOC
-    RENAME "LICENSE-ThirdParty-bindline.txt"
-)
+include(ok_add_license_file)
+ok_add_license_file("${bindline_SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-bindline.txt")

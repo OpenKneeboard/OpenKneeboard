@@ -24,7 +24,8 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(WebView2EP SOURCE_DIR)
@@ -46,9 +47,9 @@ target_link_libraries(
 )
 add_library(ThirdParty::WebView2Loader ALIAS WebView2Loader)
 
-install(
-  FILES
+include(ok_add_license_file)
+ok_add_license_file(
   "${SOURCE_DIR}/LICENSE.txt"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-WebView2.txt"
+  "LICENSE-ThirdParty-WebView2.txt"
+  DEPENDS WebView2EP-update
 )

@@ -21,7 +21,8 @@ ExternalProject_Add(
   --config "$<CONFIG>"
 
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 ExternalProject_Get_property(geographiclibBuild SOURCE_DIR)
@@ -41,8 +42,5 @@ target_include_directories(
 )
 add_library(ThirdParty::GeographicLib ALIAS geographiclib)
 
-install(
-  FILES "${SOURCE_DIR}/LICENSE.txt"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-geographiclib.txt"
-)
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE.txt" "LICENSE-ThirdParty-geographiclib.txt" DEPENDS geographiclibBuild-update)

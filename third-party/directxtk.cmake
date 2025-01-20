@@ -18,7 +18,8 @@ ExternalProject_Add(
   ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
   
   EXCLUDE_FROM_ALL
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  STEP_TARGETS update
 )
 
 add_library(directxtk INTERFACE)
@@ -37,3 +38,6 @@ install(
 )
 
 add_library(ThirdParty::DirectXTK ALIAS directxtk)
+
+include(ok_add_license_file)
+ok_add_license_file("${SOURCE_DIR}/LICENSE" "LICENSE-ThirdParty-DirectXTK.txt" DEPENDS directxtkBuild-update)
