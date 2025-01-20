@@ -48,4 +48,11 @@ add_custom_target(
   "${CMAKE_SOURCE_DIR}/assets/WixUIBanner.png"
   "${CMAKE_SOURCE_DIR}/assets/WixUIDialog.png"
   "${BUILD_OUT_ROOT}/installer/assets"
+  COMMAND
+  "${CMAKE_COMMAND}"
+  -E copy_if_different
+  "${CMAKE_CURRENT_SOURCE_DIR}/OpenKneeboardPluginFileType.wxs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
+  "${BUILD_OUT_ROOT}/installer/"
+  DEPENDS remove-openkneeboard-msix
 )

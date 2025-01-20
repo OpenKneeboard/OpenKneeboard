@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <DirectoryRef Id="INSTALLDIR">
+            <Component Id="OpenKneeboardPlugin_FileType" Guid="{2e4ca00a-ef2b-4511-9060-c5f87a0bc945}">
+                <RegistryValue
+                    Root="HKLM"
+                    Key="SOFTWARE\Classes\OpenKneeboard.Plugin"
+                    Name="FriendlyTypeName"
+                    Value="OpenKneeboard Plugin"
+                    Type="string"
+                    KeyPath="yes"
+                />
+                <RegistryValue
+                    Root="HKLM"
+                    Key="SOFTWARE\Classes\OpenKneeboard.Plugin\shell\open"
+                    Name="FriendlyAppName"
+                    Value="OpenKneeboard"
+                    Type="string"
+                />
+                <ProgId
+                    Id="OpenKneeboard"
+                    Icon="File_Bin_OpenKneeboardApp_exe"
+                    IconIndex="0">
+                    <ProgId Id="OpenKneeboard.Plugin">
+                        <Extension
+                            Id="OpenKneeboardPlugin"
+                            Advertise="no"
+                            ContentType="application/x.openkneeboard.plugin" >
+                            <Verb
+                                Id="open"
+                                Command="Open"
+                                TargetFile="File_Bin_OpenKneeboardApp_exe"
+                                Argument="--plugin &quot;%1&quot;"
+                            />
+                        </Extension>
+                    </ProgId>
+                </ProgId>
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+</Wix>

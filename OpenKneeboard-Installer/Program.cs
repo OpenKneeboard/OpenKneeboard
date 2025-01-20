@@ -5,7 +5,9 @@ using WixSharp;
 using WixSharp.CommonTasks;
 using File = WixSharp.File;
 using System.Text.Json;
+using System.Xml;
 using System.Xml.Linq;
+using System.Xml.XPath;
 using Microsoft.Win32;
 using WixToolset.Dtf.WindowsInstaller;
 using RegistryHive = WixSharp.RegistryHive;
@@ -85,6 +87,7 @@ async Task<int> CreateInstaller(DirectoryInfo inputRoot, string? signingKeyId, s
     await SetProjectVersionFromJson(project, inputRoot);
 
     CreateShortcuts(inputRoot, project);
+    AddFileTypeRegistration(project);
 
     RegisterApiLayers(inputRoot, project);
     project.AfterInstall += DisableLegacyApiLayers;
@@ -114,52 +117,14 @@ Id GetExecutableId()
 
 void RemoveLicenseDialog(ManagedProject project)
 {
-    // https://github.com/oleg-shilo/wixsharp/issues/1728
-    // project.WxsFiles.Add("installer/WixUI_Minimal_NoEULA.wxs");
     project.UI = WUI.WixUI_Common;
-    Compiler.WixSourceGenerated += WixUIWithoutEULA;
-}
-
-void WixUIWithoutEULA(XDocument document)
-{
-    var ui = XElement.Parse(
-        """
-        <UI Id="file WixUI_Minimal_NoEULA">
-            <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
-            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
-            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
-        
-            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
-        
-            <DialogRef Id="ErrorDlg" />
-            <DialogRef Id="FatalError" />
-            <DialogRef Id="FilesInUse" />
-            <DialogRef Id="MsiRMFilesInUse" />
-            <DialogRef Id="PrepareDlg" />
-            <DialogRef Id="ProgressDlg" />
-            <DialogRef Id="ResumeDlg" />
-            <DialogRef Id="UserExit" />
-            <DialogRef Id="WelcomeDlg" />
-        
-            <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999" />
-        
-            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" />
-        
-            <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" />
-        
-            <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" />
-            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg" />
-            <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
-        
-            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="(NOT Installed) OR (Installed AND PATCH)" />
-            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="(NOT Installed) OR (Installed AND PATCH)" />
-        
-            <Property Id="ARPNOMODIFY" Value="1" />
-        </UI>   
-        """);
-    var uiRef = XElement.Parse("<UIRef Id=\"WixUI_Common\" />");
-    document.Root.Select(Compiler.ProductElementName).Add(ui);
-    document.Root.Select(Compiler.ProductElementName).Add(uiRef);
+    project.WxsFiles.Add("installer/WixUI_Minimal_NoEULA.wxs");
+    Compiler.WixSourceGenerated += document =>
+    {
+        document.Root.Select(Compiler.ProductElementName).Add(
+            XElement.Parse("<UIRef Id=\"WixUI_Minimal_NoEULA\" />")
+        );
+    };
 }
 
 void SignProject(ManagedProject managedProject, string? s, string? timestampServer1)
@@ -245,7 +210,26 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
             SequenceNumber = 5,
         }
     );
+
+    // Workaround https://github.com/oleg-shilo/wixsharp/issues/1728
+    project.WixBuildCommandGenerated += cmd => cmd.Replace("-arch x64", "-arch x64 ");
+    
+    Compiler.PreserveTempFiles = true;
+
     return project;
+}
+
+void AddFileTypeRegistration(ManagedProject project)
+{
+    project.WxsFiles.Add("installer/OpenKneeboardPluginFileType.wxs");
+    Compiler.WixSourceGenerated += document =>
+    {
+        var xmlns = new XmlNamespaceManager(new NameTable());
+        xmlns.AddNamespace("wix", "http://wixtoolset.org/schemas/v4/wxs");
+        document.Root.XPathSelectElement("//wix:Feature[@Id='Complete']", xmlns).Add(
+            XElement.Parse("<ComponentRef Id=\"OpenKneeboardPlugin_FileType\" />")
+        );
+    };
 }
 
 void RegisterApiLayers(DirectoryInfo directoryInfo, ManagedProject managedProject)
@@ -353,7 +337,7 @@ class MyActions
             session.SetProperty("MIGRATE", it);
             session.SetProperty("UPGRADINGPRODUCTCODE", it);
         }
-        
+
         return ActionResult.Success;
     }
 }
