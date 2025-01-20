@@ -34,17 +34,6 @@ jobs:
         with:
           path: source
           fetch-depth: 0
-      - name: Fetch code-signing key
-        env:
-          CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
-        id: fetch-key
-        if: ${{ (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push') && (github.actor == 'fredemmott') }}
-        shell: pwsh
-        run: |
-          $pfxPath="${{runner.temp}}/MyCert.pfx"
-          [System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content "$pfxPath" -AsByteStream
-          Add-Content $Env:GITHUB_OUTPUT "HAVE_KEY=true"
-          Add-Content $Env:GITHUB_OUTPUT "PATH=$pfxPath"
       - name: Make build directory
         run: cmake -E make_directory build
       - name: Configure
@@ -54,12 +43,6 @@ jobs:
           $args = @(
             "-A", "x64"
           )
-          if ( "${{steps.fetch-key.outputs.HAVE_KEY}}" -eq "true" ) {
-            echo "::notice::Signing build targets"
-            $args += "-DSIGNTOOL_KEY_FILE=${{steps.fetch-key.outputs.PATH}}" `
-          } else {
-            echo "::warning::Not signing targets"
-          }
           cmake ${{github.workspace}}/source @args
       - name: Build
         id: build
@@ -77,79 +60,28 @@ jobs:
           $version="$(Get-Content version.txt)"
           Add-Content $Env:GITHUB_OUTPUT "VERSION=${version}"
           echo "::endgroup::"
-      - name: Create MSI
-        working-directory: build
-        id: create-msi
-        run: |
-          # Create MSI
-          cmake --build . `
-            --config ${{matrix.config}} `
-            --target package
-          $installer="$(Get-Content installer-name.txt)"
-          if ("${{github.ref_type}}" -eq "tag") {
-            $normalized = "OpenKneeboard-${{github.ref_name}}.msi"
-            if ($normalized -ne $installer) {
-              Copy-Item $installer $normalized
-              $installer = $normalized
-            }
-          }
-          Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
-          $installer=(Get-ChildItem $installer).FullName -replace '\\','/'
-          Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
-      - name: Sign MSI
-        working-directory: build
-        if: ${{steps.fetch-key.outputs.HAVE_KEY}}
-        run: |
-          # Known path for the GitHub Actions windows 2022 runner, may need updating
-          & 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe' `
-            sign `
-            /d "${{steps.create-msi.outputs.MSI_NAME}}" `
-            /t http://timestamp.digicert.com `
-            /fd SHA256 `
-            /f "${{steps.fetch-key.outputs.PATH}}" `
-            "${{steps.create-msi.outputs.MSI_PATH}}"
-      - name: Attach MSI
-        if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: OpenKneeboard-GHA${{github.run_number}}.msi
-          path: ${{steps.create-msi.outputs.MSI_PATH}}
-      - name: Install debug symbols
-        id: debug-symbols
-        working-directory: build
-        shell: pwsh
-        run: |
-          $prefix="${{runner.temp}}/OpenKneeboard-${{steps.build.outputs.VERSION}}-Symbols"
-
-          echo "::group::Running cmake"
-
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component DebugSymbols `
-            --prefix "${prefix}"
-          Add-Content $Env:GITHUB_OUTPUT "PREFIX=$prefix"
-
-          echo "::endgroup::"
-
-          echo "::group::Creating zip"
-          if ("${{github.ref_type}}" -eq "tag") {
-            $zip = "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip"
-          } else {
-            $zip = "${{runner.temp}}/OpenKneeboard-GHA${{github.run_number}}-DebugSymbols.zip"
-          }
-          $zip = $zip -replace '\\','/'
-          cd $prefix
-          Compress-Archive `
-            -Path * `
-            -DestinationPath $zip
-          Add-Content $Env:GITHUB_OUTPUT "ZIP_PATH=$zip"
-          echo "::endgroup::"
       - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v4
         with:
           name: OpenKneeboard-GHA${{github.run_number}}-Symbols
-          path: ${{steps.debug-symbols.outputs.PREFIX}}
+          path: build/out/${{matrix.config}}/pdb
+      - name: Build installer generator
+        if: ${{matrix.config != 'Debug' }}
+        shell: pwsh
+        working-directory: source/OpenKneeboard-Installer
+        run: |
+          dotnet publish `
+            --configuration Release `
+            --output "build/out/${{matrix.config}}/installer-generator"
+      - name: Attach bundle
+        if: ${{matrix.config != 'Debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenKneeboard-GHA${{github.run_number}}
+          path: |
+            build/out/${{matrix.config}}
+            !build/out/${{matrix.config}}/pdb
       - name: Generate release notes
         if: github.ref_type == 'tag' && matrix.config != 'Debug'
         id: release-notes
@@ -167,8 +99,3 @@ jobs:
           draft: true
           body_path: ${{steps.release-notes.outputs.PATH}}
           prerelease: ${{contains(github.ref_name, '-')}}
-          # 'files' uses a JS glob library that only supports forward slashes;
-          # backslashes are treated as escapes
-          files: |
-            ${{ steps.create-msi.outputs.MSI_PATH }}
-            ${{ steps.debug-symbols.outputs.ZIP_PATH}}
