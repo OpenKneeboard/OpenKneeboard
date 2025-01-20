@@ -242,7 +242,6 @@ install(
   TYPE DOC
 )
 
-add_subdirectory("installer")
 add_subdirectory(OpenKneeboard-Installer)
 
 macro(append_recursive_targets VAR SUBDIR)

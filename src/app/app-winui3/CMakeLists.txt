@@ -137,16 +137,3 @@ install(
   # These are just put here for use during development, but are put in `share\` for the real installation
   PATTERN "DCS-Aircraft-Mapping.json" EXCLUDE
 )
-
-set_property(
-  INSTALL
-  "OpenKneeboardApp.exe"
-  PROPERTY
-  CPACK_START_MENU_SHORTCUTS "OpenKneeboard"
-)
-set_property(
-  INSTALL
-  "OpenKneeboardApp.exe"
-  PROPERTY
-  CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
-)
