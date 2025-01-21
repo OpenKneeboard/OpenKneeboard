@@ -33,7 +33,10 @@ target_include_directories(
 	OpenKneeboard-c-api
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR})
-install(
-	FILES
+file(
+	GENERATE
+	OUTPUT
+	"${BUILD_OUT_ROOT}/include/OpenKneeboard_CAPI.h"
+	INPUT
 	"OpenKneeboard_CAPI.h"
-	DESTINATION "include")
+)

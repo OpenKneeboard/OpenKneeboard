@@ -171,6 +171,8 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
                     new Files("bin/*.*", f => !f.EndsWith("OpenKneeboardApp.exe"))),
                 new Dir("share", new Files("share/*.*")),
                 new Dir("utilities", new Files("utilities/*.*")),
+                new Dir("include", new Files("include/*.*")),
+                new Dir("scripts", new Files("scripts/*.*")),
                 new Files(installerResources, @"installer/*.*")),
             new Binary(GetMsixRemovalToolId(), "installer/remove-openkneeboard-msix.exe"));
     project.SourceBaseDir = inputRoot.FullName;
@@ -213,7 +215,7 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
 
     // Workaround https://github.com/oleg-shilo/wixsharp/issues/1728
     project.WixBuildCommandGenerated += cmd => cmd.Replace("-arch x64", "-arch x64 ");
-    
+
     Compiler.PreserveTempFiles = true;
 
     return project;

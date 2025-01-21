@@ -27,12 +27,6 @@ target_include_directories(directxtk12 INTERFACE "${INSTALL_DIR}/$<CONFIG>/inclu
 target_link_libraries(directxtk12 INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/DirectXTK12.lib")
 
 ExternalProject_Get_property(directxtk12Build SOURCE_DIR)
-install(
-  FILES
-  "${SOURCE_DIR}/LICENSE"
-  TYPE DOC
-  RENAME "LICENSE-ThirdParty-DirectXTK12.txt"
-)
 
 add_library(ThirdParty::DirectXTK12 ALIAS directxtk12)
 

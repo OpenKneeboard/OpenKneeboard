@@ -123,5 +123,3 @@ add_custom_command(
 )
 add_custom_target(webview-content DEPENDS "${WEBPACK_STAMP_FILE}")
 add_dependencies(runtime-dependencies webview-content)
-
-install(DIRECTORY "${WEBVIEW_CONTENT_DIR}" DESTINATION "bin/webview-content")

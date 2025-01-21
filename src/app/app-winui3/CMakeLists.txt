@@ -120,20 +120,3 @@ set_property(
   TARGET OpenKneeboard-App-WinUI3
   PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
 )
-
-install(
-  DIRECTORY
-
-  # Trailing / copies the contents instead of the directory itself,
-  # i.e. avoids installing `bin/Debug/`
-  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/"
-  TYPE BIN
-  PATTERN "*.pdb" EXCLUDE
-  PATTERN "*.lib" EXCLUDE
-  # WinUI3 includes these localizations, but they are not supported by WiX v3.11.2, so including them breaks the installer :'(
-  PATTERN "gd-gb/*" EXCLUDE
-  PATTERN "mi-NZ/*" EXCLUDE
-  PATTERN "ug-CN/*" EXCLUDE
-  # These are just put here for use during development, but are put in `share\` for the real installation
-  PATTERN "DCS-Aircraft-Mapping.json" EXCLUDE
-)

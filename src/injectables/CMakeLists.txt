@@ -157,12 +157,6 @@ file(
   INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
   NEWLINE_STYLE UNIX
 )
-install(
-  FILES
-  "${32BIT_OPENXR_JSON}"
-  "${64BIT_OPENXR_JSON}"
-  DESTINATION bin
-)
 
 ok_add_library(OpenKneeboard-AutoDetect MODULE InjectionBootstrapper.cpp)
 target_link_libraries(

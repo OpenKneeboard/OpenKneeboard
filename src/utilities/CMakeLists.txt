@@ -10,8 +10,6 @@ function(add_helper_executable TARGET)
   if(HELPER_ARG_32BIT_ONLY AND NOT BUILD_IS_32BIT)
     return()
   endif()
-
-  install(TARGETS "${TARGET}")
 endfunction()
 
 function(add_utility_executable TARGET)
@@ -240,15 +238,4 @@ add_custom_command(
   "${CMAKE_COMMAND}" -E copy_if_different
   "${DIASDK_DLL}"
   "$<TARGET_FILE_DIR:symbolize-traces>/"
-)
-install(
-  TARGETS symbolize-traces
-  DESTINATION "."
-  COMPONENT DebugSymbols
-)
-install(
-  FILES
-  "${DIASDK_DLL}"
-  DESTINATION "."
-  COMPONENT DebugSymbols
 )

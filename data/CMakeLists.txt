@@ -13,9 +13,11 @@ file(
     OpenKneeboard-*.d.ts
 )
 
-install(
-    FILES
-    ${API_DEV_RESOURCES}
-    DESTINATION
-    "share/doc"
-)
+foreach(FILE IN LISTS API_DEV_RESOURCES)
+  cmake_path(GET FILE FILENAME FILENAME)
+  file(
+    GENERATE
+    OUTPUT "${BUILD_OUT_ROOT}/share/doc/${FILENAME}"
+    INPUT "${FILENAME}"
+  )
+endforeach()

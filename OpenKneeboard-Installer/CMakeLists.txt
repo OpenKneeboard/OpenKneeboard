@@ -24,7 +24,6 @@ add_custom_target(
   BYPRODUCTS
   "${VERSION_JSON}"
 )
-install(FILES "${VERSION_JSON}" DESTINATION "installer")
 
 ok_add_executable(remove-openkneeboard-msix WIN32 remove-msix.cpp)
 target_link_libraries(remove-openkneeboard-msix PRIVATE ThirdParty::CppWinRT)
