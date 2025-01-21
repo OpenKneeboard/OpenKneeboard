@@ -73,7 +73,7 @@ jobs:
         run: |
           dotnet publish `
             --configuration Release `
-            --output "build/out/${{matrix.config}}/installer-generator"
+            --output "${{github.workspace}}/build/out/${{matrix.config}}/installer-generator"
       - name: Attach bundle
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v4
@@ -82,6 +82,27 @@ jobs:
           path: |
             build/out/${{matrix.config}}
             !build/out/${{matrix.config}}/pdb
+      - name: Install WiX
+        run: dotnet tool install --global wix
+      - name: Build installer
+        id: build-installer
+        if: ${{matrix.config != 'Debug' }}
+        shell: pwsh
+        working-directory: build/out/${{matrix.config}}
+        run: |
+          installer-generator/OpenKneeboard-Installer.exe `
+            "$(Get-Location)" `
+            --stamp-file ${{github.workspace}}/installer.stamp
+          $InstallerPath = Get-Content ${{github.workspace}}/installer.stamp
+          $InstallerName = (Get-Item $InstallerPath).Name
+          Add-Content $env:GITHUB_OUTPUT "installer-path=${InstallerPath}"
+          Add-Content $env:GITHUB_OUTPUT "installer-name=${InstallerName}"
+      - name: Upload unsigned installer
+        if: ${{matrix.config != 'Debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{steps.build-installer.outputs.installer-name}}
+          path: ${{steps.build-installer.outputs.installer-path}}
       - name: Generate release notes
         if: github.ref_type == 'tag' && matrix.config != 'Debug'
         id: release-notes
