@@ -44,7 +44,6 @@ ok_add_executable(
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
   VRViewUIKinds.idl
   VRViewSettingsControl.idl VRViewSettingsControl.xaml VRViewSettingsControl.xaml.cpp VRViewSettingsControl.xaml.h
-  WebViewBasedSettingsPage.idl WebViewBasedSettingsPage.xaml WebViewBasedSettingsPage.xaml.cpp WebViewBasedSettingsPage.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
   WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h
 )
@@ -67,7 +66,6 @@ target_link_libraries(
   OpenKneeboard-App-WinUI3
   PRIVATE
   OpenKneeboard-App-Common
-  OpenKneeboard-App-WebView
   OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND

@@ -1,6 +1,5 @@
 add_subdirectory(app-common)
 add_subdirectory(app-winui3)
-add_subdirectory(app-webview)
 
 ok_add_runtime_files(copy-quick-start-pdf "${CMAKE_SOURCE_DIR}/docs/Quick Start.pdf")
 

@@ -106,13 +106,6 @@
             Title="Advanced">
             Advanced features and behavior tweaks.
           </local:SettingsSubpageData>
-          <!-- EC7A DeveloperTools -->
-          <local:SettingsSubpageData
-            x:Name="OKBDeveloperToolsItem"
-            Glyph="&#xEC7A;"
-            Title="Developer Tools">
-            Tools for OpenKneeboard Developers.
-          </local:SettingsSubpageData>
         </GridView.Items>
       </GridView>
     </StackPanel>

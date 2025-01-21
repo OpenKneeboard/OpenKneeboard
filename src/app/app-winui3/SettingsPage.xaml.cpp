@@ -37,17 +37,6 @@ using namespace OpenKneeboard;
 
 SettingsPage::SettingsPage() {
   InitializeComponent();
-
-  const bool showDeveloperTools = (!Version::IsTaggedVersion)
-    || gKneeboard.lock()->GetAppSettings().mAlwaysShowDeveloperTools;
-
-  if (!showDeveloperTools) {
-    auto items = Grid().Items();
-    uint32_t index {};
-    if (items.IndexOf(OKBDeveloperToolsItem(), index)) {
-      items.RemoveAt(index);
-    }
-  }
 }
 
 void SettingsPage::OnItemClick(
@@ -70,13 +59,6 @@ void SettingsPage::OnItemClick(
   IT(Input)
   IT(Advanced)
 #undef IT
-
-  if (item == OKBDeveloperToolsItem()) {
-    Frame().Navigate(
-      xaml_typename<WebViewBasedSettingsPage>(),
-      winrt::box_value(winrt::to_hstring("DeveloperTools")));
-    return;
-  }
 
   OPENKNEEBOARD_BREAK;
 }// namespace winrt::OpenKneeboardApp::implementation
