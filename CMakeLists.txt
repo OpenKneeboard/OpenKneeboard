@@ -30,10 +30,9 @@ set(
 )
 
 add_compile_options(
-
   # Standard C++ exception behavior
   "/EHsc"
-)
+) 
 
 # Require that targets exist
 cmake_policy(SET CMP0079 NEW)
@@ -45,7 +44,14 @@ cmake_policy(SET CMP0091 NEW)
 
 option(WITH_ASAN "Build with ASAN" OFF)
 
-set(COMMON_COMPILE_OPTIONS)
+set(
+  COMMON_COMPILE_OPTIONS
+  # Disable iterator debugging for CEF USE_SANDBOX
+  "/D_HAS_ITERATOR_DEBUGGING=0"
+  # _HAS_ITERATOR_DEBUGGING is set by CEF but deprecated,
+  # set the non-deprecated property too
+  "/D_ITERATOR_DEBUG_LEVEL=0"
+)
 set(COMMON_LINK_OPTIONS)
 
 if(WITH_ASAN)
@@ -104,6 +110,8 @@ else()
   # upgrade logic
   set(VERSION_BUILD 0)
 endif()
+
+set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
 
 project("${PROJECT_REVERSE_DOMAIN}" VERSION 1.9.13.${VERSION_BUILD} LANGUAGES CXX C)
 

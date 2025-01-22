@@ -239,3 +239,21 @@ add_custom_command(
   "${DIASDK_DLL}"
   "$<TARGET_FILE_DIR:symbolize-traces>/"
 )
+
+if (BUILD_IS_64BIT)
+  add_helper_executable(
+    OpenKneeboard-Chromium
+    WIN32
+    chromium-worker.cpp
+  )
+  target_link_libraries(
+    OpenKneeboard-Chromium
+    PRIVATE
+    Cef::LibCef
+  )
+  set_target_properties(
+    OpenKneeboard-Chromium
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/libexec/cef"
+  )
+endif()

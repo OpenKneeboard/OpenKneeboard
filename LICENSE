@@ -7,22 +7,18 @@ Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
 LINKING EXCEPTION
 
  In addition to the permissions in the GNU General Public License,
- the authors give you permission to link this software with the
- Windows App SDK, as published by Microsoft Corporation, forming a
- combined work, and to distribute this combination without any
- restriction coming from the use of the Windows App SDK. (The General
- Public License restrictions do apply in other respects; for example,
- they cover modification of the software, and distribution when modified
- or linked with other libraries into a combined executable.)
+ the authors give you permission to link this software with unmodified
+ binary distributions of the following dependencies, forming a combined
+ work, and to distribute this combination without any restriction coming
+ from the use of the dependencies.
 
- In addition to the permissions in the GNU General Public License,
- the authors give you permission to link this software with Microsoft Edge
- WebView2, as published by Microsoft Corporation, forming a combined work,
- and to distribute this combination without any restriction coming from the
- use of Microsoft Edge WebView2. (The General Public License restrictions
- do apply in other respects; for example, they cover modification of the
- software, and distribution when modified or linked with other libraries
- into a combined executable.)
+ - The Windows App SDK, as published by Microsoft Corporation
+ - Microsoft Edge WebView 2, as published by Microsoft Corporation
+ - Chromium Embedded Framework, as published by Marshall Greenblatt
+
+(The General Public License restrictions do apply in other respects; for
+example, they cover modification of the software, and distribution when
+modified or linked with other libraries into a combined executable.)
 
 ----------------------------------------------------------------------
 

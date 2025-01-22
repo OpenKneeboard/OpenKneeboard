@@ -26,6 +26,7 @@ configure_file(
 
 scoped_include(abiwinrt.cmake)
 scoped_include(bindline.cmake)
+scoped_include(cef.cmake)
 scoped_include(cppwinrt.cmake)
 scoped_include(detours.cmake)
 scoped_include(dia.cmake)
