@@ -32,12 +32,13 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  public:
   RenderHandler() = delete;
   RenderHandler(ChromiumPageSource* pageSource) : mPageSource(pageSource) {
+    mSize = pageSource->mSettings.mInitialSize;
   }
   ~RenderHandler() {
   }
 
   void GetViewRect(CefRefPtr<CefBrowser>, CefRect& rect) override {
-    rect = {0, 0, DefaultPixelSize.Width(), DefaultPixelSize.Height()};
+    rect = {0, 0, mSize.Width<int>(), mSize.Height<int>()};
   }
 
   void OnPaint(
@@ -112,13 +113,14 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
   IMPLEMENT_REFCOUNTING(RenderHandler);
 
   ChromiumPageSource* mPageSource {nullptr};
+  PixelSize mSize {};
 };
 
 class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler {
  public:
   Client() = delete;
-  Client(ChromiumPageSource* pageSource) {
+  Client(ChromiumPageSource* pageSource) : mPageSource(pageSource) {
     mRenderHandler = {new RenderHandler(pageSource)};
   }
   ~Client() {
@@ -148,6 +150,7 @@ class ChromiumPageSource::Client final : public CefClient,
  private:
   IMPLEMENT_REFCOUNTING(Client);
 
+  ChromiumPageSource* mPageSource {nullptr};
   CefRefPtr<CefBrowser> mBrowser;
   CefRefPtr<RenderHandler> mRenderHandler;
   std::optional<int> mBrowserId;
@@ -173,11 +176,14 @@ task<void> ChromiumPageSource::Init() {
   info.SetAsWindowless(nullptr);
   info.shared_texture_enabled = true;
 
-  CefBrowserSettings settings {};
+  CefBrowserSettings settings;
   settings.windowless_frame_rate = Config::FramesPerSecond;
+  if (mSettings.mTransparentBackground) {
+    settings.background_color = CefColorSetARGB(0x00, 0x00, 0x00, 0x00);
+  }
 
   CefBrowserHost::CreateBrowser(
-    info, mClient, "https://example.com", settings, nullptr, nullptr);
+    info, mClient, mSettings.mURI, settings, nullptr, nullptr);
   co_return;
 }
 

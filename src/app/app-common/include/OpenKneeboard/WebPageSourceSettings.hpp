@@ -21,13 +21,15 @@
 
 #include <OpenKneeboard/Pixels.hpp>
 
+#include <OpenKneeboard/config.hpp>
+
 #include <filesystem>
 #include <string>
 #include <unordered_map>
 
 namespace OpenKneeboard {
 struct WebPageSourceSettings {
-  PixelSize mInitialSize {1024, 768};
+  PixelSize mInitialSize {Config::DefaultPixelSize};
   bool mIntegrateWithSimHub {true};
   std::string mURI;
   bool mOpenDeveloperToolsWindow {false};
