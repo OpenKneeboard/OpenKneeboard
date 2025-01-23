@@ -213,6 +213,14 @@ void ChromiumPageSource::PostCursorEvent(
 
   // We only pay attention to buttons 1 and 2
   const auto newButtons = ev.mButtons & (LeftButton | RightButton);
+
+  if (newButtons & LeftButton) {
+    cme.modifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
+  }
+  if (newButtons & RightButton) {
+    cme.modifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
+  }
+
   if (mCursorButtons == newButtons) {
     host->SendMouseMoveEvent(cme, /* mouseLeave = */ false);
     return;
