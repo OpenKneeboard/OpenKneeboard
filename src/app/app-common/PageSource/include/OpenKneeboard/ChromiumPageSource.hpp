@@ -78,6 +78,8 @@ class ChromiumPageSource final
     wil::com_ptr<ID3D11Texture2D> mTexture;
     wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   };
+  bool mIsHovered = false;
+  uint32_t mCursorButtons = 0;
 
   winrt::apartment_context mUIThread;
   DisposalState mDisposal;
