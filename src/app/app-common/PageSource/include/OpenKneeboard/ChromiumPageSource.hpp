@@ -22,9 +22,15 @@
 #include "IPageSourceWithCursorEvents.hpp"
 
 #include <OpenKneeboard/CursorEvent.hpp>
+#include <OpenKneeboard/D3D11/SpriteBatch.hpp>
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/KneeboardViewID.hpp>
+#include <OpenKneeboard/Pixels.hpp>
+
+#include <Windows.h>
+
+#include <wil/com.h>
 
 // TODO: Avoid the need to include this, to avoid poluting with the generic
 // macros like `IMPLEMENT_REFCOUNTING`
@@ -66,9 +72,19 @@ class ChromiumPageSource final
 
  private:
   class Client;
+  class RenderHandler;
+  struct Frame {
+    PixelSize mSize {};
+    wil::com_ptr<ID3D11Texture2D> mTexture;
+    wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
+  };
 
   winrt::apartment_context mUIThread;
   DisposalState mDisposal;
+
+  audited_ptr<DXResources> mDXResources;
+  KneeboardState* mKneeboard {nullptr};
+  D3D11::SpriteBatch mSpriteBatch;
 
   PageID mPageID;
 
@@ -77,7 +93,8 @@ class ChromiumPageSource final
   ChromiumPageSource(const audited_ptr<DXResources>&, KneeboardState*);
   task<void> Init();
 
-  audited_ptr<DXResources> mDXResources;
-  KneeboardState* mKneeboard {nullptr};
+  uint64_t mFrameCount = 0;
+  wil::com_ptr<ID3D11Fence> mFence;
+  std::array<Frame, 3> mFrames;
 };
 }// namespace OpenKneeboard

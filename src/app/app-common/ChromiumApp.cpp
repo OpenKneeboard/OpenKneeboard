@@ -69,6 +69,7 @@ ChromiumApp::ChromiumApp() {
 
   CefSettings settings {};
   settings.multi_threaded_message_loop = true;
+  settings.windowless_rendering_enabled = true;
 
   CefString(&settings.browser_subprocess_path)
     .FromWString(subprocessPath.wstring());
