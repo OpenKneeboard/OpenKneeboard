@@ -423,11 +423,6 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
 }
 
 OpenKneeboard::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
-  if (!WebView2PageSource::IsAvailable()) {
-    this->PromptToInstallWebView2();
-    co_return;
-  }
-
   AddBrowserAddress().Text({});
 
   if (co_await AddBrowserDialog().ShowAsync() != ContentDialogResult::Primary) {
