@@ -21,6 +21,8 @@
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
+#include <OpenKneeboard/version.hpp>
+
 #include <include/cef_app.h>
 #include <include/cef_base.h>
 
@@ -67,14 +69,23 @@ ChromiumApp::ChromiumApp() {
   p.reset(new Wrapper());
   p->mCefApp = new Impl();
 
+  CefMainArgs mainArgs {};
   CefSettings settings {};
   settings.multi_threaded_message_loop = true;
   settings.windowless_rendering_enabled = true;
+  CefString(&settings.user_agent_product)
+    .FromString(std::format(
+      "OpenKneeboard/{}.{}.{}.{}",
+      Version::Major,
+      Version::Minor,
+      Version::Patch,
+      Version::Build));
+  CefString(&settings.root_cache_path)
+    .FromWString(
+      (Filesystem::GetLocalAppDataDirectory() / "Chromium").wstring());
 
   CefString(&settings.browser_subprocess_path)
     .FromWString(subprocessPath.wstring());
-
-  CefMainArgs mainArgs {};
 
   CefInitialize(mainArgs, settings, p->mCefApp, nullptr);
 }
