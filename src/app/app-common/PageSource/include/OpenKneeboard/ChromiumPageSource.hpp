@@ -27,6 +27,8 @@
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/Pixels.hpp>
+#include <OpenKneeboard/WebPageSourceKind.hpp>
+#include <OpenKneeboard/WebPageSourceSettings.hpp>
 
 #include <Windows.h>
 
@@ -47,12 +49,14 @@ class ChromiumPageSource final
     public EventReceiver,
     public std::enable_shared_from_this<ChromiumPageSource> {
  public:
+  using Kind = WebPageSourceKind;
+  using Settings = WebPageSourceSettings;
+
   ChromiumPageSource() = delete;
   virtual ~ChromiumPageSource();
 
-  static task<std::shared_ptr<ChromiumPageSource>> Create(
-    audited_ptr<DXResources>,
-    KneeboardState*);
+  static task<std::shared_ptr<ChromiumPageSource>>
+  Create(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
 
   task<void> DisposeAsync() noexcept override;
 
@@ -78,21 +82,23 @@ class ChromiumPageSource final
     wil::com_ptr<ID3D11Texture2D> mTexture;
     wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   };
-  bool mIsHovered = false;
-  uint32_t mCursorButtons = 0;
 
   winrt::apartment_context mUIThread;
   DisposalState mDisposal;
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
+  Settings mSettings {};
   D3D11::SpriteBatch mSpriteBatch;
+
+  bool mIsHovered = false;
+  uint32_t mCursorButtons = 0;
 
   PageID mPageID;
 
   CefRefPtr<Client> mClient;
 
-  ChromiumPageSource(const audited_ptr<DXResources>&, KneeboardState*);
+  ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
   task<void> Init();
 
   uint64_t mFrameCount = 0;

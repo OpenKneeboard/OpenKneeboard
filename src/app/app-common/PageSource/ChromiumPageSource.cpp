@@ -157,8 +157,11 @@ ChromiumPageSource::~ChromiumPageSource() = default;
 
 task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
   audited_ptr<DXResources> dxr,
-  KneeboardState* kbs) {
-  std::shared_ptr<ChromiumPageSource> ret(new ChromiumPageSource(dxr, kbs));
+  KneeboardState* kbs,
+  Kind kind,
+  Settings settings) {
+  std::shared_ptr<ChromiumPageSource> ret(
+    new ChromiumPageSource(dxr, kbs, kind, settings));
   co_await ret->Init();
   co_return ret;
 }
@@ -305,9 +308,14 @@ std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID) {
 }
 
 ChromiumPageSource::ChromiumPageSource(
-  const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs)
-  : mDXResources(dxr), mKneeboard(kbs), mSpriteBatch(dxr->mD3D11Device.get()) {
+  audited_ptr<DXResources> dxr,
+  KneeboardState* kbs,
+  Kind,
+  Settings settings)
+  : mDXResources(dxr),
+    mKneeboard(kbs),
+    mSettings(settings),
+    mSpriteBatch(dxr->mD3D11Device.get()) {
   check_hresult(dxr->mD3D11Device->CreateFence(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 }

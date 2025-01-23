@@ -23,7 +23,7 @@
 #include <OpenKneeboard/ITabWithSettings.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 #include <OpenKneeboard/TabBase.hpp>
-#include <OpenKneeboard/WebView2PageSource.hpp>
+#include <OpenKneeboard/WebPageSourceSettings.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/handles.hpp>
@@ -37,7 +37,8 @@ class BrowserTab final : public TabBase,
                          public ITabWithSettings,
                          public PageSourceWithDelegates {
  public:
-  struct Settings;
+  using Settings = WebPageSourceSettings;
+
   BrowserTab() = delete;
   static task<std::shared_ptr<BrowserTab>> Create(
     audited_ptr<DXResources>,
@@ -52,10 +53,6 @@ class BrowserTab final : public TabBase,
 
   [[nodiscard]]
   virtual task<void> Reload() final override;
-
-  struct Settings : WebView2PageSource::Settings {
-    constexpr bool operator==(const Settings&) const noexcept = default;
-  };
 
   nlohmann::json GetSettings() const override;
 

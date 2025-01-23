@@ -73,9 +73,8 @@ task<void> BrowserTab::Reload() {
 
   mDelegate = {};
   co_await this->SetDelegates({});
-  mDelegate = co_await ChromiumPageSource::Create(mDXR, mKneeboard);
-  // FIXME: mDXR, mKneeboard, WebView2PageSource::Kind::WebDashboard,
-  // mSettings);
+  mDelegate = co_await ChromiumPageSource::Create(
+    mDXR, mKneeboard, WebPageSourceKind::WebDashboard, mSettings);
   this->RemoveAllEventListeners();
   AddEventListener(
     mDelegate->evDocumentTitleChangedEvent,
