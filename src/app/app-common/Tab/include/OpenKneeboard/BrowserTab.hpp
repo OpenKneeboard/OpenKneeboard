@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/ITabWithSettings.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 #include <OpenKneeboard/TabBase.hpp>
@@ -83,7 +84,7 @@ class BrowserTab final : public TabBase,
   Settings mSettings;
   bool mHaveTitle {false};
 
-  std::shared_ptr<WebView2PageSource> mDelegate;
+  std::shared_ptr<ChromiumPageSource> mDelegate;
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(BrowserTab::Settings);

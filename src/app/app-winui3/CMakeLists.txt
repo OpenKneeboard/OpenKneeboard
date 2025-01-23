@@ -85,6 +85,11 @@ target_link_libraries(
   System::User32
   ThirdParty::LibZip
 )
+target_link_options(
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  "/DELAYLOAD:libcef.dll"
+)
 
 target_include_directories(
   OpenKneeboard-App-WinUI3

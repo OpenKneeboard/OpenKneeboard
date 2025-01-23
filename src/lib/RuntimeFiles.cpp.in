@@ -3,6 +3,9 @@
 namespace OpenKneeboard::RuntimeFiles {
 const std::filesystem::path QUICK_START_PDF("Quick Start.pdf");
 
+const std::filesystem::path CHROMIUM(
+  "$<$<TARGET_EXISTS:OpenKneeboard-Chromium>:libexec/cef/$<TARGET_FILE_NAME:OpenKneeboard-Chromium>>");
+
 const std::filesystem::path DCSWORLD_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-lua-api>");
 

@@ -31,6 +31,7 @@ target_link_libraries(
   OpenKneeboard-StateMachine
   ThirdParty::DirectXTK
   ThirdParty::JSON
+  Cef::LibCef
   PRIVATE
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources

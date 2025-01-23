@@ -26,6 +26,7 @@
 #include "MainWindow.xaml.h"
 
 #include <OpenKneeboard/APIEvent.hpp>
+#include <OpenKneeboard/ChromiumApp.hpp>
 #include <OpenKneeboard/DebugPrivileges.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -626,6 +627,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       << Filesystem::GetKnownFolderPath<FOLDERID_Profile>().string()
       << ") instead." << std::endl;
   }
+
+  ChromiumApp cefApp;
 
   DebugPrivileges privileges;
 
