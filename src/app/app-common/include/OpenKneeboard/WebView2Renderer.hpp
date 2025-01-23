@@ -23,6 +23,8 @@
 #include <OpenKneeboard/Geometry2D.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 #include <OpenKneeboard/WGCRenderer.hpp>
+#include <OpenKneeboard/WebPageSourceKind.hpp>
+#include <OpenKneeboard/WebPageSourceSettings.hpp>
 
 #include <OpenKneeboard/task.hpp>
 
@@ -70,25 +72,8 @@ class WebView2Renderer final : public WGCRenderer {
   using worker_task = basic_task<WorkerDQ, T>;
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
   using jsapi_task = worker_task<JSAPIResult>;
-
-  enum class Kind {
-    WebDashboard,
-    File,// from SingleFileTab or FolderTab
-    Plugin,
-  };
-
-  struct Settings {
-    PixelSize mInitialSize {1024, 768};
-    bool mIntegrateWithSimHub {true};
-    std::string mURI;
-    bool mOpenDeveloperToolsWindow {false};
-    bool mTransparentBackground {true};
-
-    ///// NOT SAVED - JUST FOR INTERNAL USE (e.g. PluginTab) /////
-    std::unordered_map<std::string, std::filesystem::path> mVirtualHosts;
-
-    constexpr bool operator==(const Settings&) const noexcept = default;
-  };
+  using Kind = WebPageSourceKind;
+  using Settings = WebPageSourceSettings;
 
   enum class CursorEventsMode {
     MouseEmulation,
