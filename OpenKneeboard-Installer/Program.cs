@@ -170,6 +170,7 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
                     new File(GetExecutableId(), "bin/OpenKneeboardApp.exe"),
                     new Files("bin/*.*", f => !f.EndsWith("OpenKneeboardApp.exe"))),
                 new Dir("share", new Files("share/*.*")),
+                new Dir("libexec", new Files("libexec/*.*")),
                 new Dir("utilities", new Files("utilities/*.*")),
                 new Dir("include", new Files("include/*.*")),
                 new Dir("scripts", new Files("scripts/*.*")),
