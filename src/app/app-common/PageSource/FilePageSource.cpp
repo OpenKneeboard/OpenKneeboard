@@ -17,12 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/PDFFilePageSource.hpp>
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
-#include <OpenKneeboard/WebView2PageSource.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
@@ -82,8 +82,7 @@ task<std::shared_ptr<IPageSource>> FilePageSource::Create(
   }
 
   if (hasExtension(u".htm") || hasExtension(u".html")) {
-    co_return co_await WebView2PageSource::Create(
-      dxr, kbs, WebView2Renderer::Kind::File, path);
+    co_return co_await ChromiumPageSource::Create(dxr, kbs, path);
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {

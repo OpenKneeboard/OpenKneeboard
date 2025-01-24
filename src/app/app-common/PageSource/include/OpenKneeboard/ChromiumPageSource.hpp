@@ -59,6 +59,8 @@ class ChromiumPageSource final
 
   static task<std::shared_ptr<ChromiumPageSource>>
   Create(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
+  static task<std::shared_ptr<ChromiumPageSource>>
+  Create(audited_ptr<DXResources>, KneeboardState*, std::filesystem::path);
 
   task<void> DisposeAsync() noexcept override;
 
@@ -75,6 +77,13 @@ class ChromiumPageSource final
   std::optional<PreferredSize> GetPreferredSize(PageID) override;
 
   Event<std::string> evDocumentTitleChangedEvent;
+
+  void PostCustomAction(
+    KneeboardViewID,
+    std::string_view,
+    const nlohmann::json& arg) {
+    // FIXME: plugins are not yet implemented with Chromium
+  }
 
  private:
   struct JSRequest;

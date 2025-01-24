@@ -411,17 +411,6 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateTab(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
-OpenKneeboard::fire_and_forget TabsSettingsPage::PromptToInstallWebView2() {
-  if (
-    co_await InstallWebView2Dialog().ShowAsync()
-    != ContentDialogResult::Primary) {
-    co_return;
-  }
-  // From "Get the Link" button at
-  // https://developer.microsoft.com/en-us/microsoft-edge/webview2/
-  co_await LaunchURI("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
-}
-
 OpenKneeboard::fire_and_forget TabsSettingsPage::CreateBrowserTab() {
   AddBrowserAddress().Text({});
 

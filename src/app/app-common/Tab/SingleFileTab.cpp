@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/PDFFilePageSource.hpp>
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
 #include <OpenKneeboard/SingleFileTab.hpp>
-#include <OpenKneeboard/WebView2PageSource.hpp>
-
-#include <shims/nlohmann/json.hpp>
 
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 
@@ -131,7 +131,7 @@ task<void> SingleFileTab::SetPath(std::filesystem::path rawPath) {
     mKind = Kind::PlainTextFile;
   } else if (std::dynamic_pointer_cast<ImageFilePageSource>(delegate)) {
     mKind = Kind::ImageFile;
-  } else if (std::dynamic_pointer_cast<WebView2PageSource>(delegate)) {
+  } else if (std::dynamic_pointer_cast<ChromiumPageSource>(delegate)) {
     mKind = Kind::HTMLFile;
   }
 

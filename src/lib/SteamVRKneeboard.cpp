@@ -323,7 +323,7 @@ void SteamVRKneeboard::Tick() {
     // If you remove this, test that SteamVR updates when changing tabs/pages
     // when there are not regular page dirty events. For example:
     // - disable/hide the clock/footer
-    // - remove any window capture or webview2 tabs
+    // - remove any window capture or browser tabs
     winrt::check_hresult(mFence->SetEventOnCompletion(
       layerState.mFenceValue, mGPUFlushEvent.get()));
     {

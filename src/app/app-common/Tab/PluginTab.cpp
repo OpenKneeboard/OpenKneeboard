@@ -18,11 +18,11 @@
  * USA.
  */
 
+#include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/D2DErrorRenderer.hpp>
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/PluginStore.hpp>
 #include <OpenKneeboard/PluginTab.hpp>
-#include <OpenKneeboard/WebView2PageSource.hpp>
 
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/semver.hpp>
@@ -125,7 +125,7 @@ task<void> PluginTab::Reload() {
     case Kind::WebBrowser: {
       const auto args = std::get<Plugin::TabType::WebBrowserArgs>(
         mTabType->mImplementationArgs);
-      WebView2PageSource::Settings settings {
+      WebPageSourceSettings settings {
         .mInitialSize = args.mInitialSize,
         .mIntegrateWithSimHub = false,
         .mURI = args.mURI,
@@ -146,8 +146,8 @@ task<void> PluginTab::Reload() {
           path);
       }
 
-      mDelegate = co_await WebView2PageSource::Create(
-        mDXResources, mKneeboard, WebView2PageSource::Kind::Plugin, settings);
+      mDelegate = co_await ChromiumPageSource::Create(
+        mDXResources, mKneeboard, WebPageSourceKind::Plugin, settings);
       co_await this->SetDelegates({mDelegate});
       mState = State::OK;
       co_return;
@@ -183,7 +183,7 @@ void PluginTab::PostCustomAction(
   }
 
   const auto postable
-    = std::dynamic_pointer_cast<WebView2PageSource>(mDelegate);
+    = std::dynamic_pointer_cast<ChromiumPageSource>(mDelegate);
   if (postable) {
     postable->PostCustomAction(viewID, id, arg);
   }

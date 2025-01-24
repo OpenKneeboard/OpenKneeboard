@@ -25,7 +25,11 @@
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/version.hpp>
 
+#include <Shlwapi.h>
+
 #include <include/cef_client.h>
+
+#include <wininet.h>
 
 namespace OpenKneeboard {
 
@@ -237,6 +241,21 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
     new ChromiumPageSource(dxr, kbs, kind, settings));
   co_await ret->Init();
   co_return ret;
+}
+
+task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
+  audited_ptr<DXResources> dxr,
+  KneeboardState* kbs,
+  std::filesystem::path path) {
+  char buffer[INTERNET_MAX_URL_LENGTH];
+  DWORD charCount {std::size(buffer)};
+  check_hresult(
+    UrlCreateFromPathA(path.string().c_str(), buffer, &charCount, NULL));
+  const Settings settings {
+    .mIntegrateWithSimHub = false,
+    .mURI = {buffer, charCount},
+  };
+  return Create(dxr, kbs, Kind::File, settings);
 }
 
 task<void> ChromiumPageSource::Init() {

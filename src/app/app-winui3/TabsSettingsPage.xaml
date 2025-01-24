@@ -292,23 +292,6 @@
         </Grid>
       </Button>
       <ContentDialog
-        x:Name="InstallWebView2Dialog"
-        Title="Browser Tabs Unavailable"
-        DefaultButton="Primary"
-        PrimaryButtonText="Download"
-        CloseButtonText="Cancel">
-        <RichTextBlock>
-          <Paragraph>
-            Browser tabs require Microsoft Edge WebView2, which is not
-            installed.
-          </Paragraph>
-          <Paragraph>
-            To add a browser tab, download and install Microsoft Edge WebView2,
-            then restart OpenKneeboard.
-          </Paragraph>
-        </RichTextBlock>
-      </ContentDialog>
-      <ContentDialog
         x:Name="AddBrowserDialog"
         Title="Add Web Dashboard"
         DefaultButton="Primary"
