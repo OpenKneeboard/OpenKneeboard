@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <include/cef_client.h>
 
@@ -192,8 +193,35 @@ task<void> ChromiumPageSource::Init() {
     settings.background_color = CefColorSetARGB(0x00, 0x00, 0x00, 0x00);
   }
 
+  auto extraData = CefDictionaryValue::Create();
+
+  nlohmann::json initData {
+    {
+      "Version",
+      {
+        {
+          "Components",
+          {
+            {"Major", Version::Major},
+            {"Minor", Version::Minor},
+            {"Patch", Version::Patch},
+            {"Build", Version::Build},
+          },
+        },
+        {"HumanReadable", Version::ReleaseName},
+        {"IsGitHubActionsBuild", Version::IsGithubActionsBuild},
+        {"IsTaggedVersion", Version::IsTaggedVersion},
+        {"IsStableRelease", Version::IsStableRelease},
+      },
+    },
+    {"AvailableExperimentalFeatures",
+     nlohmann::json::object({}) /* SupportedExperimentalFeatures */},
+    {"VirtualHosts", nlohmann::json::object({})},
+  };
+  extraData->SetString("InitData", initData.dump());
+
   CefBrowserHost::CreateBrowser(
-    info, mClient, mSettings.mURI, settings, nullptr, nullptr);
+    info, mClient, mSettings.mURI, settings, extraData, nullptr);
   co_return;
 }
 

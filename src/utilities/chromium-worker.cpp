@@ -17,15 +17,58 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Filesystem.hpp>
+
+#include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/fatal.hpp>
+#include <OpenKneeboard/format/filesystem.hpp>
+
 #include <Windows.h>
 
 #include <include/cef_app.h>
 #include <include/cef_base.h>
 #include <include/cef_sandbox_win.h>
 
+#include <fstream>
+#include <unordered_map>
+
+namespace OpenKneeboard {
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.ChromiumWorker")
+ * c7ba8cbb-cc1f-5c43-e114-a837f6b5ae95
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.ChromiumWorker",
+  (0xc7ba8cbb, 0xcc1f, 0x5c43, 0xe1, 0x14, 0xa8, 0x37, 0xf6, 0xb5, 0xae, 0x95));
+}// namespace OpenKneeboard
+
 namespace OpenKneeboard::Cef {
 
-class BrowserApp final : public CefApp, public CefBrowserProcessHandler {
+namespace {
+CefString GetOKBNativeJS() {
+  static CefString sRet;
+  static std::once_flag sOnce;
+  std::call_once(sOnce, [&ret = sRet]() {
+    // 'libexec/cef/' = 'share/'
+    const auto directory
+      = Filesystem::GetRuntimeDirectory().parent_path().parent_path() / "share";
+    const auto file = directory / "Chromium.js";
+    dprint("Loading JS from file: {}", file);
+    std::ifstream f(file);
+    std::stringstream ss;
+    ss << f.rdbuf();
+    sRet.FromString(ss.str());
+  });
+  return sRet;
+}
+
+}// namespace
+
+class BrowserApp final : public CefApp,
+                         public CefBrowserProcessHandler,
+                         public CefRenderProcessHandler,
+                         public CefV8Handler {
  public:
   BrowserApp() {
   }
@@ -34,18 +77,75 @@ class BrowserApp final : public CefApp, public CefBrowserProcessHandler {
     return this;
   }
 
+  CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
+    return this;
+  }
+
+  void OnBrowserCreated(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefDictionaryValue> extraInfo) override {
+    OPENKNEEBOARD_TraceLoggingScope("OnBrowserCreated()");
+    mInitData.emplace(
+      browser->GetIdentifier(), extraInfo->GetString("InitData"));
+  }
+
+  void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override {
+    OPENKNEEBOARD_TraceLoggingScope("OnBrowserDestroyed");
+    mInitData.erase(browser->GetIdentifier());
+  }
+
+  void OnWebKitInitialized() override {
+    OPENKNEEBOARD_TraceLoggingScope("OnWebKitInitialized");
+    CefRegisterExtension("OpenKneeboard/Native", GetOKBNativeJS(), this);
+  }
+
+  bool Execute(
+    const CefString& name,
+    CefRefPtr<CefV8Value> object,
+    const CefV8ValueList& arguments,
+    CefRefPtr<CefV8Value>& ret,
+    CefString& exception) {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "Execute/V8", TraceLoggingValue(name.ToString().c_str(), "name"));
+
+    if (name != "OKBNative_GetInitializationData") {
+      dprint.Warning("Unrecognized v8 function: {}");
+      return false;
+    }
+
+    const auto browserID
+      = CefV8Context::GetCurrentContext()->GetBrowser()->GetIdentifier();
+    if (!mInitData.contains(browserID)) {
+      dprint.Warning("Unrecognized browser ID");
+      return false;
+    }
+
+    ret = CefV8Value::CreateString(mInitData.at(browserID));
+
+    return true;
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(BrowserApp);
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
+
+  std::unordered_map<int, CefString> mInitData;
 };
 
 }// namespace OpenKneeboard::Cef
+
+using namespace OpenKneeboard;
 
 int __stdcall wWinMain(
   HINSTANCE hInstance,
   [[maybe_unused]] HINSTANCE hPrevInstance,
   [[maybe_unused]] PWSTR lpCmdLine,
   [[maybe_unused]] int nCmdShow) {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_exit unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
+  divert_process_failure_to_fatal();
+
   void* sandboxInfo = nullptr;
 #ifdef CEF_USE_SANDBOX
   CefScopedSandboxInfo scopedSandbox;
@@ -55,8 +155,7 @@ int __stdcall wWinMain(
   // `lpCmdLine` is inconsistent in whether or not it includes argv[0]
   CefMainArgs mainArgs(hInstance);
 
-  CefRefPtr<OpenKneeboard::Cef::BrowserApp> app {
-    new OpenKneeboard::Cef::BrowserApp()};
+  CefRefPtr<CefApp> app {new OpenKneeboard::Cef::BrowserApp()};
 
   return CefExecuteProcess(mainArgs, app.get(), sandboxInfo);
 }

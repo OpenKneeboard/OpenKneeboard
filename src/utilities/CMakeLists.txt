@@ -250,6 +250,8 @@ if (BUILD_IS_64BIT)
     OpenKneeboard-Chromium
     PRIVATE
     Cef::LibCef
+    OpenKneeboard-Filesystem
+    OpenKneeboard-fatal
   )
   set_target_properties(
     OpenKneeboard-Chromium

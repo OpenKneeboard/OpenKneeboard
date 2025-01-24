@@ -1,6 +1,7 @@
 set(
     DATA_SOURCES
     DCS-Aircraft-Mapping.json
+    Chromium.js
     WebView2.js
     WebView2-SimHub.js
 )
