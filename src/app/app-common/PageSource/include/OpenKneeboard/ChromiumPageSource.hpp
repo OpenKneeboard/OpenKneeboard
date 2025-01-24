@@ -103,9 +103,6 @@ class ChromiumPageSource final
   Settings mSettings {};
   D3D11::SpriteBatch mSpriteBatch;
 
-  bool mIsHovered = false;
-  uint32_t mCursorButtons = 0;
-
   PageID mPageID;
 
   CefRefPtr<Client> mClient;

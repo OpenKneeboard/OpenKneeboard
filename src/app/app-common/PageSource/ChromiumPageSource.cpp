@@ -244,6 +244,60 @@ class ChromiumPageSource::Client final : public CefClient,
     return mBrowserId;
   }
 
+  void PostCursorEvent(const CursorEvent& ev) {
+    auto host = this->GetBrowser()->GetHost();
+
+    const auto epsilon = std::numeric_limits<decltype(ev.mX)>::epsilon();
+    if (ev.mX < epsilon || ev.mY < epsilon) {
+      if (!mIsHovered) {
+        return;
+      }
+      mIsHovered = false;
+      host->SendMouseMoveEvent({}, /* mouseLeave = */ true);
+      return;
+    }
+
+    mIsHovered = true;
+    CefMouseEvent cme;
+    cme.x = static_cast<int>(std::lround(ev.mX));
+    cme.y = static_cast<int>(std::lround(ev.mY));
+
+    constexpr uint32_t LeftButton = (1 << 0);
+    constexpr uint32_t RightButton = (1 << 1);
+
+    // We only pay attention to buttons 1 and 2
+    const auto newButtons = ev.mButtons & (LeftButton | RightButton);
+
+    if (newButtons & LeftButton) {
+      cme.modifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
+    }
+    if (newButtons & RightButton) {
+      cme.modifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
+    }
+
+    if (mCursorButtons == newButtons) {
+      host->SendMouseMoveEvent(cme, /* mouseLeave = */ false);
+      return;
+    }
+
+    const auto down = newButtons & ~mCursorButtons;
+    const auto up = mCursorButtons & ~newButtons;
+    using enum cef_mouse_button_type_t;
+    if (down & LeftButton) {
+      host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ false, 1);
+    }
+    if (up & LeftButton) {
+      host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ true, 1);
+    }
+    if (down & RightButton) {
+      host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ false, 1);
+    }
+    if (up & RightButton) {
+      host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ true, 1);
+    }
+    mCursorButtons = newButtons;
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
 
@@ -251,6 +305,9 @@ class ChromiumPageSource::Client final : public CefClient,
   CefRefPtr<CefBrowser> mBrowser;
   CefRefPtr<RenderHandler> mRenderHandler;
   std::optional<int> mBrowserId;
+
+  bool mIsHovered = false;
+  uint32_t mCursorButtons = 0;
 };
 
 ChromiumPageSource::~ChromiumPageSource() = default;
@@ -341,58 +398,7 @@ void ChromiumPageSource::PostCursorEvent(
   if (this->GetPageCount() == 0) {
     return;
   }
-
-  auto host = mClient->GetBrowser()->GetHost();
-
-  const auto epsilon = std::numeric_limits<decltype(ev.mX)>::epsilon();
-  if (ev.mX < epsilon || ev.mY < epsilon) {
-    if (!mIsHovered) {
-      return;
-    }
-    mIsHovered = false;
-    host->SendMouseMoveEvent({}, /* mouseLeave = */ true);
-    return;
-  }
-
-  mIsHovered = true;
-  CefMouseEvent cme;
-  cme.x = static_cast<int>(std::lround(ev.mX));
-  cme.y = static_cast<int>(std::lround(ev.mY));
-
-  constexpr uint32_t LeftButton = (1 << 0);
-  constexpr uint32_t RightButton = (1 << 1);
-
-  // We only pay attention to buttons 1 and 2
-  const auto newButtons = ev.mButtons & (LeftButton | RightButton);
-
-  if (newButtons & LeftButton) {
-    cme.modifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
-  }
-  if (newButtons & RightButton) {
-    cme.modifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
-  }
-
-  if (mCursorButtons == newButtons) {
-    host->SendMouseMoveEvent(cme, /* mouseLeave = */ false);
-    return;
-  }
-
-  const auto down = newButtons & ~mCursorButtons;
-  const auto up = mCursorButtons & ~newButtons;
-  using enum cef_mouse_button_type_t;
-  if (down & LeftButton) {
-    host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ false, 1);
-  }
-  if (up & LeftButton) {
-    host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ true, 1);
-  }
-  if (down & RightButton) {
-    host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ false, 1);
-  }
-  if (up & RightButton) {
-    host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ true, 1);
-  }
-  mCursorButtons = newButtons;
+  mClient->PostCursorEvent(ev);
 }
 
 task<void>
