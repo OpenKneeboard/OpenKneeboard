@@ -111,6 +111,10 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     mPageSource->evNeedsRepaintEvent.Emit();
   }
 
+  void SetSize(const PixelSize& size) {
+    mSize = size;
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(RenderHandler);
 
@@ -126,11 +130,8 @@ class ChromiumPageSource::Client final : public CefClient,
   Client(ChromiumPageSource* pageSource) : mPageSource(pageSource) {
     mRenderHandler = {new RenderHandler(pageSource)};
   }
-  ~Client() {
-  }
 
-  void OnTitleChange(CefRefPtr<CefBrowser>, const CefString& title) override {
-    mPageSource->evDocumentTitleChangedEvent.Emit(title);
+  ~Client() {
   }
 
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override {
@@ -143,6 +144,32 @@ class ChromiumPageSource::Client final : public CefClient,
 
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override {
     return this;
+  }
+
+  bool OnProcessMessageReceived(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefProcessId process,
+    CefRefPtr<CefProcessMessage> message) override {
+    const auto name = message->GetName().ToString();
+    if (name == "okbjs/SetPreferredPixelSize") {
+      const auto args = nlohmann::json::parse(
+        message->GetArgumentList()->GetString(1).ToString());
+      mRenderHandler->SetSize({args[0], args[1]});
+      browser->GetHost()->WasResized();
+      return true;
+    }
+    if (name.starts_with("okbjs/")) {
+      dprint.Error("Unknown OKBJS message: {}", name);
+      OPENKNEEBOARD_BREAK;
+      return false;
+    }
+    return CefClient::OnProcessMessageReceived(
+      browser, frame, process, message);
+  }
+
+  void OnTitleChange(CefRefPtr<CefBrowser>, const CefString& title) override {
+    mPageSource->evDocumentTitleChangedEvent.Emit(title);
   }
 
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {

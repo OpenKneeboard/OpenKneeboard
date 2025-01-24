@@ -108,20 +108,50 @@ class BrowserApp final : public CefApp,
     OPENKNEEBOARD_TraceLoggingScope(
       "Execute/V8", TraceLoggingValue(name.ToString().c_str(), "name"));
 
-    if (name != "OKBNative_GetInitializationData") {
-      dprint.Warning("Unrecognized v8 function: {}");
-      return false;
+    const auto browser = CefV8Context::GetCurrentContext()->GetBrowser();
+
+    if (name == "OKBNative_GetInitializationData") {
+      return JSGetInitializationData(browser, ret);
+    }
+    if (name == "OKBNative_SendMessage") {
+      return JSSendMessage(browser, arguments, ret);
+    }
+    if (name == "OKBNative_OnMessage") {
+      return true;
     }
 
-    const auto browserID
-      = CefV8Context::GetCurrentContext()->GetBrowser()->GetIdentifier();
+    dprint.Warning("Unrecognized v8 function: {}");
+    return false;
+  }
+
+  [[nodiscard]]
+  bool JSGetInitializationData(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefV8Value>& ret) {
+    OPENKNEEBOARD_TraceLoggingScope("JSGetInitializationData");
+
+    const auto browserID = browser->GetIdentifier();
     if (!mInitData.contains(browserID)) {
       dprint.Warning("Unrecognized browser ID");
       return false;
     }
 
     ret = CefV8Value::CreateString(mInitData.at(browserID));
+    return true;
+  }
 
+  [[nodiscard]]
+  bool JSSendMessage(
+    CefRefPtr<CefBrowser> browser,
+    const CefV8ValueList& arguments,
+    CefRefPtr<CefV8Value>& ret) {
+    OPENKNEEBOARD_TraceLoggingScope("JSSendMessage");
+
+    auto message = CefProcessMessage::Create(arguments.at(0)->GetStringValue());
+    message->GetArgumentList()->SetInt(0, arguments.at(1)->GetIntValue());// ID
+    message->GetArgumentList()->SetString(
+      1, arguments.at(2)->GetStringValue());// data
+    browser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
     return true;
   }
 
@@ -145,6 +175,10 @@ int __stdcall wWinMain(
   const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
   divert_process_failure_to_fatal();
+
+  DPrintSettings::Set({
+    .prefix = "OpenKneeboard-Chromium",
+  });
 
   void* sandboxInfo = nullptr;
 #ifdef CEF_USE_SANDBOX
