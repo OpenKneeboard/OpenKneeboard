@@ -50,7 +50,7 @@ struct method_reflection<R (O::*)(Args...)> {
 
 template <auto TMethod>
 task<ChromiumPageSource::JSAPIResult> JSInvokeSplat(
-  ChromiumPageSource* self,
+  auto self,
   const nlohmann::json& args) {
   return [&]<std::size_t... I>(std::index_sequence<I...>) {
     return std::invoke(TMethod, self, args.at(I)...);
@@ -60,7 +60,7 @@ task<ChromiumPageSource::JSAPIResult> JSInvokeSplat(
 
 template <auto TMethod>
 task<ChromiumPageSource::JSAPIResult> JSInvoke(
-  ChromiumPageSource* self,
+  auto self,
   const nlohmann::json& args) {
   if constexpr (requires { std::invoke(TMethod, self, args); }) {
     co_return co_await std::invoke(TMethod, self, args);
@@ -332,6 +332,49 @@ class ChromiumPageSource::Client final : public CefClient,
     mCursorButtons = newButtons;
   }
 
+task<ChromiumPageSource::JSAPIResult> SetPreferredPixelSize(
+    uint32_t width,
+    uint32_t height) {
+    if (width < 1 || height < 1) {
+      co_return jsapi_error("Requested 0px area, ignoring");
+    }
+
+    PixelSize size {width, height};
+    if (
+      width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+      || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
+      dprint.Warning(
+        "Web page requested resize to {}x{}, which is outside of D3D11 limits",
+        width,
+        height);
+      size = size.ScaledToFit(
+        {
+          D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+          D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+        },
+        Geometry2D::ScaleToFitMode::ShrinkOnly);
+      if (size.mWidth < 1 || size.mHeight < 1) {
+        co_return jsapi_error(
+          "Requested size scales down to < 1px in at least 1 dimension");
+      }
+      dprint("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
+    }
+
+    this->GetRenderHandlerSubclass()->SetSize(size);
+    this->GetBrowser()->GetHost()->WasResized();
+
+    co_return nlohmann::json {
+      {"result", "resized"},
+      {
+        "details",
+        {
+          {"width", size.mWidth},
+          {"height", size.mHeight},
+        },
+      },
+    };
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
 
@@ -513,8 +556,7 @@ fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
   if (request.mName == "okbjs/SetPreferredPixelSize") {
     mClient->SendJSAsyncResult(
       request.mID,
-      co_await JSInvoke<&ChromiumPageSource::SetPreferredPixelSize>(
-        this, args));
+      co_await JSInvoke<&Client::SetPreferredPixelSize>(mClient.get(), args));
     co_return;
   }
 
@@ -523,49 +565,6 @@ fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
     request.mID, jsapi_error("Unhandled JS request: {}", request.mName));
   OPENKNEEBOARD_BREAK;
   co_return;
-}
-
-task<ChromiumPageSource::JSAPIResult> ChromiumPageSource::SetPreferredPixelSize(
-  uint32_t width,
-  uint32_t height) {
-  if (width < 1 || height < 1) {
-    co_return jsapi_error("Requested 0px area, ignoring");
-  }
-
-  PixelSize size {width, height};
-  if (
-    width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-    || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
-    dprint.Warning(
-      "Web page requested resize to {}x{}, which is outside of D3D11 limits",
-      width,
-      height);
-    size = size.ScaledToFit(
-      {
-        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
-        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
-      },
-      Geometry2D::ScaleToFitMode::ShrinkOnly);
-    if (size.mWidth < 1 || size.mHeight < 1) {
-      co_return jsapi_error(
-        "Requested size scales down to < 1px in at least 1 dimension");
-    }
-    dprint("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
-  }
-
-  mClient->GetRenderHandlerSubclass()->SetSize(size);
-  mClient->GetBrowser()->GetHost()->WasResized();
-
-  co_return nlohmann::json {
-    {"result", "resized"},
-    {
-      "details",
-      {
-        {"width", size.mWidth},
-        {"height", size.mHeight},
-      },
-    },
-  };
 }
 
 }// namespace OpenKneeboard

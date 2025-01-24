@@ -112,7 +112,5 @@ class ChromiumPageSource final
   task<void> Init();
 
   fire_and_forget OnJSRequest(JSRequest);
-
-  task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
 };
 }// namespace OpenKneeboard
