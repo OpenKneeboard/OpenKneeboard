@@ -110,12 +110,9 @@ class ChromiumPageSource final
 
   CefRefPtr<Client> mClient;
 
-  uint64_t mFrameCount = 0;
-  wil::com_ptr<ID3D11Fence> mFence;
-  std::array<Frame, 3> mFrames;
-
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
   task<void> Init();
+
   fire_and_forget OnJSRequest(JSRequest);
 
   task<JSAPIResult> SetPreferredPixelSize(std::tuple<uint32_t, uint32_t>);

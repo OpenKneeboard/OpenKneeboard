@@ -48,9 +48,15 @@ struct ChromiumPageSource::JSRequest {
 
 class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  public:
+  uint64_t mFrameCount = 0;
+  wil::com_ptr<ID3D11Fence> mFence;
+  std::array<Frame, 3> mFrames;
+
   RenderHandler() = delete;
   RenderHandler(ChromiumPageSource* pageSource) : mPageSource(pageSource) {
     mSize = pageSource->mSettings.mInitialSize;
+    check_hresult(pageSource->mDXResources->mD3D11Device->CreateFence(
+      0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
   }
   ~RenderHandler() {
   }
@@ -77,9 +83,9 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     const RectList& dirtyRects,
     const CefAcceleratedPaintInfo& info) {
     auto dxr = mPageSource->mDXResources.get();
-    const auto frameCount = mPageSource->mFrameCount + 1;
-    const auto frameIndex = frameCount % mPageSource->mFrames.size();
-    auto& frame = mPageSource->mFrames.at(frameIndex);
+    const auto frameCount = mFrameCount + 1;
+    const auto frameIndex = frameCount % mFrames.size();
+    auto& frame = mFrames.at(frameIndex);
 
     const PixelSize sourceSize {
       static_cast<uint32_t>(info.extra.visible_rect.width),
@@ -123,8 +129,8 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     auto ctx = dxr->mD3D11ImmediateContext.get();
     ctx->CopySubresourceRegion(
       frame.mTexture.get(), 0, 0, 0, 0, sourceTexture.get(), 0, nullptr);
-    check_hresult(ctx->Signal(mPageSource->mFence.get(), frameCount));
-    mPageSource->mFrameCount = frameCount;
+    check_hresult(ctx->Signal(mFence.get(), frameCount));
+    mFrameCount = frameCount;
     mPageSource->evNeedsRepaintEvent.Emit();
   }
 
@@ -315,7 +321,7 @@ void ChromiumPageSource::PostCursorEvent(
   KneeboardViewID,
   const CursorEvent& ev,
   PageID) {
-  if (mFrameCount == 0) {
+  if (this->GetPageCount() == 0) {
     return;
   }
 
@@ -374,17 +380,18 @@ void ChromiumPageSource::PostCursorEvent(
 
 task<void>
 ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
-  if (id != mPageID || mFrameCount == 0) {
+  auto rh = mClient->GetRenderHandlerSubclass();
+  if (id != mPageID || rh->mFrameCount == 0) {
     co_return;
   }
 
-  const auto frameCount = mFrameCount;
-  const auto& frame = mFrames.at(frameCount % mFrames.size());
+  const auto frameCount = rh->mFrameCount;
+  const auto& frame = rh->mFrames.at(frameCount % rh->mFrames.size());
 
   auto d3d = rc.d3d();
   auto ctx = mDXResources->mD3D11ImmediateContext.get();
 
-  check_hresult(ctx->Wait(mFence.get(), frameCount));
+  check_hresult(ctx->Wait(rh->mFence.get(), frameCount));
   mSpriteBatch.Begin(d3d.rtv(), rc.GetRenderTarget()->GetDimensions());
   mSpriteBatch.Draw(frame.mShaderResourceView.get(), {0, 0, frame.mSize}, rect);
   mSpriteBatch.End();
@@ -410,7 +417,14 @@ void ChromiumPageSource::ClearUserInput() {
 }
 
 PageIndex ChromiumPageSource::GetPageCount() const {
-  return (mFrameCount > 0) ? 1 : 0;
+  if (!mClient) {
+    return 0;
+  }
+  auto rh = mClient->GetRenderHandlerSubclass();
+  if (!rh) {
+    return 0;
+  }
+  return (rh->mFrameCount > 0) ? 1 : 0;
 }
 
 std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
@@ -425,7 +439,8 @@ std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID) {
     return std::nullopt;
   }
 
-  const auto& frame = mFrames.at(mFrameCount % mFrames.size());
+  auto rh = this->mClient->GetRenderHandlerSubclass();
+  const auto& frame = rh->mFrames.at(rh->mFrameCount % rh->mFrames.size());
   return PreferredSize {
     .mPixelSize = frame.mSize,
     .mScalingKind = ScalingKind::Bitmap,
@@ -441,8 +456,6 @@ ChromiumPageSource::ChromiumPageSource(
     mKneeboard(kbs),
     mSettings(settings),
     mSpriteBatch(dxr->mD3D11Device.get()) {
-  check_hresult(dxr->mD3D11Device->CreateFence(
-    0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 }
 
 fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
