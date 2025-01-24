@@ -99,6 +99,48 @@ class BrowserApp final : public CefApp,
     CefRegisterExtension("OpenKneeboard/Native", GetOKBNativeJS(), this);
   }
 
+  void OnContextReleased(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame>,
+    CefRefPtr<CefV8Context>) override {
+    OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
+    const auto id = browser->GetIdentifier();
+    if (mJSMessageHandlers.contains(id)) {
+      mJSMessageHandlers.erase(id);
+    }
+  }
+
+  bool OnProcessMessageReceived(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefProcessId sourceProcess,
+    CefRefPtr<CefProcessMessage> message) override {
+    const auto name = message->GetName().ToString();
+    if (name == "okb/asyncResponse") {
+      if (!mJSMessageHandlers.contains(browser->GetIdentifier())) {
+        return true;
+      }
+      auto& [context, handler]
+        = mJSMessageHandlers.at(browser->GetIdentifier());
+      if (context->Enter()) {
+        const auto args = message->GetArgumentList();
+
+        CefV8ValueList jsArgs;
+        jsArgs.push_back(CefV8Value::CreateString(message->GetName()));
+        jsArgs.push_back(CefV8Value::CreateInt(args->GetInt(0)));// ID
+        jsArgs.push_back(
+          CefV8Value::CreateString(args->GetString(1)));// details
+        handler->ExecuteFunction(nullptr, jsArgs);
+
+        context->Exit();
+      }
+      return true;
+    }
+
+    return CefRenderProcessHandler::OnProcessMessageReceived(
+      browser, frame, sourceProcess, message);
+  }
+
   bool Execute(
     const CefString& name,
     CefRefPtr<CefV8Value> object,
@@ -114,10 +156,10 @@ class BrowserApp final : public CefApp,
       return JSGetInitializationData(browser, ret);
     }
     if (name == "OKBNative_SendMessage") {
-      return JSSendMessage(browser, arguments, ret);
+      return JSSendMessage(browser, arguments);
     }
     if (name == "OKBNative_OnMessage") {
-      return true;
+      return JSOnMessage(browser, arguments);
     }
 
     dprint.Warning("Unrecognized v8 function: {}");
@@ -143,8 +185,7 @@ class BrowserApp final : public CefApp,
   [[nodiscard]]
   bool JSSendMessage(
     CefRefPtr<CefBrowser> browser,
-    const CefV8ValueList& arguments,
-    CefRefPtr<CefV8Value>& ret) {
+    const CefV8ValueList& arguments) {
     OPENKNEEBOARD_TraceLoggingScope("JSSendMessage");
 
     auto message = CefProcessMessage::Create(arguments.at(0)->GetStringValue());
@@ -155,11 +196,25 @@ class BrowserApp final : public CefApp,
     return true;
   }
 
+  [[discard]]
+  bool JSOnMessage(
+    CefRefPtr<CefBrowser> browser,
+    const CefV8ValueList& arguments) {
+    const auto id = browser->GetIdentifier();
+    mJSMessageHandlers.insert_or_assign(
+      id, std::tuple {CefV8Context::GetCurrentContext(), arguments.at(0)});
+    return true;
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(BrowserApp);
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 
   std::unordered_map<int, CefString> mInitData;
+  std::unordered_map<
+    int,
+    std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
+    mJSMessageHandlers;
 };
 
 }// namespace OpenKneeboard::Cef

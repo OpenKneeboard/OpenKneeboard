@@ -155,10 +155,19 @@ class ChromiumPageSource::Client final : public CefClient,
     if (name == "okbjs/SetPreferredPixelSize") {
       const auto args = nlohmann::json::parse(
         message->GetArgumentList()->GetString(1).ToString());
-      mRenderHandler->SetSize({args[0], args[1]});
+      const auto width = args.at(0).get<uint32_t>();
+      const auto height = args.at(1).get<uint32_t>();
+      mRenderHandler->SetSize({width, height});
       browser->GetHost()->WasResized();
+
+      auto response = CefProcessMessage::Create("okb/asyncResponse");
+      auto responseArgs = response->GetArgumentList();
+      responseArgs->SetInt(0, message->GetArgumentList()->GetInt(0));
+      responseArgs->SetString(1, "great success!");
+      browser->GetMainFrame()->SendProcessMessage(PID_RENDERER, response);
       return true;
     }
+
     if (name.starts_with("okbjs/")) {
       dprint.Error("Unknown OKBJS message: {}", name);
       OPENKNEEBOARD_BREAK;
