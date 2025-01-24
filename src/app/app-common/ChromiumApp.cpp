@@ -71,6 +71,10 @@ ChromiumApp::ChromiumApp() {
 
   CefMainArgs mainArgs {};
   CefSettings settings {};
+#ifndef NDEBUG
+  // FIXME: this should be configurable
+  settings.remote_debugging_port = 1234;
+#endif
   settings.multi_threaded_message_loop = true;
   settings.windowless_rendering_enabled = true;
   CefString(&settings.user_agent_product)
