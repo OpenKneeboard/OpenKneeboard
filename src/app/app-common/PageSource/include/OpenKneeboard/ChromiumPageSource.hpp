@@ -39,6 +39,8 @@
 #include <include/cef_base.h>
 #include <include/cef_client.h>
 
+class CefBrowser;
+
 namespace OpenKneeboard {
 
 /// A browser using Chromium Embedded Framework
@@ -75,6 +77,7 @@ class ChromiumPageSource final
   Event<std::string> evDocumentTitleChangedEvent;
 
  private:
+  struct JSRequest;
   class Client;
   class RenderHandler;
   struct Frame {
@@ -82,8 +85,8 @@ class ChromiumPageSource final
     wil::com_ptr<ID3D11Texture2D> mTexture;
     wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   };
+  using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
-  winrt::apartment_context mUIThread;
   DisposalState mDisposal;
 
   audited_ptr<DXResources> mDXResources;
@@ -98,11 +101,14 @@ class ChromiumPageSource final
 
   CefRefPtr<Client> mClient;
 
-  ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
-  task<void> Init();
-
   uint64_t mFrameCount = 0;
   wil::com_ptr<ID3D11Fence> mFence;
   std::array<Frame, 3> mFrames;
+
+  ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
+  task<void> Init();
+  fire_and_forget OnJSRequest(JSRequest);
+
+  task<JSAPIResult> SetPreferredPixelSize(std::tuple<uint32_t, uint32_t>);
 };
 }// namespace OpenKneeboard

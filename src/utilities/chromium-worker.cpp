@@ -116,7 +116,7 @@ class BrowserApp final : public CefApp,
     CefProcessId sourceProcess,
     CefRefPtr<CefProcessMessage> message) override {
     const auto name = message->GetName().ToString();
-    if (name == "okb/asyncResponse") {
+    if (name == "okb/asyncResult") {
       if (!mJSMessageHandlers.contains(browser->GetIdentifier())) {
         return true;
       }

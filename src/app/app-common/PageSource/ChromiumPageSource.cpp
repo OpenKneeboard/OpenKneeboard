@@ -29,6 +29,19 @@
 
 namespace OpenKneeboard {
 
+namespace {
+template <class... Args>
+auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
+  return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
+}
+}// namespace
+
+struct ChromiumPageSource::JSRequest {
+  std::string mName;
+  int mID {};
+  CefString mData;
+};
+
 class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  public:
   RenderHandler() = delete;
@@ -134,11 +147,17 @@ class ChromiumPageSource::Client final : public CefClient,
   ~Client() {
   }
 
+  Event<JSRequest> evJSRequest;
+
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override {
     return this;
   }
 
   CefRefPtr<CefRenderHandler> GetRenderHandler() override {
+    return mRenderHandler;
+  }
+
+  CefRefPtr<RenderHandler> GetRenderHandlerSubclass() {
     return mRenderHandler;
   }
 
@@ -152,29 +171,33 @@ class ChromiumPageSource::Client final : public CefClient,
     CefProcessId process,
     CefRefPtr<CefProcessMessage> message) override {
     const auto name = message->GetName().ToString();
-    if (name == "okbjs/SetPreferredPixelSize") {
-      const auto args = nlohmann::json::parse(
-        message->GetArgumentList()->GetString(1).ToString());
-      const auto width = args.at(0).get<uint32_t>();
-      const auto height = args.at(1).get<uint32_t>();
-      mRenderHandler->SetSize({width, height});
-      browser->GetHost()->WasResized();
-
-      auto response = CefProcessMessage::Create("okb/asyncResponse");
-      auto responseArgs = response->GetArgumentList();
-      responseArgs->SetInt(0, message->GetArgumentList()->GetInt(0));
-      responseArgs->SetString(1, "great success!");
-      browser->GetMainFrame()->SendProcessMessage(PID_RENDERER, response);
+    if (name.starts_with("okbjs/")) {
+      evJSRequest.Emit(JSRequest {
+        .mName = name,
+        .mID = message->GetArgumentList()->GetInt(0),
+        .mData = message->GetArgumentList()->GetString(1),
+      });
       return true;
     }
 
-    if (name.starts_with("okbjs/")) {
-      dprint.Error("Unknown OKBJS message: {}", name);
-      OPENKNEEBOARD_BREAK;
-      return false;
-    }
     return CefClient::OnProcessMessageReceived(
       browser, frame, process, message);
+  }
+
+  void SendJSAsyncResult(int callID, JSAPIResult result) {
+    auto data = nlohmann::json::object({});
+    if (result.has_value()) {
+      data.emplace("result", result->is_null() ? "ok" : result.value());
+    } else {
+      data.emplace("error", result.error());
+      dprint.Warning("JS API error: {}", result.error());
+    }
+
+    auto message = CefProcessMessage::Create("okb/asyncResult");
+    auto args = message->GetArgumentList();
+    args->SetInt(0, callID);
+    args->SetString(1, data.dump());
+    mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
   }
 
   void OnTitleChange(CefRefPtr<CefBrowser>, const CefString& title) override {
@@ -218,6 +241,9 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
 
 task<void> ChromiumPageSource::Init() {
   mClient = {new Client(this)};
+  AddEventListener(
+    mClient->evJSRequest,
+    &ChromiumPageSource::OnJSRequest | bind_refs_front(this));
 
   CefWindowInfo info {};
   info.SetAsWindowless(nullptr);
@@ -398,6 +424,79 @@ ChromiumPageSource::ChromiumPageSource(
     mSpriteBatch(dxr->mD3D11Device.get()) {
   check_hresult(dxr->mD3D11Device->CreateFence(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+}
+
+fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
+  auto self = shared_from_this();
+  const auto args = nlohmann::json::parse(request.mData.ToString());
+
+  if (request.mName == "okbjs/SetPreferredPixelSize") {
+    mClient->SendJSAsyncResult(
+      request.mID, co_await this->SetPreferredPixelSize(args));
+    co_return;
+  }
+
+  dprint.Warning("Unhandled JS request: {}", request.mName);
+  mClient->SendJSAsyncResult(
+    request.mID, jsapi_error("Unhandled JS request: {}", request.mName));
+  OPENKNEEBOARD_BREAK;
+  co_return;
+}
+
+task<ChromiumPageSource::JSAPIResult> ChromiumPageSource::SetPreferredPixelSize(
+  std::tuple<uint32_t, uint32_t> dimensions) {
+  const auto [w, h] = dimensions;
+
+  if (w < 1 || h < 1) {
+    co_return jsapi_error("Requested 0px area, ignoring");
+  }
+
+  PixelSize size {w, h};
+  if (
+    w > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+    || h > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
+    dprint.Warning(
+      "Web page requested resize to {}x{}, which is outside of D3D11 limits",
+      w,
+      h);
+    size = size.ScaledToFit(
+      {
+        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+        D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
+      },
+      Geometry2D::ScaleToFitMode::ShrinkOnly);
+    if (size.mWidth < 1 || size.mHeight < 1) {
+      co_return jsapi_error(
+        "Requested size scales down to < 1px in at least 1 dimension");
+    }
+    dprint("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
+  }
+
+  const auto success = [&size](auto result) {
+    return nlohmann::json {
+      {"result", result},
+      {
+        "details",
+        {
+          {"width", size.mWidth},
+          {"height", size.mHeight},
+        },
+      },
+    };
+  };
+
+  mClient->GetRenderHandlerSubclass()->SetSize(size);
+  mClient->GetBrowser()->GetHost()->WasResized();
+  co_return nlohmann::json {
+    {"result", "resized"},
+    {
+      "details",
+      {
+        {"width", size.mWidth},
+        {"height", size.mHeight},
+      },
+    },
+  };
 }
 
 }// namespace OpenKneeboard
