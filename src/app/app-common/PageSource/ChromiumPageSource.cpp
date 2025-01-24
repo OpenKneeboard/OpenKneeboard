@@ -117,7 +117,8 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
 };
 
 class ChromiumPageSource::Client final : public CefClient,
-                                         public CefLifeSpanHandler {
+                                         public CefLifeSpanHandler,
+                                         public CefDisplayHandler {
  public:
   Client() = delete;
   Client(ChromiumPageSource* pageSource) : mPageSource(pageSource) {
@@ -126,12 +127,20 @@ class ChromiumPageSource::Client final : public CefClient,
   ~Client() {
   }
 
+  void OnTitleChange(CefRefPtr<CefBrowser>, const CefString& title) override {
+    mPageSource->evDocumentTitleChangedEvent.Emit(title);
+  }
+
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override {
     return this;
   }
 
   CefRefPtr<CefRenderHandler> GetRenderHandler() override {
     return mRenderHandler;
+  }
+
+  CefRefPtr<CefDisplayHandler> GetDisplayHandler() override {
+    return this;
   }
 
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
