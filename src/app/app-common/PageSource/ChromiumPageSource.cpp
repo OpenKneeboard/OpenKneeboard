@@ -107,6 +107,7 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
       frame.mTexture.get(), 0, 0, 0, 0, sourceTexture.get(), 0, nullptr);
     check_hresult(ctx->Signal(mPageSource->mFence.get(), frameCount));
     mPageSource->mFrameCount = frameCount;
+    mPageSource->evNeedsRepaintEvent.Emit();
   }
 
  private:
