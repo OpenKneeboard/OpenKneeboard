@@ -138,6 +138,23 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     mSize = size;
   }
 
+  void RenderPage(RenderContext rc, const PixelRect& rect) {
+    if (mFrameCount == 0) {
+      return;
+    }
+    const auto& frame = mFrames.at(mFrameCount % mFrames.size());
+    auto& spriteBatch = mPageSource->mSpriteBatch;
+
+    auto d3d = rc.d3d();
+    auto ctx = mPageSource->mDXResources->mD3D11ImmediateContext.get();
+
+    check_hresult(ctx->Wait(mFence.get(), mFrameCount));
+    spriteBatch.Begin(d3d.rtv(), rc.GetRenderTarget()->GetDimensions());
+    spriteBatch.Draw(
+      frame.mShaderResourceView.get(), {0, 0, frame.mSize}, rect);
+    spriteBatch.End();
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(RenderHandler);
 
@@ -385,16 +402,7 @@ ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
     co_return;
   }
 
-  const auto frameCount = rh->mFrameCount;
-  const auto& frame = rh->mFrames.at(frameCount % rh->mFrames.size());
-
-  auto d3d = rc.d3d();
-  auto ctx = mDXResources->mD3D11ImmediateContext.get();
-
-  check_hresult(ctx->Wait(rh->mFence.get(), frameCount));
-  mSpriteBatch.Begin(d3d.rtv(), rc.GetRenderTarget()->GetDimensions());
-  mSpriteBatch.Draw(frame.mShaderResourceView.get(), {0, 0, frame.mSize}, rect);
-  mSpriteBatch.End();
+  rh->RenderPage(rc, rect);
 
   co_return;
 }
