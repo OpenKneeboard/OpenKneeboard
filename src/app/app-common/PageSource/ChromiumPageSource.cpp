@@ -34,6 +34,8 @@
 namespace OpenKneeboard {
 
 namespace {
+using JSAPIResult = std::expected<nlohmann::json, std::string>;
+
 template <class... Args>
 auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
   return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
@@ -49,9 +51,7 @@ struct method_reflection<R (O::*)(Args...)> {
 };
 
 template <auto TMethod>
-task<ChromiumPageSource::JSAPIResult> JSInvokeSplat(
-  auto self,
-  const nlohmann::json& args) {
+task<JSAPIResult> JSInvokeSplat(auto self, const nlohmann::json& args) {
   return [&]<std::size_t... I>(std::index_sequence<I...>) {
     return std::invoke(TMethod, self, args.at(I)...);
   }(std::make_index_sequence<
@@ -59,9 +59,7 @@ task<ChromiumPageSource::JSAPIResult> JSInvokeSplat(
 }
 
 template <auto TMethod>
-task<ChromiumPageSource::JSAPIResult> JSInvoke(
-  auto self,
-  const nlohmann::json& args) {
+task<JSAPIResult> JSInvoke(auto self, const nlohmann::json& args) {
   if constexpr (requires { std::invoke(TMethod, self, args); }) {
     co_return co_await std::invoke(TMethod, self, args);
   }
@@ -73,12 +71,6 @@ task<ChromiumPageSource::JSAPIResult> JSInvoke(
   co_return jsapi_error("Unable to unpack arguments");
 }
 }// namespace
-
-struct ChromiumPageSource::JSRequest {
-  std::string mName;
-  int mID {};
-  CefString mData;
-};
 
 class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  public:
@@ -208,8 +200,6 @@ class ChromiumPageSource::Client final : public CefClient,
   ~Client() {
   }
 
-  Event<JSRequest> evJSRequest;
-
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override {
     return this;
   }
@@ -233,16 +223,21 @@ class ChromiumPageSource::Client final : public CefClient,
     CefRefPtr<CefProcessMessage> message) override {
     const auto name = message->GetName().ToString();
     if (name.starts_with("okbjs/")) {
-      evJSRequest.Emit(JSRequest {
-        .mName = name,
-        .mID = message->GetArgumentList()->GetInt(0),
-        .mData = message->GetArgumentList()->GetString(1),
-      });
+      this->OnJSAsyncRequest<&Client::SetPreferredPixelSize>(message);
       return true;
     }
 
     return CefClient::OnProcessMessageReceived(
       browser, frame, process, message);
+  }
+
+  template <auto TMethod>
+  fire_and_forget OnJSAsyncRequest(CefRefPtr<CefProcessMessage> message) {
+    const auto callID = message->GetArgumentList()->GetInt(0);
+    const auto args = nlohmann::json::parse(
+      message->GetArgumentList()->GetString(1).ToString());
+
+    this->SendJSAsyncResult(callID, co_await JSInvoke<TMethod>(this, args));
   }
 
   void SendJSAsyncResult(int callID, JSAPIResult result) {
@@ -332,9 +327,7 @@ class ChromiumPageSource::Client final : public CefClient,
     mCursorButtons = newButtons;
   }
 
-task<ChromiumPageSource::JSAPIResult> SetPreferredPixelSize(
-    uint32_t width,
-    uint32_t height) {
+  task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height) {
     if (width < 1 || height < 1) {
       co_return jsapi_error("Requested 0px area, ignoring");
     }
@@ -417,9 +410,6 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
 
 task<void> ChromiumPageSource::Init() {
   mClient = {new Client(this)};
-  AddEventListener(
-    mClient->evJSRequest,
-    &ChromiumPageSource::OnJSRequest | bind_refs_front(this));
 
   CefWindowInfo info {};
   info.SetAsWindowless(nullptr);
@@ -547,24 +537,6 @@ ChromiumPageSource::ChromiumPageSource(
     mKneeboard(kbs),
     mSettings(settings),
     mSpriteBatch(dxr->mD3D11Device.get()) {
-}
-
-fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
-  auto self = shared_from_this();
-  const auto args = nlohmann::json::parse(request.mData.ToString());
-
-  if (request.mName == "okbjs/SetPreferredPixelSize") {
-    mClient->SendJSAsyncResult(
-      request.mID,
-      co_await JSInvoke<&Client::SetPreferredPixelSize>(mClient.get(), args));
-    co_return;
-  }
-
-  dprint.Warning("Unhandled JS request: {}", request.mName);
-  mClient->SendJSAsyncResult(
-    request.mID, jsapi_error("Unhandled JS request: {}", request.mName));
-  OPENKNEEBOARD_BREAK;
-  co_return;
 }
 
 }// namespace OpenKneeboard

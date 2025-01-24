@@ -51,8 +51,6 @@ class ChromiumPageSource final
     public EventReceiver,
     public std::enable_shared_from_this<ChromiumPageSource> {
  public:
-  using JSAPIResult = std::expected<nlohmann::json, std::string>;
-
   using Kind = WebPageSourceKind;
   using Settings = WebPageSourceSettings;
 
@@ -88,7 +86,6 @@ class ChromiumPageSource final
   }
 
  private:
-  struct JSRequest;
   class Client;
   class RenderHandler;
   struct Frame {
@@ -110,7 +107,5 @@ class ChromiumPageSource final
 
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
   task<void> Init();
-
-  fire_and_forget OnJSRequest(JSRequest);
 };
 }// namespace OpenKneeboard
