@@ -38,6 +38,40 @@ template <class... Args>
 auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
   return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
 }
+
+template <class T>
+struct method_reflection;
+
+template <class R, class O, class... Args>
+struct method_reflection<R (O::*)(Args...)> {
+  using args_tuple = std::tuple<Args...>;
+  static constexpr std::size_t args_count = sizeof...(Args);
+};
+
+template <auto TMethod>
+task<ChromiumPageSource::JSAPIResult> JSInvokeSplat(
+  ChromiumPageSource* self,
+  const nlohmann::json& args) {
+  return [&]<std::size_t... I>(std::index_sequence<I...>) {
+    return std::invoke(TMethod, self, args.at(I)...);
+  }(std::make_index_sequence<
+           method_reflection<decltype(TMethod)>::args_count> {});
+}
+
+template <auto TMethod>
+task<ChromiumPageSource::JSAPIResult> JSInvoke(
+  ChromiumPageSource* self,
+  const nlohmann::json& args) {
+  if constexpr (requires { std::invoke(TMethod, self, args); }) {
+    co_return co_await std::invoke(TMethod, self, args);
+  }
+
+  if (args.is_array()) {
+    co_return co_await JSInvokeSplat<TMethod>(self, args);
+  }
+
+  co_return jsapi_error("Unable to unpack arguments");
+}
 }// namespace
 
 struct ChromiumPageSource::JSRequest {
@@ -478,7 +512,9 @@ fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
 
   if (request.mName == "okbjs/SetPreferredPixelSize") {
     mClient->SendJSAsyncResult(
-      request.mID, co_await this->SetPreferredPixelSize(args));
+      request.mID,
+      co_await JSInvoke<&ChromiumPageSource::SetPreferredPixelSize>(
+        this, args));
     co_return;
   }
 
@@ -490,21 +526,20 @@ fire_and_forget ChromiumPageSource::OnJSRequest(JSRequest request) {
 }
 
 task<ChromiumPageSource::JSAPIResult> ChromiumPageSource::SetPreferredPixelSize(
-  std::tuple<uint32_t, uint32_t> dimensions) {
-  const auto [w, h] = dimensions;
-
-  if (w < 1 || h < 1) {
+  uint32_t width,
+  uint32_t height) {
+  if (width < 1 || height < 1) {
     co_return jsapi_error("Requested 0px area, ignoring");
   }
 
-  PixelSize size {w, h};
+  PixelSize size {width, height};
   if (
-    w > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-    || h > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
+    width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+    || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) {
     dprint.Warning(
       "Web page requested resize to {}x{}, which is outside of D3D11 limits",
-      w,
-      h);
+      width,
+      height);
     size = size.ScaledToFit(
       {
         D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION,
@@ -518,21 +553,9 @@ task<ChromiumPageSource::JSAPIResult> ChromiumPageSource::SetPreferredPixelSize(
     dprint("Shrunk to fit: {}x{}", size.mWidth, size.mHeight);
   }
 
-  const auto success = [&size](auto result) {
-    return nlohmann::json {
-      {"result", result},
-      {
-        "details",
-        {
-          {"width", size.mWidth},
-          {"height", size.mHeight},
-        },
-      },
-    };
-  };
-
   mClient->GetRenderHandlerSubclass()->SetSize(size);
   mClient->GetBrowser()->GetHost()->WasResized();
+
   co_return nlohmann::json {
     {"result", "resized"},
     {

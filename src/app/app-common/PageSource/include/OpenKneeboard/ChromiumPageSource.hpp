@@ -51,6 +51,8 @@ class ChromiumPageSource final
     public EventReceiver,
     public std::enable_shared_from_this<ChromiumPageSource> {
  public:
+  using JSAPIResult = std::expected<nlohmann::json, std::string>;
+
   using Kind = WebPageSourceKind;
   using Settings = WebPageSourceSettings;
 
@@ -94,7 +96,6 @@ class ChromiumPageSource final
     wil::com_ptr<ID3D11Texture2D> mTexture;
     wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   };
-  using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
   DisposalState mDisposal;
 
@@ -112,6 +113,6 @@ class ChromiumPageSource final
 
   fire_and_forget OnJSRequest(JSRequest);
 
-  task<JSAPIResult> SetPreferredPixelSize(std::tuple<uint32_t, uint32_t>);
+  task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
 };
 }// namespace OpenKneeboard
