@@ -23,18 +23,16 @@
 
 namespace OpenKneeboard {
 
-#define OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES \
-  IT(TouchingSurface) \
-  IT(NearSurface) \
-  IT(NotNearSurface)
-
 enum class CursorTouchState {
-#define IT(x) x,
-  OPENKNEEBOARD_CURSORTOUCHSTATE_VALUES
-#undef IT
+  TouchingSurface,
+  NearSurface,
+  NotNearSurface,
 };
 
-enum class CursorSource { WindowPointer, Tablet };
+enum class CursorSource {
+  WindowPointer,
+  Tablet,
+};
 
 struct CursorEvent {
   CursorSource mSource = CursorSource::Tablet;
