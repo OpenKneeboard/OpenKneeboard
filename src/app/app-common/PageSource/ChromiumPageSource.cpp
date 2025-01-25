@@ -443,7 +443,7 @@ task<void> ChromiumPageSource::Init() {
       },
     },
     {"AvailableExperimentalFeatures",
-     nlohmann::json::object({}) /* SupportedExperimentalFeatures */},
+     nlohmann::json::array({}) /* SupportedExperimentalFeatures */},
     {"VirtualHosts", nlohmann::json::object({})},
   };
   extraData->SetString("InitData", initData.dump());

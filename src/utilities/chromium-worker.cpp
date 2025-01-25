@@ -46,20 +46,31 @@ TRACELOGGING_DEFINE_PROVIDER(
 namespace OpenKneeboard::Cef {
 
 namespace {
-CefString GetOKBNativeJS() {
+
+void ReadJSFile(CefString& ret, auto name) {
+  // 'libexec/cef/' = 'share/'
+  const auto directory
+    = Filesystem::GetRuntimeDirectory().parent_path().parent_path() / "share";
+
+  std::stringstream ss;
+  std::ifstream f(directory / name);
+  ss << f.rdbuf();
+  ret.FromString(ss.str());
+}
+
+CefString GetOpenKneeboardNativeJS() {
   static CefString sRet;
   static std::once_flag sOnce;
-  std::call_once(sOnce, [&ret = sRet]() {
-    // 'libexec/cef/' = 'share/'
-    const auto directory
-      = Filesystem::GetRuntimeDirectory().parent_path().parent_path() / "share";
-    const auto file = directory / "Chromium.js";
-    dprint("Loading JS from file: {}", file);
-    std::ifstream f(file);
-    std::stringstream ss;
-    ss << f.rdbuf();
-    sRet.FromString(ss.str());
-  });
+  std::call_once(
+    sOnce, [&ret = sRet]() { ReadJSFile(ret, "OpenKneeboardNative.js"); });
+  return sRet;
+}
+
+CefString GetOpenKneeboardAPIJS() {
+  static CefString sRet;
+  static std::once_flag sOnce;
+  std::call_once(
+    sOnce, [&ret = sRet]() { ReadJSFile(ret, "OpenKneeboardAPI.js"); });
   return sRet;
 }
 
@@ -96,7 +107,31 @@ class BrowserApp final : public CefApp,
 
   void OnWebKitInitialized() override {
     OPENKNEEBOARD_TraceLoggingScope("OnWebKitInitialized");
-    CefRegisterExtension("OpenKneeboard/Native", GetOKBNativeJS(), this);
+    CefRegisterExtension(
+      "OpenKneeboard/Native", GetOpenKneeboardNativeJS(), this);
+  }
+
+  void OnContextCreated(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefV8Context> context) override {
+    OPENKNEEBOARD_TraceLoggingScope("OnContextCreated");
+
+    const auto window = context->GetGlobal();
+    if (window->HasValue("OpenKneeboard")) {
+      return;
+    }
+    if (context->Enter()) {
+      CefRefPtr<CefV8Value> ret;
+      CefRefPtr<CefV8Exception> exception;
+      context->Eval(
+        GetOpenKneeboardAPIJS(), "OpenKneeboardAPI.js", 1, ret, exception);
+      context->Eval(
+        "new OpenKneeboardAPI()", "OpenKneeboardInit.js", 1, ret, exception);
+      window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
+      context->Exit();
+    }
+    OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
   }
 
   void OnContextReleased(
@@ -104,10 +139,6 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefFrame>,
     CefRefPtr<CefV8Context>) override {
     OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
-    const auto id = browser->GetIdentifier();
-    if (mJSMessageHandlers.contains(id)) {
-      mJSMessageHandlers.erase(id);
-    }
   }
 
   bool OnProcessMessageReceived(
@@ -117,22 +148,19 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefProcessMessage> message) override {
     const auto name = message->GetName().ToString();
     if (name == "okb/asyncResult") {
-      if (!mJSMessageHandlers.contains(browser->GetIdentifier())) {
+      const auto args = message->GetArgumentList();
+      const auto id = args->GetInt(0);
+
+      if (!mJSPromises.contains(id)) {
         return true;
       }
-      auto& [context, handler]
-        = mJSMessageHandlers.at(browser->GetIdentifier());
+      auto& [context, promise] = mJSPromises.at(id);
       if (context->Enter()) {
-        const auto args = message->GetArgumentList();
-
         CefV8ValueList jsArgs;
-        jsArgs.push_back(CefV8Value::CreateString(message->GetName()));
-        jsArgs.push_back(CefV8Value::CreateInt(args->GetInt(0)));// ID
-        jsArgs.push_back(
-          CefV8Value::CreateString(args->GetString(1)));// details
-        handler->ExecuteFunction(nullptr, jsArgs);
-
+        promise->ResolvePromise(CefV8Value::CreateString(args->GetString(1)));
         context->Exit();
+
+        mJSPromises.erase(id);
       }
       return true;
     }
@@ -155,11 +183,8 @@ class BrowserApp final : public CefApp,
     if (name == "OKBNative_GetInitializationData") {
       return JSGetInitializationData(browser, ret);
     }
-    if (name == "OKBNative_SendMessage") {
-      return JSSendMessage(browser, arguments);
-    }
-    if (name == "OKBNative_OnMessage") {
-      return JSOnMessage(browser, arguments);
+    if (name == "OKBNative_AsyncRequest") {
+      return JSAsyncRequest(browser, arguments, ret);
     }
 
     dprint.Warning("Unrecognized v8 function: {}");
@@ -183,26 +208,22 @@ class BrowserApp final : public CefApp,
   }
 
   [[nodiscard]]
-  bool JSSendMessage(
+  bool JSAsyncRequest(
     CefRefPtr<CefBrowser> browser,
-    const CefV8ValueList& arguments) {
-    OPENKNEEBOARD_TraceLoggingScope("JSSendMessage");
+    const CefV8ValueList& arguments,
+    CefRefPtr<CefV8Value>& ret) {
+    OPENKNEEBOARD_TraceLoggingScope("JSAsyncRequest");
+
+    const auto promiseID = mNextPromiseID++;
+    ret = CefV8Value::CreatePromise();
+    mJSPromises.emplace(
+      promiseID, std::tuple {CefV8Context::GetCurrentContext(), ret});
 
     auto message = CefProcessMessage::Create(arguments.at(0)->GetStringValue());
-    message->GetArgumentList()->SetInt(0, arguments.at(1)->GetIntValue());// ID
-    message->GetArgumentList()->SetString(
-      1, arguments.at(2)->GetStringValue());// data
+    message->GetArgumentList()->SetInt(0, promiseID);
+    message->GetArgumentList()->SetString(1, arguments.at(1)->GetStringValue());
     browser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
-    return true;
-  }
 
-  [[discard]]
-  bool JSOnMessage(
-    CefRefPtr<CefBrowser> browser,
-    const CefV8ValueList& arguments) {
-    const auto id = browser->GetIdentifier();
-    mJSMessageHandlers.insert_or_assign(
-      id, std::tuple {CefV8Context::GetCurrentContext(), arguments.at(0)});
     return true;
   }
 
@@ -211,10 +232,12 @@ class BrowserApp final : public CefApp,
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 
   std::unordered_map<int, CefString> mInitData;
+
+  int mNextPromiseID {};
   std::unordered_map<
     int,
     std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
-    mJSMessageHandlers;
+    mJSPromises;
 };
 
 }// namespace OpenKneeboard::Cef

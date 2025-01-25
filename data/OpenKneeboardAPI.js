@@ -18,25 +18,15 @@
  * USA.
  */
 
-class OpenKneeboardAPIError extends Error {
-    constructor(message, apiMethodName) {
-        super(message)
-        this.apiMethodName = apiMethodName;
-    }
 
-    apiMethodName;
-}
 
 class OpenKneeboardAPI extends EventTarget {
-    constructor(runtimeData) {
+    constructor() {
+        const runtimeData = OpenKneeboardNative.initializationData;
         console.log(`Initializing OpenKneeboard API (${runtimeData.Version.HumanReadable})`);
         super();
 
         this.#runtimeData = runtimeData;
-        this.#inFlightRequests = {};
-        this.#nextAsyncCallID = 0;
-
-        window.chrome.webview.addEventListener('message', this.#OnNativeMessage.bind(this));
 
         if (runtimeData.PeerInfo) {
             const info = runtimeData.PeerInfo.ThisInstance;
@@ -64,18 +54,11 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     SetPreferredPixelSize(width, height) {
-        return this.#AsyncRequest(
-            "OpenKneeboard.SetPreferredPixelSize",
-            { width, height },
-        );
+        return this.#AsyncRequest("SetPreferredPixelSize", width, height);
     }
 
     async GetVersion() {
         return this.#runtimeData.Version;
-    }
-
-    OpenDeveloperToolsWindow() {
-        return this.#AsyncRequest("OpenKneeboard.OpenDeveloperToolsWindow", {});
     }
 
     EnableExperimentalFeature(name, version) {
@@ -83,7 +66,7 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     async EnableExperimentalFeatures(features) {
-        const ret = await this.#AsyncRequest("OpenKneeboard.EnableExperimentalFeatures", { features });
+        const ret = await this.#AsyncRequest("EnableExperimentalFeatures", { features });
         if (!(ret.details?.features)) {
             return ret;
         }
@@ -97,15 +80,9 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #runtimeData;
-    #inFlightRequests;
-    #nextAsyncCallID;
 
-    #AsyncRequest(messageName, messageData) {
-        const callID = this.#nextAsyncCallID++;
-        return new Promise((resolve, reject) => {
-            this.#inFlightRequests[callID] = { resolve, reject, messageName };
-            window.chrome.webview.postMessage({ callID, messageName, messageData });
-        });
+    #AsyncRequest(name, ...args) {
+        return OpenKneeboardNative.asyncRequest(name, ...args);
     }
 
     #SetCursorEventsMode(mode) {
@@ -144,7 +121,9 @@ class OpenKneeboardAPI extends EventTarget {
         }
     }
 
-    #OnNativeMessage(event) {
+    #OnNativeMessage(message, ...args) {
+        console.log("native message:", { message, args });
+        /*
         const message = event.data;
         if (!("OpenKneeboard_WebView2_MessageType" in message)) {
             return;
@@ -160,24 +139,8 @@ class OpenKneeboardAPI extends EventTarget {
             case "Event":
                 this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));
                 return;
-            case "AsyncResponse":
-                if (!('callID' in message)) {
-                    return;
-                }
-                const callID = message.callID;
-                if (callID in this.#inFlightRequests) {
-                    const call = this.#inFlightRequests[callID];
-                    try {
-                        if (message.result) {
-                            call.resolve(message.result);
-                        } else {
-                            console.log(`⚠️ OpenKneeboard API error: '${call.messageName}()' => '${message.error}'`);
-                            call.reject(new OpenKneeboardAPIError(message.error, call.messageName));
-                        }
-                    } finally {
-                        delete this.#inFlightRequests[callID];
-                    }
-                }
+            case "okb/asyncResponse":
         }
+                */
     }
 }

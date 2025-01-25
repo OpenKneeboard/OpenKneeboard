@@ -1,9 +1,9 @@
 set(
     DATA_SOURCES
     DCS-Aircraft-Mapping.json
-    Chromium.js
-    WebView2.js
-    WebView2-SimHub.js
+    OpenKneeboardNative.js
+    OpenKneeboardAPI.js
+    SimHub.js
 )
 ok_add_runtime_files(data ${DATA_SOURCES} DESTINATION share)
 
