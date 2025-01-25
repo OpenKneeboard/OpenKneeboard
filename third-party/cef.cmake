@@ -18,14 +18,14 @@
 
 include_guard(GLOBAL)
 
+if (NOT BUILD_IS_64BIT)
+    return()
+endif ()
+
 set(CEF_VERSION "132.3.1+g144febe+chromium-132.0.6834.83")
 set(CEF_DOWNLOAD_ROOT "${CMAKE_BINARY_DIR}/_cef")
 set(CEF_BINARY_OUT_DIR "${BUILD_OUT_ROOT}/libexec/cef")
 set(CEF_RESOURCE_OUT_DIR "${BUILD_OUT_ROOT}/libexec/cef")
-
-if (NOT BUILD_IS_64BIT)
-    return()
-endif ()
 
 include(ok_add_license_file)
 ok_add_license_file(cef/LICENSE.txt LICENSE-ThirdParty-CEF.txt)
@@ -37,6 +37,9 @@ message(STATUS "Downloaded Chromium Embedded Framework (CEF) to ${CEF_ROOT}")
 list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
 
 find_package(CEF REQUIRED)
+
+# CEF requires compatibility manifests; we provide the necessary manifest
+list(REMOVE_ITEM CEF_EXE_LINKER_FLAGS "/MANIFEST:NO")
 
 PRINT_CEF_CONFIG()
 message(STATUS "*** END CEF CONFIGURATION SETTINGS ***")
