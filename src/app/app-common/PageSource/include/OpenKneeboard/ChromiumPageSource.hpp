@@ -39,8 +39,6 @@
 #include <include/cef_base.h>
 #include <include/cef_client.h>
 
-class CefBrowser;
-
 namespace OpenKneeboard {
 
 /// A browser using Chromium Embedded Framework
@@ -88,11 +86,6 @@ class ChromiumPageSource final
  private:
   class Client;
   class RenderHandler;
-  struct Frame {
-    PixelSize mSize {};
-    wil::com_ptr<ID3D11Texture2D> mTexture;
-    wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
-  };
 
   DisposalState mDisposal;
 

@@ -26,6 +26,12 @@
 namespace OpenKneeboard {
 class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  public:
+  struct Frame {
+    PixelSize mSize {};
+    wil::com_ptr<ID3D11Texture2D> mTexture;
+    wil::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
+  };
+
   uint64_t mFrameCount = 0;
   wil::com_ptr<ID3D11Fence> mFence;
   std::array<Frame, 3> mFrames;
