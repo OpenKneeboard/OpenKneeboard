@@ -99,7 +99,7 @@ task<void> ChromiumPageSource::Init() {
       },
     },
     {"AvailableExperimentalFeatures",
-     nlohmann::json::array({}) /* SupportedExperimentalFeatures */},
+     Client::GetSupportedExperimentalFeatures()},
     {"VirtualHosts", nlohmann::json::object({})},
   };
   extraData->SetString("InitData", initData.dump());

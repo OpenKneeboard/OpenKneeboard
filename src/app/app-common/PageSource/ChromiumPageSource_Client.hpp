@@ -38,6 +38,8 @@ class ChromiumPageSource::Client final : public CefClient,
   Client(ChromiumPageSource* pageSource);
   ~Client();
 
+  static nlohmann::json GetSupportedExperimentalFeatures();
+
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
   CefRefPtr<CefRenderHandler> GetRenderHandler() override;
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;

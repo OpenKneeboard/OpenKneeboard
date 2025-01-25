@@ -241,10 +241,21 @@ add_custom_command(
 )
 
 if (BUILD_IS_64BIT)
+  set(TARGET_NAME "OpenKneeboard-Chromium")
+  set(MANIFEST_PATH "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-Chromium.manifest")
+
+  configure_file(
+    "utility.manifest.in"
+    "${MANIFEST_PATH}"
+    @ONLY
+    NEWLINE_STYLE UNIX
+  )
+
   add_helper_executable(
     OpenKneeboard-Chromium
     WIN32
     chromium-worker.cpp
+    "${MANIFEST_PATH}"
   )
   target_link_libraries(
     OpenKneeboard-Chromium
@@ -257,26 +268,5 @@ if (BUILD_IS_64BIT)
     OpenKneeboard-Chromium
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/libexec/cef"
-  )
-
-  # CMake doesn't want to add the manifest directly, so let's add it in ourselves
-  set(TARGET_NAME "OpenKneeboard-Chromium")
-  set(MANIFEST_PATH "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-Chromium.manifest")
-
-  configure_file(
-    "utility.manifest.in"
-    "${MANIFEST_PATH}"
-    @ONLY
-    NEWLINE_STYLE UNIX
-  )
-
-  add_custom_command(
-    TARGET OpenKneeboard-Chromium
-    POST_BUILD
-    COMMAND
-    "${CMAKE_MT}"
-    -manifest "${MANIFEST_PATH}"
-    "-outputresource:$<TARGET_FILE:OpenKneeboard-Chromium>;#1"
-    VERBATIM
   )
 endif()

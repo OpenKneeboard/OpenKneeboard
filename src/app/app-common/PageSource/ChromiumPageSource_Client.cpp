@@ -322,4 +322,8 @@ PageID ChromiumPageSource::Client::GetCurrentPage() const {
   return mCurrentPage;
 }
 
+nlohmann::json ChromiumPageSource::Client::GetSupportedExperimentalFeatures() {
+  return SupportedExperimentalFeatures;
+}
+
 }// namespace OpenKneeboard
