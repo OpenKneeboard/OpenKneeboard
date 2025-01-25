@@ -58,6 +58,8 @@ class ChromiumPageSource::Client final : public CefClient,
 
   void PostCursorEvent(const CursorEvent& ev);
 
+  PageID GetCurrentPage() const;
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
@@ -66,6 +68,8 @@ class ChromiumPageSource::Client final : public CefClient,
   CefRefPtr<CefBrowser> mBrowser;
   CefRefPtr<RenderHandler> mRenderHandler;
   std::optional<int> mBrowserId;
+
+  PageID mCurrentPage;
 
   bool mIsHovered = false;
   uint32_t mCursorButtons = 0;

@@ -318,4 +318,8 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
   };
 }
 
+PageID ChromiumPageSource::Client::GetCurrentPage() const {
+  return mCurrentPage;
+}
+
 }// namespace OpenKneeboard

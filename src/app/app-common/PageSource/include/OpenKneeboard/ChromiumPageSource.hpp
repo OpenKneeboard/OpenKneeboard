@@ -94,8 +94,6 @@ class ChromiumPageSource final
   Settings mSettings {};
   D3D11::SpriteBatch mSpriteBatch;
 
-  PageID mPageID;
-
   CefRefPtr<Client> mClient;
 
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);

@@ -127,7 +127,7 @@ void ChromiumPageSource::PostCursorEvent(
 task<void>
 ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
   auto rh = mClient->GetRenderHandlerSubclass();
-  if (id != mPageID || rh->mFrameCount == 0) {
+  if (id != mClient->GetCurrentPage() || rh->mFrameCount == 0) {
     co_return;
   }
 
@@ -168,7 +168,7 @@ std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
   if (this->GetPageCount() == 0) {
     return {};
   }
-  return {mPageID};
+  return {mClient->GetCurrentPage()};
 }
 
 std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID) {
