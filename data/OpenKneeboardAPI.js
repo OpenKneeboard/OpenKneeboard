@@ -55,6 +55,10 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#AsyncRequest("SetPreferredPixelSize", width, height);
     }
 
+    OpenDeveloperToolsWindow() {
+        return this.#AsyncRequest("OpenDeveloperToolsWindow");
+    }
+
     async GetVersion() {
         return this.#runtimeData.Version;
     }

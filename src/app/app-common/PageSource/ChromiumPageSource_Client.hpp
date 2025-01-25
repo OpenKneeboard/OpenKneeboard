@@ -92,5 +92,6 @@ class ChromiumPageSource::Client final : public CefClient,
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
   task<JSAPIResult> EnableExperimentalFeatures(
     std::vector<ExperimentalFeature>);
+  task<JSAPIResult> OpenDeveloperToolsWindow();
 };
 }// namespace OpenKneeboard

@@ -131,6 +131,7 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   }
   IMPLEMENT_JS_API(SetPreferredPixelSize)
   IMPLEMENT_JS_API(EnableExperimentalFeatures)
+  IMPLEMENT_JS_API(OpenDeveloperToolsWindow)
 #undef IMPLEMENT_JS_API
 
   return CefClient::OnProcessMessageReceived(browser, frame, process, message);
@@ -321,6 +322,14 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
       },
     },
   };
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::OpenDeveloperToolsWindow() {
+  CefWindowInfo windowInfo;
+  windowInfo.windowless_rendering_enabled = false;
+  CefBrowserSettings settings;
+  mBrowser->GetHost()->ShowDevTools(windowInfo, this, settings, {});
+  co_return nlohmann::json {};
 }
 
 PageID ChromiumPageSource::Client::GetCurrentPage() const {
