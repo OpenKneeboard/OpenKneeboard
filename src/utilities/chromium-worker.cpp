@@ -96,13 +96,19 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefDictionaryValue> extraInfo) override {
     OPENKNEEBOARD_TraceLoggingScope("OnBrowserCreated()");
-    mInitData.emplace(
-      browser->GetIdentifier(), extraInfo->GetString("InitData"));
+    mBrowserData.emplace(
+      browser->GetIdentifier(),
+      BrowserData {
+        .mInitializationData = extraInfo->GetString("InitData"),
+      });
   }
 
   void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override {
     OPENKNEEBOARD_TraceLoggingScope("OnBrowserDestroyed");
-    mInitData.erase(browser->GetIdentifier());
+    const auto id = browser->GetIdentifier();
+    if (mBrowserData.contains(id)) {
+      mBrowserData.erase(id);
+    }
   }
 
   void OnWebKitInitialized() override {
@@ -139,6 +145,11 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefFrame>,
     CefRefPtr<CefV8Context>) override {
     OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
+    dprint("OnContextReleased");
+    const auto id = browser->GetIdentifier();
+    if (mBrowserData.contains(id)) {
+      mBrowserData.erase(id);
+    }
   }
 
   bool OnProcessMessageReceived(
@@ -151,16 +162,18 @@ class BrowserApp final : public CefApp,
       const auto args = message->GetArgumentList();
       const auto id = args->GetInt(0);
 
-      if (!mJSPromises.contains(id)) {
+      auto& state = mBrowserData.at(id);
+
+      if (!state.mJSPromises.contains(id)) {
         return true;
       }
-      auto& [context, promise] = mJSPromises.at(id);
+      auto& [context, promise] = state.mJSPromises.at(id);
       if (context->Enter()) {
         CefV8ValueList jsArgs;
         promise->ResolvePromise(CefV8Value::CreateString(args->GetString(1)));
         context->Exit();
 
-        mJSPromises.erase(id);
+        state.mJSPromises.erase(id);
       }
       return true;
     }
@@ -198,12 +211,13 @@ class BrowserApp final : public CefApp,
     OPENKNEEBOARD_TraceLoggingScope("JSGetInitializationData");
 
     const auto browserID = browser->GetIdentifier();
-    if (!mInitData.contains(browserID)) {
+    if (!mBrowserData.contains(browserID)) {
       dprint.Warning("Unrecognized browser ID");
       return false;
     }
 
-    ret = CefV8Value::CreateString(mInitData.at(browserID));
+    ret = CefV8Value::CreateString(
+      mBrowserData.at(browserID).mInitializationData);
     return true;
   }
 
@@ -214,9 +228,11 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefV8Value>& ret) {
     OPENKNEEBOARD_TraceLoggingScope("JSAsyncRequest");
 
-    const auto promiseID = mNextPromiseID++;
+    auto& state = mBrowserData.at(browser->GetIdentifier());
+
+    const auto promiseID = state.mNextPromiseID++;
     ret = CefV8Value::CreatePromise();
-    mJSPromises.emplace(
+    state.mJSPromises.emplace(
       promiseID, std::tuple {CefV8Context::GetCurrentContext(), ret});
 
     auto message = CefProcessMessage::Create(arguments.at(0)->GetStringValue());
@@ -231,13 +247,15 @@ class BrowserApp final : public CefApp,
   IMPLEMENT_REFCOUNTING(BrowserApp);
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 
-  std::unordered_map<int, CefString> mInitData;
-
-  int mNextPromiseID {};
-  std::unordered_map<
-    int,
-    std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
-    mJSPromises;
+  struct BrowserData {
+    int mNextPromiseID {};
+    CefString mInitializationData;
+    std::unordered_map<
+      int,
+      std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
+      mJSPromises;
+  };
+  std::unordered_map<int, BrowserData> mBrowserData;
 };
 
 }// namespace OpenKneeboard::Cef
