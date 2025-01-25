@@ -126,7 +126,7 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   const auto name = message->GetName().ToString();
 #define IMPLEMENT_JS_API(X) \
   if (name == "okbjs/" #X) { \
-    this->OnJSAsyncRequest<&Client::X>(message); \
+    this->OnJSAsyncRequest<&Client::X>(frame, process, message); \
     return true; \
   }
   IMPLEMENT_JS_API(SetPreferredPixelSize)
@@ -138,15 +138,20 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
 
 template <auto TMethod>
 fire_and_forget ChromiumPageSource::Client::OnJSAsyncRequest(
+  CefRefPtr<CefFrame> frame,
+  CefProcessId process,
   CefRefPtr<CefProcessMessage> message) {
   const auto callID = message->GetArgumentList()->GetInt(0);
   const auto args = nlohmann::json::parse(
     message->GetArgumentList()->GetString(1).ToString());
 
-  this->SendJSAsyncResult(callID, co_await JSInvoke<TMethod>(this, args));
+  this->SendJSAsyncResult(
+    frame, process, callID, co_await JSInvoke<TMethod>(this, args));
 }
 
 void ChromiumPageSource::Client::SendJSAsyncResult(
+  CefRefPtr<CefFrame> frame,
+  CefProcessId process,
   int callID,
   JSAPIResult result) {
   auto data = nlohmann::json::object({});
@@ -161,7 +166,7 @@ void ChromiumPageSource::Client::SendJSAsyncResult(
   auto args = message->GetArgumentList();
   args->SetInt(0, callID);
   args->SetString(1, data.dump());
-  mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
+  frame->SendProcessMessage(process, message);
 }
 
 void ChromiumPageSource::Client::OnTitleChange(

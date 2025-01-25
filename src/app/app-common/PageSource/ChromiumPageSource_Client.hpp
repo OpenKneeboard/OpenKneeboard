@@ -79,8 +79,15 @@ class ChromiumPageSource::Client final : public CefClient,
   std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
 
   template <auto TMethod>
-  fire_and_forget OnJSAsyncRequest(CefRefPtr<CefProcessMessage> message);
-  void SendJSAsyncResult(int callID, JSAPIResult result);
+  fire_and_forget OnJSAsyncRequest(
+    CefRefPtr<CefFrame> frame,
+    CefProcessId process,
+    CefRefPtr<CefProcessMessage> message);
+  void SendJSAsyncResult(
+    CefRefPtr<CefFrame> frame,
+    CefProcessId process,
+    int callID,
+    JSAPIResult result);
 
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
   task<JSAPIResult> EnableExperimentalFeatures(
