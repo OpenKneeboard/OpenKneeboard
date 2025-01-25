@@ -64,7 +64,7 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     async EnableExperimentalFeatures(features) {
-        const ret = await this.#AsyncRequest("EnableExperimentalFeatures", { features });
+        const ret = await this.#AsyncRequest("EnableExperimentalFeatures", features);
         if (!(ret.details?.features)) {
             return ret;
         }

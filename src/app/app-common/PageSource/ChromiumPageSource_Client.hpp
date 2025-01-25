@@ -22,6 +22,14 @@
 #include <OpenKneeboard/ChromiumPageSource.hpp>
 
 namespace OpenKneeboard {
+
+struct ExperimentalFeature {
+  std::string mName;
+  uint64_t mVersion;
+
+  bool operator==(const ExperimentalFeature&) const noexcept = default;
+};
+
 class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler,
                                          public CefDisplayHandler {
@@ -62,10 +70,14 @@ class ChromiumPageSource::Client final : public CefClient,
   bool mIsHovered = false;
   uint32_t mCursorButtons = 0;
 
+  std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
+
   template <auto TMethod>
   fire_and_forget OnJSAsyncRequest(CefRefPtr<CefProcessMessage> message);
   void SendJSAsyncResult(int callID, JSAPIResult result);
 
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
+  task<JSAPIResult> EnableExperimentalFeatures(
+    std::vector<ExperimentalFeature>);
 };
 }// namespace OpenKneeboard

@@ -21,7 +21,24 @@
 
 #include "ChromiumPageSource_RenderHandler.hpp"
 
+#include <OpenKneeboard/json.hpp>
+
+template <>
+struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
+  : std::formatter<std::string, char> {
+  auto format(
+    const OpenKneeboard::ExperimentalFeature& feature,
+    auto& formatContext) const {
+    return std::formatter<std::string, char>::format(
+      std::format("`{}` version `{}`", feature.mName, feature.mVersion),
+      formatContext);
+  }
+};
+
 namespace OpenKneeboard {
+
+OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
+
 namespace {
 using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
@@ -40,25 +57,40 @@ struct method_reflection<R (O::*)(Args...)> {
 };
 
 template <auto TMethod>
-task<JSAPIResult> JSInvokeSplat(auto self, const nlohmann::json& args) {
-  return [&]<std::size_t... I>(std::index_sequence<I...>) {
-    return std::invoke(TMethod, self, args.at(I)...);
-  }(std::make_index_sequence<
-           method_reflection<decltype(TMethod)>::args_count> {});
-}
+task<JSAPIResult> JSInvoke(auto self, nlohmann::json args) {
+  using Reflection = method_reflection<decltype(TMethod)>;
+  using ArgsTuple = Reflection::args_tuple;
+  constexpr auto ArgCount = Reflection::args_count;
 
-template <auto TMethod>
-task<JSAPIResult> JSInvoke(auto self, const nlohmann::json& args) {
-  if constexpr (requires { std::invoke(TMethod, self, args); }) {
-    co_return co_await std::invoke(TMethod, self, args);
+  if (!args.is_array()) {
+    co_return jsapi_error("Native API call arguments must be an array");
+  }
+  if (args.size() != ArgCount) {
+    co_return jsapi_error(
+      "Native API call required {} arguments, {} provided",
+      ArgCount,
+      args.size());
   }
 
-  if (args.is_array()) {
-    co_return co_await JSInvokeSplat<TMethod>(self, args);
+  const auto argsTuple = [&]<std::size_t... I>(std::index_sequence<I...>)
+    -> std::expected<ArgsTuple, nlohmann::json::exception> {
+    try {
+      return ArgsTuple {
+        args.at(I).get<std::tuple_element_t<I, ArgsTuple>>()...};
+    } catch (const nlohmann::json::exception& e) {
+      return std::unexpected(e);
+    }
+  }(std::make_index_sequence<ArgCount> {});
+  if (!argsTuple.has_value()) {
+    co_return jsapi_error(
+      "Error decoding native API arguments: {}", argsTuple.error().what());
   }
 
-  co_return jsapi_error("Unable to unpack arguments");
+  co_return co_await std::apply(std::bind_front(TMethod, self), *argsTuple);
 }
+
+const std::array<ExperimentalFeature, 0> SupportedExperimentalFeatures;
+
 }// namespace
 
 ChromiumPageSource::Client::Client(ChromiumPageSource* pageSource)
@@ -92,10 +124,14 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   CefProcessId process,
   CefRefPtr<CefProcessMessage> message) {
   const auto name = message->GetName().ToString();
-  if (name.starts_with("okbjs/")) {
-    this->OnJSAsyncRequest<&Client::SetPreferredPixelSize>(message);
-    return true;
+#define IMPLEMENT_JS_API(X) \
+  if (name == "okbjs/" #X) { \
+    this->OnJSAsyncRequest<&Client::X>(message); \
+    return true; \
   }
+  IMPLEMENT_JS_API(SetPreferredPixelSize)
+  IMPLEMENT_JS_API(EnableExperimentalFeatures)
+#undef IMPLEMENT_JS_API
 
   return CefClient::OnProcessMessageReceived(browser, frame, process, message);
 }
@@ -239,6 +275,44 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPreferredPixelSize(
       {
         {"width", size.mWidth},
         {"height", size.mHeight},
+      },
+    },
+  };
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
+  std::vector<ExperimentalFeature> toEnable) {
+  std::vector<ExperimentalFeature> enabledThisCall;
+
+  const auto EnableFeature = [&, this](const ExperimentalFeature& feature) {
+    dprint.Warning("JS enabled experimental feature {}", feature);
+    mEnabledExperimentalFeatures.push_back(feature);
+    enabledThisCall.push_back(feature);
+  };
+
+  for (auto&& feature: toEnable) {
+    if (std::ranges::contains(
+          mEnabledExperimentalFeatures,
+          feature.mName,
+          &ExperimentalFeature::mName)) {
+      co_return jsapi_error(
+        "Experimental feature `{}` is already enabled", feature.mName);
+    }
+
+    if (!std::ranges::contains(SupportedExperimentalFeatures, feature)) {
+      co_return jsapi_error(
+        "`{}` is not a recognized experimental feature", feature);
+    }
+
+    EnableFeature(feature);
+  }
+
+  co_return nlohmann::json {
+    {"result", std::format("Enabled {} features", enabledThisCall.size())},
+    {
+      "details",
+      {
+        {"features", enabledThisCall},
       },
     },
   };

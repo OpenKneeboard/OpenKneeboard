@@ -157,14 +157,16 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefFrame> frame,
     CefProcessId sourceProcess,
     CefRefPtr<CefProcessMessage> message) override {
+    OPENKNEEBOARD_TraceLoggingScope("OnProcessMessageReceived()");
+
     const auto name = message->GetName().ToString();
     if (name == "okb/asyncResult") {
+      auto& state = mBrowserData.at(browser->GetIdentifier());
       const auto args = message->GetArgumentList();
       const auto id = args->GetInt(0);
 
-      auto& state = mBrowserData.at(id);
-
       if (!state.mJSPromises.contains(id)) {
+        dprint.Warning("Could not find JS promise with ID {}", id);
         return true;
       }
       auto& [context, promise] = state.mJSPromises.at(id);

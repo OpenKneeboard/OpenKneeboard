@@ -35,7 +35,7 @@ var OpenKneeboardNative = new class {
     if (response.result) {
       return response.result;
     }
-    console.log(`⚠️ OpenKneeboard API error: '${name}()' => '${response.error}'`);
+    console.log(`\u26a0 OpenKneeboard API error: '${name}()' => '${response.error}'`);
     throw new OpenKneeboardAPIError(response.error, name);
   }
 
