@@ -18,8 +18,6 @@
  * USA.
  */
 
-
-
 class OpenKneeboardAPI extends EventTarget {
     constructor() {
         const runtimeData = OpenKneeboardNative.initializationData;
