@@ -112,6 +112,7 @@ struct SignalAwaitable {
   inline void await_suspend(std::coroutine_handle<> coro) {
     if (!mState.TryTransition<State::Init, State::StartingWait>()) {
       mState.Assert(State::CancelledBeforeWait);
+      coro.resume();
       return;
     }
 
