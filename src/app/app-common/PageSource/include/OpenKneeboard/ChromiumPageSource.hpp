@@ -83,9 +83,7 @@ class ChromiumPageSource final
   void PostCustomAction(
     KneeboardViewID,
     std::string_view,
-    const nlohmann::json& arg) {
-    // FIXME: plugins are not yet implemented with Chromium
-  }
+    const nlohmann::json& arg);
 
  private:
   class Client;

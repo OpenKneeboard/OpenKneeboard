@@ -688,4 +688,20 @@ void ChromiumPageSource::Client::SetViewID(KneeboardViewID id) {
   mViewID = id;
 }
 
+void ChromiumPageSource::Client::PostCustomAction(
+  std::string_view actionID,
+  const nlohmann::json& arg) {
+  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+  auto args = message->GetArgumentList();
+  args->SetString(0, "plugin/tab/customAction");
+  args->SetString(
+    1,
+    nlohmann::json {
+      {"id", actionID},
+      {"extraData", arg},
+    }
+      .dump());
+  mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
+}
+
 }// namespace OpenKneeboard

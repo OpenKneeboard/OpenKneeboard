@@ -306,4 +306,11 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::GetOrCreateClient(
   return state->mClients.at(id);
 }
 
+void ChromiumPageSource::PostCustomAction(
+  KneeboardViewID view,
+  std::string_view actionID,
+  const nlohmann::json& arg) {
+  this->GetOrCreateClient(view)->PostCustomAction(actionID, arg);
+}
+
 }// namespace OpenKneeboard

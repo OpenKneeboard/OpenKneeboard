@@ -82,6 +82,7 @@ class ChromiumPageSource::Client final : public CefClient,
   CefRefPtr<CefBrowser> GetBrowser() const;
   std::optional<int> GetBrowserID() const;
 
+  void PostCustomAction(std::string_view actionID, const nlohmann::json& arg);
   void PostCursorEvent(const CursorEvent& ev);
 
   PageID GetCurrentPage() const;
