@@ -115,7 +115,20 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
 
 task<void> ChromiumPageSource::DisposeAsync() noexcept {
   auto disposing = co_await mDisposal.StartOnce();
-  co_return;
+
+  if (auto it = get_if<ScrollableState>(&mState)) {
+    it->mClient->GetBrowser()->GetHost()->CloseBrowser(true);
+    co_return;
+  }
+
+  if (auto it = get_if<PageBasedState>(&mState)) {
+    for (auto&& [id, client]: it->mClients) {
+      client->GetBrowser()->GetHost()->CloseBrowser(true);
+    }
+    co_return;
+  }
+
+  fatal("Invalid ChromiumPageSource state");
 }
 
 void ChromiumPageSource::PostCursorEvent(
