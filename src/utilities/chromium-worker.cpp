@@ -74,6 +74,13 @@ CefString GetOpenKneeboardAPIJS() {
   return sRet;
 }
 
+CefString GetSimHubJS() {
+  static CefString sRet;
+  static std::once_flag sOnce;
+  std::call_once(sOnce, [&ret = sRet]() { ReadJSFile(ret, "SimHub.js"); });
+  return sRet;
+}
+
 }// namespace
 
 class BrowserApp final : public CefApp,
@@ -100,6 +107,7 @@ class BrowserApp final : public CefApp,
       browser->GetIdentifier(),
       BrowserData {
         .mInitializationData = extraInfo->GetString("InitData"),
+        .mIntegrateWithSimHub = extraInfo->GetBool("IntegrateWithSimHub"),
       });
   }
 
@@ -143,10 +151,31 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefV8Value> ret;
     CefRefPtr<CefV8Exception> exception;
     context->Eval(
-      GetOpenKneeboardAPIJS(), "OpenKneeboardAPI.js", 1, ret, exception);
+      GetOpenKneeboardAPIJS(),
+      "https://openkneeboard.local/OpenKneeboardAPI.js",
+      1,
+      ret,
+      exception);
     context->Eval(
-      "new OpenKneeboardAPI()", "OpenKneeboardInit.js", 1, ret, exception);
+      "new OpenKneeboardAPI()",
+      "https://openkneeboard.local/OpenKneeboardInit.js",
+      1,
+      ret,
+      exception);
     window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
+
+    const auto browserId = browser->GetIdentifier();
+    if (
+      mBrowserData.contains(browserId)
+      && mBrowserData.at(browserId).mIntegrateWithSimHub) {
+      context->Eval(
+        GetSimHubJS(),
+        "https://openkneeboard.local/simhub.js",
+        1,
+        ret,
+        exception);
+    }
+
     OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
   }
 
@@ -307,6 +336,7 @@ class BrowserApp final : public CefApp,
   struct BrowserData {
     int mNextPromiseID {};
     CefString mInitializationData;
+    bool mIntegrateWithSimHub {false};
     std::vector<std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
       mEventCallbacks;
     std::unordered_map<

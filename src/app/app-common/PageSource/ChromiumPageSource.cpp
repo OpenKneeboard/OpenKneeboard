@@ -105,6 +105,7 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
     {"VirtualHosts", nlohmann::json::object({})},
   };
   extraData->SetString("InitData", initData.dump());
+  extraData->SetBool("IntegrateWithSimHub", mSettings.mIntegrateWithSimHub);
 
   CefBrowserHost::CreateBrowser(
     info, client, mSettings.mURI, settings, extraData, nullptr);
