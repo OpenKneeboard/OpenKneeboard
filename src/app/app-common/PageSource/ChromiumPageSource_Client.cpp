@@ -483,7 +483,7 @@ task<JSAPIResult> ChromiumPageSource::Client::OpenDeveloperToolsWindow() {
   CefWindowInfo windowInfo;
   windowInfo.windowless_rendering_enabled = false;
   CefBrowserSettings settings;
-  mBrowser->GetHost()->ShowDevTools(windowInfo, this, settings, {});
+  mBrowser->GetHost()->ShowDevTools(windowInfo, nullptr, settings, {});
   co_return nlohmann::json {};
 }
 
