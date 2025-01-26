@@ -44,7 +44,9 @@ class ChromiumPageSource::Client final : public CefClient,
   };
 
   Client() = delete;
-  Client(ChromiumPageSource* pageSource, std::optional<KneeboardViewID>);
+  Client(
+    std::shared_ptr<ChromiumPageSource> pageSource,
+    std::optional<KneeboardViewID>);
   ~Client();
 
   static nlohmann::json GetSupportedExperimentalFeatures();
@@ -98,7 +100,7 @@ class ChromiumPageSource::Client final : public CefClient,
 
   winrt::apartment_context mUIThread;
 
-  ChromiumPageSource* mPageSource {nullptr};
+  std::weak_ptr<ChromiumPageSource> mPageSource;
   std::optional<KneeboardViewID> mViewID;
   CefRefPtr<CefBrowser> mBrowser;
   CefRefPtr<RenderHandler> mRenderHandler;

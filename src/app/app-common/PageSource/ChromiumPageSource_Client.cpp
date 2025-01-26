@@ -148,7 +148,7 @@ const std::array SupportedExperimentalFeatures {
 }// namespace
 
 ChromiumPageSource::Client::Client(
-  ChromiumPageSource* pageSource,
+  std::shared_ptr<ChromiumPageSource> pageSource,
   std::optional<KneeboardViewID> viewID)
   : mPageSource(pageSource), mViewID(viewID) {
   mRenderHandler = {new RenderHandler(pageSource)};
@@ -213,7 +213,12 @@ CefRefPtr<CefResourceHandler> ChromiumPageSource::Client::GetResourceHandler(
   }
   const auto host = CefString(&parts.host).ToString();
 
-  const auto& vhosts = mPageSource->mSettings.mVirtualHosts;
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    return nullptr;
+  }
+
+  const auto& vhosts = pageSource->mSettings.mVirtualHosts;
   auto it = std::ranges::find(
     vhosts, host, [](const auto& pair) { return pair.first; });
   if (it == vhosts.end()) {
@@ -306,7 +311,9 @@ void ChromiumPageSource::Client::EnableJSAPI(CefString name) {
 void ChromiumPageSource::Client::OnTitleChange(
   CefRefPtr<CefBrowser>,
   const CefString& title) {
-  mPageSource->evDocumentTitleChangedEvent.EnqueueForContext(mUIThread, title);
+  if (auto it = mPageSource.lock()) {
+    it->evDocumentTitleChangedEvent.EnqueueForContext(mUIThread, title);
+  }
 }
 
 void ChromiumPageSource::Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
@@ -515,10 +522,14 @@ task<JSAPIResult> ChromiumPageSource::Client::GetPages() {
         mEnabledExperimentalFeatures, PageBasedContentFeature)) {
     co_return jsapi_missing_feature_error(PageBasedContentFeature);
   }
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    co_return jsapi_error("Tab no longer exists");
+  }
 
   {
-    std::shared_lock lock(mPageSource->mStateMutex);
-    if (auto state = get_if<PageBasedState>(&mPageSource->mState)) {
+    std::shared_lock lock(pageSource->mStateMutex);
+    if (auto state = get_if<PageBasedState>(&pageSource->mState)) {
       if (state->mPages.empty()) {
         co_return nlohmann::json {{"havePages", false}};
       }
@@ -526,24 +537,28 @@ task<JSAPIResult> ChromiumPageSource::Client::GetPages() {
     }
   }
 
-  std::unique_lock lock(mPageSource->mStateMutex);
-  if (auto state = get_if<PageBasedState>(&mPageSource->mState)) {
+  std::unique_lock lock(pageSource->mStateMutex);
+  if (auto state = get_if<PageBasedState>(&pageSource->mState)) {
     if (state->mPages.empty()) {
       co_return nlohmann::json {{"havePages", false}};
     }
     co_return nlohmann::json {{"havePages", true}, {"pages", state->mPages}};
   }
-  auto primaryClient = get<ScrollableState>(mPageSource->mState).mClient;
+  auto primaryClient = get<ScrollableState>(pageSource->mState).mClient;
   OPENKNEEBOARD_ASSERT(primaryClient->GetBrowserID() == this->GetBrowserID());
-  mPageSource->mState = PageBasedState {primaryClient};
+  pageSource->mState = PageBasedState {primaryClient};
   co_return nlohmann::json {{"havePages", false}};
 }
 
 task<JSAPIResult> ChromiumPageSource::Client::SetPages(
   std::vector<APIPage> pages) {
+  auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    co_return jsapi_error("Tab no longer exists");
+  }
   {
-    std::unique_lock lock(mPageSource->mStateMutex);
-    auto state = get_if<PageBasedState>(&mPageSource->mState);
+    std::unique_lock lock(pageSource->mStateMutex);
+    auto state = get_if<PageBasedState>(&pageSource->mState);
     if (!state) {
       co_return jsapi_error(
         "SetPages() called without first calling GetPages()");
@@ -563,9 +578,9 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPages(
       .dump());
 
   {
-    std::shared_lock lock(mPageSource->mStateMutex);
+    std::shared_lock lock(pageSource->mStateMutex);
     for (auto&& [id, client]:
-         get<PageBasedState>(mPageSource->mState).mClients) {
+         get<PageBasedState>(pageSource->mState).mClients) {
       if (client->GetBrowserID() == this->GetBrowserID()) {
         continue;
       }
@@ -574,23 +589,28 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPages(
     }
   }
 
-  mPageSource->evContentChangedEvent.EnqueueForContext(mUIThread);
-  mPageSource->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
+  pageSource->evContentChangedEvent.EnqueueForContext(mUIThread);
+  pageSource->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
 
   co_return nlohmann::json {};
 }
 
 task<JSAPIResult> ChromiumPageSource::Client::RequestPageChange(
   nlohmann::json data) {
-  std::shared_lock lock(mPageSource->mStateMutex);
-  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    co_return jsapi_error("Tab no longer exists.");
+  }
+
+  std::shared_lock lock(pageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&pageSource->mState);
   if (!state) {
     co_return jsapi_error(
       "RequestPageChange() called without calling GetPages() first");
   }
 
   if (
-    mPageSource->mKind != Kind::Plugin
+    pageSource->mKind != Kind::Plugin
     && (std::chrono::steady_clock::now() - mLastCursorEventAt)
       > std::chrono::milliseconds(100)) {
     co_return jsapi_error(
@@ -633,8 +653,13 @@ void ChromiumPageSource::Client::SetCurrentPage(
     return;
   }
 
-  std::shared_lock lock(mPageSource->mStateMutex);
-  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    return;
+  }
+
+  std::shared_lock lock(pageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&pageSource->mState);
   if (!state) {
     return;
   }
@@ -652,14 +677,18 @@ void ChromiumPageSource::Client::SetCurrentPage(
 
   mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
 
-  mPageSource->evPageChangeRequestedEvent.EnqueueForContext(
+  pageSource->evPageChangeRequestedEvent.EnqueueForContext(
     mUIThread, mViewID.value(), page.mPageID);
 }
 
 task<JSAPIResult> ChromiumPageSource::Client::SendMessageToPeers(
   nlohmann::json apiMessage) {
-  std::shared_lock lock(mPageSource->mStateMutex);
-  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    co_return jsapi_error("Tab no longer exists");
+  }
+  std::shared_lock lock(pageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&pageSource->mState);
   if (!state) {
     co_return jsapi_error(
       "SendMessageToPeers() called without first calling GetPages()");

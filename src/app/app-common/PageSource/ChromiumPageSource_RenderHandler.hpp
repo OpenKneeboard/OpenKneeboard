@@ -37,7 +37,7 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
   std::array<Frame, 3> mFrames;
 
   RenderHandler() = delete;
-  RenderHandler(ChromiumPageSource* pageSource);
+  RenderHandler(std::shared_ptr<ChromiumPageSource> pageSource);
   ~RenderHandler();
 
   void GetViewRect(CefRefPtr<CefBrowser>, CefRect& rect) override;
@@ -64,7 +64,7 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
  private:
   IMPLEMENT_REFCOUNTING(RenderHandler);
 
-  ChromiumPageSource* mPageSource {nullptr};
+  std::weak_ptr<ChromiumPageSource> mPageSource;
   PixelSize mSize {};
 };
 

@@ -26,7 +26,8 @@
 
 namespace OpenKneeboard {
 
-ChromiumPageSource::RenderHandler::RenderHandler(ChromiumPageSource* pageSource)
+ChromiumPageSource::RenderHandler::RenderHandler(
+  std::shared_ptr<ChromiumPageSource> pageSource)
   : mPageSource(pageSource) {
   mSize = pageSource->mSettings.mInitialSize;
   check_hresult(pageSource->mDXResources->mD3D11Device->CreateFence(
@@ -59,7 +60,11 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   PaintElementType,
   const RectList& dirtyRects,
   const CefAcceleratedPaintInfo& info) {
-  auto dxr = mPageSource->mDXResources.get();
+  auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    return;
+  }
+  auto dxr = pageSource->mDXResources.get();
   const auto frameCount = mFrameCount + 1;
   const auto frameIndex = frameCount % mFrames.size();
   auto& frame = mFrames.at(frameIndex);
@@ -108,7 +113,7 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
     frame.mTexture.get(), 0, 0, 0, 0, sourceTexture.get(), 0, nullptr);
   check_hresult(ctx->Signal(mFence.get(), frameCount));
   mFrameCount = frameCount;
-  mPageSource->evNeedsRepaintEvent.Emit();
+  pageSource->evNeedsRepaintEvent.Emit();
 }
 
 void ChromiumPageSource::RenderHandler::SetSize(const PixelSize& size) {
@@ -125,11 +130,16 @@ void ChromiumPageSource::RenderHandler::RenderPage(
   if (mFrameCount == 0) {
     return;
   }
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    return;
+  }
+
   const auto& frame = mFrames.at(mFrameCount % mFrames.size());
-  auto& spriteBatch = mPageSource->mSpriteBatch;
+  auto& spriteBatch = pageSource->mSpriteBatch;
 
   auto d3d = rc.d3d();
-  auto ctx = mPageSource->mDXResources->mD3D11ImmediateContext.get();
+  auto ctx = pageSource->mDXResources->mD3D11ImmediateContext.get();
 
   check_hresult(ctx->Wait(mFence.get(), mFrameCount));
   spriteBatch.Begin(d3d.rtv(), rc.GetRenderTarget()->GetDimensions());

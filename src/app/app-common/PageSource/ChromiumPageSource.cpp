@@ -46,6 +46,7 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
   Settings settings) {
   std::shared_ptr<ChromiumPageSource> ret(
     new ChromiumPageSource(dxr, kbs, kind, settings));
+  ret->Init();
   co_return ret;
 }
 
@@ -66,7 +67,7 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
 
 CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
   std::optional<KneeboardViewID> viewID) {
-  CefRefPtr<Client> client = {new Client(this, viewID)};
+  CefRefPtr<Client> client = {new Client(shared_from_this(), viewID)};
 
   CefWindowInfo info {};
   info.SetAsWindowless(nullptr);
@@ -273,6 +274,11 @@ ChromiumPageSource::ChromiumPageSource(
     mKind(kind),
     mSettings(settings),
     mSpriteBatch(dxr->mD3D11Device.get()) {
+}
+
+void ChromiumPageSource::Init() {
+  // Not in the constructor because we must be fully initialized and in an
+  // std::shared_ptr before we use shared_from_this
   mState = ScrollableState {this->CreateClient()};
 }
 

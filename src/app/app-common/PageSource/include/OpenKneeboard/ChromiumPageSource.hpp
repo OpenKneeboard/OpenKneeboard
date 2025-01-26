@@ -126,8 +126,9 @@ class ChromiumPageSource final
   std::variant<ScrollableState, PageBasedState> mState;
 
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
-  CefRefPtr<Client> GetOrCreateClient(KneeboardViewID);
+  void Init();
 
+  CefRefPtr<Client> GetOrCreateClient(KneeboardViewID);
   CefRefPtr<Client> CreateClient(
     std::optional<KneeboardViewID> viewID = std::nullopt);
 };
