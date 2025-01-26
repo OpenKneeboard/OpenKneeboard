@@ -38,6 +38,7 @@ class ChromiumPageSource::Client final : public CefClient,
                                          public CefRequestHandler,
                                          public CefResourceRequestHandler {
  public:
+  using JSAPIResult = std::expected<nlohmann::json, std::string>;
   enum class CursorEventsMode {
     MouseEmulation,
     DoodlesOnly,
@@ -94,9 +95,10 @@ class ChromiumPageSource::Client final : public CefClient,
 
   CursorEventsMode GetCursorEventsMode() const;
 
+  task<JSAPIResult> OpenDeveloperToolsWindow();
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
-  using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
   winrt::apartment_context mUIThread;
 
@@ -130,7 +132,6 @@ class ChromiumPageSource::Client final : public CefClient,
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
   task<JSAPIResult> EnableExperimentalFeatures(
     std::vector<ExperimentalFeature>);
-  task<JSAPIResult> OpenDeveloperToolsWindow();
   task<JSAPIResult> SetCursorEventsMode(CursorEventsMode);
   task<JSAPIResult> GetPages();
   task<JSAPIResult> SetPages(std::vector<APIPage>);

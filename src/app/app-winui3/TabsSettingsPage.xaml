@@ -90,11 +90,6 @@
           Header="SimHub integration"
           OffContent="Disabled"
           OnContent="Automatically resize to fit SimHub dashboards"/>
-        <ToggleSwitch
-          IsOn="{x:Bind IsDeveloperToolsWindowEnabled}"
-          Header="Developer tools window"
-          OffContent="Disabled"
-          OnContent="Enabled"/>
       </StackPanel>
     </DataTemplate>
     <!-- DCS Radio Tab -->

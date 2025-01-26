@@ -138,9 +138,6 @@ struct BrowserTabUIData : BrowserTabUIDataT<
   bool IsBackgroundTransparent() const;
   OpenKneeboard::fire_and_forget IsBackgroundTransparent(bool);
 
-  bool IsDeveloperToolsWindowEnabled() const;
-  OpenKneeboard::fire_and_forget IsDeveloperToolsWindowEnabled(bool);
-
  private:
   std::shared_ptr<OpenKneeboard::BrowserTab> GetTab() const;
 };

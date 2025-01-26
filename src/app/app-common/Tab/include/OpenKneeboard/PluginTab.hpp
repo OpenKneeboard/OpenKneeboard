@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/IPageSourceWithDeveloperTools.hpp>
 #include <OpenKneeboard/ITabWithSettings.hpp>
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
@@ -34,7 +35,8 @@ class D2DErrorRenderer;
 
 class PluginTab final : public TabBase,
                         public ITabWithSettings,
-                        public PageSourceWithDelegates {
+                        public PageSourceWithDelegates,
+                        public IPageSourceWithDeveloperTools {
  public:
   struct Settings {
     std::string mPluginTabTypeID;
@@ -64,6 +66,9 @@ class PluginTab final : public TabBase,
     KneeboardViewID,
     std::string_view id,
     const nlohmann::json& arg);
+
+  bool HasDeveloperTools(PageID) const override;
+  fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
  private:
   enum class State {

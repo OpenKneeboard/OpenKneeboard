@@ -737,15 +737,6 @@ OpenKneeboard::fire_and_forget BrowserTabUIData::IsBackgroundTransparent(
   co_await GetTab()->SetBackgroundTransparent(value);
 }
 
-bool BrowserTabUIData::IsDeveloperToolsWindowEnabled() const {
-  return GetTab()->IsDeveloperToolsWindowEnabled();
-}
-
-OpenKneeboard::fire_and_forget BrowserTabUIData::IsDeveloperToolsWindowEnabled(
-  bool value) {
-  co_await GetTab()->SetDeveloperToolsWindowEnabled(value);
-}
-
 std::shared_ptr<BrowserTab> BrowserTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {

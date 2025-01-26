@@ -124,19 +124,14 @@ task<void> BrowserTab::SetBackgroundTransparent(bool transparent) {
   this->evSettingsChangedEvent.Emit();
 }
 
-bool BrowserTab::IsDeveloperToolsWindowEnabled() const {
-  return mSettings.mOpenDeveloperToolsWindow;
+bool BrowserTab::HasDeveloperTools(PageID page) const {
+  return mDelegate->HasDeveloperTools(page);
 }
 
-task<void> BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
-  OPENKNEEBOARD_TraceLoggingCoro(
-    "BrowserTab::SetDeveloperToolsWindowsEnabled()");
-  if (enabled == this->IsDeveloperToolsWindowEnabled()) {
-    co_return;
-  }
-  mSettings.mOpenDeveloperToolsWindow = enabled;
-  co_await this->Reload();
-  this->evSettingsChangedEvent.Emit();
+fire_and_forget BrowserTab::OpenDeveloperToolsWindow(
+  KneeboardViewID view,
+  PageID page) {
+  return mDelegate->OpenDeveloperToolsWindow(view, page);
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
@@ -144,7 +139,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mURI,
   mInitialSize,
   mIntegrateWithSimHub,
-  mOpenDeveloperToolsWindow,
   mTransparentBackground)
 
 }// namespace OpenKneeboard

@@ -24,6 +24,7 @@
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/D3D11/SpriteBatch.hpp>
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
+#include <OpenKneeboard/IPageSourceWithDeveloperTools.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/KneeboardViewID.hpp>
 #include <OpenKneeboard/Pixels.hpp>
@@ -48,6 +49,7 @@ class DoodleRenderer;
 /// A browser using Chromium Embedded Framework
 class ChromiumPageSource final
   : public virtual IPageSourceWithInternalCaching,
+    public virtual IPageSourceWithDeveloperTools,
     public virtual IPageSourceWithCursorEvents,
     public IHasDisposeAsync,
     public EventReceiver,
@@ -84,6 +86,11 @@ class ChromiumPageSource final
     KneeboardViewID,
     std::string_view,
     const nlohmann::json& arg);
+
+  bool HasDeveloperTools(PageID) const override {
+    return true;
+  }
+  fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
  private:
   class Client;

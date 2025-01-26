@@ -19,25 +19,33 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Pixels.hpp>
-
-#include <OpenKneeboard/config.hpp>
-
-#include <filesystem>
-#include <string>
-#include <unordered_map>
+#include <OpenKneeboard/ToolbarAction.hpp>
+#include <OpenKneeboard/UserActionHandler.hpp>
 
 namespace OpenKneeboard {
-struct WebPageSourceSettings {
-  PixelSize mInitialSize {Config::DefaultPixelSize};
-  bool mIntegrateWithSimHub {true};
-  std::string mURI;
-  bool mTransparentBackground {true};
 
-  ///// NOT SAVED - JUST FOR INTERNAL USE (e.g. PluginTab) /////
-  std::unordered_map<std::string, std::filesystem::path> mVirtualHosts;
+class TabView;
 
-  constexpr bool operator==(const WebPageSourceSettings&) const noexcept
-    = default;
+class TabDeveloperToolsAction final : public ToolbarAction,
+                                      private EventReceiver,
+                                      public UserActionHandler {
+ public:
+  TabDeveloperToolsAction(
+    KneeboardState*,
+    KneeboardViewID kneeboardView,
+    const std::shared_ptr<TabView>& state);
+  TabDeveloperToolsAction() = delete;
+
+  ~TabDeveloperToolsAction();
+
+  virtual bool IsEnabled() const override;
+  [[nodiscard]]
+  virtual task<void> Execute() override;
+
+ private:
+  KneeboardState* mKneeboard = nullptr;
+  KneeboardViewID mKneeboardView;
+  std::weak_ptr<TabView> mTabView;
 };
+
 }// namespace OpenKneeboard

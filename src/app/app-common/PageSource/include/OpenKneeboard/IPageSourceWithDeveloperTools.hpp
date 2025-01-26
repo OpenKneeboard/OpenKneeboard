@@ -1,7 +1,7 @@
 /*
  * OpenKneeboard
  *
- * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
+ * Copyright (C) 2025 Fred Emmott <fred@fredemmott.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,26 +18,14 @@
  * USA.
  */
 #pragma once
-
-#include <OpenKneeboard/Pixels.hpp>
-
-#include <OpenKneeboard/config.hpp>
-
-#include <filesystem>
-#include <string>
-#include <unordered_map>
-
+#include "IPageSource.hpp"
 namespace OpenKneeboard {
-struct WebPageSourceSettings {
-  PixelSize mInitialSize {Config::DefaultPixelSize};
-  bool mIntegrateWithSimHub {true};
-  std::string mURI;
-  bool mTransparentBackground {true};
 
-  ///// NOT SAVED - JUST FOR INTERNAL USE (e.g. PluginTab) /////
-  std::unordered_map<std::string, std::filesystem::path> mVirtualHosts;
-
-  constexpr bool operator==(const WebPageSourceSettings&) const noexcept
-    = default;
+class IPageSourceWithDeveloperTools : public virtual IPageSource {
+ public:
+  [[nodiscard]]
+  virtual bool HasDeveloperTools(PageID) const
+    = 0;
+  virtual fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) = 0;
 };
 }// namespace OpenKneeboard

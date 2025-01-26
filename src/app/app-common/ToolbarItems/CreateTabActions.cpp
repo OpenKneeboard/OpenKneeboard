@@ -25,6 +25,7 @@
 #include <OpenKneeboard/ReloadTabAction.hpp>
 #include <OpenKneeboard/SwitchProfileFlyout.hpp>
 #include <OpenKneeboard/SwitchTabFlyout.hpp>
+#include <OpenKneeboard/TabDeveloperToolsAction.hpp>
 #include <OpenKneeboard/TabFirstPageAction.hpp>
 #include <OpenKneeboard/TabNavigationAction.hpp>
 #include <OpenKneeboard/TabNextPageAction.hpp>
@@ -115,6 +116,8 @@ InAppActions InAppActions::Create(
     .mSecondary = {
       CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
       CreateReloadItem(kneeboardState, kneeboardView, tabView),
+      std::make_shared<ToolbarSeparator>(),
+      std::make_shared<TabDeveloperToolsAction>(kneeboardState, kneeboardView->GetRuntimeID(), tabView),
     },
   };
 }

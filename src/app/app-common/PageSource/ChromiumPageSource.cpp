@@ -320,4 +320,10 @@ void ChromiumPageSource::PostCustomAction(
   this->GetOrCreateClient(view)->PostCustomAction(actionID, arg);
 }
 
+fire_and_forget ChromiumPageSource::OpenDeveloperToolsWindow(
+  KneeboardViewID view,
+  PageID) {
+  co_await GetOrCreateClient(view)->OpenDeveloperToolsWindow();
+}
+
 }// namespace OpenKneeboard
