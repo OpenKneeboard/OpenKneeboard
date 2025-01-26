@@ -41,6 +41,8 @@
 
 namespace OpenKneeboard {
 
+class DoodleRenderer;
+
 /// A browser using Chromium Embedded Framework
 class ChromiumPageSource final
   : public virtual IPageSourceWithInternalCaching,
@@ -95,6 +97,7 @@ class ChromiumPageSource final
   D3D11::SpriteBatch mSpriteBatch;
 
   CefRefPtr<Client> mClient;
+  std::unique_ptr<DoodleRenderer> mDoodles;
 
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
   task<void> Init();

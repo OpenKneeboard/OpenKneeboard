@@ -140,13 +140,13 @@ class BrowserApp final : public CefApp,
     }
     const scope_exit exitContext([context] { context->Exit(); });
 
-      CefRefPtr<CefV8Value> ret;
-      CefRefPtr<CefV8Exception> exception;
-      context->Eval(
-        GetOpenKneeboardAPIJS(), "OpenKneeboardAPI.js", 1, ret, exception);
-      context->Eval(
-        "new OpenKneeboardAPI()", "OpenKneeboardInit.js", 1, ret, exception);
-      window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
+    CefRefPtr<CefV8Value> ret;
+    CefRefPtr<CefV8Exception> exception;
+    context->Eval(
+      GetOpenKneeboardAPIJS(), "OpenKneeboardAPI.js", 1, ret, exception);
+    context->Eval(
+      "new OpenKneeboardAPI()", "OpenKneeboardInit.js", 1, ret, exception);
+    window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
     OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
   }
 
@@ -196,6 +196,19 @@ class BrowserApp final : public CefApp,
       }
       return true;
     }
+    constexpr std::string_view EventPrefix = "okbEvent/";
+    if (name.starts_with(EventPrefix)) {
+      const auto eventName = name.substr(EventPrefix.length());
+
+      auto& state = mBrowserData.at(browser->GetIdentifier());
+      const auto args = message->GetArgumentList();
+      for (auto&& [context, callback]: state.mEventCallbacks) {
+        CefV8ValueList jsArgs;
+        jsArgs.push_back(CefV8Value::CreateString(eventName));
+        jsArgs.push_back(CefV8Value::CreateString(args->GetString(0)));
+        callback->ExecuteFunctionWithContext(context, nullptr, jsArgs);
+      }
+    }
 
     return CefRenderProcessHandler::OnProcessMessageReceived(
       browser, frame, sourceProcess, message);
@@ -218,6 +231,9 @@ class BrowserApp final : public CefApp,
     if (name == "OKBNative_AsyncRequest") {
       return JSAsyncRequest(browser, arguments, ret);
     }
+    if (name == "OKBNative_AddEventCallback") {
+      return JSAddEventCallback(browser, arguments);
+    }
 
     dprint.Warning("Unrecognized v8 function: {}");
     return false;
@@ -237,6 +253,20 @@ class BrowserApp final : public CefApp,
 
     ret = CefV8Value::CreateString(
       mBrowserData.at(browserID).mInitializationData);
+    return true;
+  }
+
+  [[nodiscard]]
+  bool JSAddEventCallback(
+    CefRefPtr<CefBrowser> browser,
+    const CefV8ValueList& arguments) {
+    OPENKNEEBOARD_TraceLoggingScope("JSAddEventCallback");
+    auto& state = mBrowserData.at(browser->GetIdentifier());
+    state.mEventCallbacks.push_back({
+      CefV8Context::GetCurrentContext(),
+      arguments.at(0),
+    });
+
     return true;
   }
 
@@ -269,6 +299,8 @@ class BrowserApp final : public CefApp,
   struct BrowserData {
     int mNextPromiseID {};
     CefString mInitializationData;
+    std::vector<std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
+      mEventCallbacks;
     std::unordered_map<
       int,
       std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>

@@ -26,6 +26,8 @@ class OpenKneeboardAPI extends EventTarget {
 
         this.#runtimeData = runtimeData;
 
+        OpenKneeboardNative.onEvent(this.#OnNativeMessage.bind(this));
+
         if (runtimeData.PeerInfo) {
             const info = runtimeData.PeerInfo.ThisInstance;
             console.log(`OpenKneeboard: This browser instance is for view {${info.ViewGUID}} - "${info.ViewName}"`);
@@ -88,7 +90,7 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #SetCursorEventsMode(mode) {
-        return this.#AsyncRequest("OpenKneeboard.SetCursorEventsMode", { mode });
+        return this.#AsyncRequest("SetCursorEventsMode", mode);
     }
 
     #GetPages() {
@@ -124,25 +126,22 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #OnNativeMessage(message, ...args) {
-        console.log("native message:", { message, args });
-        /*
-        const message = event.data;
-        if (!("OpenKneeboard_WebView2_MessageType" in message)) {
-            return;
+        switch (message) {
+            case 'console.log':
+                console.log(...args);
+                return;
+            case 'enableAPI':
+                this.#ActivateAPI(...args);
+                return;
+            case 'apiEvent':
+                this.#DispatchAPIEvent(...args);
         }
+    }
 
-        switch (message.OpenKneeboard_WebView2_MessageType) {
-            case "console.log":
-                console.log(...message.logArgs);
-                return;
-            case "ActivateAPI":
-                this.#ActivateAPI(message.api);
-                return;
-            case "Event":
-                this.dispatchEvent(new CustomEvent(message.eventType, message.eventOptions));
-                return;
-            case "okb/asyncResponse":
-        }
-                */
+    #DispatchAPIEvent(json) {
+        var message = JSON.parse(json);
+        this.dispatchEvent(new CustomEvent(
+            message.name,
+            { detail: message.detail }));
     }
 }

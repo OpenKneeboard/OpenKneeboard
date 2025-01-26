@@ -67,6 +67,7 @@ target_link_libraries(
   ThirdParty::OTDIPC
   ThirdParty::OpenVR
   ThirdParty::WMM
+  ThirdParty::magic_json_serialize_enum
 )
 target_link_windows_app_sdk(OpenKneeboard-App-Common)
 

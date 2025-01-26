@@ -39,6 +39,11 @@ var OpenKneeboardNative = new class {
     throw new OpenKneeboardAPIError(response.error, name);
   }
 
+  onEvent(callback) {
+    native function OKBNative_AddEventCallback();
+    OKBNative_AddEventCallback(callback);
+  }
+
   get initializationData() {
     native function OKBNative_GetInitializationData();
     return JSON.parse(OKBNative_GetInitializationData());

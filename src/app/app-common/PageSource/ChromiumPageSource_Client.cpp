@@ -23,6 +23,8 @@
 
 #include <OpenKneeboard/json.hpp>
 
+#include <FredEmmott/magic_json_serialize_enum.hpp>
+
 template <>
 struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
   : std::formatter<std::string, char> {
@@ -38,6 +40,8 @@ struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
 namespace OpenKneeboard {
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
+FREDEMMOTT_MAGIC_JSON_SERIALIZE_ENUM(
+  ChromiumPageSource::Client::CursorEventsMode);
 
 namespace {
 using JSAPIResult = std::expected<nlohmann::json, std::string>;
@@ -45,6 +49,10 @@ using JSAPIResult = std::expected<nlohmann::json, std::string>;
 template <class... Args>
 auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
   return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
+}
+
+auto jsapi_missing_feature_error(const ExperimentalFeature& feature) {
+  return jsapi_error("Missing required experimental feature:{}", feature);
 }
 
 template <class T>
@@ -89,7 +97,16 @@ task<JSAPIResult> JSInvoke(auto self, nlohmann::json args) {
   co_return co_await std::apply(std::bind_front(TMethod, self), *argsTuple);
 }
 
-const std::array<ExperimentalFeature, 0> SupportedExperimentalFeatures;
+const ExperimentalFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071802};
+
+const ExperimentalFeature SetCursorEventsModeFeature {
+  "SetCursorEventsMode",
+  2024071801};
+
+const std::array SupportedExperimentalFeatures {
+  DoodlesOnlyFeature,
+  SetCursorEventsModeFeature,
+};
 
 }// namespace
 
@@ -129,9 +146,10 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
     this->OnJSAsyncRequest<&Client::X>(frame, process, message); \
     return true; \
   }
-  IMPLEMENT_JS_API(SetPreferredPixelSize)
   IMPLEMENT_JS_API(EnableExperimentalFeatures)
   IMPLEMENT_JS_API(OpenDeveloperToolsWindow)
+  IMPLEMENT_JS_API(SetCursorEventsMode)
+  IMPLEMENT_JS_API(SetPreferredPixelSize)
 #undef IMPLEMENT_JS_API
 
   return CefClient::OnProcessMessageReceived(browser, frame, process, message);
@@ -168,6 +186,13 @@ void ChromiumPageSource::Client::SendJSAsyncResult(
   args->SetInt(0, callID);
   args->SetString(1, data.dump());
   frame->SendProcessMessage(process, message);
+}
+
+void ChromiumPageSource::Client::EnableJSAPI(CefString name) {
+  auto message = CefProcessMessage::Create("okbEvent/enableAPI");
+  auto args = message->GetArgumentList();
+  args->SetString(0, name);
+  mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
 }
 
 void ChromiumPageSource::Client::OnTitleChange(
@@ -311,6 +336,10 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
     }
 
     EnableFeature(feature);
+
+    if (feature == SetCursorEventsModeFeature) {
+      this->EnableJSAPI(SetCursorEventsModeFeature.mName);
+    }
   }
 
   co_return nlohmann::json {
@@ -338,6 +367,28 @@ PageID ChromiumPageSource::Client::GetCurrentPage() const {
 
 nlohmann::json ChromiumPageSource::Client::GetSupportedExperimentalFeatures() {
   return SupportedExperimentalFeatures;
+}
+
+ChromiumPageSource::Client::CursorEventsMode
+ChromiumPageSource::Client::GetCursorEventsMode() const {
+  return mCursorEventsMode;
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::SetCursorEventsMode(
+  CursorEventsMode mode) {
+  if (!std::ranges::contains(
+        mEnabledExperimentalFeatures, SetCursorEventsModeFeature)) {
+    co_return jsapi_missing_feature_error(SetCursorEventsModeFeature);
+  }
+  using enum CursorEventsMode;
+  if (
+    mode == DoodlesOnly
+    && !std::ranges::contains(
+      mEnabledExperimentalFeatures, DoodlesOnlyFeature)) {
+    co_return jsapi_missing_feature_error(DoodlesOnlyFeature);
+  }
+  mCursorEventsMode = mode;
+  co_return nlohmann::json {};
 }
 
 }// namespace OpenKneeboard

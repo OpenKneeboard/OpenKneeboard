@@ -23,6 +23,7 @@
 #include "ChromiumPageSource_RenderHandler.hpp"
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
+#include <OpenKneeboard/DoodleRenderer.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/hresult.hpp>
@@ -115,13 +116,29 @@ task<void> ChromiumPageSource::DisposeAsync() noexcept {
 }
 
 void ChromiumPageSource::PostCursorEvent(
-  KneeboardViewID,
+  KneeboardViewID view,
   const CursorEvent& ev,
-  PageID) {
+  PageID pageID) {
   if (this->GetPageCount() == 0) {
     return;
   }
-  mClient->PostCursorEvent(ev);
+  const auto mode = mClient->GetCursorEventsMode();
+  using enum Client::CursorEventsMode;
+  if (mode == MouseEmulation) {
+    mClient->PostCursorEvent(ev);
+    return;
+  }
+  OPENKNEEBOARD_ASSERT(mode == DoodlesOnly);
+  if (!mDoodles) [[unlikely]] {
+    mDoodles = std::make_unique<DoodleRenderer>(mDXResources, mKneeboard);
+    AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  }
+  const auto size = this->GetPreferredSize(pageID);
+  if (!size) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  mDoodles->PostCursorEvent(view, ev, pageID, size->mPixelSize);
 }
 
 task<void>
@@ -133,24 +150,41 @@ ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
 
   rh->RenderPage(rc, rect);
 
+  if (mDoodles) {
+    mDoodles->Render(rc.GetRenderTarget(), id, rect);
+  }
+
   co_return;
 }
 
-bool ChromiumPageSource::CanClearUserInput(PageID) const {
-  return CanClearUserInput();
+bool ChromiumPageSource::CanClearUserInput(PageID pageID) const {
+  if (!mDoodles) {
+    return false;
+  }
+  return mDoodles->HaveDoodles(pageID);
 }
 
 bool ChromiumPageSource::CanClearUserInput() const {
-  // TODO
-  return false;
+  if (!mDoodles) {
+    return false;
+  }
+  return mDoodles->HaveDoodles();
 }
 
-void ChromiumPageSource::ClearUserInput(PageID) {
-  ClearUserInput();
+void ChromiumPageSource::ClearUserInput(PageID pageID) {
+  if (!mDoodles) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  mDoodles->ClearPage(pageID);
 }
 
 void ChromiumPageSource::ClearUserInput() {
-  // TODO
+  if (!mDoodles) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  mDoodles->Clear();
 }
 
 PageIndex ChromiumPageSource::GetPageCount() const {

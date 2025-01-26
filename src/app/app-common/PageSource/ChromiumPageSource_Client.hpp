@@ -34,6 +34,11 @@ class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler,
                                          public CefDisplayHandler {
  public:
+  enum class CursorEventsMode {
+    MouseEmulation,
+    DoodlesOnly,
+  };
+
   Client() = delete;
   Client(ChromiumPageSource* pageSource);
   ~Client();
@@ -62,6 +67,8 @@ class ChromiumPageSource::Client final : public CefClient,
 
   PageID GetCurrentPage() const;
 
+  CursorEventsMode GetCursorEventsMode() const;
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
@@ -73,6 +80,7 @@ class ChromiumPageSource::Client final : public CefClient,
 
   PageID mCurrentPage;
 
+  CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
   bool mIsHovered = false;
   uint32_t mCursorButtons = 0;
 
@@ -88,10 +96,12 @@ class ChromiumPageSource::Client final : public CefClient,
     CefProcessId process,
     int callID,
     JSAPIResult result);
+  void EnableJSAPI(CefString name);
 
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
   task<JSAPIResult> EnableExperimentalFeatures(
     std::vector<ExperimentalFeature>);
   task<JSAPIResult> OpenDeveloperToolsWindow();
+  task<JSAPIResult> SetCursorEventsMode(CursorEventsMode);
 };
 }// namespace OpenKneeboard
