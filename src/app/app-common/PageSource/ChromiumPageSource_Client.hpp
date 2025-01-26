@@ -34,7 +34,9 @@ struct ExperimentalFeature {
 
 class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler,
-                                         public CefDisplayHandler {
+                                         public CefDisplayHandler,
+                                         public CefRequestHandler,
+                                         public CefResourceRequestHandler {
  public:
   enum class CursorEventsMode {
     MouseEmulation,
@@ -50,8 +52,23 @@ class ChromiumPageSource::Client final : public CefClient,
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
   CefRefPtr<CefRenderHandler> GetRenderHandler() override;
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
+  CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 
   CefRefPtr<RenderHandler> GetRenderHandlerSubclass();
+
+  CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefRequest> request,
+    bool is_navigation,
+    bool is_download,
+    const CefString& request_initiator,
+    bool& disable_default_handling) override;
+
+  CefRefPtr<CefResourceHandler> GetResourceHandler(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefRequest> request) override;
 
   bool OnProcessMessageReceived(
     CefRefPtr<CefBrowser> browser,

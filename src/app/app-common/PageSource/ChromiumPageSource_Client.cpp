@@ -24,6 +24,8 @@
 #include <OpenKneeboard/json.hpp>
 
 #include <FredEmmott/magic_json_serialize_enum.hpp>
+#include <include/cef_parser.h>
+#include <include/wrapper/cef_stream_resource_handler.h>
 
 template <>
 struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
@@ -170,6 +172,71 @@ ChromiumPageSource::Client::GetRenderHandlerSubclass() {
 
 CefRefPtr<CefDisplayHandler> ChromiumPageSource::Client::GetDisplayHandler() {
   return this;
+}
+
+CefRefPtr<CefRequestHandler> ChromiumPageSource::Client::GetRequestHandler() {
+  return this;
+}
+
+CefRefPtr<CefResourceRequestHandler>
+ChromiumPageSource::Client::GetResourceRequestHandler(
+  CefRefPtr<CefBrowser> browser,
+  CefRefPtr<CefFrame> frame,
+  CefRefPtr<CefRequest> request,
+  bool is_navigation,
+  bool is_download,
+  const CefString& request_initiator,
+  bool& disable_default_handling) {
+  return this;
+}
+
+CefRefPtr<CefResourceHandler> ChromiumPageSource::Client::GetResourceHandler(
+  CefRefPtr<CefBrowser> browser,
+  CefRefPtr<CefFrame> frame,
+  CefRefPtr<CefRequest> request) {
+  auto make404 = []() {
+    constexpr std::string_view content {"404 Not Found"};
+    return new CefStreamResourceHandler(
+      404,
+      "Not found",
+      "text/plain",
+      {},
+      CefStreamReader::CreateForData(
+        const_cast<char*>(content.data()), content.size()));
+  };
+  const auto url = request->GetURL();
+  CefURLParts parts {};
+  CefParseURL(url, parts);
+  const auto scheme = CefString(&parts.scheme).ToString();
+  if (scheme != "https" && scheme != "http") {
+    return nullptr;
+  }
+  const auto host = CefString(&parts.host).ToString();
+
+  const auto& vhosts = mPageSource->mSettings.mVirtualHosts;
+  auto it = std::ranges::find(
+    vhosts, host, [](const auto& pair) { return pair.first; });
+  if (it == vhosts.end()) {
+    return nullptr;
+  }
+  auto relativePath = CefString(&parts.path).ToString();
+  if (relativePath.starts_with('/')) {
+    relativePath = relativePath.substr(1);
+  }
+  const auto path = it->second / relativePath;
+
+  const auto ext = path.extension().wstring();
+  if (!ext.starts_with(L'.')) {
+    return make404();
+  }
+  const auto mime = CefGetMimeType(ext.substr(1));
+
+  if (!std::filesystem::exists(path)) {
+    return make404();
+  }
+
+  auto reader = CefStreamReader::CreateForFile(path.wstring());
+  return new CefStreamResourceHandler(mime, reader);
 }
 
 bool ChromiumPageSource::Client::OnProcessMessageReceived(
