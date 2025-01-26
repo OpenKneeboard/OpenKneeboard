@@ -94,19 +94,19 @@ class OpenKneeboardAPI extends EventTarget {
     }
 
     #GetPages() {
-        return this.#AsyncRequest("OpenKneeboard.GetPages", {});
+        return this.#AsyncRequest("GetPages");
     }
 
     #SetPages(pages) {
-        return this.#AsyncRequest("OpenKneeboard.SetPages", { pages });
+        return this.#AsyncRequest("SetPages", pages);
     }
 
     #RequestPageChange(guid) {
-        return this.#AsyncRequest("OpenKneeboard.RequestPageChange", guid);
+        return this.#AsyncRequest("RequestPageChange", guid);
     }
 
     #SendMessageToPeers(message) {
-        return this.#AsyncRequest("OpenKneeboard.SendMessageToPeers", { message });
+        return this.#AsyncRequest("SendMessageToPeers", { message });
     }
 
     #ActivateAPI(api) {
@@ -138,10 +138,10 @@ class OpenKneeboardAPI extends EventTarget {
         }
     }
 
-    #DispatchAPIEvent(json) {
-        var message = JSON.parse(json);
+    #DispatchAPIEvent(name, detail) {
+        var detail = JSON.parse(detail);
         this.dispatchEvent(new CustomEvent(
-            message.name,
-            { detail: message.detail }));
+            name,
+            { detail }));
     }
 }

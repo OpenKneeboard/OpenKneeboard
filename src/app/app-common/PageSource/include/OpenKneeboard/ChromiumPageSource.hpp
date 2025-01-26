@@ -39,6 +39,8 @@
 #include <include/cef_base.h>
 #include <include/cef_client.h>
 
+#include <shared_mutex>
+
 namespace OpenKneeboard {
 
 class DoodleRenderer;
@@ -88,18 +90,47 @@ class ChromiumPageSource final
  private:
   class Client;
   class RenderHandler;
+  struct APIPage {
+    ///// Provided by API client /////
+
+    winrt::guid mGuid;
+    PixelSize mPixelSize;
+    nlohmann::json mExtraData;
+
+    ///// Internals /////
+
+    PageID mPageID;
+
+    bool operator==(const APIPage&) const noexcept = default;
+  };
+  friend void to_json(nlohmann::json&, const APIPage&);
+  friend void from_json(const nlohmann::json&, APIPage&);
+
+  struct ScrollableState {
+    CefRefPtr<Client> mClient;
+  };
+  struct PageBasedState {
+    CefRefPtr<Client> mPrimaryClient;
+    std::vector<APIPage> mPages;
+    std::unordered_map<KneeboardViewID, CefRefPtr<Client>> mClients;
+  };
 
   DisposalState mDisposal;
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
+  Kind mKind {};
   Settings mSettings {};
   D3D11::SpriteBatch mSpriteBatch;
-
-  CefRefPtr<Client> mClient;
   std::unique_ptr<DoodleRenderer> mDoodles;
 
+  mutable std::shared_mutex mStateMutex;
+  std::variant<ScrollableState, PageBasedState> mState;
+
   ChromiumPageSource(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
-  task<void> Init();
+  CefRefPtr<Client> GetOrCreateClient(KneeboardViewID);
+
+  CefRefPtr<Client> CreateClient(
+    std::optional<KneeboardViewID> viewID = std::nullopt);
 };
 }// namespace OpenKneeboard

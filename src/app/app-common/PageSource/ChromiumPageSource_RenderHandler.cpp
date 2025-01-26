@@ -115,6 +115,10 @@ void ChromiumPageSource::RenderHandler::SetSize(const PixelSize& size) {
   mSize = size;
 }
 
+PixelSize ChromiumPageSource::RenderHandler::GetSize() const {
+  return mSize;
+}
+
 void ChromiumPageSource::RenderHandler::RenderPage(
   RenderContext rc,
   const PixelRect& rect) {

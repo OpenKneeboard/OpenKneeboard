@@ -196,6 +196,7 @@ class BrowserApp final : public CefApp,
       }
       return true;
     }
+
     constexpr std::string_view EventPrefix = "okbEvent/";
     if (name.starts_with(EventPrefix)) {
       const auto eventName = name.substr(EventPrefix.length());
@@ -205,9 +206,16 @@ class BrowserApp final : public CefApp,
       for (auto&& [context, callback]: state.mEventCallbacks) {
         CefV8ValueList jsArgs;
         jsArgs.push_back(CefV8Value::CreateString(eventName));
-        jsArgs.push_back(CefV8Value::CreateString(args->GetString(0)));
+        for (std::size_t i = 0; i < args->GetSize(); ++i) {
+          if (args->GetType(i) != CefValueType::VTYPE_STRING) {
+            dprint.Warning("JS event {} has non-string arg {}", eventName, i);
+            return true;
+          }
+          jsArgs.push_back(CefV8Value::CreateString(args->GetString(i)));
+        }
         callback->ExecuteFunctionWithContext(context, nullptr, jsArgs);
       }
+      return true;
     }
 
     return CefRenderProcessHandler::OnProcessMessageReceived(

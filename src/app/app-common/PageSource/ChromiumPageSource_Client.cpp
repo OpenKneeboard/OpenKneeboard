@@ -43,6 +43,32 @@ OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
 FREDEMMOTT_MAGIC_JSON_SERIALIZE_ENUM(
   ChromiumPageSource::Client::CursorEventsMode);
 
+void to_json(nlohmann::json& j, const ChromiumPageSource::APIPage& v) {
+  j.update({
+    {"guid", std::format("{:nobraces}", v.mGuid)},
+    {"pixelSize",
+     {
+       {"width", v.mPixelSize.mWidth},
+       {"height", v.mPixelSize.mHeight},
+     }},
+    {"extraData", v.mExtraData},
+  });
+}
+
+void from_json(const nlohmann::json& j, ChromiumPageSource::APIPage& v) {
+  v.mGuid = j.at("guid");
+  if (j.contains("extraData")) {
+    v.mExtraData = j.at("extraData");
+  }
+  if (j.contains("pixelSize")) {
+    const auto ps = j.at("pixelSize");
+    v.mPixelSize = PixelSize {
+      ps.at("width"),
+      ps.at("height"),
+    };
+  }
+}
+
 namespace {
 using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
@@ -103,15 +129,26 @@ const ExperimentalFeature SetCursorEventsModeFeature {
   "SetCursorEventsMode",
   2024071801};
 
+const ExperimentalFeature PageBasedContentFeature {
+  "PageBasedContent",
+  2024072001};
+const ExperimentalFeature PageBasedContentWithRequestPageChangeFeature {
+  "PageBasedContent",
+  2024073001};
+
 const std::array SupportedExperimentalFeatures {
   DoodlesOnlyFeature,
   SetCursorEventsModeFeature,
+  PageBasedContentFeature,
+  PageBasedContentWithRequestPageChangeFeature,
 };
 
 }// namespace
 
-ChromiumPageSource::Client::Client(ChromiumPageSource* pageSource)
-  : mPageSource(pageSource) {
+ChromiumPageSource::Client::Client(
+  ChromiumPageSource* pageSource,
+  std::optional<KneeboardViewID> viewID)
+  : mPageSource(pageSource), mViewID(viewID) {
   mRenderHandler = {new RenderHandler(pageSource)};
 }
 
@@ -147,8 +184,12 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
     return true; \
   }
   IMPLEMENT_JS_API(EnableExperimentalFeatures)
+  IMPLEMENT_JS_API(GetPages)
   IMPLEMENT_JS_API(OpenDeveloperToolsWindow)
+  IMPLEMENT_JS_API(RequestPageChange)
+  IMPLEMENT_JS_API(SendMessageToPeers)
   IMPLEMENT_JS_API(SetCursorEventsMode)
+  IMPLEMENT_JS_API(SetPages)
   IMPLEMENT_JS_API(SetPreferredPixelSize)
 #undef IMPLEMENT_JS_API
 
@@ -198,7 +239,7 @@ void ChromiumPageSource::Client::EnableJSAPI(CefString name) {
 void ChromiumPageSource::Client::OnTitleChange(
   CefRefPtr<CefBrowser>,
   const CefString& title) {
-  mPageSource->evDocumentTitleChangedEvent.Emit(title);
+  mPageSource->evDocumentTitleChangedEvent.EnqueueForContext(mUIThread, title);
 }
 
 void ChromiumPageSource::Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
@@ -215,6 +256,8 @@ std::optional<int> ChromiumPageSource::Client::GetBrowserID() const {
 }
 
 void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
+  mLastCursorEventAt = std::chrono::steady_clock::now();
+
   auto host = this->GetBrowser()->GetHost();
 
   const auto epsilon = std::numeric_limits<decltype(ev.mX)>::epsilon();
@@ -340,6 +383,15 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
     if (feature == SetCursorEventsModeFeature) {
       this->EnableJSAPI(SetCursorEventsModeFeature.mName);
     }
+
+    if (feature == PageBasedContentFeature) {
+      this->EnableJSAPI(PageBasedContentFeature.mName);
+    }
+
+    if (feature == PageBasedContentWithRequestPageChangeFeature) {
+      EnableFeature(PageBasedContentFeature);
+      this->EnableJSAPI("PageBasedContentWithRequestPageChange");
+    }
   }
 
   co_return nlohmann::json {
@@ -389,6 +441,184 @@ task<JSAPIResult> ChromiumPageSource::Client::SetCursorEventsMode(
   }
   mCursorEventsMode = mode;
   co_return nlohmann::json {};
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::GetPages() {
+  if (!std::ranges::contains(
+        mEnabledExperimentalFeatures, PageBasedContentFeature)) {
+    co_return jsapi_missing_feature_error(PageBasedContentFeature);
+  }
+
+  {
+    std::shared_lock lock(mPageSource->mStateMutex);
+    if (auto state = get_if<PageBasedState>(&mPageSource->mState)) {
+      if (state->mPages.empty()) {
+        co_return nlohmann::json {{"havePages", false}};
+      }
+      co_return nlohmann::json {{"havePages", true}, {"pages", state->mPages}};
+    }
+  }
+
+  std::unique_lock lock(mPageSource->mStateMutex);
+  if (auto state = get_if<PageBasedState>(&mPageSource->mState)) {
+    if (state->mPages.empty()) {
+      co_return nlohmann::json {{"havePages", false}};
+    }
+    co_return nlohmann::json {{"havePages", true}, {"pages", state->mPages}};
+  }
+  auto primaryClient = get<ScrollableState>(mPageSource->mState).mClient;
+  OPENKNEEBOARD_ASSERT(primaryClient->GetBrowserID() == this->GetBrowserID());
+  mPageSource->mState = PageBasedState {primaryClient};
+  co_return nlohmann::json {{"havePages", false}};
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::SetPages(
+  std::vector<APIPage> pages) {
+  {
+    std::unique_lock lock(mPageSource->mStateMutex);
+    auto state = get_if<PageBasedState>(&mPageSource->mState);
+    if (!state) {
+      co_return jsapi_error(
+        "SetPages() called without first calling GetPages()");
+    }
+
+    state->mPages = pages;
+  }
+
+  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+  auto args = message->GetArgumentList();
+  args->SetString(0, "pagesChanged");
+  args->SetString(
+    1,
+    nlohmann::json {
+      {"pages", pages},
+    }
+      .dump());
+
+  {
+    std::shared_lock lock(mPageSource->mStateMutex);
+    for (auto&& [id, client]:
+         get<PageBasedState>(mPageSource->mState).mClients) {
+      if (client->GetBrowserID() == this->GetBrowserID()) {
+        continue;
+      }
+      client->mBrowser->GetMainFrame()->SendProcessMessage(
+        PID_RENDERER, message);
+    }
+  }
+
+  mPageSource->evContentChangedEvent.EnqueueForContext(mUIThread);
+  mPageSource->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
+
+  co_return nlohmann::json {};
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::RequestPageChange(
+  nlohmann::json data) {
+  std::shared_lock lock(mPageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  if (!state) {
+    co_return jsapi_error(
+      "RequestPageChange() called without calling GetPages() first");
+  }
+
+  if (
+    mPageSource->mKind != Kind::Plugin
+    && (std::chrono::steady_clock::now() - mLastCursorEventAt)
+      > std::chrono::milliseconds(100)) {
+    co_return jsapi_error(
+      "Web Dashboards can only call `RequestPageChange()` shortly after a "
+      "cursor event; to remove this limit, create an OpenKneeboard plugin.");
+  }
+
+  const auto guid = data.at("guid").get<winrt::guid>();
+  auto pageIt = std::ranges::find(state->mPages, guid, &APIPage::mGuid);
+  if (pageIt == state->mPages.end()) {
+    co_return jsapi_error("Couldn't find page with GUID {}", guid);
+  }
+  const auto page = *pageIt;
+  const auto clientIt = std::ranges::find(
+    state->mClients, this, [](const auto& pair) { return pair.second.get(); });
+  if (clientIt == state->mClients.end()) {
+    co_return jsapi_error("Couldn't find kneeboardViewID for current client");
+  }
+  const auto viewID = clientIt->first;
+  lock.unlock();
+
+  this->SetCurrentPage(page.mPageID, page.mPixelSize);
+}
+
+void ChromiumPageSource::Client::SetCurrentPage(
+  PageID pageID,
+  const PixelSize& size) {
+  if (pageID == mCurrentPage) {
+    return;
+  }
+
+  if (size != mRenderHandler->GetSize()) {
+    mRenderHandler->SetSize(size);
+    mBrowser->GetHost()->WasResized();
+  }
+
+  mCurrentPage = pageID;
+
+  if (!mViewID.has_value()) {
+    return;
+  }
+
+  std::shared_lock lock(mPageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  if (!state) {
+    return;
+  }
+  auto it = std::ranges::find(state->mPages, pageID, &APIPage::mPageID);
+  if (it == state->mPages.end()) {
+    return;
+  }
+  auto page = *it;
+  lock.unlock();
+
+  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+  auto args = message->GetArgumentList();
+  args->SetString(0, "pageChanged");
+  args->SetString(1, nlohmann::json {{"page", page}}.dump());
+
+  mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
+
+  mPageSource->evPageChangeRequestedEvent.EnqueueForContext(
+    mUIThread, mViewID.value(), page.mPageID);
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::SendMessageToPeers(
+  nlohmann::json apiMessage) {
+  std::shared_lock lock(mPageSource->mStateMutex);
+  auto state = get_if<PageBasedState>(&mPageSource->mState);
+  if (!state) {
+    co_return jsapi_error(
+      "SendMessageToPeers() called without first calling GetPages()");
+  }
+
+  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+  auto args = message->GetArgumentList();
+  args->SetString(0, "peerMessage");
+  args->SetString(1, nlohmann::json {{"message", apiMessage}}.dump());
+
+  const auto myID = mBrowser->GetIdentifier();
+  for (auto&& [view, client]: state->mClients) {
+    auto browser = client->GetBrowser();
+    if (!browser) {
+      continue;
+    }
+    if (browser->GetIdentifier() == myID) {
+      continue;
+    }
+    browser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
+  }
+  co_return {};
+}
+
+void ChromiumPageSource::Client::SetViewID(KneeboardViewID id) {
+  mViewID = id;
 }
 
 }// namespace OpenKneeboard

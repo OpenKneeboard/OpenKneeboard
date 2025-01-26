@@ -46,7 +46,6 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
   Settings settings) {
   std::shared_ptr<ChromiumPageSource> ret(
     new ChromiumPageSource(dxr, kbs, kind, settings));
-  co_await ret->Init();
   co_return ret;
 }
 
@@ -65,8 +64,9 @@ task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
   return Create(dxr, kbs, Kind::File, settings);
 }
 
-task<void> ChromiumPageSource::Init() {
-  mClient = {new Client(this)};
+CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
+  std::optional<KneeboardViewID> viewID) {
+  CefRefPtr<Client> client = {new Client(this, viewID)};
 
   CefWindowInfo info {};
   info.SetAsWindowless(nullptr);
@@ -106,8 +106,9 @@ task<void> ChromiumPageSource::Init() {
   extraData->SetString("InitData", initData.dump());
 
   CefBrowserHost::CreateBrowser(
-    info, mClient, mSettings.mURI, settings, extraData, nullptr);
-  co_return;
+    info, client, mSettings.mURI, settings, extraData, nullptr);
+
+  return client;
 }
 
 task<void> ChromiumPageSource::DisposeAsync() noexcept {
@@ -122,10 +123,12 @@ void ChromiumPageSource::PostCursorEvent(
   if (this->GetPageCount() == 0) {
     return;
   }
-  const auto mode = mClient->GetCursorEventsMode();
+
+  auto client = this->GetOrCreateClient(view);
+  const auto mode = client->GetCursorEventsMode();
   using enum Client::CursorEventsMode;
   if (mode == MouseEmulation) {
-    mClient->PostCursorEvent(ev);
+    client->PostCursorEvent(ev);
     return;
   }
   OPENKNEEBOARD_ASSERT(mode == DoodlesOnly);
@@ -143,9 +146,19 @@ void ChromiumPageSource::PostCursorEvent(
 
 task<void>
 ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
-  auto rh = mClient->GetRenderHandlerSubclass();
-  if (id != mClient->GetCurrentPage() || rh->mFrameCount == 0) {
+  auto client = this->GetOrCreateClient(rc.GetKneeboardView()->GetRuntimeID());
+
+  auto rh = client->GetRenderHandlerSubclass();
+  if (rh->mFrameCount == 0) {
     co_return;
+  }
+
+  if (id != client->GetCurrentPage()) {
+    auto size = this->GetPreferredSize(id);
+    if (!size) {
+      co_return;
+    }
+    client->SetCurrentPage(id, size->mPixelSize);
   }
 
   rh->RenderPage(rc, rect);
@@ -188,45 +201,109 @@ void ChromiumPageSource::ClearUserInput() {
 }
 
 PageIndex ChromiumPageSource::GetPageCount() const {
-  if (!mClient) {
-    return 0;
+  std::shared_lock lock(mStateMutex);
+
+  if (auto state = get_if<ScrollableState>(&mState)) {
+    auto rh = state->mClient->GetRenderHandlerSubclass();
+    return (rh->mFrameCount > 0) ? 1 : 0;
   }
-  auto rh = mClient->GetRenderHandlerSubclass();
-  if (!rh) {
-    return 0;
+
+  if (auto state = get_if<PageBasedState>(&mState)) {
+    return state->mPages.size();
   }
-  return (rh->mFrameCount > 0) ? 1 : 0;
+
+  fatal("Invalid ChromiumPageSource state");
 }
 
 std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
   if (this->GetPageCount() == 0) {
     return {};
   }
-  return {mClient->GetCurrentPage()};
+
+  std::shared_lock lock(mStateMutex);
+  if (auto state = get_if<ScrollableState>(&mState)) {
+    return {state->mClient->GetCurrentPage()};
+  }
+
+  if (auto state = get_if<PageBasedState>(&mState)) {
+    return std::ranges::transform_view(
+             state->mPages, [](const APIPage& page) { return page.mPageID; })
+      | std::ranges::to<std::vector>();
+  }
+
+  fatal("Invalid ChromiumPageSource state");
 }
 
-std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID) {
+std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID page) {
   if (this->GetPageCount() == 0) {
     return std::nullopt;
   }
 
-  auto rh = this->mClient->GetRenderHandlerSubclass();
-  const auto& frame = rh->mFrames.at(rh->mFrameCount % rh->mFrames.size());
-  return PreferredSize {
-    .mPixelSize = frame.mSize,
-    .mScalingKind = ScalingKind::Bitmap,
-  };
+  std::shared_lock lock(mStateMutex);
+  if (auto state = get_if<ScrollableState>(&mState)) {
+    auto rh = state->mClient->GetRenderHandlerSubclass();
+    const auto& frame = rh->mFrames.at(rh->mFrameCount % rh->mFrames.size());
+    return PreferredSize {
+      .mPixelSize = frame.mSize,
+      .mScalingKind = ScalingKind::Bitmap,
+    };
+  }
+
+  if (auto state = get_if<PageBasedState>(&mState)) {
+    auto it = std::ranges::find(state->mPages, page, &APIPage::mPageID);
+    if (it == state->mPages.end()) {
+      return std::nullopt;
+    }
+    return PreferredSize {
+      .mPixelSize = it->mPixelSize,
+      .mScalingKind = ScalingKind::Bitmap,
+    };
+  }
+
+  fatal("Invalid ChromiumPageSource state");
 }
 
 ChromiumPageSource::ChromiumPageSource(
   audited_ptr<DXResources> dxr,
   KneeboardState* kbs,
-  Kind,
+  Kind kind,
   Settings settings)
   : mDXResources(dxr),
     mKneeboard(kbs),
+    mKind(kind),
     mSettings(settings),
     mSpriteBatch(dxr->mD3D11Device.get()) {
+  mState = ScrollableState {this->CreateClient()};
+}
+
+CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::GetOrCreateClient(
+  KneeboardViewID id) {
+  std::shared_lock lock(mStateMutex);
+
+  if (auto state = get_if<ScrollableState>(&mState)) {
+    return state->mClient;
+  }
+  auto state = get_if<PageBasedState>(&mState);
+  if (!state) {
+    fatal("Invalid ChromiumPageSource state");
+  }
+
+  if (state->mClients.contains(id)) {
+    return state->mClients.at(id);
+  }
+  lock.unlock();
+
+  std::unique_lock writeLock(mStateMutex);
+  if (state->mClients.empty()) {
+    state->mClients.emplace(id, state->mPrimaryClient);
+    state->mPrimaryClient->SetViewID(id);
+    return state->mPrimaryClient;
+  }
+
+  if (!state->mClients.contains(id)) {
+    state->mClients.emplace(id, this->CreateClient(id));
+  }
+  return state->mClients.at(id);
 }
 
 }// namespace OpenKneeboard

@@ -56,6 +56,7 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     const RectList& dirtyRects,
     const CefAcceleratedPaintInfo& info);
 
+  PixelSize GetSize() const;
   void SetSize(const PixelSize& size);
 
   void RenderPage(RenderContext rc, const PixelRect& rect);

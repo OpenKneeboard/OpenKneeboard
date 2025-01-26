@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
 
+#include <optional>
+
 namespace OpenKneeboard {
 
 struct ExperimentalFeature {
@@ -40,7 +42,7 @@ class ChromiumPageSource::Client final : public CefClient,
   };
 
   Client() = delete;
-  Client(ChromiumPageSource* pageSource);
+  Client(ChromiumPageSource* pageSource, std::optional<KneeboardViewID>);
   ~Client();
 
   static nlohmann::json GetSupportedExperimentalFeatures();
@@ -66,6 +68,9 @@ class ChromiumPageSource::Client final : public CefClient,
   void PostCursorEvent(const CursorEvent& ev);
 
   PageID GetCurrentPage() const;
+  void SetCurrentPage(PageID, const PixelSize&);
+
+  void SetViewID(KneeboardViewID);
 
   CursorEventsMode GetCursorEventsMode() const;
 
@@ -73,7 +78,10 @@ class ChromiumPageSource::Client final : public CefClient,
   IMPLEMENT_REFCOUNTING(Client);
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
 
+  winrt::apartment_context mUIThread;
+
   ChromiumPageSource* mPageSource {nullptr};
+  std::optional<KneeboardViewID> mViewID;
   CefRefPtr<CefBrowser> mBrowser;
   CefRefPtr<RenderHandler> mRenderHandler;
   std::optional<int> mBrowserId;
@@ -83,6 +91,7 @@ class ChromiumPageSource::Client final : public CefClient,
   CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
   bool mIsHovered = false;
   uint32_t mCursorButtons = 0;
+  std::chrono::steady_clock::time_point mLastCursorEventAt;
 
   std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;
 
@@ -103,5 +112,9 @@ class ChromiumPageSource::Client final : public CefClient,
     std::vector<ExperimentalFeature>);
   task<JSAPIResult> OpenDeveloperToolsWindow();
   task<JSAPIResult> SetCursorEventsMode(CursorEventsMode);
+  task<JSAPIResult> GetPages();
+  task<JSAPIResult> SetPages(std::vector<APIPage>);
+  task<JSAPIResult> SendMessageToPeers(nlohmann::json message);
+  task<JSAPIResult> RequestPageChange(nlohmann::json);
 };
 }// namespace OpenKneeboard
