@@ -123,11 +123,23 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefV8Context> context) override {
     OPENKNEEBOARD_TraceLoggingScope("OnContextCreated");
 
-    const auto window = context->GetGlobal();
-    if (window->HasValue("OpenKneeboard")) {
+    if (!frame->GetV8Context()->IsSame(context)) {
+      // Secondary context, e.g. dev tools window
+      //
+      // See https://github.com/chromiumembedded/cef/issues/3867
       return;
     }
-    if (context->Enter()) {
+    if (!frame->IsMain()) {
+      return;
+    }
+
+    const auto window = context->GetGlobal();
+
+    if (!context->Enter()) {
+      return;
+    }
+    const scope_exit exitContext([context] { context->Exit(); });
+
       CefRefPtr<CefV8Value> ret;
       CefRefPtr<CefV8Exception> exception;
       context->Eval(
@@ -135,16 +147,21 @@ class BrowserApp final : public CefApp,
       context->Eval(
         "new OpenKneeboardAPI()", "OpenKneeboardInit.js", 1, ret, exception);
       window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
-      context->Exit();
-    }
     OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
   }
 
   void OnContextReleased(
     CefRefPtr<CefBrowser> browser,
-    CefRefPtr<CefFrame>,
-    CefRefPtr<CefV8Context>) override {
+    CefRefPtr<CefFrame> frame,
+    CefRefPtr<CefV8Context> context) override {
     OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
+    if (!frame->GetV8Context()->IsSame(context)) {
+      return;
+    }
+    if (!frame->IsMain()) {
+      return;
+    }
+
     dprint("OnContextReleased");
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
