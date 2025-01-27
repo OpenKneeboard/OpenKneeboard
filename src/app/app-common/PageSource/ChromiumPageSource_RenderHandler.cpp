@@ -123,6 +123,16 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   dxr->mD3D11Device->OpenSharedResource1(
     info.shared_texture_handle, IID_PPV_ARGS(sourceTexture.put()));
 
+  auto mutex = sourceTexture.try_query<IDXGIKeyedMutex>();
+  if (mutex) {
+    mutex->AcquireSync(0, 500);
+  }
+  const scope_exit releaseMutex([&mutex] {
+    if (mutex) {
+      mutex->ReleaseSync(0);
+    }
+  });
+
   if ((!frame.mTexture) || frame.mSize != sourceSize) {
     frame = {};
     OPENKNEEBOARD_ALWAYS_ASSERT(info.format == CEF_COLOR_TYPE_BGRA_8888);
@@ -185,6 +195,7 @@ void ChromiumPageSource::RenderHandler::RenderPage(
   auto ctx = pageSource->mDXResources->mD3D11ImmediateContext.get();
 
   check_hresult(ctx->Wait(mFence.get(), mFrameCount));
+
   spriteBatch.Begin(d3d.rtv(), rc.GetRenderTarget()->GetDimensions());
   spriteBatch.Draw(frame.mShaderResourceView.get(), {0, 0, frame.mSize}, rect);
   spriteBatch.End();
