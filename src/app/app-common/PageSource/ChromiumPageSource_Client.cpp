@@ -152,9 +152,30 @@ ChromiumPageSource::Client::Client(
   std::optional<KneeboardViewID> viewID)
   : mPageSource(pageSource), mViewID(viewID) {
   mRenderHandler = {new RenderHandler(pageSource)};
+  mShutdownEvent.reset(CreateEventW(nullptr, FALSE, FALSE, nullptr));
 }
 
 ChromiumPageSource::Client::~Client() {
+}
+
+task<void> ChromiumPageSource::Client::DisposeAsync() noexcept {
+  OPENKNEEBOARD_TraceLoggingCoro("ChromiumPageSource::Client::DisposeAsync()");
+  const auto disposing = co_await mDisposal.StartOnce();
+  if (!disposing) {
+    co_return;
+  }
+
+  mBrowser->GetHost()->CloseBrowser(/* force = */ true);
+  co_await winrt::resume_on_signal(mShutdownEvent.get());
+  co_return;
+}
+
+void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser>) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::Client::OnBeforeClose()");
+  mBrowser = nullptr;
+  mRenderHandler = nullptr;
+  SetEvent(mShutdownEvent.get());
 }
 
 CefRefPtr<CefLifeSpanHandler> ChromiumPageSource::Client::GetLifeSpanHandler() {

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
+#include <OpenKneeboard/IHasDisposeAsync.hpp>
 
 #include <optional>
 
@@ -36,7 +37,8 @@ class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler,
                                          public CefDisplayHandler,
                                          public CefRequestHandler,
-                                         public CefResourceRequestHandler {
+                                         public CefResourceRequestHandler,
+                                         public IHasDisposeAsync {
  public:
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
   enum class CursorEventsMode {
@@ -81,6 +83,7 @@ class ChromiumPageSource::Client final : public CefClient,
 
   void OnTitleChange(CefRefPtr<CefBrowser>, const CefString& title) override;
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
+  void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
   CefRefPtr<CefBrowser> GetBrowser() const;
   std::optional<int> GetBrowserID() const;
@@ -97,10 +100,16 @@ class ChromiumPageSource::Client final : public CefClient,
 
   task<JSAPIResult> OpenDeveloperToolsWindow();
 
+  task<void> DisposeAsync() noexcept;
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
 
+  DisposalState mDisposal;
+
   winrt::apartment_context mUIThread;
+
+  wil::unique_handle mShutdownEvent;
 
   std::weak_ptr<ChromiumPageSource> mPageSource;
   std::optional<KneeboardViewID> mViewID;

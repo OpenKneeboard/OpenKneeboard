@@ -71,6 +71,10 @@ ChromiumApp::ChromiumApp() {
 
   CefMainArgs mainArgs {};
   CefSettings settings {};
+  CefString(&settings.log_file)
+    .FromWString(
+      (Filesystem::GetLogsDirectory() / "chromium-debug.log").wstring());
+  settings.log_severity = cef_log_severity_t::LOGSEVERITY_ERROR;
 #ifndef NDEBUG
   // FIXME: this should be configurable
   settings.remote_debugging_port = 1234;
@@ -95,6 +99,7 @@ ChromiumApp::ChromiumApp() {
 }
 
 ChromiumApp::~ChromiumApp() {
+  p = nullptr;
   CefShutdown();
 }
 

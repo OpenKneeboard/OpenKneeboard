@@ -37,7 +37,8 @@
 
 namespace OpenKneeboard {
 
-ChromiumPageSource::~ChromiumPageSource() = default;
+ChromiumPageSource::~ChromiumPageSource() {
+}
 
 task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(
   audited_ptr<DXResources> dxr,
@@ -116,19 +117,21 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
 task<void> ChromiumPageSource::DisposeAsync() noexcept {
   auto disposing = co_await mDisposal.StartOnce();
 
+  std::vector<task<void>> children;
+
   if (auto it = get_if<ScrollableState>(&mState)) {
-    it->mClient->GetBrowser()->GetHost()->CloseBrowser(true);
-    co_return;
+    children.push_back(it->mClient->DisposeAsync());
   }
 
   if (auto it = get_if<PageBasedState>(&mState)) {
     for (auto&& [id, client]: it->mClients) {
-      client->GetBrowser()->GetHost()->CloseBrowser(true);
+      children.push_back(client->DisposeAsync());
     }
-    co_return;
   }
 
-  fatal("Invalid ChromiumPageSource state");
+  for (auto&& child: children) {
+    co_await std::move(child);
+  }
 }
 
 void ChromiumPageSource::PostCursorEvent(
