@@ -443,7 +443,7 @@ void TabsSettingsPage::OnAddBrowserAddressTextChanged(
       const auto foldedScheme = fold_utf8(to_string(uri.SchemeName()));
 
       valid = (foldedScheme == "https") || (foldedScheme == "http")
-        || (foldedScheme == "file");
+        || (foldedScheme == "file") || (foldedScheme == "chrome");
 
     } catch (...) {
       valid = false;
