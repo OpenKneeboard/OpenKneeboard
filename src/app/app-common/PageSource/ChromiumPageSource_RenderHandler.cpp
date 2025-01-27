@@ -44,15 +44,58 @@ void ChromiumPageSource::RenderHandler::GetViewRect(
 }
 
 void ChromiumPageSource::RenderHandler::OnPaint(
-  CefRefPtr<CefBrowser>,
-  PaintElementType,
+  CefRefPtr<CefBrowser> browser,
+  PaintElementType elementType,
   const RectList& dirtyRects,
   const void* buffer,
   int width,
   int height) {
-  fatal(
-    "In ChromiumRenderHandler::OnPaint() - should always be using "
-    "OnAcceleratedPaint() instead");
+  static std::once_flag sWarnOnce;
+  std::call_once(sWarnOnce, []() {
+    dprint.Warning(
+      "In ChromiumRenderHandler::OnPaint() - should always be using "
+      "OnAcceleratedPaint() instead, unless we're in a VM for testing");
+  });
+
+  const auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    return;
+  }
+  auto dxr = pageSource->mDXResources.get();
+
+  // This path is inefficient as it should never be hit in real usage;
+  // it's only here so we can test in clean VMs
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = static_cast<UINT>(width),
+    .Height = static_cast<UINT>(height),
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .Usage = D3D11_USAGE_DEFAULT,
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+      | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+  };
+  D3D11_SUBRESOURCE_DATA data {
+    .pSysMem = buffer,
+    .SysMemPitch = static_cast<UINT>(4 * width),
+  };
+  wil::com_ptr<ID3D11Texture2D> texture;
+  check_hresult(pageSource->mDXResources->mD3D11Device->CreateTexture2D(
+    &desc, &data, texture.put()));
+
+  auto resource = texture.query<IDXGIResource1>();
+  wil::unique_handle handle;
+  check_hresult(resource->CreateSharedHandle(
+    nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, handle.put()));
+
+  CefAcceleratedPaintInfo info;
+  info.format = CEF_COLOR_TYPE_BGRA_8888;
+  info.shared_texture_handle = handle.get();
+  info.extra.source_size = {width, height};
+  info.extra.visible_rect = {0, 0, width, height};
+  this->OnAcceleratedPaint(browser, elementType, dirtyRects, info);
 }
 
 void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
