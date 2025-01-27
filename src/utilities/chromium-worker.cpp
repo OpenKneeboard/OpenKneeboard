@@ -165,15 +165,17 @@ class BrowserApp final : public CefApp,
     window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
 
     const auto browserId = browser->GetIdentifier();
-    if (
-      mBrowserData.contains(browserId)
-      && mBrowserData.at(browserId).mIntegrateWithSimHub) {
+    if (mBrowserData.contains(browserId)) {
+      auto& data = mBrowserData.at(browserId);
+      data.mMainWorldContext = context;
+      if (data.mIntegrateWithSimHub) {
       context->Eval(
         GetSimHubJS(),
         "https://openkneeboard.local/simhub.js",
         1,
         ret,
         exception);
+      }
     }
 
     OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
@@ -184,17 +186,12 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) override {
     OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
-    if (!frame->GetV8Context()->IsSame(context)) {
-      return;
-    }
-    if (!frame->IsMain()) {
-      return;
-    }
 
-    dprint("OnContextReleased");
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
-      mBrowserData.erase(id);
+      if (context->IsSame(mBrowserData.at(id).mMainWorldContext)) {
+              mBrowserData.erase(id);
+            }
     }
   }
 
@@ -343,6 +340,7 @@ class BrowserApp final : public CefApp,
       int,
       std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
       mJSPromises;
+    CefRefPtr<CefV8Context> mMainWorldContext;
   };
   std::unordered_map<int, BrowserData> mBrowserData;
 };
