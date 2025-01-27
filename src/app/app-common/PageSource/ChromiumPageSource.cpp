@@ -234,11 +234,7 @@ PageIndex ChromiumPageSource::GetPageCount() const {
 }
 
 std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
-  if (this->GetPageCount() == 0) {
-    return {};
-  }
-
-  std::shared_lock lock(mStateMutex);
+    std::shared_lock lock(mStateMutex);
   if (auto state = get_if<ScrollableState>(&mState)) {
     return {state->mClient->GetCurrentPage()};
   }
