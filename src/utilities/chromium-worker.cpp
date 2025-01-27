@@ -366,7 +366,7 @@ int __stdcall wWinMain(
   void* sandboxInfo = nullptr;
 #ifdef CEF_USE_SANDBOX
   CefScopedSandboxInfo scopedSandbox;
-  sandboxInfo = scoped_sandbox.sandbox_info();
+  sandboxInfo = scopedSandbox.sandbox_info();
 #endif
 
   // `lpCmdLine` is inconsistent in whether or not it includes argv[0]

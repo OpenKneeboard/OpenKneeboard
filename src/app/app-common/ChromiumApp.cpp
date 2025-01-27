@@ -25,6 +25,7 @@
 
 #include <include/cef_app.h>
 #include <include/cef_base.h>
+#include <include/cef_sandbox_win.h>
 #include <include/cef_version.h>
 
 namespace OpenKneeboard {
@@ -47,6 +48,9 @@ struct ChromiumApp::Wrapper {
   struct CefApp;
 
   CefRefPtr<Impl> mCefApp;
+#ifdef CEF_USE_SANDBOX
+  CefScopedSandboxInfo mCefSandbox;
+#endif
 };
 
 ChromiumApp::ChromiumApp() {
@@ -93,7 +97,12 @@ ChromiumApp::ChromiumApp() {
   CefString(&settings.browser_subprocess_path)
     .FromWString(subprocessPath.wstring());
 
-  CefInitialize(mainArgs, settings, p->mCefApp, nullptr);
+  void* sandboxInfo {nullptr};
+#ifdef CEF_USE_SANDBOX
+  sandboxInfo = p->mCefSandbox.sandbox_info();
+#endif
+
+  CefInitialize(mainArgs, settings, p->mCefApp, sandboxInfo);
 }
 
 ChromiumApp::~ChromiumApp() {

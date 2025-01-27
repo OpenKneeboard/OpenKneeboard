@@ -62,6 +62,11 @@ set_target_properties(
     IMPORTED_IMPLIB_RELEASE "${CEF_LIB_RELEASE}"
     IMPORTED_IMPLIB_RELWITHDEBINFO "${CEF_LIB_RELEASE}"
 )
+# Intentionally not adding CEF_COMPILER_FLAGS: this adds several that are appropriate for CEF's own targets,
+# but not to force on for things that *use* CEF, e.g. /W4;/WX
+#
+# CEF_CXX_COMPILER_FLAGS also adds /std:c++17 which we don't want as we use c++23; re-adding it as a *lower*
+# bound with target_compile_features() below
 target_compile_options(
     Cef::LibCef
     INTERFACE
@@ -70,7 +75,12 @@ target_compile_options(
 target_compile_definitions(
     Cef::LibCef
     INTERFACE
-    "$<IF:$<CONFIG:Debug>,${CEF_COMPILER_DEFINES_DEBUG},${CEF_COMPILER_DEFINES_RELEASE}>"
+    "${CEF_COMPILER_DEFINES};$<IF:$<CONFIG:Debug>,${CEF_COMPILER_DEFINES_DEBUG},${CEF_COMPILER_DEFINES_RELEASE}>"
+)
+target_compile_features(
+    Cef::LibCef
+    INTERFACE
+    cxx_std_17
 )
 target_include_directories(
     Cef::LibCef
@@ -94,7 +104,12 @@ set_target_properties(
     RUNTIME_OUTPUT_DIRECTORY "${CEF_BINARY_OUT_DIR}"
     PDB_OUTPUT_DIRECTORY "${BUILD_OUT_PDBDIR}"
 )
-target_link_libraries(Cef::LibCef INTERFACE libcef_dll_wrapper)
+target_link_libraries(
+    Cef::LibCef
+    INTERFACE
+    libcef_dll_wrapper
+    "$<IF:$<CONFIG:Debug>,${CEF_SANDBOX_LIB_DEBUG},${CEF_SANDBOX_LIB_RELEASE}>;${CEF_SANDBOX_STANDARD_LIBS}"
+)
 
 add_custom_target(
     copy-cef-binaries
