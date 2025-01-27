@@ -169,12 +169,12 @@ class BrowserApp final : public CefApp,
       auto& data = mBrowserData.at(browserId);
       data.mMainWorldContext = context;
       if (data.mIntegrateWithSimHub) {
-      context->Eval(
-        GetSimHubJS(),
-        "https://openkneeboard.local/simhub.js",
-        1,
-        ret,
-        exception);
+        context->Eval(
+          GetSimHubJS(),
+          "https://openkneeboard.local/simhub.js",
+          1,
+          ret,
+          exception);
       }
     }
 
@@ -190,8 +190,8 @@ class BrowserApp final : public CefApp,
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
       if (context->IsSame(mBrowserData.at(id).mMainWorldContext)) {
-              mBrowserData.erase(id);
-            }
+        mBrowserData.erase(id);
+      }
     }
   }
 
