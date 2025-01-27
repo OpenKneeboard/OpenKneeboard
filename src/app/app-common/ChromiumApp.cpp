@@ -25,6 +25,7 @@
 
 #include <include/cef_app.h>
 #include <include/cef_base.h>
+#include <include/cef_version.h>
 
 namespace OpenKneeboard {
 
@@ -83,11 +84,12 @@ ChromiumApp::ChromiumApp() {
   settings.windowless_rendering_enabled = true;
   CefString(&settings.user_agent_product)
     .FromString(std::format(
-      "OpenKneeboard/{}.{}.{}.{}",
+      "OpenKneeboard/{}.{}.{}.{} Chromium/{}.0.0.0",
       Version::Major,
       Version::Minor,
       Version::Patch,
-      Version::Build));
+      Version::Build,
+      CEF_VERSION_MAJOR));
   CefString(&settings.root_cache_path)
     .FromWString(
       (Filesystem::GetLocalAppDataDirectory() / "Chromium").wstring());
