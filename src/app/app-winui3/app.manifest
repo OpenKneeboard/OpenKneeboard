@@ -17,6 +17,24 @@
     <application>
       <!-- Windows 10 and Windows 11 -->
       <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+      <!-- This tag is required for XAML islands usage in the process for media scenarios. -->
+      <!-- This version corresponds to the Windows 10 May 2019 Update. -->
+      <maxversiontested Id="10.0.18362.0"/>
     </application>
   </compatibility>
+  
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="Win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
+  
+  <!-- even though thse are the defaults, specifying them explicitly changes behavior -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
 </assembly>
