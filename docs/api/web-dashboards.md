@@ -228,7 +228,7 @@ await OpenKneeboard.EnableExperimentalFeature([
 
 Return values will be the same; if any feature names/versions are not supported, the function will indicate failure - however, preceding features may have been enabled
 
-## GraphicsTabletInfo
+### GraphicsTabletInfo
 
 This feature requires:
 - OpenKneeboard v1.9.15 or above
