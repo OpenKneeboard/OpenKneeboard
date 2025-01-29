@@ -221,26 +221,6 @@ PluginTab::RenderPage(RenderContext ctx, PageID page, PixelRect rect) {
   std::unreachable();
 }
 
-bool PluginTab::HasDeveloperTools(PageID pageID) const {
-  auto delegate
-    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(mDelegate);
-  if (delegate) {
-    return delegate->HasDeveloperTools(pageID);
-  }
-  return false;
-}
-
-fire_and_forget PluginTab::OpenDeveloperToolsWindow(
-  KneeboardViewID view,
-  PageID page) {
-  auto delegate
-    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(mDelegate);
-  if (delegate) {
-    delegate->OpenDeveloperToolsWindow(view, page);
-  }
-  co_return;
-}
-
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(PluginTab::Settings, mPluginTabTypeID);
 
 }// namespace OpenKneeboard

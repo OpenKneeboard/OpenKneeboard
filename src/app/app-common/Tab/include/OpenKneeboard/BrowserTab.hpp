@@ -20,7 +20,6 @@
 #pragma once
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
-#include <OpenKneeboard/IPageSourceWithDeveloperTools.hpp>
 #include <OpenKneeboard/ITabWithSettings.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 #include <OpenKneeboard/TabBase.hpp>
@@ -36,8 +35,7 @@ class HWNDPageSource;
 
 class BrowserTab final : public TabBase,
                          public PageSourceWithDelegates,
-                         public virtual ITabWithSettings,
-                         public virtual IPageSourceWithDeveloperTools {
+                         public virtual ITabWithSettings {
  public:
   using Settings = WebPageSourceSettings;
 
@@ -65,9 +63,6 @@ class BrowserTab final : public TabBase,
   bool IsBackgroundTransparent() const;
   [[nodiscard]]
   task<void> SetBackgroundTransparent(bool);
-
-  bool HasDeveloperTools(PageID) const override;
-  fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
  private:
   BrowserTab(

@@ -317,4 +317,33 @@ std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
   return entries;
 }
 
+bool PageSourceWithDelegates::HasDeveloperTools(PageID id) const {
+  auto delegate = this->FindDelegate(id);
+  if (!delegate) {
+    return false;
+  }
+  auto devTools
+    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
+  if (!devTools) {
+    return false;
+  }
+  return devTools->HasDeveloperTools(id);
+}
+
+fire_and_forget PageSourceWithDelegates::OpenDeveloperToolsWindow(
+  KneeboardViewID view,
+  PageID page) {
+  auto delegate = this->FindDelegate(page);
+  if (!delegate) {
+    co_return;
+  }
+  auto devTools
+    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
+  if (!devTools) {
+    co_return;
+  }
+  devTools->OpenDeveloperToolsWindow(view, page);
+  co_return;
+}
+
 }// namespace OpenKneeboard

@@ -124,16 +124,6 @@ task<void> BrowserTab::SetBackgroundTransparent(bool transparent) {
   this->evSettingsChangedEvent.Emit();
 }
 
-bool BrowserTab::HasDeveloperTools(PageID page) const {
-  return mDelegate->HasDeveloperTools(page);
-}
-
-fire_and_forget BrowserTab::OpenDeveloperToolsWindow(
-  KneeboardViewID view,
-  PageID page) {
-  return mDelegate->OpenDeveloperToolsWindow(view, page);
-}
-
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   BrowserTab::Settings,
   mURI,

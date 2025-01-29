@@ -24,6 +24,7 @@
 #include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/IPageSource.hpp>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
+#include <OpenKneeboard/IPageSourceWithDeveloperTools.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
@@ -46,6 +47,7 @@ class PageSourceWithDelegates
   : public virtual IPageSource,
     public virtual IPageSourceWithCursorEvents,
     public virtual IPageSourceWithNavigation,
+    public virtual IPageSourceWithDeveloperTools,
     public IHasDisposeAsync,
     public virtual EventReceiver,
     public enable_shared_from_this<PageSourceWithDelegates> {
@@ -71,6 +73,10 @@ class PageSourceWithDelegates
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
+
+  [[nodiscard]]
+  bool HasDeveloperTools(PageID) const override;
+  fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
  protected:
   DisposalState mDisposal;
