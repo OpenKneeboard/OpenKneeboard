@@ -167,6 +167,10 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   check_hresult(ctx->Signal(mFence.get(), frameCount));
   mFrameCount = frameCount;
   pageSource->evNeedsRepaintEvent.Emit();
+  if (frameCount == 1) {
+    pageSource->evContentChangedEvent.Emit();
+    pageSource->evAvailableFeaturesChangedEvent.Emit();
+  }
 }
 
 void ChromiumPageSource::RenderHandler::SetSize(const PixelSize& size) {
