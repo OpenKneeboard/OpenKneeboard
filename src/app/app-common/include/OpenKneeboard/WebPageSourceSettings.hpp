@@ -29,7 +29,7 @@
 
 namespace OpenKneeboard {
 struct WebPageSourceSettings {
-  PixelSize mInitialSize {Config::DefaultPixelSize};
+  PixelSize mInitialSize {Config::DefaultWebPagePixelSize};
   bool mIntegrateWithSimHub {true};
   std::string mURI;
   bool mTransparentBackground {true};

@@ -77,6 +77,7 @@ class TabletInputAdapter final
   WinTabAvailability GetWinTabAvailability();
 
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
+  std::vector<TabletInfo> GetTabletInfo() const;
 
   Event<UserAction> evUserActionEvent;
   Event<std::shared_ptr<UserInputDevice>> evDeviceConnectedEvent;

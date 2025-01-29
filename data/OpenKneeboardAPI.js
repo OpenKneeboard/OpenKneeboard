@@ -105,12 +105,19 @@ class OpenKneeboardAPI extends EventTarget {
         return this.#AsyncRequest("RequestPageChange", guid);
     }
 
+    #GetGraphicsTabletInfo() {
+        return this.#AsyncRequest("GetGraphicsTabletInfo");
+    }
+
     #SendMessageToPeers(message) {
         return this.#AsyncRequest("SendMessageToPeers", { message });
     }
 
     #ActivateAPI(api) {
         switch (api) {
+            case "GraphicsTabletInfo":
+                this.GetGraphicsTabletInfo = this.#GetGraphicsTabletInfo;
+                return;
             case "SetCursorEventsMode":
                 this.SetCursorEventsMode = this.#SetCursorEventsMode;
                 return;

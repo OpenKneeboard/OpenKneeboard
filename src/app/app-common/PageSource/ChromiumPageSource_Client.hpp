@@ -146,5 +146,6 @@ class ChromiumPageSource::Client final : public CefClient,
   task<JSAPIResult> SetPages(std::vector<APIPage>);
   task<JSAPIResult> SendMessageToPeers(nlohmann::json message);
   task<JSAPIResult> RequestPageChange(nlohmann::json);
+  task<JSAPIResult> GetGraphicsTabletInfo();
 };
 }// namespace OpenKneeboard

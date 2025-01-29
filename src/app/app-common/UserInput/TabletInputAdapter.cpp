@@ -587,4 +587,14 @@ WinTabAvailability TabletInputAdapter::GetWinTabAvailability() {
   return WinTabAvailability::Available;
 }
 
+std::vector<TabletInfo> TabletInputAdapter::GetTabletInfo() const {
+  if (mOTDIPC) {
+    return mOTDIPC->GetTablets();
+  }
+  if (mWintabTablet) {
+    return {mWintabTablet->GetDeviceInfo()};
+  }
+  return {};
+}
+
 }// namespace OpenKneeboard

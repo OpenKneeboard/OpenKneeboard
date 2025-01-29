@@ -49,6 +49,13 @@ constexpr PreferredSize ErrorPreferredSize {
   ErrorPixelSize,
   ScalingKind::Vector,
 };
+// We don't use the DefaultPixelSize as:
+// - `DefaultPixelSize` is primarily for actual kneeboards
+// - 5:8 doesn't really work for other common use cases,
+//   e.g. youtube, discord, overlays
+// - web pages intended to be kneeboards are the most likely
+//   to call a resize API
+constexpr PixelSize DefaultWebPagePixelSize {1024, 768};
 
 constexpr float CursorRadiusDivisor = 400.0f;
 constexpr float CursorStrokeDivisor = CursorRadiusDivisor;

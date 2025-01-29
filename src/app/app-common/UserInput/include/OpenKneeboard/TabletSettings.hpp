@@ -63,6 +63,14 @@ struct TabletSettings final {
   bool operator==(const TabletSettings&) const noexcept = default;
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  TabletOrientation,
+  {
+    {TabletOrientation::Normal, "Normal"},
+    {TabletOrientation::RotateCW90, "RotateCW90"},
+    {TabletOrientation::RotateCW180, "RotateCW180"},
+    {TabletOrientation::RotateCW270, "RotateCCW270"},
+  })
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(TabletSettings);
 
 };// namespace OpenKneeboard

@@ -21,6 +21,12 @@
 
 #include "ChromiumPageSource_RenderHandler.hpp"
 
+#include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/TabletInfo.hpp>
+#include <OpenKneeboard/TabletInputAdapter.hpp>
+
+#include <OpenKneeboard/json/Geometry2D.hpp>
+
 #include <OpenKneeboard/json.hpp>
 
 #include <FredEmmott/magic_json_serialize_enum.hpp>
@@ -138,11 +144,16 @@ const ExperimentalFeature PageBasedContentWithRequestPageChangeFeature {
   "PageBasedContent",
   2024073001};
 
+const ExperimentalFeature GraphicsTabletInfoFeature {
+  "GraphicsTabletInfo",
+  2025012901};
+
 const std::array SupportedExperimentalFeatures {
   DoodlesOnlyFeature,
   SetCursorEventsModeFeature,
   PageBasedContentFeature,
   PageBasedContentWithRequestPageChangeFeature,
+  GraphicsTabletInfoFeature,
 };
 
 }// namespace
@@ -284,6 +295,7 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   IMPLEMENT_JS_API(SetCursorEventsMode)
   IMPLEMENT_JS_API(SetPages)
   IMPLEMENT_JS_API(SetPreferredPixelSize)
+  IMPLEMENT_JS_API(GetGraphicsTabletInfo)
 #undef IMPLEMENT_JS_API
 
   return CefClient::OnProcessMessageReceived(browser, frame, process, message);
@@ -474,6 +486,10 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
     }
 
     EnableFeature(feature);
+
+    if (feature == GraphicsTabletInfoFeature) {
+      this->EnableJSAPI(GraphicsTabletInfoFeature.mName);
+    }
 
     if (feature == SetCursorEventsModeFeature) {
       this->EnableJSAPI(SetCursorEventsModeFeature.mName);
@@ -752,6 +768,59 @@ void ChromiumPageSource::Client::PostCustomAction(
     }
       .dump());
   mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
+}
+
+task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
+  auto pageSource = mPageSource.lock();
+  if (!pageSource) {
+    co_return jsapi_error("Tab no longer exists");
+  }
+
+  auto tablets = pageSource->mKneeboard->GetTabletInputAdapter();
+  std::optional<TabletInfo> tablet;
+  if (tablets) {
+    const auto info = tablets->GetTabletInfo();
+    if (!info.empty()) {
+      tablet = {info.front()};
+    }
+  }
+  auto orientation = TabletSettings::Device {}.mOrientation;
+  if (tablet) {
+    const auto& devices = tablets->GetSettings().mDevices;
+    if (devices.contains(tablet->mDeviceID)) {
+      orientation = devices.at(tablet->mDeviceID).mOrientation;
+    }
+  }
+
+  if (!tablet) {
+    co_return nlohmann::json {
+      {"HaveTablet", false},
+      {"SuggestedPixelSize", Config::DefaultPixelSize},
+    };
+  }
+
+  const auto inputResolution = Geometry2D::Size {
+    tablet->mMaxX,
+    tablet->mMaxY,
+  };
+  const auto gcd = std::gcd<uint32_t, uint32_t>(tablet->mMaxX, tablet->mMaxY);
+  auto suggested = Geometry2D::Size {
+    tablet->mMaxX / gcd,
+    tablet->mMaxY / gcd,
+  }.Rounded<uint32_t>().IntegerScaledToFit(
+    {1024, 1024}, Geometry2D::ScaleToFitMode::ShrinkOrGrow);
+
+  using TO = TabletOrientation;
+  if (orientation == TO::RotateCW270 || orientation == TO::RotateCW90) {
+    std::swap(suggested.mWidth, suggested.mHeight);
+  }
+
+  co_return nlohmann::json {
+    {"HaveTablet", true},
+    {"InputResolution", inputResolution},
+    {"InputOrientation", orientation},
+    {"SuggestedPixelSize", suggested},
+  };
 }
 
 }// namespace OpenKneeboard
