@@ -228,6 +228,33 @@ await OpenKneeboard.EnableExperimentalFeature([
 
 Return values will be the same; if any feature names/versions are not supported, the function will indicate failure - however, preceding features may have been enabled
 
+## GraphicsTabletInfo
+
+This feature requires:
+- OpenKneeboard v1.9.15 or above
+- experimental feature `GraphicsTabletInfo` version `2025012901`
+
+```js
+// Syntax:
+await OpenKneeboard.GetGraphicsTabletInfo(): Promise
+
+// Example:
+await OpenKneeboard.EnableExperimentalFeature(
+  'GraphicsTabletInfo',
+  2025012901);
+var info = await OpenKneeboard.GetGraphicsTabletInfo();
+await OpenKneeboard.SetPreferredPixelSize(
+  info.SuggestedPixelSize.Width,
+  info.SuggestedPixelSize.Height)
+```
+
+`GetGraphicsTabletInfo()` returns a structure with the following members:
+- `HaveTablet`: boolean
+- `SuggestedPixelSize`: `{ Width: number, Height: number }`; suggested values for `OpenKneeboard.SetPreferredPixelSize()` to match the aspect ratio of the graphics tablet. This value is present and contains recommended values even if `HaveTablet` is false.
+
+This API is intended for web pages that aim to provide kneeboard content in flight simulators, in
+order to provide the largest drawable area possible.
+
 ### DoodlesOnly
 
 This feature requires:
