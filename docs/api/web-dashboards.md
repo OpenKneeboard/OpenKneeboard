@@ -27,7 +27,7 @@ There are several ways to detect if your web page is being accessed within OpenK
 OpenKneeboard v1.9 and above no longer add CSS classes to the body, as this can lead to compatibility problems. The easiest way to restore the old behavior is to add the following to your page:
 
 ```js
-if (windows.OpenKneeboard) {
+if (window.OpenKneeboard) {
   document.body.classList.add("OpenKneeboard");
 }
 ```
@@ -36,10 +36,10 @@ The `window.OpenKneeboard` object is loaded before any scripts on the page start
 
 ## Transparency
 
-OpenKneeboard's virtual browser window is fully transparent; this allows full RGBA transparency via standard CSS, e.g.:
+OpenKneeboard's virtual browser window is fully transparent; this allows full RGBA transparency via standard CSS, e.g:
 
 ```css
-body.OpenKneeboard {
+body {
     background-color: transparent;
 }
 ```
