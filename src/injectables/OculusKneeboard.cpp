@@ -238,7 +238,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {
-      fatal("Commit failed with {}", error);
+      dprint.Warning("ovr_CommitTextureSwapChain failed with {}", error);
+      return passthrough();
     }
 
     for (size_t i = 0; i < cacheKeys.size(); ++i) {
