@@ -228,54 +228,6 @@ await OpenKneeboard.EnableExperimentalFeature([
 
 Return values will be the same; if any feature names/versions are not supported, the function will indicate failure - however, preceding features may have been enabled
 
-### 'cursor' event
-
-This feature requires:
-- OpenKneeboard v1.9 or above
-- experimental feature: `RawCursorEvents` version `2024071802`
-- experimental feature: `SetCursorEventsMode` version `2024071801`
-
-This event provides access to OpenKneeboard's raw cursor events, bypassing browser mouse emulation.
-
-```js
-// Example:
-OpenKneeboard.addEventListener('cursor', (ev) => { console.log(ev.detail); });
-await OpenKneeboard.EnableExperimentalFeatures([
-  {name: "RawCursorEvents", version: 2024071802},
-  {name: "SetCursorEventsMode", version: 2024071801},
-]);
-await OpenKneeboard.SetCursorEventsMode("Raw");
-```
-
-For version 2024071802 of the experimental feature, the events will be of this form:
-
-```js
-{
-  buttons: int,
-  position: { x: number, y: number },
-  touchState: "NearSurface" | "NotNearSurface" | "TouchingSurface",
-}
-```
-
-These events are used for both tablet and mouse events.
-
-- `buttons`: bitmask; the lowest bit is left click or the tablet pen tip. Other buttons are additional mice buttons or buttons on the tablet (not pen)
-- `position`: positions in pixels
-  - `x` and `y` are floating point; especially with a tablet, the cursor can be positioned between two logical pixels
-- `touchState`
-  - for tablets, this is self-descriptive
-  - for mice, `NotNearSurface` means "outside of the web page's area", and `TouchingSurface` means 'clicking'
-  - you should usually hide any cursors you may be showing if the state changes to `NotNearSurface`
-
-An example/debugging tool - `api-example-RawCursorEvents.html` is included in the `data` folder of the OpenKneeboard source tree, or the `share\doc\` subfolder of an OpenKneeboard installation.
-
-#### Change history
-
-##### 2024071801 -> 2024071802
-
-- enabling the feature now only makes the cursor event mode available, it does not automatically switch to it
-- it is no longer incompatible with the `DoodlesOnly` feature
-
 ### DoodlesOnly
 
 This feature requires:
@@ -300,7 +252,7 @@ await OpenKneeboard.SetCursorEventsMode("DoodlesOnly");
 ##### 2024071801 -> 2024071802
 
 - enabling the feature now only makes the cursor event mode available, it does not automatically switch to it
-- it is no longer incompatible with the `RawCursorEvents` feature
+- it is no longer incompatible with the `RawCursorEvents` feature (which has been removed in v1.9.14)
 
 ### SetCursorEventsMode
 
@@ -310,21 +262,16 @@ This feature requires:
 
 ```js
 // Syntax:
-OpenKneeboard.SetCursorEventsMode("MouseEmulation" | "DoodlesOnly" | "Raw"): Promise<any>;
+OpenKneeboard.SetCursorEventsMode("MouseEmulation" | "DoodlesOnly"): Promise<any>;
 // Example:
 await OpenKneeboard.EnableExperimentalFeatures([
-  {name: "RawCursorEvents", version: 2024071802},
+  {name: "DoodlesOnly", version: 2024071802},
   {name: "SetCursorEventsMode", version: 2024071801},
 ]);
-await OpenKneeboard.SetCursorEventsMode("Raw");
+await OpenKneeboard.SetCursorEventsMode("DoodlesOnly");
 ```
 
-- setting the mode to `"Raw"` requires `RawCursorEvents` version `2024071802`
 - setting the mode to `"DoodlesOnly"` requires `DoodlesOnly` version `2024071802`
-
-An example/debugging tool - `api-example-RawCursorEvents.html` is included in:
-- [the `data` folder of the OpenKneeboard source tree](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/data/api-example-RawCursorEvents.html)
-- the `share\doc\` subfolder of an OpenKneeboard installation.
 
 ### Page-Based Web Applications
 
