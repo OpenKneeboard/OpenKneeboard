@@ -102,7 +102,9 @@ class BrowserApp final : public CefApp,
   void OnBrowserCreated(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefDictionaryValue> extraInfo) override {
-    OPENKNEEBOARD_TraceLoggingScope("OnBrowserCreated()");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "OnBrowserCreated()",
+      TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
     mBrowserData.emplace(
       browser->GetIdentifier(),
       BrowserData {
@@ -112,7 +114,9 @@ class BrowserApp final : public CefApp,
   }
 
   void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override {
-    OPENKNEEBOARD_TraceLoggingScope("OnBrowserDestroyed");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "OnBrowserDestroyed",
+      TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
       mBrowserData.erase(id);
@@ -129,7 +133,9 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) override {
-    OPENKNEEBOARD_TraceLoggingScope("OnContextCreated");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "OnContextCreated",
+      TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
 
     if (!frame->GetV8Context()->IsSame(context)) {
       // Secondary context, e.g. dev tools window
@@ -185,7 +191,9 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) override {
-    OPENKNEEBOARD_TraceLoggingScope("OnContextReleased");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "OnContextReleased",
+      TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
 
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
@@ -277,7 +285,9 @@ class BrowserApp final : public CefApp,
   bool JSGetInitializationData(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefV8Value>& ret) {
-    OPENKNEEBOARD_TraceLoggingScope("JSGetInitializationData");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "JSGetInitializationData",
+      TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
 
     const auto browserID = browser->GetIdentifier();
     if (!mBrowserData.contains(browserID)) {
