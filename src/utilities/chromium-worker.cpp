@@ -173,7 +173,7 @@ class BrowserApp final : public CefApp,
     const auto browserId = browser->GetIdentifier();
     if (mBrowserData.contains(browserId)) {
       auto& data = mBrowserData.at(browserId);
-      data.mMainWorldContext = context;
+      data.mJS.mMainWorldContext = context;
       if (data.mIntegrateWithSimHub) {
         context->Eval(
           GetSimHubJS(),
@@ -197,8 +197,11 @@ class BrowserApp final : public CefApp,
 
     const auto id = browser->GetIdentifier();
     if (mBrowserData.contains(id)) {
-      if (context->IsSame(mBrowserData.at(id).mMainWorldContext)) {
-        mBrowserData.erase(id);
+      auto& data = mBrowserData.at(id);
+      if (
+        data.mJS.mMainWorldContext
+        && context->IsSame(data.mJS.mMainWorldContext)) {
+        data.mJS = {};
       }
     }
   }
@@ -212,21 +215,21 @@ class BrowserApp final : public CefApp,
 
     const auto name = message->GetName().ToString();
     if (name == "okb/asyncResult") {
-      auto& state = mBrowserData.at(browser->GetIdentifier());
+      auto& state = mBrowserData.at(browser->GetIdentifier()).mJS;
       const auto args = message->GetArgumentList();
       const auto id = args->GetInt(0);
 
-      if (!state.mJSPromises.contains(id)) {
+      if (!state.mPromises.contains(id)) {
         dprint.Warning("Could not find JS promise with ID {}", id);
         return true;
       }
-      auto& [context, promise] = state.mJSPromises.at(id);
+      auto& [context, promise] = state.mPromises.at(id);
       if (context->Enter()) {
         CefV8ValueList jsArgs;
         promise->ResolvePromise(CefV8Value::CreateString(args->GetString(1)));
         context->Exit();
 
-        state.mJSPromises.erase(id);
+        state.mPromises.erase(id);
       }
       return true;
     }
@@ -235,7 +238,7 @@ class BrowserApp final : public CefApp,
     if (name.starts_with(EventPrefix)) {
       const auto eventName = name.substr(EventPrefix.length());
 
-      auto& state = mBrowserData.at(browser->GetIdentifier());
+      auto& state = mBrowserData.at(browser->GetIdentifier()).mJS;
       const auto args = message->GetArgumentList();
       for (auto&& [context, callback]: state.mEventCallbacks) {
         CefV8ValueList jsArgs;
@@ -321,11 +324,11 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefV8Value>& ret) {
     OPENKNEEBOARD_TraceLoggingScope("JSAsyncRequest");
 
-    auto& state = mBrowserData.at(browser->GetIdentifier());
+    auto& state = mBrowserData.at(browser->GetIdentifier()).mJS;
 
     const auto promiseID = state.mNextPromiseID++;
     ret = CefV8Value::CreatePromise();
-    state.mJSPromises.emplace(
+    state.mPromises.emplace(
       promiseID, std::tuple {CefV8Context::GetCurrentContext(), ret});
 
     auto message = CefProcessMessage::Create(arguments.at(0)->GetStringValue());
@@ -341,16 +344,20 @@ class BrowserApp final : public CefApp,
   DISALLOW_COPY_AND_ASSIGN(BrowserApp);
 
   struct BrowserData {
-    int mNextPromiseID {};
+    struct JSData {
+      int mNextPromiseID {};
+      std::vector<std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
+        mEventCallbacks;
+      std::unordered_map<
+        int,
+        std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
+        mPromises;
+      CefRefPtr<CefV8Context> mMainWorldContext;
+    };
+
     CefString mInitializationData;
     bool mIntegrateWithSimHub {false};
-    std::vector<std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
-      mEventCallbacks;
-    std::unordered_map<
-      int,
-      std::tuple<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>>>
-      mJSPromises;
-    CefRefPtr<CefV8Context> mMainWorldContext;
+    JSData mJS {};
   };
   std::unordered_map<int, BrowserData> mBrowserData;
 };
