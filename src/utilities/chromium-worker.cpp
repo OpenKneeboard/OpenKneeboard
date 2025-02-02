@@ -308,7 +308,7 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefBrowser> browser,
     const CefV8ValueList& arguments) {
     OPENKNEEBOARD_TraceLoggingScope("JSAddEventCallback");
-    auto& state = mBrowserData.at(browser->GetIdentifier());
+    auto& state = mBrowserData.at(browser->GetIdentifier()).mJS;
     state.mEventCallbacks.push_back({
       CefV8Context::GetCurrentContext(),
       arguments.at(0),
