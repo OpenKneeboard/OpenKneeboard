@@ -190,9 +190,14 @@ task<void> BookmarksUILayer::Render(
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
   size_t buttonNumber = 0;
-  const auto currentTab = mKneeboardView->GetCurrentTabView();
-  const auto currentTabID = currentTab->GetTab()->GetRuntimeID();
-  const auto currentPageID = currentTab->GetPageID();
+  const auto currentTabView = mKneeboardView->GetCurrentTabView();
+  const auto currentTab = currentTabView->GetTab().lock();
+  if (!currentTab) {
+    co_return;
+  }
+
+  const auto currentTabID = currentTab->GetRuntimeID();
+  const auto currentPageID = currentTabView->GetPageID();
   for (const auto& button: buttons) {
     const D2D1_RECT_F buttonRect {
       rect.Left<float>(),

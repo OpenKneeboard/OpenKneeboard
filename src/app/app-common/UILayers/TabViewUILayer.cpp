@@ -88,15 +88,16 @@ task<void> TabViewUILayer::Render(
   const Context& context,
   const PixelRect& rect) {
   const auto tabView = context.mTabView;
+  std::shared_ptr<ITab> tab;
+  if (tabView) {
+    tab = tabView->GetTab().lock();
+  }
 
   OPENKNEEBOARD_TraceLoggingScope(
     "TabViewUILayer::Render()",
     TraceLoggingHexUInt64(
       rc.GetRenderTarget()->GetID().GetTemporaryValue(), "RenderTargetID"),
-    TraceLoggingGuid(
-      (tabView && tabView->GetTab()) ? tabView->GetTab()->GetPersistentID()
-                                     : winrt::guid {},
-      "TabID"),
+    TraceLoggingGuid((tab ? tab->GetPersistentID() : winrt::guid {}), "TabID"),
     TraceLoggingHexUInt64(
       tabView ? tabView->GetPageID().GetTemporaryValue() : 0ui64, "PageID"));
 
@@ -104,7 +105,6 @@ task<void> TabViewUILayer::Render(
     this->RenderError(rc.d2d(), _("No Tab View"), rect);
     co_return;
   }
-  auto tab = tabView->GetTab();
   if (!tab) {
     this->RenderError(rc.d2d(), _("No Tab"), rect);
     co_return;

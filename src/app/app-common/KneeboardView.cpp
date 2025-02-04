@@ -133,7 +133,10 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   decltype(mTabViews) tabViews;
 
   for (const auto& tab: tabs) {
-    auto it = std::ranges::find(mTabViews, tab, &TabView::GetTab);
+    auto it = std::ranges::find_if(
+      mTabViews, [&tab](const std::shared_ptr<TabView>& tv) {
+        return tab == tv->GetTab().lock();
+      });
     const auto tabView = (it != mTabViews.end())
       ? (*it)
       : std::make_shared<TabView>(mDXR, mKneeboard, tab, mRuntimeID);
@@ -238,9 +241,14 @@ void KneeboardView::NextTab() {
 std::shared_ptr<TabView> KneeboardView::GetTabViewByID(
   ITab::RuntimeID id) const {
   for (const auto& tabView: mTabViews) {
-    if (tabView->GetTab()->GetRuntimeID() == id) {
+    const auto tab = tabView->GetTab().lock();
+    if (!tab) {
+      continue;
+    }
+    if (tab->GetRuntimeID() == id) {
       return tabView;
     }
+
     const auto rootTab = tabView->GetRootTab().lock();
     if (rootTab && rootTab->GetRuntimeID() == id) {
       return tabView;
@@ -251,7 +259,7 @@ std::shared_ptr<TabView> KneeboardView::GetTabViewByID(
   return {};
 }
 
-std::shared_ptr<ITab> KneeboardView::GetCurrentTab() const {
+std::weak_ptr<ITab> KneeboardView::GetCurrentTab() const {
   if (!mCurrentTabView) [[unlikely]] {
     return {};
   }
@@ -450,14 +458,22 @@ task<void> KneeboardView::RenderWithChrome(
 
 task<void> KneeboardView::PostUserAction(UserAction action) {
   switch (action) {
-    case UserAction::PREVIOUS_TAB:
+    case UserAction::PREVIOUS_TAB: {
       this->PreviousTab();
-      dprint("Previous tab to '{}'", this->GetCurrentTab()->GetTitle());
+      auto tab = this->GetCurrentTab().lock();
+      if (tab) {
+        dprint("Previous tab to '{}'", tab->GetTitle());
+      }
       co_return;
-    case UserAction::NEXT_TAB:
+    }
+    case UserAction::NEXT_TAB: {
       this->NextTab();
-      dprint("Next tab to '{}'", this->GetCurrentTab()->GetTitle());
+      auto tab = this->GetCurrentTab().lock();
+      if (tab) {
+        dprint("Next tab to '{}'", tab->GetTitle());
+      }
       co_return;
+    }
     case UserAction::PREVIOUS_BOOKMARK:
       this->GoToPreviousBookmark();
       co_return;

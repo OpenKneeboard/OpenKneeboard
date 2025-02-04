@@ -65,7 +65,7 @@ class TabView final : private EventReceiver {
 
   std::weak_ptr<ITab> GetRootTab() const;
 
-  std::shared_ptr<ITab> GetTab() const;
+  std::weak_ptr<ITab> GetTab() const;
 
   std::optional<PreferredSize> GetPreferredSize() const;
 

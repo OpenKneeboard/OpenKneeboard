@@ -65,7 +65,7 @@ class KneeboardView final : private EventReceiver,
   task<void> PostUserAction(UserAction);
 
   std::shared_ptr<TabView> GetCurrentTabView() const;
-  std::shared_ptr<ITab> GetCurrentTab() const;
+  std::weak_ptr<ITab> GetCurrentTab() const;
   TabIndex GetTabIndex() const;
   std::shared_ptr<TabView> GetTabViewByID(ITab::RuntimeID) const;
   void SetCurrentTabByIndex(

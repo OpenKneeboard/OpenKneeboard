@@ -909,10 +909,10 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabChanged() noexcept {
     }
   }
 
-  const auto tab = mKneeboardView->GetCurrentTab();
   if (mKneeboardView != mKneeboard->GetAppWindowView()) {
     OPENKNEEBOARD_BREAK;
   }
+  const auto tab = mKneeboardView->GetCurrentTab().lock();
   if (!tab) {
     this->Frame().Navigate(
       xaml_typename<TabPage_WinRT>(),

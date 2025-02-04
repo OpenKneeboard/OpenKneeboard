@@ -57,7 +57,7 @@ task<void> ReloadTabAction::Execute() {
     if (!tv) {
       co_return;
     }
-    auto tab = tv->GetTab();
+    auto tab = tv->GetTab().lock();
     if (tab) {
       co_await tab->Reload();
     }

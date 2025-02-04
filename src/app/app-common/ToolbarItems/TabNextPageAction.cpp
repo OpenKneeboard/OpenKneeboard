@@ -33,9 +33,10 @@ TabNextPageAction::TabNextPageAction(
   AddEventListener(tabView->evPageChangedEvent, this->evStateChangedEvent);
   AddEventListener(tabView->evContentChangedEvent, this->evStateChangedEvent);
   AddEventListener(
-    tabView->GetTab()->evPageAppendedEvent, this->evStateChangedEvent);
-  AddEventListener(
     kneeboard->evSettingsChangedEvent, this->evStateChangedEvent);
+  if (auto tab = tabView->GetTab().lock()) {
+    AddEventListener(tab->evPageAppendedEvent, this->evStateChangedEvent);
+  }
 }
 
 TabNextPageAction::~TabNextPageAction() {

@@ -625,7 +625,10 @@ task<void> TabPage::PaintNow(std::source_location loc) noexcept {
     // activity.StopWithResult("Render width or height is 0");
     co_return;
   }
-  auto tab = mTabView->GetTab();
+  auto tab = mTabView->GetTab().lock();
+  if (!tab) {
+    co_return;
+  }
   if (tab->GetPageCount()) {
     OPENKNEEBOARD_TraceLoggingCoro("TabPage/RenderPage");
     co_await tab->RenderPage(

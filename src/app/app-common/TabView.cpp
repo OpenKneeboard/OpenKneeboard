@@ -72,8 +72,8 @@ std::weak_ptr<ITab> TabView::GetRootTab() const {
   return mRootTab;
 }
 
-std::shared_ptr<ITab> TabView::GetTab() const {
-  return mActiveSubTab ? mActiveSubTab : mRootTab.lock();
+std::weak_ptr<ITab> TabView::GetTab() const {
+  return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
 PageID TabView::GetPageID() const {
@@ -85,9 +85,13 @@ PageID TabView::GetPageID() const {
     return mRootTabPage->mID;
   }
 
-  const auto ids = this->GetTab()->GetPageIDs();
+  auto tab = this->GetTab().lock();
+  if (!tab) {
+    return PageID {nullptr};
+  }
+  const auto ids = tab->GetPageIDs();
   if (ids.size() == 0) {
-    return PageID(nullptr);
+    return PageID {nullptr};
   }
 
   return ids.front();
@@ -105,8 +109,8 @@ std::vector<PageID> TabView::GetPageIDs() const {
 }
 
 void TabView::PostCursorEvent(const CursorEvent& ev) {
-  auto receiver
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
+  auto receiver = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
+    this->GetTab().lock());
   if (!receiver) {
     return;
   }
@@ -121,7 +125,10 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
 }
 
 void TabView::SetPageID(PageID page) {
-  const auto tab = this->GetTab();
+  const auto tab = this->GetTab().lock();
+  if (!tab) {
+    return;
+  }
   const auto pages = tab->GetPageIDs();
   const auto it = std::ranges::find(pages, page);
   if (it == pages.end()) {
@@ -220,7 +227,7 @@ void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
 }
 
 std::optional<PreferredSize> TabView::GetPreferredSize() const {
-  auto tab = this->GetTab();
+  auto tab = this->GetTab().lock();
   if (!tab) {
     return std::nullopt;
   }
@@ -258,8 +265,8 @@ bool TabView::SetTabMode(TabMode mode) {
     return false;
   }
 
-  auto receiver
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
+  auto receiver = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
+    this->GetTab().lock());
   if (receiver) {
     receiver->PostCursorEvent(mKneeboardViewID, {}, this->GetPageID());
   }

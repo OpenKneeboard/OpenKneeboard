@@ -80,9 +80,9 @@ ClearUserInputAction::~ClearUserInputAction() {
 
 bool ClearUserInputAction::IsEnabled() const {
   auto tabView = mTabView.lock();
-  auto wce = tabView
-    ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tabView->GetTab())
-    : nullptr;
+  auto wce = tabView ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
+                         tabView->GetTab().lock())
+                     : nullptr;
   switch (mMode) {
     case Mode::CurrentPage:
       return wce && tabView && wce->CanClearUserInput(tabView->GetPageID());
@@ -117,8 +117,8 @@ task<void> ClearUserInputAction::Execute() {
     co_return;
   }
 
-  auto wce
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tabView->GetTab());
+  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
+    tabView->GetTab().lock());
   if (!wce) {
     co_return;
   }
