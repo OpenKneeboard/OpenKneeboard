@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/197021466",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/197021466/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/197021466/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.9.14",
-    "id": 197021466,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/198418751",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/198418751/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/198418751/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.0",
+    "id": 198418751,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,20 +26,20 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Lvk8a",
-    "tag_name": "v1.9.14",
+    "node_id": "RE_kwDOGk0DR84L06E_",
+    "tag_name": "v1.10.0",
     "target_commitish": "master",
-    "name": "v1.9.14: web browser improvements",
+    "name": "v1.10.0",
     "draft": false,
-    "prerelease": true,
-    "created_at": "2025-01-27T20:05:30Z",
-    "published_at": "2025-01-27T21:11:59Z",
+    "prerelease": false,
+    "created_at": "2025-02-04T18:47:40Z",
+    "published_at": "2025-02-04T20:32:27Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/224045732",
-        "id": 224045732,
-        "node_id": "RA_kwDOGk0DR84NWqqk",
-        "name": "OpenKneeboard-v1.9.14-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/226291329",
+        "id": 226291329,
+        "node_id": "RA_kwDOGk0DR84NfO6B",
+        "name": "OpenKneeboard-v1.10.0-Symbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -64,17 +64,17 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 262577107,
+        "size": 262501236,
         "download_count": 0,
-        "created_at": "2025-01-27T20:59:04Z",
-        "updated_at": "2025-01-27T20:59:10Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.14/OpenKneeboard-v1.9.14-Symbols.zip"
+        "created_at": "2025-02-04T20:31:17Z",
+        "updated_at": "2025-02-04T20:31:26Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.0/OpenKneeboard-v1.10.0-Symbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/224045622",
-        "id": 224045622,
-        "node_id": "RA_kwDOGk0DR84NWqo2",
-        "name": "OpenKneeboard-v1.9.14.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/226291322",
+        "id": 226291322,
+        "node_id": "RA_kwDOGk0DR84NfO56",
+        "name": "OpenKneeboard-v1.10.0.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -99,15 +99,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 191799296,
+        "size": 191848448,
         "download_count": 0,
-        "created_at": "2025-01-27T20:58:17Z",
-        "updated_at": "2025-01-27T20:58:25Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.14/OpenKneeboard-v1.9.14.msi"
+        "created_at": "2025-02-04T20:31:10Z",
+        "updated_at": "2025-02-04T20:31:13Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.0/OpenKneeboard-v1.10.0.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.9.14",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.9.14",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.9.14.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.9.14/OpenKneeboard-v1.9.14.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes\r\n\r\n- ✨ WebView2 (MS Edge) has been replaced with Chromium Embedded Framework (CEF); this should greatly improve performance and reliability of web pages\r\n- ✨ Installer has been rewritten for more flexibility, and to be more thorough about removing old versions\r\n- ✨ The default aspect ratio for various tab types has been changed to 5:8 to match common graphics tablets\r\n- ✨ \"Developer tools\" is now an option in the in-app toolbar for web dashboards and plugins; it is no longer available in tab settings\r\n- 🐛 Rewrote Direct3D 12 texture copying to avoid dark borders leaking into content. This fix was previously limited to D3D11 and Vulkan\r\n- 🐛 Fixed \"Metadata file 'v1.json' has an unknown size\" error when installing plugins on some systems\r\n- 🐛 Fixed drawing on endless notebook tabs\r\n- 🐛 Fixed crash when entering syntactically invalid URLs, e.g. URLs with spaces in the hostname\r\n- 🐛 Fixed crash when turning off OpenTabletDriver\r\n- 🐛 Fixed various crashes caused by [Microsoft C++ library bugs](https://developercommunity.visualstudio.com/t/10692305)\r\n- 🐛 Fixed hangs if timer awaitables are cancelled before they are started\r\n- 🩹 The \"OpenTabletDriver is misconfigured\" message is now only shown if you explicitly turned OTD on or if you have previously used it\r\n- 🩹 The \"You are running as administrator\" messages no longer depend on the application UI loading correctly, and are also shown for unsupported UAC configurations\r\n- 🔥Removed 'run as normal user' option; Windows updates made it so the option no longer worked correctly\r\n- 🔥Removed `RawCursorEvents` JavaScript experimental feature; it should not be needed any more due to the move from WebView2 to CEF\r\n- 🔥Legacy Oculus + D3D12 support has been removed; I'm not aware of any games that were using this combination"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.10.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.10.0",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.10.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.0/OpenKneeboard-v1.10.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nChanges since the previous stable release (v1.8.14) are listed below; there is [a separate list of changes since the previous testing release (v1.9.14)](https://gist.github.com/fredemmott/a64c153003a50a5cb49c6e7dfec16e26).\r\n\r\n# New Features\r\n\r\n- ✨ Web dashboards now use Chromium Embedded Framework (CEF) instead of WebView2 (Chromium-based Edge); this improves performance and reliability, and fixes many mouse/tablet-input bugs.\r\n- ✨ Added support for 32-bit OpenXR applications, e.g. OpenRBRVR\r\n- ✨ Legacy Oculus SDK (OVR) support now also supports Virtual Desktop; using OpenXR instead is still recommended where possible\r\n- ✨ New web dashboard tabs will automatically have their tab name set to the web page title\r\n- ✨ The default aspect ratio for various tab types has been changed to 5:8 to match common graphics tablets\r\n- ✨ When you upgrade OpenKneeboard, a backup of your settings is now made in `%LOCALAPPDATA%\\OpenKneeboard Backups`\r\n- ✨ 'Single file' and folder tabs now support HTML files\r\n- ✨ Re-introduced support for webp. OpenKneeboard will now detect when Microsoft's WebP support violates standard behavior, and avoid doing anything else until it has finished and standard behavior resumes; this is usually < 1 ms.\r\n- 🧪 Added experimental support for [plugins](https://openkneeboard.com/api/web-dashboards/plugins.html); plugins can add entries to the 'Add Tab' menu, and integrate more throughly with OpenKneeboard. Removal and listing of plugins is not yet supported.\r\n- 🧑‍💻 \"Developer tools\" is now an option in the in-app toolbar for web dashboards and plugins\r\n- 🧑‍💻 Web pages can now choose to support multiple pages, or drawing-on-top; see [developer documentation](https://openkneeboard.com/api/web-dashboards.html)\r\n\r\n# Major changes\r\n\r\n- 🚚 Settings are now located in `%LOCALAPPDATA%\\OpenKneeboard`\r\n- 🔥 'Always update swapchain' option has been removed, and is now always on. This commonly triggered bugs in other OpenXR components, and while it marginally improved performance, it reduced the predictability of frame times and increased the amount of testing required\r\n- 🔥 Removed 'run as normal user' option; changes included in Windows Update broke this functionality\r\n- 🔥 Removed support for OVR+D3D12\r\n\r\n# Other Changes \r\n\r\n- 🐛 Rewritten texture copying to avoid dark borders leaking into content\r\n- 🐛 Fixed crash when resetting VR configuration to defaults when there is no legacy configuration\r\n- 🐛 Fixed several crash bugs that could be triggered by switching profiles\r\n- 🐛 DirectInput: fixed intermittent crash when DirectInput controllers are unplugged\r\n- 🐛 Fixed crash if Windows returns an error when checking if the DCS saved games folder exists; this is usually caused by improperly relocating the 'saved games' folder, e.g. by using NTFS junctions\r\n- 🐛 Stopped the app becoming unresponsive for a *ridiculously* long time (multiple minutes) if a window capture tab can't find a matching window\r\n- 🐛 Fixed crash when changing window capture tab settings\r\n- 🐛 Renaming a tab now instantly affects the left navigation bar in the OpenKneeboard app\r\n- 🐛 Fixed various crashes when closing OpenKneeboard immediately after starting it (before OpenKneeboard's frame loop starts)\r\n- 🐛 Window capture tabs: fixed potential crash when switching profiles immediately after a matching window is created\r\n- 🐛 Window capture tab: fixed crash if window capture tabs are present and a new window is created while a profile change is in progress\r\n- 🩹 OVR+D3D11: OpenKneeboard will no longer crash the game if submitting the texture fails; however, most games will crash in this situation regardless. This is usually caused by configuring OpenKneeboard to use OVR+D3D11 for a game that uses OVR+D3D12\r\n- 🩹 Window capture tab: consistently show 'No pages' message when no matching window, instead of 'width or hegiht is 0'\r\n- 🩹 OpenXR conformance: return XR_ERROR_LIMIT_REACHED instead of XR_ERROR_RUNTIME_FAILURE if an XrSession is created while another is still active\r\n- 🩹 OpenXR conformance: return XR_ERROR_FUNCTION_NOT_SUPPORTED for Vulkan functions if the application has not enabled the relevant extensions\r\n- 🩹 OpenXR conformance: improved conformance of `xrEnumerateApiLayerProperties` and `xrEnumerateInstanceExtensionProperties`\r\n- ⚡ Window capture tabs: reduce time for capture to start after a matching window is opened\r\n- 🧑‍💻 OpenKneeboard no longer adds the `OpenKneeboard` and `OpenKneeboard_WebView2` CSS classes to Web Dashboard `<body>` tags, to avoid compatibility issues with frameworks that require complete ownership of the DOM. \r\n- 🔨 `symbolize-traces.exe` now takes an optional `--pdb-path` parameter\r\n- 🔨 `symbolize-traces.exe` now handles frames with an invalid offset; this probably means the wrong PDB files are being used\r\n- 🔨 `symbolize-traces.exe` now looks up symbols for the 'Blame frame' in an OpenKneeboard crash log\r\n- 🔨 Crash logs and dumps are now much more likely to be useful\r\n- 🔨 In situation where OpenKneeboard would either subtly misbehave, or cause a delayed crash without useful information, OpenKneeboard is now more likely to crash immediately, with information that is useful for debugging. This has led to many of the bugfixes in v1.10"
   }
 ]
