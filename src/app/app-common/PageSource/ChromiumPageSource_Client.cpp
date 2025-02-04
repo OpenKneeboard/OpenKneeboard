@@ -167,18 +167,10 @@ ChromiumPageSource::Client::Client(
 }
 
 ChromiumPageSource::Client::~Client() {
-}
-
-task<void> ChromiumPageSource::Client::DisposeAsync() noexcept {
-  OPENKNEEBOARD_TraceLoggingCoro("ChromiumPageSource::Client::DisposeAsync()");
-  const auto disposing = co_await mDisposal.StartOnce();
-  if (!disposing) {
-    co_return;
+  if (mBrowser) {
+    mBrowser->GetHost()->CloseBrowser(/* force = */ true);
   }
-
-  mBrowser->GetHost()->CloseBrowser(/* force = */ true);
-  co_await winrt::resume_on_signal(mShutdownEvent.get());
-  co_return;
+  WaitForSingleObject(mShutdownEvent.get(), INFINITE);
 }
 
 void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser>) {

@@ -114,26 +114,6 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
   return client;
 }
 
-task<void> ChromiumPageSource::DisposeAsync() noexcept {
-  auto disposing = co_await mDisposal.StartOnce();
-
-  std::vector<task<void>> children;
-
-  if (auto it = get_if<ScrollableState>(&mState)) {
-    children.push_back(it->mClient->DisposeAsync());
-  }
-
-  if (auto it = get_if<PageBasedState>(&mState)) {
-    for (auto&& [id, client]: it->mClients) {
-      children.push_back(client->DisposeAsync());
-    }
-  }
-
-  for (auto&& child: children) {
-    co_await std::move(child);
-  }
-}
-
 void ChromiumPageSource::PostCursorEvent(
   KneeboardViewID view,
   const CursorEvent& ev,
@@ -234,7 +214,7 @@ PageIndex ChromiumPageSource::GetPageCount() const {
 }
 
 std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
-    std::shared_lock lock(mStateMutex);
+  std::shared_lock lock(mStateMutex);
   if (auto state = get_if<ScrollableState>(&mState)) {
     return {state->mClient->GetCurrentPage()};
   }

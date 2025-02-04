@@ -23,7 +23,6 @@
 
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/D3D11/SpriteBatch.hpp>
-#include <OpenKneeboard/IHasDisposeAsync.hpp>
 #include <OpenKneeboard/IPageSourceWithDeveloperTools.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/KneeboardViewID.hpp>
@@ -51,7 +50,6 @@ class ChromiumPageSource final
   : public virtual IPageSourceWithInternalCaching,
     public virtual IPageSourceWithDeveloperTools,
     public virtual IPageSourceWithCursorEvents,
-    public IHasDisposeAsync,
     public EventReceiver,
     public std::enable_shared_from_this<ChromiumPageSource> {
  public:
@@ -65,8 +63,6 @@ class ChromiumPageSource final
   Create(audited_ptr<DXResources>, KneeboardState*, Kind, Settings);
   static task<std::shared_ptr<ChromiumPageSource>>
   Create(audited_ptr<DXResources>, KneeboardState*, std::filesystem::path);
-
-  task<void> DisposeAsync() noexcept override;
 
   void PostCursorEvent(KneeboardViewID, const CursorEvent&, PageID) override;
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
@@ -119,8 +115,6 @@ class ChromiumPageSource final
     std::vector<APIPage> mPages;
     std::unordered_map<KneeboardViewID, CefRefPtr<Client>> mClients;
   };
-
-  DisposalState mDisposal;
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboard {nullptr};
