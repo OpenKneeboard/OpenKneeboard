@@ -220,6 +220,13 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 }
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
+  if (mInputViewIndex >= mViews.size()) {
+    if (mViews.empty()) {
+      dprint.Error("No views in KneeboardState::GetActiveInGameView()");
+      return nullptr;
+    }
+    return mViews.front();
+  }
   return mViews.at(mInputViewIndex);
 }
 

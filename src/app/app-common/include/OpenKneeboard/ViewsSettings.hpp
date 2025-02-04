@@ -25,6 +25,7 @@
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/json_fwd.hpp>
+#include <OpenKneeboard/utf8.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -181,7 +182,12 @@ enum class AppWindowViewMode {
 };
 
 struct ViewsSettings {
-  std::vector<ViewSettings> mViews;
+  std::vector<ViewSettings> mViews {
+    ViewSettings {
+      .mName = _("Kneeboard 1"),
+      .mVR = ViewVRSettings::Independent({}),
+    },
+  };
 
   AppWindowViewMode mAppWindowMode {AppWindowViewMode::NoDecision};
 

@@ -293,12 +293,11 @@ Settings Settings::Load(
   OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
 #undef IT
 
-  if (settings.mViews.mViews.empty() ||
-  (
+  if (
     parentSettings
-    && settings.mApp.mDeprecated.mDualKneeboards != parentSettings->mApp.mDeprecated.mDualKneeboards
-    &&
-    (!std::filesystem::exists(profileDir / "Views.json")))) {
+    && settings.mApp.mDeprecated.mDualKneeboards
+      != parentSettings->mApp.mDeprecated.mDualKneeboards
+    && (!std::filesystem::exists(profileDir / "Views.json"))) {
     MigrateToViewsSettings(settings);
   }
 
