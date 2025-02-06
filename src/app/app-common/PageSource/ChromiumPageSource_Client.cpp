@@ -596,15 +596,10 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPages(
     state->mPages = pages;
   }
 
-  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
-  auto args = message->GetArgumentList();
-  args->SetString(0, "pagesChanged");
-  args->SetString(
-    1,
+  const auto messageBody = 
     nlohmann::json {
       {"pages", pages},
-    }
-      .dump());
+    }.dump();
 
   {
     std::shared_lock lock(pageSource->mStateMutex);
@@ -613,6 +608,11 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPages(
       if (client->GetBrowserID() == this->GetBrowserID()) {
         continue;
       }
+
+      auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+      auto args = message->GetArgumentList();
+      args->SetString(0, "pagesChanged");
+      args->SetString(1, messageBody);
       client->mBrowser->GetMainFrame()->SendProcessMessage(
         PID_RENDERER, message);
     }
@@ -723,10 +723,7 @@ task<JSAPIResult> ChromiumPageSource::Client::SendMessageToPeers(
       "SendMessageToPeers() called without first calling GetPages()");
   }
 
-  auto message = CefProcessMessage::Create("okbEvent/apiEvent");
-  auto args = message->GetArgumentList();
-  args->SetString(0, "peerMessage");
-  args->SetString(1, nlohmann::json {{"message", apiMessage}}.dump());
+  const auto messageBody = nlohmann::json {{"message", apiMessage}}.dump();
 
   const auto myID = mBrowser->GetIdentifier();
   for (auto&& [view, client]: state->mClients) {
@@ -737,6 +734,11 @@ task<JSAPIResult> ChromiumPageSource::Client::SendMessageToPeers(
     if (browser->GetIdentifier() == myID) {
       continue;
     }
+    auto message = CefProcessMessage::Create("okbEvent/apiEvent");
+    auto args = message->GetArgumentList();
+    args->SetString(0, "peerMessage");
+    args->SetString(1, messageBody);
+    OPENKNEEBOARD_ASSERT(message->IsValid());
     browser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
   }
   co_return {};
