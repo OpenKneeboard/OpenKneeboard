@@ -393,3 +393,17 @@ int __stdcall wWinMain(
 
   return CefExecuteProcess(mainArgs, app.get(), sandboxInfo);
 }
+
+/** Prefer discrete GPU.
+ *
+ * As we're using OnAcceleratedPaint, we need to be on the same GPU as the main
+ * process for the texture to be usable, which needs to be the same GPU as the
+ * VR headset. This will pretty much always be the 'high performance' gpu.
+ */
+extern "C" {
+// http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+
+// http://developer.amd.com/community/blog/2015/10/02/amd-enduro-system-for-developers/
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
