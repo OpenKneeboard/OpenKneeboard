@@ -297,26 +297,8 @@ void WGCRenderer::OnWGCFrame() {
     TraceLoggingValue(captureSize.Width, "Width"),
     TraceLoggingValue(captureSize.Height, "Height"));
 
-  const auto contentRect = this->GetContentRect(mCaptureSize);
-  if (contentRect.Width() < 1 || contentRect.Height() < 1) {
-    activity.StopWithResult("EmptyContentRect");
-    return;
-  }
-
-  const D3D11_BOX box {
-    .left = static_cast<UINT>(
-      std::min(contentRect.Left(), mSwapchainDimensions.Width())),
-    .top = static_cast<UINT>(
-      std::min(contentRect.Top(), mSwapchainDimensions.Height())),
-    .front = 0,
-    .right = static_cast<UINT>(
-      std::min(contentRect.Right(), mSwapchainDimensions.Width())),
-    .bottom = static_cast<UINT>(
-      std::min(contentRect.Bottom(), mSwapchainDimensions.Height())),
-    .back = 1,
-  };
   mDXR->mD3D11ImmediateContext->CopySubresourceRegion(
-    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
+    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, nullptr);
 }
 
 void WGCRenderer::PreOKBFrame() {
