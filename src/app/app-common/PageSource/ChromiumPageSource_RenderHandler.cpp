@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/hresult.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 namespace OpenKneeboard {
 
@@ -120,8 +121,21 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   // CEF explicitly bans us from caching the texture for this HANDLE; we need
   // to re-open it every frame
   wil::com_ptr<ID3D11Texture2D> sourceTexture;
-  dxr->mD3D11Device->OpenSharedResource1(
-    info.shared_texture_handle, IID_PPV_ARGS(sourceTexture.put()));
+  if (const auto result = dxr->mD3D11Device->OpenSharedResource1(
+        info.shared_texture_handle, IID_PPV_ARGS(sourceTexture.put()));
+      FAILED(result)) {
+    TraceLoggingWrite(
+      gTraceProvider,
+      "ChromiumPageSource::RenderHandler::OnAcceleratedPaint()/NoTexture",
+      TraceLoggingValue(result, "HRESULT"));
+    static std::once_flag sOnce;
+    std::call_once(sOnce, [result]() {
+      dprint.Warning(
+        "Failed to open CEF texture: {:#010x}",
+        std::bit_cast<uint32_t>(result));
+    });
+    return;
+  }
 
   auto mutex = sourceTexture.try_query<IDXGIKeyedMutex>();
   if (mutex) {
