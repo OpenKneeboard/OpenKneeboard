@@ -22,10 +22,6 @@ If you are launching OpenKneeboard through a shortcut, make sure that "Run this 
 
 ![Properties -> Compatibility -> Run this program as administrator](../screenshots/elevation-shortcut.png)
 
-## Other Launchers
-
-
-
 ## User Account Control
 
 Open the start menu and find 'User Account Control' ('UAC'):
