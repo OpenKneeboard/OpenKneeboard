@@ -79,7 +79,6 @@ class WGCRenderer : public virtual EventReceiver,
   [[nodiscard]]
   task<void> Init();
 
-  virtual task<void> InitializeContentToCapture() = 0;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
     const
@@ -90,7 +89,6 @@ class WGCRenderer : public virtual EventReceiver,
   virtual PixelRect GetContentRect(const PixelSize& captureSize) const = 0;
   virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) const
     = 0;
-  virtual void PostFrame();
 
   ThreadGuard mThreadGuard;
 

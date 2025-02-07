@@ -313,10 +313,6 @@ PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) const {
   return *clientArea;
 }
 
-task<void> HWNDPageSource::InitializeContentToCapture() {
-  co_return;
-}
-
 PixelSize HWNDPageSource::GetSwapchainDimensions(
   const PixelSize& contentSize) const {
   // Don't create massive buffers if it just moves between a few fixed

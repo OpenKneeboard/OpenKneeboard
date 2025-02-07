@@ -78,9 +78,6 @@ task<void> WGCRenderer::Init() {
     supportsBorderRemoval = false;
   }
 
-  // Would switch threads here, but now we're using the UI thread for everything
-  // :)
-  co_await this->InitializeContentToCapture();
   co_await mUIThread;
   const std::unique_lock d2dlock(*mDXR);
 
@@ -316,12 +313,6 @@ void WGCRenderer::OnWGCFrame() {
   };
   mDXR->mD3D11ImmediateContext->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
-  activity.Stop();
-  {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "WGCRenderer::OnWGCFrame()/CallingPostFrame");
-    this->PostFrame();
-  }
 }
 
 void WGCRenderer::PreOKBFrame() {
@@ -332,9 +323,6 @@ void WGCRenderer::PreOKBFrame() {
   if (mNextFrame) {
     evNeedsRepaintEvent.Emit();
   }
-}
-
-void WGCRenderer::PostFrame() {
 }
 
 OpenKneeboard::fire_and_forget WGCRenderer::ForceResize(PixelSize size) {
