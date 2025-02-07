@@ -170,10 +170,12 @@ std::optional<PreferredSize> WGCRenderer::GetPreferredSize() const {
     return std::nullopt;
   }
 
-  return PreferredSize {
-    this->GetContentRect(mCaptureSize).mSize,
-    ScalingKind::Bitmap,
-  };
+  const auto size = this->GetContentRect(mCaptureSize).mSize;
+  if (size.IsEmpty()) {
+    return std::nullopt;
+  }
+
+  return PreferredSize {size, ScalingKind::Bitmap};
 }
 
 void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
