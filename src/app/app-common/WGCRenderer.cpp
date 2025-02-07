@@ -298,6 +298,10 @@ void WGCRenderer::OnWGCFrame() {
     TraceLoggingValue(captureSize.Height, "Height"));
 
   const auto contentRect = this->GetContentRect(mCaptureSize);
+  if (contentRect.Width() < 1 || contentRect.Height() < 1) {
+    activity.StopWithResult("EmptyContentRect");
+    return;
+  }
 
   const D3D11_BOX box {
     .left = static_cast<UINT>(
