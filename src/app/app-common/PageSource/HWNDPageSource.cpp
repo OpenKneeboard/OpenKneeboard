@@ -480,10 +480,7 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
   if (!GetClientRect(mCaptureWindow, &clientRect)) {
     return {};
   }
-
-  // The capture includes the extended frame bounds, not just the standard
-  // ones, so we need to fetch those instead of using `GetWindowRect()`
-  RECT windowRect {};
+  RECT windowRect;
   if (
     DwmGetWindowAttribute(
       mCaptureWindow,
@@ -493,12 +490,8 @@ std::optional<PixelRect> HWNDPageSource::GetClientArea(
     != S_OK) {
     return {};
   }
-
-  // Convert client coordinates to screen coordinates; needed as
-  // `GetClientRect()` returns client coordinates, so the top left of the
-  // client rect is always (0, 0), which isn't useful
   MapWindowPoints(
-    mCaptureWindow, HWND_DESKTOP, reinterpret_cast<POINT*>(&clientRect), 2);
+    HWND_DESKTOP, mCaptureWindow, reinterpret_cast<POINT*>(&windowRect), 2);
 
   const auto windowWidth = windowRect.right - windowRect.left;
   const auto scale = captureSize.Width<float>() / windowWidth;
