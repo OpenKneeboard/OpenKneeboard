@@ -177,6 +177,10 @@ task<void> HeaderUILayer::Render(
     {rect.Width(), headerHeight},
   };
 
+  if (headerRect.mSize.IsEmpty()) {
+    co_return;
+  }
+
   mLastRenderSize = rect.mSize;
 
   {
