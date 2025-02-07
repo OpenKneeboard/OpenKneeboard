@@ -44,7 +44,7 @@ struct WinEventHook {
   WinEventHook() {
     mHook.reset(SetWinEventHook(
       EVENT_OBJECT_CREATE,
-      EVENT_OBJECT_SHOW,
+      EVENT_OBJECT_LOCATIONCHANGE,
       nullptr,
       &WinEventHook::HookProc,
       0,
@@ -560,7 +560,9 @@ void WinEventHook::HookProc(
   LONG idChild,
   DWORD idEventThread,
   DWORD dwmsEventTime) {
-  if (event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW) {
+  if (
+    event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW
+    && event != EVENT_OBJECT_LOCATIONCHANGE) {
     return;
   }
   if (idObject != OBJID_WINDOW) {
