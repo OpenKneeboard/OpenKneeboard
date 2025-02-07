@@ -231,6 +231,9 @@ task<void> MainWindow::Init() {
 }
 
 task<void> MainWindow::FrameLoop() {
+  // If something goes wrong, crash immediately, instead of when closing the app
+  co_await this_task::fatal_on_uncaught_exception();
+
   auto stop = mFrameLoopStopSource.get_token();
   const auto interval = std::chrono::microseconds(
     static_cast<uint32_t>((1000 * 1000) / FramesPerSecond));
