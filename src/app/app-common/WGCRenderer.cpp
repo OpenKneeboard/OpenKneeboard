@@ -196,10 +196,14 @@ void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
     const auto dimming = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL / (*whiteLevel);
     color = {dimming, dimming, dimming, 1};
   }
+  const auto sourceRect = this->GetContentRect(mCaptureSize);
+
+  if (sourceRect.Width() < 1 || sourceRect.Height() < 1) {
+    return;
+  }
 
   auto sb = mDXR->mSpriteBatch.get();
   sb->Begin(d3d.rtv(), rt->GetDimensions());
-  const auto sourceRect = this->GetContentRect(mCaptureSize);
   sb->Draw(mShaderResourceView.get(), sourceRect, rect, color);
   sb->End();
 
