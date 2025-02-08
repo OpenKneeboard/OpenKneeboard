@@ -123,8 +123,28 @@ void from_json(const nlohmann::json& j, ProfileSettings& v) {
       std::unordered_map<std::string, ProfileSettings::Profile> oldValue;
       oldValue = jj;
 
+      std::unordered_set<winrt::guid> guids;
+
       const auto baseDir = Filesystem::GetSettingsDirectory() / "Profiles";
       for (auto&& [subfolder, profile]: oldValue) {
+        // Part of the reason for changing the structure of profiles is because
+        // of people manually editing the profiles.json file incorrectly; the
+        // new structure makes some common mistakes impossible.
+        //
+        // While editing OpenKneeboard configuration files outside of
+        // OpenKneeboard is not supported, duplicate GUIDs are a particularly
+        // common case.
+        if (guids.contains(profile.mGuid)) {
+          const auto newGUID = random_guid();
+          dprint.Warning(
+            "Profile '{}' has duplicate GUID {} - changing to new GUID {}",
+            profile.mName,
+            profile.mGuid,
+            newGUID);
+          profile.mGuid = newGUID;
+        }
+        guids.emplace(profile.mGuid);
+
         const auto oldPath = baseDir / subfolder;
         const auto newPath = baseDir / profile.GetDirectoryName();
         // Profiles with no changes do not necessarily have a settings folder
