@@ -64,7 +64,7 @@ jobs:
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v4
         with:
-          name: OpenKneeboard-GHA${{github.run_number}}-Symbols
+          name: OpenKneeboard-GHA${{github.run_number}}-DebugSymbols
           path: build/out/${{matrix.config}}/pdb
       - name: Build installer generator
         if: ${{matrix.config != 'Debug' }}
