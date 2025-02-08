@@ -202,8 +202,9 @@ void InterprocessRenderer::PostUserAction(UserAction action) {
       return;
   }
 
+  // Force an SHM update, even if we don't have new pixels
   if (!mVisible) {
-    mFirstInvisible = true;
+    mPreviousFrameWasVisible = true;
   }
 
   mKneeboard->SetRepaintNeeded();
@@ -364,20 +365,26 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "InterprocessRenderer::RenderNow()");
 
-  if (!mVisible) {
-    TraceLoggingWriteTagged(activity, "Invisible");
-    if (mFirstInvisible) {
-      mFirstInvisible = false;
-      if (mSHM) {
-        std::unique_lock lock(mSHM);
-        mSHM.SubmitEmptyFrame();
-      }
-    }
-    co_return;
-  }
-
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
   const auto layerCount = renderInfos.size();
+
+  // layerCount == 0 'should' be impossible as it's not meant to be possible to
+  // disable the non-VR view for view 1, however a bug in v1.10.0 and v1.10.2
+  // could lead to view 1 being fully disabled
+  if (layerCount == 0 || !mVisible) {
+    if (layerCount == 0) {
+      TraceLoggingWriteTagged(activity, "NoLayers");
+    } else {
+      TraceLoggingWriteTagged(activity, "Invisible");
+    }
+    if (mSHM && mPreviousFrameWasVisible) {
+      std::unique_lock lock(mSHM);
+      mSHM.SubmitEmptyFrame();
+    }
+    mPreviousFrameWasVisible = false;
+    co_return;
+  }
+  mPreviousFrameWasVisible = true;
 
   const auto canvasSize = Spriting::GetBufferSize(layerCount);
 

@@ -25,11 +25,13 @@
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/SHM.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
+
+#include <shims/winrt/base.h>
+
+#include <d3d11.h>
 
 #include <memory>
 #include <mutex>
@@ -37,7 +39,6 @@
 
 #include <d2d1.h>
 #include <d2d1_1.h>
-#include <d3d11.h>
 #include <d3d11_3.h>
 
 namespace OpenKneeboard {
@@ -121,7 +122,7 @@ class InterprocessRenderer final
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 
   bool mVisible {true};
-  bool mFirstInvisible {false};
+  bool mPreviousFrameWasVisible {false};
 };
 
 }// namespace OpenKneeboard
