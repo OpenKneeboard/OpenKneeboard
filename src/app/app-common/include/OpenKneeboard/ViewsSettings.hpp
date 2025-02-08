@@ -186,6 +186,7 @@ struct ViewsSettings {
     ViewSettings {
       .mName = _("Kneeboard 1"),
       .mVR = ViewVRSettings::Independent({}),
+      .mNonVR = {.mEnabled = true},
     },
   };
 
