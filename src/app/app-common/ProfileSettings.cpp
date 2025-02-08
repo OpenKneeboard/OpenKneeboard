@@ -148,7 +148,10 @@ void from_json(const nlohmann::json& j, ProfileSettings& v) {
         const auto oldPath = baseDir / subfolder;
         const auto newPath = baseDir / profile.GetDirectoryName();
         // Profiles with no changes do not necessarily have a settings folder
-        if (std::filesystem::exists(oldPath)) {
+        if (!std::filesystem::exists(oldPath)) {
+          dprint.Warning(
+            "Migrated empty profile {} ('{}')", profile.mGuid, profile.mName);
+        } else {
           try {
             std::filesystem::copy(
               oldPath, newPath, std::filesystem::copy_options::recursive);
