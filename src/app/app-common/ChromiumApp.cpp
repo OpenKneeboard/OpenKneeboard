@@ -18,9 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/ChromiumApp.hpp>
+#include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
+#include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <include/cef_app.h>
@@ -39,9 +41,31 @@ class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
     return this;
   }
 
+  void OnBeforeCommandLineProcessing(
+    const CefString& process_type,
+    CefRefPtr<CefCommandLine> command_line) override {
+    command_line->AppendSwitch("angle");
+    command_line->AppendSwitchWithValue("use-angle", "d3d11");
+    command_line->AppendSwitchWithValue("use-adapter-luid", this->GetGpuLuid());
+  }
+
  private:
   IMPLEMENT_REFCOUNTING(Impl);
   DISALLOW_COPY_AND_ASSIGN(Impl);
+
+  CefString mGpuLuid;
+
+  CefString GetGpuLuid() {
+    if (!mGpuLuid.empty()) {
+      return mGpuLuid;
+    }
+    D3D11Resources dxr;
+    const auto luid = std::bit_cast<uint64_t>(dxr.mAdapterLUID);
+    dprint("Setting CEF GPU LUID to {:#018x}", luid);
+    mGpuLuid = std::format(
+      "{},{}", luid >> 32, luid & std::numeric_limits<uint32_t>::max());
+    return mGpuLuid;
+  }
 };
 
 struct ChromiumApp::Wrapper {
