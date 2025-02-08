@@ -21,6 +21,7 @@
 #include <OpenKneeboard/ProfileSettings.hpp>
 #include <OpenKneeboard/Settings.hpp>
 
+#include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/utf8.hpp>
 
@@ -126,9 +127,21 @@ void from_json(const nlohmann::json& j, ProfileSettings& v) {
       for (auto&& [subfolder, profile]: oldValue) {
         const auto oldPath = baseDir / subfolder;
         const auto newPath = baseDir / profile.GetDirectoryName();
-        std::filesystem::copy(
-          oldPath, newPath, std::filesystem::copy_options::recursive);
-        toRemove.push_back(oldPath);
+        // Profiles with no changes do not necessarily have a settings folder
+        if (std::filesystem::exists(oldPath)) {
+          try {
+            std::filesystem::copy(
+              oldPath, newPath, std::filesystem::copy_options::recursive);
+          } catch (const std::filesystem::filesystem_error& e) {
+            dprint.Warning(
+              "Error migrating profile from `{}` to `{}`: {} ({})",
+              oldPath,
+              newPath,
+              e.what(),
+              e.code().value());
+          }
+          toRemove.push_back(oldPath);
+        }
         v.mProfiles.push_back(profile);
       }
       v.mDefaultProfile = oldValue.at("default").mGuid;
