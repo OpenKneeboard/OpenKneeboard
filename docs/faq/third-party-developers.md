@@ -41,7 +41,7 @@ The most common reasons for this failing are:
 
 ## How do I support transparency?
 
-- for HTML files or web pages, use CSS; WebView2 is used (Chromium-based MS Edge), which includes support for `background-color: transparent;` and `rgba(...)`, including on the `body` tag.
+- for HTML files or web pages, use CSS; Chromium is used, which includes support for `background-color: transparent;` and `rgba(...)`, including on the `body` tag.
 - for capturable Windows, Windows only supports composable RGBA via DirectComposition. If you are already using a DXGI swapchain, moving to a DirectComposition swapchain with `DXGI_ALPHA_MODE_PREMULTIPLIED` is [relatively straightforward](https://github.com/OpenKneeboard/OpenKneeboard/commit/694b87570f90d2d68ea9bcc596afc0cdefc23430). All other approaches resolve transparency within the app and provide Windows with RGB data, so the capture will not include transparency.
 
 If you are using a framework that manages your window/swapchain/transparency, see the documentation and support resources for that framework.
@@ -96,12 +96,6 @@ Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to 
 With that in mind, take a look at [the API documentation](https://openkneeboard.com/api/); if your feature requires an additional API and fits with the intended purposes of OpenKneeboard, open a feature request or pull request for an additional API.
 
 Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
-
-## Why doesn't the mouse emulation work correctly in my web dashboard?
-
-This is generally a limitation of Edge WebView2 or WinUI3's integration with it; Microsoft have periodically published improvements to this. Most of these improvements have been delivered by Windows Update, however some are delivered as an update to the Windows App SDK, which requires OpenKneeboard to be rebuilt with the new SDK.
-
-A future version of OpenKneeboard may gain support for directly exposing its' own cursor events via `window.OpenKneeboard.addEventListener('cursor', ...)` or similar; any updates will be on issue #240. These would avoid WebView2 limitations, but would require manually implementing DOM click events, e.g. via `document.elementFromPoint()`.
 
 ## Why doesn't the mouse emulation work correctly in my app when using Window Capture tabs?
 

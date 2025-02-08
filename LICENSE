@@ -13,7 +13,6 @@ LINKING EXCEPTION
  from the use of the dependencies.
 
  - The Windows App SDK, as published by Microsoft Corporation
- - Microsoft Edge WebView 2, as published by Microsoft Corporation
  - Chromium Embedded Framework, as published by Marshall Greenblatt
 
 (The General Public License restrictions do apply in other respects; for
