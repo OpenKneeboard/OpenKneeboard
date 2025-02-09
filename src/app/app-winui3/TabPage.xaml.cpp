@@ -549,6 +549,10 @@ void TabPage::PaintLater() {
 }
 
 task<void> TabPage::PaintNow(std::source_location loc) noexcept {
+  if (!mTabView) {
+    OPENKNEEBOARD_TraceLoggingWrite("TabPage::PaintNow()/NoTabView");
+    co_return;
+  }
   const auto rootTab = mTabView->GetRootTab().lock();
   if (!rootTab) {
     OPENKNEEBOARD_TraceLoggingWrite("TabPage::PaintNow()/StaleTab");
