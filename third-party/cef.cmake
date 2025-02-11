@@ -40,6 +40,7 @@ find_package(CEF REQUIRED)
 
 # CEF requires compatibility manifests; we provide the necessary manifest
 list(REMOVE_ITEM CEF_EXE_LINKER_FLAGS "/MANIFEST:NO")
+list(REMOVE_ITEM CEF_COMPILER_DEFINES "_HAS_EXCEPTIONS=0")
 
 PRINT_CEF_CONFIG()
 message(STATUS "*** END CEF CONFIGURATION SETTINGS ***")
