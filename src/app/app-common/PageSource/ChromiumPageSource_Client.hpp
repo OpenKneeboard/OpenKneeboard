@@ -98,6 +98,11 @@ class ChromiumPageSource::Client final : public CefClient,
 
   task<JSAPIResult> OpenDeveloperToolsWindow();
 
+  void OnAddressChange(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    const CefString& url) override;
+
  private:
   IMPLEMENT_REFCOUNTING(Client);
   winrt::apartment_context mUIThread;

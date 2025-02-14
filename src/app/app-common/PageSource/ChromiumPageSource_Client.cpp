@@ -817,4 +817,15 @@ task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
   };
 }
 
+void ChromiumPageSource::Client::OnAddressChange(
+  CefRefPtr<CefBrowser>,
+  CefRefPtr<CefFrame>,
+  [[maybe_unused]] const CefString& url) {
+  mCurrentPage = {};
+  mEnabledExperimentalFeatures = {};
+  if (auto source = mPageSource.lock()) {
+    source->evContentChangedEvent.EnqueueForContext(mUIThread);
+  }
+}
+
 }// namespace OpenKneeboard
