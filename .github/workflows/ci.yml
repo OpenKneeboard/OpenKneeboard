@@ -83,7 +83,10 @@ jobs:
             build/out/${{matrix.config}}
             !build/out/${{matrix.config}}/pdb
       - name: Install WiX
-        run: dotnet tool install --global wix
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          # Wix5 by default will pull in the Wix6 RC wixext, which isn't compatible
+          wix extension add -g WixToolset.UI.wixext/5.0.2
       - name: Build installer
         id: build-installer
         if: ${{matrix.config != 'Debug' }}
