@@ -274,6 +274,11 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   CefProcessId process,
   CefRefPtr<CefProcessMessage> message) {
   const auto name = message->GetName().ToString();
+  if (name == "okb/onContextReleased") {
+    mCurrentPage = {};
+    mEnabledExperimentalFeatures = {};
+    return true;
+  }
 #define IMPLEMENT_JS_API(X) \
   if (name == "okbjs/" #X) { \
     this->OnJSAsyncRequest<&Client::X>(frame, process, message); \
@@ -815,17 +820,6 @@ task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
     {"InputOrientation", orientation},
     {"SuggestedPixelSize", suggested},
   };
-}
-
-void ChromiumPageSource::Client::OnAddressChange(
-  CefRefPtr<CefBrowser>,
-  CefRefPtr<CefFrame>,
-  [[maybe_unused]] const CefString& url) {
-  mCurrentPage = {};
-  mEnabledExperimentalFeatures = {};
-  if (auto source = mPageSource.lock()) {
-    source->evContentChangedEvent.EnqueueForContext(mUIThread);
-  }
 }
 
 }// namespace OpenKneeboard

@@ -196,14 +196,18 @@ class BrowserApp final : public CefApp,
       TraceLoggingValue(browser->GetIdentifier(), "BrowserID"));
 
     const auto id = browser->GetIdentifier();
-    if (mBrowserData.contains(id)) {
-      auto& data = mBrowserData.at(id);
-      if (
-        data.mJS.mMainWorldContext
-        && context->IsSame(data.mJS.mMainWorldContext)) {
-        data.mJS = {};
-      }
+    if (!mBrowserData.contains(id)) {
+      return;
     }
+    auto& data = mBrowserData.at(id);
+    const auto isMainWorldContext = data.mJS.mMainWorldContext
+      && context->IsSame(data.mJS.mMainWorldContext);
+    if (!isMainWorldContext) {
+      return;
+    }
+    data.mJS = {};
+    frame->SendProcessMessage(
+      PID_BROWSER, CefProcessMessage::Create("okb/onContextReleased"));
   }
 
   bool OnProcessMessageReceived(
