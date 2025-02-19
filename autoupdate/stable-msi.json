@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/199200416",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/199200416/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/199200416/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.4",
-    "id": 199200416,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/201292762",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/201292762/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/201292762/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.6",
+    "id": 201292762,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,20 +26,20 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84L346g",
-    "tag_name": "v1.10.4",
+    "node_id": "RE_kwDOGk0DR84L_3va",
+    "tag_name": "v1.10.6",
     "target_commitish": "master",
-    "name": "v1.10.4",
+    "name": "v1.10.6",
     "draft": false,
     "prerelease": false,
-    "created_at": "2025-02-08T14:51:25Z",
-    "published_at": "2025-02-08T15:48:36Z",
+    "created_at": "2025-02-19T21:04:07Z",
+    "published_at": "2025-02-19T22:28:11Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/227433928",
-        "id": 227433928,
-        "node_id": "RA_kwDOGk0DR84Njl3I",
-        "name": "OpenKneeboard-v1.10.4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/230767708",
+        "id": 230767708,
+        "node_id": "RA_kwDOGk0DR84NwTxc",
+        "name": "OpenKneeboard-v1.10.6-DebugSymbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -64,17 +64,17 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 262906432,
+        "size": 263041298,
         "download_count": 0,
-        "created_at": "2025-02-08T15:47:39Z",
-        "updated_at": "2025-02-08T15:47:49Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.4/OpenKneeboard-v1.10.4-DebugSymbols.zip"
+        "created_at": "2025-02-19T22:26:02Z",
+        "updated_at": "2025-02-19T22:26:12Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.6/OpenKneeboard-v1.10.6-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/227433902",
-        "id": 227433902,
-        "node_id": "RA_kwDOGk0DR84Njl2u",
-        "name": "OpenKneeboard-v1.10.4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/230767975",
+        "id": 230767975,
+        "node_id": "RA_kwDOGk0DR84NwT1n",
+        "name": "OpenKneeboard-v1.10.6.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -99,15 +99,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 191832064,
+        "size": 191852544,
         "download_count": 0,
-        "created_at": "2025-02-08T15:47:29Z",
-        "updated_at": "2025-02-08T15:47:37Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.4/OpenKneeboard-v1.10.4.msi"
+        "created_at": "2025-02-19T22:27:21Z",
+        "updated_at": "2025-02-19T22:27:27Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.6/OpenKneeboard-v1.10.6.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.10.4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.10.4",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.10.4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.4/OpenKneeboard-v1.10.4.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- For changes between v1.8 and v1.10, see [the announcement for v1.10.0](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.0)\r\n- For changes between v1.10.0 and v1.10.2, see [the announcement for v1.10.2](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.2)\r\n\r\n# Bug Fixes\r\n\r\n- 🐛 Force Chromium onto the same GPU as OpenKneeboard; this is needed for efficient VRAM copying\r\n  - this fixes a crash on some multi-GPU systems (including integrated graphics), where Chromium may select an alternative GPU even if no monitors are attached to it\r\n- 🐛 Fix crash when turning off VR for the first view, if settings have been reset to default or were not migrated from v1.8\r\n- 🐛 Fixed crash when migrating profiles with no settings from v1.8\r\n\r\n# Other Improvements\r\n\r\nIf the profiles settings file has been manually edited and multiple profiles have the same GUID, duplicate GUIDs will now be replaced with random GUIDs. If you are using remote controls or the API to switch profiles, this may change which profile is switched to.\r\n\r\nEditing OpenKneeboard's settings file except via the OpenKneeboard app remains unsupported, and may lead to OpenKneeboard crashing or other problems. As editing the settings files outside of OpenKneeboard is not supported, any issues encountered are not considered bugs; I've added support for this particularly common incorrect edit as a one-off exception."
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.10.6",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.10.6",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.10.6.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.6/OpenKneeboard-v1.10.6.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- 🐛 Fix crash if OpenKneeboard was closed with no tabs\r\n- 🐛 Fix build issue that could lead to crashes without dumps\r\n- 🐛 Fix experimental JavaScript features (e.g. web pages with custom previous/next page behavior) breaking when page was reloaded or navigated"
   }
 ]
