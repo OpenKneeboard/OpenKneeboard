@@ -64,7 +64,7 @@ These contain the same information as the standard traces, in addition to inform
 
 1. Download the msvc-x64 [OpenXR-Tracing](https://github.com/fredemmott/OpenXR-Tracing/releases/latest), and extract it somewhere handy
 2. Download the [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI/releases/latest), and extract it somewhere handy
-3. Run `OpenXR-API-Layers-Win64-HKLM.exe`
+3. Run `OpenXR-API-Layers-GUI.exe`
 4. `OpenXR-Tracing` contains two JSON files, `APILayer.json` and `APILayer_Alternate.json`; add them in the layers tool, and position `APILayer.json` immediately above OpenKneeboard, and `APILayer_Alternate.json` immediately below OpenKneeboard
 5. Make sure the layers are enabled (ticked); you should see something like the image below
 6. Collect the trace in the same way as a [standard trace](#standard-traces)
