@@ -267,8 +267,7 @@ std::string TroubleshootingStore::GetDPrintDebugLogAsString() const {
       L"[{:%F %T} {} ({})] {}: {}\n",
       std::chrono::zoned_time(
         std::chrono::current_zone(),
-        std::chrono::time_point_cast<std::chrono::seconds>(
-          std::chrono::system_clock::now())),
+        std::chrono::time_point_cast<std::chrono::seconds>(entry.mWhen)),
       exe,
       entry.mProcessID,
       entry.mPrefix,
