@@ -360,7 +360,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_TraceLoggingRect(layerSprites.back().mDestRect, "DestRect"),
       TraceLoggingValue(layerSprites.back().mOpacity, "Opacity"));
 
-    if (params.mIsLookingAtKneeboard) {
+    if (layer->mLayerID == config.mGlobalInputLayerID) {
       topMost = layerIndex;
     }
 

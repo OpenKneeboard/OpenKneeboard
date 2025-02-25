@@ -196,7 +196,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .mOpacity = params.mKneeboardOpacity,
     });
 
-    if (params.mIsLookingAtKneeboard) {
+    if (layer->mLayerID == config.mGlobalInputLayerID) {
       topMost = layerIndex;
     }
 

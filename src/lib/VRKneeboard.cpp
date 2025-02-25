@@ -127,17 +127,28 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
   }
 
   const auto config = snapshot.GetConfig();
-  if (config.mVR.mEnableGazeInputFocus) {
-    const auto activeLayerID = config.mGlobalInputLayerID;
+  if (!config.mVR.mEnableGazeInputFocus) {
+    return ret;
+  }
+  const auto activeLayerID = config.mGlobalInputLayerID;
 
-    for (const auto& [layerConfig, renderParams]:
-         std::ranges::reverse_view(ret)) {
-      if (
-        renderParams.mIsLookingAtKneeboard
-        && layerConfig->mLayerID != activeLayerID) {
-        SHM::ActiveConsumers::SetActiveInGameViewID(layerConfig->mLayerID);
-        break;
-      }
+  const auto activeIt
+    = std::ranges::find(ret, activeLayerID, [](const Layer& layer) {
+        return layer.mLayerConfig->mLayerID;
+      });
+  if (
+    (activeIt != ret.end())
+    && (activeIt->mRenderParameters.mIsLookingAtKneeboard)) {
+    return ret;
+  }
+
+  for (const auto& [layerConfig, renderParams]:
+       std::ranges::reverse_view(ret)) {
+    if (
+      renderParams.mIsLookingAtKneeboard
+      && layerConfig->mLayerID != activeLayerID) {
+      SHM::ActiveConsumers::SetActiveInGameViewID(layerConfig->mLayerID);
+      return ret;
     }
   }
 
