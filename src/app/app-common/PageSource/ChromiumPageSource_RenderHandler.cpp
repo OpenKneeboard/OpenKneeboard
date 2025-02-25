@@ -41,6 +41,7 @@ ChromiumPageSource::RenderHandler::~RenderHandler() {
 void ChromiumPageSource::RenderHandler::GetViewRect(
   CefRefPtr<CefBrowser>,
   CefRect& rect) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
   rect = {0, 0, mSize.Width<int>(), mSize.Height<int>()};
 }
 
@@ -51,6 +52,8 @@ void ChromiumPageSource::RenderHandler::OnPaint(
   const void* buffer,
   int width,
   int height) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
+
   static std::once_flag sWarnOnce;
   std::call_once(sWarnOnce, []() {
     dprint.Warning(
@@ -104,6 +107,7 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   PaintElementType,
   const RectList& dirtyRects,
   const CefAcceleratedPaintInfo& info) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
   auto pageSource = mPageSource.lock();
   if (!pageSource) {
     return;

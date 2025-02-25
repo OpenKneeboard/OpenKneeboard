@@ -176,6 +176,7 @@ ChromiumPageSource::Client::~Client() {
 void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser>) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::Client::OnBeforeClose()");
+  const FatalOnUncaughtExceptions exceptionBoundary;
   mBrowser = nullptr;
   mRenderHandler = nullptr;
   SetEvent(mShutdownEvent.get());
@@ -218,6 +219,7 @@ CefRefPtr<CefResourceHandler> ChromiumPageSource::Client::GetResourceHandler(
   CefRefPtr<CefBrowser> browser,
   CefRefPtr<CefFrame> frame,
   CefRefPtr<CefRequest> request) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
   auto make404 = []() {
     constexpr std::string_view content {"404 Not Found"};
     return new CefStreamResourceHandler(
@@ -273,6 +275,7 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   CefRefPtr<CefFrame> frame,
   CefProcessId process,
   CefRefPtr<CefProcessMessage> message) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
   const auto name = message->GetName().ToString();
   if (name == "okb/onContextReleased") {
     mCurrentPage = {};
@@ -347,6 +350,7 @@ void ChromiumPageSource::Client::OnTitleChange(
 }
 
 void ChromiumPageSource::Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
+  const FatalOnUncaughtExceptions exceptionBoundary;
   mBrowser = browser;
   mBrowserId = mBrowser->GetIdentifier();
 }

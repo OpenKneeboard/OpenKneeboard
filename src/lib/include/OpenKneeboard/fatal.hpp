@@ -181,6 +181,26 @@ void fatal_with_exception(std::exception_ptr);
 /// Hook std::terminate() and SetUnhandledExceptionFilter()
 void divert_process_failure_to_fatal();
 
+/** Useful if `noexcept` is unusable.
+ *
+ * For example, CEF requires interfaces be implemented that do not throw
+ * exceptions, but does not declare the functions to be noexcept.
+ */
+class FatalOnUncaughtExceptions final {
+ public:
+  FatalOnUncaughtExceptions();
+  ~FatalOnUncaughtExceptions();
+
+  FatalOnUncaughtExceptions(const FatalOnUncaughtExceptions&) = delete;
+  FatalOnUncaughtExceptions(FatalOnUncaughtExceptions&&) = delete;
+  FatalOnUncaughtExceptions& operator=(const FatalOnUncaughtExceptions&)
+    = delete;
+  FatalOnUncaughtExceptions& operator=(FatalOnUncaughtExceptions&&) = delete;
+
+ private:
+  int mUncaughtExceptions;
+};
+
 }// namespace OpenKneeboard
 
 namespace OpenKneeboard::detail {

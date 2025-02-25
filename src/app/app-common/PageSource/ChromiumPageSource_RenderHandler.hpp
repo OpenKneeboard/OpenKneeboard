@@ -54,7 +54,7 @@ class ChromiumPageSource::RenderHandler final : public CefRenderHandler {
     CefRefPtr<CefBrowser>,
     PaintElementType,
     const RectList& dirtyRects,
-    const CefAcceleratedPaintInfo& info);
+    const CefAcceleratedPaintInfo& info) override;
 
   PixelSize GetSize() const;
   void SetSize(const PixelSize& size);

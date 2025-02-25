@@ -699,4 +699,15 @@ std::string StackFramePointer::to_string() const noexcept {
 
   return std::format("{}", std::bit_cast<std::stacktrace_entry>(*this));
 }
+
+FatalOnUncaughtExceptions::FatalOnUncaughtExceptions()
+  : mUncaughtExceptions(std::uncaught_exceptions()) {
+}
+
+FatalOnUncaughtExceptions::~FatalOnUncaughtExceptions() {
+  if (std::uncaught_exceptions() > mUncaughtExceptions) {
+    fatal("Uncaught exceptions");
+  }
+}
+
 }// namespace OpenKneeboard
