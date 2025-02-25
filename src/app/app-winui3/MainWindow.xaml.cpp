@@ -65,6 +65,7 @@
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Animation.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
+#include <winrt/Windows.Devices.Display.Core.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
 #include <winrt/Windows.UI.Xaml.h>
@@ -118,6 +119,20 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     0);
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
+
+  using namespace winrt::Windows::Devices::Display::Core;
+  auto mgr = DisplayManager::Create({});
+  auto targets = mgr.GetCurrentTargets();
+  const auto targetCount = targets.Size();
+  for (auto&& target: targets) {
+    const auto kind = static_cast<DWORD>(target.UsageKind());
+    dprint("Display kind: {}", kind);
+    const auto monitor = target.TryGetMonitor();
+    if (!monitor) {
+      continue;
+    }
+    dprint("Display name: {}", monitor.DisplayName());
+  }
 }
 
 task<void> MainWindow::Init() {
@@ -231,7 +246,8 @@ task<void> MainWindow::Init() {
 }
 
 task<void> MainWindow::FrameLoop() {
-  // If something goes wrong, crash immediately, instead of when closing the app
+  // If something goes wrong, crash immediately, instead of when closing the
+  // app
   co_await this_task::fatal_on_uncaught_exception();
 
   auto stop = mFrameLoopStopSource.get_token();
@@ -306,7 +322,8 @@ OpenKneeboard::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   co_await mUIThread;
 
   const auto message = std::format(
-    _(L"'{}' (process {}) is running elevated; this WILL cause problems.\n\nIt "
+    _(L"'{}' (process {}) is running elevated; this WILL cause "
+      L"problems.\n\nIt "
       L"is STRONGLY recommended that you do not run games elevated.\n\n"
       L"Running games as administrator is unsupported;\n"
       L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS."),
