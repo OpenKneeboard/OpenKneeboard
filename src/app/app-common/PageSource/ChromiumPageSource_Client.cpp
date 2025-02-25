@@ -361,8 +361,14 @@ std::optional<int> ChromiumPageSource::Client::GetBrowserID() const {
 
 void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
   mLastCursorEventAt = std::chrono::steady_clock::now();
+  if (!this->GetBrowser()) {
+    return;
+  }
 
   auto host = this->GetBrowser()->GetHost();
+  if (!host) {
+    return;
+  }
 
   const auto epsilon = std::numeric_limits<decltype(ev.mX)>::epsilon();
   if (ev.mX < epsilon || ev.mY < epsilon) {
