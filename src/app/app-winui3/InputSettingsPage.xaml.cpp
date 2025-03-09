@@ -142,27 +142,28 @@ winrt::hstring InputSettingsPage::WinTabAvailability() const {
   switch (adapter->GetWinTabAvailability()) {
     case WinTabAvailability::NotInstalled:
       return _(
-        L"No 64-bit WinTab-capable tablet driver is installed on your "
+        L"⚠️ No 64-bit WinTab-capable tablet driver is installed on your "
         L"system.");
     case WinTabAvailability::Available:
       if (
         adapter->HaveAnyTablet()
         || adapter->GetWintabMode() == WintabMode::Disabled) {
-        return _(L"WinTab is available on your system.");
+        return _(L"✅ WinTab is available on your system.");
       } else {
         return _(
-          L"WinTab is available on your system, but the driver reports that "
+          L"⚠️ WinTab is available on your system, but the driver reports that "
           L"no tablet is connected.");
       }
     case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
       return _(
-        L"WinTab is disabled because OpenTabletDriver support is enabled.");
+        L"ℹ️ WinTab support is disabled because OpenTabletDriver support is "
+        L"enabled.");
     case WinTabAvailability::Skipping_NoTrustedSignature:
       return _(
-        L"WinTab is disabled because your manufacturer's WinTab driver is "
-        L"not signed by a manufacturer that Windows recognizes and trusts; "
-        L"historically, these drivers frequently cause OpenKneeboard and "
-        L"game crashes. If there is not a more recent driver available, "
+        L"⚠️ WinTab support is disabled because your manufacturer's WinTab "
+        L"driver is not signed by a manufacturer that Windows recognizes and "
+        L"trusts; historically, these drivers frequently cause OpenKneeboard "
+        L"and game crashes. If there is not a more recent driver available, "
         L"use OpenTabletDriver instead.");
   }
   std::unreachable();

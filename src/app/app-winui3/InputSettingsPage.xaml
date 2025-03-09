@@ -94,7 +94,7 @@
         Spacing="8"
         Padding="8">
         <ToggleSwitch
-          Header="OpenTabletDriver IPC"
+          Header="OpenTabletDriver IPC - recommended"
           IsOn="{x:Bind IsOpenTabletDriverEnabled, Mode=TwoWay}"
           OffContent="Disabled"
           OnContent="Enabled"/>
