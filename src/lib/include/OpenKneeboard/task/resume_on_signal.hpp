@@ -130,10 +130,9 @@ struct SignalAwaitable {
       },
       this,
       nullptr);
+    mState.Transition<State::StartingWait, State::Waiting>();
     SetThreadpoolWait(
       mTPSignal, mHandle, mTimeout ? &mTimeout.value() : nullptr);
-
-    mState.Transition<State::StartingWait, State::Waiting>();
   }
 
  private:

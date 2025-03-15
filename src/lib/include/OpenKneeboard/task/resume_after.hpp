@@ -117,8 +117,8 @@ struct TimerAwaitable {
       },
       this,
       nullptr);
-    SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
     mState.Transition<State::StartingWait, State::Waiting>();
+    SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
   }
 
  private:
