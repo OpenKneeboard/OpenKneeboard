@@ -304,6 +304,36 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   return CefClient::OnProcessMessageReceived(browser, frame, process, message);
 }
 
+bool ChromiumPageSource::Client::OnBeforePopup(
+  CefRefPtr<CefBrowser> browser,
+  CefRefPtr<CefFrame> frame,
+  int popup_id,
+  const CefString& target_url,
+  const CefString& target_frame_name,
+  CefLifeSpanHandler::WindowOpenDisposition target_disposition,
+  bool user_gesture,
+  const CefPopupFeatures& popupFeatures,
+  CefWindowInfo& windowInfo,
+  CefRefPtr<CefClient>& client,
+  CefBrowserSettings& settings,
+  CefRefPtr<CefDictionaryValue>& extra_info,
+  bool* no_javascript_access) {
+  dprint.Warning(
+    "CEF - blocking popup: {} in frame '{}'",
+    target_url.ToString(),
+    target_frame_name.ToString());
+
+  auto message = CefProcessMessage::Create("okbEvent/console.warn");
+  message->GetArgumentList()->SetString(
+    0,
+    std::format(
+      "OpenKneeboard does not support popups; requested popup: {}",
+      target_url.ToString()));
+  frame->SendProcessMessage(PID_RENDERER, message);
+
+  return /* cancel popup creation */ true;
+}
+
 template <auto TMethod>
 fire_and_forget ChromiumPageSource::Client::OnJSAsyncRequest(
   CefRefPtr<CefFrame> frame,

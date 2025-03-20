@@ -137,6 +137,9 @@ class OpenKneeboardAPI extends EventTarget {
             case 'console.log':
                 console.log(...args);
                 return;
+            case 'console.warn':
+                console.warn(...args);
+                return;
             case 'enableAPI':
                 this.#ActivateAPI(...args);
                 return;
