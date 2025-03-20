@@ -30,6 +30,8 @@ namespace OpenKneeboard {
 ChromiumPageSource::RenderHandler::RenderHandler(
   std::shared_ptr<ChromiumPageSource> pageSource)
   : mPageSource(pageSource) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderHandler::RenderHandler()");
   mSize = pageSource->mSettings.mInitialSize;
   check_hresult(pageSource->mDXResources->mD3D11Device->CreateFence(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
@@ -41,6 +43,8 @@ ChromiumPageSource::RenderHandler::~RenderHandler() {
 void ChromiumPageSource::RenderHandler::GetViewRect(
   CefRefPtr<CefBrowser>,
   CefRect& rect) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderHandler::RenderHandler()");
   const FatalOnUncaughtExceptions exceptionBoundary;
   rect = {0, 0, mSize.Width<int>(), mSize.Height<int>()};
 }
@@ -52,6 +56,8 @@ void ChromiumPageSource::RenderHandler::OnPaint(
   const void* buffer,
   int width,
   int height) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderHandler::OnPaint()");
   const FatalOnUncaughtExceptions exceptionBoundary;
 
   static std::once_flag sWarnOnce;
@@ -107,6 +113,8 @@ void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   PaintElementType,
   const RectList& dirtyRects,
   const CefAcceleratedPaintInfo& info) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderHandler::OnAcceleratedPaint()");
   const FatalOnUncaughtExceptions exceptionBoundary;
   auto pageSource = mPageSource.lock();
   if (!pageSource) {
@@ -202,6 +210,8 @@ PixelSize ChromiumPageSource::RenderHandler::GetSize() const {
 void ChromiumPageSource::RenderHandler::RenderPage(
   RenderContext rc,
   const PixelRect& rect) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderHandler::RenderPage()");
   if (mFrameCount == 0) {
     return;
   }

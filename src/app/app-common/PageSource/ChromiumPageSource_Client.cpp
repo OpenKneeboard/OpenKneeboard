@@ -277,6 +277,9 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
   CefRefPtr<CefProcessMessage> message) {
   const FatalOnUncaughtExceptions exceptionBoundary;
   const auto name = message->GetName().ToString();
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::Client::OnProcessMessageReceived()",
+    TraceLoggingValue(name.c_str(), "MessageName"));
   if (name == "okb/onContextReleased") {
     mCurrentPage = {};
     mEnabledExperimentalFeatures = {};
@@ -350,6 +353,8 @@ void ChromiumPageSource::Client::OnTitleChange(
 }
 
 void ChromiumPageSource::Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::Client::OnAfterCreated()");
   const FatalOnUncaughtExceptions exceptionBoundary;
   mBrowser = browser;
   mBrowserId = mBrowser->GetIdentifier();
@@ -364,6 +369,8 @@ std::optional<int> ChromiumPageSource::Client::GetBrowserID() const {
 }
 
 void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::Client::PostCursorEvent()");
   mLastCursorEventAt = std::chrono::steady_clock::now();
   if (!this->GetBrowser()) {
     return;

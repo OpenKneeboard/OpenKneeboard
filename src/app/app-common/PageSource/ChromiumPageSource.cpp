@@ -118,6 +118,10 @@ void ChromiumPageSource::PostCursorEvent(
   KneeboardViewID view,
   const CursorEvent& ev,
   PageID pageID) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::PostCursorEvent()",
+    TraceLoggingValue(pageID.GetTemporaryValue(), "PageID"));
+
   if (this->GetPageCount() == 0) {
     return;
   }
@@ -144,6 +148,10 @@ void ChromiumPageSource::PostCursorEvent(
 
 task<void>
 ChromiumPageSource::RenderPage(RenderContext rc, PageID id, PixelRect rect) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "ChromiumPageSource::RenderPage()",
+    TraceLoggingValue(id.GetTemporaryValue(), "PageID"));
+
   auto client = this->GetOrCreateClient(rc.GetKneeboardView()->GetRuntimeID());
 
   auto rh = client->GetRenderHandlerSubclass();
@@ -199,6 +207,8 @@ void ChromiumPageSource::ClearUserInput() {
 }
 
 PageIndex ChromiumPageSource::GetPageCount() const {
+  OPENKNEEBOARD_TraceLoggingScope("ChromiumPageSource::GetPageCount()");
+
   std::shared_lock lock(mStateMutex);
 
   if (auto state = get_if<ScrollableState>(&mState)) {
@@ -214,6 +224,7 @@ PageIndex ChromiumPageSource::GetPageCount() const {
 }
 
 std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
+  OPENKNEEBOARD_TraceLoggingScope("ChromiumPageSource::GetPageIDs()");
   std::shared_lock lock(mStateMutex);
   if (auto state = get_if<ScrollableState>(&mState)) {
     return {state->mClient->GetCurrentPage()};
@@ -229,6 +240,7 @@ std::vector<PageID> ChromiumPageSource::GetPageIDs() const {
 }
 
 std::optional<PreferredSize> ChromiumPageSource::GetPreferredSize(PageID page) {
+  OPENKNEEBOARD_TraceLoggingScope("ChromiumPageSource::GetPreferredSize()");
   if (this->GetPageCount() == 0) {
     return std::nullopt;
   }
@@ -309,6 +321,7 @@ void ChromiumPageSource::PostCustomAction(
   KneeboardViewID view,
   std::string_view actionID,
   const nlohmann::json& arg) {
+  OPENKNEEBOARD_TraceLoggingScope("ChromiumPageSource::GetPreferredSize()");
   this->GetOrCreateClient(view)->PostCustomAction(actionID, arg);
 }
 
