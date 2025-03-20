@@ -38,6 +38,24 @@
 namespace OpenKneeboard {
 
 ChromiumPageSource::~ChromiumPageSource() {
+  if (auto state = std::get_if<ScrollableState>(&mState)) {
+    if (auto client = state->mClient) {
+      if (auto browser = client->GetBrowser()) {
+        browser->GetHost()->CloseDevTools();
+      }
+    }
+    return;
+  }
+  auto state = std::get_if<PageBasedState>(&mState);
+  if (!state) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  for (auto& client: std::views::values(state->mClients)) {
+    if (auto browser = client->GetBrowser()) {
+      browser->GetHost()->CloseDevTools();
+    }
+  }
 }
 
 task<std::shared_ptr<ChromiumPageSource>> ChromiumPageSource::Create(

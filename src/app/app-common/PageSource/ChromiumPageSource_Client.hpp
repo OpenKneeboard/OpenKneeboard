@@ -36,7 +36,8 @@ class ChromiumPageSource::Client final : public CefClient,
                                          public CefLifeSpanHandler,
                                          public CefDisplayHandler,
                                          public CefRequestHandler,
-                                         public CefResourceRequestHandler {
+                                         public CefResourceRequestHandler,
+                                         public CefDevToolsMessageObserver {
  public:
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
   enum class CursorEventsMode {
@@ -58,6 +59,8 @@ class ChromiumPageSource::Client final : public CefClient,
   CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 
   CefRefPtr<RenderHandler> GetRenderHandlerSubclass();
+
+  void OnDevToolsAgentDetached(CefRefPtr<CefBrowser>) override;
 
   CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
     CefRefPtr<CefBrowser> browser,

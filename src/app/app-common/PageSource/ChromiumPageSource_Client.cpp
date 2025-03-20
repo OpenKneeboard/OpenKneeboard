@@ -173,13 +173,19 @@ ChromiumPageSource::Client::~Client() {
   WaitForSingleObject(mShutdownEvent.get(), INFINITE);
 }
 
-void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser>) {
+void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::Client::OnBeforeClose()");
   const FatalOnUncaughtExceptions exceptionBoundary;
+  auto host = browser->GetHost();
+  host->CloseDevTools();
   mBrowser = nullptr;
   mRenderHandler = nullptr;
   SetEvent(mShutdownEvent.get());
+}
+
+void ChromiumPageSource::Client::OnDevToolsAgentDetached(
+  CefRefPtr<CefBrowser>) {
 }
 
 CefRefPtr<CefLifeSpanHandler> ChromiumPageSource::Client::GetLifeSpanHandler() {
@@ -386,6 +392,7 @@ void ChromiumPageSource::Client::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::Client::OnAfterCreated()");
   const FatalOnUncaughtExceptions exceptionBoundary;
+  browser->GetHost()->AddDevToolsMessageObserver(this);
   mBrowser = browser;
   mBrowserId = mBrowser->GetIdentifier();
 }
