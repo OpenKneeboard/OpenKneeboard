@@ -592,7 +592,6 @@ struct TaskAwaiter {
 
   decltype(auto) await_resume() {
     const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
-    OPENKNEEBOARD_ASSERT(waiting == TaskPromiseCompleted);
     TraceLoggingWrite(
       gTraceProvider,
       "TaskAwaiter<>::await_resume()",
@@ -605,6 +604,7 @@ struct TaskAwaiter {
         std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
+    OPENKNEEBOARD_ASSERT(waiting == TaskPromiseCompleted);
 
     using enum TaskPromiseResultState;
     if (mPromise->mUncaught) {
