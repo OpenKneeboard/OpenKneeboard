@@ -39,6 +39,9 @@ constexpr std::string_view SettingsInput {"Settings/Input"};
 constexpr std::string_view SettingsTabs {"Settings/Tabs"};
 }// namespace Paths
 
+const std::string SettingsInput
+  = std::format("{}:///{}", Scheme, Paths::SettingsInput);
+
 };// namespace SpecialURIs
 
 void RegisterURIHandler(

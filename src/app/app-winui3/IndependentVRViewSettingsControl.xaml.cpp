@@ -26,6 +26,7 @@
 #include "Globals.h"
 
 #include <OpenKneeboard/KneeboardState.hpp>
+#include <OpenKneeboard/LaunchURI.hpp>
 
 #include <OpenKneeboard/utf8.hpp>
 
@@ -72,9 +73,9 @@ IndependentVRViewSettingsControl::RestoreDefaults(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
-  dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default VR settings, "
-                           "removing your preferences?"))));
+  dialog.Content(box_value(to_hstring(
+    _("Do you want to restore the default VR settings, "
+      "removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);
@@ -121,10 +122,10 @@ OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
   co_await mKneeboard->PostUserAction(UserAction::RECENTER_VR);
 }
 
-void IndependentVRViewSettingsControl::GoToBindings(
+OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::GoToBindings(
   const IInspectable&,
   const RoutedEventArgs&) {
-  Frame().Navigate(xaml_typename<InputSettingsPage>());
+  co_await LaunchURI(SpecialURIs::SettingsInput);
 }
 
 float IndependentVRViewSettingsControl::KneeboardX() {

@@ -52,7 +52,9 @@ struct IndependentVRViewSettingsControl
   OpenKneeboard::fire_and_forget RecenterNow(
     Windows::Foundation::IInspectable,
     RoutedEventArgs);
-  void GoToBindings(const IInspectable&, const RoutedEventArgs&);
+  OpenKneeboard::fire_and_forget GoToBindings(
+    const IInspectable&,
+    const RoutedEventArgs&);
 
   float KneeboardX();
   void KneeboardX(float value);
