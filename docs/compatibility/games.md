@@ -20,10 +20,9 @@ OpenXR + Vulkan: the game must use `XR_KHR_vulkan_enable2` and the `xrCreateVulk
 Legacy Oculus API (OVR):
 
 - where possible, OpenXR is *strongly* recommended instead
-- only Link or Air Link are supported
-- Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR. Virtual Desktop is likely to be supported in the future - any updates will be on issue #608
+- only Link, Air Link, or Virtual Desktop are supported
 
-Leagcy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended instead
+Legacy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended instead
 
 32-bit games:
 
