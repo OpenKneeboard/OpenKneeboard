@@ -257,6 +257,11 @@ void GameInjector::CheckProcess(
       continue;
     }
 
+    constexpr auto MaxTries = 5;
+    if (++process.mCheckProcessCount > MaxTries) {
+      return;
+    }
+
     auto& currentDlls = process.mInjectedDlls;
     const auto missingDlls = wantedDlls & ~currentDlls;
     if (missingDlls == InjectedDlls::None && process.mHaveLoggedDLLs) {

@@ -96,6 +96,7 @@ class GameInjector final : public EventReceiver,
     InjectionAccessState mInjectionAccessState {InjectionAccessState::NotTried};
     InjectedDlls mInjectedDlls {InjectedDlls::None};
     bool mHaveLoggedDLLs {false};
+    uint32_t mCheckProcessCount = 0;
   };
   std::unordered_map<DWORD, ProcessCacheEntry> mProcessCache;
 
