@@ -16,6 +16,8 @@ If you're a developer and your OpenKneeboard-related question is not answered he
 
 ## How do I use OpenKneeboard to show content from my app?
 
+For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com]. I do not offer any direct-to-consumer services or support via email.
+
 You have three options:
 - implement a custom tab type in OpenKneeboard with C++ and Direct3D 11
 - provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
@@ -56,6 +58,8 @@ If your app/framework does not support `GetClientRect()`, you can add support to
 
 ## I haven't yet built an app; how do I get content into OpenKneeboard?
 
+For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com]. I do not offer any direct-to-consumer services or support via email.
+
 The best way is to implement a new tab type in C++ with Direct3D11/Direct2D/DirectWrite.
 
 That is not particularly friendly, so an alternative is to implement your content as an HTML page - OpenKneeboard offers [additional web APIs](../api/web-dashboards.md). If you need to go beyond what JavaScript enables, consider making your app a webserver, like [BMS Kneeboard Server](https://github.com/AviiNL/bms-kneeboard-server).
@@ -76,6 +80,8 @@ OpenKneeboard is a tool for users to show their content how they wish in VR, via
 Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
 
 ## How do I use OpenKneeboard to create my own OpenXR overlay?
+
+For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com]. I do not offer any direct-to-consumer services or support via email.
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit. This is not a supported use-case of OpenKneeboard.
 
