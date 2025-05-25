@@ -42,7 +42,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   std::uniform_int_distribution<uint64_t> randDist;
 
   mTempDir = Filesystem::GetTemporaryDirectory()
-    / std::format("{:016x}-{}", randDist(randDevice), zipPath.stem().string());
+    / std::format("{:016x}", randDist(randDevice));
   dprint(
     L"Extracting DCS mission {} to {}", zipPath.wstring(), mTempDir.wstring());
   std::filesystem::create_directories(mTempDir);
