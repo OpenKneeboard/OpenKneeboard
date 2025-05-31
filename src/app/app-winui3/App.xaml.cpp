@@ -50,6 +50,8 @@
 #include <ShlObj.h>
 #include <shellapi.h>
 
+#include <winrt/Windows.System.Profile.h>
+
 #include <wil/registry.h>
 
 #include <chrono>
@@ -123,6 +125,26 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
   LaunchActivatedEventArgs) noexcept {
   DispatcherShutdownMode(
     winrt::Microsoft::UI::Xaml::DispatcherShutdownMode::OnExplicitShutdown);
+
+  auto propertyNames = winrt::single_threaded_vector<winrt::hstring>({
+    L"DeviceFamily",
+    L"FlightRing",
+    L"OSVersionFull",
+  });
+  auto properties = co_await winrt::Windows::System::Profile::AnalyticsInfo::
+    GetSystemPropertiesAsync(propertyNames);
+  dprint("----------");
+  for (auto&& [name, value]: properties) {
+    dprint(
+      L"WinRT analytics {}: {}",
+      std::wstring_view {name},
+      std::wstring_view {value});
+  }
+  dprint(
+    L"WinRT analytics DeviceForm: {}",
+    std::wstring_view {
+      winrt::Windows::System::Profile::AnalyticsInfo::DeviceForm()});
+  dprint("----------");
 
   auto window = make<MainWindow>();
   mWindow = window;
