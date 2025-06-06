@@ -171,10 +171,11 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
  */
 #define OPENKNEEBOARD_TraceLoggingScopedActivity( \
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
-  const std::function<void(UncategorizedTraceLoggingThreadActivity&)> \
+  const std::function<void( \
+    OpenKneeboard::UncategorizedTraceLoggingThreadActivity&)> \
     OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY) \
     = [&, loc = std::source_location::current()]( \
-        UncategorizedTraceLoggingThreadActivity& activity) { \
+        OpenKneeboard::UncategorizedTraceLoggingThreadActivity& activity) { \
         TraceLoggingWriteStart( \
           activity, \
           OKBTL_NAME, \
@@ -182,7 +183,7 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
           ##__VA_ARGS__); \
       }; \
   class OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) final \
-    : public UncategorizedTraceLoggingThreadActivity { \
+    : public OpenKneeboard::UncategorizedTraceLoggingThreadActivity { \
    public: \
     OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
     (decltype(OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY))& startImpl) { \

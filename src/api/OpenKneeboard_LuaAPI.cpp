@@ -37,49 +37,6 @@ extern "C" {
 
 using OpenKneeboard::dprint;
 
-static void push_arg_error(lua_State* state) {
-  lua_pushliteral(state, "2 string arguments are required\n");
-  lua_error(state);
-}
-
-static int SendToOpenKneeboard(lua_State* state) {
-  int argc = lua_gettop(state);
-  if (argc != 2) {
-    dprint("Invalid argument count\n");
-    push_arg_error(state);
-    return 1;
-  }
-
-  if (!(lua_isstring(state, 1) && lua_isstring(state, 2))) {
-    dprint("Non-string args\n");
-    push_arg_error(state);
-    return 1;
-  }
-
-  const OpenKneeboard::APIEvent ge {
-    lua_tostring(state, 1),
-    lua_tostring(state, 2),
-  };
-  ge.Send();
-
-  return 0;
-}
-
-extern "C" int __declspec(dllexport)
-#if UINTPTR_MAX == UINT64_MAX
-luaopen_OpenKneeboard_LuaAPI64(lua_State* state) {
-#elif UINTPTR_MAX == UINT32_MAX
-luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
-#endif
-  OpenKneeboard::DPrintSettings::Set({
-    .prefix = "OpenKneeboard-LuaAPI",
-  });
-  lua_createtable(state, 0, 1);
-  lua_pushcfunction(state, &SendToOpenKneeboard);
-  lua_setfield(state, -2, "sendRaw");
-  return 1;
-}
-
 namespace OpenKneeboard {
 
 /* PS >
@@ -91,6 +48,53 @@ TRACELOGGING_DEFINE_PROVIDER(
   "OpenKneeboard.API.Lua",
   (0x039d7b52, 0x2065, 0x5863, 0x80, 0x2b, 0x87, 0x3c, 0x63, 0x8b, 0xdf, 0x88));
 }// namespace OpenKneeboard
+
+static void push_arg_error(lua_State* state) {
+  lua_pushliteral(state, "2 string arguments are required\n");
+  lua_error(state);
+}
+
+static int SendToOpenKneeboard(lua_State* state) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(activity, "SendToOpenKneeboard");
+  int argc = lua_gettop(state);
+  if (argc != 2) {
+    dprint("Invalid argument count\n");
+    push_arg_error(state);
+    activity.StopWithResult("InvalidArgs");
+    return 1;
+  }
+
+  if (!(lua_isstring(state, 1) && lua_isstring(state, 2))) {
+    dprint("Non-string args\n");
+    push_arg_error(state);
+    activity.StopWithResult("NonStringArgs");
+    return 1;
+  }
+
+  const OpenKneeboard::APIEvent event {
+    lua_tostring(state, 1),
+    lua_tostring(state, 2),
+  };
+  event.Send();
+
+  return 0;
+}
+
+extern "C" int __declspec(dllexport)
+#if UINTPTR_MAX == UINT64_MAX
+luaopen_OpenKneeboard_LuaAPI64(lua_State* state) {
+#elif UINTPTR_MAX == UINT32_MAX
+luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
+#endif
+  OPENKNEEBOARD_TraceLoggingScope("luaopen_OpenKneeboard_LuaAPI64");
+  OpenKneeboard::DPrintSettings::Set({
+    .prefix = "OpenKneeboard-LuaAPI",
+  });
+  lua_createtable(state, 0, 1);
+  lua_pushcfunction(state, &SendToOpenKneeboard);
+  lua_setfield(state, -2, "sendRaw");
+  return 1;
+}
 
 static TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
 
