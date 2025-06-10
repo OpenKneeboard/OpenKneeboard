@@ -55,7 +55,10 @@ struct TimerAwaitable {
   TimerAwaitable(
     std::chrono::duration<Rep, Period> delay,
     std::stop_token stopToken)
-    : mStopCallback(stopToken, std::bind_front(&TimerAwaitable::cancel, this)) {
+    : mStopCallback(
+        std::in_place,
+        stopToken,
+        std::bind_front(&TimerAwaitable::cancel, this)) {
     OPENKNEEBOARD_ASSERT(
       delay > decltype(delay)::zero(), "Sleep duration must be > 0");
 
@@ -84,6 +87,8 @@ struct TimerAwaitable {
   }
 
   inline ~TimerAwaitable() {
+    mStopCallback.reset();
+
     if (mTPTimer) {
       CloseThreadpoolTimer(mTPTimer);
     }
@@ -159,7 +164,7 @@ struct TimerAwaitable {
   PTP_TIMER mTPTimer {nullptr};
   std::coroutine_handle<> mCoro;
 
-  std::stop_callback<std::function<void()>> mStopCallback;
+  std::optional<std::stop_callback<std::function<void()>>> mStopCallback;
 };
 
 }// namespace OpenKneeboard::detail
