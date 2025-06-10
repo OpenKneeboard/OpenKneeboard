@@ -57,6 +57,7 @@ struct SignalAwaitable {
     std::chrono::duration<Rep, Period> timeout)
     : mHandle(handle),
       mStopCallback(
+        std::in_place,
         stopToken,
         std::bind_front(&SignalAwaitable::cancel, this)) {
     if (timeout == decltype(timeout)::zero()) {
@@ -92,6 +93,10 @@ struct SignalAwaitable {
   }
 
   inline ~SignalAwaitable() {
+    // We definitely don't want to invoke the callback while we're in the
+    // destructor
+    mStopCallback.reset();
+
     if (mTPSignal) {
       CloseThreadpoolWait(mTPSignal);
     }
@@ -175,7 +180,7 @@ struct SignalAwaitable {
   PTP_WAIT mTPSignal {nullptr};
   std::coroutine_handle<> mCoro;
 
-  std::stop_callback<std::function<void()>> mStopCallback;
+  std::optional<std::stop_callback<std::function<void()>>> mStopCallback;
 };
 
 }// namespace OpenKneeboard::detail
