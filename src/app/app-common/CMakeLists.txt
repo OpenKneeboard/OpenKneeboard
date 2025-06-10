@@ -37,6 +37,7 @@ target_link_libraries(
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
   OpenKneeboard-APIEvent
+  OpenKneeboard-EnumerateProcesses
   OpenKneeboard-GetSystemColor
   OpenKneeboard-PDFNavigation
   OpenKneeboard-RayIntersectsRect

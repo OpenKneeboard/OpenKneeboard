@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/D3D11.hpp>
 #include <OpenKneeboard/DXResources.hpp>
+#include <OpenKneeboard/EnumerateProcesses.hpp>
 #include <OpenKneeboard/RayIntersectsRect.hpp>
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
@@ -31,8 +32,6 @@
 
 #include <shims/winrt/base.h>
 
-#include <TlHelp32.h>
-#include <WtsApi32.h>
 #include <d3d11.h>
 
 #include <directxtk/SimpleMath.h>
@@ -456,37 +455,23 @@ static bool IsSteamVRRunning() {
   // 2022-01-13)
   //
   // Also reproduced with vr::VR_IsHmdPresent()
-  WTS_PROCESS_INFO_EXW* processes {nullptr};
-  DWORD processCount {0};
-  DWORD level = 1;
-  if (!WTSEnumerateProcessesExW(
-        WTS_CURRENT_SERVER_HANDLE,
-        &level,
-        WTS_CURRENT_SESSION,
-        reinterpret_cast<LPWSTR*>(&processes),
-        &processCount)) {
-    const auto code = GetLastError();
-    if (code == ERROR_BAD_LENGTH) {
-      // We don't provide a length, but sometimes WTSEnumerateProcessesExW
-      // internally fails
-      return sIsRunning;
-    }
-    fatal("WTSEnumerateProcessesExW() failed with {}", code);
+  const auto processes = EnumerateProcesses();
+  if (!processes) [[unlikely]] {
+    fatal(
+      "EnumerateProceses() failed with {:#x}",
+      static_cast<uint32_t>(processes.error()));
   }
 
   static constexpr std::wstring_view SteamVRExecutable {L"vrmonitor.exe"};
 
   sIsRunning = false;
 
-  for (DWORD i = 0; i < processCount; ++i) {
-    const auto& process = processes[i];
+  for (auto&& process: processes) {
     if (std::wstring_view(process.pProcessName) == SteamVRExecutable) {
       sIsRunning = true;
       break;
     }
   }
-  WTSFreeMemory(processes);
-  processes = nullptr;
 
   return sIsRunning;
 }

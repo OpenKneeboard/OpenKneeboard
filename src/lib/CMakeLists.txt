@@ -499,6 +499,7 @@ target_link_libraries(
   OpenKneeboard-SteamVRKneeboard
   PRIVATE
   OpenKneeboard-dprint
+  OpenKneeboard-EnumerateProcesses
 )
 # task<void> needs Microsoft::UI::Dispatching
 target_link_windows_app_sdk(OpenKneeboard-SteamVRKneeboard)
@@ -546,6 +547,21 @@ target_link_libraries(
   OpenKneeboard-Lib-Headers
   PRIVATE
   ThirdParty::RenderDoc
+)
+ok_add_library(
+  OpenKneeboard-EnumerateProcesses
+  STATIC
+  EnumerateProcesses.cpp
+  HEADERS
+  include/OpenKneeboard/EnumerateProcesses.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
+target_link_libraries(
+  OpenKneeboard-EnumerateProcesses
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-tracing
 )
 
 ok_add_library(

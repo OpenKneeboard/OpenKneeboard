@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Elevation.hpp>
+#include <OpenKneeboard/EnumerateProcesses.hpp>
 #include <OpenKneeboard/GameInjector.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -36,7 +37,6 @@
 #include <ShlObj.h>
 #include <Shlwapi.h>
 #include <TlHelp32.h>
-#include <WtsApi32.h>
 
 #include <chrono>
 #include <mutex>
@@ -93,37 +93,19 @@ task<void> GameInjector::Run(std::stop_token stopToken) {
       co_return;
     }
     OPENKNEEBOARD_TraceLoggingScope("GameInjector::Run()/EnumerateProcesses");
-    WTS_PROCESS_INFO_EXW* processes {nullptr};
-    DWORD processCount {0};
-    DWORD level = 1;
-    {
-      OPENKNEEBOARD_TraceLoggingScope("WTSEnumerateProcessesExW()");
-      if (!WTSEnumerateProcessesExW(
-            WTS_CURRENT_SERVER_HANDLE,
-            &level,
-            WTS_CURRENT_SESSION,
-            reinterpret_cast<LPWSTR*>(&processes),
-            &processCount)) {
-        const auto code = GetLastError();
-        if (code == ERROR_BAD_LENGTH) {
-          continue;// ?! We're not providing a length...
-        }
-        dprint.Error("WTSEnumerateProcessesExW() failed with {}", code);
-        continue;
-      }
+    const auto processes = EnumerateProcesses();
+    if (!processes) {
+      continue;
     }
 
     std::unordered_set<DWORD> seenProcesses;
-    for (int i = 0; i < processCount; ++i) {
-      const auto& process = processes[i];
+    for (auto&& process: processes) {
       seenProcesses.insert(process.ProcessId);
       if (process.pUserSid == 0) {
         continue;
       }
       CheckProcess(process.ProcessId, process.pProcessName);
     }
-    WTSFreeMemory(processes);
-    processes = nullptr;
 
     auto it = mProcessCache.begin();
     while (it != mProcessCache.end()) {
