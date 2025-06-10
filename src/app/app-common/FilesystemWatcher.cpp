@@ -52,14 +52,11 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     return;
   }
   mHandle.reset(handle);
-  mShutdownHandle
-    = Win32::or_throw::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 }
 
 OpenKneeboard::fire_and_forget FilesystemWatcher::final_release(
   std::unique_ptr<FilesystemWatcher> self) {
   self->mStop.request_stop();
-  co_await winrt::resume_on_signal(self->mShutdownHandle.get());
   co_await std::move(self->mImpl).value();
 }
 
@@ -77,7 +74,6 @@ task<void> FilesystemWatcher::Run() {
     winrt::check_bool(FindNextChangeNotification(handle));
     co_await resume_on_signal(handle, stop);
     if (stop.stop_requested()) {
-      SetEvent(mShutdownHandle.get());
       co_return;
     }
     if (!mSettling) {

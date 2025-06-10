@@ -21,12 +21,12 @@
 
 #include <OpenKneeboard/Events.hpp>
 
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/handles.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Storage.Search.h>
-
-#include <OpenKneeboard/final_release_deleter.hpp>
-#include <OpenKneeboard/handles.hpp>
 
 #include <filesystem>
 #include <memory>
@@ -67,7 +67,6 @@ class FilesystemWatcher final
 
   unique_changenotification mHandle;
   std::stop_source mStop;
-  winrt::handle mShutdownHandle;
 };
 
 }// namespace OpenKneeboard
