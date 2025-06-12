@@ -37,9 +37,9 @@
 #include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
-#include <microsoft.ui.xaml.window.h>
-
 #include <OpenKneeboard/utf8.hpp>
+
+#include <microsoft.ui.xaml.window.h>
 
 #include <algorithm>
 #include <format>
@@ -69,9 +69,9 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::RestoreDefaults(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
-  dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default games list, "
-                           "removing your preferences?"))));
+  dialog.Content(box_value(to_hstring(
+    _("Do you want to restore the default games list, "
+      "removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);
@@ -125,6 +125,7 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::AddRunningProcess(
   IInspectable,
   RoutedEventArgs) noexcept {
   ::winrt::OpenKneeboardApp::ProcessPickerDialog picker;
+  picker.GamesOnly(true);
   picker.XamlRoot(this->XamlRoot());
 
   auto result = co_await picker.ShowAsync();
@@ -210,9 +211,10 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::RemoveGame(
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(
     box_value(to_hstring(std::format(_("Remove {}?"), instance->mName))));
-  dialog.Content(box_value(to_hstring(std::format(
-    _("Do you want OpenKneeboard to stop integrating with {}?"),
-    instance->mName))));
+  dialog.Content(box_value(to_hstring(
+    std::format(
+      _("Do you want OpenKneeboard to stop integrating with {}?"),
+      instance->mName))));
 
   dialog.PrimaryButtonText(to_hstring(_("Yes")));
   dialog.CloseButtonText(to_hstring(_("No")));
@@ -265,33 +267,80 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::AddPath(
   std::filesystem::path path = std::filesystem::canonical(rawPath);
 
   auto gamesList = mKneeboard->GetGamesList();
-  for (auto game: gamesList->GetGames()) {
-    if (!game->MatchesPath(path)) {
-      continue;
-    }
-    auto instance = game->CreateGameInstance(path);
-
-    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
-    if (dcs) {
-      if (dcs->mSavedGamesPath.empty()) {
-        const auto path = co_await ChooseDCSSavedGamesFolder(
-          this->XamlRoot(), DCSSavedGamesSelectionTrigger::IMPLICIT);
-        if (path) {
-          dcs->mSavedGamesPath = *path;
-        }
-      }
-
-      if (!dcs->mSavedGamesPath.empty()) {
-        co_await CheckDCSHooks(this->XamlRoot(), dcs->mSavedGamesPath);
-      }
-    }
-
-    auto instances = gamesList->GetGameInstances();
-    instances.push_back(instance);
-    gamesList->SetGameInstances(instances);
-    this->UpdateGames();
+  const auto games = gamesList->GetGames();
+  const auto game = std::ranges::find_if(
+    games, [path](const auto& it) { return it->MatchesPath(path); });
+  if (game == games.end()) {
+    dprint.Error("Could not find a matching game for {}", path.string());
+    OPENKNEEBOARD_BREAK;
     co_return;
   }
+  auto instance = (*game)->CreateGameInstance(path);
+  const auto correctedPattern
+    = GamesList::FixPathPattern(instance->mPathPattern);
+  if (!correctedPattern) {
+    std::string error;
+    using enum GamesList::PathPatternError;
+    switch (correctedPattern.error()) {
+      case NotAGame:
+        error = std::format(
+          _("`{}` is not a game, so is not being added to the games list.\n\n"
+            "Adding things that are not games to the games list has no "
+            "benefits, and can cause severe issues, including crashes and "
+            "performance problems."),
+          path.filename().string());
+        break;
+      case Launcher:
+        error = std::format(
+          _("`{}` is a launcher - not a game - but OpenKneeboard could not "
+            "find the game. Add the game instead of the "
+            "launcher."),
+          path.filename().string());
+        break;
+    }
+    ContentDialog dialog;
+    dialog.XamlRoot(this->XamlRoot());
+    dialog.Title(box_value(to_hstring(path.filename().string())));
+    dialog.Content(box_value(to_hstring(error)));
+    dialog.PrimaryButtonText(to_hstring(_("Close")));
+    co_await dialog.ShowAsync();
+    co_return;
+  }
+  if (correctedPattern != instance->mPathPattern) {
+    const auto error = std::format(
+      _("Adding `{0}` instead of `{1}`, as `{1}` is a launcher, not the "
+        "actual game."),
+      std::filesystem::path {*correctedPattern}.filename().string(),
+      path.filename().string());
+    ContentDialog dialog;
+    dialog.XamlRoot(this->XamlRoot());
+    dialog.Title(box_value(to_hstring(path.filename().string())));
+    dialog.Content(box_value(to_hstring(error)));
+    dialog.PrimaryButtonText(to_hstring(_("OK")));
+    co_await dialog.ShowAsync();
+    instance->mPathPattern = *correctedPattern;
+    instance->mName = std::filesystem::path {*correctedPattern}.stem().string();
+  }
+
+  if (auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance)) {
+    if (dcs->mSavedGamesPath.empty()) {
+      const auto path = co_await ChooseDCSSavedGamesFolder(
+        this->XamlRoot(), DCSSavedGamesSelectionTrigger::IMPLICIT);
+      if (path) {
+        dcs->mSavedGamesPath = *path;
+      }
+    }
+
+    if (!dcs->mSavedGamesPath.empty()) {
+      co_await CheckDCSHooks(this->XamlRoot(), dcs->mSavedGamesPath);
+    }
+  }
+
+  auto instances = gamesList->GetGameInstances();
+  instances.push_back(instance);
+  gamesList->SetGameInstances(instances);
+  this->UpdateGames();
+  co_return;
 }
 
 GameInstanceUIData::GameInstanceUIData() {

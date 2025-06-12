@@ -4,6 +4,7 @@ namespace OpenKneeboardApp
     runtimeclass ProcessPickerDialog: Microsoft.UI.Xaml.Controls.ContentDialog
     {
         ProcessPickerDialog();
+        Boolean GamesOnly;
         String SelectedPath { get; };
     }
 }

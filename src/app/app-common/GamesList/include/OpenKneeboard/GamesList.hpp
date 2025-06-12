@@ -24,6 +24,7 @@
 
 #include <shims/nlohmann/json_fwd.hpp>
 
+#include <expected>
 #include <thread>
 
 namespace OpenKneeboard {
@@ -57,6 +58,14 @@ class GamesList final : private EventReceiver {
 
   Event<DWORD, const std::shared_ptr<GameInstance>&> evGameChangedEvent;
   Event<> evSettingsChangedEvent;
+
+  enum class PathPatternError {
+    NotAGame,
+    Launcher,
+  };
+  /// Correct common misconfigurations.
+  static std::expected<std::string, PathPatternError> FixPathPattern(
+    std::string_view pattern);
 
  private:
   void OnGameChanged(

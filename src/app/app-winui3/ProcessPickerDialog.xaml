@@ -11,20 +11,25 @@
   CloseButtonText="Cancel"
   DefaultButton="Primary">
   <ContentDialog.Resources>
-    <Style TargetType="local:ProcessPickerDialog" BasedOn="{StaticResource DefaultContentDialogStyle}" />
+    <Style TargetType="local:ProcessPickerDialog"
+           BasedOn="{StaticResource DefaultContentDialogStyle}"/>
   </ContentDialog.Resources>
-  <ScrollViewer VerticalScrollMode="Auto" Padding="8">
-    <StackPanel Orientation="Vertical" Spacing="8">
+  <ScrollViewer VerticalScrollMode="Auto"
+                Padding="8">
+    <StackPanel Orientation="Vertical"
+                Spacing="8">
       <AutoSuggestBox
         TextChanged="OnAutoSuggestTextChanged"
         QuerySubmitted="OnAutoSuggestQuerySubmitted"
         PlaceholderText="Search"
-        QueryIcon="Find"
-      />
-      <ListView x:Name="List" SelectionMode="Single" SelectionChanged="OnListSelectionChanged">
+        QueryIcon="Find"/>
+      <ListView x:Name="List"
+                SelectionMode="Single"
+                SelectionChanged="OnListSelectionChanged">
         <ListView.ItemTemplate>
           <DataTemplate x:DataType="local:GameInstanceUIData">
-            <Grid ColumnDefinitions="Auto,*" Margin="8">
+            <Grid ColumnDefinitions="Auto,*"
+                  Margin="8">
               <Grid
                 Grid.Column="0"
                 Margin="0,8,8,8"
@@ -32,22 +37,23 @@
                 Width="48"
                 CornerRadius="8"
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-                <Image Height="32" Width="32" Source="{x:Bind Icon}" />
+                <Image Height="32"
+                       Width="32"
+                       Source="{x:Bind Icon}"/>
               </Grid>
-              <Grid RowDefinitions="Auto,*" Grid.Column="1">
+              <Grid RowDefinitions="Auto,*"
+                    Grid.Column="1">
                 <TextBlock
                   Grid.Row="0"
                   Style="{StaticResource BodyStrongTextBlockStyle}"
                   Text="{x:Bind Name}"
-                  VerticalAlignment="Center"
-                />
+                  VerticalAlignment="Center"/>
                 <TextBlock
                   Grid.Row="2"
                   Text="{x:Bind Path}"
                   Style="{StaticResource CaptionTextBlockStyle}"
                   TextWrapping="Wrap"
-                  VerticalAlignment="Stretch"
-                />
+                  VerticalAlignment="Stretch"/>
               </Grid>
             </Grid>
           </DataTemplate>

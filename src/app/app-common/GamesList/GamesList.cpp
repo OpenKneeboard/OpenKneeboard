@@ -25,9 +25,9 @@
 #include <OpenKneeboard/GenericGame.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
-#include <windows.h>
-
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <windows.h>
 
 namespace OpenKneeboard {
 GamesList::GamesList(KneeboardState* state, const nlohmann::json& config)
@@ -106,16 +106,33 @@ void GamesList::LoadSettings(const nlohmann::json& config) {
 
   auto list = config.at("Configured");
 
-  for (const auto& instance: list) {
-    const std::string type = instance.at("Type");
-    for (auto& game: mGames) {
-      if (game->GetNameForConfigFile() == type) {
-        mInstances.push_back(game->CreateGameInstance(instance));
-        goto NEXT_INSTANCE;
-      }
+  for (const auto& jsonInstance: list) {
+    const std::string type = jsonInstance.at("Type");
+    const auto game
+      = std::ranges::find(mGames, type, &Game::GetNameForConfigFile);
+    if (game == mGames.end()) {
+      dprint.Error("Unsupported game type: `{}`", type);
+      OPENKNEEBOARD_BREAK;
+      continue;
     }
-  NEXT_INSTANCE:
-    continue;// need statement after label
+
+    auto instance = (*game)->CreateGameInstance(jsonInstance);
+    const auto corrected = FixPathPattern(instance->mPathPattern);
+    if (!corrected) {
+      dprint.Warning(
+        "Removing game `{}` - {}",
+        instance->mPathPattern,
+        magic_enum::enum_name(corrected.error()));
+      continue;
+    }
+    if (corrected != instance->mPathPattern) {
+      dprint.Warning(
+        "Correcting game `{}` to `{}`",
+        instance->mPathPattern,
+        corrected.value());
+      instance->mPathPattern = corrected.value();
+    }
+    mInstances.push_back(instance);
   }
 }
 
@@ -134,6 +151,58 @@ void GamesList::SetGameInstances(
     mInjector->SetGameInstances(mInstances);
   }
   this->evSettingsChangedEvent.Emit();
+}
+
+std::expected<std::string, GamesList::PathPatternError>
+GamesList::FixPathPattern(const std::string_view pattern) {
+  using namespace std::string_view_literals;
+
+  constexpr std::array Launchers {
+    std::tuple {
+      "\\ui\\iRacingUI.exe"sv,
+      "\\iRacingSim64DX11.exe"sv,
+    },
+    std::tuple {
+      "\\EDLaunch.exe"sv,
+      "\\Products\\elite-dangerous-odyssey-64\\EliteDangerous64.exe"sv,
+    },
+  };
+
+  for (auto&& [launcher, game]: Launchers) {
+    if (!pattern.ends_with(launcher)) {
+      continue;
+    }
+    std::string_view base {pattern};
+    base.remove_suffix(launcher.size());
+    const auto ret = std::format("{}{}", base, game);
+    if (std::filesystem::exists(ret)) {
+      return ret;
+    }
+    return std::unexpected {PathPatternError::Launcher};
+  }
+
+  constexpr std::array CommonUtilities {
+    "\\Content Manager.exe"sv,// 3rd-party Assetto Corsa launcher
+    "\\Discord.exe"sv,
+    "\\OpenKneeboardApp.exe"sv,// ?!
+    "\\RacelabApps.exe"sv,
+    "\\SimHubWPF.exe"sv,
+    "\\Spotify.exe"sv,
+    "\\StreamDeck.exe"sv,
+    "\\chrome.exe"sv,
+    "\\firefox.exe"sv,
+    "\\iOverlay.exe"sv,
+    "\\msedge.exe"sv,
+    "\\opera.exe"sv,
+  };
+
+  for (auto&& it: CommonUtilities) {
+    if (pattern.ends_with(it)) {
+      return std::unexpected {PathPatternError::NotAGame};
+    }
+  }
+
+  return std::string {pattern};
 }
 
 }// namespace OpenKneeboard

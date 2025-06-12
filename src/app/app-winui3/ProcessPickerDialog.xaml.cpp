@@ -25,13 +25,15 @@
 
 #include "ExecutableIconFactory.h"
 
+#include <OpenKneeboard/GamesList.hpp>
+
 #include <OpenKneeboard/utf8.hpp>
+
+#include <TlHelp32.h>
 
 #include <algorithm>
 #include <filesystem>
 #include <set>
-
-#include <TlHelp32.h>
 
 using namespace winrt::Windows::Foundation::Collections;
 using namespace OpenKneeboard;
@@ -56,6 +58,22 @@ static std::filesystem::path GetFullPathFromPID(DWORD pid) {
 
 ProcessPickerDialog::ProcessPickerDialog() {
   InitializeComponent();
+  this->Reload();
+}
+
+bool ProcessPickerDialog::GamesOnly() const noexcept {
+  return mGamesOnly;
+}
+
+void ProcessPickerDialog::GamesOnly(bool value) noexcept {
+  if (mGamesOnly == value) {
+    return;
+  }
+  mGamesOnly = value;
+  this->Reload();
+}
+
+void ProcessPickerDialog::Reload() {
   ExecutableIconFactory iconFactory;
 
   winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
@@ -69,6 +87,17 @@ ProcessPickerDialog::ProcessPickerDialog() {
     if (path.empty()) {
       continue;
     }
+    if (mGamesOnly) {
+      const auto utf8 = path.string();
+      const auto corrected = GamesList::FixPathPattern(utf8);
+      if (!corrected) {
+        continue;
+      }
+      if (corrected != utf8) {
+        path = corrected.value();
+      }
+    }
+
     if (seen.contains(path)) {
       continue;
     }

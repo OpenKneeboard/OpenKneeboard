@@ -32,6 +32,8 @@ struct ProcessPickerDialog : ProcessPickerDialogT<ProcessPickerDialog> {
   ~ProcessPickerDialog();
 
   hstring SelectedPath() noexcept;
+  bool GamesOnly() const noexcept;
+  void GamesOnly(bool) noexcept;
 
   void OnListSelectionChanged(
     const IInspectable&,
@@ -49,8 +51,10 @@ struct ProcessPickerDialog : ProcessPickerDialogT<ProcessPickerDialog> {
   hstring mSelectedPath;
   std::vector<IInspectable> mProcesses;
   bool mFiltered {false};
+  bool mGamesOnly {true};
 
   std::vector<IInspectable> GetFilteredProcesses(std::wstring_view queryText);
+  void Reload();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
