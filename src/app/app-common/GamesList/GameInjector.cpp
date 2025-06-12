@@ -213,6 +213,10 @@ void GameInjector::CheckProcess(
         return;
     }
 
+    if (wantedDlls == InjectedDlls::None) {
+      continue;
+    }
+
     const auto currentGame = mKneeboardState->GetCurrentGame();
     const DWORD currentPID = currentGame ? currentGame->mProcessID : 0;
 
