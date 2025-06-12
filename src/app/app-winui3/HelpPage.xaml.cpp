@@ -27,6 +27,8 @@
 #include "FilePicker.h"
 
 #include <OpenKneeboard/Filesystem.hpp>
+#include <OpenKneeboard/GameInstance.hpp>
+#include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
@@ -431,7 +433,7 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   const auto now = SHM::ActiveConsumers::Clock::now();
   const SHM::ActiveConsumers::T null {};
 
-  auto log = [&](const auto name, const auto& value) {
+  const auto log = [&](const auto name, const auto& value) {
     if (value == null) {
       ret += std::format("{}: inactive\n", name);
       return;
@@ -449,9 +451,31 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   log("Viewer", consumers.mViewer);
 
   ret += std::format(
-    "\nNon-VR canvas: {}x{}\n",
+    "\nNon-VR canvas: {}x{}\n\n",
     consumers.mNonVRPixelSize.mWidth,
     consumers.mNonVRPixelSize.mHeight);
+
+  const auto logGame
+    = [&](const auto name, const std::optional<GameProcess>& process) {
+        if (!process) {
+          ret += std::format("{}: none\n", name);
+          return;
+        }
+        const auto info = process->mGameInstance.lock();
+        if (info) {
+          ret += std::format(
+            "{}: {} ({})\n",
+            name,
+            info->mLastSeenPath.string(),
+            process->mProcessID);
+        } else {
+          ret += std::format("{}: {}\n", name, process->mProcessID);
+        }
+      };
+
+  const auto kb = gKneeboard.lock();
+  logGame("Current game", kb->GetCurrentGame());
+  logGame("Most recent game", kb->GetMostRecentGame());
 
   return ret;
 }

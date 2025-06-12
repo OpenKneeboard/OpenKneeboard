@@ -69,7 +69,7 @@ struct ViewRenderInfo {
   bool mIsActiveForInput = false;
 };
 
-struct RunningGame {
+struct GameProcess {
   DWORD mProcessID = 0;
   std::weak_ptr<GameInstance> mGameInstance;
 };
@@ -118,7 +118,8 @@ class KneeboardState final
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
   GamesList* GetGamesList() const;
-  std::optional<RunningGame> GetCurrentGame() const;
+  std::optional<GameProcess> GetCurrentGame() const;
+  std::optional<GameProcess> GetMostRecentGame() const;
 
   std::shared_ptr<PluginStore> GetPluginStore() const;
 
@@ -219,7 +220,8 @@ class KneeboardState final
 
   std::shared_ptr<APIEventServer> mAPIEventServer;
   RunnerThread mOpenVRThread;
-  std::optional<RunningGame> mCurrentGame;
+  std::optional<GameProcess> mCurrentGame;
+  std::optional<GameProcess> mMostRecentGame;
 
   std::queue<std::function<task<void>()>> mOrderedEventQueue;
   bool mFlushingQueue = false;

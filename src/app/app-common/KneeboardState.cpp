@@ -181,15 +181,16 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       layoutSize,
     };
 
-    ret.push_back(ViewRenderInfo {
-      .mView = view,
-      .mVR = viewConfig.mVR.Resolve(
-        contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
-      .mNonVR = viewConfig.mNonVR.Resolve(
-        contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
-      .mFullSize = layoutSize,
-      .mIsActiveForInput = (i == mInputViewIndex),
-    });
+    ret.push_back(
+      ViewRenderInfo {
+        .mView = view,
+        .mVR = viewConfig.mVR.Resolve(
+          contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
+        .mNonVR = viewConfig.mNonVR.Resolve(
+          contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
+        .mFullSize = layoutSize,
+        .mIsActiveForInput = (i == mInputViewIndex),
+      });
 
     TraceLoggingWriteTagged(
       activity,
@@ -405,6 +406,7 @@ void KneeboardState::OnGameChangedEvent(
   SHM::ActiveConsumers::Clear();
   if (processID && game) {
     mCurrentGame = {processID, {game}};
+    mMostRecentGame = mCurrentGame;
   } else {
     mCurrentGame = {};
   }
@@ -724,8 +726,12 @@ std::shared_ptr<TabletInputAdapter> KneeboardState::GetTabletInputAdapter()
   return mTabletInput;
 }
 
-std::optional<RunningGame> KneeboardState::GetCurrentGame() const {
+std::optional<GameProcess> KneeboardState::GetCurrentGame() const {
   return mCurrentGame;
+}
+
+std::optional<GameProcess> KneeboardState::GetMostRecentGame() const {
+  return mMostRecentGame;
 }
 
 ProfileSettings KneeboardState::GetProfileSettings() const {
