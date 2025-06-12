@@ -25,11 +25,12 @@
 #include <chrono>
 
 namespace OpenKneeboard::SHM {
-// This should be kept in sync with `SHM::ConsumerKind`.
 struct ActiveConsumers final {
   using Clock = std::chrono::steady_clock;
   using T = Clock::time_point;
-  T mSteamVR {};
+
+  // These should be kept in sync with `SHM::ConsumerKind`.
+  T mOpenVR {};
   T mOpenXR {};
   T mOculusD3D11 {};
   T mNonVRD3D11 {};

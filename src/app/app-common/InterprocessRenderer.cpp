@@ -60,7 +60,7 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
     case OverlayAPI::AutoDetect:
       return {};
     case OverlayAPI::SteamVR:
-      return {SHM::ConsumerKind::SteamVR};
+      return {SHM::ConsumerKind::OpenVR};
     case OverlayAPI::OpenXR:
       return {SHM::ConsumerKind::OpenXR};
     case OverlayAPI::OculusD3D11:

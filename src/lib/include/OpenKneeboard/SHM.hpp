@@ -114,7 +114,7 @@ class IPCTextureCopier {
 
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {
-  SteamVR = 1 << 0,
+  OpenVR = 1 << 0,
   OpenXR = 1 << 1,
   OculusD3D11 = 1 << 2,
   // OculusD3D12 = 1 << 3,

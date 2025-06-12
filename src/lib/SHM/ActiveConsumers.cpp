@@ -128,8 +128,8 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
 
   const auto now = Clock::now();
   switch (consumer) {
-    case ConsumerKind::SteamVR:
-      p->mSteamVR = now;
+    case ConsumerKind::OpenVR:
+      p->mOpenVR = now;
       break;
     case ConsumerKind::OpenXR:
       p->mOpenXR = now;
@@ -166,7 +166,7 @@ void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
 
 ActiveConsumers::T ActiveConsumers::Any() const {
   const auto ret
-    = std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11, mNonVRD3D11});
+    = std::ranges::max({mOpenVR, mOpenXR, mOculusD3D11, mNonVRD3D11});
   if (ret != T {}) {
     return ret;
   }
@@ -174,7 +174,7 @@ ActiveConsumers::T ActiveConsumers::Any() const {
 }
 
 ActiveConsumers::T ActiveConsumers::AnyVR() const {
-  return std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11});
+  return std::ranges::max({mOpenVR, mOpenXR, mOculusD3D11});
 }
 
 ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {

@@ -25,10 +25,11 @@
 #include <OpenKneeboard/SHM/D3D11.hpp>
 #include <OpenKneeboard/VRKneeboard.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/task.hpp>
+
+#include <shims/winrt/base.h>
+
 #include <directxtk/SimpleMath.h>
 
 #include <memory>
@@ -65,7 +66,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
-  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::SteamVR};
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenVR};
 
   std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 

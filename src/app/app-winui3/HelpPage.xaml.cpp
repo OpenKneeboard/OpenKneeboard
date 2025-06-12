@@ -180,14 +180,15 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   picker.SettingsIdentifier(thisCall);
   picker.SuggestedStartLocation(FOLDERID_Desktop);
   picker.AppendFileType(_(L"Zip archive"), {L".zip"});
-  picker.SuggestedFileName(std::format(
-    L"OpenKneeboard-v{}.{}.{}.{}-{:%Y%m%dT%H%M}.zip",
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    std::chrono::zoned_time(
-      std::chrono::current_zone(), std::chrono::system_clock::now())));
+  picker.SuggestedFileName(
+    std::format(
+      L"OpenKneeboard-v{}.{}.{}.{}-{:%Y%m%dT%H%M}.zip",
+      Version::Major,
+      Version::Minor,
+      Version::Patch,
+      Version::Build,
+      std::chrono::zoned_time(
+        std::chrono::current_zone(), std::chrono::system_clock::now())));
 
   const auto maybePath = picker.PickSaveFile();
   if (!maybePath) {
@@ -441,7 +442,7 @@ std::string HelpPage::GetActiveConsumers() noexcept {
       std::chrono::duration_cast<std::chrono::milliseconds>(now - value));
   };
 
-  log("SteamVR", consumers.mSteamVR);
+  log("OpenVR", consumers.mOpenVR);
   log("OpenXR", consumers.mOpenXR);
   log("Oculus-D3D11", consumers.mOculusD3D11);
   log("NonVR-D3D11", consumers.mNonVRD3D11);
