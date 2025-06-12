@@ -65,7 +65,7 @@ GameInjector::~GameInjector() {
 
 void GameInjector::SetGameInstances(
   const std::vector<std::shared_ptr<GameInstance>>& games) {
-  const std::unique_lock lock(mGamesMutex);
+  std::scoped_lock lock(mGamesMutex);
   mGames = games;
 }
 
@@ -92,12 +92,7 @@ task<void> GameInjector::Run(std::stop_token stopToken) {
     if (stopToken.stop_requested()) {
       co_return;
     }
-    OPENKNEEBOARD_TraceLoggingScopedActivity(
-      activity, "GameInjector::Run()/EnumerateProcesses");
-    if (!IsInjectionRequiredByConfiguration()) {
-      activity.StopWithResult("NotRequiredByConfiguration");
-      continue;
-    }
+    OPENKNEEBOARD_TraceLoggingScope("GameInjector::Run()/EnumerateProcesses");
     const auto processes = EnumerateProcesses();
     if (!processes) {
       continue;
@@ -445,29 +440,6 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
 
   dprint("Injected {}", dll.string());
   return true;
-}
-
-bool GameInjector::IsInjectionRequiredByConfiguration() const {
-  if (mWintabMode == WintabMode::EnabledInvasive) {
-    return true;
-  }
-
-  const std::unique_lock lock(mGamesMutex);
-  for (auto&& game: mGames) {
-    switch (game->mOverlayAPI) {
-      case OverlayAPI::AutoDetect:
-      case OverlayAPI::OculusD3D11:
-      case OverlayAPI::NonVRD3D11:
-        return true;
-
-      case OverlayAPI::None:
-      case OverlayAPI::OpenXR:
-      case OverlayAPI::SteamVR:
-      case OverlayAPI::OculusD3D12:// no longer supported
-        continue;
-    }
-  }
-  return false;
 }
 
 }// namespace OpenKneeboard
