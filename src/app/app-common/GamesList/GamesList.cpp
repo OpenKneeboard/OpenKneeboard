@@ -131,6 +131,9 @@ void GamesList::LoadSettings(const nlohmann::json& config) {
         instance->mPathPattern,
         corrected.value());
       instance->mPathPattern = corrected.value();
+      instance->mLastSeenPath = corrected.value();
+      instance->mName
+        = std::filesystem::path {corrected.value()}.stem().string();
     }
     mInstances.push_back(instance);
   }

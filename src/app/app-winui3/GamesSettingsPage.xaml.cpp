@@ -319,6 +319,7 @@ OpenKneeboard::fire_and_forget GamesSettingsPage::AddPath(
     dialog.PrimaryButtonText(to_hstring(_("OK")));
     co_await dialog.ShowAsync();
     instance->mPathPattern = *correctedPattern;
+    instance->mLastSeenPath = *correctedPattern;
     instance->mName = std::filesystem::path {*correctedPattern}.stem().string();
   }
 
