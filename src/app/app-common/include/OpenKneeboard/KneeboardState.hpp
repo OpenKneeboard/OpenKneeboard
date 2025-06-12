@@ -72,6 +72,7 @@ struct ViewRenderInfo {
 struct GameProcess {
   DWORD mProcessID = 0;
   std::weak_ptr<GameInstance> mGameInstance;
+  std::chrono::steady_clock::time_point mSince {};
 };
 
 enum class FramePostEventKind {

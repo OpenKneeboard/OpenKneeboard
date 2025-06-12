@@ -405,7 +405,11 @@ void KneeboardState::OnGameChangedEvent(
   const std::shared_ptr<GameInstance>& game) {
   SHM::ActiveConsumers::Clear();
   if (processID && game) {
-    mCurrentGame = {processID, {game}};
+    mCurrentGame = {
+      processID,
+      {game},
+      std::chrono::steady_clock::now(),
+    };
     mMostRecentGame = mCurrentGame;
   } else {
     mCurrentGame = {};

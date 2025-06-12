@@ -464,10 +464,12 @@ std::string HelpPage::GetActiveConsumers() noexcept {
         const auto info = process->mGameInstance.lock();
         if (info) {
           ret += std::format(
-            "{}: {} ({})\n",
+            "{}: {} (PID {}, started {} ago)\n",
             name,
             info->mLastSeenPath.string(),
-            process->mProcessID);
+            process->mProcessID,
+            std::chrono::duration_cast<std::chrono::seconds>(
+              std::chrono::steady_clock::now() - process->mSince));
         } else {
           ret += std::format("{}: {}\n", name, process->mProcessID);
         }
