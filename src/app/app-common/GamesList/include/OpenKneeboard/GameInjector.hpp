@@ -76,9 +76,11 @@ class GameInjector final : public EventReceiver,
   static std::unordered_set<std::filesystem::path> GetProcessCurrentDLLs(
     HANDLE process);
   void CheckProcess(DWORD processID, std::wstring_view exeBaseName);
+  bool IsInjectionRequiredByConfiguration() const;
+
   KneeboardState* mKneeboardState {nullptr};
   std::vector<std::shared_ptr<GameInstance>> mGames;
-  std::mutex mGamesMutex;
+  mutable std::mutex mGamesMutex;
 
   std::filesystem::path mTabletProxyDll;
   std::filesystem::path mOverlayAutoDetectDll;
