@@ -15,7 +15,7 @@ F17-24 are particularly useful for this, as they do not exist on most keyboards,
 
 ![binding F17 through the StreamDeck UI](../screenshots/streamdeck-hotkey.png)
 
-Once this is done, you can bind it through Settings -> DirectInput -> Keyboard in OpenKneeboard:
+Once this is done, you can bind it through Settings -> Input -> Keyboard in OpenKneeboard:
 
 ![screenshot of F17 bound to show/hide in OpenKneeboard](../screenshots/openkneeboard-bound-f17.png)
 
