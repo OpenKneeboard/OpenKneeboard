@@ -180,7 +180,29 @@ void GameInjector::CheckProcess(
       continue;
     }
 
-    const auto friendly = game->mGame->GetUserFriendlyName(fullPath);
+    const auto currentGame = mKneeboardState->GetCurrentGame();
+    const DWORD currentPID = currentGame ? currentGame->mProcessID : 0;
+
+    if (currentPID != processID) {
+      // Lazy to-string approach
+      nlohmann::json overlayAPI;
+      to_json(overlayAPI, game->mOverlayAPI);
+
+      dprint(
+        "Current game changed to {}, PID {}, configured rendering API {}",
+        fullPath.string(),
+        processID,
+        overlayAPI.dump());
+      const auto elevated = IsElevated(processHandle);
+      if (IsElevated() != elevated) {
+        dprint.Warning(
+          "OpenKneeboard {} elevated, but PID {} {} elevated.",
+          IsElevated() ? "is" : "is not",
+          processID,
+          elevated ? "is" : "is not");
+      }
+      this->evGameChangedEvent.Emit(processID, fullPath, game);
+    }
 
     InjectedDlls wantedDlls {InjectedDlls::None};
 
@@ -215,30 +237,6 @@ void GameInjector::CheckProcess(
 
     if (wantedDlls == InjectedDlls::None) {
       continue;
-    }
-
-    const auto currentGame = mKneeboardState->GetCurrentGame();
-    const DWORD currentPID = currentGame ? currentGame->mProcessID : 0;
-
-    if (currentPID != processID) {
-      // Lazy to-string approach
-      nlohmann::json overlayAPI;
-      to_json(overlayAPI, game->mOverlayAPI);
-
-      dprint(
-        "Current game changed to {}, PID {}, configured rendering API {}",
-        fullPath.string(),
-        processID,
-        overlayAPI.dump());
-      const auto elevated = IsElevated(processHandle);
-      if (IsElevated() != elevated) {
-        dprint.Warning(
-          "OpenKneeboard {} elevated, but PID {} {} elevated.",
-          IsElevated() ? "is" : "is not",
-          processID,
-          elevated ? "is" : "is not");
-      }
-      this->evGameChangedEvent.Emit(processID, fullPath, game);
     }
 
     auto& process = mProcessCache.at(processID);
