@@ -82,6 +82,7 @@ void FolderPageSource::SubscribeToChanges() {
 
 OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
   std::filesystem::path directory) {
+  const auto keepAlive = shared_from_this();
   if (directory != mPath) {
     co_return;
   }
