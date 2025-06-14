@@ -213,7 +213,7 @@ Rename-Item $Zip $Out
 
 ### Windows registry
 
-If your software has an installer or other locally running code, you can directly register your plugin by creating a DWORD value in `SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1`.
+If your software has an installer or other locally running code, you can directly register your plugin by creating a DWORD value in `SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1`; both `HKEY_LOCAL_MACHINE` and `HKEY_CURRENT_USER` are supported.
 
 - the value name should be the full path to your JSON file
 - the value itself should be 0 for disabled, 1 for enabled
