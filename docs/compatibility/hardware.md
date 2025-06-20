@@ -20,8 +20,12 @@ It should work with any headset that is compatible with OpenXR or SteamVR.
 ### Known issues
 
 - Pimax + AMD: on some systems, the Pimax software has significant performance issues rendering *any* OpenXR overlay; this can only be fixed by Pimax.
-- Varjo Base v4.4 and above [have a bug](https://github.com/OpenKneeboard/OpenKneeboard/issues/698) which makes OpenKneeboard invisible or appear in an extremely incorrect position for some users. If you encounter any issues, downgrade Varjo Base to v4.3 or below. Varjo are aware of the issue.
 - The Somnium VR1 OpenXR runtime appears to have bugs in the handling of overlays which can cause game crashes or incorrect overlay positions.
+  - There are unconfirmed reports that these issues may have been fixed in their 'beta4' runtime (June 2025)
+- Varjo Base v4.4 and above [have a bug](https://github.com/OpenKneeboard/OpenKneeboard/issues/698) which makes OpenKneeboard invisible or appear in an extremely incorrect position for some users. If you encounter any issues, downgrade Varjo Base to v4.3 or below. Varjo are aware of the issue.
+  - There are unconfirmed reports that these issues may have been fixed in Varjo Base v4.11
+  - If you have used OpenKneeboard with Varjo Base v4.4-v4.10, you *may* need to reset and reconfigure
+    position after switching to Varjo Base v4.3 or v4.11+
 
 ## XBox and other XInput Controllers
 
