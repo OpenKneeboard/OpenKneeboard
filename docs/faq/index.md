@@ -36,6 +36,19 @@ Mouse support is unlikely to be added soon as it requires interfering with how t
 
 Mouse support is not planned; any updates will be on [the GitHub issue](https://github.com/OpenKneeboard/OpenKneeboard/issues/374). If there are no updates there, there is no news or ETA.
 
+## How do I stop the administrator or UAC warnings showing up every time?
+
+- Don't run OpenKneeboard as administrator
+- Turn UAC on and reboot
+
+There is no other way, and one won't be added - don't ask.
+
+Prior to these warnings being added, administrator and UAC issues were by far the most common cause of support requests.
+
+### When I do that, everything else prompts me all the time.
+
+Stop running everything else as administrator.
+
 ## How do I use my iPad, Microsoft Surface, other tablet computer, or phone with OpenKneeboard?
 
 OpenKneeboard only supports graphics tablets (sometimes called 'artists tablets') such as those made by Wacom or Huion, not tablet computers or phones.
