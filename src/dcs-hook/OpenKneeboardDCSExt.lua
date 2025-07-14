@@ -18,18 +18,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ]]--
 local Terrain = require('terrain')
 
-function l(msg)
-  log.write("OpenKneeboard", log.INFO, msg)
-end
-l("Init")
-
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
-l("Loading DLL - search path: "..package.cpath)
 local status, OpenKneeboard = pcall(require, "OpenKneeboard_LuaAPI64")
-if status then
-  l("DLL Loaded")
-else
-  l("Failed: "..err)
+if not status then
   return
 end
 
@@ -148,7 +139,6 @@ function getTrackFileDateTime(trackFile)
 end
 
 function useTrackFileAsMission()
-    l("Mission: using track file")
     --[[
       DCS does not make the .miz available for multiplayer, however the
       the track file contains the kneeboard images, briefing etc.
@@ -170,14 +160,12 @@ function useTrackFileAsMission()
       local latest = tracks[#tracks]
       local fullPath = mpTrackPath .. "\\" .. latest
       if (state.mission ~= fullPath) then
-        l("Setting mission to track file: " .. latest)
         state.mission = fullPath
       end
     end
 end
 
 function callbacks.onMissionLoadBegin()
-  l("onMissionLoadBegin: "..DCS.getMissionName())
   local haveMiz, mizOrError = pcall(DCS.getMissionFilename)
   if haveMiz and not mizOrError then
     haveMiz = false
@@ -188,7 +176,6 @@ function callbacks.onMissionLoadBegin()
     -- clicking 'create multiplayer server' from 'mission' in the main menu...
     file = mizOrError:gsub("^.[/\\]+", lfs.currentdir())
     state.mission = file
-    l("Mission: "..state.mission)
   else
     -- ... but not when joining a dedicated server; use the track file instead
     useTrackFileAsMission()
@@ -197,14 +184,12 @@ function callbacks.onMissionLoadBegin()
   if mission and mission.mission and mission.mission.theatre then
     state.terrain = mission.mission.theatre
     state.utcOffset = Terrain.GetTerrainConfig('SummerTimeDelta')
-    l("Terrain: "..state.terrain)
   end
   state.selfData = Export.LoGetSelfData()
   sendState()
 end
 
 function callbacks.onSimulationStart()
-  l("onSimulationStart")
   updateGeo()
 
   if not state.utcOffset then
@@ -223,7 +208,6 @@ function callbacks.onSimulationStart()
   end
   state.aircraft = selfData.Name
   state.selfData = selfData
-  l("Aircraft: "..state.aircraft)
   sendState()
   OpenKneeboard.send("SimulationStart", startData);
 end
@@ -282,5 +266,3 @@ function callbacks.onTriggerMessage(message, duration, clearView)
 end
 
 DCS.setUserCallbacks(callbacks)
-
-l("Callbacks installed")
