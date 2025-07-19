@@ -31,6 +31,8 @@ add_subdirectory(shaders)
 # Always link this so we never accidentally use the Windows SDK version (as opposed to the Windows App SDK version)
 link_libraries(ThirdParty::CppWinRT)
 
+include(sourcelink)
+
 include(ok_add_runtime_files)
 include(ok_add_library)
 include(ok_add_executable)

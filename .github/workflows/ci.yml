@@ -42,6 +42,7 @@ jobs:
         run: |
           $args = @(
             "-A", "x64"
+            "-DSOURCELINK=https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/${{github.sha}}"
           )
           cmake ${{github.workspace}}/source @args
       - name: Build
