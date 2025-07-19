@@ -155,10 +155,7 @@ task<void> WGCRenderer::DisposeAsync() noexcept {
     mCaptureSession.Close();
   }
   disown_later(
-    std::move(mCaptureItem),
-    std::move(mNextFrame),
-    std::move(mCaptureSession),
-    std::move(mFramePool));
+    std::move(mCaptureItem), std::move(mCaptureSession), std::move(mFramePool));
 
   mTexture = nullptr;
 }
@@ -186,9 +183,6 @@ void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
   }
 
   auto d3d = rt->d3d();
-  if (mNextFrame) {
-    this->OnWGCFrame();
-  }
   if (!mTexture) {
     return;
   }
@@ -214,19 +208,12 @@ void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
   mNeedsRepaint = false;
 }
 
-void WGCRenderer::OnWGCFrame() {
+void WGCRenderer::OnWGCFrame(
+  winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame frame) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "WGCRenderer::OnWGCFrame()");
 
   const auto keepAlive = shared_from_this();
-
-  auto frame = mNextFrame;
-  mNextFrame = {nullptr};
-  if (!frame) {
-    activity.StopWithResult("No Frame");
-    return;
-  }
-  TraceLoggingWriteTagged(activity, "WGCRenderer::OnWGCFrame()/HaveFrame");
 
   auto wgdxSurface = frame.Surface();
   auto interopSurface = wgdxSurface.as<
@@ -307,15 +294,17 @@ void WGCRenderer::OnWGCFrame() {
 
   mDXR->mD3D11ImmediateContext->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, nullptr);
+  this->evNeedsRepaintEvent.Emit();
 }
 
 void WGCRenderer::PreOKBFrame() {
   if (!mFramePool) {
     return;
   }
-  mNextFrame = mFramePool.TryGetNextFrame();
-  if (mNextFrame) {
-    evNeedsRepaintEvent.Emit();
+
+  auto frame = mFramePool.TryGetNextFrame();
+  if (frame) {
+    this->OnWGCFrame(std::move(frame));
   }
 }
 

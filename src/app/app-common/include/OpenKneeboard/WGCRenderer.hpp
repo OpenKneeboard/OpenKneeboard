@@ -98,7 +98,7 @@ class WGCRenderer : public virtual EventReceiver,
   WGCRenderer() = delete;
 
   void PreOKBFrame();
-  void OnWGCFrame();
+  void OnWGCFrame(winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame);
 
   DisposalState mDisposal;
   winrt::apartment_context mUIThread;
@@ -116,8 +116,6 @@ class WGCRenderer : public virtual EventReceiver,
   winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
     nullptr};
   winrt::Windows::Graphics::Capture::GraphicsCaptureItem mCaptureItem {nullptr};
-  winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mNextFrame {
-    nullptr};
 
   PixelSize mCaptureSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
