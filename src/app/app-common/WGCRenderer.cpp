@@ -111,6 +111,8 @@ task<void> WGCRenderer::Init() {
     this->GetPixelFormat(),
     WGCRenderer::SwapchainLength,
     size);
+  mSwapchainDimensions
+    = {static_cast<uint32_t>(size.Width), static_cast<uint32_t>(size.Height)};
 
   mCaptureSession = mFramePool.CreateCaptureSession(item);
   mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
