@@ -120,7 +120,6 @@ class WGCRenderer : public virtual EventReceiver,
   PixelSize mCaptureSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
-  bool mNeedsRepaint {true};
 };
 
 }// namespace OpenKneeboard

@@ -204,8 +204,6 @@ void WGCRenderer::Render(RenderTarget* rt, const PixelRect& rect) {
   sb->Begin(d3d.rtv(), rt->GetDimensions());
   sb->Draw(mShaderResourceView.get(), sourceRect, rect, color);
   sb->End();
-
-  mNeedsRepaint = false;
 }
 
 void WGCRenderer::OnWGCFrame(
