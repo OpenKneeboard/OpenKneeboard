@@ -20,7 +20,6 @@
 #include <OpenKneeboard/WindowCaptureTab.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/final_release_deleter.hpp>
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
 
@@ -92,7 +91,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const nlohmann::json& jsonSettings) {
   auto settings = jsonSettings.get<Settings>();
 
-  auto ret = shared_with_final_release(
+  auto ret = std::shared_ptr<WindowCaptureTab>(
     new WindowCaptureTab(dxr, kbs, persistentID, title, settings));
   gInstances.emplace(ret.get(), ret);
   ret->TryToStartCapture();
@@ -273,6 +272,13 @@ task<void> WindowCaptureTab::DisposeAsync() noexcept {
     co_return;
   }
   gInstances.erase(this);
+  if (mDelegate) {
+    // Should be handled by PageSourceWithDelegates, but HWNDPageSource
+    // safely handles a double-dispose - so, just in case the
+    // PageSourceWithDelegates is out of sync with mDelegate
+    co_await mDelegate->DisposeAsync();
+    mDelegate.reset();
+  }
   co_await PageSourceWithDelegates::DisposeAsync();
 }
 
@@ -297,14 +303,6 @@ nlohmann::json WindowCaptureTab::GetSettings() const {
     .mSendInput = mSendInput,
     .mCaptureOptions = mCaptureOptions,
   };
-}
-
-OpenKneeboard::fire_and_forget WindowCaptureTab::final_release(
-  std::unique_ptr<WindowCaptureTab> self) {
-  if (self->mDelegate) {
-    co_await self->mDelegate->DisposeAsync();
-  }
-  co_await self->mUIThread;
 }
 
 std::unordered_map<HWND, WindowSpecification>
