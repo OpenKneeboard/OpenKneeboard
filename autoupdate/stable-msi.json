@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/225227185",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/225227185/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/225227185/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.14",
-    "id": 225227185,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/233650203",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/233650203/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/233650203/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.10.16",
+    "id": 233650203,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,20 +26,21 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84NbLGx",
-    "tag_name": "v1.10.14",
+    "node_id": "RE_kwDOGk0DR84N7Tgb",
+    "tag_name": "v1.10.16",
     "target_commitish": "master",
-    "name": "v1.10.14",
+    "name": "v1.10.16: Fixes to Window Capture on Win11 24H2",
     "draft": false,
+    "immutable": false,
     "prerelease": false,
-    "created_at": "2025-06-13T16:42:26Z",
-    "published_at": "2025-06-13T18:00:36Z",
+    "created_at": "2025-07-19T02:03:41Z",
+    "published_at": "2025-07-19T10:57:10Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/263697920",
-        "id": 263697920,
-        "node_id": "RA_kwDOGk0DR84Pt7YA",
-        "name": "OpenKneeboard-v1.10.14-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/274348018",
+        "id": 274348018,
+        "node_id": "RA_kwDOGk0DR84QWjfy",
+        "name": "OpenKneeboard-v1.10.16-DebugSymbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -64,18 +65,18 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 268622915,
-        "digest": "sha256:ef1a22c7c9b6da4e85acd4618d8a4bf0a1fcf8927f5b11408cbda7bc6cb99b63",
+        "size": 267527383,
+        "digest": "sha256:acf7db1021a324df222638f8c444fddaac192adeafcf4e5b88a0e35828f0de56",
         "download_count": 0,
-        "created_at": "2025-06-13T17:59:37Z",
-        "updated_at": "2025-06-13T17:59:49Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.14/OpenKneeboard-v1.10.14-DebugSymbols.zip"
+        "created_at": "2025-07-19T10:54:45Z",
+        "updated_at": "2025-07-19T10:55:10Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.16/OpenKneeboard-v1.10.16-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/263697954",
-        "id": 263697954,
-        "node_id": "RA_kwDOGk0DR84Pt7Yi",
-        "name": "OpenKneeboard-v1.10.14.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/274348012",
+        "id": 274348012,
+        "node_id": "RA_kwDOGk0DR84QWjfs",
+        "name": "OpenKneeboard-v1.10.16.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -100,16 +101,16 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 192487424,
-        "digest": "sha256:0995c44787b272018ec5f1ad8d54dbd5abf965f5a6c8d56e2d9066630f9a7ea6",
+        "size": 192536576,
+        "digest": "sha256:ab9a331d2b285e366b259941d69d11e4c219c48e8084f80e66731de2aad7d5a2",
         "download_count": 0,
-        "created_at": "2025-06-13T18:00:00Z",
-        "updated_at": "2025-06-13T18:00:09Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.14/OpenKneeboard-v1.10.14.msi"
+        "created_at": "2025-07-19T10:54:39Z",
+        "updated_at": "2025-07-19T10:55:00Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.16/OpenKneeboard-v1.10.16.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.10.14",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.10.14",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.10.14.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.14/OpenKneeboard-v1.10.14.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- 🦺 Several common misconfigurations in Games Settings are now prevented or corrected\r\n  - The iRacing UI/launcher is replaced with the game\r\n  - The Elite Dangerous launcher is replaced with the game\r\n  - Some common tools are automatically removed from the games list and can't be re-added; adding something that is not a game to the games list is *never* beneficial in *any* way, and can cause severe performance and reliability issues\r\n- 🐛 Fixed a memory leak when enumerating processes\r\n- 🐛 Fixed crash if OpenKneeboard is waiting for certain kinds of events, and the waiting is cancelled at the same time the event occurs\r\n- 🐛 Fixed crash if a folder page source is removed at the same time the contents of the folder is modified\r\n- 🔊 Replaced 'SteamVR' with 'OpenVR' in `renderers.txt` in debug logs\r\n- 🔊 `renderers.txt` in the debug logs now contains the current and most recent game\r\n- 🔊 added more tracing for the Lua API"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.10.16",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.10.16",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.10.16.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.10.16/OpenKneeboard-v1.10.16.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- 🐛 Fix window capture tabs being blank or not updating on Windows 11 24H2\r\n  - previous versions of Windows (including earlier versions of Windows 11) have a performance issue where Windows *constantly* says that captured windows have a new frame, even if nothing's changed. OpenKneeboard accidentally depended on this bug\r\n- 🔇Stop writing entries in the DCS World log that have turned out to be misleading to people investigating unrelated DCS startup or OpenXR issues"
   }
 ]
