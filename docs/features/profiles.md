@@ -25,9 +25,11 @@ Profiles are frequently used to:
 
 Enable support for multiple profiles in OpenKneeboard Settings -> Advanced.
 
-## Adding, renaming, or deleting profiles
+## Adding or deleting profiles
 
 Click on the profile switcher in the top left of the OpenKneeboard window, then click 'edit profiles'.
+
+Renaming is not currently supported.
 
 ## Switching profiles
 
