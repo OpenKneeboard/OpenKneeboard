@@ -16,20 +16,18 @@ If you're a developer and your OpenKneeboard-related question is not answered he
 
 ## How do I use OpenKneeboard to show content from my app?
 
-For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com]. I do not offer any direct-to-consumer services or support via email.
+For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com). I do not offer any direct-to-consumer services or support via email.
 
-You have three options:
+Developers have three options:
 - implement a custom tab type in OpenKneeboard with C++ and Direct3D 11
 - provide a file or web page, and instruct users on how to configure OpenKneeboard to access that content. OpenKneeboard will automatically reload files when they are modified.
 - provide a window, and instruct users on how to configure a Window Capture tab for your app
 
 OpenKneeboard has additional integration APIs available for [web dashboards](../api/web-dashboards.md); however, text quality will be higher for text or PDF files.
 
-Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard.
+Do not write software that changes OpenKneeboard's configuration files; it is *extremely* likely to break users' configuration when they update OpenKneeboard. Reading OpenKneeboard's configuration files is not supported; no attempt is made to minimize between changes, or to provide a configuration format that is easy to consume by third-parties. The *only* supported ways for third-party applications to interact with OpenKneeboard's configuration are via the documented APIs.
 
 OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
-
-Feel free to *read* OpenKneeboard's configuration files from your software, but keep in mind there are no attempts at providing stability.
 
 ## Why can't my window be captured?
 
@@ -58,7 +56,7 @@ If your app/framework does not support `GetClientRect()`, you can add support to
 
 ## I haven't yet built an app; how do I get content into OpenKneeboard?
 
-For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com]. I do not offer any direct-to-consumer services or support via email.
+For commercial enquiries, please [contact Fred Emmott Software Services LLC via email](mailto:fred@fredemmott.com). I do not offer any direct-to-consumer services or support via email.
 
 The best way is to implement a new tab type in C++ with Direct3D11/Direct2D/DirectWrite.
 
