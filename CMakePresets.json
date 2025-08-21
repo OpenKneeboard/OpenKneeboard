@@ -1,0 +1,38 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022"
+    },
+    {
+      "name": "debug",
+      "inherits": "default",
+      "binaryDir": "cmake-build-Debug"
+    },
+    {
+      "name": "release",
+      "inherits": "default",
+      "binaryDir": "cmake-build-RelWithDebInfo"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "debug",
+      "configuration": "Debug",
+      "jobs": 16
+    },
+    {
+      "name": "Release",
+      "configurePreset": "release",
+      "configuration": "RelWithDebInfo",
+      "jobs": 16
+    }
+  ]
+}

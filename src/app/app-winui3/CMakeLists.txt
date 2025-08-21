@@ -97,6 +97,13 @@ target_include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
+set(BUILD_TIME_MARKER_FILE "${CMAKE_CURRENT_BINARY_DIR}/openkneeboard-build-time-marker.hpp")
+add_custom_command(
+  OUTPUT "${BUILD_TIME_MARKER_FILE}"
+  COMMAND "${CMAKE_COMMAND}" -E touch "${BUILD_TIME_MARKER_FILE}"
+)
+target_sources(OpenKneeboard-App-WinUI3 PRIVATE "${BUILD_TIME_MARKER_FILE}")
+
 target_precompile_headers(
   OpenKneeboard-App-WinUI3
   PRIVATE

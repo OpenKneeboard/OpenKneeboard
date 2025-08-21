@@ -1,4 +1,10 @@
-﻿#pragma once
+﻿// CLion pulls in this header at configure-time when tyring to identify
+// the compiler, so several of the things we pull in (including
+// both winrt-generated files and ExternalProject_Add dependencies) are
+// unavailable. Check for a sentinel file to figure out whether or not we're
+// actually building
+#if __has_include("openkneeboard-build-time-marker.hpp") && !defined(OPENKNEEBOARD_PCH_H)
+#define OPENKNEEBOARD_PCH_H
 
 #define NOMINMAX 1
 
@@ -49,3 +55,5 @@
 namespace winrt::OpenKneeboardApp {
 using namespace ::OpenKneeboard::task_ns;
 }
+
+#endif

@@ -1,4 +1,15 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
+
+# cmake --build . --preset appears to require CMakePresets exists in the build directory,
+# not the source directory, as of CMake 4.0 (2025-08-21)
+#
+# While we're here, let's set the parallelism nicely :)
+if (NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+  cmake_host_system_information(RESULT CORE_COUNT QUERY NUMBER_OF_LOGICAL_CORES)
+  file(READ "${CMAKE_SOURCE_DIR}/CMakePresets.json" PRESETS)
+  string(REGEX REPLACE "\"jobs\": \\d+" "\"jobs\": ${CORE_COUNT}" PRESETS "${PRESETS}")
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakePresets.json" "${PRESETS}")
+endif ()
 
 set(PROJECT_REVERSE_DOMAIN "com.openkneeboard" CACHE STRING "Project reverse domain, e.g. com.example; used for IPC")
 set(PROJECT_OPENXR_API_LAYER_NAME "XR_APILAYER_FREDEMMOTT_OpenKneeboard" CACHE STRING "OpenXR API layer name")
