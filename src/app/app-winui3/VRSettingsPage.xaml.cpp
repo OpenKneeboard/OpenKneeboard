@@ -135,6 +135,25 @@ bool VRSettingsPage::OpenXR32Enabled() noexcept {
 OpenKneeboard::fire_and_forget VRSettingsPage::AddView(
   muxc::TabView tabView,
   IInspectable) noexcept {
+  auto settings = mKneeboard->GetViewsSettings();
+
+  if (settings.mViews.size() >= MaxViewCount) {
+    ContentDialog dialog;
+    dialog.XamlRoot(XamlRoot());
+    dialog.Title(winrt::box_value(winrt::to_hstring(_("Too many views"))));
+    dialog.DefaultButton(ContentDialogButton::Close);
+    dialog.CloseButtonText(winrt::to_hstring(_("OK")));
+    dialog.Content(box_value(to_hstring(
+      std::format(
+        "OpenKneeboard supports up to {} views; you currently have {}, so "
+        " you can't add another. You might also be limited by "
+        "your OpenXR runtime.",
+        MaxViewCount,
+        settings.mViews.size()))));
+    co_await dialog.ShowAsync();
+    co_return;
+  }
+
   auto kinds = AddViewKind().Items();
   kinds.Clear();
 
@@ -146,7 +165,6 @@ OpenKneeboard::fire_and_forget VRSettingsPage::AddView(
   std::unordered_set<winrt::guid> mirrored;
   std::unordered_map<winrt::guid, uint32_t> indices;
 
-  auto settings = mKneeboard->GetViewsSettings();
   for (const auto& view: settings.mViews) {
     const auto& vr = view.mVR;
     if (!vr.mEnabled) {
