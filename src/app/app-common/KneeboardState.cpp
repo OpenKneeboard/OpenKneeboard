@@ -158,8 +158,9 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     activity, "KneeboardState::GetViewRenderInfo()");
   std::vector<ViewRenderInfo> ret;
 
-  const size_t count = mSettings.mViews.mViews.size();
-  if (count != mViews.size()) [[unlikely]] {
+  const auto count
+    = std::min<std::size_t>(mSettings.mViews.mViews.size(), MaxViewCount);
+  if (count > mViews.size()) [[unlikely]] {
     fatal("View count mismatch");
   }
   for (size_t i = 0; i < count; ++i) {
