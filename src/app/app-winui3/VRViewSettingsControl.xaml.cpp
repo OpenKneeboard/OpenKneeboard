@@ -41,6 +41,13 @@ namespace winrt::OpenKneeboardApp::implementation {
 VRViewSettingsControl::VRViewSettingsControl() {
   this->InitializeComponent();
   mKneeboard = gKneeboard.lock();
+  AddEventListener(mKneeboard->evSettingsChangedEvent, [this]() {
+    this->EmitPropertyChangedEvent(L"TooManyViewsVisibility");
+  });
+}
+
+VRViewSettingsControl::~VRViewSettingsControl() {
+  this->RemoveAllEventListeners();
 }
 
 winrt::guid VRViewSettingsControl::ViewID() {
@@ -220,6 +227,16 @@ IInspectable VRViewSettingsControl::SelectedDefaultTab() {
   }
 
   return items.GetAt(0);
+}
+
+Visibility VRViewSettingsControl::TooManyViewsVisibility() {
+  const auto settings = mKneeboard->GetViewsSettings();
+  const auto it
+    = std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
+  if (it - settings.mViews.begin() >= MaxViewCount) {
+    return Visibility::Visible;
+  }
+  return Visibility::Collapsed;
 }
 
 OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(

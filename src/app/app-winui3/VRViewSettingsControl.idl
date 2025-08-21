@@ -12,5 +12,7 @@ namespace OpenKneeboardApp
         IInspectable SelectedKind;
 
         IInspectable SelectedDefaultTab;
+
+        Microsoft.UI.Xaml.Visibility TooManyViewsVisibility { get; };
     }
 }

@@ -37,8 +37,10 @@ using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl>,
-                               WithPropertyChangedEvent {
+                               WithPropertyChangedEvent,
+                               EventReceiver {
   VRViewSettingsControl();
+  ~VRViewSettingsControl();
 
   winrt::guid ViewID();
   void ViewID(const winrt::guid&);
@@ -53,6 +55,8 @@ struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl>,
   IInspectable SelectedDefaultTab();
   OpenKneeboard::fire_and_forget SelectedDefaultTab(
     Windows::Foundation::IInspectable);
+
+  winrt::Microsoft::UI::Xaml::Visibility TooManyViewsVisibility();
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;

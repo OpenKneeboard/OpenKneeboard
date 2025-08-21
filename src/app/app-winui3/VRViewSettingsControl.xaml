@@ -12,6 +12,19 @@
     x:DefaultBindMode="TwoWay"
     Margin="16"
     Spacing="8">
+    <StackPanel
+      Orientation="Horizontal"
+      Margin="12"
+      Spacing="8"
+      Visibility="{x:Bind TooManyViewsVisibility, Mode=OneWay}">
+      <FontIcon Glyph="&#xE814;" FontSize="40" />
+      <TextBlock
+        Text="You have more views configured than OpenKneeboard supports, so this view will never be enabled. Remove other views to make this view usable."
+        Style="{StaticResource BodyStrongTextBlockStyle}"
+        VerticalAlignment="Center"
+        HorizontalAlignment="Center"
+      />
+    </StackPanel>
     <ToggleSwitch
       OnContent="Enabled in VR"
       OffContent="Disabled in VR"
