@@ -4,15 +4,17 @@ title: Elevation
 ---
 
 # Administrator and UAC
-
 {: .no_toc }
 
 OpenKneeboard does not support running as administrator, or with User Account Control (UAC) turned off.
 
 
+## Table of Contents
+{: .no_toc, .text-delta }
+
 1. TOC
 {:toc}
-2. 
+
 ## Launchers
 
 e.g. Stream Deck or Voice Attack
