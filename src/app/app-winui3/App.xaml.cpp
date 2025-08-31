@@ -671,27 +671,47 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();
 
-  Filesystem::MigrateSettingsDirectory();
-  BackupSettings();
+  try {
+    Filesystem::MigrateSettingsDirectory();
+  } catch (const std::filesystem::filesystem_error& e) {
+    dprint.Warning(
+      "A filesystem error occurred while migrating settings: {:#010x}, {}",
+      std::bit_cast<uint32_t>(e.code().value()),
+      e.what());
+  }
+  try {
+    BackupSettings();
+  } catch (const std::filesystem::filesystem_error& e) {
+    dprint.Warning(
+      "A filesystem error occurred while backing up settings: {:#010x}, {}",
+      std::bit_cast<uint32_t>(e.code().value()),
+      e.what());
+  }
 
-  for (auto&& dir:
-       {Filesystem::GetLocalAppDataDirectory(),
-        Filesystem::GetSettingsDirectory()}) {
-    const auto warningFile = dir / "DO_NOT_PUT_YOUR_FILES_HERE-README.txt";
-    if (std::filesystem::exists(warningFile)) {
-      continue;
+  try {
+    for (auto&& dir:
+         {Filesystem::GetLocalAppDataDirectory(),
+          Filesystem::GetSettingsDirectory()}) {
+      const auto warningFile = dir / "DO_NOT_PUT_YOUR_FILES_HERE-README.txt";
+      if (std::filesystem::exists(warningFile)) {
+        continue;
+      }
+
+      std::ofstream f(warningFile, std::ios::trunc | std::ios::binary);
+      f << "Do not put any of your files here; this directory is for "
+           "OpenKneeboard's internal use, and OpenKneeboard may delete any "
+           "files you put here without warning.\n\n"
+           "You might want to use the My Documents folder ("
+        << Filesystem::GetKnownFolderPath<FOLDERID_Documents>().string()
+        << ") or a new subfolder of your user folder ("
+        << Filesystem::GetKnownFolderPath<FOLDERID_Profile>().string()
+        << ") instead." << std::endl;
     }
-
-    std::ofstream f(warningFile, std::ios::trunc | std::ios::binary);
-    f << "Do not put any of your files here; this directory is for "
-         "OpenKneeboard's internal use, and OpenKneeboard may delete any "
-         "files "
-         "you put here without warning.\n\n"
-         "You might want to use the My Documents folder ("
-      << Filesystem::GetKnownFolderPath<FOLDERID_Documents>().string()
-      << ") or a new subfolder of your user folder ("
-      << Filesystem::GetKnownFolderPath<FOLDERID_Profile>().string()
-      << ") instead." << std::endl;
+  } catch (const std::filesystem::filesystem_error& e) {
+    dprint.Warning(
+      "Error creating DO_NOT_PUT_YOUR_FILES_HERE files: {:#010x} {}",
+      std::bit_cast<uint32_t>(e.code().value()),
+      e.what());
   }
 
   ChromiumApp cefApp;

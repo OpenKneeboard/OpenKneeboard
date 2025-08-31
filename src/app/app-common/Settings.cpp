@@ -266,7 +266,7 @@ static void MigrateToViewsSettings(Settings& settings) {
 
 Settings Settings::Load(
   const winrt::guid defaultProfile,
-  const winrt::guid activeProfile) {
+  const winrt::guid activeProfile) try {
   dprint("Reading profile '{}' from disk", activeProfile);
   std::optional<Settings> parentSettings;
   Settings settings;
@@ -312,6 +312,23 @@ Settings Settings::Load(
   }
 
   return settings;
+} catch (const std::filesystem::filesystem_error& e) {
+  dprint.Warning(
+    "Filesystem error when reading settings: {:#010x} {}",
+    std::bit_cast<uint32_t>(e.code().value()),
+    e.what());
+  const auto message = std::format(
+    _("There was a filesystem error when trying to load your settings: "
+      "{:#010x} {}"),
+    std::bit_cast<uint32_t>(e.code().value()),
+    e.what());
+  const auto wideMessage = winrt::to_hstring(message);
+  MessageBoxW(
+    nullptr,
+    wideMessage.c_str(),
+    L"OpenKneeboard",
+    MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+  return Settings {};
 }
 
 }// namespace OpenKneeboard
