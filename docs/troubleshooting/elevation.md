@@ -67,7 +67,7 @@ I refuse to spend any more of my time on these issues.
 
 This was true for *some* software that was made for Windows 95 and not updated since Windows Vista. It is actively harmful for most modern Windows software.
 
-Turning UAC off or running normal user programs as Administrator has been bad advice since roughly 2010.
+Turning UAC off or running normal user programs as Administrator has been bad advice and a bad idea since roughly 2010.
 
 ## I just want to run it as Administrator once to see if it fixes things
 
