@@ -39,6 +39,7 @@
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
+#include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
@@ -246,11 +247,70 @@ static void BackupSettings() {
   }
 }
 
-static void LogSystemInformation() {
+enum class DamagingEnvironmentFlags : uint8_t {
+  None = 0,
+  Fatal = (1 << 1),
+  IsElevated = (1 << 1) | Fatal,
+  UacIsDisabled = (1 << 2) | Fatal,
+  UacWasPreviouslyDisabled = (1 << 3),
+};
+
+constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
+  return true;
+}
+
+void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
+  using enum DamagingEnvironmentFlags;
+
+  std::wstring_view problem;
+  if ((flags & IsElevated) == IsElevated) {
+    problem = _(L"OpenKneeboard is running elevated");
+  } else if ((flags & UacIsDisabled) == UacIsDisabled) {
+    problem = _(L"User Account Control (UAC) is disabled");
+  } else if ((flags & UacWasPreviouslyDisabled) == UacWasPreviouslyDisabled) {
+    MessageBoxW(
+      nullptr,
+      _(L"User Account Control (UAC) was previously disabled on this "
+        L"system.\n\n"
+        L"This can cause problems with your VR drivers, tablet drivers, games, "
+        L"OpenKneeboard, and other software that can only be fixed by "
+        L"reinstalling Windows.\n\n"
+        L"DO NOT REPORT OR ASK FOR HELP WITH ANY ISSUES YOU ENCOUNTER.\n\n"
+        L"To stop this message appearing, reinstall Windows. "
+        L"This check will not be removed from OpenKneeboard."),
+      _(L"OpenKneeboard"),
+      MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
+    return;
+  } else {
+    dprint.Error(
+      "Damaging environment error, but no recognized flags: {:#x}",
+      std::to_underlying(flags));
+    return;
+  }
+
+  const auto message = std::format(
+    _(L"{}; this is not supported.\n\n"
+      L"Turning off User Account Control or running software as administrator "
+      L"that is not intended to be ran as administrator can cause problems "
+      L"that can only be fixed by reinstalling Windows.\n\n"
+      L"This requirement will not be removed."),
+    problem);
+  dprint.Warning(L"Aborting with environment error: {}", problem);
+  MessageBoxW(
+    nullptr,
+    message.c_str(),
+    L"OpenKneeboard",
+    MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+}
+
+[[nodiscard]]
+static DamagingEnvironmentFlags LogSystemInformation() {
   dprint("{} {}", ProjectReverseDomainA, Version::ReleaseName);
   dprint(L"Full path: {}", GetFullPathForCurrentExecutable());
   dprint(L"Command line: {}", GetCommandLineW());
   dprint("----------");
+
+  DamagingEnvironmentFlags ret = DamagingEnvironmentFlags::None;
 
   {
     OSVERSIONINFOEXA osVersion {sizeof(OSVERSIONINFOEXA)};
@@ -301,20 +361,8 @@ static void LogSystemInformation() {
       "  {}: {} {}", label, elevated ? "⚠️" : "✅", elevated ? "yes" : "no");
   }
 
-  bool shownElevationWarning = false;
   if (IsElevated()) {
-    dprint.Warning("Showing self elevation warning");
-    MessageBoxW(
-      nullptr,
-      L"OpenKneeboard is running elevated; this is very likely to cause "
-      L"problems.\n\nIt is STRONGLY recommended to run both OpenKneeboard and "
-      L"the games with normal permissions.\n\nRunning OpenKneeboard as "
-      L"administrator is unsupported;\n"
-      L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS.",
-      L"OpenKneeboard",
-      MB_OK | MB_ICONWARNING);
-    dprint("Self elevation warning closed");
-    shownElevationWarning = true;
+    ret |= DamagingEnvironmentFlags::IsElevated;
   }
 
   // Log UAC settings because lower values aren't just "do not prompt" - they
@@ -331,7 +379,6 @@ static void LogSystemInformation() {
     const auto cpba
       = wil::reg::try_get_value_dword(hkey.get(), L"ConsentPromptBehaviorAdmin")
           .value_or(0);
-    bool badUAC = false;
     for (auto&& [name, value, isValid]: {
            std::tuple {"EnableLUA", enableLua, enableLua == 1},
            std::tuple {
@@ -341,29 +388,25 @@ static void LogSystemInformation() {
         dprint("  UAC {0}: ✅ {1:#010x} ({1})", name, value);
       } else {
         dprint("  UAC {0}: ⚠️ {1:#010x} ({1})", name, value);
-        badUAC = true;
+        ret |= DamagingEnvironmentFlags::UacIsDisabled;
+        if (const auto hr = wil::reg::set_value_dword_nothrow(
+              HKEY_LOCAL_MACHINE,
+              Config::RegistrySubKey,
+              L"UacWasPreviouslyDisabled",
+              1);
+            FAILED(hr)) {
+          dprint.Warning(
+            "Failed to set UAC flag in registry: {:#010x}",
+            std::bit_cast<uint32_t>(hr));
+        }
       }
     }
-
-    if (badUAC && !shownElevationWarning) {
-      dprint.Warning("Showing UAC warning");
-      shownElevationWarning = true;
-      MessageBoxW(
-        nullptr,
-        L"Your Windows User Account Control (UAC) settings effectively "
-        L"run programs as administrator even if you don't ask them to.\n\n"
-        L"It is STRONGLY recommended to run both OpenKneeboard and "
-        L"the games with normal permissions.\n\n"
-        L"Fix this by changing UAC to any option EXCEPT for the lowest "
-        L"setting, then rebooting.\n\n"
-        L"This configuration is unsupported; "
-        L"DO NOT ASK FOR HELP AND DO NOT REPORT ANY BUGS.",
-        L"OpenKneeboard",
-        MB_OK | MB_ICONWARNING);
-      dprint("UAC warning dismissed");
-    }
-  } else {
-    dprint("  Failed to read UAC settings.");
+  }
+  if (wil::reg::try_get_value_dword(
+        HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"UacWasPreviouslyDisabled")
+        .value_or(0)) {
+    dprint.Warning("UAC was previously disabled.");
+    ret |= DamagingEnvironmentFlags::UacWasPreviouslyDisabled;
   }
 
   CPINFOEXW codePageInfo;
@@ -399,6 +442,7 @@ static void LogSystemInformation() {
   GetPhysicallyInstalledSystemMemory(&totalMemoryKB);
   dprint("  Total RAM: {}mb", totalMemoryKB / 1024);
   dprint("----------");
+  return ret;
 }
 
 static void SetRegistryValues() {
@@ -612,7 +656,15 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   // Weak
   gTroubleshootingStore = troubleshootingStore;
 
-  LogSystemInformation();
+  if (const auto flags = LogSystemInformation();
+      flags != DamagingEnvironmentFlags::None) {
+    ShowDamagingEnvironmentError(flags);
+    if (
+      (flags & DamagingEnvironmentFlags::Fatal)
+      == DamagingEnvironmentFlags::Fatal) {
+      return EXIT_FAILURE;
+    }
+  }
   LogInstallationInformation();
   SetRegistryValues();
 
