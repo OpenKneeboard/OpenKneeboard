@@ -75,11 +75,12 @@ This doesn't fix problems; instead, it can cause problems that can only reasonab
 
 This is true for almost all modern Windows software; there are very few exceptions.
 
-## I turned UAC back on, but I still get a warning. How do I get rid of it?
+## I turned UAC back on, but I still get a warning. How do I stop getting these warnings?
+
+Reinstall Windows.
 
 Turning UAC off frequently causes problems that are only reasonably fixed by reinstalling Windows.
 
-To remove this popup, reinstall Windows.
 
 ## Will you remove the requirements or messages?
 
