@@ -88,7 +88,7 @@ Turning UAC off frequently causes problems that are only reasonably fixed by rei
 
 No.
 
-## Please reconsider.
+## Will you reconsider?
 
 No.
 
