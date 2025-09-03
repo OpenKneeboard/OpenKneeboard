@@ -54,16 +54,16 @@ The only way to resolve these issues is *not* to run OpenKneeboard as administra
 
 ## Why can't I choose to run it as administrator anyway?
 
-I tried very obtrusive warnings, which told people:
+I tried very obtrusive warnings - every time the OpenKneeboard started - which told people:
 
 - their configuration is unsupported
 - their configuration has known problems
 - not to ask for help
 - not to report any issues
 
-These messages were widely ignored, and in some cases, led to users lying about their configuration, wasting all of our time.
+These messages were widely ignored, and in some cases, led to users lying about their configuration, wasting all of our time. The problems were usually actually in other software that people use in combination with OpenKneeboard — e.g. games, VR drivers, and tablet drivers — but people considered them all to be OpenKneeboard issues.
 
-I refuse to spend any more of my time on these issues.
+I refuse to spend any more of my time on unsupported configurations, and softer approaches to reduce this failed.
 
 ## I heard things work better as Administrator or with UAC off
 
