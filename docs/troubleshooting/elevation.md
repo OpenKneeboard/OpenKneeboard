@@ -41,7 +41,7 @@ OpenKneeboard allows any setting except the bottom value; however, if you have *
 
 - there are [known crash-causing bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/7690)
 - running software as administrator - or worse, with UAC turned off - can cause problems with other applications, including the operating system itself, which can only be fixed by reinstalling Windows
-    - among other problems, it can change permissions so that in the future, you *must* run as OpenKneeboard
+    - among other problems, it can change permissions so that in the future, you *must* run as Administrator
     - when combined with the known-crash-causing-bugs that can only be fixed by Microsoft, this gets you in a situation where you "must" run as Administrator, but you also "must not". The only way to avoid these issues are to never run as Administrator
 - even if there weren't these concrete issues, I am not willing to spend any more of my free time looking into issues that are caused by a configuration that has been discouraged since 2007, and is a bad idea.
 
