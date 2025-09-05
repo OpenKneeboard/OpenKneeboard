@@ -822,11 +822,25 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
   return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 
+static std::string_view BoundedStringView(
+  char const* p,
+  const std::size_t maxLength) {
+  return {p, strnlen_s(p, maxLength)};
+}
+
 XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   const XrInstanceCreateInfo* info,
   const struct XrApiLayerCreateInfo* layerInfo,
   XrInstance* instance) {
-  dprint("{}", __FUNCTION__);
+  dprint(
+    "{} - Application `{}` (v{}), engine `{}` (v{})",
+    __FUNCTION__,
+    BoundedStringView(
+      info->applicationInfo.applicationName, XR_MAX_APPLICATION_NAME_SIZE),
+    info->applicationInfo.applicationVersion,
+    BoundedStringView(
+      info->applicationInfo.engineName, XR_MAX_ENGINE_NAME_SIZE),
+    info->applicationInfo.engineVersion);
   // TODO: check version fields etc in layerInfo
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
