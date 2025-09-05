@@ -4,7 +4,7 @@ nav_order: 9998
 
 ## Getting Help
 
-First, [check the troubleshooting guides](troubleshooting/).
+First, [check the troubleshooting guides](../troubleshooting/).
 
 I make this for my own use, and I share this in the hope others find it useful; I'm not able to commit to support, bug fixes, or feature development.
 
