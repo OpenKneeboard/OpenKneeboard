@@ -39,6 +39,7 @@ OpenKneeboard allows any setting except the bottom value; however, if you have *
 
 ## Why is this a problem?
 
+- first and foremost, it is a **giant security risk**, malware that inevitably infects your computer can run without warning with elevated privileges doing who knows what to your system and others you interact with
 - there are [known crash-causing bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/7690)
 - running software as administrator - or worse, with UAC turned off - can cause problems with other applications, including the operating system itself, which can only be fixed by reinstalling Windows
     - among other problems, it can change permissions so that in the future, you *must* run as Administrator
