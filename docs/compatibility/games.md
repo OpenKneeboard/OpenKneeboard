@@ -31,23 +31,30 @@ Legacy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 
 ## Common Games
 
-| Game | Non-VR | Native OpenXR | Legacy Oculus SDK (OVR) | Legacy SteamVR API (OpenVR) |
-|------|--------|---------------|------------|--------|
-| DCS World | ✅ | ✅ | ✅ | ✅ |
-| Falcon BMS | ✅ | n/a | n/a | ✅ |
-| iRacing | ❌ | ✅ | ❌ | ✅ |
-| MSFS 2020 - D3D11 | ✅ | ✅ | n/a | ✅ |
-| MSFS 2020 - D3D12 | ❌ | 🧪 | n/a | ✅ |
-| MSFS 2024 | ❌ | 🧪 | n/a | ✅ |
-| BeamNG.drive | untested | ❌  | n/a | ✅ |
+| Game              | Non-VR   | Native OpenXR | Legacy Oculus SDK (OVR) | Legacy SteamVR API (OpenVR) |
+|-------------------|----------|---------------|-------------------------|-----------------------------|
+| DCS World         | ✅        | ✅             | ✅                       | ✅                           |
+| Falcon BMS        | ✅        | n/a           | n/a                     | ✅                           |
+| iRacing           | ❌        | ✅             | ❌                       | ✅                           |
+| MSFS 2020 - D3D11 | ✅        | ✅             | n/a                     | ✅                           |
+| MSFS 2020 - D3D12 | ❌        | 🧪            | n/a                     | ✅                           |
+| MSFS 2024         | ❌        | 🧪            | n/a                     | ✅                           |
+| BeamNG.drive      | untested | ❌             | n/a                     | ✅                           |
+| Elite Dangerous  | ❌ | n/a | n/a | ✅ |
 
 **BeamNG.drive:** as of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
 
 **iRacing:** support for other APIs is blocked by the anti-cheat software.
 
+**Elite Dangerous:** the game does not natively support OpenXR. If you are using OpenComposite, [see below](#OpenComposite) for details.
+
 ## OpenComposite
 
-OpenKneeboard is not tested with OpenComposite, and issues will not be investigated.
+OpenKneeboard usually works with OpenComposite, however, no help is available when using OpenComposite with *any game*, and any issues reported will be closed/ignored.
+
+For assistance when using OpenComposite, try the support channels for OpenComposite itself, or community resources for the game, such as the game's Discord, subreddit, or forum.
+
+Usually, problems are caused by OpenComposite not being installed or configured correctly.
 
 ## Advice
 
