@@ -23,10 +23,11 @@ Huion and Wacom are the most commonly used tablet manufacturers for OpenKneeboar
 
 OpenKneeboard *should* work with any WinTab or OpenTabletDriver-compatible tablet, however, as of 2024-04-21, most manufacturers (including Wacom) have limitations or bugs in their WinTab drivers which prevent their use with OpenKneeboard.
 
-You have a choice between "WinTab Standard", "WinTab Invasive", and "OpenTabletDriver"
+You have a choice between "Standard" WinTab, "Invasive" WinTab, and "OpenTabletDriver"
 - OpenTabletDriver is *strongly* recommended
 - WinTab of both forms is legacy-only; no support is available, and issues won't be investigated
-- "Invasive" mode may be needed for some buggy drivers, and will be removed in a future version of OpenKneeboard
+- "Invasive" WinTab mode may be needed for some buggy drivers, and *will* be removed in a future version of OpenKneeboard
+- "Standard" WinTab mode is *likely* to be removed in a future version of OpenKneeboard, due to driver bugs frequently causing crashes
 
 If you are currently using "Invasive" WinTab:
 - try OpenTabletDriver instead
