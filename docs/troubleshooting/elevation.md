@@ -53,9 +53,11 @@ The most common issue that running as administrator 'fixes' is that the program 
 
 The only way to resolve these issues is *not* to run OpenKneeboard as administrator. **If OpenKneeboard says `[Administrator]` but you are not intentionally running *anything* as administrator**, check out the [User Account Control](#user-account-control) section.
 
-## Why can't I choose to run it as administrator anyway?
+## Why can't I choose to run it as Administrator anyway?
 
-I tried very obtrusive warnings - every time the OpenKneeboard started - which told people:
+Problems caused by unnecessarily running OpenKneeboard or other related software as administrator or with UAC off have been the most common cause of issues and support requests for the entirety of OpenKneeboard's history.
+
+I tried very obtrusive warnings - every time that OpenKneeboard started - which told people:
 
 - their configuration is unsupported
 - their configuration has known problems
@@ -84,7 +86,6 @@ Reinstall Windows.
 
 Turning UAC off frequently causes problems that are only reasonably fixed by reinstalling Windows.
 
-
 ## Will you remove the requirements or messages?
 
 No.
@@ -93,3 +94,10 @@ No.
 
 No.
 
+## I can work around this by ...
+
+Probably, but if you encounter any problems, don't report them, don't ask for help - assume that any problems are caused by your configuration, because historically, they probably are.
+
+Also, please don't share your approach. Running as Administrator or with UAC off is a known and easily avoidable cause of problems. If you remove my ability to block unsupported configurations, my only remaining way to avoid wasting my time is to stop providing support to anyone.
+
+Don't be the person responsible for making OpenKneeboard unsupported.
