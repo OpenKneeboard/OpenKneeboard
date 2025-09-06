@@ -19,6 +19,8 @@ OpenTabletDriver is *STRONGLY* recommended; Huion's driver is only still support
 
 OpenTabletDriver is *STRONGLY* recommended; Huion's driver is only still supported by OpenKneeboard in case you need it for other software.
 
+If you choose to use Huion's drivers, **no help is available** for tablet issues when using OpenKneeboard.
+
 To use Huion's drivers, you need to enable the tablet by:
 
 1. Open OpenKneeboard's settings page (bottom left)
