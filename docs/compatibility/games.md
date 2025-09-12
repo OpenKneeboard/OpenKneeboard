@@ -40,13 +40,21 @@ Legacy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 | MSFS 2020 - D3D12 | ❌        | 🧪            | n/a                     | ✅                           |
 | MSFS 2024         | ❌        | 🧪            | n/a                     | ✅                           |
 | BeamNG.drive      | untested | ❌             | n/a                     | ✅                           |
-| Elite Dangerous  | ❌ | n/a | n/a | ✅ |
+| Elite Dangerous  | ❌ | n/a | ❌ | ✅ |
 
-**BeamNG.drive:** as of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
+### BeamNG.drive
 
-**iRacing:** support for other APIs is blocked by the anti-cheat software.
+As of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
 
-**Elite Dangerous:** the game does not natively support OpenXR. If you are using OpenComposite, [see below](#OpenComposite) for details.
+### iRacing
+
+Support for other APIs is blocked by the anti-cheat software.
+
+### Elite Dangerous
+
+- Support for other APIs is blocked by the anti-cheat software.
+- The game does not natively support OpenXR.
+- The game is reported to work with OpenKneeboard via OpenComposite, however [see below](#OpenComposite).
 
 ## OpenComposite
 
