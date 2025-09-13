@@ -40,14 +40,13 @@ OpenKneeboard allows any setting except the bottom value; however, if you have *
 ## Why is this a problem?
 
 - there are [known crash-causing bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/7690)
-- running software as administrator - or worse, with UAC turned off - can cause problems with other applications, including the operating system itself, which can only be fixed by reinstalling Windows
+- running software as administrator - or worse, with UAC turned off - can cause problems with other applications, including the operating system itself, which can onlyreasonably  be fixed by reinstalling Windows
     - among other problems, it can change permissions so that in the future, you *must* run as Administrator
     - when combined with the known-crash-causing-bugs that can only be fixed by Microsoft, this gets you in a situation where you "must" run as Administrator, but you also "must not". The only way to avoid these issues are to never run as Administrator
-- independent of OpenKneeboard, it's simply a giant security risk, malware that inevitably infects your computer can run without warning with elevated privileges doing who knows what to your system and others you interact with, being it a shared file via discord or by simply joining a multiplayer session you are putting others at risk. Especially in multiplayer games like (but not limited to) DCS where missions embed scripts that run on your computer which you have no control over and could cause all sorts of damage when given permission, which it has when UAC is disabled.
+- independent of OpenKneeboard, it's simply a giant security risk, especially if you play multiplayer games where servers can provide code that runs on your computer (e.g. as part of 'custom missions')
 - even if there weren't these concrete issues, I am not willing to spend any more of my free time looking into issues that are caused by a configuration that has been discouraged since 2007, and is a bad idea.
 
-**This is not specific to OpenKneeboard** - on modern Windows, turning off UAC
-running any application as Administrator that is not intended to be ran as administrator is more likely to cause problems than fix them.
+**This is not specific to OpenKneeboard** - on modern Windows, turning off UAC or running any application as Administrator that is not intended to be ran as administrator is more likely to cause problems than fix them.
 
 The most common issue that running as administrator 'fixes' is that the program was previously ran as administrator.
 
