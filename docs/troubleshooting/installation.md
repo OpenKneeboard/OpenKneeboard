@@ -38,3 +38,15 @@ If you're having trouble using the MSI on a supported version of Windows with th
 - Try [Microsoft's documentation for these issues](https://support.microsoft.com/en-us/topic/how-to-troubleshoot-windows-installer-errors-dc2f66aa-2ae2-1e61-6104-b8166628fbde)
 - [`DISM` and `sfc`](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e)
 - Unfortunately, if these don't resolve these issue, you may need to reinstall Windows; these problems are a problem with a Windows component, not OpenKneeboard
+
+## Unsupported alternative
+
+You can use tools like 7-zip to extract the MSI.
+
+- No help/support is available if you do this
+- Check for and remove any old versions in add/remove programs first
+- Check for and remove any old versions in my [OpenXR API Layers tool](https://github.com/fredemmott/OpenXR-API-Layers-GUI/releases/latest) first
+- You will need to turn on OpenXR support in Settings -> VR
+- You are likely to encounter issues with some applications/games from the Microsoft Store, including:
+  - OpenXR Tools for Windows Mixed Reality
+  - some editions of Microsoft Flight Simulator (2020)
