@@ -43,6 +43,7 @@ OpenKneeboard allows any setting except the bottom value; however, if you have *
 - running software as administrator - or worse, with UAC turned off - can cause problems with other applications, including the operating system itself, which can onlyreasonably  be fixed by reinstalling Windows
     - among other problems, it can change permissions so that in the future, you *must* run as Administrator
     - when combined with the known-crash-causing-bugs that can only be fixed by Microsoft, this gets you in a situation where you "must" run as Administrator, but you also "must not". The only way to avoid these issues are to never run as Administrator
+- because of its need to communicate with multiple other processes (IPC), OpenKneeboard is particularly sensitive to the kinds of issues that running as Administrator or with UAC off can cause. Among other things, this includes the game, VR runtime, and tablet drivers. Many of these are not tested or designed to work as Administrator or with UAC off.
 - independent of OpenKneeboard, it's simply a giant security risk, especially if you play multiplayer games where servers can provide code that runs on your computer (e.g. as part of 'custom missions')
 - even if there weren't these concrete issues, I am not willing to spend any more of my free time looking into issues that are caused by a configuration that has been discouraged since 2007, and is a bad idea.
 
