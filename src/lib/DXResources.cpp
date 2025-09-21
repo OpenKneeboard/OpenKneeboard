@@ -27,6 +27,11 @@
 #include <Windows.h>
 #include <winternl.h>
 
+#include <winrt/base.h>
+
+#include <expected>
+#include <ranges>
+
 #include <d3dkmthk.h>
 #include <dxgi1_6.h>
 
@@ -45,6 +50,58 @@ struct D2DResources::Locks {
   std::optional<DrawInfo> mCurrentDraw;
 };
 
+// Usually manufacturer/model
+static std::
+  expected<std::unordered_map<std::wstring, std::vector<std::wstring>>, HRESULT>
+  GetMonitorFriendlyNames() {
+  std::unordered_map<std::wstring, std::vector<std::wstring>> ret;
+  UINT32 pathCount {};
+  UINT32 modeCount {};
+  if (const auto hr = GetDisplayConfigBufferSizes(
+        QDC_ONLY_ACTIVE_PATHS, &pathCount, &modeCount);
+      FAILED(hr)) {
+    return std::unexpected(hr);
+  }
+  std::vector<DISPLAYCONFIG_PATH_INFO> paths(pathCount);
+  std::vector<DISPLAYCONFIG_MODE_INFO> modes(modeCount);
+  if (const auto hr = QueryDisplayConfig(
+        QDC_ONLY_ACTIVE_PATHS,
+        &pathCount,
+        paths.data(),
+        &modeCount,
+        modes.data(),
+        nullptr);
+      FAILED(hr)) {
+    return std::unexpected(hr);
+  }
+
+  for (auto&& path: paths) {
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME source {.header =
+      DISPLAYCONFIG_DEVICE_INFO_HEADER {
+        .type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+        .size = sizeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME),
+        .adapterId = path.sourceInfo.adapterId,
+        .id = path.sourceInfo.id,
+      },
+    };
+    if (FAILED(DisplayConfigGetDeviceInfo(&source.header))) {
+      continue;
+    }
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target {.header = DISPLAYCONFIG_DEVICE_INFO_HEADER {
+      .type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+      .size = sizeof(DISPLAYCONFIG_TARGET_DEVICE_NAME),
+      .adapterId = path.targetInfo.adapterId,
+      .id = path.targetInfo.id,
+    },};
+    if (FAILED(DisplayConfigGetDeviceInfo(&target.header))) {
+      continue;
+    }
+    ret[source.viewGdiDeviceName].emplace_back(
+      target.monitorFriendlyDeviceName);
+  }
+  return ret;
+}
+
 D3D11Resources::D3D11Resources() {
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
   auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
@@ -58,27 +115,60 @@ D3D11Resources::D3D11Resources() {
     CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(mDXGIFactory.put())));
 
   winrt::com_ptr<IDXGIAdapter4> adapterIt;
-  for (unsigned int i = 0;
-       mDXGIFactory->EnumAdapterByGpuPreference(
-         i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapterIt.put()))
+  for (unsigned int adapterIndex = 0; mDXGIFactory->EnumAdapterByGpuPreference(
+                                        adapterIndex,
+                                        DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                                        IID_PPV_ARGS(adapterIt.put()))
        == S_OK;
-       ++i) {
-    const scope_exit releaseIt([&]() { adapterIt = {nullptr}; });
+       ++adapterIndex, adapterIt = nullptr) {
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
     dprint(
       L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb) {}",
-      i,
+      adapterIndex,
       std::bit_cast<uint64_t>(desc.AdapterLuid),
       desc.VendorId,
       desc.DeviceId,
       desc.Description,
       desc.DedicatedVideoMemory / (1024 * 1024),
       (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
-    if (i == 0) {
+    if (adapterIndex == 0) {
       mDXGIAdapter = adapterIt;
       static_assert(sizeof(uint64_t) == sizeof(desc.AdapterLuid));
       mAdapterLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
+    }
+
+    const auto displayNames = GetMonitorFriendlyNames().value_or({});
+
+    winrt::com_ptr<IDXGIOutput> outputIt;
+    for (UINT outputIndex = 0;
+         SUCCEEDED(adapterIt->EnumOutputs(outputIndex, outputIt.put()));
+         ++outputIndex, outputIt = nullptr) {
+      const auto output = outputIt.as<IDXGIOutput2>();
+      DXGI_OUTPUT_DESC outputDesc {};
+      output->GetDesc(&outputDesc);
+      const auto nameIt = displayNames.find(outputDesc.DeviceName);
+      const auto monitorNames
+        = (nameIt != displayNames.end() && !nameIt->second.empty())
+        ? std::ranges::to<std::wstring>(std::views::join_with(
+            displayNames.at(outputDesc.DeviceName), L" + "))
+        : L"UNNAMED";
+      dprint(
+        L"    Output {} '{}' ('{}'): ({}, {}) -> ({}, {}) ({}x{}) - {}, "
+        L"{} hardware-accelerated overlays",
+        outputIndex,
+        outputDesc.DeviceName,
+        monitorNames,
+        outputDesc.DesktopCoordinates.left,
+        outputDesc.DesktopCoordinates.top,
+        outputDesc.DesktopCoordinates.right,
+        outputDesc.DesktopCoordinates.bottom,
+        outputDesc.DesktopCoordinates.right
+          - outputDesc.DesktopCoordinates.left,
+        outputDesc.DesktopCoordinates.bottom
+          - outputDesc.DesktopCoordinates.top,
+        outputDesc.AttachedToDesktop ? L"attached" : L"NOT attached",
+        output->SupportsOverlays() ? L"supports" : L"DOES NOT support");
     }
 
     D3DKMT_OPENADAPTERFROMLUID kmtAdapter {.AdapterLuid = desc.AdapterLuid};
@@ -114,7 +204,6 @@ D3D11Resources::D3D11Resources() {
           "    HAGS: driver does not support WDDM 2.9 or 2.7 capabilities "
           "queries");
       }
-      continue;
     }
 
     switch (caps.HwSchSupportState) {
@@ -135,24 +224,7 @@ D3D11Resources::D3D11Resources() {
         break;
     }
   }
-  DISPLAY_DEVICEW displayDevice {.cb = sizeof(DISPLAY_DEVICEW)};
-  for (DWORD i = 0; EnumDisplayDevicesW(nullptr, i, &displayDevice, 0); ++i) {
-    if (
-      (displayDevice.StateFlags & DISPLAY_DEVICE_ACTIVE)
-      != DISPLAY_DEVICE_ACTIVE) {
-      continue;
-    }
-    DEVMODEW deviceMode {.dmSize = sizeof(DEVMODEW)};
-    EnumDisplaySettingsW(
-      displayDevice.DeviceName, ENUM_CURRENT_SETTINGS, &deviceMode);
-    dprint(
-      L"  Monitor {} ('{}'): {}x{} @ {}hz",
-      i,
-      displayDevice.DeviceName,
-      deviceMode.dmPelsWidth,
-      deviceMode.dmPelsHeight,
-      deviceMode.dmDisplayFrequency);
-  }
+
   dprint("----------");
 
   winrt::com_ptr<ID3D11Device> d3d;
