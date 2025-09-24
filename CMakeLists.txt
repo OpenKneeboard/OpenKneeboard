@@ -254,7 +254,6 @@ add_subdirectory("src")
 set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT OpenKneeboard-App-WinUI3)
 
 ok_add_license_file(LICENSE LICENSE.txt)
-ok_add_license_file(gpl-2.0.txt gpl-2.0.txt)
 
 add_subdirectory(OpenKneeboard-Installer)
 
