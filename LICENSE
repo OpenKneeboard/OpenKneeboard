@@ -18,7 +18,7 @@ This software is **NOT** licensed under the GPL.
 The intent of these modifications is to:
 
 - prevent technical issues when both the original work and derived works are installed on
-  a user's system
+  a user's system (e.g. conflicting GUIDs, OpenXR API layer IDs)
 - prevent technical issues when a user uses a derived work then reverts back to the
   original work
 - make it so that developers (including OpenKneeboard developers and third-parties, such
@@ -26,10 +26,30 @@ The intent of these modifications is to:
   unambiguously identify which software is present
 - make it so users can clearly identify what software they are using
 
-These modifications do not apply to source redistributions, or to binaries that you do not make
-available publically.
+These modifications do not apply to:
+
+- source redistributions, whether modified or unmodified
+- binaries that you make but do not distribute
 
 For details, see the full license text.
+
+----------------------------------------------------------------------
+
+DISTRIBUTION EXCEPTION
+
+ In addition to the permissions in the OpenKneeboard Public License,
+ the authors give you permission to distribute unmodified binary releases
+ of OpenKneeboard that are published and signed by Frederick Emmott.
+
+ The OpenKneeboard Public License restrictions do apply in other respects; for
+ example, they cover modification of the software, and distribution when
+ modified or linked with other libraries into a combined executable.
+
+ Note that people who make modified versions of OpenKneeboard are not obligated
+ to grant this special exception for their modified versions; it is their choice
+ whether to do so. The OpenKneeboard Public License gives permission to release
+ a modified version without this exception; this exception also makes it possible
+ to release a modified version which carries forward this exception.
 
 ----------------------------------------------------------------------
 
@@ -44,15 +64,15 @@ LINKING EXCEPTION
  - The Windows App SDK, as published by Microsoft Corporation
  - Chromium Embedded Framework, as published by Marshall Greenblatt
 
-The OpenKneeboard Public License restrictions do apply in other respects; for
-example, they cover modification of the software, and distribution when
-modified or linked with other libraries into a combined executable.
+ The OpenKneeboard Public License restrictions do apply in other respects; for
+ example, they cover modification of the software, and distribution when
+ modified or linked with other libraries into a combined executable.
 
-Note that people who make modified versions of OpenKneeboard are not obligated
-to grant this special exception for their modified versions; it is their choice
-whether to do so. The OpenKneeboard Public License gives permission to release
-a modified version without this exception; this exception also makes it possible
-to release a modified version which carries forward this exception.
+ Note that people who make modified versions of OpenKneeboard are not obligated
+ to grant this special exception for their modified versions; it is their choice
+ whether to do so. The OpenKneeboard Public License gives permission to release
+ a modified version without this exception; this exception also makes it possible
+ to release a modified version which carries forward this exception.
 
 ----------------------------------------------------------------------
 
