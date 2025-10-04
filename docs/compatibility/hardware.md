@@ -39,7 +39,8 @@ Any other DirectInput game controller should be supported; this includes the vas
 
 Graphics tablets are supported, *but not required*; OpenKneeboard supports most graphics tablets; these are generally marketed to artists. **Phones and tablet computers such as an iPad, Microsoft Surface, or similar are a different kind of device and not supported.**
 
-- Wacom tablets seem to have the most trouble-free drivers; the small Intuos S is the most popular
-- Huion tablets are also popular and well-tested, especially the H640P; the drivers do have noteable issues leading to more complicated setup instructions
+[OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) is *STRONGLY* recommended instead of your tablet manufacturer's drivers; as of 2025-10-04, I am not aware of any manufacturers with reliable and full-featured drivers; use OpenTabletDriver instead.
 
-[OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) is *STRONGLY* recommended instead of your tablet manufacturer's drivers.
+- The Wacom Intuos S is a good size, with buttons that are easy to find in VR
+- The Huion H640P is also a popular choice, and often cheaper
+- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used
