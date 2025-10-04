@@ -33,7 +33,6 @@ Most remote controls are straightforward:
 - `OpenKneeboard-RemoteControl-DISABLE_TINT.exe`: disable the tint
 - `OpenKneeboard-RemoteControl-TOGGLE_TINT.exe`: enable the tint if disabled, disable it if enabled
 - `OpenKneeboard-RemoteControl-RECENTER_VR.exe`: tell OpenKneeboard to recenter in virtual reality
-- `OpenKneeboard-RemoteControl-RELOAD_CURRENT_TAB.exe`: reload the current tab, discarding any dynamic content, notes, or drawings etc
 - `OpenKneeboard-RemoteControl-SWAP_FIRST_TWO_VIEWS.exe`: when two kneeboards are enabled, switch active/inactive or left/right
 - `OpenKneeboard-RemoteControl-TOGGLE_FORCE_ZOOM.exe`: in VR mode, toggle 'always zoom' on or off; if off, by default, OpenKneeboard will enlarge the kneeboard when you're looking directly at it.
 - `OpenKneeboard-RemoteControl-HIDE.exe`: hide all views

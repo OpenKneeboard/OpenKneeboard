@@ -61,7 +61,7 @@ The value is one of:
 - `TOGGLE_TINT`
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
-- `RELOAD_CURRENT_TAB` - *use with caution: this removes all notes or other interaction, and there is no undo for this function*
+
 
 **WARNING**: like changing profiles in the app, or via a remote control, changing profiles via the API will discard all of the user's notes, bookmarks, and all other state, e.g. the current page for each tab, DCS radio history, etc.
 

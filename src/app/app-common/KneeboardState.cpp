@@ -348,7 +348,6 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
     case UserAction::PREVIOUS_BOOKMARK:
     case UserAction::NEXT_BOOKMARK:
     case UserAction::TOGGLE_BOOKMARK:
-    case UserAction::RELOAD_CURRENT_TAB:
       co_await GetActiveViewForGlobalInput()->PostUserAction(action);
       co_return;
     case UserAction::PREVIOUS_PROFILE:

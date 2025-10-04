@@ -483,7 +483,6 @@ task<void> KneeboardView::PostUserAction(UserAction action) {
     case UserAction::NEXT_PAGE:
     case UserAction::TOGGLE_BOOKMARK:
     case UserAction::PREVIOUS_PAGE:
-    case UserAction::RELOAD_CURRENT_TAB:
       if (
         auto handler = UserActionHandler::Create(
           mKneeboard, shared_from_this(), this->GetCurrentTabView(), action)) {
