@@ -119,7 +119,7 @@ jobs:
       - name: Create draft release
         id: create-release
         if: github.ref_type == 'tag' && matrix.config != 'Debug'
-        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836
+        uses: softprops/action-gh-release@62c96d0c4e8a889135c1f3a25910db8dbe0e85f7
         with:
           draft: true
           body_path: ${{steps.release-notes.outputs.PATH}}
