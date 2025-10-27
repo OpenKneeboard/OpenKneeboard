@@ -63,7 +63,7 @@ jobs:
           echo "::endgroup::"
       - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: OpenKneeboard-GHA${{github.run_number}}-DebugSymbols
           path: build/out/${{matrix.config}}/pdb
@@ -77,7 +77,7 @@ jobs:
             --output "${{github.workspace}}/build/out/${{matrix.config}}/installer-generator"
       - name: Attach bundle
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: OpenKneeboard-GHA${{github.run_number}}
           path: |
@@ -103,7 +103,7 @@ jobs:
           Add-Content $env:GITHUB_OUTPUT "installer-name=${InstallerName}"
       - name: Upload unsigned installer
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{steps.build-installer.outputs.installer-name}}
           path: ${{steps.build-installer.outputs.installer-path}}
