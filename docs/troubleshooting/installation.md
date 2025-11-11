@@ -37,7 +37,7 @@ If you're having trouble using the MSI on a supported version of Windows with th
 - Try [the Windows Installer Troubleshooter](https://support.microsoft.com/en-us/topic/fix-problems-that-block-programs-from-being-installed-or-removed-cca7d1b6-65a9-3d98-426b-e9f927e1eb4d)
 - Try [Microsoft's documentation for these issues](https://support.microsoft.com/en-us/topic/how-to-troubleshoot-windows-installer-errors-dc2f66aa-2ae2-1e61-6104-b8166628fbde)
 - [`DISM` and `sfc`](https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files-79aa86cb-ca52-166a-92a3-966e85d4094e)
-- Unfortunately, if these don't resolve these issue, you may need to reinstall Windows; these problems are a problem with a Windows component, not OpenKneeboard
+- Unfortunately, if these don't resolve the issue, you may need to reinstall Windows; these problems are a problem with a Windows component, not OpenKneeboard. If you are using a 'debloated'/'minimized'/'optimized'/'streamlined' modified version of Windows, make sure that it does not exclude the Windows Installer component, and keep in mind that only standard consumer editions of Windows are supported/tested.
 
 ## Unsupported alternative
 
