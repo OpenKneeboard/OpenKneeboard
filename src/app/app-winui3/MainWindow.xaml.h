@@ -116,6 +116,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   OpenKneeboard::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   OpenKneeboard::fire_and_forget OnTabChanged() noexcept;
   OpenKneeboard::fire_and_forget OnTabsChanged();
+  OpenKneeboard::fire_and_forget OnTabSettingsChanged(std::shared_ptr<ITab>);
   OpenKneeboard::fire_and_forget OnAPIEvent(APIEvent);
   OpenKneeboard::fire_and_forget OnLoaded();
   task<void> PromptForViewMode();

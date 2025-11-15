@@ -990,9 +990,10 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
     if (!tab) {
       continue;
     }
+    // Make tab renaming affect left nav instantly
     mTabsEvents.push_back(this->AddEventListener(
       tab->evSettingsChangedEvent,
-      &MainWindow::OnTabsChanged | bind_refs_front(this)));
+      &MainWindow::OnTabSettingsChanged | bind_refs_front(this, tab)));
   }
 
   // In theory, we could directly mutate Navigation().MenuItems();
@@ -1008,6 +1009,28 @@ OpenKneeboard::fire_and_forget MainWindow::OnTabsChanged() {
     Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"NavigationItems"));
 
   this->OnTabChanged();
+}
+OpenKneeboard::fire_and_forget MainWindow::OnTabSettingsChanged(
+  const std::shared_ptr<ITab> tab) {
+  if (!mNavigationItems) {
+    this->mPropertyChangedEvent(
+      *this,
+      Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"NavigationItems"));
+    co_return;
+  }
+
+  for (auto&& it: mNavigationItems) {
+    const auto item = it.try_as<muxc::NavigationViewItem>();
+    if (!item) {
+      continue;
+    }
+    const auto tag = NavigationTag::unbox(item.Tag());
+    if (tag.mTabID != tab->GetRuntimeID()) {
+      continue;
+    }
+    item.Content(box_value(to_hstring(tab->GetTitle())));
+    co_return;
+  }
 }
 
 winrt::Windows::Foundation::Collections::IVector<
