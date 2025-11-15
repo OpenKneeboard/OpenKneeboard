@@ -110,6 +110,20 @@ task<void> BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
   this->evSettingsChangedEvent.Emit();
 }
 
+bool BrowserTab::AreOpenKneeboardAPIsEnabled() const {
+  return mSettings.mExposeOpenKneeboardAPIs;
+}
+
+task<void> BrowserTab::SetOpenKneeboardAPIsEnabled(const bool enabled) {
+  OPENKNEEBOARD_TraceLoggingCoro("BrowserTab::SetOpenKneeboardAPIsEnabled()");
+  if (enabled == this->AreOpenKneeboardAPIsEnabled()) {
+    co_return;
+  }
+  mSettings.mExposeOpenKneeboardAPIs = enabled;
+  co_await this->Reload();
+  this->evSettingsChangedEvent.Emit();
+}
+
 bool BrowserTab::IsBackgroundTransparent() const {
   return mSettings.mTransparentBackground;
 }
@@ -129,6 +143,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mURI,
   mInitialSize,
   mIntegrateWithSimHub,
-  mTransparentBackground)
+  mTransparentBackground,
+  mExposeOpenKneeboardAPIs)
 
 }// namespace OpenKneeboard

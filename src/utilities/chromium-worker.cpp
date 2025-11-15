@@ -110,6 +110,8 @@ class BrowserApp final : public CefApp,
       BrowserData {
         .mInitializationData = extraInfo->GetString("InitData"),
         .mIntegrateWithSimHub = extraInfo->GetBool("IntegrateWithSimHub"),
+        .mExposeOpenKneeboardAPIs
+        = extraInfo->GetBool("ExposeOpenKneeboardAPIs"),
       });
   }
 
@@ -147,15 +149,30 @@ class BrowserApp final : public CefApp,
       return;
     }
 
-    const auto window = context->GetGlobal();
-
+    const auto browserId = browser->GetIdentifier();
+    if (!mBrowserData.contains(browserId)) {
+      return;
+    }
+    auto& data = mBrowserData.at(browserId);
     if (!context->Enter()) {
       return;
     }
     const scope_exit exitContext([context] { context->Exit(); });
-
     CefRefPtr<CefV8Value> ret;
     CefRefPtr<CefV8Exception> exception;
+
+    if (!data.mExposeOpenKneeboardAPIs) {
+      context->Eval(
+        "console.warn('OpenKneeboard JS APIs are disabled by user settings');",
+        {},
+        1,
+        ret,
+        exception);
+      dprint.Warning("OpenKneeboard JS APIs are disabled by user settings");
+      return;
+    }
+    data.mJS.mMainWorldContext = context;
+
     context->Eval(
       GetOpenKneeboardAPIJS(),
       "https://openkneeboard.local/OpenKneeboardAPI.js",
@@ -168,20 +185,17 @@ class BrowserApp final : public CefApp,
       1,
       ret,
       exception);
+
+    const auto window = context->GetGlobal();
     window->SetValue("OpenKneeboard", ret, V8_PROPERTY_ATTRIBUTE_READONLY);
 
-    const auto browserId = browser->GetIdentifier();
-    if (mBrowserData.contains(browserId)) {
-      auto& data = mBrowserData.at(browserId);
-      data.mJS.mMainWorldContext = context;
-      if (data.mIntegrateWithSimHub) {
-        context->Eval(
-          GetSimHubJS(),
-          "https://openkneeboard.local/simhub.js",
-          1,
-          ret,
-          exception);
-      }
+    if (data.mIntegrateWithSimHub) {
+      context->Eval(
+        GetSimHubJS(),
+        "https://openkneeboard.local/simhub.js",
+        1,
+        ret,
+        exception);
     }
 
     OPENKNEEBOARD_ALWAYS_ASSERT(window->HasValue("OpenKneeboard"));
@@ -361,6 +375,7 @@ class BrowserApp final : public CefApp,
 
     CefString mInitializationData;
     bool mIntegrateWithSimHub {false};
+    bool mExposeOpenKneeboardAPIs {false};
     JSData mJS {};
   };
   std::unordered_map<int, BrowserData> mBrowserData;

@@ -125,6 +125,8 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
   };
   extraData->SetString("InitData", initData.dump());
   extraData->SetBool("IntegrateWithSimHub", mSettings.mIntegrateWithSimHub);
+  extraData->SetBool(
+    "ExposeOpenKneeboardAPIs", mSettings.mExposeOpenKneeboardAPIs);
 
   CefBrowserHost::CreateBrowser(
     info, client, mSettings.mURI, settings, extraData, nullptr);

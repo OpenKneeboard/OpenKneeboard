@@ -86,7 +86,11 @@
           OffContent="Background is solid"
           OnContent="Background is transparent"/>
         <ToggleSwitch
+          IsOn="{x:Bind AreOpenKneeboardAPIsEnabled}"
+          Header="Allow web pages to integrate with OpenKneeboard" />
+        <ToggleSwitch
           IsOn="{x:Bind IsSimHubIntegrationEnabled}"
+          IsEnabled="{x:Bind AreOpenKneeboardAPIsEnabled}"
           Header="SimHub integration"
           OffContent="Disabled"
           OnContent="Automatically resize to fit SimHub dashboards"/>

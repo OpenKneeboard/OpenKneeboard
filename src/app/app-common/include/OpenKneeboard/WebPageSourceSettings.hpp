@@ -28,8 +28,10 @@
 #include <unordered_map>
 
 namespace OpenKneeboard {
+
 struct WebPageSourceSettings {
   PixelSize mInitialSize {Config::DefaultWebPagePixelSize};
+  bool mExposeOpenKneeboardAPIs {true};
   bool mIntegrateWithSimHub {true};
   std::string mURI;
   bool mTransparentBackground {true};

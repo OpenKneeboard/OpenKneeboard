@@ -728,6 +728,23 @@ OpenKneeboard::fire_and_forget BrowserTabUIData::IsSimHubIntegrationEnabled(
   co_await GetTab()->SetSimHubIntegrationEnabled(value);
 }
 
+bool BrowserTabUIData::AreOpenKneeboardAPIsEnabled() const {
+  return GetTab()->AreOpenKneeboardAPIsEnabled();
+}
+
+OpenKneeboard::fire_and_forget BrowserTabUIData::AreOpenKneeboardAPIsEnabled(
+  bool value) {
+  if (value == GetTab()->AreOpenKneeboardAPIsEnabled()) {
+    co_return;
+  }
+  const auto weak = get_weak();
+  co_await GetTab()->SetOpenKneeboardAPIsEnabled(value);
+  if (const auto self = weak.get(); self && self->mPropertyChangedEvent) {
+    self->mPropertyChangedEvent(
+      *self, PropertyChangedEventArgs(L"AreOpenKneeboardAPIsEnabled"));
+  }
+}
+
 bool BrowserTabUIData::IsBackgroundTransparent() const {
   return GetTab()->IsBackgroundTransparent();
 }

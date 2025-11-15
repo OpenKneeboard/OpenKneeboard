@@ -61,7 +61,7 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
                           OpenKneeboard::EventReceiver,
                           OpenKneeboard::WithPropertyChangedEvent {
   TabsSettingsPage();
-  ~TabsSettingsPage() noexcept;
+  ~TabsSettingsPage() noexcept override;
 
   IVector<IInspectable> Tabs() noexcept;
 
@@ -134,6 +134,9 @@ struct BrowserTabUIData : BrowserTabUIDataT<
 
   bool IsSimHubIntegrationEnabled() const;
   OpenKneeboard::fire_and_forget IsSimHubIntegrationEnabled(bool);
+
+  bool AreOpenKneeboardAPIsEnabled() const;
+  OpenKneeboard::fire_and_forget AreOpenKneeboardAPIsEnabled(bool);
 
   bool IsBackgroundTransparent() const;
   OpenKneeboard::fire_and_forget IsBackgroundTransparent(bool);

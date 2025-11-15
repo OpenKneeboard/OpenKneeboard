@@ -46,7 +46,7 @@ class BrowserTab final : public TabBase,
     winrt::guid persistentID,
     std::string_view title,
     Settings);
-  virtual ~BrowserTab();
+  ~BrowserTab() override;
 
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
@@ -59,6 +59,10 @@ class BrowserTab final : public TabBase,
   bool IsSimHubIntegrationEnabled() const;
   [[nodiscard]]
   task<void> SetSimHubIntegrationEnabled(bool);
+
+  bool AreOpenKneeboardAPIsEnabled() const;
+  [[nodiscard]]
+  task<void> SetOpenKneeboardAPIsEnabled(bool);
 
   bool IsBackgroundTransparent() const;
   [[nodiscard]]
