@@ -357,7 +357,7 @@ task<void> MainWindow::FrameTick(
   }
   TraceLoggingWriteTagged(activity, "Acquired shared kneeboard locked");
 
-  this->CheckForElevatedConsumer();
+  // this->CheckForElevatedConsumer();
   OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
   mKneeboard->evFrameTimerPreEvent.Emit();
   TraceLoggingWriteTagged(activity, "Prepared to render");
@@ -454,9 +454,9 @@ task<void> MainWindow::ShowWarningIfWintabConfiguredButUnusable() {
       co_return;
       break;
     case WinTabAvailability::NotInstalled:
-      dialog.Content(
-        box_value(to_hstring(_(L"You have enabled Wintab support, but you do "
-                               L"not have a Wintab driver installed."))));
+      dialog.Content(box_value(to_hstring(
+        _(L"You have enabled Wintab support, but you do "
+          L"not have a Wintab driver installed."))));
       break;
     case WinTabAvailability::Skipping_NoTrustedSignature:
       dialog.Content(box_value(to_hstring(
@@ -468,9 +468,9 @@ task<void> MainWindow::ShowWarningIfWintabConfiguredButUnusable() {
           L"use OpenTabletDriver instead."))));
       break;
     case WinTabAvailability::Available:
-      dialog.Content(
-        box_value(to_hstring(_("You have enabled Wintab support, but your "
-                               "driver reports no tablet is attached."))));
+      dialog.Content(box_value(to_hstring(
+        _("You have enabled Wintab support, but your "
+          "driver reports no tablet is attached."))));
       break;
   }
 
@@ -511,10 +511,10 @@ task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
   ContentDialog dialog;
   dialog.XamlRoot(Navigation().XamlRoot());
   dialog.Title(box_value(to_hstring(_(L"Tablet is unusable"))));
-  dialog.Content(box_value(
-    to_hstring(_(L"You have configured OpenTabletDriver, but it's not "
-                 L"usable; check your tablet is connected, OpenTabletDriver is "
-                 L"running, and the OTD-IPC plugin is enabled."))));
+  dialog.Content(box_value(to_hstring(
+    _(L"You have configured OpenTabletDriver, but it's not "
+      L"usable; check your tablet is connected, OpenTabletDriver is "
+      L"running, and the OTD-IPC plugin is enabled."))));
 
   dialog.CloseButtonText(_(L"Ignore"));
   dialog.PrimaryButtonText(_(L"Open documentation"));
