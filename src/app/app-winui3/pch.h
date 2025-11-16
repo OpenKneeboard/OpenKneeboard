@@ -1,4 +1,10 @@
-﻿// CLion pulls in this header at configure-time when tyring to identify
+﻿// OpenKneeboard
+//
+// Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
+//
+// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+
+// CLion pulls in this header at configure-time when tyring to identify
 // the compiler, so several of the things we pull in (including
 // both winrt-generated files and ExternalProject_Add dependencies) are
 // unavailable. Check for a sentinel file to figure out whether or not we're
