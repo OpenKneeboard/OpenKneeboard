@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/243751967",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/243751967/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/243751967/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.0",
-    "id": 243751967,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/262690980",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/262690980/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/262690980/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.2",
+    "id": 262690980,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,22 +26,22 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Oh1wf",
-    "tag_name": "v1.12.0",
+    "node_id": "RE_kwDOGk0DR84PqFik",
+    "tag_name": "v1.12.2",
     "target_commitish": "master",
-    "name": "v1.12.0",
+    "name": "v1.12.2",
     "draft": false,
     "immutable": false,
     "prerelease": false,
-    "created_at": "2025-08-31T23:17:44Z",
-    "updated_at": "2025-09-01T00:34:20Z",
-    "published_at": "2025-09-01T00:34:20Z",
+    "created_at": "2025-11-15T17:35:04Z",
+    "updated_at": "2025-11-16T02:11:07Z",
+    "published_at": "2025-11-16T02:11:07Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/288238138",
-        "id": 288238138,
-        "node_id": "RA_kwDOGk0DR84RLio6",
-        "name": "OpenKneeboard-v1.12.0-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/316936309",
+        "id": 316936309,
+        "node_id": "RA_kwDOGk0DR84S5BB1",
+        "name": "OpenKneeboard-v1.12.2-DebugSymbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -66,18 +66,18 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 173046954,
-        "digest": "sha256:252d851f1f9d70230dde084cdefa1502ab6af2202dbe18e1f2b798f4b0ecaa04",
+        "size": 170909891,
+        "digest": "sha256:5c62d4e28d7c5e6a7503c70c163cdbabdf055e290f49e8c90fc8968b47310f00",
         "download_count": 0,
-        "created_at": "2025-09-01T00:33:49Z",
-        "updated_at": "2025-09-01T00:34:02Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.0/OpenKneeboard-v1.12.0-DebugSymbols.zip"
+        "created_at": "2025-11-16T02:10:47Z",
+        "updated_at": "2025-11-16T02:11:02Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.2/OpenKneeboard-v1.12.2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/288238171",
-        "id": 288238171,
-        "node_id": "RA_kwDOGk0DR84RLipb",
-        "name": "OpenKneeboard-v1.12.0.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/316936282",
+        "id": 316936282,
+        "node_id": "RA_kwDOGk0DR84S5BBa",
+        "name": "OpenKneeboard-v1.12.2.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -102,16 +102,16 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 183500800,
-        "digest": "sha256:8408b60754bcf4c550f5f8fc3d180448230f05d2734f507365086dcaaa288537",
+        "size": 183361536,
+        "digest": "sha256:ce79c01f0f44d21bd64aa55ae94b719d6c443e7dd6ea25914681a6a8373c6764",
         "download_count": 0,
-        "created_at": "2025-09-01T00:34:04Z",
-        "updated_at": "2025-09-01T00:34:17Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.0/OpenKneeboard-v1.12.0.msi"
+        "created_at": "2025-11-16T02:10:38Z",
+        "updated_at": "2025-11-16T02:10:54Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.2/OpenKneeboard-v1.12.2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.0",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.0",
-    "body": "Start by downloading [OpenKneeboard-v1.12.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.0/OpenKneeboard-v1.12.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- 🐛 Fix crash if > 16 views are added; added limit to UI\r\n- 🐛 Fix crash if user doesn't have permission to see if their own Saved Games folder exists\r\n- 🐛 Fix crash if user doesn't have permission to read/write to their own LOCALAPPDATA folder\r\n- 💥 OpenKneeboard can no longer be ran as Administrator, or with User Account Control (UAC) turned off\r\n  - this is related to the previous 2 crash fixes\r\n  - the previous warnings were extremely obtrusive, but still widely ignored\r\n  - it is relatively common for people to try running it as administrator just once 'to see if it fixes things'; like most Windows software released since Windows Vista, even running it as admin 'just once' is much more likely to cause problems - including problems that can not reasonably be fixed except by reinstalling windows - than fix them.\r\n  - I will not reconsider this change\r\n- 🔊 Added a warning if UAC was previously enabled\r\n  - This ties into the previous 2 crash fixes, and several reports of issues in other related software and driver caused by disabling UAC\r\n  - Similar to the previous UAC/Administrator warnings, it is still possible to start OpenKneeboard with this warning. If they are similarly ignored, it will become a hard error in the future\r\n  - I will not reconsider this change\r\n\r\nFor more information on the UAC/elevation changes, see https://openkneeboard.com/troubleshooting/elevation/ \r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.2",
+    "body": "Start by downloading [OpenKneeboard-v1.12.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.2/OpenKneeboard-v1.12.2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# Changes\r\n\r\n- ✨ Web dashboard tabs now have the ability to disable OpenKneeboard extensions/integrations. This is a workaround for web pages with buggy integrations\r\n- 🐛 Fix OpenKneeboard intermittently switching tabs the moment tab settings are changed; if a settings popup was still open, this could lead to the app window becoming greyed out and unusable\r\n- 🔊 More detailed debug logging for monitors, including which GPU they are connected to\r\n- 🔊 Log OpenXR application and engine information\r\n- 📄 Relicensed: projects derived from OpenKneeboard must change the name and unique identifiers to reduce confusion and technical conflicts\r\n- 🔥 Remove `RELOAD_CURRENT_TAB` remote control/API, as a courtesy to the original contributor. I was unable to reach the original author when proposing the license change.\r\n"
   }
 ]
