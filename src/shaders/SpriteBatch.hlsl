@@ -1,7 +1,8 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// OpenKneeboard
 //
-// http://go.microsoft.com/fwlink/?LinkId=248929
+// Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
+//
+// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
 
 // Modified for OpenKneeboard::Vulkan::SpriteBatch:
 // - use descriptor indexing
