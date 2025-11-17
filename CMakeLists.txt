@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.25..3.31 FATAL_ERROR)
 
 # cmake --build . --preset appears to require CMakePresets exists in the build directory,
 # not the source directory, as of CMake 4.0 (2025-08-21)
