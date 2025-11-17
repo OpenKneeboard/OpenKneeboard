@@ -170,19 +170,6 @@ target_link_libraries(
   oculus-hooks
   openvr-hooks)
 
-ok_add_library(OpenKneeboard-TabletProxy MODULE TabletProxy.cpp)
-target_link_libraries(
-  OpenKneeboard-TabletProxy
-  PRIVATE
-  detours-ext
-  OpenKneeboard-FindMainWindow
-  OpenKneeboard-GetMainHWND
-  OpenKneeboard-Wintab
-  OpenKneeboard-dprint
-  OpenKneeboard-tracing
-  OpenKneeboard-version
-)
-
 ok_add_library(OpenKneeboard-WindowCaptureHook MODULE DUALARCH WindowCaptureHook.cpp)
 target_link_libraries(
   OpenKneeboard-WindowCaptureHook

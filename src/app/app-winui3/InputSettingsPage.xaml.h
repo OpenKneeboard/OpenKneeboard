@@ -31,14 +31,8 @@ struct InputSettingsPage
   InputSettingsPage();
   ~InputSettingsPage();
 
-  uint8_t WintabMode() const;
-  OpenKneeboard::fire_and_forget WintabMode(uint8_t);
-
   bool IsOpenTabletDriverEnabled() const;
   OpenKneeboard::fire_and_forget IsOpenTabletDriverEnabled(bool);
-
-  bool IsWinTabSelectionEnabled() const;
-  winrt::hstring WinTabAvailability() const;
 
   OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,

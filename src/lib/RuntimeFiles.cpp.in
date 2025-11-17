@@ -15,9 +15,6 @@ const std::filesystem::path DCSWORLD_HOOK_LUA(
 const std::filesystem::path AUTODETECTION_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-AutoDetect>");
 
-const std::filesystem::path TABLET_PROXY_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-TabletProxy>");
-
 const std::filesystem::path WINDOW_CAPTURE_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-WindowCaptureHook>");
 

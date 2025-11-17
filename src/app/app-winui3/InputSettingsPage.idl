@@ -26,12 +26,8 @@ namespace OpenKneeboardApp
     {
         InputSettingsPage();
 
-        UInt8 WintabMode;
         Boolean IsOpenTabletDriverEnabled;
-        Boolean IsWinTabSelectionEnabled { get; };
 
-        String WinTabAvailability { get; };
-        
         Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
     }
 

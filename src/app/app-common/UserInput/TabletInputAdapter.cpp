@@ -14,7 +14,6 @@
 #include <OpenKneeboard/UserAction.hpp>
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
-#include <OpenKneeboard/WintabTablet.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
@@ -38,8 +37,6 @@ namespace OpenKneeboard {
 
 static std::atomic_flag gHaveInstance;
 
-UINT_PTR TabletInputAdapter::gNextSubclassID = 1;
-
 std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   HWND hwnd,
   KneeboardState* kbs,
@@ -47,32 +44,27 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   if (gHaveInstance.test_and_set()) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
-  auto ret = std::shared_ptr<TabletInputAdapter>(
-    new TabletInputAdapter(hwnd, kbs, tablet));
+  auto ret
+    = std::shared_ptr<TabletInputAdapter>(new TabletInputAdapter(kbs, tablet));
   ret->Init();
 
   return ret;
 }
 
 TabletInputAdapter::TabletInputAdapter(
-  HWND window,
   KneeboardState* kneeboard,
   const TabletSettings& settings)
-  : mKneeboard(kneeboard), mWindow(window) {
+  : mKneeboard(kneeboard) {
   OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::TabletInputAdapter()");
   LoadSettings(settings);
 }
 
 void TabletInputAdapter::Init() {
-  this->StartWintab();
   this->StartOTDIPC();
 }
 
 bool TabletInputAdapter::HaveAnyTablet() const {
   if (!mOTDDevices.empty()) {
-    return true;
-  }
-  if (mWintabDevice) {
     return true;
   }
   return false;
@@ -126,127 +118,6 @@ task<void> TabletInputAdapter::StopOTDIPC() {
     co_await mOTDIPC->DisposeAsync();
   }
   mOTDIPC.reset();
-}
-
-WintabMode TabletInputAdapter::GetWintabMode() const {
-  return mSettings.mWintab;
-}
-
-task<void> TabletInputAdapter::SetWintabMode(WintabMode mode) {
-  auto weak = weak_from_this();
-
-  if (mode == GetWintabMode()) {
-    co_return;
-  }
-
-  if (mode == WintabMode::Disabled) {
-    mSettings.mWintab = mode;
-    StopWintab();
-    evSettingsChangedEvent.Emit();
-    co_return;
-  }
-
-  const auto availability = this->GetWinTabAvailability();
-  if (availability != WinTabAvailability::Available) {
-    switch (availability) {
-      case WinTabAvailability::NotInstalled:
-        dprint("WinTab: not installed");
-        break;
-      case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
-        dprint("WinTab: skipping, OpenTabletDriver enabled");
-        break;
-      case WinTabAvailability::Skipping_NoTrustedSignature:
-        dprint("WinTab: skipping, unsigned");
-        break;
-      case WinTabAvailability::Available:
-        std::unreachable();// make clang-tidy happy
-    }
-    co_return;
-  }
-
-  // Check that we can actually load Wintab before we save it; some drivers
-  // - especially XP-Pen - will crash as soon as they're loaded
-  if (!mWintabTablet) {
-    dprint("Attempting to load wintab");
-    unique_hmodule wintab {LoadLibraryW(L"WINTAB32.dll")};
-    co_await winrt::resume_after(std::chrono::milliseconds(100));
-    dprint("Loaded wintab!");
-  }
-
-  auto self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-
-  mSettings.mWintab = mode;
-
-  self.reset();
-  co_await mUIThread;
-  self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-
-  try {
-    StartWintab();
-  } catch (const winrt::hresult_error& e) {
-    dprint("Failed to initialize wintab: {}", winrt::to_string(e.message()));
-    co_return;
-  } catch (const std::exception& e) {
-    dprint("Failed to initialize wintab: {}", e.what());
-    co_return;
-  }
-  if (!mWintabTablet) {
-    dprint("Initialized wintab, but no tablet attached");
-  } else {
-    auto priority = (mSettings.mWintab == WintabMode::Enabled)
-      ? WintabTablet::Priority::AlwaysActive
-      : WintabTablet::Priority::ForegroundOnly;
-    mWintabTablet->SetPriority(priority);
-    // Again, make sure that doesn't crash :)
-
-    self.reset();
-    co_await winrt::resume_after(std::chrono::milliseconds(100));
-    self = weak.lock();
-    if (!self) {
-      co_return;
-    }
-  }
-  evSettingsChangedEvent.Emit();
-}
-
-void TabletInputAdapter::StartWintab() {
-  GetWinTabAvailability();
-  if (mSettings.mWintab == WintabMode::Disabled) {
-    return;
-  }
-
-  if (!mWintabTablet) {
-    // If mode is 'Invasive', we manage background access by
-    // injecting a DLL, so as far as our wintab is concerned,
-    // it's only dealing with the foreground
-    auto priority = (mSettings.mWintab == WintabMode::Enabled)
-      ? WintabTablet::Priority::AlwaysActive
-      : WintabTablet::Priority::ForegroundOnly;
-    mWintabTablet = std::make_unique<WintabTablet>(mWindow, priority);
-    if (!mWintabTablet->IsValid()) {
-      mWintabTablet.reset();
-      return;
-    }
-  }
-
-  if (mSubclassID) {
-    return;
-  }
-  mSubclassID = gNextSubclassID++;
-  winrt::check_bool(SetWindowSubclass(
-    mWindow,
-    &TabletInputAdapter::SubclassProc,
-    mSubclassID,
-    reinterpret_cast<DWORD_PTR>(this)));
-
-  auto info = mWintabTablet->GetDeviceInfo();
-  mWintabDevice = this->CreateDevice(info.mDeviceName, info.mDeviceID);
 }
 
 std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
@@ -312,62 +183,19 @@ task<void> TabletInputAdapter::DisposeAsync() noexcept {
 
 TabletInputAdapter::~TabletInputAdapter() {
   OPENKNEEBOARD_TraceLoggingScope("TabletInputAdapter::~TabletInputAdapter()");
-  StopWintab();
   this->RemoveAllEventListeners();
   gHaveInstance.clear();
-}
-
-void TabletInputAdapter::StopWintab() {
-  if (!mWintabTablet) {
-    return;
-  }
-
-  if (!mSubclassID) {
-    return;
-  }
-
-  RemoveWindowSubclass(mWindow, &TabletInputAdapter::SubclassProc, mSubclassID);
-  mWintabTablet = {};
-}
-
-LRESULT TabletInputAdapter::SubclassProc(
-  HWND hwnd,
-  UINT uMsg,
-  WPARAM wParam,
-  LPARAM lParam,
-  UINT_PTR uIdSubclass,
-  DWORD_PTR dwRefData) {
-  auto instance = reinterpret_cast<TabletInputAdapter*>(dwRefData);
-
-  instance->OnWintabMessage(uMsg, wParam, lParam);
-  return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> TabletInputAdapter::GetDevices()
   const {
   std::vector<std::shared_ptr<UserInputDevice>> ret;
 
-  if (mWintabDevice) {
-    ret.push_back(std::static_pointer_cast<UserInputDevice>(mWintabDevice));
-  }
-
   for (const auto& [_, device]: mOTDDevices) {
     ret.push_back(device);
   }
 
   return ret;
-}
-
-void TabletInputAdapter::OnWintabMessage(
-  UINT uMsg,
-  WPARAM wParam,
-  LPARAM lParam) {
-  if (!mWintabTablet->ProcessMessage(uMsg, wParam, lParam)) {
-    return;
-  }
-  const auto tablet = mWintabTablet->GetDeviceInfo();
-  const auto state = mWintabTablet->GetState();
-  this->OnTabletInput(tablet, state, mWintabDevice);
 }
 
 void TabletInputAdapter::OnTabletInput(
@@ -535,50 +363,9 @@ OpenKneeboard::fire_and_forget TabletInputAdapter::OnOTDInput(
   this->OnTabletInput(*tablet, state, device);
 }
 
-WinTabAvailability TabletInputAdapter::GetWinTabAvailability() {
-  if (mSettings.mOTDIPC) {
-    return WinTabAvailability::Skipping_OpenTabletDriverEnabled;
-  }
-
-  const auto path
-    = Filesystem::GetKnownFolderPath<FOLDERID_System>() / "wintab32.dll";
-  if (!std::filesystem::exists(path)) {
-    return WinTabAvailability::NotInstalled;
-  }
-
-  const auto pathStr = path.wstring();
-
-  WINTRUST_FILE_INFO fileInfo {
-    .cbStruct = sizeof(WINTRUST_FILE_INFO),
-    .pcwszFilePath = pathStr.c_str(),
-  };
-  WINTRUST_DATA wintrustData {
-    .cbStruct = sizeof(WINTRUST_DATA),
-    .dwUIChoice = WTD_UI_NONE,
-    .fdwRevocationChecks = WTD_REVOCATION_CHECK_NONE,
-    .dwUnionChoice = WTD_CHOICE_FILE,
-    .pFile = &fileInfo,
-    .dwStateAction = WTD_STATEACTION_VERIFY,
-  };
-
-  GUID policyGuid = WINTRUST_ACTION_GENERIC_VERIFY_V2;
-
-  if (
-    WinVerifyTrust(
-      static_cast<HWND>(INVALID_HANDLE_VALUE), &policyGuid, &wintrustData)
-    != 0) {
-    return WinTabAvailability::Skipping_NoTrustedSignature;
-  }
-
-  return WinTabAvailability::Available;
-}
-
 std::vector<TabletInfo> TabletInputAdapter::GetTabletInfo() const {
   if (mOTDIPC) {
     return mOTDIPC->GetTablets();
-  }
-  if (mWintabTablet) {
-    return {mWintabTablet->GetDeviceInfo()};
   }
   return {};
 }

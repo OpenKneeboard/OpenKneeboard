@@ -416,68 +416,7 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
 }
 
 task<void> MainWindow::ShowWarningIfTabletConfiguredButUnusable() {
-  co_await ShowWarningIfWintabConfiguredButUnusable();
   co_await ShowWarningIfOTDIPCConfiguredButUnusable();
-}
-
-task<void> MainWindow::ShowWarningIfWintabConfiguredButUnusable() {
-  auto adapter = mKneeboard->GetTabletInputAdapter();
-
-  if ((!adapter) || adapter->GetWintabMode() == WintabMode::Disabled) {
-    co_return;
-  }
-
-  if (adapter->HaveAnyTablet()) {
-    co_return;
-  }
-
-  ContentDialog dialog;
-  dialog.XamlRoot(Navigation().XamlRoot());
-  dialog.Title(box_value(to_hstring(_(L"Tablet is unusable"))));
-
-  switch (adapter->GetWinTabAvailability()) {
-    case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
-      co_return;
-      break;
-    case WinTabAvailability::NotInstalled:
-      dialog.Content(
-        box_value(to_hstring(_(L"You have enabled Wintab support, but you do "
-                               L"not have a Wintab driver installed."))));
-      break;
-    case WinTabAvailability::Skipping_NoTrustedSignature:
-      dialog.Content(box_value(to_hstring(
-        _(L"You have enabled Wintab support, but it is not usable because your "
-          L"manufacturer's Wintab driver is "
-          L"not signed by a manufacturer that Windows recognizes and trusts; "
-          L"historically, these drivers frequently cause OpenKneeboard and "
-          L"game crashes. If there is not a more recent driver available, "
-          L"use OpenTabletDriver instead."))));
-      break;
-    case WinTabAvailability::Available:
-      dialog.Content(
-        box_value(to_hstring(_("You have enabled Wintab support, but your "
-                               "driver reports no tablet is attached."))));
-      break;
-  }
-
-  dialog.CloseButtonText(_(L"Ignore"));
-  dialog.PrimaryButtonText(_(L"Open documentation"));
-  dialog.SecondaryButtonText(_(L"Change settings"));
-
-  dialog.DefaultButton(ContentDialogButton::Primary);
-
-  const auto result = co_await dialog.ShowAsync();
-
-  switch (result) {
-    case ContentDialogResult::Primary:
-      co_await LaunchURI("https://go.openkneeboard.com/wintab");
-      co_return;
-    case ContentDialogResult::Secondary:
-      Frame().Navigate(xaml_typename<InputSettingsPage>());
-      co_return;
-    case ContentDialogResult::None:
-      co_return;
-  }
 }
 
 task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {

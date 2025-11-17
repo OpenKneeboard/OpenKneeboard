@@ -39,7 +39,6 @@ std::shared_ptr<GameInjector> GameInjector::Create(KneeboardState* state) {
 GameInjector::GameInjector(KneeboardState* state) : mKneeboardState(state) {
   const auto dllPath
     = std::filesystem::canonical(RuntimeFiles::GetInstallationDirectory());
-  mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
   mOverlayAutoDetectDll = dllPath / RuntimeFiles::AUTODETECTION_DLL;
   mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
   mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
@@ -56,22 +55,6 @@ void GameInjector::SetGameInstances(
 }
 
 task<void> GameInjector::Run(std::stop_token stopToken) {
-  this->RemoveEventListener(mTabletSettingsChangeToken);
-  if (auto tablet = mKneeboardState->GetTabletInputAdapter()) {
-    if (tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
-      mWintabMode = tablet->GetWintabMode();
-    }
-    mTabletSettingsChangeToken = AddEventListener(
-      tablet->evSettingsChangedEvent, [](auto self, auto tablet) {
-        static_assert(strong_ref<decltype(self)>);
-        if (tablet->GetWinTabAvailability() == WinTabAvailability::Available) {
-          self->mWintabMode = tablet->GetWintabMode();
-        } else {
-          self->mWintabMode = WintabMode::Disabled;
-        }
-      } | bind_refs_front(this, tablet));
-  }
-
   dprint("Watching for game processes");
   do {
     co_await resume_after(std::chrono::milliseconds(200), stopToken);
@@ -187,10 +170,6 @@ void GameInjector::CheckProcess(
 
     InjectedDlls wantedDlls {InjectedDlls::None};
 
-    if (mWintabMode == WintabMode::EnabledInvasive) {
-      wantedDlls |= InjectedDlls::TabletProxy;
-    }
-
     std::filesystem::path overlayDll;
     switch (game->mOverlayAPI) {
       case OverlayAPI::None:
@@ -302,7 +281,6 @@ void GameInjector::CheckProcess(
       currentDlls |= dllID;
     };
 
-    injectIfNeeded(InjectedDlls::TabletProxy, mTabletProxyDll);
     injectIfNeeded(InjectedDlls::AutoDetection, mOverlayAutoDetectDll);
     injectIfNeeded(InjectedDlls::NonVRD3D11, mOverlayNonVRD3D11Dll);
     injectIfNeeded(InjectedDlls::OculusD3D11, mOverlayOculusD3D11Dll);

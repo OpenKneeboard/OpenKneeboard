@@ -96,70 +96,16 @@ void InputSettingsPage::OnOrientationChanged(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
 
-uint8_t InputSettingsPage::WintabMode() const {
-  return static_cast<uint8_t>(
-    mKneeboard->GetTabletInputAdapter()->GetWintabMode());
-}
-
-OpenKneeboard::fire_and_forget InputSettingsPage::WintabMode(uint8_t rawMode) {
-  auto t = mKneeboard->GetTabletInputAdapter();
-  const auto mode = static_cast<OpenKneeboard::WintabMode>(rawMode);
-  if (mode == t->GetWintabMode()) {
-    co_return;
-  }
-  co_await t->SetWintabMode(mode);
-  // Should be 'available', but may also have 'no tablet connnected'
-  this->EmitPropertyChangedEvent(L"WinTabAvailability");
-}
-
 bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
   return mKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
 }
 
-bool InputSettingsPage::IsWinTabSelectionEnabled() const {
-  auto adapter = mKneeboard->GetTabletInputAdapter();
-  return (adapter->GetWinTabAvailability() == WinTabAvailability::Available)
-    || (adapter->GetWintabMode() != WintabMode::Disabled);
-}
-
-winrt::hstring InputSettingsPage::WinTabAvailability() const {
-  auto adapter = mKneeboard->GetTabletInputAdapter();
-
-  switch (adapter->GetWinTabAvailability()) {
-    case WinTabAvailability::NotInstalled:
-      return _(
-        L"⚠️ No 64-bit WinTab-capable tablet driver is installed on your "
-        L"system.");
-    case WinTabAvailability::Available:
-      if (
-        adapter->HaveAnyTablet()
-        || adapter->GetWintabMode() == WintabMode::Disabled) {
-        return _(L"✅ WinTab is available on your system.");
-      } else {
-        return _(
-          L"⚠️ WinTab is available on your system, but the driver reports that "
-          L"no tablet is connected.");
-      }
-    case WinTabAvailability::Skipping_OpenTabletDriverEnabled:
-      return _(
-        L"ℹ️ WinTab support is disabled because OpenTabletDriver support is "
-        L"enabled.");
-    case WinTabAvailability::Skipping_NoTrustedSignature:
-      return _(
-        L"⚠️ WinTab support is disabled because your manufacturer's WinTab "
-        L"driver is not signed by a manufacturer that Windows recognizes and "
-        L"trusts; historically, these drivers frequently cause OpenKneeboard "
-        L"and game crashes. If there is not a more recent driver available, "
-        L"use OpenTabletDriver instead.");
-  }
-  std::unreachable();
-}
-
 OpenKneeboard::fire_and_forget InputSettingsPage::IsOpenTabletDriverEnabled(
-  bool value) {
+  const bool value) {
+  if (value == IsOpenTabletDriverEnabled()) {
+    co_return;
+  }
   co_await mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
-  this->EmitPropertyChangedEvent(L"IsWinTabSelectionEnabled");
-  this->EmitPropertyChangedEvent(L"WinTabAvailability");
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

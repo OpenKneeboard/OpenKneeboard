@@ -393,19 +393,6 @@ target_link_libraries(
   INTERFACE
   OpenKneeboard-Lib-Headers)
 
-ok_add_library(OpenKneeboard-Wintab
-  STATIC
-  WintabTablet.cpp
-)
-target_link_libraries(
-  OpenKneeboard-Wintab
-  PRIVATE
-  OpenKneeboard-Lib-Headers
-  ThirdParty::Wintab
-  OpenKneeboard-dprint
-  OpenKneeboard-UTF8
-)
-
 ok_add_library(OpenKneeboard-VRKneeboard STATIC VRKneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-VRKneeboard

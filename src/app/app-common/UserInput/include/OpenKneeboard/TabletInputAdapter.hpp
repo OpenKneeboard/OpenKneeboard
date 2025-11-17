@@ -30,13 +30,6 @@ struct CursorEvent;
 struct TabletInfo;
 struct TabletState;
 
-enum class WinTabAvailability {
-  NotInstalled,
-  Available,
-  Skipping_OpenTabletDriverEnabled,
-  Skipping_NoTrustedSignature,
-};
-
 class TabletInputAdapter final
   : private EventReceiver,
     public std::enable_shared_from_this<TabletInputAdapter>,
@@ -44,7 +37,7 @@ class TabletInputAdapter final
  public:
   static std::shared_ptr<TabletInputAdapter>
   Create(HWND, KneeboardState*, const TabletSettings&);
-  ~TabletInputAdapter();
+  ~TabletInputAdapter() override;
 
   task<void> DisposeAsync() noexcept override;
 
@@ -52,15 +45,10 @@ class TabletInputAdapter final
   void LoadSettings(const TabletSettings&);
   Event<> evSettingsChangedEvent;
 
-  WintabMode GetWintabMode() const;
-  task<void> SetWintabMode(WintabMode);
-
   bool HaveAnyTablet() const;
 
   bool IsOTDIPCEnabled() const;
   task<void> SetIsOTDIPCEnabled(bool);
-
-  WinTabAvailability GetWinTabAvailability();
 
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
   std::vector<TabletInfo> GetTabletInfo() const;
@@ -71,10 +59,8 @@ class TabletInputAdapter final
   TabletInputAdapter() = delete;
 
  private:
-  TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
+  TabletInputAdapter(KneeboardState*, const TabletSettings&);
   void Init();
-  void StartWintab();
-  void StopWintab();
   void StartOTDIPC();
   task<void> StopOTDIPC();
 
@@ -106,23 +92,6 @@ class TabletInputAdapter final
   std::shared_ptr<OTDIPCClient> mOTDIPC;
   std::unordered_map<std::string, std::shared_ptr<TabletInputDevice>>
     mOTDDevices;
-
-  ///// Wintab /////
-
-  void OnWintabMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-  static LRESULT SubclassProc(
-    HWND hWnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    UINT_PTR uIdSubclass,
-    DWORD_PTR dwRefData);
-
-  HWND mWindow {};
-  std::unique_ptr<WintabTablet> mWintabTablet;
-  std::shared_ptr<TabletInputDevice> mWintabDevice;
-  UINT_PTR mSubclassID {};
-  static UINT_PTR gNextSubclassID;
 };
 
 }// namespace OpenKneeboard

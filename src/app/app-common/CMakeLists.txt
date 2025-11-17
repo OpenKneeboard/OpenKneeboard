@@ -47,7 +47,6 @@ target_link_libraries(
   OpenKneeboard-ThreadGuard
   OpenKneeboard-UTF8
   OpenKneeboard-WindowCaptureControl
-  OpenKneeboard-Wintab
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-fatal

@@ -105,33 +105,6 @@
           Content="Get the IPC Plugin"
           NavigateUri="https://go.openkneeboard.com/otd-ipc"/>
       </StackPanel>
-      <StackPanel
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Spacing="8"
-        Padding="8">
-        <ComboBox
-          IsEnabled="{x:Bind IsWinTabSelectionEnabled, Mode=OneWay}"
-          Header="Wintab"
-          SelectedIndex="{x:Bind WintabMode, Mode=TwoWay}">
-          <x:String>Disabled</x:String>
-          <x:String>Standard</x:String>
-          <x:String>Invasive</x:String>
-        </ComboBox>
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}">
-          If your tablet only works when OpenKneeboard is the active window,
-          try invasive mode, or OpenTabletDriver. Invasive mode can cause game
-          issues, but may be required by buggy drivers.
-        </TextBlock>
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}"
-          Text="{x:Bind WinTabAvailability, Mode=OneWay}"/>
-      </StackPanel>
       <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical"

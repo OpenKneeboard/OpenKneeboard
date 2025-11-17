@@ -6,7 +6,6 @@
 #pragma once
 
 #include <OpenKneeboard/UserAction.hpp>
-#include <OpenKneeboard/WintabMode.hpp>
 
 #include <OpenKneeboard/json_fwd.hpp>
 
@@ -40,7 +39,6 @@ struct TabletSettings final {
     bool operator==(const Device&) const noexcept = default;
   };
 
-  WintabMode mWintab {WintabMode::Disabled};
   bool mOTDIPC {true};
   bool mWarnIfOTDIPCUnusuable {false};
 
