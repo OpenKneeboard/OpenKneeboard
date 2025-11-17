@@ -9,7 +9,6 @@
     <EventProvider Id="EventProvider_OpenKneeboard.API.C" Name="cfaa744f-ba6f-5e56-5c91-88de46269c4b" />
     <EventProvider Id="EventProvider_OpenKneeboard.API.Lua" Name="039d7b52-2065-5863-802b-873c638bdf88" />
     <EventProvider Id="EventProvider_OpenKneeboard.App" Name="cc76597c-1041-5d57-c8ab-92cf9437104a" />
-    <EventProvider Id="EventProvider_OpenKneeboard.AutoDetect" Name="cb1c6ba7-9801-5736-cc7c-c37fcca3feb7" />
     <EventProvider Id="EventProvider_OpenKneeboard.Elevation.Helper" Name="4cd19abb-3b31-5e4e-ca98-75e403061214" />
     <EventProvider Id="EventProvider_OpenKneeboard.NonVR.D3D11" Name="d301dc28-a6f4-5054-6786-5cdb46c0f270" />
     <EventProvider Id="EventProvider_OpenKneeboard.Oculus.D3D11" Name="bce0dd2f-2946-509d-0079-54a2eb7e4cf9" />
@@ -35,7 +34,6 @@
             <EventProviderId Value="EventProvider_OpenKneeboard.API.C" />
             <EventProviderId Value="EventProvider_OpenKneeboard.API.Lua" />
             <EventProviderId Value="EventProvider_OpenKneeboard.App" />
-            <EventProviderId Value="EventProvider_OpenKneeboard.AutoDetect" />
             <EventProviderId Value="EventProvider_OpenKneeboard.Elevation.Helper" />
             <EventProviderId Value="EventProvider_OpenKneeboard.NonVR.D3D11" />
             <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D11" />

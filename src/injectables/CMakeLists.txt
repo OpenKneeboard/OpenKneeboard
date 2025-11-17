@@ -50,16 +50,6 @@ target_link_libraries(
   oculus-sdk-headers
 )
 
-ok_add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
-target_link_libraries(
-  openvr-hooks
-  PUBLIC
-  detours-ext
-  OpenKneeboard-DllLoadWatcher
-  OpenKneeboard-ScopedRWX
-  openvr-headers
-  OpenKneeboard-dprint)
-
 ok_add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
@@ -157,18 +147,6 @@ file(
   INPUT "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-OpenXR.intermediate.json"
   NEWLINE_STYLE UNIX
 )
-
-ok_add_library(OpenKneeboard-AutoDetect MODULE InjectionBootstrapper.cpp)
-target_link_libraries(
-  OpenKneeboard-AutoDetect
-  PRIVATE
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-tracing
-  OpenKneeboard-version
-  detours-ext
-  dxgi-hooks
-  oculus-hooks
-  openvr-hooks)
 
 ok_add_library(OpenKneeboard-WindowCaptureHook MODULE DUALARCH WindowCaptureHook.cpp)
 target_link_libraries(

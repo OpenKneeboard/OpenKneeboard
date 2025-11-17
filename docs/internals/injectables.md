@@ -18,22 +18,6 @@ Popular 2D overlays like the Steam Overlay and Discord's Game Overlay have the
 same problem, and essentially do the same thing: inject a DLL, and modify the
 game's behavior so that the game renders the overlay.
 
-## Special Injectables
-
-The vast majority of the injected DLLs in OpenKneeboard are renderers, however
-there are a small number of special ones:
-
-### OpenKneeboard-AutoDetect
-
-This is the default injectable. It intercepts every known API to detect which are in use. Once it's received 30 frames, it will load an actual implementation if there is one.
-
-This is also the only injectable that hooks OpenVR/SteamVR: if it
-detects SteamVR is in use, it will will not load any implementation, as the main OpenKneeboard application should be using the OpenVR overlay APIs.
-
-For example, if it detects Oculus and Direct3D 11 in use, it will load `OpenKneeboard-oculus-d3d11`; if it detects Direct3D 11, but does not detect any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
-
-If both Direct3D 11 and Direct3D 12 are detected, Direct3D 12 takes priority: it is likely that the game is a Direct3D 12 application using https://docs.microsoft.com/en-us/windows/win32/direct3d12/direct3d-11-on-12
-
 ## Developer Workflow
 
 While eventually, implementations must be tested with real games and the main

@@ -12,9 +12,6 @@ const std::filesystem::path DCSWORLD_HOOK_DLL(
 const std::filesystem::path DCSWORLD_HOOK_LUA(
   "$<TARGET_PROPERTY:dcs-lua-ext,OUTPUT_NAME>");
 
-const std::filesystem::path AUTODETECTION_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-AutoDetect>");
-
 const std::filesystem::path WINDOW_CAPTURE_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-WindowCaptureHook>");
 
