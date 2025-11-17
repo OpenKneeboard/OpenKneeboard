@@ -96,16 +96,4 @@ void InputSettingsPage::OnOrientationChanged(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
 
-bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
-  return mKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
-}
-
-OpenKneeboard::fire_and_forget InputSettingsPage::IsOpenTabletDriverEnabled(
-  const bool value) {
-  if (value == IsOpenTabletDriverEnabled()) {
-    co_return;
-  }
-  co_await mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
-}
-
 }// namespace winrt::OpenKneeboardApp::implementation

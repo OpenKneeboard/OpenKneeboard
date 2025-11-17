@@ -26,8 +26,6 @@ namespace OpenKneeboardApp
     {
         InputSettingsPage();
 
-        Boolean IsOpenTabletDriverEnabled;
-
         Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
     }
 

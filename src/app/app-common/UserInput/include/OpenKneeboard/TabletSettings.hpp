@@ -39,7 +39,6 @@ struct TabletSettings final {
     bool operator==(const Device&) const noexcept = default;
   };
 
-  bool mOTDIPC {true};
   bool mWarnIfOTDIPCUnusuable {false};
 
   std::unordered_map<std::string, Device> mDevices;

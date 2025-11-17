@@ -82,29 +82,6 @@
           Content="Restore defaults"
           Click="RestoreDefaults"/>
       </Grid>
-      <TextBlock
-        Text="Tablet Support"
-        Style="{StaticResource SubtitleTextBlockStyle}"
-        Margin="0,0,0,16"/>
-      <StackPanel
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Spacing="8"
-        Padding="8">
-        <ToggleSwitch
-          Header="OpenTabletDriver IPC - recommended"
-          IsOn="{x:Bind IsOpenTabletDriverEnabled, Mode=TwoWay}"
-          OffContent="Disabled"
-          OnContent="Enabled"/>
-        <HyperlinkButton
-          Content="Get OpenTabletDriver"
-          NavigateUri="https://opentabletdriver.net/"/>
-        <HyperlinkButton
-          Content="Get the IPC Plugin"
-          NavigateUri="https://go.openkneeboard.com/otd-ipc"/>
-      </StackPanel>
       <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical"

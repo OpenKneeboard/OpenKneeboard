@@ -31,9 +31,6 @@ struct InputSettingsPage
   InputSettingsPage();
   ~InputSettingsPage();
 
-  bool IsOpenTabletDriverEnabled() const;
-  OpenKneeboard::fire_and_forget IsOpenTabletDriverEnabled(bool);
-
   OpenKneeboard::fire_and_forget RestoreDefaults(
     IInspectable,
     RoutedEventArgs) noexcept;

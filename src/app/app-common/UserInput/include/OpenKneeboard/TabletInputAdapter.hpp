@@ -47,9 +47,6 @@ class TabletInputAdapter final
 
   bool HaveAnyTablet() const;
 
-  bool IsOTDIPCEnabled() const;
-  task<void> SetIsOTDIPCEnabled(bool);
-
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
   std::vector<TabletInfo> GetTabletInfo() const;
 

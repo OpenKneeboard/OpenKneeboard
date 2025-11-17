@@ -22,7 +22,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   TabletSettings,
   mDevices,
-  mOTDIPC,
   mWarnIfOTDIPCUnusuable)
 
 }// namespace OpenKneeboard

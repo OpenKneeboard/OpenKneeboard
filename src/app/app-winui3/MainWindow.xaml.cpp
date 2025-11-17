@@ -420,7 +420,7 @@ task<void> MainWindow::ShowWarningIfTabletConfiguredButUnusable() {
 task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
   auto adapter = mKneeboard->GetTabletInputAdapter();
 
-  if ((!adapter) || (!adapter->IsOTDIPCEnabled()) || adapter->HaveAnyTablet()) {
+  if ((!adapter) || adapter->HaveAnyTablet()) {
     co_return;
   }
 
@@ -434,10 +434,10 @@ task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
   ContentDialog dialog;
   dialog.XamlRoot(Navigation().XamlRoot());
   dialog.Title(box_value(to_hstring(_(L"Tablet is unusable"))));
-  dialog.Content(box_value(
-    to_hstring(_(L"You have configured OpenTabletDriver, but it's not "
-                 L"usable; check your tablet is connected, OpenTabletDriver is "
-                 L"running, and the OTD-IPC plugin is enabled."))));
+  dialog.Content(box_value(to_hstring(
+    _(L"You have previously used OpenTabletDriver, but it's not "
+      L"currently usable; check your tablet is connected, "
+      L"OpenTabletDriver is running, and the OTD-IPC plugin is enabled."))));
 
   dialog.CloseButtonText(_(L"Ignore"));
   dialog.PrimaryButtonText(_(L"Open documentation"));

@@ -70,33 +70,8 @@ bool TabletInputAdapter::HaveAnyTablet() const {
   return false;
 }
 
-bool TabletInputAdapter::IsOTDIPCEnabled() const {
-  return mSettings.mOTDIPC;
-}
-
-task<void> TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
-  if (value == IsOTDIPCEnabled()) {
-    co_return;
-  }
-
-  if (!mSettings.mWarnIfOTDIPCUnusuable) {
-    mSettings.mWarnIfOTDIPCUnusuable = true;
-  }
-
-  mSettings.mOTDIPC = value;
-  if (value) {
-    StartOTDIPC();
-  } else {
-    co_await StopOTDIPC();
-  }
-  evSettingsChangedEvent.Emit();
-}
-
 void TabletInputAdapter::StartOTDIPC() {
   if (mOTDIPC) {
-    return;
-  }
-  if (!mSettings.mOTDIPC) {
     return;
   }
 
