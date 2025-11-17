@@ -5,7 +5,6 @@
 // This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
 #include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/Game.hpp>
-#include <OpenKneeboard/GameInjector.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/GenericGame.hpp>
@@ -20,26 +19,6 @@ GamesList::GamesList(KneeboardState* state, const nlohmann::json& config)
   : mKneeboardState(state),
     mGames({std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()}) {
   LoadSettings(config);
-}
-
-void GamesList::StartInjector() {
-  if (mInjector) {
-    return;
-  }
-
-  mInjector = GameInjector::Create(mKneeboardState);
-  mInjector->SetGameInstances(mInstances);
-  AddEventListener(
-    mInjector->evGameChangedEvent,
-    std::bind_front(&GamesList::OnGameChanged, this));
-  mInjectorThread = {
-    "GameInjector Thread",
-    std::bind_front(
-      [](auto injector, std::stop_token stop) -> task<void> {
-        co_await injector->Run(stop);
-      },
-      mInjector),
-  };
 }
 
 void GamesList::OnGameChanged(
@@ -136,9 +115,6 @@ std::vector<std::shared_ptr<GameInstance>> GamesList::GetGameInstances() const {
 void GamesList::SetGameInstances(
   const std::vector<std::shared_ptr<GameInstance>>& instances) {
   mInstances = instances;
-  if (mInjector) {
-    mInjector->SetGameInstances(mInstances);
-  }
   this->evSettingsChangedEvent.Emit();
 }
 

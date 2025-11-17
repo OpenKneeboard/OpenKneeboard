@@ -407,7 +407,6 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   }
   if (mKneeboard) {
     co_await InstallPlugin(mKneeboard, xamlRoot, GetCommandLineW());
-    mKneeboard->GetGamesList()->StartInjector();
   }
 
   co_await CheckAllDCSHooks(xamlRoot);
