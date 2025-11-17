@@ -30,26 +30,6 @@ target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint Syste
 
 ok_add_library(OpenKneeboard-ScopedRWX STATIC ScopedRWX.cpp)
 
-ok_add_library(
-  oculus-hooks
-  STATIC
-  OculusEndFrameHook.cpp
-  OculusKneeboard.cpp
-  OVRProxy.cpp)
-target_link_libraries(
-  oculus-hooks
-  PUBLIC
-  OpenKneeboard-DllLoadWatcher
-  OpenKneeboard-RayIntersectsRect
-  OpenKneeboard-SHM
-  OpenKneeboard-VRKneeboard
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  ThirdParty::DirectXTK
-  detours-ext
-  oculus-sdk-headers
-)
-
 ok_add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
@@ -64,26 +44,6 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-DllLoadWatcher)
-
-ok_add_library(
-  OpenKneeboard-oculus-d3d11
-  MODULE
-  OculusD3D11Kneeboard.cpp
-  OculusD3D11Kneeboard_DllMain.cpp
-)
-target_link_libraries(
-  OpenKneeboard-oculus-d3d11
-  PRIVATE
-  dxgi-hooks
-  detours-ext
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  OpenKneeboard-tracing
-  OpenKneeboard-version
-  OpenKneeboard-D3D11
-  OpenKneeboard-SHM-Client-D3D11
-  oculus-hooks
-  oculus-sdk-headers)
 
 configure_file(
   OpenKneeboard-OpenXR.in.def

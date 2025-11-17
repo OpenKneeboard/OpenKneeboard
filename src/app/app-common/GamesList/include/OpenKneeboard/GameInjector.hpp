@@ -28,8 +28,8 @@ enum class InjectedDlls : uint32_t {
   // TabletProxy = 1,
   // AutoDetection = 1 << 1,
   NonVRD3D11 = 1 << 2,
-  OculusD3D11 = 1 << 3,
-  OculusD3D12 = 1 << 4,
+  // OculusD3D11 = 1 << 3,
+  // OculusD3D12 = 1 << 4,
 };
 
 template <>
@@ -65,7 +65,6 @@ class GameInjector final : public EventReceiver,
   std::mutex mGamesMutex;
 
   std::filesystem::path mOverlayNonVRD3D11Dll;
-  std::filesystem::path mOverlayOculusD3D11Dll;
 
   struct ProcessCacheEntry {
     enum class InjectionAccessState {
