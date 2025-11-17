@@ -1,50 +1,6 @@
 ok_add_library(detours-ext STATIC detours-ext.cpp)
 target_link_libraries(detours-ext PUBLIC detours OpenKneeboard-dprint)
 
-ok_add_library(OpenKneeboard-DllLoadWatcher STATIC DllLoadWatcher.cpp)
-target_link_libraries(
-  OpenKneeboard-DllLoadWatcher
-  PRIVATE
-  detours-ext
-  OpenKneeboard-dprint)
-
-ok_add_library(OpenKneeboard-function-patterns STATIC function-patterns.cpp)
-target_link_libraries(
-  OpenKneeboard-function-patterns
-  PRIVATE
-  OpenKneeboard-dprint)
-
-ok_add_library(OpenKneeboard-FindMainWindow STATIC FindMainWindow.cpp)
-
-ok_add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainHook.cpp)
-target_link_libraries(
-  dxgi-hooks
-  PRIVATE
-  detours-ext
-  OpenKneeboard-dprint
-  OpenKneeboard-function-patterns
-  OpenKneeboard-FindMainWindow)
-
-ok_add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
-target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint System::D3d12)
-
-ok_add_library(OpenKneeboard-ScopedRWX STATIC ScopedRWX.cpp)
-
-ok_add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
-target_link_libraries(
-  OpenKneeboard-nonvr-d3d11
-  PRIVATE
-  dxgi-hooks
-  detours-ext
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  OpenKneeboard-tracing
-  OpenKneeboard-version
-  OpenKneeboard-D3D11
-  OpenKneeboard-SHM
-  OpenKneeboard-SHM-Client-D3D11
-  OpenKneeboard-DllLoadWatcher)
-
 configure_file(
   OpenKneeboard-OpenXR.in.def
   OpenKneeboard-OpenXR${BUILD_BITNESS}.def

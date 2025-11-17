@@ -39,7 +39,6 @@ std::shared_ptr<GameInjector> GameInjector::Create(KneeboardState* state) {
 GameInjector::GameInjector(KneeboardState* state) : mKneeboardState(state) {
   const auto dllPath
     = std::filesystem::canonical(RuntimeFiles::GetInstallationDirectory());
-  mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
 }
 
 GameInjector::~GameInjector() {
@@ -174,9 +173,6 @@ void GameInjector::CheckProcess(
       case OverlayAPI::SteamVR:
       case OverlayAPI::OpenXR:
         break;
-      case OverlayAPI::NonVRD3D11:
-        wantedDlls |= InjectedDlls::NonVRD3D11;
-        break;
       default:
         dprint(
           "Unhandled OverlayAPI: {}", std::to_underlying(game->mOverlayAPI));
@@ -269,8 +265,6 @@ void GameInjector::CheckProcess(
       InjectDll(processHandle, dllPath);
       currentDlls |= dllID;
     };
-
-    injectIfNeeded(InjectedDlls::NonVRD3D11, mOverlayNonVRD3D11Dll);
   }
 }
 

@@ -15,9 +15,6 @@ const std::filesystem::path DCSWORLD_HOOK_LUA(
 const std::filesystem::path WINDOW_CAPTURE_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-WindowCaptureHook>");
 
-const std::filesystem::path NON_VR_D3D11_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-nonvr-d3d11>");
-
 const std::filesystem::path OPENXR_64BIT_JSON("OpenKneeboard-OpenXR.json");
 const std::filesystem::path OPENXR_64BIT_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>");
