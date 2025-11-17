@@ -197,36 +197,24 @@ task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
   co_return *folder;
 }
 
-task<void> CheckAllDCSHooks(XamlRoot root) {
-  winrt::apartment_context uiThread;
+task<void> CheckAllDCSHooks(XamlRoot root) try {
+  const winrt::apartment_context uiThread;
 
-  std::set<std::filesystem::path> dcsSavedGamesPaths;
-  auto kneeboard = gKneeboard.lock();
-  for (const auto& game: kneeboard->GetGamesList()->GetGameInstances()) {
-    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
-    if (!dcs) {
+  const auto savedGames = Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>();
+
+  const auto kneeboard = gKneeboard.lock();
+  for (auto&& game: std::filesystem::directory_iterator(savedGames)) {
+    if (!game.is_directory()) {
       continue;
     }
-    auto& path = dcs->mSavedGamesPath;
-    if (path.empty()) {
-      co_await uiThread;
-      auto chosenPath = co_await ChooseDCSSavedGamesFolder(
-        root, DCSSavedGamesSelectionTrigger::IMPLICIT);
-      if (!chosenPath) {
-        continue;
-      }
-      path = *chosenPath;
-      kneeboard->SaveSettings();
-    }
-
-    if (!dcsSavedGamesPaths.contains(path)) {
-      dcsSavedGamesPaths.emplace(path);
+    const auto name = game.path().filename().string();
+    if (name == "DCS" || name.starts_with("DCS.")) {
+      co_await CheckDCSHooks(root, game.path());
     }
   }
-
-  for (const auto& path: dcsSavedGamesPaths) {
-    co_await CheckDCSHooks(root, path);
-  }
+} catch (const std::filesystem::filesystem_error& e) {
+  dprint.Error("Failed to check DCS hooks: {}", e.what());
+  co_return;
 }
 
 }// namespace OpenKneeboard
