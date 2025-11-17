@@ -34,7 +34,6 @@ namespace OpenKneeboard {
 
 enum class UserAction;
 class DirectInputAdapter;
-class GamesList;
 class PluginStore;
 class KneeboardView;
 class InterprocessRenderer;
@@ -104,7 +103,6 @@ class KneeboardState final
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
-  GamesList* GetGamesList() const;
   std::optional<GameProcess> GetCurrentGame() const;
   std::optional<GameProcess> GetMostRecentGame() const;
 
@@ -195,7 +193,6 @@ class KneeboardState final
 
   PixelSize mLastNonVRPixelSize {};
 
-  std::unique_ptr<GamesList> mGamesList;
   std::shared_ptr<TabsList> mTabsList;
   std::shared_ptr<InterprocessRenderer> mInterprocessRenderer;
   // Initalization and destruction order must match as they both use

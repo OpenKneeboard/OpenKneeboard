@@ -20,7 +20,6 @@ ok_add_executable(
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
   ExecutableIconFactory.cpp ExecutableIconFactory.h
   FilePicker.cpp FilePicker.h
-  GamesSettingsPage.idl GamesSettingsPage.xaml GamesSettingsPage.xaml.cpp GamesSettingsPage.xaml.h
   Globals.cpp Globals.h
   HorizontalMirrorVRViewUIKind.cpp HorizontalMirrorVRViewUIKind.h
   IndependentVRViewUIKind.cpp IndependentVRViewUIKind.h
@@ -34,7 +33,6 @@ ok_add_executable(
   MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
   NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
-  ProcessPickerDialog.idl ProcessPickerDialog.xaml ProcessPickerDialog.xaml.cpp ProcessPickerDialog.xaml.h
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
   RenameTabDialog.idl RenameTabDialog.xaml RenameTabDialog.xaml.cpp RenameTabDialog.xaml.h
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h

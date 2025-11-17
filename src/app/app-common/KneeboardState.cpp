@@ -8,7 +8,6 @@
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/DirectInputAdapter.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
-#include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/InterprocessRenderer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -73,16 +72,7 @@ task<void> KneeboardState::Init() {
     this->evFrameTimerPostEvent,
     std::bind_front(&KneeboardState::AfterFrame, this));
 
-  mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   mPluginStore = std::make_shared<PluginStore>();
-
-  AddEventListener(
-    mGamesList->evSettingsChangedEvent,
-    std::bind_front(&KneeboardState::SaveSettings, this));
-  AddEventListener(
-    mGamesList->evGameChangedEvent,
-    std::bind_front(&KneeboardState::OnGameChangedEvent, this));
-
   mTabsList = co_await TabsList::Create(mDXResources, this, mSettings.mTabs);
   AddEventListener(
     mTabsList->evSettingsChangedEvent,
@@ -699,10 +689,6 @@ task<void> KneeboardState::SetAppSettings(const AppSettings& value) {
   co_return;
 }
 
-GamesList* KneeboardState::GetGamesList() const {
-  return mGamesList.get();
-}
-
 TabsList* KneeboardState::GetTabsList() const {
   return mTabsList.get();
 }
@@ -773,7 +759,6 @@ task<void> KneeboardState::SetProfileSettings(
 
   co_await this->SetAppSettings(newSettings.mApp);
   co_await this->SetDoodlesSettings(newSettings.mDoodles);
-  mGamesList->LoadSettings(newSettings.mGames);
   mDirectInput->LoadSettings(newSettings.mDirectInput);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
   co_await this->SetVRSettings(newSettings.mVR);
@@ -787,9 +772,6 @@ void KneeboardState::SaveSettings() {
     return;
   }
 
-  if (mGamesList) {
-    mSettings.mGames = mGamesList->GetSettings();
-  }
   if (mTabsList) {
     mSettings.mTabs = mTabsList->GetSettings();
   }
@@ -862,13 +844,6 @@ task<void> KneeboardState::SetTabletInputSettings(
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
   mTabletInput->LoadSettings(settings);
-  co_return;
-}
-
-task<void> KneeboardState::SetGamesSettings(const nlohmann::json& j) {
-  const EventDelay delay;// lock must be released first
-  const std::unique_lock lock(*this);
-  mGamesList->LoadSettings(j);
   co_return;
 }
 

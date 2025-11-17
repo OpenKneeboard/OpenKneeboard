@@ -151,7 +151,6 @@ void from_json_postprocess<Settings>(const nlohmann::json& j, Settings& s) {
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   Settings,
-  mGames,
   mTabs,
   mApp,
   mDirectInput,

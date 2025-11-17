@@ -20,7 +20,6 @@ namespace SpecialURIs {
 constexpr std::string_view Scheme {"openkneeboard"};
 
 namespace Paths {
-constexpr std::string_view SettingsGames {"Settings/Games"};
 constexpr std::string_view SettingsInput {"Settings/Input"};
 constexpr std::string_view SettingsTabs {"Settings/Tabs"};
 }// namespace Paths

@@ -14,7 +14,6 @@
 #include <OpenKneeboard/DCSWorldInstance.hpp>
 #include <OpenKneeboard/FilesDiffer.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
 

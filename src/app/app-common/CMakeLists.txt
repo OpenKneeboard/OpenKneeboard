@@ -74,7 +74,6 @@ target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_include_directories(
   OpenKneeboard-App-Common
   PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
   ${CMAKE_CURRENT_SOURCE_DIR}/PageSource/include
   ${CMAKE_CURRENT_SOURCE_DIR}/Tab/include
   ${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include

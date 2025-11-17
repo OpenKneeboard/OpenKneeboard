@@ -40,7 +40,6 @@ void SettingsPage::OnItemClick(
   }
   IT(VR)
   IT(NonVR)
-  IT(Games)
   IT(Tabs)
   IT(Input)
   IT(Advanced)

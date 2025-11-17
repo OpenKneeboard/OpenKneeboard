@@ -25,7 +25,6 @@ namespace OpenKneeboard {
   IT(DirectInputSettings, DirectInput) \
   IT(DoodleSettings, Doodles) \
   IT(TextSettings, Text) \
-  IT(nlohmann::json, Games) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
   IT(UISettings, UI) \

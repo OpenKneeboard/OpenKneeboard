@@ -22,7 +22,6 @@
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GamesList.hpp>
 #include <OpenKneeboard/GetMainHWND.hpp>
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/InterprocessRenderer.hpp>
@@ -1170,10 +1169,6 @@ OpenKneeboard::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
 
   using namespace SpecialURIs::Paths;
 
-  if (path == SettingsGames) {
-    Frame().Navigate(xaml_typename<GamesSettingsPage>());
-    co_return;
-  }
   if (path == SettingsInput) {
     Frame().Navigate(xaml_typename<InputSettingsPage>());
     co_return;

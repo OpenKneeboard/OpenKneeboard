@@ -77,13 +77,6 @@
             Title="Non VR">
             Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
           </local:SettingsSubpageData>
-          <!-- E7FC Game -->
-          <local:SettingsSubpageData
-            x:Name="GamesItem"
-            Glyph="&#xE7FC;"
-            Title="Games">
-            Use OpenKneeboard with non-VR or legacy Oculus games, or some tablets.
-          </local:SettingsSubpageData>
           <!-- F571 PrintAllPages -->
           <local:SettingsSubpageData
             x:Name="TabsItem"
