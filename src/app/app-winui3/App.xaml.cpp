@@ -235,7 +235,7 @@ static void BackupSettings() {
 
 enum class DamagingEnvironmentFlags : uint8_t {
   None = 0,
-  Fatal = (1 << 1),
+  Fatal = (1 << 0),
   IsElevated = (1 << 1) | Fatal,
   UacIsDisabled = (1 << 2) | Fatal,
   UacWasPreviouslyDisabled = (1 << 3),
