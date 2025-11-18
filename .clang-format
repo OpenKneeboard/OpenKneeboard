@@ -70,6 +70,9 @@ IncludeCategories:
   - Regex: '^<[a-z_/]+>$'
     Priority: 42
     CaseSensitive: true
+  - Regex: '^<afunix.h>$'
+    Priority: 43
+    SortPriority: 44
   - Regex: '^<[a-z0-9_]+\.h>$'
     Priority: 43
 IndentWidth: 2

@@ -83,7 +83,7 @@ void TabletInputAdapter::StartOTDIPC() {
     mOTDIPC->evDeviceInfoReceivedEvent,
     std::bind_front(&TabletInputAdapter::OnOTDDevice, this));
   for (const auto& device: mOTDIPC->GetTablets()) {
-    this->GetOTDDevice(device.mDeviceID);
+    this->GetOTDDevice(device.mDevicePersistentID);
   }
 }
 
@@ -177,7 +177,7 @@ void TabletInputAdapter::OnTabletInput(
   const TabletInfo& tablet,
   const TabletState& state,
   const std::shared_ptr<TabletInputDevice>& device) {
-  auto& auxButtons = mAuxButtons[tablet.mDeviceID];
+  auto& auxButtons = mAuxButtons[tablet.mDevicePersistentID];
 
   if (state.mAuxButtons != auxButtons) {
     const uint32_t changedMask = state.mAuxButtons ^ auxButtons;
@@ -293,8 +293,8 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
     return nullptr;
   }
 
-  auto device = CreateDevice(info->mDeviceName, info->mDeviceID);
-  mOTDDevices[info->mDeviceID] = device;
+  auto device = CreateDevice(info->mDeviceName, info->mDevicePersistentID);
+  mOTDDevices[info->mDevicePersistentID] = device;
   evDeviceConnectedEvent.Emit(device);
   return device;
 }
@@ -308,7 +308,7 @@ OpenKneeboard::fire_and_forget TabletInputAdapter::OnOTDDevice(
   auto weak = weak_from_this();
   co_await mUIThread;
   if (auto self = weak.lock()) {
-    self->GetOTDDevice(tablet.mDeviceID);
+    self->GetOTDDevice(tablet.mDevicePersistentID);
   }
 }
 

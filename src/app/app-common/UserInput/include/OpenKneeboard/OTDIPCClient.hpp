@@ -21,6 +21,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <OTD-IPC/DebugMessage.h>
+
 namespace OTDIPC::Messages {
 struct Header;
 struct DeviceInfo;
@@ -41,8 +43,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
   ~OTDIPCClient();
   task<void> DisposeAsync() noexcept override;
 
-  std::optional<TabletState> GetState(const std::string& id) const;
-  std::optional<TabletInfo> GetTablet(const std::string& id) const;
+  std::optional<TabletState> GetState(const std::string& persistentID) const;
+  std::optional<TabletInfo> GetTablet(const std::string& persistentID) const;
   std::vector<TabletInfo> GetTablets() const;
 
   Event<TabletInfo> evDeviceInfoReceivedEvent;
@@ -60,10 +62,12 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
   task<void> RunSingle();
 
   OpenKneeboard::fire_and_forget EnqueueMessage(std::string message);
-  void ProcessMessage(const OTDIPC::Messages::Header* const);
-  void ProcessMessage(const OTDIPC::Messages::DeviceInfo* const);
-  void ProcessMessage(const OTDIPC::Messages::State* const);
-  void TimeoutTablet(const std::string& id);
+  void ProcessMessage(const OTDIPC::Messages::Header&);
+  void ProcessMessage(const OTDIPC::Messages::DeviceInfo&);
+  void ProcessMessage(const OTDIPC::Messages::State&);
+  void ProcessMessage(const OTDIPC::Messages::DebugMessage&);
+  void TimeoutTablet(uint32_t id);
+  void TimeoutTablets();
 
   std::optional<task<void>> mRunner;
 
@@ -73,7 +77,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
     TabletInfo mDevice;
     std::optional<TabletState> mState;
   };
-  std::unordered_map<std::string, Tablet> mTablets;
+  std::unordered_map<uint32_t, Tablet> mTablets;
+  std::unordered_map<std::string, uint32_t> mTabletIDs;
 
   using TimeoutClock = std::chrono::steady_clock;
   /* Tablets that do not support proximity data.
@@ -81,7 +86,15 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
    * We just consider them inactive once we stop receiving packets
    * for a while.
    */
-  std::unordered_map<std::string, TimeoutClock::time_point> mTabletsToTimeout;
+  std::unordered_map<uint32_t, TimeoutClock::time_point> mTabletsToTimeout;
+
+  template <
+    class T,
+    class TTablet
+    = std::conditional_t<std::is_const_v<T>, const Tablet, Tablet>>
+  std::optional<TTablet*> GetTabletFromPersistentID(
+    this T& self,
+    const std::string& persistentID);
 };
 
 }// namespace OpenKneeboard

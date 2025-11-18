@@ -826,8 +826,8 @@ task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
   auto orientation = TabletSettings::Device {}.mOrientation;
   if (tablet) {
     const auto& devices = tablets->GetSettings().mDevices;
-    if (devices.contains(tablet->mDeviceID)) {
-      orientation = devices.at(tablet->mDeviceID).mOrientation;
+    if (devices.contains(tablet->mDevicePersistentID)) {
+      orientation = devices.at(tablet->mDevicePersistentID).mOrientation;
     }
   }
 

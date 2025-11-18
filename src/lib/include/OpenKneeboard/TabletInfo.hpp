@@ -15,7 +15,7 @@ struct TabletInfo final {
   float mMaxY {};
   uint32_t mMaxPressure {};
   std::string mDeviceName;
-  std::string mDeviceID;
+  std::string mDevicePersistentID;
 };
 
 }// namespace OpenKneeboard

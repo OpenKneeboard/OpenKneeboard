@@ -1,7 +1,7 @@
 ExternalProject_Add(
   OTDIPCFetch
-  URL "https://github.com/OpenKneeboard/OTD-IPC/archive/refs/tags/v0.1.tar.gz"
-  URL_HASH "SHA256=22ea9598b12b4dcca3bfdba2775587250170df8f8e95ba24735dd367819acc74"
+  GIT_REPOSITORY "https://github.com/OpenKneeboard/OTD-IPC.git"
+  GIT_TAG "944cf470088172abc257439d325f55885fb4bae0"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""

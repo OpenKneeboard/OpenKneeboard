@@ -410,53 +410,6 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
 
   co_await CheckAllDCSHooks(xamlRoot);
   co_await PromptForViewMode();
-  co_await ShowWarningIfTabletConfiguredButUnusable();
-}
-
-task<void> MainWindow::ShowWarningIfTabletConfiguredButUnusable() {
-  co_await ShowWarningIfOTDIPCConfiguredButUnusable();
-}
-
-task<void> MainWindow::ShowWarningIfOTDIPCConfiguredButUnusable() {
-  auto adapter = mKneeboard->GetTabletInputAdapter();
-
-  if ((!adapter) || adapter->HaveAnyTablet()) {
-    co_return;
-  }
-
-  if (!adapter->GetSettings().mWarnIfOTDIPCUnusuable) {
-    dprint("OTD-IPC is enabled and unusable, but has never been used");
-    co_return;
-  }
-
-  dprint.Warning("OTD-IPC configured but not usable");
-
-  ContentDialog dialog;
-  dialog.XamlRoot(Navigation().XamlRoot());
-  dialog.Title(box_value(to_hstring(_(L"Tablet is unusable"))));
-  dialog.Content(box_value(to_hstring(
-    _(L"You have previously used OpenTabletDriver, but it's not "
-      L"currently usable; check your tablet is connected, "
-      L"OpenTabletDriver is running, and the OTD-IPC plugin is enabled."))));
-
-  dialog.CloseButtonText(_(L"Ignore"));
-  dialog.PrimaryButtonText(_(L"Open documentation"));
-  dialog.SecondaryButtonText(_(L"Change settings"));
-
-  dialog.DefaultButton(ContentDialogButton::Primary);
-
-  const auto result = co_await dialog.ShowAsync();
-
-  switch (result) {
-    case ContentDialogResult::Primary:
-      co_await LaunchURI("https://go.openkneeboard.com/otd-ipc");
-      co_return;
-    case ContentDialogResult::Secondary:
-      Frame().Navigate(xaml_typename<InputSettingsPage>());
-      co_return;
-    case ContentDialogResult::None:
-      co_return;
-  }
 }
 
 void MainWindow::WinEventProc(
