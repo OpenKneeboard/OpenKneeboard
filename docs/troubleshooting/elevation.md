@@ -66,7 +66,7 @@ I tried very obtrusive warnings - every time that OpenKneeboard started - which 
 
 These messages were widely ignored, and in some cases, led to users lying about their configuration, wasting all of our time. The problems were usually actually in other software that people use in combination with OpenKneeboard — e.g. games, VR drivers, and tablet drivers — but people considered them all to be OpenKneeboard issues.
 
-I refuse to spend any more of my time on unsupported configurations, and softer approaches to reduce this failed.
+I refuse to spend any more of my time on unsupported configurations, and softer approaches to reduce this failed; the change from warnings to a hard requirement led to a > 95% reduction in support requests and bug reports.
 
 ## I heard things work better as Administrator or with UAC off
 
@@ -93,6 +93,8 @@ No.
 ## Will you reconsider?
 
 No.
+
+This change resulted in a > 95% reduction in support requests and bug reports.
 
 ## I can work around this by ...
 
