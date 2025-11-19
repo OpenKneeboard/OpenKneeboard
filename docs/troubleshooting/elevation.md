@@ -82,9 +82,11 @@ This is true for almost all modern Windows software; there are very few exceptio
 
 ## I turned UAC back on, but I still get a warning. How do I stop getting these warnings?
 
-Reinstall Windows.
+Reinstall Windows. Turning UAC off frequently causes problems that are only reasonably fixed by reinstalling Windows.
 
-Turning UAC off frequently causes problems that are only reasonably fixed by reinstalling Windows.
+The alternative to reinstalling Windows is to remove or fix permissions on every trace (both system-wide and per-user, and both in the filesystem and registry) of all software that OpenKneeboard interacts with (for example, Meta Link). If you can figure out how to do that thoroughly, suppressing the message will be comparatively straightforward for you.
+
+This particular warning does not stop you from using OpenKneeboard.
 
 ## Will you remove the requirements or messages?
 
