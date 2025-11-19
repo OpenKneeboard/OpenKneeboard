@@ -342,7 +342,6 @@ void HelpPage::PopulateLicenses() noexcept {
       };
 
   addEntry("OpenKneeboard", docDir / "LICENSE.txt");
-  addEntry("GNU General Public License, Version 2", docDir / "gpl-2.0.txt");
 
   Controls::TextBlock ackBlock;
   ackBlock.TextWrapping(TextWrapping::WrapWholeWords);
