@@ -40,6 +40,7 @@
 #include <OpenKneeboard/json.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/task/resume_after.hpp>
+#include <OpenKneeboard/task/resume_on_signal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -220,30 +221,42 @@ task<void> MainWindow::FrameLoop() {
   // app
   co_await this_task::fatal_on_uncaught_exception();
 
-  auto stop = mFrameLoopStopSource.get_token();
-  const auto interval = std::chrono::microseconds(
-    static_cast<uint32_t>((1000 * 1000) / FramesPerSecond));
+  const auto stop = mFrameLoopStopSource.get_token();
+  constexpr auto NanosPerFrame
+    = std::chrono::nanoseconds(static_cast<int64_t>(1e9) / FramesPerSecond);
+  using HighResolutionTimerTick
+    = std::chrono::duration<int64_t, std::ratio<1, 1'0'000'000>>;
+
+  const wil::unique_event timer {CreateWaitableTimerExW(
+    nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS)};
 
   while (!stop.stop_requested()) {
     const auto start = std::chrono::steady_clock::now();
-    const auto nextGoal = start + interval;
+    const auto nextGoal = start + NanosPerFrame;
 
     co_await this->FrameTick(nextGoal);
 
     const auto wait = nextGoal - std::chrono::steady_clock::now();
-    if (wait < decltype(wait)::zero()) {
+    if (wait <= decltype(wait)::zero()) {
       TraceLoggingWrite(
         gTraceProvider, "MainWindow::FrameLoop()/FrameDurationExceeded");
       continue;
     }
-
+    const LARGE_INTEGER waitTime {
+      .QuadPart
+      = -std::chrono::duration_cast<HighResolutionTimerTick>(wait).count()};
+    if (!SetWaitableTimer(timer.get(), &waitTime, 0, nullptr, nullptr, 0)) {
+      dprint.Error(
+        "Failed to set frame timer: {}",
+        winrt::hresult(HRESULT_FROM_WIN32(GetLastError())));
+      co_return;
+    }
     TraceLoggingWrite(
       gTraceProvider,
-      "MainWindow::FrameLoop()/Wait",
-      TraceLoggingValue(wait.count(), "interval"));
-    if (wait > decltype(wait)::zero()) {
-      co_await OpenKneeboard::resume_after(wait, stop);
-    }
+      "MainWindow::FrameLoop()/WaitStart",
+      TraceLoggingValue(waitTime.QuadPart, "interval"));
+    co_await OpenKneeboard::resume_on_signal(timer.get(), stop);
+    TraceLoggingWrite(gTraceProvider, "MainWindow::FrameLoop()/WaitComplete");
   }
   co_return;
 }
