@@ -15,17 +15,19 @@ set(PROJECT_REVERSE_DOMAIN "com.openkneeboard" CACHE STRING "Project reverse dom
 set(PROJECT_OPENXR_API_LAYER_NAME "XR_APILAYER_FREDEMMOTT_OpenKneeboard" CACHE STRING "OpenXR API layer name")
 set(PROJECT_OPENXR_API_LAYER_DESCRIPTION "OpenKneeboard - https://github.com/OpenKneeboard/OpenKneeboard" CACHE STRING "Project description for API layer JSON")
 
-# Required for ID3D11On12Device2
-# SDK version below - actually need Win 10 Creators Update (15063)
-# set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
-
-# Required for:
-# - GraphicsCaptureItem.TryCreateFromWindowId
+# Win10 19H1 runtime-required for:
+# - AF_UNIX (OTD-IPC v2)
 # - icu.dll
-# SDK version below - actually need Win 10 19H1 (18362) or later
-set(MINIMUM_WINDOWS_VERSION "10.0.20348.0")
-set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum Windows Version" FORCE)
-set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum windows version" FORCE)
+
+# For later NTDDI_VERSION values, see `sdkddkver.h`
+# https://en.wikipedia.org/wiki/List_of_Microsoft_codenames is a useful reference - e.g. `NTDDI_WIN10_VB` is probably
+# 'Vibranium', a.k.a Win20 20H1
+set(NTDDI_VERSION "NTDDI_WIN10_19H1")
+set(WIN32_WINNT "_WIN32_WINNT_WIN10")
+
+# Win10 20H1 SDK (20348) build-time-required for:
+# - GraphicsCaptureItem.TryCreateFromWindowId
+set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_MIN_VERSION "10.0.20348.0" CACHE INTERNAL "Minimum windows version" FORCE)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,7 +45,7 @@ set(
 add_compile_options(
   # Standard C++ exception behavior
   "/EHsc"
-) 
+)
 
 # Require that targets exist
 cmake_policy(SET CMP0079 NEW)
@@ -62,6 +64,8 @@ set(
   # _HAS_ITERATOR_DEBUGGING is set by CEF but deprecated,
   # set the non-deprecated property too
   "/D_ITERATOR_DEBUG_LEVEL=0"
+  "/D_WIN32_WINNT=${WIN32_WINNT}"
+  "/DNTDDI_VERSION=${NTDDI_VERSION}"
 )
 set(COMMON_LINK_OPTIONS)
 
