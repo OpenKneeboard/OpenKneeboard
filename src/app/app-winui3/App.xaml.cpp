@@ -236,9 +236,11 @@ static void BackupSettings() {
 enum class DamagingEnvironmentFlags : uint8_t {
   None = 0,
   Fatal = (1 << 0),
-  IsElevated = (1 << 1) | Fatal,
-  UacIsDisabled = (1 << 2) | Fatal,
-  UacWasPreviouslyDisabled = (1 << 3),
+  ElevationRelated = (1 << 1),
+  IsElevated = (1 << 2) | ElevationRelated | Fatal,
+  UacIsDisabled = (1 << 3) | ElevationRelated | Fatal,
+  UacWasPreviouslyDisabled = (1 << 4) | ElevationRelated,
+  OlderThanWin10 = (1 << 5),
 };
 
 constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
@@ -248,11 +250,11 @@ constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
 void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
   using enum DamagingEnvironmentFlags;
 
-  std::wstring_view problem;
+  std::wstring_view elevationProblem;
   if ((flags & IsElevated) == IsElevated) {
-    problem = _(L"OpenKneeboard is running elevated");
+    elevationProblem = _(L"OpenKneeboard is running elevated");
   } else if ((flags & UacIsDisabled) == UacIsDisabled) {
-    problem = _(L"User Account Control (UAC) is disabled");
+    elevationProblem = _(L"User Account Control (UAC) is disabled");
   } else if ((flags & UacWasPreviouslyDisabled) == UacWasPreviouslyDisabled) {
     MessageBoxW(
       nullptr,
@@ -267,6 +269,16 @@ void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
       _(L"OpenKneeboard"),
       MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
     return;
+  } else if ((flags & OlderThanWin10) == OlderThanWin10) {
+    MessageBoxW(
+      nullptr,
+      _(L"Your version of Windows is too old to run OpenKneeboard.\n\n"
+        L"OpenKneeboard requires Windows 10 or newer. If you are using "
+        L"Windows 10 or newer, turn off 'Compatibility Mode' in the shortcut "
+        L"properties."),
+      L"OpenKneeboard",
+      MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
+    return;
   } else {
     dprint.Error(
       "Damaging environment error, but no recognized flags: {:#x}",
@@ -274,19 +286,25 @@ void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
     return;
   }
 
+  OPENKNEEBOARD_ASSERT((flags & ElevationRelated) == ElevationRelated);
+  OPENKNEEBOARD_ASSERT(!elevationProblem.empty());
+
+  const auto isFatal = (flags & Fatal) == Fatal;
+
   const auto message = std::format(
     _(L"{}; this is not supported.\n\n"
       L"Turning off User Account Control or running software as administrator "
       L"that is not intended to be ran as administrator can cause problems "
-      L"that can only be fixed by reinstalling Windows.\n\n"
-      L"This requirement will not be removed."),
-    problem);
-  dprint.Warning(L"Aborting with environment error: {}", problem);
+      L"that can only reasonably be fixed by reinstalling Windows.\n\n"
+      L"This {} will not be removed."),
+    elevationProblem,
+    isFatal ? L"requirement" : L"warning");
+  const auto iconFlag = isFatal ? MB_ICONERROR : MB_ICONWARNING;
   MessageBoxW(
     nullptr,
     message.c_str(),
     L"OpenKneeboard",
-    MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+    MB_OK | MB_SETFOREGROUND | iconFlag);
 }
 
 [[nodiscard]]
@@ -302,8 +320,14 @@ static DamagingEnvironmentFlags LogSystemInformation() {
     OSVERSIONINFOEXA osVersion {sizeof(OSVERSIONINFOEXA)};
     winrt::check_bool(
       GetVersionExA(reinterpret_cast<OSVERSIONINFOA*>(&osVersion)));
-    DWORD productType {};
+    if (osVersion.dwMajorVersion < 10) {
+      dprint.Warning(
+        "Windows {} is not supported - compatibility mode?",
+        osVersion.dwMajorVersion);
+      ret |= DamagingEnvironmentFlags::OlderThanWin10;
+    }
 
+    DWORD productType {};
     std::string humanMajorVer = std::to_string(osVersion.dwMajorVersion);
     if (osVersion.dwMajorVersion == 10 && osVersion.dwBuildNumber >= 22000) {
       humanMajorVer = "11";
@@ -648,6 +672,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     if (
       (flags & DamagingEnvironmentFlags::Fatal)
       == DamagingEnvironmentFlags::Fatal) {
+      dprint.Warning(
+        L"Exiting with environment error: {:#010x}", std::to_underlying(flags));
       return EXIT_FAILURE;
     }
   }
