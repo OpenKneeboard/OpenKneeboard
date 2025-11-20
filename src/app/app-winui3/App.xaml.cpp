@@ -247,7 +247,7 @@ constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
   return true;
 }
 
-void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
+static void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
   using enum DamagingEnvironmentFlags;
 
   std::wstring_view elevationProblem;
@@ -573,6 +573,33 @@ static void LogInstallationInformation() {
   dprint("----------");
 }
 
+static void OptOutOfPowerSaving() {
+  dprint("Opting out of power saving for event timers (frame intervals)");
+  // Windows can automatically reduce the accuracy/frequency of event timers
+  // when a Window-owning process has no visible windows, including when the
+  // window is fully occluded or minimized.
+  //
+  // In Windows 11, this changed from opt-in to opt-out. Switch it back off
+  // so we can run our frame loop properly
+  PROCESS_POWER_THROTTLING_STATE powerThrottling {
+    .Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+    .ControlMask = PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION,
+    .StateMask = 0,
+  };
+
+  if (!SetProcessInformation(
+        GetCurrentProcess(),
+        ProcessPowerThrottling,
+        &powerThrottling,
+        sizeof(powerThrottling))) {
+    dprint.Warning(
+      "Failed to set process power throttling state: {}",
+      winrt::hresult(HRESULT_FROM_WIN32(GetLastError())));
+    return;
+  }
+  dprint("✅ opted out of power saving event timers");
+}
+
 static auto gCrashHandler = []() {
   OpenKneeboard::divert_process_failure_to_fatal();
   struct placeholder_t {};
@@ -725,6 +752,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
       std::bit_cast<uint32_t>(e.code().value()),
       e.what());
   }
+
+  OptOutOfPowerSaving();
 
   ChromiumApp cefApp;
 
