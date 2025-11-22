@@ -1,0 +1,4 @@
+:root {
+  --download-button-color: #{$link-color};
+  --download-button-hover-color: #{darken($link-color, 10%)};
+}
