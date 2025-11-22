@@ -292,6 +292,7 @@ PLATFORMS
 DEPENDENCIES
   github-pages
   jekyll
+  jemoji
   json
   just-the-docs
   webrick

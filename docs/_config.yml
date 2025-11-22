@@ -13,6 +13,8 @@ gh_edit_branch: master
 gh_edit_source: docs
 gh_edit_view_mode: edit
 safe: false
+plugins:
+  - jemoji
 aux_links:
   "Download":
     - "https://go.openkneeboard.com/download"

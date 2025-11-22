@@ -1,1 +1,33 @@
 @import './download_button';
+@import './badges';
+
+.release-published-at, .release-copy-link {
+  font-style: italic;
+  color: $grey-dk-000;
+  &:before {
+    content: " - ";
+    text-decoration: none;
+  }
+}
+
+.release-copy-link {
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+  &:active {
+    text-decoration: none;
+  }
+}
+
+details.prerelease {
+  display: none;
+}
+body.with-prerelease-details details.prerelease {
+  display: block;
+}
+.toggle-prereleases {
+  color: #ccc;
+  font-size: 80%;
+  font-style: italic;
+}
