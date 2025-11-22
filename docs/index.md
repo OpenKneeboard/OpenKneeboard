@@ -11,7 +11,9 @@ OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics table
 
 Note that OpenKneeboard has **NO WARRANTY**, and [anti-cheat software could theoretically have issues with it](#warning-anti-cheat)
 
-1. Download [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)
+{% include download_button.html %}
+
+1. Download [the latest release](https://go.openkneeboard.com/download)
 2. Install it; the installer will offer to launch OpenKneeboard when finished.
 3. Open settings
 4. Add games to the 'Games' tab if they were not automatically added; this is needed for tablet, Oculus, and non-VR support
@@ -23,7 +25,7 @@ While OpenKneeboard is not a cheat, it does hook into the games rendering and in
 
 As of March 19th, 2024, the developers have not received any reports of any users receiving any bans in any games, but this remains a theoretical possibility in the future.
 
-Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/LICENSE) and [full text of the GPLv2](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/gpl-2.0.txt) for details.
+Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/LICENSE) for details.
 
 ## Screenshots
 

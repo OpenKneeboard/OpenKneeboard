@@ -1,0 +1,46 @@
+{% assign release = include.release | default: site.data.openkneeboard_latest_release %}
+
+<style>
+    .dl-button {
+        background-color: var(--download-button-color);
+        border-radius: 1.2rem;
+        padding: 1.2rem 1.8rem;
+        width: fit-content;
+        cursor: pointer;
+        text-align: center;
+        font-size: 1.2rem;
+    }
+
+    .dl-button-link {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+        text-decoration: none;
+        &:hover {
+            .dl-button {
+                background-color: var(--download-button-hover-color);
+            }
+            .dl-button-below-text {
+                text-decoration-color: white;
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .dl-button-below-text {
+        display: inline-block;
+        font-size: 0.7rem;
+        width: fit-content;
+        margin-top: 0.3rem;
+    }
+</style>
+
+<a class="dl-button-link" href="{{release.msi_url}}">
+    <span class="dl-button">&#x2193; Download OpenKneeboard</span>
+    <span class="dl-button-below-text">{{release.msi_filename}}</span>
+</a>
