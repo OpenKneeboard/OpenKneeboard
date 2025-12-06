@@ -32,6 +32,14 @@ DCS World does not include kneeboard images for other maps; OpenKneeboard does n
 Dynamic (Lua) kneeboard pages are not supported at all, and are unlikely to be supported in the future. This
 includes most of the kneeboard pages for the F14, F16, and F18.
 
+## Files I added to the DCS kneeboard aren't being shown
+
+Make sure you put them in [a place where the specific tab is looking](../features/dcs.md).
+
+You can see the full paths that OpenKneeboard is looking for files in
+Settings -> Tabs, with a tick or cross next to them showing whether or
+not the folder exists. A cross doesn't mean "something is wrong", just "OpenKneeboard looked here, and there wasn't anything".
+
 ## The path is incorrect for some aircraft
 
 1. [Check if this has already been reported](https://github.com/OpenKneeboard/OpenKneeboard/issues?q=is%3Aissue)

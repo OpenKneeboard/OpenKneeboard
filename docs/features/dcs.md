@@ -41,10 +41,6 @@ This will show any *image files* for the current aircraft, from:
 
 For example, I put my A-10C kneeboard images in `C:\Users\fred\Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
 
-You can see the full paths that OpenKneeboard is looking for files in
-Settings -> Tabs, with a tick or cross next to them showing whether or
-not the folder exists.
-
 These paths are the same as the paths that DCS itself uses.
 
 ## The 'DCS Briefing' Tab
