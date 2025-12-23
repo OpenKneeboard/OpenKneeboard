@@ -21,7 +21,12 @@ function(target_link_nuget_packages TARGET)
   )
   get_target_property(VS_PACKAGE_REFERENCES "${TARGET}" VS_PACKAGE_REFERENCES)
   list(REMOVE_DUPLICATES VS_PACKAGE_REFERENCES)
-  set_property(TARGET "${TARGET}" PROPERTY VS_PACKAGE_REFERENCES "${VS_PACKAGE_REFERENCES}")
+  set_target_properties(
+    "${TARGET}"
+    PROPERTIES
+    VS_PACKAGE_REFERENCES "${VS_PACKAGE_REFERENCES}"
+    VS_GLOBAL_NuGetTargetMoniker "native,Version=v0.0"
+  )
 endfunction()
 
 function(target_link_windows_app_sdk TARGET)

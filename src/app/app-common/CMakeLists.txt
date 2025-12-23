@@ -14,16 +14,262 @@ target_link_libraries(
 )
 target_include_directories(OpenKneeboard-Events PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.hpp")
-list(FILTER APP_COMMON_SOURCES EXCLUDE REGEX "\\bEvents\\.[ch]pp$")
+include(PDFNavigation.cmake)
+include(SteamVRKneeboard.cmake)
 
-ok_add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
+ok_add_library(
+  OpenKneeboard-App-Common
+  STATIC
+  APIEventServer.cpp
+  AppSettings.cpp
+  CachedLayer.cpp
+  ChromiumApp.cpp
+  Coordinates.cpp
+  CursorRenderer.cpp
+  DCSExtractedMission.cpp
+  DCSGrid.cpp
+  DCSMagneticModel.cpp
+  DebugPrivileges.cpp
+  DoodleRenderer.cpp
+  DoodleSettings.cpp
+  FilesystemWatcher.cpp
+  IHasDebugInformation.cpp
+  InterprocessRenderer.cpp
+  KneeboardState.cpp
+  KneeboardView.cpp
+  LaunchURI.cpp
+  Lua.cpp
+  OpenXRMode.cpp
+  PageSource/ChromiumPageSource.cpp
+  PageSource/ChromiumPageSource_Client.cpp
+  PageSource/ChromiumPageSource_Client.hpp
+  PageSource/ChromiumPageSource_RenderHandler.cpp
+  PageSource/ChromiumPageSource_RenderHandler.hpp
+  PageSource/FilePageSource.cpp
+  PageSource/FolderPageSource.cpp
+  PageSource/HWNDPageSource.cpp
+  PageSource/IPageSource.cpp
+  PageSource/ImageFilePageSource.cpp
+  PageSource/PDFFilePageSource.cpp
+  PageSource/PageSourceWithDelegates.cpp
+  PageSource/PlainTextFilePageSource.cpp
+  PageSource/PlainTextPageSource.cpp
+  PageSource/include/OpenKneeboard/ChromiumPageSource.hpp
+  PageSource/include/OpenKneeboard/FilePageSource.hpp
+  PageSource/include/OpenKneeboard/FolderPageSource.hpp
+  PageSource/include/OpenKneeboard/HWNDPageSource.hpp
+  PageSource/include/OpenKneeboard/IPageSource.hpp
+  PageSource/include/OpenKneeboard/IPageSourceWithCursorEvents.hpp
+  PageSource/include/OpenKneeboard/IPageSourceWithDeveloperTools.hpp
+  PageSource/include/OpenKneeboard/IPageSourceWithInternalCaching.hpp
+  PageSource/include/OpenKneeboard/IPageSourceWithNavigation.hpp
+  PageSource/include/OpenKneeboard/ImageFilePageSource.hpp
+  PageSource/include/OpenKneeboard/PDFFilePageSource.hpp
+  PageSource/include/OpenKneeboard/PageSourceWithDelegates.hpp
+  PageSource/include/OpenKneeboard/PlainTextFilePageSource.hpp
+  PageSource/include/OpenKneeboard/PlainTextPageSource.hpp
+  Plugin.cpp
+  PluginStore.cpp
+  ProcessShutdownBlock.cpp
+  ProfileSettings.cpp
+  RenderTarget.cpp
+  RunSubprocessAsync.cpp
+  RunnerThread.cpp
+  Settings.cpp
+  Tab/BrowserTab.cpp
+  Tab/DCSAircraftTab.cpp
+  Tab/DCSBriefingTab.cpp
+  Tab/DCSBriefingTab_sections.cpp
+  Tab/DCSMissionTab.cpp
+  Tab/DCSRadioLogTab.cpp
+  Tab/DCSTab.cpp
+  Tab/DCSTerrainTab.cpp
+  Tab/EndlessNotebookTab.cpp
+  Tab/FolderTab.cpp
+  Tab/ITab.cpp
+  Tab/NavigationTab.cpp
+  Tab/PluginTab.cpp
+  Tab/SingleFileTab.cpp
+  Tab/TabBase.cpp
+  Tab/WindowCaptureTab.cpp
+  Tab/include/OpenKneeboard/BrowserTab.hpp
+  Tab/include/OpenKneeboard/CursorEvent.hpp
+  Tab/include/OpenKneeboard/DCSAircraftTab.hpp
+  Tab/include/OpenKneeboard/DCSBriefingTab.hpp
+  Tab/include/OpenKneeboard/DCSMissionTab.hpp
+  Tab/include/OpenKneeboard/DCSRadioLogTab.hpp
+  Tab/include/OpenKneeboard/DCSTab.hpp
+  Tab/include/OpenKneeboard/DCSTerrainTab.hpp
+  Tab/include/OpenKneeboard/EndlessNotebookTab.hpp
+  Tab/include/OpenKneeboard/FolderTab.hpp
+  Tab/include/OpenKneeboard/ITab.hpp
+  Tab/include/OpenKneeboard/ITabWithSettings.hpp
+  Tab/include/OpenKneeboard/NavigationTab.hpp
+  Tab/include/OpenKneeboard/PluginTab.hpp
+  Tab/include/OpenKneeboard/SingleFileTab.hpp
+  Tab/include/OpenKneeboard/TabBase.hpp
+  Tab/include/OpenKneeboard/WindowCaptureTab.hpp
+  TabView.cpp
+  TabsList/TabsList.cpp
+  TabsList/include/OpenKneeboard/TabTypes.hpp
+  TabsList/include/OpenKneeboard/TabsList.hpp
+  TextSettings.cpp
+  ToolbarItems/ClearUserInputAction.cpp
+  ToolbarItems/CreateTabActions.cpp
+  ToolbarItems/IToolbarItem.cpp
+  ToolbarItems/NextTabAction.cpp
+  ToolbarItems/PreviousTabAction.cpp
+  ToolbarItems/ReloadTabAction.cpp
+  ToolbarItems/SwitchProfileAction.cpp
+  ToolbarItems/SwitchProfileFlyout.cpp
+  ToolbarItems/SwitchTabAction.cpp
+  ToolbarItems/SwitchTabFlyout.cpp
+  ToolbarItems/TabDeveloperToolsAction.cpp
+  ToolbarItems/TabFirstPageAction.cpp
+  ToolbarItems/TabNavigationAction.cpp
+  ToolbarItems/TabNextPageAction.cpp
+  ToolbarItems/TabPreviousPageAction.cpp
+  ToolbarItems/ToggleBookmarkAction.cpp
+  ToolbarItems/ToolbarAction.cpp
+  ToolbarItems/ToolbarFlyout.cpp
+  ToolbarItems/ToolbarSeparator.cpp
+  ToolbarItems/ToolbarToggleAction.cpp
+  ToolbarItems/include/OpenKneeboard/ClearUserInputAction.hpp
+  ToolbarItems/include/OpenKneeboard/CreateTabActions.hpp
+  ToolbarItems/include/OpenKneeboard/ICheckableToolbarItem.hpp
+  ToolbarItems/include/OpenKneeboard/ISelectableToolbarItem.hpp
+  ToolbarItems/include/OpenKneeboard/IToolbarFlyout.hpp
+  ToolbarItems/include/OpenKneeboard/IToolbarItem.hpp
+  ToolbarItems/include/OpenKneeboard/IToolbarItemWithConfirmation.hpp
+  ToolbarItems/include/OpenKneeboard/IToolbarItemWithVisibility.hpp
+  ToolbarItems/include/OpenKneeboard/NextTabAction.hpp
+  ToolbarItems/include/OpenKneeboard/PreviousTabAction.hpp
+  ToolbarItems/include/OpenKneeboard/ReloadTabAction.hpp
+  ToolbarItems/include/OpenKneeboard/SwitchProfileAction.hpp
+  ToolbarItems/include/OpenKneeboard/SwitchProfileFlyout.hpp
+  ToolbarItems/include/OpenKneeboard/SwitchTabAction.hpp
+  ToolbarItems/include/OpenKneeboard/SwitchTabFlyout.hpp
+  ToolbarItems/include/OpenKneeboard/TabDeveloperToolsAction.hpp
+  ToolbarItems/include/OpenKneeboard/TabFirstPageAction.hpp
+  ToolbarItems/include/OpenKneeboard/TabNavigationAction.hpp
+  ToolbarItems/include/OpenKneeboard/TabNextPageAction.hpp
+  ToolbarItems/include/OpenKneeboard/TabPreviousPageAction.hpp
+  ToolbarItems/include/OpenKneeboard/ToggleBookmarkAction.hpp
+  ToolbarItems/include/OpenKneeboard/ToolbarAction.hpp
+  ToolbarItems/include/OpenKneeboard/ToolbarFlyout.hpp
+  ToolbarItems/include/OpenKneeboard/ToolbarSeparator.hpp
+  ToolbarItems/include/OpenKneeboard/ToolbarToggleAction.hpp
+  TroubleshootingStore.cpp
+  UILayers/BookmarksUILayer.cpp
+  UILayers/ConfirmationUILayer.cpp
+  UILayers/FlyoutMenuUILayer.cpp
+  UILayers/FooterUILayer.cpp
+  UILayers/HeaderUILayer.cpp
+  UILayers/IUILayer.cpp
+  UILayers/TabViewUILayer.cpp
+  UILayers/UILayerBase.cpp
+  UILayers/include/OpenKneeboard/BookmarksUILayer.hpp
+  UILayers/include/OpenKneeboard/ConfirmationUILayer.hpp
+  UILayers/include/OpenKneeboard/FlyoutMenuUILayer.hpp
+  UILayers/include/OpenKneeboard/FooterUILayer.hpp
+  UILayers/include/OpenKneeboard/HeaderUILayer.hpp
+  UILayers/include/OpenKneeboard/IUILayer.hpp
+  UILayers/include/OpenKneeboard/TabViewUILayer.hpp
+  UILayers/include/OpenKneeboard/UILayerBase.hpp
+  UISettings.cpp
+  UserActionHandler.cpp
+  UserInput/DirectInputAdapter.cpp
+  UserInput/DirectInputDevice.cpp
+  UserInput/DirectInputJoystickListener.cpp
+  UserInput/DirectInputKeyboardListener.cpp
+  UserInput/DirectInputListener.cpp
+  UserInput/DirectInputMouseListener.cpp
+  UserInput/DirectInputSettings.cpp
+  UserInput/GetDirectInputDevices.cpp
+  UserInput/OTDIPCClient.cpp
+  UserInput/TabletInputAdapter.cpp
+  UserInput/TabletInputDevice.cpp
+  UserInput/TabletSettings.cpp
+  UserInput/UserInputButtonBinding.cpp
+  UserInput/UserInputButtonEvent.cpp
+  UserInput/UserInputDevice.cpp
+  UserInput/include/OpenKneeboard/CursorClickableRegions.hpp
+  UserInput/include/OpenKneeboard/DirectInputAdapter.hpp
+  UserInput/include/OpenKneeboard/DirectInputDevice.hpp
+  UserInput/include/OpenKneeboard/DirectInputJoystickListener.hpp
+  UserInput/include/OpenKneeboard/DirectInputKeyboardListener.hpp
+  UserInput/include/OpenKneeboard/DirectInputListener.hpp
+  UserInput/include/OpenKneeboard/DirectInputMouseListener.hpp
+  UserInput/include/OpenKneeboard/DirectInputSettings.hpp
+  UserInput/include/OpenKneeboard/GetDirectInputDevices.hpp
+  UserInput/include/OpenKneeboard/OTDIPCClient.hpp
+  UserInput/include/OpenKneeboard/TabletInputAdapter.hpp
+  UserInput/include/OpenKneeboard/TabletInputDevice.hpp
+  UserInput/include/OpenKneeboard/TabletSettings.hpp
+  UserInput/include/OpenKneeboard/UserInputButtonBinding.hpp
+  UserInput/include/OpenKneeboard/UserInputButtonEvent.hpp
+  UserInput/include/OpenKneeboard/UserInputDevice.hpp
+  VRSettings.cpp
+  ViewsSettings.cpp
+  WGCRenderer.cpp
+  include/OpenKneeboard/APIEventServer.hpp
+  include/OpenKneeboard/AppSettings.hpp
+  include/OpenKneeboard/Bookmark.hpp
+  include/OpenKneeboard/CachedLayer.hpp
+  include/OpenKneeboard/ChromiumApp.hpp
+  include/OpenKneeboard/Coordinates.hpp
+  include/OpenKneeboard/CursorRenderer.hpp
+  include/OpenKneeboard/DCSExtractedMission.hpp
+  include/OpenKneeboard/DCSGrid.hpp
+  include/OpenKneeboard/DCSMagneticModel.hpp
+  include/OpenKneeboard/DebugPrivileges.hpp
+  include/OpenKneeboard/DoodleRenderer.hpp
+  include/OpenKneeboard/DoodleSettings.hpp
+  include/OpenKneeboard/FilesystemWatcher.hpp
+  include/OpenKneeboard/IHasDebugInformation.hpp
+  include/OpenKneeboard/IHasDisposeAsync.hpp
+  include/OpenKneeboard/InterprocessRenderer.hpp
+  include/OpenKneeboard/KneeboardState.hpp
+  include/OpenKneeboard/KneeboardView.hpp
+  include/OpenKneeboard/KneeboardViewID.hpp
+  include/OpenKneeboard/LaunchURI.hpp
+  include/OpenKneeboard/Lua.hpp
+  include/OpenKneeboard/OpenXRMode.hpp
+  include/OpenKneeboard/Plugin.hpp
+  include/OpenKneeboard/PluginStore.hpp
+  include/OpenKneeboard/ProcessShutdownBlock.hpp
+  include/OpenKneeboard/ProfileSettings.hpp
+  include/OpenKneeboard/Registry.hpp
+  include/OpenKneeboard/RenderTarget.hpp
+  include/OpenKneeboard/RenderTargetID.hpp
+  include/OpenKneeboard/RunSubprocessAsync.hpp
+  include/OpenKneeboard/RunnerThread.hpp
+  include/OpenKneeboard/Settings.hpp
+  include/OpenKneeboard/TabView.hpp
+  include/OpenKneeboard/TextSettings.hpp
+  include/OpenKneeboard/TroubleshootingStore.hpp
+  include/OpenKneeboard/TryEnqueue.hpp
+  include/OpenKneeboard/UISettings.hpp
+  include/OpenKneeboard/UniqueID.hpp
+  include/OpenKneeboard/UserAction.hpp
+  include/OpenKneeboard/UserActionHandler.hpp
+  include/OpenKneeboard/ViewsSettings.hpp
+  include/OpenKneeboard/WGCRenderer.hpp
+  include/OpenKneeboard/WebPageSourceKind.hpp
+  include/OpenKneeboard/WebPageSourceSettings.hpp
+  include/OpenKneeboard/bindline.hpp
+  include/OpenKneeboard/cppwinrt.hpp
+  include/OpenKneeboard/enable_shared_from_this.hpp
+  include/OpenKneeboard/final_release_deleter.hpp
+  include/OpenKneeboard/weak_refs.hpp
+  json/LegacyNonVRSettings.cpp
+  json/NonVRConstrainedPosition.cpp
+)
 target_compile_definitions(
   OpenKneeboard-App-Common
   PUBLIC
   "DIRECTINPUT_VERSION=0x0800"
 )
-target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(
   OpenKneeboard-App-Common
   PUBLIC
@@ -69,7 +315,6 @@ target_link_libraries(
   ThirdParty::WMM
   ThirdParty::magic_json_serialize_enum
 )
-target_link_windows_app_sdk(OpenKneeboard-App-Common)
 
 target_include_directories(
   OpenKneeboard-App-Common
@@ -83,7 +328,6 @@ target_include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-ok_add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
+target_link_windows_app_sdk(OpenKneeboard-App-Common)
 
-include(PDFNavigation.cmake)
-include(SteamVRKneeboard.cmake)
+ok_add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
