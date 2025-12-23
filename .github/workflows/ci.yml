@@ -104,7 +104,9 @@ jobs:
           } else {
             $args += "--preset", "release"
           }
-          cmake ${{github.workspace}}/source @args
+          cmake ${{github.workspace}}/source `
+            -B ${{github.workspace}}/build `
+            @args
       - name: Build
         id: build
         working-directory: build
