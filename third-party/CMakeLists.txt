@@ -1,17 +1,10 @@
 set(BUILD_SHARED_LIBS OFF)
 
-list(
-  APPEND
-  CMAKE_VS_GLOBALS
-  "ClangTidyToolPath=${CMAKE_CURRENT_SOURCE_DIR}"
-  "ClangTidyToolExe=clang-tidy-stub.bat"
-)
-
 set(THIRD_PARTY_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS})
 if(MSVC)
   list(APPEND THIRD_PARTY_COMPILE_OPTIONS "/WX-")
 else()
-  list(APPEND THID_PARTY_COMPILE_OPTIONS "-Wno-error")
+  list(APPEND THIRD_PARTY_COMPILE_OPTIONS "-Wno-error")
 endif()
 
 set(
@@ -24,6 +17,8 @@ configure_file(
   @ONLY
 )
 
+set(OKB_VCPKG_SHARE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share")
+
 scoped_include(bindline.cmake)
 scoped_include(cef.cmake)
 scoped_include(cppwinrt.cmake)
@@ -35,7 +30,6 @@ scoped_include(directxtk12.cmake)
 scoped_include(dxc.cmake)
 scoped_include(geographiclib.cmake)
 scoped_include(json.cmake)
-scoped_include(libjpeg-turbo.cmake)
 scoped_include(libzip.cmake)
 scoped_include(lualib.cmake)
 scoped_include(magic_enum.cmake)
@@ -51,4 +45,3 @@ scoped_include(vulkan-headers.cmake)
 scoped_include(wil.cmake)
 scoped_include(windowsappsdk.cmake)
 scoped_include(wmm.cmake)
-scoped_include(zlib.cmake)

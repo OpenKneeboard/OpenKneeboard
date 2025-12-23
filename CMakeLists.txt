@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.25..3.31 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.25..4.0 FATAL_ERROR)
+
+# `GIT_SUBMODULES ""` means no submodules
+cmake_policy(SET CMP0097 NEW)
 
 # cmake --build . --preset appears to require CMakePresets exists in the build directory,
 # not the source directory, as of CMake 4.0 (2025-08-21)
@@ -60,10 +63,10 @@ option(WITH_ASAN "Build with ASAN" OFF)
 set(
   COMMON_COMPILE_OPTIONS
   # Disable iterator debugging for CEF USE_SANDBOX
-  "/D_HAS_ITERATOR_DEBUGGING=0"
+  "-D_HAS_ITERATOR_DEBUGGING=0"
   # _HAS_ITERATOR_DEBUGGING is set by CEF but deprecated,
   # set the non-deprecated property too
-  "/D_ITERATOR_DEBUG_LEVEL=0"
+  "-D_ITERATOR_DEBUG_LEVEL=0"
   "/D_WIN32_WINNT=${WIN32_WINNT}"
   "/DNTDDI_VERSION=${NTDDI_VERSION}"
 )
@@ -193,25 +196,6 @@ if(MSBUILD_LLVM_ROOT)
   )
 endif() 
 
-find_program(
-  CLANG_TIDY
-  NAMES clang-tidy
-  HINTS "${MSBUILD_LLVM_ROOT}/bin"
-)
-if (CLANG_TIDY)
-  cmake_path(GET CLANG_TIDY PARENT_PATH CLANG_TIDY_FOLDER)
-  cmake_path(GET CLANG_TIDY FILENAME CLANG_TIDY_FILENAME)
-  list(
-    APPEND
-    CMAKE_VS_GLOBALS
-    "RunCodeAnalysis=false"
-    "EnableMicrosoftCodeAnalysis=false"
-    "EnableClangTidyCodeAnalysis=true"
-    "ClangTidyToolPath=${CLANG_TIDY_FOLDER}"
-    "ClangTidyToolExe=${CLANG_TIDY_FILENAME}"
-  )
-endif ()
-
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
 message(STATUS "MSVC: ${MSVC}")
@@ -247,6 +231,8 @@ else()
   set(BUILD_IS_64BIT ON CACHE INTERNAL "")
 endif()
 
+option(ENABLE_APP "Build the main app, not just the injectables" ON)
+
 add_subdirectory("cmake")
 
 add_subdirectory("scripts")
@@ -260,45 +246,3 @@ set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT OpenKneeboard-App-WinUI3)
 ok_add_license_file(LICENSE LICENSE.txt)
 
 add_subdirectory(OpenKneeboard-Installer)
-
-macro(append_recursive_targets VAR SUBDIR)
-  get_property(NON_RECURSIVE_TARGETS DIRECTORY "${SUBDIR}" PROPERTY BUILDSYSTEM_TARGETS)
-  list(APPEND ${VAR} ${NON_RECURSIVE_TARGETS})
-  get_property(SUBDIRS DIRECTORY "${SUBDIR}" PROPERTY SUBDIRECTORIES)
-  foreach(CHILD IN LISTS SUBDIRS)
-    append_recursive_targets("${VAR}" "${CHILD}")
-  endforeach() 
-endmacro()
-
-find_program(POWERSHELL powershell)
-find_program(MSBUILD msbuild)
-
-if(POWERSHELL AND CLANG_TIDY AND MSBUILD AND NOT ${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-  file(
-    GENERATE
-    OUTPUT "${CMAKE_BINARY_DIR}/make-compile-commands-$<CONFIG>.ps1"
-    CONTENT "
-& '${CMAKE_SOURCE_DIR}/scripts/make-compile-commands.ps1' `
-  -ArgsToLines '$<TARGET_FILE:args-to-lines>' `
-  -TrueExe '$<TARGET_FILE:true>' `
-  -CXXStandard ${CMAKE_CXX_STANDARD} `
-  -Compiler '${CMAKE_CXX_COMPILER}' `
-  -MSBuild '${MSBUILD}'
-"
-    NEWLINE_STYLE UNIX
-  )
-  set(SRC_TARGETS "")
-  append_recursive_targets(SRC_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}/src")
-
-  add_custom_target(
-    compile_commands
-    ALL
-    COMMAND
-    "${POWERSHELL}"
-    -ExecutionPolicy Bypass
-    "& '${CMAKE_BINARY_DIR}/make-compile-commands-$<CONFIG>.ps1'"
-    BYPRODUCTS "${CMAKE_BINARY_DIR}/compile_commands.json"
-    DEPENDS ${SRC_TARGETS} "true" "args-to-lines"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-  )
-endif()

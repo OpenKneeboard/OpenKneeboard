@@ -44,6 +44,11 @@ jobs:
             "-A", "x64"
             "-DSOURCELINK=https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}"
           )
+          if ("${{matrix.config}}" -eq "Debug") {
+            $args += "-DVCPKG_BUILD_TYPE=debug"
+          } else {
+            $args += "-DVCPKG_BUILD_TYPE=release"
+          }
           cmake ${{github.workspace}}/source @args
       - name: Build
         id: build

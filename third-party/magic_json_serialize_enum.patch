@@ -1,0 +1,25 @@
+diff --git a/include/FredEmmott/magic_json_serialize_enum.hpp b/include/FredEmmott/magic_json_serialize_enum.hpp
+index 1a1249f..df63f0c 100644
+--- a/include/FredEmmott/magic_json_serialize_enum.hpp
++++ b/include/FredEmmott/magic_json_serialize_enum.hpp
+@@ -8,7 +8,13 @@
+ #include <array>
+ #include <type_traits>
+ 
++#if __has_include(<magic_enum/magic_enum.hpp>)
++#include <magic_enum/magic_enum.hpp>
++#elif __has_include(<magic_enum.hpp>)
+ #include <magic_enum.hpp>
++#else
++#error "Couldn't find magic_enum.hpp"
++#endif
+ #include <nlohmann/json.hpp>
+ 
+ namespace FredEmmott::magic_json_serialize_enum {
+@@ -137,4 +143,4 @@ void to_json(nlohmann::json& j, const T v) {
+     MJSE::from_json<ENUM_TYPE>(j, v); \
+   }
+
+-#endif
+\ No newline at end of file
++#endif

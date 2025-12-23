@@ -39,7 +39,7 @@ clang-tidy -p build (Get-ChildItem 'src/foo','src/bar' -Recurse -Filter '*.cpp*'
 
 `scripts/run-clang-tidy-one-at-a-time.ps1` will run clang-tidy without parallelization, which can be handy for cleaning up after a refactor.
 
-After you have build the project, you can also use "C/C++: Run code analysis" from within Visual Studio Code; you may need to restart Visual Studio Code after the first file.
+After you have built the project, you can also use "C/C++: Run code analysis" from within Visual Studio Code; you may need to restart Visual Studio Code after the first file.
 
 ### Coroutine Safety
 

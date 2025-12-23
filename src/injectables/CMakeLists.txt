@@ -1,5 +1,5 @@
 ok_add_library(detours-ext STATIC detours-ext.cpp)
-target_link_libraries(detours-ext PUBLIC detours OpenKneeboard-dprint)
+target_link_libraries(detours-ext PUBLIC ThirdParty::detours OpenKneeboard-dprint)
 
 configure_file(
   OpenKneeboard-OpenXR.in.def

@@ -1,0 +1,8 @@
+{
+  "overlay-triplets": [
+    "third-party/vcpkg-overlays/triplets"
+  ],
+  "overlay-ports": [
+    "third-party/vcpkg-overlays/ports"
+  ]
+}

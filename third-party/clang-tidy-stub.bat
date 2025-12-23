@@ -1,1 +1,0 @@
-@echo third-party/clang-tidy-stub.bat %*

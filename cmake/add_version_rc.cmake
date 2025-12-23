@@ -1,7 +1,5 @@
 include_guard(GLOBAL)
 
-include(disable_clang_tidy)
-
 function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC_FILE)
   add_custom_target(
     "${RC_TARGET}"
@@ -22,7 +20,6 @@ function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC
     BYPRODUCTS "${OUTPUT_RC_FILE}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
   )
-  disable_clang_tidy("${RC_TARGET}")
 endfunction()
 
 function(add_version_rc TARGET)

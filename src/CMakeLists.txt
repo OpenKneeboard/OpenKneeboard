@@ -12,11 +12,11 @@ add_compile_options(
   # Informational 'warning' describing how diamond inheritance works
   "/wd4250"
 )
-if(CLANG_CL)
+if (CLANG_CL)
   add_compile_options(
     "/clang:-Wno-missing-braces"
   )
-endif()
+endif ()
 
 add_compile_definitions(
   "UNICODE=1"
@@ -40,13 +40,13 @@ include(ok_add_license_file)
 
 add_subdirectory(lib)
 add_subdirectory(api)
-
-add_subdirectory(dcs-hook)
 add_subdirectory(injectables)
 
+if (NOT ENABLE_APP)
+  return()
+endif ()
+
+add_subdirectory(dcs-hook)
 add_subdirectory(games)
 add_subdirectory(utilities)
-
-if(BUILD_IS_64BIT)
-  add_subdirectory(app)
-endif()
+add_subdirectory(app)

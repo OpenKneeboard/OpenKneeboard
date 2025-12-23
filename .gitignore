@@ -1,4 +1,5 @@
 /build*/
+cmake-build-*/
 .DS_Store
 docs/_site
 docs/.bundle

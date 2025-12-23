@@ -8,7 +8,11 @@
     {
       "name": "default",
       "hidden": true,
-      "generator": "Visual Studio 17 2022"
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "third-party/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-openkneeboard"
+      }
     },
     {
       "name": "debug",

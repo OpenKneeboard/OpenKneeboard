@@ -5,6 +5,7 @@ set(
     OpenKneeboardAPI.js
     SimHub.js
 )
+include(ok_add_runtime_files)
 ok_add_runtime_files(data ${DATA_SOURCES} DESTINATION share)
 
 file(

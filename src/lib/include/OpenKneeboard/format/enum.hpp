@@ -5,9 +5,9 @@
 // This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
 #pragma once
 
-#include <format>
+#include <magic_enum/magic_enum.hpp>
 
-#include <magic_enum.hpp>
+#include <format>
 
 template <class T>
   requires std::is_scoped_enum_v<T>

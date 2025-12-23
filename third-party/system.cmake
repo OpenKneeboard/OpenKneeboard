@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 set(
   SYSTEM_LIBRARIES
   Comctl32
