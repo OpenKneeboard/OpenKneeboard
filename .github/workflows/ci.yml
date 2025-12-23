@@ -21,10 +21,47 @@ on:
       - "CMakeLists.txt"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
-
+permissions:
+  packages: write
+env:
+  USERNAME: ${{github.repository_owner}}
+  FEED_URL: https://nuget.pkg.github.com/${{github.repository_owner}}/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{github.repository_owner}}/index.json,readwrite"
 jobs:
+  populate-vcpkg-cache:
+    name: Populate vcpkg cache (${{matrix.triplet}})
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        triplet:
+          - x64-windows-openkneeboard
+          - x86-windows-static
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+      - name: Bootstrap vcpkg
+        run: third-party/vcpkg/bootstrap-vcpkg.bat
+      - name: Add nuget source
+        shell: pwsh
+        run: |
+          .$(third-party/vcpkg/vcpkg fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(third-party/vcpkg/vcpkg fetch nuget) `
+            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
+      - name: "Install dependencies"
+        run: third-party/vcpkg/vcpkg install --triplet ${{matrix.triplet}} --clean-after-build
   build:
     name: Build (${{matrix.config}})
+    needs: populate-vcpkg-cache
+    if: always() && !failure() && !cancelled()
     runs-on: windows-2022
     strategy:
       matrix:
@@ -35,6 +72,22 @@ jobs:
           path: source
           fetch-depth: 0
           submodules: 'true'
+      - name: Bootstrap vcpkg
+        run: source/third-party/vcpkg/bootstrap-vcpkg.bat
+      - name: Add nuget vcpkg source
+        shell: pwsh
+        working-directory: source
+        run: |
+          .$(third-party/vcpkg/vcpkg fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(third-party/vcpkg/vcpkg fetch nuget) `
+            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
       - name: Make build directory
         run: cmake -E make_directory build
       - name: Configure
