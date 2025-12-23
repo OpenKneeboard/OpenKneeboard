@@ -26,6 +26,7 @@ function(target_link_nuget_packages TARGET)
     PROPERTIES
     VS_PACKAGE_REFERENCES "${VS_PACKAGE_REFERENCES}"
     VS_GLOBAL_NuGetTargetMoniker "native,Version=v0.0"
+    VS_GLOBAL_RestoreProjectStyle "PackageReference"
   )
 endfunction()
 
