@@ -13,14 +13,8 @@ set(PATCH_FILE "${CMAKE_CURRENT_LIST_DIR}/magic_json_serialize_enum.patch")
 FetchContent_Declare(
   magic_json_serialize_enum
   GIT_REPOSITORY "https://github.com/fredemmott/magic_json_serialize_enum"
-  GIT_TAG "344470d5e83de639b7a84d83b2c8f2cd8b533a0d"
+  GIT_TAG "21287e9ead0adfb1b7af3933acbc0f4edebaaabe"
   GIT_SUBMODULES ""
-  PATCH_COMMAND
-  "${CMAKE_COMMAND}"
-  "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
-  "-DPATCH_FILE=${PATCH_FILE}"
-  "-DWORKING_DIRECTORY=<SOURCE_DIR>"
-  -P "${CMAKE_CURRENT_LIST_DIR}/apply-patch.cmake"
   EXCLUDE_FROM_ALL
 )
 
