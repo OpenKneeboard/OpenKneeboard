@@ -14,9 +14,9 @@
 #include <OpenKneeboard/task/resume_on_signal.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
-#include <Windows.h>
+#include <shims/winrt/base.h>
 
-#include <thread>
+#include <Windows.h>
 
 namespace OpenKneeboard {
 

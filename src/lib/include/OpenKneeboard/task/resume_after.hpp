@@ -11,8 +11,6 @@
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/task.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <chrono>
 #include <coroutine>
 #include <functional>
@@ -163,7 +161,7 @@ namespace OpenKneeboard {
  * when debugging program shutdown; as well as the irrelevant breakpoints,
  * it can also effect timing, making intermittent issues harder to reproduce.
  */
-inline task<TimerResult> resume_after(auto duration, std::stop_token token) {
+task<TimerResult> resume_after(auto duration, std::stop_token token = {}) {
   detail::TimerAwaitable impl(duration, token);
   co_await impl;
   co_return impl.result();

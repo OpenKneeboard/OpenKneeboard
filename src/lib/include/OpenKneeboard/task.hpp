@@ -12,7 +12,7 @@
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
-#include <shims/winrt/base.h>
+#include <wil/com.h>
 
 #include <combaseapi.h>
 #include <ctxtcall.h>
@@ -77,7 +77,7 @@ constexpr bool operator==(TaskPromiseWaiting a, TaskPromiseWaiting b) noexcept {
 }
 
 struct TaskContext {
-  winrt::com_ptr<IContextCallback> mCOMCallback;
+  wil::com_ptr<IContextCallback> mCOMCallback;
   std::thread::id mThreadID = std::this_thread::get_id();
   StackFramePointer mCaller {nullptr};
 
@@ -725,10 +725,8 @@ namespace OpenKneeboard::inline task_ns {
  * If you want to store one, use an `std::optional<task<T>>`; to co_await the
  * stored task, use `co_await std::move(optional).value()`
  */
-template <class TIgnoredDispatcherQueue, class T>
-using basic_task = detail::Task<detail::TaskTraits<T>>;
 template <class T>
-using task = basic_task<DispatcherQueue, T>;
+using task = detail::Task<detail::TaskTraits<T>>;
 
 namespace this_task {
 /** Call `OpenKneeboard::fatal()` if this task throws an exception.
@@ -759,9 +757,6 @@ struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
   }
 };
 
-// Useful as - like all `task<>` - guarantees to return to the original thread
-task<void> resume_after(auto t) {
-  co_await winrt::resume_after(std::chrono::seconds(1));
-}
-
 }// namespace OpenKneeboard
+
+#include "task/resume_after.hpp"

@@ -26,5 +26,3 @@ target_include_directories(
   PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-# task<void> needs Microsoft::UI::Dispatching
-target_link_windows_app_sdk(OpenKneeboard-SteamVRKneeboard)
