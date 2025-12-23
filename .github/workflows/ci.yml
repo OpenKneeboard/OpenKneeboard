@@ -33,9 +33,11 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        triplet:
-          - x64-windows-openkneeboard
-          - x86-windows-static
+        include:
+          - triplet: x64-windows-openkneeboard
+            extra: ""
+          - triplet: x86-windows-static
+            extra: "--x-no-default-features"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -57,7 +59,7 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
       - name: "Install dependencies"
-        run: third-party/vcpkg/vcpkg install --triplet ${{matrix.triplet}} --clean-after-build
+        run: third-party/vcpkg/vcpkg install --triplet ${{matrix.triplet}} --clean-after-build ${{matrix.extra}}
   build:
     name: Build (${{matrix.config}})
     needs: populate-vcpkg-cache
