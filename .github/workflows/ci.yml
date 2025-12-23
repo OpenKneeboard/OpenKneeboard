@@ -87,9 +87,6 @@ jobs:
             -Name GitHubPackages `
             -UserName "${{ env.USERNAME }}" `
             -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(third-party/vcpkg/vcpkg fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
-            -Source "${{ env.FEED_URL }}"
       - name: Make build directory
         run: cmake -E make_directory build
       - name: Configure
