@@ -13,9 +13,3 @@ target_link_libraries(
   System::WindowsApp
 )
 add_library(ThirdParty::CppWinRT ALIAS cppwinrt_with_deps)
-
-include(ok_add_license_file)
-ok_add_license_file(
-  "${OKB_VCPKG_SHARE_DIR}/cppwinrt/copyright"
-  "LICENSE-ThirdParty-CppWinRT.txt"
-)

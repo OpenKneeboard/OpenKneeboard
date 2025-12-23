@@ -29,9 +29,3 @@ set_target_properties(
 
 include(ok_add_runtime_files)
 ok_add_runtime_files(copy-openvr-dll "${OPENVR_DLL}")
-
-include(ok_add_license_file)
-ok_add_license_file(
-  "${OKB_VCPKG_SHARE_DIR}/openvr/copyright"
-  "LICENSE-ThirdParty-OpenVR SDK.txt"
-)
