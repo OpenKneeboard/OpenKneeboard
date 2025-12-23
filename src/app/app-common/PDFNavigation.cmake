@@ -1,0 +1,20 @@
+ok_add_library(OpenKneeboard-PDFNavigation STATIC PDFNavigation.cpp)
+target_link_libraries(
+  OpenKneeboard-PDFNavigation
+  PUBLIC
+  OpenKneeboard-Lib-Headers
+  OpenKneeboard-shims
+)
+target_link_libraries(
+  OpenKneeboard-PDFNavigation
+  PRIVATE
+  OpenKneeboard-DebugTimer
+  OpenKneeboard-UTF8
+  OpenKneeboard-dprint
+  ThirdParty::QPDF
+)
+target_include_directories(
+  OpenKneeboard-PDFNavigation
+  PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)

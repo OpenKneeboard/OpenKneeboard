@@ -1,0 +1,30 @@
+ok_add_library(
+  OpenKneeboard-SteamVRKneeboard
+  STATIC
+  SteamVRKneeboard.cpp
+)
+target_link_libraries(
+  OpenKneeboard-SteamVRKneeboard
+  PUBLIC
+  OpenKneeboard-DXResources
+  OpenKneeboard-D3D11
+  OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-VRKneeboard
+  OpenKneeboard-config
+  ThirdParty::DirectXTK
+  ThirdParty::OpenVR
+  OpenKneeboard-Lib-Headers
+)
+target_link_libraries(
+  OpenKneeboard-SteamVRKneeboard
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-EnumerateProcesses
+)
+target_include_directories(
+  OpenKneeboard-SteamVRKneeboard
+  PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+# task<void> needs Microsoft::UI::Dispatching
+target_link_windows_app_sdk(OpenKneeboard-SteamVRKneeboard)

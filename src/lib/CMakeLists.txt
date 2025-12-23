@@ -117,22 +117,6 @@ target_link_libraries(
   OpenKneeboard-fatal
 )
 
-ok_add_library(OpenKneeboard-PDFNavigation STATIC PDFNavigation.cpp)
-target_link_libraries(
-  OpenKneeboard-PDFNavigation
-  PUBLIC
-  OpenKneeboard-Lib-Headers
-  OpenKneeboard-shims
-)
-target_link_libraries(
-  OpenKneeboard-PDFNavigation
-  PRIVATE
-  OpenKneeboard-DebugTimer
-  OpenKneeboard-UTF8
-  OpenKneeboard-dprint
-  ThirdParty::QPDF
-)
-
 ok_add_library(OpenKneeboard-DebugTimer STATIC DebugTimer.cpp)
 target_link_libraries(
   OpenKneeboard-DebugTimer
@@ -239,6 +223,11 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-Filesystem
 )
+if (ENABLE_APP)
+  set(RUNTIME_FILES_APP_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles-app.cpp")
+  file(GENERATE OUTPUT "${RUNTIME_FILES_APP_CPP}" INPUT RuntimeFiles-app.cpp.in)
+  target_sources(OpenKneeboard-RuntimeFiles PRIVATE "${RUNTIME_FILES_APP_CPP}")
+endif ()
 
 ok_add_library(
   OpenKneeboard-SHM
@@ -464,32 +453,6 @@ target_link_libraries(
   ThirdParty::JSON
   OpenKneeboard-Lib-Headers
 )
-
-ok_add_library(
-  OpenKneeboard-SteamVRKneeboard
-  STATIC
-  SteamVRKneeboard.cpp
-)
-target_link_libraries(
-  OpenKneeboard-SteamVRKneeboard
-  PUBLIC
-  OpenKneeboard-DXResources
-  OpenKneeboard-D3D11
-  OpenKneeboard-SHM-Client-D3D11
-  OpenKneeboard-VRKneeboard
-  OpenKneeboard-config
-  ThirdParty::DirectXTK
-  ThirdParty::OpenVR
-  OpenKneeboard-Lib-Headers
-)
-target_link_libraries(
-  OpenKneeboard-SteamVRKneeboard
-  PRIVATE
-  OpenKneeboard-dprint
-  OpenKneeboard-EnumerateProcesses
-)
-# task<void> needs Microsoft::UI::Dispatching
-target_link_windows_app_sdk(OpenKneeboard-SteamVRKneeboard)
 
 ok_add_library(OpenKneeboard-Filesystem STATIC Filesystem.cpp)
 target_link_libraries(

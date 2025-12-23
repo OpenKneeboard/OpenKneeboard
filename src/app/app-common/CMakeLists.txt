@@ -84,3 +84,6 @@ target_include_directories(
 )
 
 ok_add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
+
+include(PDFNavigation.cmake)
+include(SteamVRKneeboard.cmake)
