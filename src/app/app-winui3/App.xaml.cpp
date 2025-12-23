@@ -476,6 +476,10 @@ static void SetRegistryValues() {
       utilitiesPath = binPath;
       while (utilitiesPath.has_parent_path()) {
         const auto parent = utilitiesPath.parent_path();
+        if (parent == utilitiesPath) {
+          // Uh, yeah, this is expected at `C:\` :/
+          break;
+        }
         const auto subdir = parent / "utilities" / Config::BuildType;
         if (std::filesystem::exists(subdir)) {
           dprint("Found utilities path: {}", subdir);
