@@ -17,13 +17,11 @@
     },
     {
       "name": "debug",
-      "inherits": "default",
-      "binaryDir": "cmake-build-Debug"
+      "inherits": "default"
     },
     {
       "name": "release",
-      "inherits": "default",
-      "binaryDir": "cmake-build-RelWithDebInfo"
+      "inherits": "default"
     }
   ],
   "buildPresets": [
