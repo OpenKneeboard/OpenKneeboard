@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/LazyOnceValue.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
@@ -33,20 +34,24 @@ enum class TemporaryDirectoryState {
   Initialized,
 };
 
-AtomicStateMachine<
-  TemporaryDirectoryState,
-  TemporaryDirectoryState::Uninitialized,
-  std::array {
-    Transition {
-      TemporaryDirectoryState::Uninitialized,
-      TemporaryDirectoryState::Cleaned,
-    },
-    Transition {
-      TemporaryDirectoryState::Cleaned,
-      TemporaryDirectoryState::Initialized,
-    },
-  }>
-  gTemporaryDirectoryState {};
+auto& GetTemporaryDirectoryState() {
+  static AtomicStateMachine<
+    TemporaryDirectoryState,
+    TemporaryDirectoryState::Uninitialized,
+    std::array {
+      Transition {
+        TemporaryDirectoryState::Uninitialized,
+        TemporaryDirectoryState::Cleaned,
+      },
+      Transition {
+        TemporaryDirectoryState::Cleaned,
+        TemporaryDirectoryState::Initialized,
+      },
+    }>
+    sTemporaryDirectoryState {};
+  return sTemporaryDirectoryState;
+}
+
 }// namespace
 
 std::filesystem::path GetKnownFolderPath(const _GUID& knownFolderID) {
@@ -78,9 +83,10 @@ static std::filesystem::path GetTemporaryDirectoryImpl() {
     std::filesystem::create_directories(tempDir);
   }
 
-  gTemporaryDirectoryState.Transition<
-    TemporaryDirectoryState::Cleaned,
-    TemporaryDirectoryState::Initialized>();
+  GetTemporaryDirectoryState()
+    .Transition<
+      TemporaryDirectoryState::Cleaned,
+      TemporaryDirectoryState::Initialized>();
 
   return std::filesystem::canonical(tempDir);
 }
@@ -114,9 +120,10 @@ std::filesystem::path GetTemporaryDirectory() {
 }
 
 void CleanupTemporaryDirectories() {
-  gTemporaryDirectoryState.Transition<
-    TemporaryDirectoryState::Uninitialized,
-    TemporaryDirectoryState::Cleaned>();
+  GetTemporaryDirectoryState()
+    .Transition<
+      TemporaryDirectoryState::Uninitialized,
+      TemporaryDirectoryState::Cleaned>();
   const auto root = GetTemporaryDirectoryRoot();
   dprint("Cleaning temporary directory root: {}", root);
   if (!std::filesystem::exists(root)) {

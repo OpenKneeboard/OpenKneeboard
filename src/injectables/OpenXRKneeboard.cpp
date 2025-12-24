@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include "OpenXRKneeboard.hpp"
 
@@ -39,30 +40,32 @@
 namespace OpenKneeboard {
 
 namespace {
-
 // TODO: these should all be part of the instance, and reset when a new instance
 // is created
 
-enum class VulkanXRState {
+enum class VulkanXRStates {
   NoVKEnable2,
   VKEnable2Instance,
   VKEnable2InstanceAndDevice,
 };
 
-StateMachine<
-  VulkanXRState,
-  VulkanXRState::NoVKEnable2,
-  std::array {
-    Transition {
-      VulkanXRState::NoVKEnable2,
-      VulkanXRState::VKEnable2Instance,
-    },
-    Transition {
-      VulkanXRState::VKEnable2Instance,
-      VulkanXRState::VKEnable2InstanceAndDevice,
-    },
-  }>
-  gVulkanXRState {};
+auto& VulkanXRState() {
+  static StateMachine<
+    VulkanXRStates,
+    VulkanXRStates::NoVKEnable2,
+    std::array {
+      Transition {
+        VulkanXRStates::NoVKEnable2,
+        VulkanXRStates::VKEnable2Instance,
+      },
+      Transition {
+        VulkanXRStates::VKEnable2Instance,
+        VulkanXRStates::VKEnable2InstanceAndDevice,
+      },
+    }>
+    state;
+  return state;
+}
 
 bool gHaveXR_KHR_vulkan_enable2 {false};
 }// namespace
@@ -83,11 +86,18 @@ static_assert(
 // In this case, it leads to an infinite hang on ^C
 static OpenXRKneeboard* gKneeboard {nullptr};
 
-static std::shared_ptr<OpenXRNext> gNext;
+auto& Next() {
+  static std::shared_ptr<OpenXRNext> it;
+  return it;
+}
 static OpenXRRuntimeID gRuntime {};
 static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 static const VkAllocationCallbacks* gVKAllocator {nullptr};
-static unique_hmodule gLibVulkan {LoadLibraryW(L"vulkan-1.dll")};
+
+static HMODULE LibVulkan() {
+  static unique_hmodule data {LoadLibraryW(L"vulkan-1.dll")};
+  return data.get();
+}
 
 static inline std::string_view xrresult_to_string(XrResult code) {
   // xrResultAsString exists, but isn't reliably giving useful results, e.g.
@@ -332,11 +342,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
         break;
     }
 
-    layerSprites.push_back(SHM::LayerSprite {
-      .mSourceRect = layer->mVR.mLocationOnTexture,
-      .mDestRect = destRect,
-      .mOpacity = params.mKneeboardOpacity,
-    });
+    layerSprites.push_back(
+      SHM::LayerSprite {
+        .mSourceRect = layer->mVR.mLocationOnTexture,
+        .mDestRect = destRect,
+        .mOpacity = params.mKneeboardOpacity,
+      });
 
     TraceLoggingWriteTagged(
       layerActivity,
@@ -503,7 +514,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
   const XrSessionCreateInfo* createInfo,
   XrSession* session) noexcept {
   XrInstanceProperties instanceProps {XR_TYPE_INSTANCE_PROPERTIES};
-  gNext->xrGetInstanceProperties(instance, &instanceProps);
+  Next()->xrGetInstanceProperties(instance, &instanceProps);
   gRuntime.mVersion = instanceProps.runtimeVersion;
   strncpy_s(
     gRuntime.mName,
@@ -512,7 +523,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
     XR_MAX_RUNTIME_NAME_SIZE);
   dprint("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
 
-  const auto ret = gNext->xrCreateSession(instance, createInfo, session);
+  const auto ret = Next()->xrCreateSession(instance, createInfo, session);
   if (XR_FAILED(ret)) {
     dprint("next xrCreateSession failed: {}", static_cast<int>(ret));
     return ret;
@@ -529,41 +540,39 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
     gKneeboard = new OpenXRD3D11Kneeboard(
-      instance, system, *session, gRuntime, gNext, *d3d11);
+      instance, system, *session, gRuntime, Next(), *d3d11);
     return ret;
   }
   auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D12_KHR, createInfo->next);
   if (d3d12 && d3d12->device) {
     gKneeboard = new OpenXRD3D12Kneeboard(
-      instance, system, *session, gRuntime, gNext, *d3d12);
+      instance, system, *session, gRuntime, Next(), *d3d12);
     return ret;
   }
 
   auto vk = findInXrNextChain<XrGraphicsBindingVulkan2KHR>(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
   if (vk) {
-    switch (gVulkanXRState.Get()) {
-      case VulkanXRState::NoVKEnable2:
+    switch (const auto s = VulkanXRState().Get()) {
+      case VulkanXRStates::NoVKEnable2:
         dprint.Warning(
           "Got an XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, but "
           "XR_KHR_vulkan_enable2 instance/device creation functions were not "
           "used; unsupported");
         return ret;
-      case VulkanXRState::VKEnable2Instance:
+      case VulkanXRStates::VKEnable2Instance:
         dprint.Warning(
           "XR_KHR_vulkan_enable2 was used for instance creation, "
           "but not device; unsupported");
         return ret;
-      case VulkanXRState::VKEnable2InstanceAndDevice:
+      case VulkanXRStates::VKEnable2InstanceAndDevice:
         dprint(
           "GOOD: XR_KHR_vulkan_enable2 used for instance and device "
           "creation");
         break;
       default:
-        dprint.Error(
-          "Unrecognized VulkanXRState: {}",
-          std::to_underlying(gVulkanXRState.Get()));
+        dprint.Error("Unrecognized VulkanXRState: {}", std::to_underlying(s));
         OPENKNEEBOARD_BREAK;
         return ret;
     }
@@ -572,10 +581,10 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
         "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; "
         "looking "
         "for system library.");
-      if (gLibVulkan) {
+      if (LibVulkan()) {
         gPFN_vkGetInstanceProcAddr
           = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
-            GetProcAddress(gLibVulkan.get(), "vkGetInstanceProcAddr"));
+            GetProcAddress(LibVulkan(), "vkGetInstanceProcAddr"));
       }
       if (gPFN_vkGetInstanceProcAddr) {
         dprint("Found usable system vkGetInstanceProcAddr");
@@ -597,7 +606,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
       system,
       *session,
       gRuntime,
-      gNext,
+      Next(),
       *vk,
       gVKAllocator,
       gPFN_vkGetInstanceProcAddr);
@@ -623,7 +632,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanInstanceKHR(
   auto createInfo = *origCreateInfo;
   createInfo.vulkanCreateInfo = &vkCreateInfo;
 
-  const auto ret = gNext->xrCreateVulkanInstanceKHR(
+  const auto ret = Next()->xrCreateVulkanInstanceKHR(
     instance, &createInfo, vulkanInstance, vulkanResult);
 
   if (createInfo.pfnGetInstanceProcAddr) {
@@ -633,8 +642,10 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanInstanceKHR(
     gVKAllocator = createInfo.vulkanAllocator;
   }
 
-  gVulkanXRState
-    .Transition<VulkanXRState::NoVKEnable2, VulkanXRState::VKEnable2Instance>();
+  VulkanXRState()
+    .Transition<
+      VulkanXRStates::NoVKEnable2,
+      VulkanXRStates::VKEnable2Instance>();
 
   return ret;
 }
@@ -652,7 +663,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanDeviceKHR(
 
   auto createInfo = *origCreateInfo;
   createInfo.vulkanCreateInfo = &vkCreateInfo;
-  const auto ret = gNext->xrCreateVulkanDeviceKHR(
+  const auto ret = Next()->xrCreateVulkanDeviceKHR(
     instance, &createInfo, vulkanDevice, vulkanResult);
   if (XR_FAILED(ret)) {
     return ret;
@@ -665,9 +676,10 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanDeviceKHR(
     gVKAllocator = createInfo.vulkanAllocator;
   }
 
-  gVulkanXRState.Transition<
-    VulkanXRState::VKEnable2Instance,
-    VulkanXRState::VKEnable2InstanceAndDevice>();
+  VulkanXRState()
+    .Transition<
+      VulkanXRStates::VKEnable2Instance,
+      VulkanXRStates::VKEnable2InstanceAndDevice>();
 
   return ret;
 }
@@ -675,13 +687,13 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateVulkanDeviceKHR(
 XRAPI_ATTR XrResult XRAPI_CALL xrDestroySession(XrSession session) {
   delete gKneeboard;
   gKneeboard = nullptr;
-  return gNext->xrDestroySession(session);
+  return Next()->xrDestroySession(session);
 }
 
 XRAPI_ATTR XrResult XRAPI_CALL xrDestroyInstance(XrInstance instance) {
   delete gKneeboard;
   gKneeboard = nullptr;
-  return gNext->xrDestroyInstance(instance);
+  return Next()->xrDestroyInstance(instance);
 }
 
 XRAPI_ATTR XrResult XRAPI_CALL
@@ -689,7 +701,7 @@ xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) noexcept {
   if (gKneeboard) {
     return gKneeboard->xrEndFrame(session, frameEndInfo);
   }
-  return gNext->xrEndFrame(session, frameEndInfo);
+  return Next()->xrEndFrame(session, frameEndInfo);
 }
 
 XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateApiLayerProperties(
@@ -745,8 +757,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateInstanceExtensionProperties(
 
   // As we don't implement any extensions, just delegate to the runtime or next
   // layer.
-  if (gNext && gNext->xrEnumerateInstanceExtensionProperties) {
-    return gNext->xrEnumerateInstanceExtensionProperties(
+  if (Next() && Next()->xrEnumerateInstanceExtensionProperties) {
+    return Next()->xrEnumerateInstanceExtensionProperties(
       layerName, propertyCapacityInput, propertyCountOutput, properties);
   }
 
@@ -797,8 +809,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
     return XR_SUCCESS;
   }
 
-  if (gNext) {
-    return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
+  if (const auto next = Next().get()) {
+    return next->xrGetInstanceProcAddr(instance, name_cstr, function);
   }
 
   dprint(
@@ -848,7 +860,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
     }
   }
 
-  gNext = std::make_shared<OpenXRNext>(
+  Next() = std::make_shared<OpenXRNext>(
     *instance, layerInfo->nextInfo->nextGetInstanceProcAddr);
 
   dprint("Created API layer instance");

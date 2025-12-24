@@ -1,6 +1,6 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
 namespace OpenKneeboard::RuntimeFiles {
-const std::filesystem::path WINDOW_CAPTURE_HOOK_DLL(
+const std::string_view WINDOW_CAPTURE_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-WindowCaptureHook>");
 }// namespace OpenKneeboard::RuntimeFiles

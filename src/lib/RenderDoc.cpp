@@ -2,7 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+#include "OpenKneeboard/fatal.hpp"
+
 #include <OpenKneeboard/RenderDoc.hpp>
 
 #include <Windows.h>
@@ -11,25 +14,38 @@
 
 namespace OpenKneeboard::RenderDoc {
 
-static HMODULE gModule {NULL};
-static RENDERDOC_API_1_3_0* gRenderDoc {nullptr};
+struct API {
+  HMODULE mModule {NULL};
+  RENDERDOC_API_1_3_0* mRenderDoc {nullptr};
 
-static class InitRenderDoc {
- public:
-  InitRenderDoc() {
-    gModule = GetModuleHandleA("renderdoc.dll");
-    if (!gModule) {
+  API() {
+    mModule = GetModuleHandleA("renderdoc.dll");
+    if (!mModule) {
       return;
     }
     pRENDERDOC_GetAPI RENDERDOC_GetAPI
-      = (pRENDERDOC_GetAPI)GetProcAddress(gModule, "RENDERDOC_GetAPI");
-    RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_3_0, (void**)&gRenderDoc);
+      = (pRENDERDOC_GetAPI)GetProcAddress(mModule, "RENDERDOC_GetAPI");
+    RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_3_0, (void**)&mRenderDoc);
   }
-} gInit;
 
+  operator bool() const noexcept {
+    return mRenderDoc;
+  }
+
+  auto operator->() const noexcept {
+    OPENKNEEBOARD_ALWAYS_ASSERT(mRenderDoc);
+    return mRenderDoc;
+  }
+
+  static const auto& Get() {
+    static API sInstance;
+    return sInstance;
+  }
+};
+
+[[nodiscard]]
 bool IsPresent() {
-  InitRenderDoc();
-  return gRenderDoc;
+  return API::Get();
 }
 
 NestedFrameCapture::NestedFrameCapture(
@@ -45,18 +61,19 @@ NestedFrameCapture::NestedFrameCapture(ID3D12Device* device, const char* title)
 }
 
 NestedFrameCapture::NestedFrameCapture(void* rdDevice, const char* title) {
-  if (!(gRenderDoc && gRenderDoc->IsFrameCapturing())) {
+  auto rd = API::Get();
+  if (!(rd && rd->IsFrameCapturing())) {
     return;
   }
   mRDDevice = rdDevice;
 
-  gRenderDoc->StartFrameCapture(mRDDevice, NULL);
-  gRenderDoc->SetCaptureTitle(title);
+  rd->StartFrameCapture(mRDDevice, NULL);
+  rd->SetCaptureTitle(title);
 }
 
 NestedFrameCapture::~NestedFrameCapture() {
   if (mRDDevice) {
-    gRenderDoc->EndFrameCapture(mRDDevice, NULL);
+    API::Get()->EndFrameCapture(mRDDevice, NULL);
   }
 }
 

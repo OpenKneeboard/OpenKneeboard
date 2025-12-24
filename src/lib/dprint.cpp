@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -19,15 +20,32 @@
 
 namespace OpenKneeboard {
 
-static DebugPrinter::HistoryProvider sHistoryProvider;
+namespace {
+
+auto& GetHistoryProvider() {
+  static DebugPrinter::HistoryProvider sProvider;
+  return sProvider;
+}
+
+auto& GetSettings() {
+  static DPrintSettings sSettings;
+  return sSettings;
+}
+
+auto& GetWidePrefix() {
+  static std::wstring sPrefix;
+  return sPrefix;
+}
+
+}// namespace
 
 void DebugPrinter::SetHistoryProvider(const HistoryProvider& provider) {
-  sHistoryProvider = provider;
+  GetHistoryProvider() = provider;
 }
 
 std::optional<std::string> DebugPrinter::MaybeGetHistory() {
-  if (sHistoryProvider) {
-    return sHistoryProvider();
+  if (const auto& provider = GetHistoryProvider()) {
+    return provider();
   }
   return std::nullopt;
 }
@@ -45,7 +63,7 @@ static std::wstring GetDPrintResourceName(std::wstring_view key) {
     if (!sCache.empty()) { \
       return sCache; \
     } \
-    sCache = GetDPrintResourceName(L#resource); \
+    sCache = GetDPrintResourceName(L"" #resource); \
     return sCache; \
   }
 IPC_RESOURCE_NAME_FUNC(BufferReadyEvent)
@@ -53,9 +71,6 @@ IPC_RESOURCE_NAME_FUNC(DataReadyEvent)
 IPC_RESOURCE_NAME_FUNC(Mapping)
 IPC_RESOURCE_NAME_FUNC(Mutex)
 #undef IPC_RESOURCE_NAME_FUNC
-
-static DPrintSettings gSettings;
-static std::wstring gPrefixW;
 
 static DPrintMessageHeader gIPCMessageHeader;
 
@@ -153,7 +168,8 @@ static inline bool IsDebugStreamEnabled() {
 }
 
 static inline bool IsConsoleOutputEnabled() {
-  return gSettings.consoleOutput == DPrintSettings::ConsoleOutputMode::ALWAYS;
+  return GetSettings().consoleOutput
+    == DPrintSettings::ConsoleOutputMode::ALWAYS;
 }
 
 void DebugPrinter::Write(std::string_view message) {
@@ -167,7 +183,7 @@ void DebugPrinter::Write(std::wstring_view message) {
     TraceLoggingKeyword(std::to_underlying(TraceLoggingEventKeywords::DPrint)),
     TraceLoggingCountedWideString(message.data(), message.size(), "Message"));
   if (IsDebugStreamEnabled()) {
-    auto output = std::format(L"[{}] {}\n", gPrefixW, message);
+    auto output = std::format(L"[{}] {}\n", GetWidePrefix(), message);
     OutputDebugStringW(output.c_str());
   }
 
@@ -193,15 +209,15 @@ void DebugPrinter::Write(std::wstring_view message) {
 }
 
 void DPrintSettings::Set(const DPrintSettings& settings) {
-  gSettings = settings;
-  gPrefixW = std::wstring(winrt::to_hstring(settings.prefix));
+  GetSettings() = settings;
+  GetWidePrefix() = std::wstring(winrt::to_hstring(settings.prefix));
 
   memset(&gIPCMessageHeader, 0, sizeof(gIPCMessageHeader));
   gIPCMessageHeader.mProcessID = GetCurrentProcessId(),
   memcpy(
     gIPCMessageHeader.mPrefix,
-    gPrefixW.c_str(),
-    gPrefixW.size() * sizeof(wchar_t));
+    GetWidePrefix().c_str(),
+    GetWidePrefix().size() * sizeof(wchar_t));
   GetModuleFileNameW(
     NULL,
     gIPCMessageHeader.mExecutable,

@@ -2,14 +2,15 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
+#include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/elevation.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/handles.hpp>
@@ -18,6 +19,9 @@
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <detours/detours.h>
+#include <felly/guarded_data.hpp>
 
 #include <atomic>
 #include <bit>
@@ -29,10 +33,6 @@
 
 #include <DbgHelp.h>
 #include <wchar.h>
-
-#ifndef __clang__
-#include <detours.h>
-#endif
 
 #ifdef __clang__
 // Microsoft C++ intrinsics
@@ -72,10 +72,16 @@ consteval bool supports_bitflags(ExceptionRecord::Flags) {
   return true;
 }
 
-static std::mutex gThreadNamesMutex;
-static std::unordered_map<std::thread::id, std::wstring> gThreadNames {};
+auto ThreadNames() {
+  using T = std::unordered_map<std::thread::id, std::wstring>;
+  static felly::guarded_data<T> sData;
+  return sData.lock();
+}
 
-static thread_local std::optional<ExceptionRecord> tLatestException {};
+auto& LatestException() {
+  thread_local std::optional<ExceptionRecord> tLatestException {};
+  return tLatestException;
+}
 
 struct WILFailureRecord {
   StackTrace mCreationStack;
@@ -85,7 +91,10 @@ struct WILFailureRecord {
   std::optional<ExceptionRecord> mException;
 };
 
-static thread_local std::optional<WILFailureRecord> tLatestWILFailure {};
+auto& LatestWILFailure() {
+  thread_local std::optional<WILFailureRecord> tLatestWILFailure {};
+  return tLatestWILFailure;
+}
 
 MINIDUMP_TYPE gMinidumpType {MiniDumpNormal};
 }// namespace
@@ -346,36 +355,31 @@ static std::string GetFatalLogContents(
     << "===========\n\n"
     << meta.mStacktrace << "\n";
 
-  if (tLatestException) {
+  if (LatestException()) {
     f << "\n"
       << "Latest Exception\n"
       << "================\n\n"
-      << tLatestException->mCreationStack << "\n";
+      << LatestException()->mCreationStack << "\n";
   }
 
-  if (tLatestWILFailure) {
+  if (auto it = LatestWILFailure()) {
     f << "\n"
       << "Latest WIL Failure\n"
       << "==================\n"
       << "\n"
       << std::format(
            "HRESULT: {:#018x} ({})\n",
-           static_cast<uint32_t>(tLatestWILFailure->mHR),
-           winrt::to_string(
-             winrt::hresult_error(tLatestWILFailure->mHR).message()))
-      << std::format(
-           "Message: {}\n", winrt::to_string(tLatestWILFailure->mMessage));
+           static_cast<uint32_t>(it->mHR),
+           winrt::to_string(winrt::hresult_error(it->mHR).message()))
+      << std::format("Message: {}\n", winrt::to_string(it->mMessage));
 
-    if (tLatestWILFailure->mException) {
-      f << "\nException:\n\n"
-        << tLatestWILFailure->mException->mCreationStack << "\n";
+    if (it->mException) {
+      f << "\nException:\n\n" << it->mException->mCreationStack << "\n";
     }
   }
 
   {
-    std::unique_lock threadNameLock {gThreadNamesMutex};
-    const auto names = gThreadNames;
-    threadNameLock.unlock();
+    const auto names = *ThreadNames();
 
     f << "\n"
       << "Threads\n"
@@ -468,16 +472,16 @@ static void __stdcall OnWILResult(
   wil::FailureInfo* failure,
   PWSTR debugMessage,
   size_t debugMessageChars) noexcept {
-  tLatestWILFailure = {
+  auto& wil = LatestWILFailure();
+  auto& ex = LatestException();
+  wil = {
     .mCreationStack = StackTrace::Current(),
     .mHR = failure->hr,
     .mMessage
     = std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
   };
-  if (
-    failure->hr == HRESULT_FROM_WIN32(ERROR_UNHANDLED_EXCEPTION)
-    && tLatestException) {
-    tLatestWILFailure->mException = *tLatestException;
+  if (failure->hr == HRESULT_FROM_WIN32(ERROR_UNHANDLED_EXCEPTION) && ex) {
+    wil->mException = *ex;
   }
 }
 
@@ -496,7 +500,14 @@ struct ThreadFailureHook {
   }
 };
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 static thread_local ThreadFailureHook tThreadFailureHook;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 static decltype(&_CxxThrowException) gCxxThrowException {nullptr};
 
@@ -504,14 +515,13 @@ extern "C" void __stdcall CxxThrowExceptionHook(
   void* pExceptionObject,
   _ThrowInfo* pThrowInfo) {
   using enum ExceptionRecord::Flags;
-  if (
-    tLatestException
-    && (tLatestException->mFlags & ForceForNextException)
-      == ForceForNextException) {
-    tLatestException->mFlags &= ~ForceForNextException;
+  auto& ex = LatestException();
+
+  if (ex && (ex->mFlags & ForceForNextException) == ForceForNextException) {
+    ex->mFlags &= ~ForceForNextException;
   } else if (pExceptionObject) {
     // Otherwise, it's a rethrow
-    tLatestException = {
+    ex = {
       StackTrace::Current(1),
     };
   }
@@ -524,16 +534,18 @@ static decltype(&SetThreadDescription) gSetThreadDescription {nullptr};
 extern "C" HRESULT __stdcall SetThreadDescriptionHook(
   HANDLE hThread,
   PCWSTR lpThreadDescription) {
-  std::unique_lock lock(gThreadNamesMutex);
+  auto lock = ThreadNames();
+  auto& names = *lock;
+
   if (hThread == GetCurrentThread()) [[likely]] {
     OPENKNEEBOARD_ASSERT(
       GetCurrentThreadId() == std::bit_cast<DWORD>(std::this_thread::get_id()));
     // hThread is a pseudo-handle
-    gThreadNames[std::this_thread::get_id()] = lpThreadDescription;
+    names[std::this_thread::get_id()] = lpThreadDescription;
   } else {
     // Depend on the assertion that windows thread IDs are the same as
     // std::thread:ids
-    gThreadNames[std::bit_cast<std::thread::id>(GetThreadId(hThread))]
+    names[std::bit_cast<std::thread::id>(GetThreadId(hThread))]
       = lpThreadDescription;
   }
   return gSetThreadDescription(hThread, lpThreadDescription);
@@ -567,14 +579,15 @@ StackTrace StackTrace::Current(std::size_t skip) noexcept {
 }
 
 StackTrace StackTrace::GetForMostRecentException() {
-  if (!tLatestException) {
+  const auto& ex = LatestException();
+  if (!ex) {
     return {};
   }
-  return tLatestException->mCreationStack;
+  return ex->mCreationStack;
 }
 
 void StackTrace::SetForNextException(const StackTrace& v) {
-  tLatestException = ExceptionRecord {
+  LatestException() = ExceptionRecord {
     v,
     ExceptionRecord::Flags::ForceForNextException,
   };
@@ -663,16 +676,16 @@ void divert_process_failure_to_fatal() {
 
   wil::SetResultMessageCallback(&OnWILResult);
 
-#ifndef __clang__
   gCxxThrowException = &_CxxThrowException;
   gSetThreadDescription = &SetThreadDescription;
   winrt::check_win32(DetourTransactionBegin());
   // What could go wrong
-  winrt::check_win32(DetourAttach(&gCxxThrowException, &CxxThrowExceptionHook));
+  winrt::check_win32(DetourAttach(
+    reinterpret_cast<void**>(&gCxxThrowException),
+    std::bit_cast<void*>(&CxxThrowExceptionHook)));
   winrt::check_win32(
     DetourAttach(&gSetThreadDescription, &SetThreadDescriptionHook));
   winrt::check_win32(DetourTransactionCommit());
-#endif
 
   divert_thread_failure_to_fatal();
   gDivertThreadFailureToFatal = true;

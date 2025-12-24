@@ -32,3 +32,15 @@ endif ()
 
 file(INSTALL "${SOURCE_PATH}/LICENSE.md" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
+
+include(CMakePackageConfigHelpers)
+macro(make_package_config_file PREFIX)
+  configure_package_config_file(
+    "${CMAKE_CURRENT_LIST_DIR}/${PORT}-config.cmake.in"
+    "${CURRENT_PACKAGES_DIR}/${PREFIX}/${PORT}/${PORT}-config.cmake"
+    INSTALL_DESTINATION "${PREFIX}/${PORT}"
+  )
+endmacro()
+make_package_config_file("share")
+make_package_config_file("debug/share")
+vcpkg_cmake_config_fixup(PACKAGE_NAME "${PORT}")

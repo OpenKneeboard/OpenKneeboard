@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -82,19 +83,16 @@ luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
   return 1;
 }
 
-static TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
-
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  const auto& provider = OpenKneeboard::gTraceProvider;
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
-      TraceLoggingRegister(OpenKneeboard::gTraceProvider);
-      TraceLoggingWriteStart(
-        gActivity, "Attached", TraceLoggingThisExecutable());
+      TraceLoggingRegister(provider);
+      TraceLoggingWrite(provider, "Attached", TraceLoggingThisExecutable());
       break;
     case DLL_PROCESS_DETACH:
-      TraceLoggingWriteStop(
-        gActivity, "Detached", TraceLoggingThisExecutable());
-      TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
+      TraceLoggingWrite(provider, "Detached", TraceLoggingThisExecutable());
+      TraceLoggingUnregister(provider);
       break;
   }
   return TRUE;

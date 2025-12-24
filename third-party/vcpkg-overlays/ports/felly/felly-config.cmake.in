@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+# Avoid creating the target twice if find_package is called multiple times
+if(NOT TARGET felly::felly)
+    add_library(felly::felly INTERFACE IMPORTED GLOBAL)
+    set_target_properties(felly::felly PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include"
+    )
+endif()

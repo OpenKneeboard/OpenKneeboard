@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+set_and_check(DETOURS_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/include")
+set_and_check(DETOURS_RELEASE_LIB "${PACKAGE_PREFIX_DIR}/lib/detours.lib")
+set_and_check(DETOURS_DEBUG_LIB   "${PACKAGE_PREFIX_DIR}/debug/lib/detours.lib")
+
+if(NOT TARGET Microsoft::Detours)
+    add_library(Microsoft::Detours STATIC IMPORTED)
+    set_target_properties(Microsoft::Detours PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${DETOURS_INCLUDE_DIR}"
+        IMPORTED_CONFIGURATIONS "RELEASE;DEBUG;RELWITHDEBINFO"
+        IMPORTED_LOCATION_RELEASE         "${DETOURS_RELEASE_LIB}"
+        IMPORTED_LOCATION_RELWITHDEBINFO  "${DETOURS_RELEASE_LIB}"
+        IMPORTED_LOCATION_DEBUG           "${DETOURS_DEBUG_LIB}"
+    )
+endif()

@@ -2,23 +2,31 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ConsoleLoopCondition.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
 #include <Windows.h>
-
 #include <objbase.h>
 
 namespace OpenKneeboard {
 
-static winrt::handle gExitEvent;
+namespace {
+auto& ExitEvent() {
+  static winrt::handle gExitEvent;
+  return gExitEvent;
+}
 
-static BOOL WINAPI ExitHandler(DWORD ignored) {
+BOOL WINAPI ExitHandler(DWORD ignored) {
   CoUninitialize();
-  SetEvent(gExitEvent.get());
+  SetEvent(ExitEvent().get());
   return TRUE;
 }
+
+using FILETIME_RESOLUTION
+  = std::chrono::duration<int64_t, std::ratio_multiply<std::hecto, std::nano>>;
+}// namespace
 
 class ConsoleLoopCondition::Impl final {
  public:
@@ -26,20 +34,14 @@ class ConsoleLoopCondition::Impl final {
 };
 
 ConsoleLoopCondition::ConsoleLoopCondition() : p(std::make_shared<Impl>()) {
-  gExitEvent = Win32::or_throw::CreateEvent(nullptr, false, false, nullptr);
+  ExitEvent() = Win32::or_throw::CreateEvent(nullptr, false, false, nullptr);
   p->mTimerEvent = Win32::or_throw::CreateWaitableTimer(nullptr, true, nullptr);
   SetConsoleCtrlHandler(&ExitHandler, true);
 }
 
 ConsoleLoopCondition::~ConsoleLoopCondition() {
   SetConsoleCtrlHandler(&ExitHandler, false);
-  gExitEvent.close();
-}
-
-namespace {
-typedef std::chrono::
-  duration<int64_t, std::ratio_multiply<std::hecto, std::nano>>
-    FILETIME_RESOLUTION;
+  ExitEvent().close();
 }
 
 bool ConsoleLoopCondition::Sleep(
@@ -55,10 +57,11 @@ bool ConsoleLoopCondition::Sleep(
     nullptr,
     false);
 
-  HANDLE handles[] = {gExitEvent.get(), p->mTimerEvent.get()};
+  const auto event = ExitEvent().get();
+  HANDLE handles[] = {event, p->mTimerEvent.get()};
   auto res = WaitForMultipleObjects(
     sizeof(handles) / sizeof(handles[0]), handles, false, INFINITE);
-  if (handles[res - WAIT_OBJECT_0] == gExitEvent.get()) {
+  if (handles[res - WAIT_OBJECT_0] == event) {
     CancelWaitableTimer(p->mTimerEvent.get());
     return false;
   }

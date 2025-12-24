@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 // <Unknwn.h> must be included before <winrt/base.h> for com_ptr::as<> to work
@@ -16,10 +17,17 @@
 
 #pragma warning(push)
 #pragma warning(disable : 26820)// Potentially expensive copy operation
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 #if __has_include(<wil/cppwinrt.h> )
 #include <wil/cppwinrt.h>
 #endif
 #include <winrt/base.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #pragma warning(pop)
 
 #include <OpenKneeboard/fatal.hpp>
@@ -46,8 +54,9 @@ using DispatcherQueueController
 
 template <class... Args>
 inline void disown_later(Args&&... args) {
-  winrt::check_bool(DispatcherQueue::GetForCurrentThread().TryEnqueue(
-    std::bind_front([](auto&&...) {}, std::forward<Args>(args)...)));
+  winrt::check_bool(
+    DispatcherQueue::GetForCurrentThread().TryEnqueue(
+      std::bind_front([](auto&&...) {}, std::forward<Args>(args)...)));
 }
 #else
 // Let's provide a nice compiler error message; all actions are invalid on

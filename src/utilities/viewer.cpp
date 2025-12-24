@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "viewer.hpp"
 
 #include "viewer-d3d11.hpp"
@@ -131,8 +132,8 @@ class TestViewerWindow final : private D3D11Resources {
   };
 
   struct ShaderFillInfo {
-    D3DCOLORVALUE mD3DCOLORVALUE0;
-    D3DCOLORVALUE mD3DCOLORVALUE1;
+    D3DCOLORVALUE mD3DCOLORVALUE0 {};
+    D3DCOLORVALUE mD3DCOLORVALUE1 {};
     uint32_t mColorStride = 30;
 
     constexpr ShaderFillInfo() = default;
@@ -157,11 +158,6 @@ class TestViewerWindow final : private D3D11Resources {
   };
 
   ShaderFillInfo mDefaultFill;
-  inline static const ShaderFillInfo mCheckerboardFill {
-    {1, 1, 1, 1},
-    {0.9, 0.9, 0.9, 1},
-    /* colorStride = */ 20,
-  };
 
   static constexpr auto LastFillMode = ViewerFillMode::Transparent;
   static constexpr auto FillModeCount = std::to_underlying(LastFillMode) + 1;
@@ -742,6 +738,12 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void PaintBackground() {
+    static constexpr ShaderFillInfo CheckerboardFill {
+      {1, 1, 1, 1},
+      {0.9, 0.9, 0.9, 1},
+      /* colorStride = */ 20,
+    };
+
     mD3D11ImmediateContext->ClearRenderTargetView(
       mWindowRenderTargetView.get(), DirectX::Colors::Transparent);
 
@@ -755,7 +757,7 @@ class TestViewerWindow final : private D3D11Resources {
         this->DrawRectangle(rect, mDefaultFill);
         break;
       case ViewerFillMode::Checkerboard:
-        this->DrawRectangle(rect, mCheckerboardFill);
+        this->DrawRectangle(rect, CheckerboardFill);
         break;
       case ViewerFillMode::Transparent:
         break;

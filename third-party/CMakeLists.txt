@@ -1,11 +1,11 @@
 set(BUILD_SHARED_LIBS OFF)
 
 set(THIRD_PARTY_COMPILE_OPTIONS ${COMMON_COMPILE_OPTIONS})
-if(MSVC)
+if (MSVC)
   list(APPEND THIRD_PARTY_COMPILE_OPTIONS "/WX-")
-else()
+else ()
   list(APPEND THIRD_PARTY_COMPILE_OPTIONS "-Wno-error")
-endif()
+endif ()
 
 set(
   THIRDPARTY_TOOLCHAIN_FILE
@@ -28,6 +28,7 @@ scoped_include(directxtex.cmake)
 scoped_include(directxtk.cmake)
 scoped_include(directxtk12.cmake)
 scoped_include(dxc.cmake)
+scoped_include(felly.cmake)
 scoped_include(geographiclib.cmake)
 scoped_include(json.cmake)
 scoped_include(libzip.cmake)

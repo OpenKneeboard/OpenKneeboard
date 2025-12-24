@@ -16,6 +16,7 @@
       "name": "directxtk12",
       "default-features": false
     },
+    "felly",
     "magic-enum",
     "nlohmann-json",
     "wil"

@@ -79,19 +79,21 @@ TRACELOGGING_DEFINE_PROVIDER(
   (0xcfaa744f, 0xba6f, 0x5e56, 0x5c, 0x91, 0x88, 0xde, 0x46, 0x26, 0x9c, 0x4b));
 }// namespace OpenKneeboard
 
-static TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
-
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
       TraceLoggingRegister(OpenKneeboard::gTraceProvider);
-      TraceLoggingWriteStart(
-        gActivity, "Attached", TraceLoggingThisExecutable());
+      TraceLoggingWrite(
+        OpenKneeboard::gTraceProvider,
+        "Attached",
+        TraceLoggingThisExecutable());
       init();
       break;
     case DLL_PROCESS_DETACH:
-      TraceLoggingWriteStop(
-        gActivity, "Detached", TraceLoggingThisExecutable());
+      TraceLoggingWrite(
+        OpenKneeboard::gTraceProvider,
+        "Detached",
+        TraceLoggingThisExecutable());
       TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
       break;
   }

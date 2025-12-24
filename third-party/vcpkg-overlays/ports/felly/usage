@@ -1,0 +1,8 @@
+The package felly provides CMake targets:
+
+    find_package(felly CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE felly::felly)
+
+To include the headers in your code:
+
+    #include <felly/header.h>

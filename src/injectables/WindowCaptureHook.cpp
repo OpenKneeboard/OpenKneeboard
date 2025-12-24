@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "detours-ext.hpp"
 
 #include <OpenKneeboard/WindowCaptureControl.hpp>
@@ -33,15 +34,23 @@ static std::optional<InjectedPoint> gInjectedPoint;
 static std::atomic_flag gHaveDetours;
 static HWND gTopLevelWindow {};
 
-static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
-static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
-static auto gPFN_GetCursorPos = &GetCursorPos;
-static auto gPFN_GetPhysicalCursorPos = &GetPhysicalCursorPos;
-static auto gPFN_GetMessagePos = &GetMessagePos;
-static auto gPFN_GetFocus = &GetFocus;
-static auto gPFN_IsWindowEnabled = &IsWindowEnabled;
-static auto gPFN_IsWindowVisible = &IsWindowVisible;
-static auto gPFN_WindowFromPoint = &WindowFromPoint;
+auto& FunctionTable() {
+  static struct {
+    decltype(&GetForegroundWindow) gPFN_GetForegroundWindow
+      = &GetForegroundWindow;
+    decltype(&SetForegroundWindow) gPFN_SetForegroundWindow
+      = &SetForegroundWindow;
+    decltype(&GetCursorPos) gPFN_GetCursorPos = &GetCursorPos;
+    decltype(&GetPhysicalCursorPos) gPFN_GetPhysicalCursorPos
+      = &GetPhysicalCursorPos;
+    decltype(&GetMessagePos) gPFN_GetMessagePos = &GetMessagePos;
+    decltype(&GetFocus) gPFN_GetFocus = &GetFocus;
+    decltype(&IsWindowEnabled) gPFN_IsWindowEnabled = &IsWindowEnabled;
+    decltype(&IsWindowVisible) gPFN_IsWindowVisible = &IsWindowVisible;
+    decltype(&WindowFromPoint) gPFN_WindowFromPoint = &WindowFromPoint;
+  } sData {};
+  return sData;
+}
 
 static HWND gLastSetForegroundWindow {};
 
@@ -56,14 +65,14 @@ static BOOL WINAPI SetForegroundWindow_Hook(HWND hwnd) {
   if (ShouldInject()) {
     return TRUE;
   }
-  return gPFN_SetForegroundWindow(hwnd);
+  return FunctionTable().gPFN_SetForegroundWindow(hwnd);
 }
 
 static HWND WINAPI GetForegroundWindow_Hook() {
   if (ShouldInject()) {
     return gLastSetForegroundWindow;
   }
-  return gPFN_GetForegroundWindow();
+  return FunctionTable().gPFN_GetForegroundWindow();
 }
 
 static BOOL WINAPI GetCursorPos_Hook(LPPOINT lpPoint) {
@@ -71,7 +80,7 @@ static BOOL WINAPI GetCursorPos_Hook(LPPOINT lpPoint) {
     *lpPoint = gInjectedPoint->mScreenPoint;
     return TRUE;
   }
-  return gPFN_GetCursorPos(lpPoint);
+  return FunctionTable().gPFN_GetCursorPos(lpPoint);
 }
 
 static BOOL WINAPI GetPhysicalCursorPos_Hook(LPPOINT lpPoint) {
@@ -80,7 +89,7 @@ static BOOL WINAPI GetPhysicalCursorPos_Hook(LPPOINT lpPoint) {
     *lpPoint = gInjectedPoint->mScreenPoint;
     return TRUE;
   }
-  return gPFN_GetPhysicalCursorPos(lpPoint);
+  return FunctionTable().gPFN_GetPhysicalCursorPos(lpPoint);
 }
 
 static DWORD WINAPI GetMessagePos_Hook() {
@@ -88,26 +97,26 @@ static DWORD WINAPI GetMessagePos_Hook() {
     return gInjectedPoint->mScreenPoint.x
       + (gInjectedPoint->mScreenPoint.y << sizeof(DWORD) * 4);
   }
-  return gPFN_GetMessagePos();
+  return FunctionTable().gPFN_GetMessagePos();
 }
 
 static HWND WINAPI GetFocus_Hook() {
   if (ShouldInject()) {
     return gLastSetForegroundWindow;
   }
-  return gPFN_GetFocus();
+  return FunctionTable().gPFN_GetFocus();
 }
 
 static BOOL WINAPI IsWindowEnabled_Hook(HWND hwnd) {
   if (ShouldInject()) {
     return GetAncestor(hwnd, GA_ROOTOWNER) == gTopLevelWindow;
   }
-  return gPFN_IsWindowEnabled(hwnd);
+  return FunctionTable().gPFN_IsWindowEnabled(hwnd);
 }
 
 static BOOL WINAPI IsWindowVisible_Hook(HWND hwnd) {
   if (!gTopLevelWindow) {
-    return gPFN_IsWindowVisible(hwnd);
+    return FunctionTable().gPFN_IsWindowVisible(hwnd);
   }
   return GetAncestor(hwnd, GA_ROOTOWNER) == gTopLevelWindow;
 }
@@ -116,7 +125,7 @@ static HWND WINAPI WindowFromPoint_Hook(POINT point) {
   if (gInjectedPoint) {
     return gInjectedPoint->mHwnd;
   }
-  return gPFN_WindowFromPoint(point);
+  return FunctionTable().gPFN_WindowFromPoint(point);
 }
 
 static void InstallDetours() {
@@ -125,16 +134,17 @@ static void InstallDetours() {
   }
 
   dprint("Installing detours");
-  DetourTransaction transcation;
-  DetourAttach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
-  DetourAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
-  DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
-  DetourAttach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
-  DetourAttach(&gPFN_GetMessagePos, &GetMessagePos_Hook);
-  DetourAttach(&gPFN_GetFocus, &GetFocus_Hook);
-  DetourAttach(&gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
-  DetourAttach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
-  DetourAttach(&gPFN_WindowFromPoint, &WindowFromPoint_Hook);
+  const DetourTransaction transaction;
+  auto& funcs = FunctionTable();
+  DetourAttach(&funcs.gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
+  DetourAttach(&funcs.gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourAttach(&funcs.gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourAttach(&funcs.gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
+  DetourAttach(&funcs.gPFN_GetMessagePos, &GetMessagePos_Hook);
+  DetourAttach(&funcs.gPFN_GetFocus, &GetFocus_Hook);
+  DetourAttach(&funcs.gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
+  DetourAttach(&funcs.gPFN_IsWindowVisible, &IsWindowVisible_Hook);
+  DetourAttach(&funcs.gPFN_WindowFromPoint, &WindowFromPoint_Hook);
 }
 
 static void UninstallDetours() {
@@ -144,16 +154,17 @@ static void UninstallDetours() {
   gHaveDetours.clear();
 
   dprint("Removing detours");
-  DetourTransaction transaction;
-  DetourDetach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
-  DetourDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
-  DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
-  DetourDetach(&gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
-  DetourDetach(&gPFN_GetMessagePos, &GetMessagePos_Hook);
-  DetourDetach(&gPFN_GetFocus, &GetFocus_Hook);
-  DetourDetach(&gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
-  DetourDetach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
-  DetourDetach(&gPFN_WindowFromPoint, &WindowFromPoint_Hook);
+  const DetourTransaction transaction;
+  auto& funcs = FunctionTable();
+  DetourDetach(&funcs.gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
+  DetourDetach(&funcs.gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourDetach(&funcs.gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourDetach(&funcs.gPFN_GetPhysicalCursorPos, &GetPhysicalCursorPos_Hook);
+  DetourDetach(&funcs.gPFN_GetMessagePos, &GetMessagePos_Hook);
+  DetourDetach(&funcs.gPFN_GetFocus, &GetFocus_Hook);
+  DetourDetach(&funcs.gPFN_IsWindowEnabled, &IsWindowEnabled_Hook);
+  DetourDetach(&funcs.gPFN_IsWindowVisible, &IsWindowVisible_Hook);
+  DetourDetach(&funcs.gPFN_WindowFromPoint, &WindowFromPoint_Hook);
 }
 
 static bool ProcessControlMessage(

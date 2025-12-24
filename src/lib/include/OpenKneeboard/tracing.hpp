@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/macros.hpp>
@@ -49,96 +50,6 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
   TraceLoggingValue(pr.Left(), name "/Left"), \
     TraceLoggingValue(pr.Top(), name "/Top"), \
     OPENKNEEBOARD_TraceLoggingSize2D(pr, name)
-
-#if defined(CLANG_TIDY) || defined(__CLANG__) || defined(CLANG_CL)
-// We should be able to switch to the real definitions once
-// we're using `/Zc:preprocessor` and OPENKNEEBOARD_VA_OPT_SUPPORTED is true
-namespace ClangStubs {
-class TraceLoggingScopedActivity
-  : public TraceLoggingThreadActivity<gTraceProvider> {
- public:
-  constexpr void Stop() {
-  }
-  constexpr void CancelAutoStop() {
-  }
-  constexpr void StopWithResult([[maybe_unused]] auto result) {
-  }
-};
-constexpr const auto& maybe_unused(const auto& first, const auto&...) noexcept {
-  return first;
-}
-}// namespace ClangStubs
-#define OPENKNEEBOARD_TraceLoggingScope(...)
-#define OPENKNEEBOARD_TraceLoggingScopedActivity(activity, ...) \
-  ClangStubs::TraceLoggingScopedActivity activity;
-#define OPENKNEEBOARD_TraceLoggingWrite(...)
-
-#undef TraceLoggingProviderEnabled
-
-#undef TraceLoggingKeyword
-
-#undef TraceLoggingBinary
-#undef TraceLoggingCodePointer
-#undef TraceLoggingCountedWideString
-#undef TraceLoggingGuid
-#undef TraceLoggingHexUInt64
-#undef TraceLoggingHexUInt64Array
-#undef TraceLoggingPointer
-#undef TraceLoggingString
-#undef TraceLoggingValue
-
-#undef TraceLoggingWrite
-#undef TraceLoggingWriteStart
-#undef TraceLoggingWriteStop
-#undef TraceLoggingWriteTagged
-
-#define TraceLoggingProviderEnabled(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-
-#define TraceLoggingKeyword(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-
-#define TraceLoggingValue(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingCountedWideString(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingString(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingBinary(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingPointer(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingCodePointer(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingGuid(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingHexUInt64(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingHexUInt64Array(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-
-#define TraceLoggingWrite(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteStart(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteStop(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define TraceLoggingWriteTagged(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-#define OPENKNEEBOARD_TraceLoggingCoro(...) \
-  OpenKneeboard::ClangStubs::maybe_unused(__VA_ARGS__)
-
-#else
-
-// TraceLoggingWriteStart() requires the legacy preprocessor :(
-static_assert(_MSVC_TRADITIONAL);
-// Rewrite these macros if this fails, as presumably the above was fixed :)
-//
-// - ##__VA_ARGS__             (common vendor extension)
-// + __VA_OPT__(,) __VA_ARGS__ (standard C++20)
-static_assert(!OPENKNEEBOARD_VA_OPT_SUPPORTED);
-// ... but we currently depend on ##__VA_ARGS__
-static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 
 using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
   gTraceProvider,
@@ -261,10 +172,4 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
       ##__VA_ARGS__); \
   }};
 
-#endif
-
 }// namespace OpenKneeboard
-
-#ifdef CLANG_TIDY
-namespace ClangStubs = OpenKneeboard::ClangStubs;
-#endif

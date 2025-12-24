@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/utf8.hpp>
@@ -10,6 +11,44 @@
 #include <icu.h>
 
 namespace OpenKneeboard {
+
+namespace {
+
+class UTF8CaseMap {
+ public:
+  UTF8CaseMap(const char locale[]) {
+    auto error = U_ZERO_ERROR;
+    mImpl = ucasemap_open(locale, U_FOLD_CASE_DEFAULT, &error);
+  }
+
+  ~UTF8CaseMap() {
+    if (!mImpl) {
+      return;
+    }
+
+    ucasemap_close(mImpl);
+  }
+
+  inline operator const UCaseMap*() const noexcept {
+    return mImpl;
+  }
+
+  UTF8CaseMap() = delete;
+  UTF8CaseMap(const UTF8CaseMap&) = delete;
+  UTF8CaseMap(UTF8CaseMap&&) = delete;
+  UTF8CaseMap& operator=(const UTF8CaseMap&) = delete;
+  UTF8CaseMap& operator=(UTF8CaseMap&&) = delete;
+
+  static UTF8CaseMap& Get() {
+    static UTF8CaseMap sInstance("");
+    return sInstance;
+  }
+
+ private:
+  UCaseMap* mImpl {nullptr};
+};
+
+}// namespace
 
 std::string to_utf8(const std::filesystem::path& in) {
   const auto yaycpp20 = in.u8string();
@@ -63,41 +102,10 @@ std::string to_utf8(const wchar_t* in) {
   return to_utf8(std::wstring_view(in));
 }
 
-class UTF8CaseMap {
- public:
-  UTF8CaseMap(const char locale[]) {
-    auto error = U_ZERO_ERROR;
-    mImpl = ucasemap_open(locale, U_FOLD_CASE_DEFAULT, &error);
-  }
-
-  ~UTF8CaseMap() {
-    if (!mImpl) {
-      return;
-    }
-
-    ucasemap_close(mImpl);
-  }
-
-  inline operator const UCaseMap*() const noexcept {
-    return mImpl;
-  }
-
-  UTF8CaseMap() = delete;
-  UTF8CaseMap(const UTF8CaseMap&) = delete;
-  UTF8CaseMap(UTF8CaseMap&&) = delete;
-  UTF8CaseMap& operator=(const UTF8CaseMap&) = delete;
-  UTF8CaseMap& operator=(UTF8CaseMap&&) = delete;
-
- private:
-  UCaseMap* mImpl {nullptr};
-};
-
-static UTF8CaseMap gFoldCaseMap("");
-
 std::string fold_utf8(std::string_view in) {
   auto error = U_ZERO_ERROR;
   const auto foldedLength = ucasemap_utf8FoldCase(
-    gFoldCaseMap,
+    UTF8CaseMap::Get(),
     nullptr,
     0,
     in.data(),
@@ -107,7 +115,7 @@ std::string fold_utf8(std::string_view in) {
   std::string ret(static_cast<size_t>(foldedLength), '\0');
   error = U_ZERO_ERROR;
   ucasemap_utf8FoldCase(
-    gFoldCaseMap,
+    UTF8CaseMap::Get(),
     ret.data(),
     static_cast<int32_t>(ret.size()),
     in.data(),

@@ -1,9 +1,19 @@
 {
   "name": "detours",
   "version-date": "2023-07-24",
-  "port-version": 1,
+  "port-version": 2,
   "description": "Detours is a software package for monitoring and instrumenting API calls on Windows.",
   "homepage": "https://github.com/microsoft/Detours",
   "license": "MIT",
-  "supports": "windows & !uwp"
+  "supports": "windows & !uwp",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
 }

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Filesystem.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -268,7 +269,7 @@ class BrowserApp final : public CefApp,
     CefRefPtr<CefV8Value> object,
     const CefV8ValueList& arguments,
     CefRefPtr<CefV8Value>& ret,
-    CefString& exception) {
+    CefString& exception) override {
     OPENKNEEBOARD_TraceLoggingScope(
       "Execute/V8", TraceLoggingValue(name.ToString().c_str(), "name"));
 

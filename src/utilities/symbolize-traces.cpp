@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <Windows.h>
 
 #include <combaseapi.h>
@@ -240,7 +241,6 @@ int main(int argc, char** argv) {
         wil::com_ptr<IDiaEnumDebugStreams> streams;
         wil::verify_hresult(diaSession->getEnumDebugStreams(streams.put()));
         wil::com_ptr<IDiaEnumDebugStreamData> stream;
-        LONG fetched = 0;
         while (SUCCEEDED(streams->Next(1, stream.put(), 0))) {
           if (!stream) {
             continue;
@@ -284,7 +284,6 @@ int main(int argc, char** argv) {
         });
       if (it != fn_view.cend()) {
         const auto& base = *it;
-        const auto offset = raw_offset - base.mRelative;
         frame = {
           .mSection = base.mSection,
           .mOffset = (raw_offset - base.mRelative) + base.mOffset,

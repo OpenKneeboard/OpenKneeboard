@@ -49,11 +49,9 @@ target_link_libraries(
   OpenKneeboard-version
   ThirdParty::CppWinRT
   ThirdParty::WIL
+  ThirdParty::detours
+  ThirdParty::felly
 )
-
-if(NOT CLANG_CL)
-  target_link_libraries(OpenKneeboard-fatal PRIVATE ThirdParty::detours)
-endif()
 
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)
 target_link_libraries(
@@ -319,6 +317,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-config
   OpenKneeboard-fatal
+  OpenKneeboard-scope_exit
   ThirdParty::bindline
 )
 target_link_libraries(OpenKneeboard-dprint
@@ -374,6 +373,7 @@ target_link_libraries(
   OpenKneeboard-StateMachine
   INTERFACE
   OpenKneeboard-Lib-Headers
+  OpenKneeboard-dprint
   ThirdParty::magic_enum
 )
 
@@ -381,7 +381,9 @@ ok_add_library(OpenKneeboard-scope_exit INTERFACE)
 target_link_libraries(
   OpenKneeboard-scope_exit
   INTERFACE
-  OpenKneeboard-Lib-Headers)
+  OpenKneeboard-Lib-Headers
+  ThirdParty::felly
+)
 
 ok_add_library(OpenKneeboard-VRKneeboard STATIC VRKneeboard.cpp)
 target_link_libraries(
@@ -428,7 +430,7 @@ ok_add_library(
   semver.cpp
   HEADERS
   include/OpenKneeboard/semver.hpp
-  INCLUDE_DIRECTORIES 
+  INCLUDE_DIRECTORIES
   include
 )
 target_link_libraries(OpenKneeboard-semver PRIVATE ThirdParty::SemVer)
@@ -497,6 +499,7 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-Lib-Headers
   PRIVATE
+  OpenKneeboard-fatal
   ThirdParty::RenderDoc
 )
 ok_add_library(

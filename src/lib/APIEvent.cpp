@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Win32.hpp>
 
@@ -29,10 +30,13 @@ static uint32_t hex_to_ui32(const std::string_view& sv) {
   return value;
 }
 
-static winrt::file_handle gMailslotHandle;
+auto& MailslotHandle() {
+  static winrt::file_handle sHandle;
+  return sHandle;
+}
 
 static bool OpenMailslotHandle() {
-  if (gMailslotHandle) {
+  if (MailslotHandle()) {
     return true;
   }
 
@@ -43,7 +47,7 @@ static bool OpenMailslotHandle() {
   }
   sLastAttempt = now;
 
-  gMailslotHandle = OpenKneeboard::Win32::or_default::CreateFile(
+  MailslotHandle() = OpenKneeboard::Win32::or_default::CreateFile(
     OpenKneeboard::APIEvent::GetMailslotPath(),
     GENERIC_WRITE,
     FILE_SHARE_READ,
@@ -52,7 +56,7 @@ static bool OpenMailslotHandle() {
     0,
     NULL);
 
-  return static_cast<bool>(gMailslotHandle);
+  return static_cast<bool>(MailslotHandle());
 }
 
 namespace OpenKneeboard {
@@ -99,8 +103,8 @@ void APIEvent::Send() const {
   TraceLoggingWriteStart(
     activity,
     "APIEvent::Send()",
-    TraceLoggingValue(this->name.c_str(), "Name"),
-    TraceLoggingBinary(this->value.c_str(), this->value.size(), "Value"));
+    TraceLoggingValue(name.c_str(), "Name"),
+    TraceLoggingBinary(value.c_str(), value.size(), "Value"));
 
   if (!OpenMailslotHandle()) {
     TraceLoggingWriteStop(
@@ -112,7 +116,7 @@ void APIEvent::Send() const {
   const auto packet = this->Serialize();
 
   if (WriteFile(
-        gMailslotHandle.get(),
+        MailslotHandle().get(),
         packet.data(),
         static_cast<DWORD>(packet.size()),
         nullptr,
@@ -122,8 +126,8 @@ void APIEvent::Send() const {
     return;
   }
 
-  gMailslotHandle.close();
-  gMailslotHandle = {};
+  MailslotHandle().close();
+  MailslotHandle() = {};
   TraceLoggingWriteTagged(activity, "Closed handle");
 
   if (!OpenMailslotHandle()) {
@@ -135,7 +139,7 @@ void APIEvent::Send() const {
   }
   TraceLoggingWriteTagged(activity, "Reopened handle");
   if (WriteFile(
-        gMailslotHandle.get(),
+        MailslotHandle().get(),
         packet.data(),
         static_cast<DWORD>(packet.size()),
         nullptr,

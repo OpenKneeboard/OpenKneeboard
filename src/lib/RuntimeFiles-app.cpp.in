@@ -1,32 +1,32 @@
 #include <OpenKneeboard/RuntimeFiles.hpp>
 
 namespace OpenKneeboard::RuntimeFiles {
-const std::filesystem::path QUICK_START_PDF("Quick Start.pdf");
+const std::string_view QUICK_START_PDF("Quick Start.pdf");
 
-const std::filesystem::path CHROMIUM(
+const std::string_view CHROMIUM(
   "$<$<TARGET_EXISTS:OpenKneeboard-Chromium>:libexec/cef/$<TARGET_FILE_NAME:OpenKneeboard-Chromium>>");
 
-const std::filesystem::path DCSWORLD_HOOK_DLL(
+const std::string_view DCSWORLD_HOOK_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-lua-api>");
 
-const std::filesystem::path DCSWORLD_HOOK_LUA(
+const std::string_view DCSWORLD_HOOK_LUA(
   "$<TARGET_PROPERTY:dcs-lua-ext,OUTPUT_NAME>");
 
-const std::filesystem::path OPENXR_64BIT_JSON("OpenKneeboard-OpenXR.json");
-const std::filesystem::path OPENXR_64BIT_DLL(
+const std::string_view OPENXR_64BIT_JSON("OpenKneeboard-OpenXR.json");
+const std::string_view OPENXR_64BIT_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>");
 
-const std::filesystem::path OPENXR_32BIT_JSON("OpenKneeboard-OpenXR32.json");
-const std::filesystem::path OPENXR_32BIT_DLL(
+const std::string_view OPENXR_32BIT_JSON("OpenKneeboard-OpenXR32.json");
+const std::string_view OPENXR_32BIT_DLL(
   "$<PATH:GET_FILENAME,$<TARGET_PROPERTY:OpenKneeboard-OpenXR32,IMPORTED_LOCATION>>");
 
 
-const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
+const std::string_view OPENXR_REGISTER_LAYER_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");
 
 #ifdef _WIN64
 // clang-format off
-const std::filesystem::path WINDOW_CAPTURE_HOOK_32BIT_HELPER(
+const std::string_view WINDOW_CAPTURE_HOOK_32BIT_HELPER(
   "$<PATH:GET_FILENAME,$<TARGET_PROPERTY:OpenKneeboard-WindowCaptureHook-Helper32,IMPORTED_LOCATION>>");
 // clang-format on
 #endif

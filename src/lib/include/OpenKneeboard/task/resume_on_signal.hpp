@@ -2,14 +2,14 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/StateMachine.hpp>
 
-#include <OpenKNeeboard/format/enum.hpp>
-
 #include <OpenKneeboard/fatal.hpp>
+#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/task.hpp>
 
 #include <shims/winrt/base.h>

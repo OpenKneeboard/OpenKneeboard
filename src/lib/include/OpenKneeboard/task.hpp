@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/StateMachine.hpp>
@@ -12,10 +13,10 @@
 #include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
-#include <wil/com.h>
-
 #include <combaseapi.h>
 #include <ctxtcall.h>
+
+#include <wil/com.h>
 
 #include <atomic>
 #include <coroutine>
@@ -435,18 +436,20 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
   typename TTraits::result_type mResult;
 
   void return_value(typename TTraits::result_type&& result) noexcept {
+    // clang-cl dislikes 'this' in TraceLoggingValue
+    const auto& self = *this;
     TraceLoggingWrite(
       gTraceProvider,
       "TaskPromise<>::return_value()",
       TraceLoggingKeyword(
         std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
       TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(this->mContext.mCaller.mValue, "Caller"),
+      TraceLoggingCodePointer(self.mContext.mCaller.mValue, "Caller"),
       TraceLoggingValue(
-        to_string(this->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        to_string(self.mWaiting.load(std::memory_order_relaxed)).c_str(),
         "Waiting"),
       TraceLoggingValue(
-        std::format("{}", this->mResultState.Get(std::memory_order_relaxed))
+        std::format("{}", self.mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
     using enum TaskPromiseResultState;
@@ -463,6 +466,8 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   }
 
   void return_void() noexcept {
+    // clang-cl dislikes 'this' in TraceLoggingValue
+    const auto& self = *this;
     TraceLoggingWrite(
       gTraceProvider,
       "TaskPromise<void>::return_void()",
@@ -471,10 +476,10 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
       TraceLoggingPointer(this, "Promise"),
       TraceLoggingCodePointer(this->mContext.mCaller.mValue, "Caller"),
       TraceLoggingValue(
-        to_string(this->mWaiting.load(std::memory_order_relaxed)).c_str(),
+        to_string(self.mWaiting.load(std::memory_order_relaxed)).c_str(),
         "Waiting"),
       TraceLoggingValue(
-        std::format("{}", this->mResultState.Get(std::memory_order_relaxed))
+        std::format("{}", self.mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
     using enum TaskPromiseResultState;

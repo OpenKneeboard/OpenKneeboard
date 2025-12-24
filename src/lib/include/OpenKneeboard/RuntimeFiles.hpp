@@ -2,10 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 
 namespace OpenKneeboard::RuntimeFiles {
 
@@ -35,7 +37,7 @@ namespace OpenKneeboard::RuntimeFiles {
   OPENKNEEBOARD_PUBLIC_RUNTIME_FILES \
   OPENKNEEBOARD_PRIVATE_RUNTIME_FILES
 
-#define IT(x) extern const std::filesystem::path x;
+#define IT(x) extern const std::string_view x;
 OPENKNEEBOARD_RUNTIME_FILES
 #undef IT
 

@@ -1,24 +1,4 @@
 include_guard(GLOBAL)
-find_path(DETOURS_INCLUDE_DIRS "detours/detours.h" REQUIRED)
 
-find_library(
-  DETOURS_LIBRARY_RELEASE
-  detours
-  PATH_SUFFIXES lib
-  REQUIRED
-)
-find_library(
-  DETOURS_LIBRARY_DEBUG
-  detours
-  PATH_SUFFIXES debug/lib
-  REQUIRED
-)
-
-add_library(ThirdParty::detours STATIC IMPORTED GLOBAL)
-set_target_properties(
-  ThirdParty::detours
-  PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${DETOURS_INCLUDE_DIRS}"
-  IMPORTED_LOCATION "${DETOURS_LIBRARY_RELEASE}"
-  IMPORTED_LOCATION_DEBUG "${DETOURS_LIBRARY_DEBUG}"
-)
+find_package(detours CONFIG REQUIRED GLOBAL)
+add_library(ThirdParty::detours ALIAS Microsoft::Detours)

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/tracing.hpp>
 
@@ -23,20 +24,18 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 namespace {
 
-TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
-
 class TraceLoggingRegistration {
  public:
   TraceLoggingRegistration() {
     TraceLoggingRegister(OpenKneeboard::gTraceProvider);
-    TraceLoggingWriteStart(
-      gActivity,
-      "Invocation",
+    TraceLoggingWrite(
+      OpenKneeboard::gTraceProvider,
+      "Invocation/Start",
       TraceLoggingThisExecutable(),
       TraceLoggingValue(GetCommandLineW(), "Command Line"));
   }
   ~TraceLoggingRegistration() {
-    TraceLoggingWriteStop(gActivity, "Invocation");
+    TraceLoggingWrite(OpenKneeboard::gTraceProvider, "Invocation/Stop");
     TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
   }
 
@@ -47,4 +46,11 @@ class TraceLoggingRegistration {
 };
 }// namespace
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 static TraceLoggingRegistration gTraceLoggingRegistration;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
