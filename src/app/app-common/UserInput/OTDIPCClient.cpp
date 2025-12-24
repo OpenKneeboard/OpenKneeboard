@@ -211,6 +211,22 @@ ReadFromSocket(SOCKET s, void* buf, const std::size_t bytesToRead) {
   return bytesRead;
 }
 
+auto WaitForReadFromSocket(
+  SOCKET s,
+  void* buf,
+  const std::size_t size,
+  HANDLE event) -> task<decltype(ReadFromSocket(s, buf, size))> {
+  auto ret = ReadFromSocket(s, buf, size);
+  while (!ret) {
+    if (!holds_alternative<WouldBlockSocketReadError>(ret.error())) {
+      co_return ret;
+    }
+    co_await resume_on_signal(event, {});
+    ret = ReadFromSocket(s, buf, size);
+  }
+  co_return ret;
+}
+
 void LogSocketReadError(const SocketReadError& err) {
   if (std::holds_alternative<SocketClosedSocketReadError>(err)) {
     dprint("OTD-IPC connection closed by server");
@@ -408,6 +424,7 @@ task<void> OTDIPCClient::RunSingle() {
       for (auto&& id: std::exchange(mTabletsToTimeout, {}) | std::views::keys) {
         TimeoutTablet(id);
       }
+      continue;
     }
 
     const auto headerBytes = ReadFromSocket(sock, buffer, sizeof(Header));
@@ -430,8 +447,11 @@ task<void> OTDIPCClient::RunSingle() {
       co_return;
     }
 
-    const auto bodyBytes = ReadFromSocket(
-      sock, buffer + sizeof(Header), header->size - sizeof(Header));
+    const auto bodyBytes = co_await WaitForReadFromSocket(
+      sock,
+      buffer + sizeof(Header),
+      header->size - sizeof(Header),
+      event.get());
     if (!bodyBytes) {
       LogSocketReadError(bodyBytes.error());
       co_return;
