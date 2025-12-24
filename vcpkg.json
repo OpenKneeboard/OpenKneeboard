@@ -2,6 +2,19 @@
   "builtin-baseline": "84bab45d415d22042bd0b9081aea57f362da3f35",
   "dependencies": [
     "cppwinrt",
+    "directx-dxc",
+    {
+      "name": "directxtk12",
+      "default-features": false
+    },
+    {
+      "name": "directxtk",
+      "default-features": false
+    },
+    {
+      "name": "directxtk12",
+      "default-features": false
+    },
     "magic-enum",
     "nlohmann-json",
     "wil"
@@ -10,6 +23,11 @@
     "app": {
       "description": "Build the OpenKneeboard app",
       "dependencies": [
+        {
+          "name": "directxtex",
+          "default-features": false,
+          "features": [ "dx11" ]
+        },
         "geographiclib",
         "libzip",
         "openvr",

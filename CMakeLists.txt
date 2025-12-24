@@ -62,11 +62,6 @@ option(WITH_ASAN "Build with ASAN" OFF)
 
 set(
   COMMON_COMPILE_OPTIONS
-  # Disable iterator debugging for CEF USE_SANDBOX
-  "-D_HAS_ITERATOR_DEBUGGING=0"
-  # _HAS_ITERATOR_DEBUGGING is set by CEF but deprecated,
-  # set the non-deprecated property too
-  "-D_ITERATOR_DEBUG_LEVEL=0"
   "/D_WIN32_WINNT=${WIN32_WINNT}"
   "/DNTDDI_VERSION=${NTDDI_VERSION}"
 )

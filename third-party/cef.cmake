@@ -2,23 +2,11 @@
 #
 # Copyright (C) 2025 Fred Emmott <fred@fredemmott.com>
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-# USA.
+# This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
 
 include_guard(GLOBAL)
 
-if (NOT BUILD_IS_64BIT)
+if (NOT ENABLE_APP)
     return()
 endif ()
 
@@ -63,7 +51,7 @@ set_target_properties(
     IMPORTED_IMPLIB_RELEASE "${CEF_LIB_RELEASE}"
     IMPORTED_IMPLIB_RELWITHDEBINFO "${CEF_LIB_RELEASE}"
 )
-# Intentionally not adding CEF_COMPILER_FLAGS: this adds several that are appropriate for CEF's own targets,
+# Intentionally not adding CEF_CXX_COMPILER_FLAGS: this adds several that are appropriate for CEF's own targets,
 # but not to force on for things that *use* CEF, e.g. /W4;/WX
 #
 # CEF_CXX_COMPILER_FLAGS also adds /std:c++17 which we don't want as we use c++23; re-adding it as a *lower*
@@ -73,10 +61,26 @@ target_compile_options(
     INTERFACE
     "$<IF:$<CONFIG:Debug>,${CEF_COMPILER_FLAGS_DEBUG},${CEF_COMPILER_FLAGS_RELEASE}>"
 )
+# Restore Windows/MS defaults
+#
+# Chromium itself has unacceptable performance - even for debugging - with _ITERATOR_DEBUG_LEVEL; however, that
+# doesn't really apply to the DLL wrapper
+#
+# These need to match across the *entire* build - so, keeping the defaults meant every dependency *except* CEF
+# needed to be built differently
+list(
+  REMOVE_ITEM CEF_COMPILER_DEFINES_DEBUG
+  _HAS_ITERATOR_DEBUGGING=0
+)
+# Requires the previous
+list(REMOVE_ITEM CEF_COMPILER_DEFINES CEF_USE_SANDBOX)
+list(APPEND CEF_COMPILER_DEFINES "$<$<NOT:$<CONFIG:Debug>>:CEF_USE_SANDBOX>")
+
 target_compile_definitions(
     Cef::LibCef
     INTERFACE
-    "${CEF_COMPILER_DEFINES};$<IF:$<CONFIG:Debug>,${CEF_COMPILER_DEFINES_DEBUG},${CEF_COMPILER_DEFINES_RELEASE}>"
+    "${CEF_COMPILER_DEFINES}"
+    "$<IF:$<CONFIG:Debug>,${CEF_COMPILER_DEFINES_DEBUG},${CEF_COMPILER_DEFINES_RELEASE}>"
 )
 target_compile_features(
     Cef::LibCef
@@ -109,7 +113,7 @@ target_link_libraries(
     Cef::LibCef
     INTERFACE
     libcef_dll_wrapper
-    "$<IF:$<CONFIG:Debug>,${CEF_SANDBOX_LIB_DEBUG},${CEF_SANDBOX_LIB_RELEASE}>;${CEF_SANDBOX_STANDARD_LIBS}"
+    "$<$<NOT:$<CONFIG:Debug>>:${CEF_SANDBOX_LIB_RELEASE};${CEF_SANDBOX_STANDARD_LIBS}>"
 )
 
 add_custom_target(
