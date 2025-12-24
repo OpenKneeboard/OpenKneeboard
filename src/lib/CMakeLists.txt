@@ -46,6 +46,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-shims
   OpenKneeboard-Filesystem
+  OpenKneeboard-version
   ThirdParty::CppWinRT
   ThirdParty::WIL
 )
