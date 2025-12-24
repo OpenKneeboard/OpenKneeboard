@@ -1,3 +1,4 @@
+include(ExternalProject)
 ExternalProject_Add(
   OpenXRSDKSource
   URL "https://github.com/KhronosGroup/OpenXR-SDK/archive/refs/tags/release-1.0.25.zip"
@@ -26,7 +27,7 @@ add_library(ThirdParty::OpenXR ALIAS OpenXRSDK)
 
 include(ok_add_license_file)
 ok_add_license_file(
-	"${SOURCE_DIR}/LICENSE"
-	"LICENSE-ThirdParty-OpenXR SDK.txt"
+  "${SOURCE_DIR}/LICENSE"
+  "LICENSE-ThirdParty-OpenXR SDK.txt"
   DEPENDS OpenXRSDKSource-update
 )
