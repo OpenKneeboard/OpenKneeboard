@@ -38,4 +38,10 @@ function(target_link_windows_app_sdk TARGET)
     "Microsoft.Windows.SDK.BuildTools_${WINDOWS_SDK_BUILDTOOLS_VERSION}"
     "Microsoft.Windows.ImplementationLibrary_${WINDOWS_IMPLEMENTATION_LIBRARY_VERSION}"
   )
+  # Not necessary for compilation, but doesn't hurt, and helps IDEs
+  set(WINRT_OUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/Generated Files")
+  if (NOT EXISTS "${WINRT_OUT_PATH}")
+    file(MAKE_DIRECTORY "${WINRT_OUT_PATH}")
+  endif ()
+  target_include_directories("${TARGET}" PRIVATE "${WINRT_OUT_PATH}")
 endfunction()
