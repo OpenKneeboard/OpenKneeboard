@@ -6,22 +6,13 @@
   },
   "configurePresets": [
     {
-      "name": "default",
-      "hidden": true,
+      "name": "vcpkg",
       "architecture": "x64",
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "third-party/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-openkneeboard"
       }
-    },
-    {
-      "name": "debug",
-      "inherits": "default"
-    },
-    {
-      "name": "release",
-      "inherits": "default"
     }
   ]
 }
