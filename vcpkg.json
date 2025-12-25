@@ -25,11 +25,6 @@
     "app": {
       "description": "Build the OpenKneeboard app",
       "dependencies": [
-        {
-          "name": "directxtex",
-          "default-features": false,
-          "features": [ "dx11" ]
-        },
         "geographiclib",
         "libzip",
         "openvr",

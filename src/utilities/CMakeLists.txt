@@ -7,9 +7,9 @@ function(add_helper_executable TARGET)
   cmake_parse_arguments(HELPER_ARG "${options}" "${valueArgs}" "${multiValueArgs}" ${ARGN})
 
   ok_add_executable(${TARGET} EXCLUDE_FROM_ALL RUNTIME_DEPENDENCY ${ARGN})
-  if(HELPER_ARG_32BIT_ONLY AND NOT BUILD_IS_32BIT)
+  if (HELPER_ARG_32BIT_ONLY AND NOT BUILD_IS_32BIT)
     return()
-  endif()
+  endif ()
 endfunction()
 
 function(add_utility_executable TARGET)
@@ -84,6 +84,7 @@ add_utility_executable(
   viewer-d3d11.cpp
   viewer-d3d12.cpp
   viewer-vulkan.cpp
+  dds.hpp
   icon.rc
 )
 target_link_libraries(
@@ -110,7 +111,6 @@ target_link_libraries(
   System::D3d11
   System::Dcomp
   System::Dxgi
-  ThirdParty::DirectXTex
   ThirdParty::DirectXTK
 )
 
@@ -157,7 +157,7 @@ set(
   TOGGLE_VISIBILITY
 )
 
-foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
+foreach (REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
   add_utility_executable(
     "${TARGET}"
@@ -177,7 +177,7 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
     OpenKneeboard-dprint
     OpenKneeboard-tracing
   )
-endforeach()
+endforeach ()
 
 add_helper_executable(
   OpenKneeboard-OpenXR-Helper
@@ -268,4 +268,4 @@ if (BUILD_IS_64BIT)
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/libexec/cef"
   )
-endif()
+endif ()

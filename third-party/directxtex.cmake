@@ -1,6 +1,0 @@
-include_guard(GLOBAL)
-find_package(directxtex CONFIG GLOBAL)
-if (NOT directxtex_FOUND)
-  return ()
-endif()
-add_library(ThirdParty::DirectXTex ALIAS Microsoft::DirectXTex)

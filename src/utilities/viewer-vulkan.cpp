@@ -2,9 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include "viewer-vulkan.hpp"
+
+#include "DDS.hpp"
 
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/Vulkan.hpp>
@@ -12,11 +15,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
 
-#include <DirectXTex.h>
-
-// This is from the DirectXTex library, and doesn't touch the GPU
-// or Direct3D at all
-using DXCPUImage = DirectX::Image;
+#include <fstream>
 
 using OpenKneeboard::Vulkan::check_vkresult;
 
@@ -238,11 +237,12 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   const Vulkan::CombinedCreateInfo<
     SHM::Vulkan::DeviceCreateInfo,
     Vulkan::SpriteBatch::DeviceCreateInfo>
-    deviceCreateInfo(VkDeviceCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-      .queueCreateInfoCount = 1,
-      .pQueueCreateInfos = &queueCreateInfo,
-    });
+    deviceCreateInfo(
+      VkDeviceCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &queueCreateInfo,
+      });
 
   mDevice
     = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
@@ -551,22 +551,38 @@ void VulkanRenderer::SaveTextureToFile(
     check_vkresult(mVK->InvalidateMappedMemoryRanges(mDevice.get(), 1, &range));
   }
 
-  // We're not actually using the GPU or D3D for this at all; this all
-  // CPU and system RAM operations/resources.
-  DXCPUImage cpuImage {
-    .width = dimensions.mWidth,
-    .height = dimensions.mHeight,
-    .format = dxgiFormat,
-    .pixels = mapping.get(),
+  VkImageSubresource subresource {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT};
+  VkSubresourceLayout layout {};
+  mVK->GetImageSubresourceLayout(
+    mDevice.get(), dest.get(), &subresource, &layout);
+
+  OPENKNEEBOARD_ASSERT(dxgiFormat == DXGI_FORMAT_B8G8R8A8_UNORM);
+  const DDS::Header header {
+    .dwFlags =
+      [] {
+        using enum DDS::Header::Flags;
+        return Caps | Height | Width | Pitch | PixelFormat;
+      }(),
+    .dwHeight = dimensions.mHeight,
+    .dwWidth = dimensions.mWidth,
+    .dwPitchOrLinearSize = static_cast<DWORD>(layout.rowPitch),
+    .ddspf = DDS::PixelFormat {
+      .dwFlags = [] {
+        using enum DDS::PixelFormat::Flags;
+        return AlphaPixels | RGB;
+      }(),
+      .dwRGBBitCount = 32,
+      .dwRBitMask = 0x00FF0000,
+      .dwGBitMask = 0x0000FF00,
+      .dwBBitMask = 0x000000FF,
+      .dwABitMask = 0xFF000000,
+    },
+    .dwCaps = DDS::Header::Caps::Texture,
   };
-  check_hresult(DirectX::ComputePitch(
-    dxgiFormat,
-    dimensions.mWidth,
-    dimensions.mHeight,
-    cpuImage.rowPitch,
-    cpuImage.slicePitch));
-  check_hresult(DirectX::SaveToDDSFile(
-    cpuImage, DirectX::DDS_FLAGS_NONE, path.wstring().c_str()));
+  std::ofstream f(path, std::ios::binary | std::ios::trunc);
+  f.write(DDS::Magic, std::size(DDS::Magic));
+  f.write(reinterpret_cast<const char*>(&header), sizeof(header));
+  f.write(reinterpret_cast<const char*>(mapping.get()), layout.size);
 }
 
 uint64_t VulkanRenderer::Render(
