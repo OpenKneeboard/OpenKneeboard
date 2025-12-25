@@ -116,21 +116,43 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
-  const Vulkan::CombinedCreateInfo<
+  Vulkan::CombinedCreateInfo<
     SHM::Vulkan::InstanceCreateInfo,
     Vulkan::SpriteBatch::InstanceCreateInfo>
-    instanceCreateInfo(VkInstanceCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-      .pNext = next,
-      .pApplicationInfo = &applicationInfo,
-      .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
-      .ppEnabledLayerNames = requiredLayers.data(),
-      .enabledExtensionCount = RequiredInstanceExtensions.size(),
-      .ppEnabledExtensionNames = RequiredInstanceExtensions.data(),
-    });
+    instanceCreateInfo(
+      VkInstanceCreateInfo {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = next,
+        .pApplicationInfo = &applicationInfo,
+        .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
+        .ppEnabledLayerNames = requiredLayers.data(),
+        .enabledExtensionCount = RequiredInstanceExtensions.size(),
+        .ppEnabledExtensionNames = RequiredInstanceExtensions.data(),
+      });
 
   VkInstance instance {};
-  check_vkresult(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
+  auto created = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+#ifdef DEBUG
+  if (
+    vkCreateInstance(&instanceCreateInfo, nullptr, &instance)
+    == VK_ERROR_LAYER_NOT_PRESENT) {
+    OPENKNEEBOARD_ASSERT(
+      requiredLayers.back()
+      == std::string_view {"VK_LAYER_KHRONOS_validation"});
+    instanceCreateInfo.enabledLayerCount--;
+    OPENKNEEBOARD_ASSERT(instanceCreateInfo.pNext == &debugCreateInfo);
+    instanceCreateInfo.pNext = nullptr;
+    OPENKNEEBOARD_ASSERT(
+      RequiredInstanceExtensions.back()
+      == std::string_view {VK_EXT_DEBUG_UTILS_EXTENSION_NAME});
+    instanceCreateInfo.enabledExtensionCount--;
+    dprint.Warning(
+      "Debug init of VK failed, trying again without debug stuff; VK SDK is "
+      "probably not installed");
+    created = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+  }
+#endif
+  check_vkresult(created);
 
   auto vkDestroyInstance = reinterpret_cast<PFN_vkDestroyInstance>(
     vkGetInstanceProcAddr(instance, "vkDestroyInstance"));
