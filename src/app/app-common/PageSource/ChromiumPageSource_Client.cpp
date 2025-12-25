@@ -707,6 +707,7 @@ task<JSAPIResult> ChromiumPageSource::Client::RequestPageChange(
   lock.unlock();
 
   this->SetCurrentPage(page.mPageID, page.mPixelSize);
+  co_return nlohmann::json {};
 }
 
 void ChromiumPageSource::Client::SetCurrentPage(
