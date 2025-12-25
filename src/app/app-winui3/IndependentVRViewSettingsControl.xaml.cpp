@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "IndependentVRViewSettingsControl.xaml.h"
@@ -111,7 +112,7 @@ OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::RecenterNow(
 OpenKneeboard::fire_and_forget IndependentVRViewSettingsControl::GoToBindings(
   const IInspectable&,
   const RoutedEventArgs&) {
-  co_await LaunchURI(SpecialURIs::SettingsInput);
+  co_await LaunchURI(SpecialURIs::SettingsInput());
 }
 
 float IndependentVRViewSettingsControl::KneeboardX() {
