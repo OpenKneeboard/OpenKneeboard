@@ -2,9 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
-#pragma once
-
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "ChromiumPageSource_RenderHandler.hpp"
 
 #include <OpenKneeboard/fatal.hpp>
@@ -57,7 +56,6 @@ void ChromiumPageSource::RenderHandler::OnPaint(
   if (!pageSource) {
     return;
   }
-  auto dxr = pageSource->mDXResources.get();
 
   // This path is inefficient as it should never be hit in real usage;
   // it's only here so we can test in clean VMs

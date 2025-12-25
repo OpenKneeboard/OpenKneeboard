@@ -2,12 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Events.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
 
 #include <queue>
 
@@ -160,26 +160,13 @@ void EventBase::Shutdown(HANDLE event) {
 void EventBase::InvokeOrEnqueue(
   std::function<void()> func,
   std::source_location location) {
-  EventsTraceLoggingThreadActivity activity;
-  TraceLoggingWriteStart(
-    activity,
-    "EventBase::InvokeOrEnqueue()",
-    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
-  const scope_exit tlStop(
-    [&]() { TraceLoggingWriteStop(activity, "EventBase::InvokeOrEnqueue()"); });
-
   auto& queue = ThreadData::Get();
   queue.EmitOrEnqueue({func, location});
 }
 
 EventDelay::EventDelay(std::source_location source) : mSourceLocation(source) {
   auto& queue = ThreadData::Get();
-  const auto count = ++queue.mDelayDepth;
-  TraceLoggingWriteStart(
-    mActivity,
-    "EventDelay",
-    TraceLoggingValue(count, "Depth"),
-    OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
+  ++queue.mDelayDepth;
 }
 
 EventDelay::~EventDelay() {
@@ -188,12 +175,6 @@ EventDelay::~EventDelay() {
   if (!count) {
     queue.Flush();
   }
-  TraceLoggingWriteStop(
-    mActivity,
-    "EventDelay",
-    TraceLoggingValue(queue.mDelayDepth, "Depth"),
-    OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
-  return;
 }
 
 }// namespace OpenKneeboard

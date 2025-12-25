@@ -86,7 +86,6 @@ ok_add_library(
   Tab/DCSTerrainTab.cpp
   Tab/EndlessNotebookTab.cpp
   Tab/FolderTab.cpp
-  Tab/ITab.cpp
   Tab/NavigationTab.cpp
   Tab/PluginTab.cpp
   Tab/SingleFileTab.cpp

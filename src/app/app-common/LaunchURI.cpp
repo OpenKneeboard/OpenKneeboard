@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/LaunchURI.hpp>
 
 #include <shims/winrt/base.h>
@@ -14,23 +15,29 @@
 
 #include <unordered_map>
 
-static std::unordered_map<std::wstring, std::function<void(std::string_view)>>
-  gHandlers;
+namespace {
+
+auto& Handlers() {
+  static std::unordered_map<std::wstring, std::function<void(std::string_view)>>
+    value {};
+  return value;
+}
+}// namespace
 
 namespace OpenKneeboard {
 
 void RegisterURIHandler(
   std::string_view schemeName,
   std::function<void(std::string_view)> handler) {
-  gHandlers.insert_or_assign(
+  Handlers().insert_or_assign(
     std::wstring(winrt::to_hstring(schemeName)), handler);
 }
 
 task<void> LaunchURI(std::string_view uriStr) {
   auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
   const std::wstring scheme(uri.SchemeName());
-  if (gHandlers.contains(scheme)) {
-    gHandlers.at(scheme)(uriStr);
+  if (Handlers().contains(scheme)) {
+    Handlers().at(scheme)(uriStr);
     co_return;
   }
 
@@ -44,3 +51,11 @@ task<void> LaunchURI(std::string_view uriStr) {
 }
 
 }// namespace OpenKneeboard
+
+namespace OpenKneeboard::SpecialURIs {
+
+std::string_view SettingsInput() {
+  static auto value = std::format("{}:///{}", Scheme, Paths::SettingsInput);
+  return value;
+}
+}// namespace OpenKneeboard::SpecialURIs

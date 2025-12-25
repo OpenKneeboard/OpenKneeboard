@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/task.hpp>
@@ -24,8 +25,7 @@ constexpr std::string_view SettingsInput {"Settings/Input"};
 constexpr std::string_view SettingsTabs {"Settings/Tabs"};
 }// namespace Paths
 
-const std::string SettingsInput
-  = std::format("{}:///{}", Scheme, Paths::SettingsInput);
+std::string_view SettingsInput();
 
 };// namespace SpecialURIs
 

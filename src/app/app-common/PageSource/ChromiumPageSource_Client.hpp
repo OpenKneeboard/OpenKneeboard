@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
@@ -13,7 +14,7 @@ namespace OpenKneeboard {
 
 struct ExperimentalFeature {
   std::string mName;
-  uint64_t mVersion;
+  uint64_t mVersion {};
 
   bool operator==(const ExperimentalFeature&) const noexcept = default;
 };
@@ -23,13 +24,21 @@ class ChromiumPageSource::Client final : public CefClient,
                                          public CefDisplayHandler,
                                          public CefRequestHandler,
                                          public CefResourceRequestHandler,
-                                         public CefDevToolsMessageObserver {
+                                         public CefDevToolsMessageObserver
+
+{
  public:
   using JSAPIResult = std::expected<nlohmann::json, std::string>;
   enum class CursorEventsMode {
     MouseEmulation,
     DoodlesOnly,
   };
+  friend void to_json(nlohmann::json& j, const CursorEventsMode m) {
+    j = magic_enum::enum_name(m);
+  }
+  friend void from_json(const nlohmann::json& j, CursorEventsMode& m) {
+    m = magic_enum::enum_cast<CursorEventsMode>(j.get<std::string>()).value();
+  }
 
   Client() = delete;
   Client(
@@ -46,6 +55,11 @@ class ChromiumPageSource::Client final : public CefClient,
 
   CefRefPtr<RenderHandler> GetRenderHandlerSubclass();
 
+  void OnRenderProcessTerminated(
+    CefRefPtr<CefBrowser> browser,
+    TerminationStatus status,
+    int error_code,
+    const CefString& error_string) override;
   void OnDevToolsAgentDetached(CefRefPtr<CefBrowser>) override;
 
   CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
@@ -133,7 +147,7 @@ class ChromiumPageSource::Client final : public CefClient,
     CefProcessId process,
     int callID,
     JSAPIResult result);
-  void EnableJSAPI(CefString name);
+  void EnableJSAPI(std::string_view name);
 
   task<JSAPIResult> SetPreferredPixelSize(uint32_t width, uint32_t height);
   task<JSAPIResult> EnableExperimentalFeatures(

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "UniqueID.hpp"
@@ -13,7 +14,6 @@
 #include <OpenKneeboard/bindline.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/task.hpp>
-#include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
 
 #include <shims/winrt/base.h>
@@ -33,10 +33,6 @@ namespace OpenKneeboard {
 
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 class EventHookToken final : public UniqueIDBase<EventHookToken> {};
-
-using EventsTraceLoggingThreadActivity = TraceLoggingThreadActivity<
-  gTraceProvider,
-  std::to_underlying(TraceLoggingEventKeywords::Events)>;
 
 template <class... Args>
 class Event;
@@ -90,8 +86,9 @@ class EventHandler final {
     return static_cast<bool>(mImpl);
   }
 
-  template <event_handler_invocable<Args...> T>
+  template <class T>
     requires(!std::same_as<self_t, std::decay_t<T>>)
+    && event_handler_invocable<T, Args...>
   constexpr EventHandler(T&& fn) : mImpl(drop_extra_back(std::forward<T>(fn))) {
   }
 
@@ -173,7 +170,6 @@ class EventDelay final {
  private:
   ThreadGuard mThreadGuard;
   std::source_location mSourceLocation;
-  EventsTraceLoggingThreadActivity mActivity;
 };
 
 class EventConnectionBase {
@@ -364,21 +360,12 @@ void Event<Args...>::RemoveHandler(EventHandlerToken token) {
 
 template <class... Args>
 void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
-  EventsTraceLoggingThreadActivity activity;
-  TraceLoggingWriteStart(
-    activity,
-    "Event::Emit()",
-    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
   //  Copy in case one is erased while we're running
   auto receivers = mReceivers;
   auto hooks = mHooks;
 
   for (const auto& [_, hook]: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
-      TraceLoggingWriteStop(
-        activity,
-        "Event::Emit()",
-        TraceLoggingValue("Stopped by hook", "Result"));
       return;
     }
   }
@@ -392,8 +379,6 @@ void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
       }
     },
     location);
-  TraceLoggingWriteStop(
-    activity, "Event::Emit()", TraceLoggingValue("Done", "Result"));
 }
 
 template <class... Args>

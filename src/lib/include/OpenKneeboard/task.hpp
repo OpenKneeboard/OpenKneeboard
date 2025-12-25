@@ -16,7 +16,14 @@
 #include <combaseapi.h>
 #include <ctxtcall.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 #include <wil/com.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <atomic>
 #include <coroutine>
@@ -483,7 +490,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
           .c_str(),
         "ResultState"));
     using enum TaskPromiseResultState;
-    this->mResultState.Transition<NoResult, HaveVoidResult>();
+    this->mResultState.template Transition<NoResult, HaveVoidResult>();
   }
 };
 

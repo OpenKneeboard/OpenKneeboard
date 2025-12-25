@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -10,7 +11,7 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/handles.hpp>
 
-#include <Windows.h>
+#include <felly/guarded_data.hpp>
 
 #include <array>
 #include <fstream>
@@ -100,17 +101,17 @@ std::filesystem::path DCSExtractedMission::GetExtractedPath() const {
   return mTempDir;
 }
 
-std::shared_ptr<DCSExtractedMission> DCSExtractedMission::sCache;
-std::mutex DCSExtractedMission::sCacheMutex;
-
 std::shared_ptr<DCSExtractedMission> DCSExtractedMission::Get(
   const std::filesystem::path& zipPath) {
-  std::unique_lock lock(sCacheMutex);
-  if (sCache && sCache->GetZipPath() == zipPath) {
-    return sCache;
+  static felly::guarded_data<std::shared_ptr<DCSExtractedMission>> sCache;
+  auto cache = sCache.lock();
+
+  if (*cache && cache.get()->GetZipPath() == zipPath) {
+    return *cache;
   }
-  sCache.reset(new DCSExtractedMission(zipPath));
-  return sCache;
+
+  cache->reset(new DCSExtractedMission(zipPath));
+  return *cache;
 }
 
 }// namespace OpenKneeboard

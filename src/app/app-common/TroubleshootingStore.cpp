@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/Settings.hpp>
@@ -18,13 +19,16 @@
 
 namespace OpenKneeboard {
 
-static std::weak_ptr<TroubleshootingStore> gStore;
+static auto& Store() {
+  static std::weak_ptr<TroubleshootingStore> value;
+  return value;
+}
 
 std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
-  auto shared = gStore.lock();
+  auto shared = Store().lock();
   if (!shared) {
     shared.reset(new TroubleshootingStore());
-    gStore = shared;
+    Store() = shared;
 
     dprint.SetHistoryProvider([weak = std::weak_ptr {shared}]() {
       return weak.lock()->GetDPrintDebugLogAsString();
@@ -203,8 +207,9 @@ std::string TroubleshootingStore::GetAPIEventsDebugLogAsString() const {
            [](const auto& acc, const auto& it) {
              return std::format("{}\n\n{}", acc, it);
            })
-    .value_or(std::format(
-      "No events as of {}", ReadableTime(std::chrono::system_clock::now())));
+    .value_or(
+      std::format(
+        "No events as of {}", ReadableTime(std::chrono::system_clock::now())));
 }
 
 TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {

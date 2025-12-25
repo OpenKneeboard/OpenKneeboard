@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "ChromiumPageSource_Client.hpp"
 
 #include "ChromiumPageSource_RenderHandler.hpp"
@@ -19,12 +20,42 @@
 #include <include/cef_parser.h>
 #include <include/wrapper/cef_stream_resource_handler.h>
 
-template <>
-struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
-  : std::formatter<std::string, char> {
-  auto format(
-    const OpenKneeboard::ExperimentalFeature& feature,
-    auto& formatContext) const {
+namespace OpenKneeboard {
+namespace {
+struct ExperimentalFeatureView {
+  std::string_view mName;
+  uint64_t mVersion {};
+
+  ExperimentalFeatureView() = delete;
+  template <std::size_t N>
+  constexpr ExperimentalFeatureView(const char (&name)[N], uint64_t version)
+    : mName(name), mVersion(version) {
+  }
+
+  ExperimentalFeatureView(const ExperimentalFeature& f)
+    : mName(f.mName), mVersion(f.mVersion) {
+  }
+
+  constexpr bool operator==(const ExperimentalFeatureView&) const noexcept
+    = default;
+};
+void to_json(nlohmann::json& j, const ExperimentalFeatureView& v) {
+  j = nlohmann::json::object({
+    {"name", v.mName},
+    {"version", v.mVersion},
+  });
+}
+}// namespace
+constexpr bool operator==(
+  const ExperimentalFeatureView& a,
+  const ExperimentalFeature& b) {
+  return a.mVersion == b.mVersion && a.mName == b.mName;
+}
+}// namespace OpenKneeboard
+
+template <std::convertible_to<OpenKneeboard::ExperimentalFeatureView> T>
+struct std::formatter<T, char> : std::formatter<std::string, char> {
+  auto format(const T& feature, auto& formatContext) const {
     return std::formatter<std::string, char>::format(
       std::format("`{}` version `{}`", feature.mName, feature.mVersion),
       formatContext);
@@ -34,8 +65,6 @@ struct std::formatter<OpenKneeboard::ExperimentalFeature, char>
 namespace OpenKneeboard {
 
 OPENKNEEBOARD_DEFINE_JSON(ExperimentalFeature, mName, mVersion);
-FREDEMMOTT_MAGIC_JSON_SERIALIZE_ENUM(
-  ChromiumPageSource::Client::CursorEventsMode);
 
 void to_json(nlohmann::json& j, const ChromiumPageSource::APIPage& v) {
   j.update({
@@ -71,7 +100,7 @@ auto jsapi_error(std::format_string<Args...> fmt, Args&&... args) {
   return std::unexpected {std::format(fmt, std::forward<Args>(args)...)};
 }
 
-auto jsapi_missing_feature_error(const ExperimentalFeature& feature) {
+auto jsapi_missing_feature_error(const ExperimentalFeatureView& feature) {
   return jsapi_error("Missing required experimental feature:{}", feature);
 }
 
@@ -117,24 +146,27 @@ task<JSAPIResult> JSInvoke(auto self, nlohmann::json args) {
   co_return co_await std::apply(std::bind_front(TMethod, self), *argsTuple);
 }
 
-const ExperimentalFeature DoodlesOnlyFeature {"DoodlesOnly", 2024071802};
+constexpr ExperimentalFeatureView DoodlesOnlyFeature {
+  "DoodlesOnly",
+  2024071802,
+};
 
-const ExperimentalFeature SetCursorEventsModeFeature {
+constexpr ExperimentalFeatureView SetCursorEventsModeFeature {
   "SetCursorEventsMode",
   2024071801};
 
-const ExperimentalFeature PageBasedContentFeature {
+constexpr ExperimentalFeatureView PageBasedContentFeature {
   "PageBasedContent",
   2024072001};
-const ExperimentalFeature PageBasedContentWithRequestPageChangeFeature {
+constexpr ExperimentalFeatureView PageBasedContentWithRequestPageChangeFeature {
   "PageBasedContent",
   2024073001};
 
-const ExperimentalFeature GraphicsTabletInfoFeature {
+constexpr ExperimentalFeatureView GraphicsTabletInfoFeature {
   "GraphicsTabletInfo",
   2025012901};
 
-const std::array SupportedExperimentalFeatures {
+constexpr std::array SupportedExperimentalFeatures {
   DoodlesOnlyFeature,
   SetCursorEventsModeFeature,
   PageBasedContentFeature,
@@ -148,7 +180,7 @@ ChromiumPageSource::Client::Client(
   std::shared_ptr<ChromiumPageSource> pageSource,
   std::optional<KneeboardViewID> viewID)
   : mPageSource(pageSource), mViewID(viewID) {
-  mRenderHandler = {new RenderHandler(pageSource)};
+  mRenderHandler = new RenderHandler(pageSource);
   mShutdownEvent.reset(CreateEventW(nullptr, FALSE, FALSE, nullptr));
 }
 
@@ -185,6 +217,22 @@ CefRefPtr<CefRenderHandler> ChromiumPageSource::Client::GetRenderHandler() {
 CefRefPtr<ChromiumPageSource::RenderHandler>
 ChromiumPageSource::Client::GetRenderHandlerSubclass() {
   return mRenderHandler;
+}
+void ChromiumPageSource::Client::OnRenderProcessTerminated(
+  CefRefPtr<CefBrowser> browser,
+  TerminationStatus status,
+  int error_code,
+  const CefString& error_string) {
+  const auto err = error_string.c_str();
+  dprint.Warning(
+    L"Status: {}; ec: {}; CEF renderer error: {}",
+    std::to_underlying(status),
+    error_code,
+    reinterpret_cast<const wchar_t*>(err));
+  std::ignore = std::tuple {browser, status, error_code, err};
+  __debugbreak();
+  CefRequestHandler::OnRenderProcessTerminated(
+    browser, status, error_code, error_string);
 }
 
 CefRefPtr<CefDisplayHandler> ChromiumPageSource::Client::GetDisplayHandler() {
@@ -359,10 +407,10 @@ void ChromiumPageSource::Client::SendJSAsyncResult(
   frame->SendProcessMessage(process, message);
 }
 
-void ChromiumPageSource::Client::EnableJSAPI(CefString name) {
+void ChromiumPageSource::Client::EnableJSAPI(const std::string_view name) {
   auto message = CefProcessMessage::Create("okbEvent/enableAPI");
   auto args = message->GetArgumentList();
-  args->SetString(0, name);
+  args->SetString(0, CefString(name.data(), name.size()));
   mBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
 }
 
@@ -502,10 +550,11 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
   std::vector<ExperimentalFeature> toEnable) {
   std::vector<ExperimentalFeature> enabledThisCall;
 
-  const auto EnableFeature = [&, this](const ExperimentalFeature& feature) {
+  const auto EnableFeature = [&, this](const ExperimentalFeatureView feature) {
     dprint.Warning("JS enabled experimental feature {}", feature);
-    mEnabledExperimentalFeatures.push_back(feature);
-    enabledThisCall.push_back(feature);
+    const std::string name {feature.mName};
+    mEnabledExperimentalFeatures.emplace_back(name, feature.mVersion);
+    enabledThisCall.emplace_back(name, feature.mVersion);
   };
 
   for (auto&& feature: toEnable) {
@@ -703,7 +752,6 @@ task<JSAPIResult> ChromiumPageSource::Client::RequestPageChange(
   if (clientIt == state->mClients.end()) {
     co_return jsapi_error("Couldn't find kneeboardViewID for current client");
   }
-  const auto viewID = clientIt->first;
   lock.unlock();
 
   this->SetCurrentPage(page.mPageID, page.mPixelSize);

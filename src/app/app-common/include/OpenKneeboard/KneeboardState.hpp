@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/APIEvent.hpp>
@@ -216,7 +217,7 @@ class KneeboardState final
   void OnGameChangedEvent(
     DWORD processID,
     const std::shared_ptr<GameInstance>& game);
-  [[nodiscard]] void OnAPIEvent(APIEvent) noexcept;
+  void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
 
   void BeforeFrame();

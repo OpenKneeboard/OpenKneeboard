@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/DCSGrid.hpp>
 
@@ -10,18 +11,21 @@
 
 #include <GeographicLib/UTMUPS.hpp>
 
+namespace {
+const auto& UTM() {
+  static auto value = GeographicLib::TransverseMercator::UTM();
+  return value;
+}
+}// namespace
 namespace OpenKneeboard {
 
 static_assert(std::is_same_v<GeographicLib::Math::real, DCSWorld::GeoReal>);
-
-GeographicLib::TransverseMercator DCSGrid::sModel
-  = GeographicLib::TransverseMercator::UTM();
 
 DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
   const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
   mZoneMeridian = (6.0 * zone - 183);
 
-  sModel.Forward(mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
+  UTM().Forward(mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
 
   dprint(
     "DCS (0, 0) is in UTM zone {}, with meridian at {} and a UTM offset of "
@@ -40,7 +44,7 @@ std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> DCSGrid::LatLongFromXY(
   const auto y = mOffsetY + dcsX;
   DCSWorld::GeoReal retLat {}, retLong {};
 
-  sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
+  UTM().Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};
 }
 

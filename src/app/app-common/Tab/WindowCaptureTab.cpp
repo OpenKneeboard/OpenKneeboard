@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/WindowCaptureTab.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -21,8 +22,12 @@ using MatchSpecification = WindowCaptureTab::MatchSpecification;
 using TitleMatchKind = MatchSpecification::TitleMatchKind;
 
 namespace {
-std::unordered_map<WindowCaptureTab*, std::weak_ptr<WindowCaptureTab>>
-  gInstances;
+
+auto& Instances() {
+  static std::unordered_map<WindowCaptureTab*, std::weak_ptr<WindowCaptureTab>>
+    value;
+  return value;
+}
 
 struct WinEventHook {
  public:
@@ -48,7 +53,8 @@ struct WinEventHook {
     DWORD dwmsEventTime);
 
   unique_hwineventhook mHook;
-} gHook;
+};
+
 }// namespace
 
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
@@ -79,7 +85,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
 
   auto ret = std::shared_ptr<WindowCaptureTab>(
     new WindowCaptureTab(dxr, kbs, persistentID, title, settings));
-  gInstances.emplace(ret.get(), ret);
+  Instances().emplace(ret.get(), ret);
   ret->TryToStartCapture();
   return ret;
 }
@@ -106,6 +112,7 @@ WindowCaptureTab::WindowCaptureTab(
     mSpec(settings.mSpec),
     mSendInput(settings.mSendInput),
     mCaptureOptions(settings.mCaptureOptions) {
+  static WinEventHook observeNewWindows;
 }
 
 bool WindowCaptureTab::WindowMatches(HWND hwnd) {
@@ -257,7 +264,7 @@ task<void> WindowCaptureTab::DisposeAsync() noexcept {
   if (!disposing) {
     co_return;
   }
-  gInstances.erase(this);
+  Instances().erase(this);
   if (mDelegate) {
     // Should be handled by PageSourceWithDelegates, but HWNDPageSource
     // safely handles a double-dispose - so, just in case the
@@ -558,7 +565,7 @@ void WinEventHook::HookProc(
 
   // Copy in case anything enters the windows event loop recursively and
   // modifies the container while iterating
-  const auto instances = gInstances;
+  const auto instances = Instances();
   for (auto&& weak: instances | std::views::values) {
     if (auto instance = weak.lock()) [[likely]] {
       instance->OnNewWindow(hwnd);
