@@ -19,24 +19,16 @@ namespace OpenKneeboard::CEF {
 
 namespace {
 
-const auto& StaticJS() {
-  static JSSources sources {};
-  return sources;
-}
-
 CefString GetOpenKneeboardNativeJS() {
-  const auto raw = StaticJS().OpenKneeboardNativeAsStringView();
-  return CefString {raw.data(), raw.size()};
+  return JSSources::Get().OpenKneeboardNative<CefString>();
 }
 
 CefString GetOpenKneeboardAPIJS() {
-  const auto raw = StaticJS().OpenKneeboardAPIAsStringView();
-  return CefString {raw.data(), raw.size()};
+  return JSSources::Get().OpenKneeboardAPI<CefString>();
 }
 
 CefString GetSimHubJS() {
-  const auto raw = StaticJS().SimHubAsStringView();
-  return CefString {raw.data(), raw.size()};
+  return JSSources::Get().SimHub<CefString>();
 }
 
 }// namespace
