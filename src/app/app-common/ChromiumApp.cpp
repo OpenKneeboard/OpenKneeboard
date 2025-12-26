@@ -16,6 +16,10 @@
 #include <include/cef_base.h>
 #include <include/cef_version.h>
 
+#ifdef CEF_USE_SANDBOX
+#include <include/cef_sandbox_win.h>
+#endif
+
 namespace OpenKneeboard {
 
 class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
