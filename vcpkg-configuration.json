@@ -4,5 +4,16 @@
   ],
   "overlay-ports": [
     "third-party/vcpkg-overlays/ports"
+  ],
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/fredemmott/vcpkg-registry",
+      "reference": "master",
+      "baseline": "cf71d7c7de0125a89e5ee58bac92fe8875deb474",
+      "packages": [
+        "compressed-embed"
+      ]
+    }
   ]
 }

@@ -47,6 +47,11 @@ ok_add_executable(
 )
 
 include(winui3-boilerplate.cmake)
+target_include_directories(
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  "${CMAKE_CURRENT_BINARY_DIR}/Generated Files"
+)
 
 set_property(
   SOURCE App.xaml
@@ -59,11 +64,12 @@ set_property(
   PROPERTY VS_SETTINGS
   "DependentUpon=InputDeviceSettingsPage.idl"
 )
-
 target_link_libraries(
   OpenKneeboard-App-WinUI3
   PRIVATE
   OpenKneeboard-App-Common
+  OpenKneeboard-ChromiumApp
+  OpenKneeboard-ChromiumWorker
   OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND
@@ -86,7 +92,10 @@ target_link_libraries(
 target_link_options(
   OpenKneeboard-App-WinUI3
   PRIVATE
+  # Needs library path mutating first
   "/DELAYLOAD:libcef.dll"
+  # Interfere with CEF sandbox
+  "/DELAYLOAD:Windows.Data.Pdf.dll"
 )
 
 target_include_directories(
@@ -111,7 +120,8 @@ target_precompile_headers(
 target_compile_definitions(
   OpenKneeboard-App-WinUI3
   PRIVATE
-  DISABLE_XAML_GENERATED_MAIN=1
+  DISABLE_XAML_GENERATED_MAIN
+  MICROSOFT_WINDOWSAPPSDK_UNDOCKEDREGFREEWINRT_AUTO_INITIALIZE_LOADLIBRARY
 )
 
 target_compile_options(
@@ -124,7 +134,8 @@ target_compile_options(
   "/FI${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenKneeboard-App-WinUI3.dir/$<CONFIG>/cmake_pch.hxx"
 )
 
-set_property(
-  TARGET OpenKneeboard-App-WinUI3
-  PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
+set_target_properties(
+  OpenKneeboard-App-WinUI3
+  PROPERTIES
+  OUTPUT_NAME "OpenKneeboardApp"
 )

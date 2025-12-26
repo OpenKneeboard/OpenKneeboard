@@ -15,22 +15,12 @@ namespace OpenKneeboard {
 class ChromiumApp final {
  public:
   ChromiumApp() = delete;
-  ChromiumApp(HINSTANCE);
+  explicit ChromiumApp(HINSTANCE instance, void* sandbox);
   ~ChromiumApp();
 
-  [[nodiscard]]
-  int ExecuteSubprocess();
-
-  void InitializeBrowserProcess();
+  static void* GetSandbox();
 
  private:
-  enum class State {
-    Unused,
-    Subprocess,
-    SubprocessComplete,
-    BrowserProcess,
-  };
-  State mState {State::Unused};
   // I usually dislike PImpl, but in this case, I don't want to expose
   // generically-named macros to things using this class, such as
   // IMPLEMENT_REFCOUNTING and DISALLOW_COPY_AND_ASSIGN

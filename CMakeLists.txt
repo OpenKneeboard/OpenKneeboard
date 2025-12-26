@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25..4.0 FATAL_ERROR)
 
 # `GIT_SUBMODULES ""` means no submodules
 cmake_policy(SET CMP0097 NEW)
+# allow add_custom_command CODEGEN
+cmake_policy(SET CMP0171 NEW)
 
 # cmake --build . --preset appears to require CMakePresets exists in the build directory,
 # not the source directory, as of CMake 4.0 (2025-08-21)
@@ -67,7 +69,7 @@ set(
 )
 set(COMMON_LINK_OPTIONS)
 
-if(WITH_ASAN)
+if (WITH_ASAN)
   list(
     APPEND COMMON_COMPILE_OPTIONS
     "/fsanitize=address"
@@ -92,7 +94,7 @@ if(WITH_ASAN)
     "/MT$<$<CONFIG:Debug>:d>"
   )
 
-else() # (not) WITH_ASAN
+else () # (not) WITH_ASAN
   # We're going to use the 'Hybrid CRT' approach, which is the combination of the
   # UCRT and the static C++ Runtime
   #
@@ -112,17 +114,17 @@ else() # (not) WITH_ASAN
     "/DEFAULTLIB:ucrt$<$<CONFIG:Debug>:d>.lib" # include the dynamic UCRT
     "/NODEFAULTLIB:libucrt$<$<CONFIG:Debug>:d>.lib" # remove the static UCRT
   )
-endif()
+endif ()
 
 add_link_options("${COMMON_LINK_OPTIONS}")
 
-if(DEFINED ENV{GITHUB_RUN_NUMBER})
+if (DEFINED ENV{GITHUB_RUN_NUMBER})
   set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
-else()
+else ()
   # Make it so that local builds are easily identifiable, and don't intefere with
   # upgrade logic
   set(VERSION_BUILD 0)
-endif()
+endif ()
 
 set(CMAKE_CONFIGURATION_TYPES Debug RelWithDebInfo)
 
@@ -132,11 +134,11 @@ include(smol_binaries)
 
 set(BUILD_OUT_PREFIX "${CMAKE_BINARY_DIR}/out" CACHE PATH "Location for final build artifacts")
 get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(GENERATOR_IS_MULTI_CONFIG)
+if (GENERATOR_IS_MULTI_CONFIG)
   set(BUILD_OUT_ROOT "${BUILD_OUT_PREFIX}/$<CONFIG>")
-else()
+else ()
   set(BUILD_OUT_ROOT "${BUILD_OUT_PREFIX}/${CMAKE_BUILD_TYPE}")
-endif()
+endif ()
 set(BUILD_OUT_BINDIR "${BUILD_OUT_ROOT}/bin")
 set(BUILD_OUT_PDBDIR "${BUILD_OUT_ROOT}/pdb")
 
@@ -158,45 +160,45 @@ message(STATUS "CMake Generator: ${CMAKE_GENERATOR}")
 STRING(REGEX MATCH "^Visual Studio" GENERATOR_IS_VS "${CMAKE_GENERATOR}")
 if (NOT GENERATOR_IS_VS)
   message(FATAL_ERROR "The CMake generator '${CMAKE_GENERATOR}' is not supported; use the Visual Studio generator instead.")
-endif()
+endif ()
 
 # Handy for CI
 file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${CMAKE_PROJECT_VERSION}")
 
-if(MSVC AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if (MSVC AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CLANG_CL 1 CACHE BOOL "Whether we're using clang-cl")
   add_compile_definitions("CLANG_CL=1")
-else()
+else ()
   set(CLANG_CL 0)
-endif()
+endif ()
 
 # As of 2024-07-24:
 # - CMake automatically converts this to `/std:c++latest` for MSVC
 # - clang-cl doesn't treat that as equivalent or `c++23`
-if(CLANG_CL)
+if (CLANG_CL)
   add_compile_options(
     "$<$<COMPILE_LANGUAGE:CXX>:/clang:--std=c++23>"
     "$<$<COMPILE_LANGUAGE:CXX>:-Wno-unused-command-line-argument>"
   )
-endif()
+endif ()
 
 # MSBuild ignores CMAKE_CXX_COMPILER and friends
 set(MSBUILD_LLVM_ROOT "" CACHE PATH "Change LLVM binary used by MSBuild; you must also set MSBUILD_LLVM_VERSION")
 set(MSBUILD_LLVM_VERSION "" CACHE STRING "LLVM version used by MSBuild; you must also set MSBUILD_LLVM_ROOT")
-if(MSBUILD_LLVM_ROOT)
+if (MSBUILD_LLVM_ROOT)
   list(
     APPEND CMAKE_VS_GLOBALS
     "LLVMInstallDir=${MSBUILD_LLVM_ROOT}"
     "LLVMToolsVersion=${MSBUILD_LLVM_VERSION}"
   )
-endif() 
+endif ()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
 message(STATUS "MSVC: ${MSVC}")
 message(STATUS "CLANG_CL: ${CLANG_CL}")
 
-if(MSVC AND NOT CLANG_CL)
+if (MSVC AND NOT CLANG_CL)
   list(
     APPEND COMMON_COMPILE_OPTIONS
 
@@ -206,7 +208,7 @@ if(MSVC AND NOT CLANG_CL)
     # Include content and marker in error messages
     "/diagnostics:caret"
   )
-endif()
+endif ()
 
 add_compile_options(${COMMON_COMPILE_OPTIONS})
 
@@ -218,21 +220,23 @@ configure_file(
   COPYONLY
 )
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+if (CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(BUILD_BITNESS 32 CACHE INTERNAL "")
   set(BUILD_IS_32BIT ON CACHE INTERNAL "")
-else()
+else ()
   set(BUILD_BITNESS 64 CACHE INTERNAL "")
   set(BUILD_IS_64BIT ON CACHE INTERNAL "")
-endif()
+endif ()
 
 option(ENABLE_APP "Build the main app, not just the injectables" ON)
 
 add_subdirectory("cmake")
 
-add_subdirectory("scripts")
 add_subdirectory("third-party")
-add_subdirectory("data")
+if (ENABLE_APP)
+  add_subdirectory("scripts")
+  add_subdirectory("data")
+endif ()
 add_subdirectory("src")
 
 # MUST be set in this CMakeLists.txt to work, not a subfolder

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "App.xaml.h"
@@ -13,6 +14,7 @@
 
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/ChromiumApp.hpp>
+#include <OpenKneeboard/ChromiumWorker.hpp>
 #include <OpenKneeboard/DebugPrivileges.hpp>
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -47,8 +49,11 @@
 #include <set>
 
 #include <Dbghelp.h>
+#include <MddBootstrap.h>
 #include <signal.h>
 #include <zip.h>
+
+#include <WindowsAppSDK-VersionInfo.h>
 
 using namespace winrt;
 using namespace winrt::Windows::Foundation;
@@ -58,10 +63,6 @@ using namespace winrt::Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
 using namespace OpenKneeboard;
-
-#include <MddBootstrap.h>
-
-#include <WindowsAppSDK-VersionInfo.h>
 
 namespace OpenKneeboard {
 /* PS > [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.App")
@@ -604,13 +605,11 @@ static void OptOutOfPowerSaving() {
   dprint("✅ opted out of power saving event timers");
 }
 
-static auto gCrashHandler = []() {
-  OpenKneeboard::divert_process_failure_to_fatal();
-  struct placeholder_t {};
-  return placeholder_t {};
-}();
-
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
+[[nodiscard]]
+static int AppMain(
+  const HINSTANCE instance,
+  [[maybe_unused]] int showCommand,
+  void* cefSandbox) {
   TraceLoggingRegister(gTraceProvider);
   const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
@@ -633,7 +632,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 1;
   }
 
-  OpenKneeboard::divert_process_failure_to_fatal();
   const auto fullDumps
     = wil::reg::try_get_value_dword(
         HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"CreateFullDumps")
@@ -759,7 +757,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   OptOutOfPowerSaving();
 
-  ChromiumApp cefApp;
+  const ChromiumApp cefApp {instance, cefSandbox};
 
   DebugPrivileges privileges;
 
@@ -782,4 +780,25 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   gTroubleshootingStore = {};
 
   return 0;
+}
+
+int __stdcall
+wWinMain(const HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
+  OutputDebugStringW(
+    std::format(L"OKB process: {}", GetCommandLineW()).c_str());
+  {
+    const auto thisExe = wil::GetModuleFileNameW();
+    const auto cefPath
+      = std::filesystem::path {thisExe.get()}.parent_path().parent_path()
+      / "libexec" / "cef";
+    SetDllDirectoryW(cefPath.c_str());
+  }
+
+  const auto cefSandbox = ChromiumApp::GetSandbox();
+  if (const auto exitCode = ChromiumWorkerMain(instance, cefSandbox);
+      exitCode >= 0) {
+    return exitCode;
+  }
+
+  return AppMain(instance, showCommand, cefSandbox);
 }

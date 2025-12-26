@@ -27,6 +27,7 @@ set_target_properties(
   VS_GLOBAL_WindowsAppSDKSelfContained true
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI true
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp true
+  VS_GLOBAL_WindowsAppSdkUndockedRegFreeWinRTInitialize false
 )
 
 # Set source file dependencies properly for Xaml and non-Xaml IDL
@@ -36,26 +37,26 @@ set_target_properties(
 # for non-Xaml IDL files, e.g. value converters
 get_target_property(SOURCES OpenKneeboard-App-WinUI3 SOURCES)
 
-foreach(SOURCE ${SOURCES})
+foreach (SOURCE ${SOURCES})
   cmake_path(GET SOURCE EXTENSION LAST_ONLY EXTENSION)
 
-  if(NOT "${EXTENSION}" STREQUAL ".idl")
+  if (NOT "${EXTENSION}" STREQUAL ".idl")
     continue()
-  endif()
+  endif ()
 
   set(IDL_SOURCE "${SOURCE}")
 
   cmake_path(REMOVE_EXTENSION SOURCE LAST_ONLY OUTPUT_VARIABLE BASENAME)
   set(XAML_SOURCE "${BASENAME}.xaml")
 
-  if("${XAML_SOURCE}" IN_LIST SOURCES)
+  if ("${XAML_SOURCE}" IN_LIST SOURCES)
     set_property(
       SOURCE "${IDL_SOURCE}"
       PROPERTY VS_SETTINGS
       "SubType=Code"
       "DependentUpon=${XAML_SOURCE}"
     )
-  else()
+  else ()
     set_property(
       SOURCE "${IDL_SOURCE}"
       PROPERTY VS_SETTINGS
@@ -71,5 +72,12 @@ foreach(SOURCE ${SOURCES})
       PROPERTY VS_SETTINGS
       "DependentUpon=${IDL_SOURCE}"
     )
-  endif()
-endforeach()
+  endif ()
+endforeach ()
+
+set(MODULE_G_CPP "${CMAKE_CURRENT_BINARY_DIR}/Generated Files/module.g.cpp")
+target_sources(OpenKneeboard-App-WinUI3 PRIVATE "${MODULE_G_CPP}")
+set_property(
+  SOURCE "${MODULE_G_CPP}"
+  PROPERTY GENERATED ON
+)

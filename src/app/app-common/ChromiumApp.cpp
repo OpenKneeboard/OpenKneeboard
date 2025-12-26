@@ -2,7 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+#include "../../../cmake-build-release/_cef/cef_binary_132.3.1+g144febe+chromium-132.0.6834.83_windows64/include/cef_sandbox_win.h"
+
 #include <OpenKneeboard/ChromiumApp.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -13,7 +16,6 @@
 
 #include <include/cef_app.h>
 #include <include/cef_base.h>
-#include <include/cef_sandbox_win.h>
 #include <include/cef_version.h>
 
 namespace OpenKneeboard {
@@ -58,33 +60,16 @@ struct ChromiumApp::Wrapper {
   struct CefApp;
 
   CefRefPtr<Impl> mCefApp;
-#ifdef CEF_USE_SANDBOX
-  CefScopedSandboxInfo mCefSandbox;
-#endif
+  void* mSandbox {nullptr};
 };
 
-ChromiumApp::ChromiumApp() {
-  const auto subprocessPath
-    = (Filesystem::GetRuntimeDirectory().parent_path() / RuntimeFiles::CHROMIUM);
-  const auto libcefPath = subprocessPath.parent_path();
+ChromiumApp::ChromiumApp(const HINSTANCE instance, void* sandbox) {
+  p.reset(new Wrapper {
+    .mCefApp = new Impl(),
+    .mSandbox = sandbox,
+  });
 
-  struct scope_exit_t {
-    scope_exit_t() {
-      GetDllDirectoryW(MAX_PATH, mOldDllDirectory);
-    }
-    ~scope_exit_t() {
-      SetDllDirectoryW(mOldDllDirectory);
-    }
-
-   private:
-    wchar_t mOldDllDirectory[MAX_PATH] {};
-  } at_scope_exit;
-  SetDllDirectoryW(libcefPath.c_str());
-
-  p.reset(new Wrapper());
-  p->mCefApp = new Impl();
-
-  CefMainArgs mainArgs {};
+  const CefMainArgs mainArgs {instance};
   CefSettings settings {};
   CefString(&settings.log_file)
     .FromWString(
@@ -93,31 +78,37 @@ ChromiumApp::ChromiumApp() {
   settings.multi_threaded_message_loop = true;
   settings.windowless_rendering_enabled = true;
   CefString(&settings.user_agent_product)
-    .FromString(std::format(
-      "OpenKneeboard/{}.{}.{}.{} Chromium/{}.0.0.0",
-      Version::Major,
-      Version::Minor,
-      Version::Patch,
-      Version::Build,
-      CEF_VERSION_MAJOR));
+    .FromString(
+      std::format(
+        "OpenKneeboard/{}.{}.{}.{} Chromium/{}.0.0.0",
+        Version::Major,
+        Version::Minor,
+        Version::Patch,
+        Version::Build,
+        CEF_VERSION_MAJOR));
   CefString(&settings.root_cache_path)
     .FromWString(
       (Filesystem::GetLocalAppDataDirectory() / "Chromium").wstring());
 
-  CefString(&settings.browser_subprocess_path)
-    .FromWString(subprocessPath.wstring());
-
-  void* sandboxInfo {nullptr};
-#ifdef CEF_USE_SANDBOX
-  sandboxInfo = p->mCefSandbox.sandbox_info();
+#ifndef CEF_USE_SANDBOX
+  settings.no_sandbox = 1;
 #endif
 
-  CefInitialize(mainArgs, settings, p->mCefApp, sandboxInfo);
+  CefInitialize(mainArgs, settings, p->mCefApp, p->mSandbox);
 }
 
 ChromiumApp::~ChromiumApp() {
   p = nullptr;
   CefShutdown();
+}
+
+void* ChromiumApp::GetSandbox() {
+#ifndef CEF_USE_SANDBOX
+  return nullptr;
+#else
+  static const CefScopedSandboxInfo sandbox;
+  return sandbox.sandbox_info();
+#endif
 }
 
 }// namespace OpenKneeboard

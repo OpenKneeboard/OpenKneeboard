@@ -238,34 +238,3 @@ add_custom_command(
   "${DIASDK_DLL}"
   "$<TARGET_FILE_DIR:symbolize-traces>/"
 )
-
-if (BUILD_IS_64BIT)
-  set(TARGET_NAME "OpenKneeboard-Chromium")
-  set(MANIFEST_PATH "${CMAKE_CURRENT_BINARY_DIR}/OpenKneeboard-Chromium.manifest")
-
-  configure_file(
-    "utility.manifest.in"
-    "${MANIFEST_PATH}"
-    @ONLY
-    NEWLINE_STYLE UNIX
-  )
-
-  add_helper_executable(
-    OpenKneeboard-Chromium
-    WIN32
-    chromium-worker.cpp
-    "${MANIFEST_PATH}"
-  )
-  target_link_libraries(
-    OpenKneeboard-Chromium
-    PRIVATE
-    Cef::LibCef
-    OpenKneeboard-Filesystem
-    OpenKneeboard-fatal
-  )
-  set_target_properties(
-    OpenKneeboard-Chromium
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/libexec/cef"
-  )
-endif ()

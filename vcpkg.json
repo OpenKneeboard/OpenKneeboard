@@ -25,6 +25,7 @@
     "app": {
       "description": "Build the OpenKneeboard app",
       "dependencies": [
+        "compressed-embed",
         "geographiclib",
         "libzip",
         "openvr",

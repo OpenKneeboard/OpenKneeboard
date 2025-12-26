@@ -18,12 +18,56 @@ include(PDFNavigation.cmake)
 include(SteamVRKneeboard.cmake)
 
 ok_add_library(
+  OpenKneeboard-ChromiumApp
+  STATIC
+  ChromiumApp.cpp
+  include/OpenKneeboard/ChromiumApp.hpp
+)
+target_link_libraries(
+  OpenKneeboard-ChromiumApp
+  PUBLIC
+  Cef::LibCef
+  PRIVATE
+  OpenKneeboard-DXResources
+  OpenKneeboard-Filesystem
+  OpenKneeboard-dprint
+  OpenKneeboard-version
+)
+target_include_directories(
+  OpenKneeboard-ChromiumApp
+  PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+ok_add_library(
+  OpenKneeboard-ChromiumWorker
+  STATIC
+  ChromiumWorker.cpp
+  include/OpenKneeboard/ChromiumWorker.hpp
+)
+target_link_libraries(
+  OpenKneeboard-ChromiumWorker
+  PUBLIC
+  Cef::LibCef
+  OpenKneeboard-JS-Sources
+  # Be *very* wary of adding anything else, and make sure
+  # to test in release mode.
+  #
+  # In release mode, make sure that `chrome://sandbox` shows that renderer
+  # processes are sandboxed
+)
+target_include_directories(
+  OpenKneeboard-ChromiumWorker
+  PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+ok_add_library(
   OpenKneeboard-App-Common
   STATIC
   APIEventServer.cpp
   AppSettings.cpp
   CachedLayer.cpp
-  ChromiumApp.cpp
   Coordinates.cpp
   CursorRenderer.cpp
   DCSExtractedMission.cpp
@@ -215,7 +259,6 @@ ok_add_library(
   include/OpenKneeboard/AppSettings.hpp
   include/OpenKneeboard/Bookmark.hpp
   include/OpenKneeboard/CachedLayer.hpp
-  include/OpenKneeboard/ChromiumApp.hpp
   include/OpenKneeboard/Coordinates.hpp
   include/OpenKneeboard/CursorRenderer.hpp
   include/OpenKneeboard/DCSExtractedMission.hpp
@@ -308,7 +351,7 @@ target_link_libraries(
   System::Wtsapi32
   ThirdParty::GeographicLib
   ThirdParty::LibZip
-  ThirdParty::Lua
+  ThirdParty::Lua::DelayLoad
   ThirdParty::OTDIPC
   ThirdParty::OpenVR
   ThirdParty::WMM
