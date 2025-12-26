@@ -13,7 +13,7 @@ endif ()
 set_property(DIRECTORY . PROPERTY COMPILE_DEFINITIONS "")
 set_property(DIRECTORY . PROPERTY COMPILE_OPTIONS "")
 
-set(CEF_VERSION "132.3.1+g144febe+chromium-132.0.6834.83")
+set(CEF_VERSION "143.0.13+g30cb3bd+chromium-143.0.7499.170")
 set(CEF_DOWNLOAD_ROOT "${CMAKE_BINARY_DIR}/_cef")
 set(CEF_BINARY_OUT_DIR "${BUILD_OUT_ROOT}/libexec/cef")
 set(CEF_RESOURCE_OUT_DIR "${BUILD_OUT_ROOT}/libexec/cef")
@@ -82,12 +82,14 @@ list(
 )
 # Requires the previous
 list(REMOVE_ITEM CEF_COMPILER_DEFINES CEF_USE_SANDBOX)
-list(APPEND CEF_COMPILER_DEFINES "$<$<NOT:$<CONFIG:Debug>>:CEF_USE_SANDBOX>")
+# As of M138 we can't use the sandbox :'(
+# https://bitbucket.org/chromiumembedded/cef/wiki/SandboxSetup.md#markdown-header-windows
+#list(APPEND CEF_COMPILER_DEFINES "$<$<NOT:$<CONFIG:Debug>>:CEF_USE_SANDBOX>")
 
 target_compile_definitions(
   Cef::LibCef
   INTERFACE
-  "$<$<NOT:$<CONFIG:Debug>>:CEF_USE_SANDBOX>"
+  #"$<$<NOT:$<CONFIG:Debug>>:CEF_USE_SANDBOX>"
   "$<IF:$<CONFIG:Debug>,${CEF_COMPILER_DEFINES_DEBUG},${CEF_COMPILER_DEFINES_RELEASE}>"
 )
 target_compile_features(
@@ -121,7 +123,7 @@ target_link_libraries(
   Cef::LibCef
   INTERFACE
   libcef_dll_wrapper
-  "$<$<NOT:$<CONFIG:Debug>>:${CEF_SANDBOX_LIB_RELEASE};${CEF_SANDBOX_STANDARD_LIBS}>"
+  #"$<$<NOT:$<CONFIG:Debug>>:${CEF_SANDBOX_LIB_RELEASE};${CEF_SANDBOX_STANDARD_LIBS}>"
 )
 
 add_custom_target(
