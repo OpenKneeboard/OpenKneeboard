@@ -25,6 +25,7 @@ set_target_properties(
   INTERFACE_INCLUDE_DIRECTORIES "${OPENVR_HEADER_PATH}"
   IMPORTED_IMPLIB "${OPENVR_LIB}"
   IMPORTED_LOCATION "${OPENVR_DLL}"
+  INTERFACE_LINK_OPTIONS "/DELAYLOAD:openvr_api.dll"
 )
 
 include(ok_add_runtime_files)
