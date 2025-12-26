@@ -423,7 +423,7 @@ target_include_directories(
   INTERFACE
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
-add_dependencies(OpenKneeboard-version INTERFACE OpenKneeboard-version-sources)
+add_dependencies(OpenKneeboard-version OpenKneeboard-version-sources)
 ok_add_library(
   OpenKneeboard-semver
   STATIC
