@@ -4,8 +4,6 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
-#include "../../../cmake-build-release/_cef/cef_binary_132.3.1+g144febe+chromium-132.0.6834.83_windows64/include/cef_sandbox_win.h"
-
 #include <OpenKneeboard/ChromiumApp.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
