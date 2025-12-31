@@ -546,3 +546,10 @@ target_link_libraries(
   ThirdParty::CppWinRT
   ThirdParty::magic_enum
 )
+
+ok_add_library(
+  OpenKneeboard-UserAction
+  INTERFACE
+  HEADERS include/OpenKneeboard/UserAction.hpp
+  INCLUDE_DIRECTORIES include
+)

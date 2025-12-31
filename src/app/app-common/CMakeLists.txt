@@ -293,7 +293,6 @@ ok_add_library(
   include/OpenKneeboard/TryEnqueue.hpp
   include/OpenKneeboard/UISettings.hpp
   include/OpenKneeboard/UniqueID.hpp
-  include/OpenKneeboard/UserAction.hpp
   include/OpenKneeboard/UserActionHandler.hpp
   include/OpenKneeboard/ViewsSettings.hpp
   include/OpenKneeboard/WGCRenderer.hpp
