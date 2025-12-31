@@ -14,27 +14,32 @@ using RegistryHive = WixSharp.RegistryHive;
 
 [assembly: InternalsVisibleTo(assemblyName: "OpenKneeboard-Installer.aot")] // assembly name + '.aot suffix
 
-var inputRootArg = new Argument<DirectoryInfo>(
-    name: "INPUT_ROOT",
-    description: "Location of files to include in the installer");
-var signingKeyArg = new Option<string>(
-    name: "--signing-key",
-    description: "Code signing key ID");
-var timestampServerArg = new Option<string>(
-    name: "--timestamp-server",
-    description: "Code signing timestamp server");
-var stampFileArg = new Option<FileInfo>(
-    name: "--stamp-file",
-    description: "The full path to the produced executable will be written here on success");
+var inputRootArg = new Argument<DirectoryInfo>("INPUT_ROOT")
+{
+    Description = "Location of files to include in the installer",
+};
+var signingKeyArg = new Option<string>("--signing-key")
+{
+    Description = "Code signing key ID",
+};
+var timestampServerArg = new Option<string>("--timestamp-server")
+{
+    Description = "Code signing timestamp server",
+};
+var stampFileArg = new Option<FileInfo>("--stamp-file")
+{
+    Description = "The full path to the produced executable will be written here on success",
+};
 
 var command = new RootCommand("Build the MSI");
 command.Add(inputRootArg);
 command.Add(signingKeyArg);
 command.Add(timestampServerArg);
 command.Add(stampFileArg);
-command.SetHandler(
-    CreateInstaller, inputRootArg, signingKeyArg, timestampServerArg, stampFileArg);
-return await command.InvokeAsync(args);
+command.SetAction(args =>
+    CreateInstaller(args.GetRequiredValue(inputRootArg), args.GetValue(signingKeyArg),
+        args.GetValue(timestampServerArg), args.GetValue(stampFileArg)));
+return await command.Parse(args).InvokeAsync();
 
 async Task SetProjectVersionFromJson(ManagedProject project, DirectoryInfo inputRoot)
 {
