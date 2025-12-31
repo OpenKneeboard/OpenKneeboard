@@ -219,9 +219,6 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
         }
     );
 
-    // Workaround https://github.com/oleg-shilo/wixsharp/issues/1728
-    project.WixBuildCommandGenerated += cmd => cmd.Replace("-arch x64", "-arch x64 ");
-
     Compiler.PreserveTempFiles = true;
 
     return project;
