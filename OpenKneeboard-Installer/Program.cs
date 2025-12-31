@@ -1,6 +1,8 @@
 using System.CommandLine;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
 using WixSharp;
 using WixSharp.CommonTasks;
 using File = WixSharp.File;
@@ -75,6 +77,22 @@ async Task SetProjectVersionFromJson(ManagedProject project, DirectoryInfo input
             new RegValue("Quad",
                 $"{version.Components.A}.{version.Components.B}.{version.Components.C}.{version.Components.D}")
         ));
+}
+
+HardLink[] GetHardLinks(DirectoryInfo inputRoot)
+{
+    var links = new List<HardLink>();
+    foreach (var file in inputRoot.GetFiles("*-aliases.txt", new EnumerationOptions { RecurseSubdirectories = true }))
+    {
+        var directory = Path.GetRelativePath(inputRoot.FullName, file.Directory!.FullName);
+        var target = Path.Combine(directory, file.Name.Replace("-aliases.txt", ".exe"));
+        var aliases = System.IO.File.ReadAllLines(file.FullName, Encoding.UTF8)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Select(l => Path.Combine(directory, l) + ".exe");
+        links.AddRange(aliases.Select(l => new HardLink(target, l)));
+    }
+
+    return links.ToArray();
 }
 
 async Task<int> CreateInstaller(DirectoryInfo inputRoot, string? signingKeyId, string? timestampServer,
@@ -168,6 +186,8 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
     var installerResources = new Feature("Installer Resources");
     installerResources.IsEnabled = false;
 
+    var hardLinks = GetHardLinks(inputRoot);
+
     var project =
         new ManagedProject("OpenKneeboard",
             new Dir(@"%ProgramFiles%\OpenKneeboard",
@@ -176,13 +196,19 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
                     new Files("bin/*.*", f => !f.EndsWith("OpenKneeboardApp.exe"))),
                 new Dir("share", new Files("share/*.*")),
                 new Dir("libexec", new Files("libexec/*.*")),
-                new Dir("utilities", new Files("utilities/*.*")),
+                new Dir("utilities",
+                    new Files("utilities/*.exe",
+                        f => hardLinks.All(l => Path.Combine(inputRoot.FullName, l.Link) != f))),
                 new Dir("include", new Files("include/*.*")),
                 new Dir("scripts", new Files("scripts/*.*")),
                 new Files(installerResources, @"installer/*.*")),
             new Binary(GetMsixRemovalToolId(), "installer/remove-openkneeboard-msix.exe"));
+    project.AddProperty(new Property("OKB_HARDLINKS", hardLinks.Select(l => l.ToString()).JoinBy(",")));
     project.SourceBaseDir = inputRoot.FullName;
     project.ResolveWildCards();
+
+    project.EnableUpgradingFromPerUserToPerMachine();
+    Compiler.PreserveTempFiles = true;
 
     project.UpgradeCode = Guid.Parse("843c9331-0610-4ab1-9cf9-5305c896fb5b");
     project.ProductId = Guid.NewGuid();
@@ -203,9 +229,27 @@ ManagedProject CreateProject(DirectoryInfo inputRoot)
         "ProductGuid", $"{{{project.ProductId?.ToString().ToUpper()}}}"));
     project.AddRegValue(new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\Fred Emmott\OpenKneeboard\Installer",
         "UpgradeGuid", $"{{{project.UpgradeCode?.ToString().ToUpper()}}}"));
-    project.EnableUpgradingFromPerUserToPerMachine();
 
-    Compiler.PreserveTempFiles = true;
+    project.AddActions(
+        new ManagedAction(CustomActions.InstallHardLinks, CustomActions.UninstallHardLinks)
+        {
+            Condition = Condition.NOT_BeingRemoved,
+            UsesProperties = "OKB_HARDLINKS",
+            When = When.After,
+            Step = Step.InstallFiles,
+            Execute = Execute.deferred,
+            Impersonate = false,
+        },
+        new ManagedAction(CustomActions.UninstallHardLinks)
+        {
+            Condition = Condition.BeingUninstalled,
+            UsesProperties = "OKB_HARDLINKS",
+            When = When.Before,
+            Step = Step.RemoveFiles,
+            Execute = Execute.deferred,
+            Impersonate = false,
+        }
+    );
 
     return project;
 }
@@ -309,4 +353,144 @@ class JsonVersionInfo
     public string TweakLabel { get; set; } = string.Empty;
     public bool Stable { get; set; }
     public bool Tagged { get; set; }
+}
+
+record HardLink(string Target, string Link) : IParsable<HardLink>
+{
+    public override string ToString() => $"{Target}|{Link}";
+
+    public static HardLink Parse(string s, IFormatProvider? provider)
+    {
+        if (TryParse(s, provider, out var result))
+        {
+            return result;
+        }
+
+        throw new FormatException($"Unable to parse '{s}' as HardLink. Expected format: 'Target|Link'");
+    }
+
+    public static bool TryParse(string? s, IFormatProvider? provider, out HardLink result)
+    {
+        result = null!;
+
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            return false;
+        }
+
+        var parts = s.Split('|', 2);
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        result = new HardLink(parts[0].Trim(), parts[1].Trim());
+        return true;
+    }
+
+    public void AddReference(DirectoryInfo root, RegistryKey key)
+    {
+        var link = Path.Combine(root.FullName, Link);
+        var target = Path.Combine(root.FullName, Target);
+
+        if (System.IO.File.Exists(link))
+        {
+            System.IO.File.Delete(link);
+        }
+
+        CreateHardLinkW(link, target, IntPtr.Zero);
+
+        var value = (int)key.GetValue(Link, 0);
+        value += 1;
+        key.SetValue(Link, value);
+    }
+
+    public void RemoveReference(DirectoryInfo root, RegistryKey key)
+    {
+        var value = (int)key.GetValue(Link, 0);
+        value -= 1;
+        key.SetValue(Link, value);
+
+        var link = Path.Combine(root.FullName, Link);
+        if (value == 0 && System.IO.File.Exists(link))
+        {
+            System.IO.File.Delete(link);
+        }
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static extern bool CreateHardLinkW(
+        string lpFileName,
+        string lpExistingFileName,
+        IntPtr lpSecurityAttributes
+    );
+}
+
+public class CustomActions
+{
+    [CustomAction]
+    public static ActionResult InstallHardLinks(Session session)
+    {
+        try
+        {
+            return HandleHardLinks(session, isUninstalling: false);
+        }
+        catch (Exception e)
+        {
+            session.Log($"Error installing hard links: {e}");
+            return ActionResult.Failure;
+        }
+    }
+
+    [CustomAction]
+    public static ActionResult UninstallHardLinks(Session session)
+    {
+        try
+        {
+            return HandleHardLinks(session, isUninstalling: true);
+        }
+        catch (Exception e)
+        {
+            session.Log($"Error uninstalling hard links: {e}");
+            return ActionResult.Failure;
+        }
+    }
+
+    private static ActionResult HandleHardLinks(Session session, bool isUninstalling)
+    {
+        const string RegKeyPath = @"SOFTWARE\Fred Emmott\OpenKneeboard\Installer\HardLinks";
+        string rawLinks = session.Property("OKB_HARDLINKS");
+        string installDir = session.Property("INSTALLDIR");
+
+        if (string.IsNullOrEmpty(rawLinks))
+            return ActionResult.Failure;
+
+        var links = rawLinks.Split(",").Select(s => HardLink.Parse(s, null));
+        var root = new DirectoryInfo(installDir);
+        using var regKey = Registry.LocalMachine.CreateSubKey(RegKeyPath);
+
+        foreach (var link in links)
+        {
+            if (isUninstalling)
+                link.RemoveReference(root, regKey);
+            else
+                link.AddReference(root, regKey);
+        }
+
+        if (!isUninstalling)
+            return ActionResult.Success;
+
+        foreach (var name in regKey.GetValueNames())
+            if ((int)regKey.GetValue(name, 0) <= 0)
+                regKey.DeleteValue(name);
+
+        if (regKey.ValueCount > 0)
+            return ActionResult.Success;
+
+        regKey.Close();
+        Registry.LocalMachine.DeleteSubKey(RegKeyPath);
+
+        return ActionResult.Success;
+    }
 }
