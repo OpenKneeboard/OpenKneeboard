@@ -28,6 +28,7 @@
         "compressed-embed",
         "geographiclib",
         "libzip",
+        "magic-args",
         "openvr",
         "qpdf"
       ]
@@ -41,6 +42,10 @@
     {
       "name": "detours",
       "version": "2023-07-24"
+    },
+    {
+      "name": "magic-args",
+      "version": "2025-12-31"
     },
     {
       "name": "qpdf",

@@ -21,6 +21,8 @@ function(add_utility_executable TARGET)
   )
 endfunction()
 
+include(remote-control.cmake)
+
 ok_add_executable(
   test-apievent-feeder
   test-apievent-feeder.cpp
@@ -126,58 +128,6 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-tracing
 )
-
-# Mostly to workaround Huion driver limitations, but maybe also useful for
-# StreamDeck and VoiceAttack
-#
-# Remember to update the docs when you add stuff here :)
-set(
-  SIMPLE_REMOTE_ACTIONS
-  CYCLE_ACTIVE_VIEW
-  DECREASE_BRIGHTNESS
-  DISABLE_TINT
-  ENABLE_TINT
-  HIDE
-  INCREASE_BRIGHTNESS
-  NEXT_BOOKMARK
-  NEXT_PAGE
-  NEXT_PROFILE
-  NEXT_TAB
-  PREVIOUS_BOOKMARK
-  PREVIOUS_PAGE
-  PREVIOUS_PROFILE
-  PREVIOUS_TAB
-  RECENTER_VR
-  REPAINT_NOW
-  SHOW
-  SWAP_FIRST_TWO_VIEWS
-  TOGGLE_BOOKMARK
-  TOGGLE_FORCE_ZOOM
-  TOGGLE_TINT
-  TOGGLE_VISIBILITY
-)
-
-foreach (REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
-  set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
-  add_utility_executable(
-    "${TARGET}"
-    WIN32
-    simple-remote.cpp
-    remote-traceprovider.cpp
-  )
-  target_compile_definitions(
-    "${TARGET}"
-    PRIVATE
-    "REMOTE_ACTION=${REMOTE_ACTION}"
-  )
-  target_link_libraries(
-    "${TARGET}"
-    PRIVATE
-    OpenKneeboard-APIEvent
-    OpenKneeboard-dprint
-    OpenKneeboard-tracing
-  )
-endforeach ()
 
 add_helper_executable(
   OpenKneeboard-OpenXR-Helper

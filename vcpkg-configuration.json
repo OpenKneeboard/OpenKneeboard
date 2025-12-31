@@ -10,9 +10,10 @@
       "kind": "git",
       "repository": "https://github.com/fredemmott/vcpkg-registry",
       "reference": "master",
-      "baseline": "f69575a7c708ba9904119c168d36717629c744a2",
+      "baseline": "d5c48362d00665dba7260336ee13c71f8a4b2549",
       "packages": [
-        "compressed-embed"
+        "compressed-embed",
+        "magic-args"
       ]
     }
   ]
