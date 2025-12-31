@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <shims/winrt/base.h>
@@ -55,11 +56,12 @@ struct basic_returns_handle
 template <class TTraits>
 struct or_throw : result_transform_t<or_throw<TTraits>> {
   template <class T>
-  constexpr static auto transform_result(T&& expected) {
-    if (expected.has_value()) {
-      return std::forward<T>(expected).value();
+  constexpr static std::remove_cvref_t<T>::value_type transform_result(
+    T&& expected) {
+    if (!expected) [[unlikely]] {
+      TTraits::throw_hresult(std::forward<T>(expected).error());
     }
-    TTraits::throw_hresult(std::forward<T>(expected).error());
+    return std::forward<T>(expected).value();
   }
 };
 
@@ -180,8 +182,7 @@ struct raw_winapi_traits {
   // Error message marker
   struct winapi_does_not_use_exceptions_call_optional_value_instead {};
   static winapi_does_not_use_exceptions_call_optional_value_instead
-  throw_hresult(const HRESULT)
-    = delete;
+  throw_hresult(const HRESULT) = delete;
 };
 
 struct winrt_winapi_traits {
@@ -200,7 +201,6 @@ template <
   class TErrorMapper = result_identity,
   class TStringTraits = wide_traits>
 struct basic_winapi {
- private:
   template <class T>
   static constexpr std::expected<std::wstring, HRESULT> to_wide(T str) {
     if constexpr (std::same_as<T, std::nullptr_t>) {
@@ -220,10 +220,18 @@ struct basic_winapi {
     }
   }
 
+ private:
   template <class T>
   static constexpr auto make_error(HRESULT hr) {
     return TErrorMapper::transform_result(
       std::expected<T, HRESULT>(std::unexpect, hr));
+  }
+
+  template <class T>
+  static constexpr auto make_result(T&& result) {
+    return TErrorMapper::transform_result(
+      std::expected<std::remove_cvref_t<T>, HRESULT>(
+        std::in_place, std::forward<T>(result)));
   }
 
   static constexpr auto nullable_cstr(const std::wstring& it) {
@@ -236,6 +244,8 @@ struct basic_winapi {
   }
 
  public:
+  using string_type
+    = std::remove_cvref_t<decltype(from_wide(L"foo"))>::value_type;
   using handle_or_null_type = typename TTraits::handle_or_null_type;
   using handle_or_invalid_type = typename TTraits::handle_or_invalid_type;
 
@@ -358,6 +368,19 @@ struct basic_winapi {
 
     return (&::CreateMailslotW | returns_handle_or_invalid() | TErrorMapper())(
       nullable_cstr(name), nMaxMessageSize, lReadTimeout, lpSecurityAttributes);
+  }
+
+  static constexpr auto GetModuleFileName(const HMODULE module = nullptr) {
+    std::wstring buffer(MAX_PATH, L'\0');
+    auto length = ::GetModuleFileNameW(module, buffer.data(), buffer.size());
+    while (length == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+      buffer.resize(buffer.size() * 2);
+      length = ::GetModuleFileNameW(module, buffer.data(), buffer.size());
+    }
+    if (length == 0) [[unlikely]] {
+      return make_error<string_type>(HRESULT_FROM_WIN32(GetLastError()));
+    }
+    return make_result(from_wide(buffer).value());
   }
 };
 
