@@ -6,8 +6,15 @@ set(VCPKG_LIBRARY_LINKAGE static)
 # so force everything to VS 2022 for now
 set(VCPKG_PLATFORM_TOOLSET v143)
 
-# There is no static version of the openvr API
-if (PORT STREQUAL "openvr")
+set(
+  DYNAMIC_PORTS
+  # Use DCS World's lua.dll
+  "lua"
+  # There is no static version of the openvr API
+  "openvr"
+)
+
+if (PORT IN_LIST DYNAMIC_PORTS)
   set(VCPKG_LIBRARY_LINKAGE dynamic)
 endif ()
 
