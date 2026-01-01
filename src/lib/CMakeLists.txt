@@ -433,7 +433,12 @@ ok_add_library(
   INCLUDE_DIRECTORIES
   include
 )
-target_link_libraries(OpenKneeboard-semver PRIVATE ThirdParty::SemVer)
+target_link_libraries(
+  OpenKneeboard-semver
+  PRIVATE
+  OpenKneeboard-dprint
+  ThirdParty::SemVer
+)
 
 ok_add_library(OpenKneeboard-shims INTERFACE)
 target_include_directories(

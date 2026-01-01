@@ -19,6 +19,7 @@
     "felly",
     "lua",
     "magic-enum",
+    "neargye-semver",
     "nlohmann-json",
     "wil"
   ],

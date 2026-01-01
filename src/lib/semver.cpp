@@ -2,12 +2,14 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+#include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/semver.hpp>
 
 #include <regex>
 
-#include <semver200.h>
+#include <semver.hpp>
 
 namespace OpenKneeboard {
 std::string ToSemVerString(std::string_view raw) {
@@ -29,8 +31,16 @@ std::string ToSemVerString(std::string_view raw) {
 }
 
 ThreeWayCompareResult CompareSemVer(std::string_view as, std::string_view bs) {
-  const version::Semver200_version a {std::string {as}};
-  const version::Semver200_version b {std::string {bs}};
+  semver::version a;
+  if (!semver::parse(as, a)) {
+    dprint.Warning("Failed to parse semver `{}`", as);
+    return ThreeWayCompareResult::Equal;
+  }
+  semver::version b;
+  if (!semver::parse(bs, b)) {
+    dprint.Warning("Failed to parse semver `{}`", bs);
+    return ThreeWayCompareResult::Equal;
+  }
 
   using enum ThreeWayCompareResult;
   if (a < b) {
