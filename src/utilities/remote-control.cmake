@@ -4,7 +4,8 @@ include(MagicArgs)
 add_utility_executable(
   OpenKneeboard-RemoteControl
   WIN32
-  simple-remote.cpp
+  remote-control.cpp
+  simple-remotes.hpp
   remote-traceprovider.cpp
 )
 target_link_libraries(
