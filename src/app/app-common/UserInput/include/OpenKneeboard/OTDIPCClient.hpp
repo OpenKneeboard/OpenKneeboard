@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
@@ -21,13 +22,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include <OTD-IPC/DebugMessage.h>
-
-namespace OTDIPC::Messages {
-struct Header;
-struct DeviceInfo;
-struct State;
-};// namespace OTDIPC::Messages
+#include <OTD-IPC/DebugMessage.hpp>
+#include <OTD-IPC/DeviceInfo.hpp>
+#include <OTD-IPC/Header.hpp>
+#include <OTD-IPC/State.hpp>
 
 namespace OpenKneeboard {
 

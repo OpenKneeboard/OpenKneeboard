@@ -27,11 +27,10 @@
 
 #include <wil/cppwinrt_helpers.h>
 
-#include <OTD-IPC/DebugMessage.h>
-#include <OTD-IPC/DeviceInfo.h>
-#include <OTD-IPC/MessageType.h>
-#include <OTD-IPC/NamedPipePath.h>
-#include <OTD-IPC/State.h>
+#include <OTD-IPC/DebugMessage.hpp>
+#include <OTD-IPC/DeviceInfo.hpp>
+#include <OTD-IPC/MessageType.hpp>
+#include <OTD-IPC/State.hpp>
 
 using namespace OTDIPC::Messages;
 
@@ -539,20 +538,8 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::DeviceInfo& msg) {
     .mMaxPressure = msg.maxPressure,
     .mDeviceName = std::string {StringViewFromFixedSizedBuffer(msg.name)},
   };
-  const auto providededPersistentID
-    = StringViewFromFixedSizedBuffer(msg.persistentId);
-  if (providededPersistentID.starts_with(
-        "otd-ipc.openkneeboard.com/vid-pid/")) {
-    info.mDevicePersistentID = std::format(
-      "otdipc-vidpid:///{:04x}/{:04x}", msg.vendorId, msg.productId);
-    dprint(
-      "Converted OTD-IPC persistent ID `{}` to `{}` to preserve OKB v1 "
-      "settings",
-      providededPersistentID,
-      info.mDevicePersistentID);
-  } else {
-    info.mDevicePersistentID = std::string {providededPersistentID};
-  }
+  info.mDevicePersistentID
+    = std::string {StringViewFromFixedSizedBuffer(msg.persistentId)};
 
   dprint(
     "Received OTD-IPC device: '{}' - {}",
@@ -594,12 +581,13 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State& msg) {
   }
   auto& state = tablet.mState.value();
 
-  if (msg.positionValid) {
+  using Bits = OTDIPC::Messages::State::ValidMask;
+  if (msg.HasData(Bits::Position)) {
     state.mX = msg.x;
     state.mY = msg.y;
   }
 
-  if (msg.pressureValid) {
+  if (msg.HasData(Bits::Pressure)) {
     state.mPressure = msg.pressure;
     if (state.mPressure > 0) {
       state.mPenButtons |= 1;
@@ -608,20 +596,20 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State& msg) {
     }
   }
 
-  if (msg.penButtonsValid) {
+  if (msg.HasData(Bits::PenButtons)) {
     // Preserve tip button
     state.mPenButtons &= 1;
     state.mPenButtons |= (msg.penButtons << 1);
   }
 
-  if (msg.auxButtonsValid) {
+  if (msg.HasData(Bits::AuxButtons)) {
     state.mAuxButtons = msg.auxButtons;
   }
 
-  if (msg.proximityValid) {
+  if (msg.HasData(Bits::PenIsNearSurface)) {
     // e.g. Wacom
-    state.mIsActive = msg.nearProximity;
-  } else if (msg.positionValid) {
+    state.mIsActive = msg.penIsNearSurface;
+  } else if (msg.HasData(Bits::Position)) {
     // e.g. Huion does not have proximity
     state.mIsActive = true;
     mTabletsToTimeout[msg.nonPersistentTabletId]
