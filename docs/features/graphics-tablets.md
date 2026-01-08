@@ -43,6 +43,9 @@ OpenTabletDriver is only active while it is running;
 see [OpenTabletDriver's FAQ](https://opentabletdriver.net/Wiki/FAQ/Windows#startup) for advise on starting it
 automatically.
 
+**DO NOT** install WinUSB/Zadig unless the OpenTabletDriver website says it is required *for your specific tablet*; if
+you install it when it is not needed, it will stop your tablet from working.
+
 ## Using your manufacturer's drivers
 
 Use OpenTabletDriver instead if at all possible. If you use your manufacturer's drivers, you should expect to be unable
@@ -53,4 +56,5 @@ If you must use vendor drivers, [wintab-adapter](https://github.com/OpenKneeboar
 is the best way to use vendor drivers with OpenKneeboard, instead of OpenKneeboard's built-in WinTab support.
 OpenKneeboard's built-in WinTab support will be removed in a future version.
 
-If your manufacturer driver supports setting the buttons to launch programs, you may find the [remote controls](remote-controls.md) useful.
+If your manufacturer driver supports setting the buttons to launch programs, you may find
+the [remote controls](remote-controls.md) useful.
