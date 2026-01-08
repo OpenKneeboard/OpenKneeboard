@@ -1,8 +1,10 @@
-module RedirectHtmlExtension
+# - Automatically generate redirects from /foo.html to /foo/
+# - Still support `redirect_from`
+module RedirectsExtension
   class RedirectPage < Jekyll::Page
-    def initialize(page)
+    def initialize(page, from_url = nil)
       @to = page.url
-      @from = page.url.gsub(%r'/$', '.html')
+      @from = from_url || page.url.gsub(%r'/$', '.html')
       @title = 'Redirect - ' + (page.data['title'] || '')
 
       site = page.site
@@ -28,9 +30,18 @@ module RedirectHtmlExtension
     def generate(site)
       # @param [Jekyll::Page] page
       site.pages.dup.freeze.each do |page|
-        next if page.url == '/'
-        next unless page.url.end_with? '/'
-        site.pages << RedirectPage.new(page)
+        if page.url != '/' && page.url.end_with?('/')
+          site.pages << RedirectPage.new(page)
+        end
+
+        next unless page.data['redirect_from']
+
+        redirects = page.data['redirect_from']
+        redirects = [redirects] if redirects.is_a?(String)
+
+        redirects.each do |from_url|
+          site.pages << RedirectPage.new(page, from_url)
+        end
       end
     end
   end
