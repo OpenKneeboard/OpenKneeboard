@@ -1,10 +1,19 @@
 ---
 parent: Features
+redirect_from:
+  - /how-to/huion/
+  - /how-to/wacom/
+  - /how-to/huion.html
+  - /how-to/wacom.html
 ---
 
 # Graphics Tablets
 
-Graphics tablets are supported, *but not required*; for information on supported devices, see [the compatibility notes](../compatibility/hardware.md#graphics-tablets).
+Graphics tablets (eg Wacom) are supported, *but not required*. These are generally marketed towards artists and
+designers.
+
+**Phones and tablet computers such as an iPad, Microsoft Surface, or similar are a different kind of device and not
+supported**.
 
 Graphics tablets can be used to:
 
@@ -14,23 +23,34 @@ Graphics tablets can be used to:
 - navigate the table of contents in PDF documents
 - interact with [captured windows](./window-capture.md)
 
-Huion and Wacom are the most commonly used tablet manufacturers for OpenKneeboard users; for more information on these, see:
+## Which tablet to get
 
-- **Huion**: [how-to](../how-to/huion.md) - [troubleshooting](../troubleshooting/huion-tablet.md)
-- **Wacom**: [how-to](../how-to/wacom.md) - [troubleshooting](../troubleshooting/wacom-tablet.md)
+- The Wacom Intuos S is a good size, with buttons that are easy to find in VR
+- The Huion H640P is also a popular choice, and often cheaper
+- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used
 
-## Other Manufacturers
+## How to use your tablet
 
-OpenKneeboard *should* work with any WinTab or OpenTabletDriver-compatible tablet, however, as of 2024-04-21, most manufacturers (including Wacom) have limitations or bugs in their WinTab drivers which prevent their use with OpenKneeboard.
+OpenTabletDriver is *strongly* recommended instead of your manufacturer's drivers.
 
-You have a choice between "Standard" WinTab, "Invasive" WinTab, and "OpenTabletDriver"
-- OpenTabletDriver is *strongly* recommended
-- WinTab of both forms is legacy-only; no support is available, and issues won't be investigated
-- "Invasive" WinTab mode may be needed for some buggy drivers, and *will* be removed in a future version of OpenKneeboard
-- "Standard" WinTab mode is *likely* to be removed in a future version of OpenKneeboard, due to driver bugs frequently causing crashes
+1. Uninstall your manufacturer's driver from 'Add or Remove Programs'; try searching for your manufacturer's name, '
+   pen', and 'tablet'. There may be multiple entries for your tablet - remove them all.
+2. Use [TabletDriverCleanup](https://github.com/X9VoiD/TabletDriverCleanup) to remove left-over traces
+3. Install [OpenTabletDriver](https://opentabletdriver.net/)
+4. Install [OTD-IPC](https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md)
 
-If you are currently using "Invasive" WinTab:
-- try OpenTabletDriver instead
-- if WinTab Standard does not work, ask your tablet manufacturer to support:
-  - sending `WT_CTXOVERLAP` messages to non-foreground windows
-  - calls to `WTOverlap(ctx, TRUE)` from non-foreground windows
+OpenTabletDriver is only active while it is running;
+see [OpenTabletDriver's FAQ](https://opentabletdriver.net/Wiki/FAQ/Windows#startup) for advise on starting it
+automatically.
+
+## Using your manufacturer's drivers
+
+Use OpenTabletDriver instead if at all possible. If you use your manufacturer's drivers, you should expect to be unable
+to bind buttons or erase in OpenKneeboard. This is a limitation of the manufacturer drivers, and can only be fixed by
+the manufacturer.
+
+If you must use vendor drivers, [wintab-adapter](https://github.com/OpenKneeboard/wintab-adapter/blob/master/README.md)
+is the best way to use vendor drivers with OpenKneeboard, instead of OpenKneeboard's built-in WinTab support.
+OpenKneeboard's built-in WinTab support will be removed in a future version.
+
+If your manufacturer driver supports setting the buttons to launch programs, you may find the [remote controls](remote-controls.md) useful.

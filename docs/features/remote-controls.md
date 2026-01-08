@@ -7,9 +7,9 @@ parent: Features
 
 These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be used to control OpenKneeboard from anything that is able to launch other programs - for example:
 
-- [Huion tablets](../how-to/huion.md)
 - [an Elgato StreamDeck](./streamdeck.md)
 - [VoiceAttack](./voice-attack.md)
+- [manufacturer-provided tablet drivers](graphics-tablets.md)
 
 ## Third-Party Developers
 
