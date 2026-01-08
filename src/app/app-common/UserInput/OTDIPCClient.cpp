@@ -589,17 +589,10 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State& msg) {
 
   if (msg.HasData(Bits::Pressure)) {
     state.mPressure = msg.pressure;
-    if (state.mPressure > 0) {
-      state.mPenButtons |= 1;
-    } else {
-      state.mPenButtons &= ~1;
-    }
   }
 
   if (msg.HasData(Bits::PenButtons)) {
-    // Preserve tip button
-    state.mPenButtons &= 1;
-    state.mPenButtons |= (msg.penButtons << 1);
+    state.mPenButtons = msg.penButtons;
   }
 
   if (msg.HasData(Bits::AuxButtons)) {
