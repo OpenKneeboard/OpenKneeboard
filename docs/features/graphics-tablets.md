@@ -37,7 +37,7 @@ OpenTabletDriver is *strongly* recommended instead of your manufacturer's driver
    pen', and 'tablet'. There may be multiple entries for your tablet - remove them all.
 2. Use [TabletDriverCleanup](https://github.com/X9VoiD/TabletDriverCleanup) to remove left-over traces
 3. Install [OpenTabletDriver](https://opentabletdriver.net/)
-4. Install [OTD-IPC](https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md)
+4. Install [OTD-IPC](https://go.openkneeboard.com/otd-ipc)
 
 OpenTabletDriver is only active while it is running;
 see [OpenTabletDriver's FAQ](https://opentabletdriver.net/Wiki/FAQ/Windows#startup) for advise on starting it
