@@ -5,6 +5,7 @@ add_utility_executable(
   OpenKneeboard-RemoteControl
   WIN32
   remote-control.cpp
+  simple-remotes.cpp
   simple-remotes.hpp
   remote-traceprovider.cpp
 )

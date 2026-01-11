@@ -17,42 +17,27 @@
 namespace OpenKneeboard::SimpleRemotes {
 using namespace OpenKneeboard;
 
+struct Args {
+  magic_args::optional_positional_argument<std::size_t> mCount {
+    .storage = 1,// default
+    .help = "Number of times to perform the action",
+  };
+};
+
+// Non-template version so we don't end up with N nearly-identical
+// functions in the binary
+[[nodiscard]]
+int main(UserAction, const Args&);
+
+// Template version as we need a unique type for each subcommand
 template <UserAction TAction>
 struct SimpleRemote {
   static constexpr auto action = TAction;
 
-  struct arguments_type {
-    magic_args::optional_positional_argument<std::size_t> mCount {
-      .storage = 1,// default
-      .help = "Number of times to perform the action",
-    };
-  };
+  using arguments_type = Args;
 
   static int main(const arguments_type& args) {
-    static const std::string ActionString {magic_enum::enum_name(TAction)};
-
-    const auto count = *args.mCount;
-
-    dprint("Remote invoked: {} (count: {})", ActionString, count);
-
-    switch (count) {
-      case 0:
-        return EXIT_SUCCESS;
-      case 1:
-        APIEvent {APIEvent::EVT_REMOTE_USER_ACTION, ActionString}.Send();
-        return EXIT_SUCCESS;
-      default: {
-        const auto single = nlohmann::json::array(
-          {APIEvent::EVT_REMOTE_USER_ACTION, ActionString});
-
-        auto payload = nlohmann::json::array();
-        for (std::size_t i = 0; i < count; ++i) {
-          payload.push_back(single);
-        }
-        APIEvent {APIEvent::EVT_MULTI_EVENT, payload.dump()}.Send();
-        return EXIT_SUCCESS;
-      }
-    }
+    return SimpleRemotes::main(action, args);
   }
 };
 
