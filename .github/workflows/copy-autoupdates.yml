@@ -24,7 +24,7 @@ jobs:
         name: Clone source
       - name: Clone dest
         shell: bash
-        run:
+        run: |
           DEST="${{github.workspace}}/dest"
           git clone --depth 1 "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git" "$DEST"
       - name: Sync
