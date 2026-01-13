@@ -25,11 +25,17 @@ Graphics tablets can be used to:
 
 ## Which tablet to get
 
-- The Wacom Intuos S is my recommendation
-  - is a good size, with buttons that are easy to find in VR
-  - while OpenTabletDriver is *strongly* recommended and their recent drivers are limited, v6.4.5 of the Wacom driver (Jan 2024) is the best non-OpenTabletDriver option available for OpenKneeboard
-- The Huion H640P is also a popular choice, and often cheaper. I find the buttons harder to find blind in VR, and consider OpenTabletDriver mandatory for a good experience
-- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used
+- The Wacom Intuos S is my first recommendation
+  - it is a good size, with buttons that are easy to find in VR
+  - while OpenTabletDriver is *strongly* recommended and Wacom's own recent drivers are limited, v6.4.5 of the Wacom driver (Jan 2024) is the best non-OpenTabletDriver option available for OpenKneeboard
+- The Gaomon S620 is a similar size, also with easily-findable buttons, and is cheaper
+  - OpenTabletDriver is required for a good experience
+- The Huion H640P is also a popular choice, and also more affordable than Wacom
+  - I find the buttons harder to find blind in VR
+  - OpenTabletDriver mandatory for a good experience
+- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used, though I suggest sticking with one of the ones above
+
+These recommendations are for the best experience in OpenKneeboard; it's probably not good advice for other uses, such as graphics software or *osu!*.
 
 ## How to use your tablet
 
