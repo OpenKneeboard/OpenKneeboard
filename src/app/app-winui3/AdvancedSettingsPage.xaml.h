@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 // clang-format off
@@ -93,10 +94,6 @@ struct AdvancedSettingsPage
   OpenKneeboard::fire_and_forget TintBrightness(float value);
   winrt::Windows::UI::Color Tint();
   OpenKneeboard::fire_and_forget Tint(winrt::Windows::UI::Color value);
-
-  bool Quirk_OculusSDK_DiscardDepthInformation() const noexcept;
-  OpenKneeboard::fire_and_forget Quirk_OculusSDK_DiscardDepthInformation(
-    bool value) noexcept;
 
   uint8_t Quirk_OpenXR_Upscaling() const noexcept;
   OpenKneeboard::fire_and_forget Quirk_OpenXR_Upscaling(uint8_t value) noexcept;

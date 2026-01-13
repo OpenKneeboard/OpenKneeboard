@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "AdvancedSettingsPage.xaml.h"
@@ -285,23 +286,6 @@ OpenKneeboard::fire_and_forget AdvancedSettingsPage::RestoreQuirkDefaults(
   vr.mQuirks = {};
   co_await mKneeboard->SetVRSettings(vr);
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
-}
-
-bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
-  const noexcept {
-  return mKneeboard->GetVRSettings().mQuirks.mOculusSDK_DiscardDepthInformation;
-}
-
-OpenKneeboard::fire_and_forget
-AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
-  bool value) noexcept {
-  auto vrc = mKneeboard->GetVRSettings();
-  auto& vrcValue = vrc.mQuirks.mOculusSDK_DiscardDepthInformation;
-  if (value == vrcValue) {
-    co_return;
-  }
-  vrcValue = value;
-  co_await mKneeboard->SetVRSettings(vrc);
 }
 
 uint8_t AdvancedSettingsPage::Quirk_OpenXR_Upscaling() const noexcept {

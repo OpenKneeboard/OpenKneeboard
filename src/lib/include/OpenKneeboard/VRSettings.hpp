@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "bitflags.hpp"
@@ -53,8 +54,6 @@ struct VROpacitySettings {
  */
 struct VRRenderSettings {
   struct Quirks final {
-    bool mOculusSDK_DiscardDepthInformation {false};
-
     enum class Upscaling {
       Automatic,// Varjo-only
       AlwaysOff,

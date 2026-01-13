@@ -36,7 +36,6 @@ namespace OpenKneeboardApp
 
         Single TextPageFontSize;
 
-        Boolean Quirk_OculusSDK_DiscardDepthInformation;
         UInt8 Quirk_OpenXR_Upscaling;
     }
 }

@@ -315,24 +315,6 @@
         BorderThickness="1"
         Padding="8"
         Spacing="12">
-        <ToggleSwitch
-          Header="Legacy Oculus API (LibOVR): Discard depth information"
-          OffContent="Disabled - keep depth information"
-          OnContent="Enabled - discard depth information"
-          IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"/>
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}">
-          If the OpenKneeboard is not visible in games using the legacy Oculus
-          API (LibOVR), this may fix it; however, when things work correctly
-          without it, it may significantly reduce the quality of reprojection.
-        </TextBlock>
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}">
-          When this option helps, it indicates a bug in the game, the active
-          OVR runtime, or another mod.
-        </TextBlock>
         <ComboBox
           Header="OpenXR: Upscale images"
           SelectedIndex="{x:Bind Quirk_OpenXR_Upscaling, Mode=TwoWay}">

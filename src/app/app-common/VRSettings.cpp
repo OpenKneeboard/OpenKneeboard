@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/VRSettings.hpp>
 
 #include <OpenKneeboard/json/VRSettings.hpp>
@@ -31,10 +32,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {VRRenderSettings::Quirks::Upscaling::AlwaysOn, "AlwaysOn"},
   });
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRRenderSettings::Quirks,
-  mOculusSDK_DiscardDepthInformation,
-  mOpenXR_Upscaling)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRRenderSettings::Quirks, mOpenXR_Upscaling)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);
 
