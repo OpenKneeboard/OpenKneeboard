@@ -315,12 +315,6 @@
         BorderThickness="1"
         Padding="8"
         Spacing="12">
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}">
-          This reduces performance, but can workaround flickering issues
-          caused by bugs in other OpenXR components.
-        </TextBlock>
         <ToggleSwitch
           Header="Legacy Oculus API (LibOVR): Discard depth information"
           OffContent="Disabled - keep depth information"
