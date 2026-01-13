@@ -21,14 +21,20 @@ jobs:
         with:
           path: source
           fetch-depth: 1
-      - name: Push
-        working-directory: source
-        run: |
-          DEST="$RUNNER_TEMP/autoupdates-repo"
+        name: Clone source
+      - name: Clone dest
+        shell: bash
+        run:
+          DEST="${{github.workspace}}/dest"
           git clone --depth 1 "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git" "$DEST"
-          rsync --archive --delete --exclude --verbose .git autoupdate/ "$DEST/"
-
-          cd "$DEST"
+      - name: Sync
+        shell: bash
+        run:
+          rsync --archive --delete --exclude .git --verbose source/autoupdate/ dest/
+      - name: Push
+        shell: bash
+        working-directory: dest
+        run: |
           git config user.name "OpenKneeboard Bot"
           git config user.email "bot@openkneeboard.com"
           
