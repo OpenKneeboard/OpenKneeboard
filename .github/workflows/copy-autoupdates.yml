@@ -15,14 +15,27 @@ concurrency:
 jobs:
   publish:
     if: github.repository == 'OpenKneeboard/OpenKneeboard'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           path: source
-          fetch-depth: 0
+          fetch-depth: 1
       - name: Push
         working-directory: source
         run: |
-          git config --unset-all http.https://github.com/.extraheader
-          git subtree push --prefix=autoupdate "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git" main
+          DEST="$RUNNER_TEMP/autoupdates-repo"
+          git clone --depth 1 "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git" "$DEST"
+          rsync --archive --delete --exclude --verbose .git autoupdate/ "$DEST/"
+
+          cd "$DEST"
+          git config user.name "OpenKneeboard Bot"
+          git config user.email "bot@openkneeboard.com"
+          
+          git add .
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Update from OpenKneeboard/OpenKneeboard@$GITHUB_SHA"
+            git push origin main
+          else
+            echo "No changes to sync."
+          fi
