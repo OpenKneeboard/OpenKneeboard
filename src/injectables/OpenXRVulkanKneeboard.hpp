@@ -89,7 +89,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
   std::optional<SwapchainResources> mSwapchainResources;
 
-  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
+  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR_Vulkan2};
 
   void WaitForAllFences();
 };

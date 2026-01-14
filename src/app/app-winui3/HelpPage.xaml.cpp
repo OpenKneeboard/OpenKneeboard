@@ -432,7 +432,9 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   };
 
   log("OpenVR", consumers.mOpenVR);
-  log("OpenXR", consumers.mOpenXR);
+  log("OpenXR/XR_KHR_D3D11_enable", consumers.mOpenXR_D3D11);
+  log("OpenXR/XR_KHR_D3D12_enable", consumers.mOpenXR_D3D12);
+  log("OpenXR/XR_KHR_vulkan_enable2", consumers.mOpenXR_Vulkan2);
   log("Viewer", consumers.mViewer);
 
   ret += std::format(

@@ -94,11 +94,10 @@ class IPCTextureCopier {
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {
   OpenVR = 1 << 0,
-  OpenXR = 1 << 1,
-  // OculusD3D11 = 1 << 2,
-  // OculusD3D12 = 1 << 3,
-  // NonVRD3D11 = 1 << 4,
-  Viewer = ~(0ui32),
+  OpenXR_D3D11 = 1 << 1,
+  OpenXR_D3D12 = 1 << 2,
+  OpenXR_Vulkan2 = 1 << 3,// for XR_KHR_vulkan_enable2
+  Viewer = std::numeric_limits<uint32_t>::max(),
 };
 
 struct Config final {

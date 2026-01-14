@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "OpenXRKneeboard.hpp"
@@ -46,7 +47,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const std::span<SHM::LayerSprite>& layers) override;
 
  private:
-  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR_D3D11};
 
   winrt::com_ptr<ID3D11Device> mDevice;
   winrt::com_ptr<ID3D11DeviceContext1> mImmediateContext;

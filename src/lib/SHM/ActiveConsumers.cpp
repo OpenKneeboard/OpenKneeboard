@@ -118,8 +118,14 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
     case ConsumerKind::OpenVR:
       p->mOpenVR = now;
       break;
-    case ConsumerKind::OpenXR:
-      p->mOpenXR = now;
+    case ConsumerKind::OpenXR_D3D11:
+      p->mOpenXR_D3D11 = now;
+      break;
+    case ConsumerKind::OpenXR_D3D12:
+      p->mOpenXR_D3D11 = now;
+      break;
+    case ConsumerKind::OpenXR_Vulkan2:
+      p->mOpenXR_Vulkan2 = now;
       break;
     case ConsumerKind::Viewer:
       p->mViewer = now;
@@ -146,19 +152,19 @@ void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
 }
 
 ActiveConsumers::T ActiveConsumers::Any() const {
-  const auto ret = std::ranges::max({mOpenVR, mOpenXR});
-  if (ret != T {}) {
-    return ret;
-  }
-  return mViewer;
+  return std::max(AnyVR(), NotVR());
 }
 
 ActiveConsumers::T ActiveConsumers::AnyVR() const {
-  return std::ranges::max({mOpenVR, mOpenXR});
+  return std::max(mOpenVR, VRExceptSteam());
 }
 
 ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
-  return std::ranges::max({mOpenXR});
+  return std::ranges::max({
+    mOpenXR_D3D11,
+    mOpenXR_D3D12,
+    mOpenXR_Vulkan2,
+  });
 }
 
 ActiveConsumers::T ActiveConsumers::NotVROrViewer() const {

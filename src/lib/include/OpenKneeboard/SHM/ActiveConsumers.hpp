@@ -18,7 +18,9 @@ struct ActiveConsumers final {
 
   // These should be kept in sync with `SHM::ConsumerKind`.
   T mOpenVR {};
-  T mOpenXR {};
+  T mOpenXR_D3D11 {};
+  T mOpenXR_D3D12 {};
+  T mOpenXR_Vulkan2 {};// named after XR_KHR_vulkan_enable2
   T mViewer {};
 
   T AnyVR() const;
