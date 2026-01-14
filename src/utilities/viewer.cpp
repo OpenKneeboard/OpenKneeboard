@@ -162,8 +162,6 @@ class TestViewerWindow final : private D3D11Resources {
   static constexpr auto LastFillMode = ViewerFillMode::Transparent;
   static constexpr auto FillModeCount = std::to_underlying(LastFillMode) + 1;
 
-  bool mShowVR {false};
-
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   winrt::com_ptr<ID3D11Texture2D> mWindowTexture;
@@ -661,11 +659,6 @@ class TestViewerWindow final : private D3D11Resources {
         }
         this->PaintNow();
         return;
-      // VR
-      case 'V':
-        mShowVR = !mShowVR;
-        this->PaintNow();
-        return;
       // Alignment
       case 'A': {
         auto& align = mSettings.mAlignment;
@@ -806,8 +799,7 @@ class TestViewerWindow final : private D3D11Resources {
       const auto layerCount = snapshot.GetLayerCount();
       if (mLayerIndex < layerCount) {
         const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-        const auto size = mShowVR ? layer->mVR.mLocationOnTexture.mSize
-                                  : layer->mNonVR.mLocationOnTexture.mSize;
+        const auto size = layer->mVR.mLocationOnTexture.mSize;
         text += std::format(
           L"\nView {} of {}\n{}x{}",
           mLayerIndex + 1,
@@ -829,11 +821,8 @@ class TestViewerWindow final : private D3D11Resources {
     switch (mSettings.mAlignment) { OPENKNEEBOARD_VIEWER_ALIGNMENTS }
 #undef IT
 
-    if (mShowVR) {
-      text += L"\nVR";
-    } else {
-      text += L"\nNon-VR";
-    }
+    // OpenKneeboard is currently VR-only
+    text += L"\nVR";
 
     winrt::com_ptr<IDWriteTextLayout> layout;
     mD2D->mDWriteFactory->CreateTextLayout(
@@ -882,21 +871,14 @@ class TestViewerWindow final : private D3D11Resources {
 
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
 
-    if (mShowVR && !layer.mVREnabled) {
+    if (!layer.mVREnabled) {
       RenderError("No VR Layer");
-      return;
-    }
-
-    if ((!mShowVR) && !layer.mNonVREnabled) {
-      RenderError("No Non-VR Layer");
       return;
     }
 
     mLayerID = layer.mLayerID;
 
-    const auto sourceRect = mShowVR ? layer.mVR.mLocationOnTexture
-                                    : layer.mNonVR.mLocationOnTexture;
-
+    const auto sourceRect = layer.mVR.mLocationOnTexture;
     const auto& imageSize = sourceRect.mSize;
     const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
     const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
