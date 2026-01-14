@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 
@@ -120,12 +121,6 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
     case ConsumerKind::OpenXR:
       p->mOpenXR = now;
       break;
-    case ConsumerKind::OculusD3D11:
-      p->mOculusD3D11 = now;
-      break;
-    case ConsumerKind::NonVRD3D11:
-      p->mNonVRD3D11 = now;
-      break;
     case ConsumerKind::Viewer:
       p->mViewer = now;
       break;
@@ -151,8 +146,7 @@ void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
 }
 
 ActiveConsumers::T ActiveConsumers::Any() const {
-  const auto ret
-    = std::ranges::max({mOpenVR, mOpenXR, mOculusD3D11, mNonVRD3D11});
+  const auto ret = std::ranges::max({mOpenVR, mOpenXR});
   if (ret != T {}) {
     return ret;
   }
@@ -160,15 +154,15 @@ ActiveConsumers::T ActiveConsumers::Any() const {
 }
 
 ActiveConsumers::T ActiveConsumers::AnyVR() const {
-  return std::ranges::max({mOpenVR, mOpenXR, mOculusD3D11});
+  return std::ranges::max({mOpenVR, mOpenXR});
 }
 
 ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
-  return std::ranges::max({mOpenXR, mOculusD3D11});
+  return std::ranges::max({mOpenXR});
 }
 
 ActiveConsumers::T ActiveConsumers::NotVROrViewer() const {
-  return mNonVRD3D11;
+  return {};
 }
 
 ActiveConsumers::T ActiveConsumers::NotVR() const {

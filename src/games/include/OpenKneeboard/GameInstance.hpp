@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Game.hpp>
@@ -19,12 +20,12 @@ namespace OpenKneeboard {
 // there's not a compelling reason to bring it back.
 #define OPENKNEEBOARD_OVERLAY_APIS \
   IT(None) \
-  IT(AutoDetect) \
+  IT(AutoDetect) /* TODO: remove later */ \
   IT(SteamVR) \
   IT(OpenXR) \
-  IT(OculusD3D11) \
-  IT(OculusD3D12) /* TODO: remove later*/ \
-  IT(NonVRD3D11)
+  IT(OculusD3D11) /* TODO: remove later */ \
+  IT(OculusD3D12) /* TODO: remove later */ \
+  IT(NonVRD3D11) /* TODO: remove later */
 
 enum class OverlayAPI {
 #define IT(x) x,

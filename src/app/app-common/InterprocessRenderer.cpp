@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CreateTabActions.hpp>
 #include <OpenKneeboard/CursorClickableRegions.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
@@ -49,10 +50,6 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
       return {SHM::ConsumerKind::OpenVR};
     case OverlayAPI::OpenXR:
       return {SHM::ConsumerKind::OpenXR};
-    case OverlayAPI::OculusD3D11:
-      return {SHM::ConsumerKind::OculusD3D11};
-    case OverlayAPI::NonVRD3D11:
-      return {SHM::ConsumerKind::NonVRD3D11};
     default:
       dprint(
         "Unhandled overlay API: {}", std::to_underlying(game->mOverlayAPI));

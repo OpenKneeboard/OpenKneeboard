@@ -587,10 +587,7 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void OnResize(const D2D1_SIZE_U& size) {
-    const auto now = ActiveConsumers::Clock::now();
-    if ((now - ActiveConsumers::Get().mNonVRD3D11) > std::chrono::seconds(1)) {
-      ActiveConsumers::SetNonVRPixelSize({size.width, size.height});
-    }
+    ActiveConsumers::SetNonVRPixelSize({size.width, size.height});
   }
 
   void CaptureScreenshot() {

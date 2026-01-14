@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "NonVRConstrainedPosition.hpp"
@@ -94,17 +95,16 @@ class IPCTextureCopier {
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,
-    uint64_t fenceValueIn) noexcept
-    = 0;
+    uint64_t fenceValueIn) noexcept = 0;
 };
 
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {
   OpenVR = 1 << 0,
   OpenXR = 1 << 1,
-  OculusD3D11 = 1 << 2,
+  // OculusD3D11 = 1 << 2,
   // OculusD3D12 = 1 << 3,
-  NonVRD3D11 = 1 << 4,
+  // NonVRD3D11 = 1 << 4,
   Viewer = ~(0ui32),
 };
 
@@ -299,8 +299,9 @@ class CachedReader : public Reader {
  protected:
   void InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength);
 
-  virtual std::shared_ptr<IPCClientTexture>
-  CreateIPCClientTexture(const PixelSize&, uint8_t swapchainIndex) noexcept = 0;
+  virtual std::shared_ptr<IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
+    uint8_t swapchainIndex) noexcept = 0;
 
   virtual void ReleaseIPCHandles() = 0;
 
