@@ -737,21 +737,6 @@ uint64_t Reader::GetFrameCountForMetricsOnly() const {
   return p->mHeader->mFrameNumber;
 }
 
-ConsumerPattern::ConsumerPattern() = default;
-ConsumerPattern::ConsumerPattern(
-  std::underlying_type_t<ConsumerKind> consumerKindMask)
-  : mKindMask(consumerKindMask) {
-}
-
-std::underlying_type_t<ConsumerKind> ConsumerPattern::GetRawMaskForDebugging()
-  const {
-  return mKindMask;
-}
-
-bool ConsumerPattern::Matches(ConsumerKind kind) const {
-  return (mKindMask & std::to_underlying(kind)) == mKindMask;
-}
-
 Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "CachedReader::MaybeGet()");

@@ -101,21 +101,6 @@ enum class ConsumerKind : uint32_t {
   Viewer = ~(0ui32),
 };
 
-class ConsumerPattern final {
- public:
-  ConsumerPattern();
-  ConsumerPattern(std::underlying_type_t<ConsumerKind> consumerKindMask);
-  ConsumerPattern(ConsumerKind kind) : mKindMask(std::to_underlying(kind)) {
-  }
-
-  bool Matches(ConsumerKind) const;
-
-  std::underlying_type_t<ConsumerKind> GetRawMaskForDebugging() const;
-
- private:
-  std::underlying_type_t<ConsumerKind> mKindMask {0};
-};
-
 struct Config final {
   uint64_t mGlobalInputLayerID {};
   VRRenderSettings mVR {};
