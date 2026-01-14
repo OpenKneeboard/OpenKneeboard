@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/SHM.hpp>
@@ -118,28 +119,11 @@ struct ViewVRSettings {
   std::variant<IndependentViewVRSettings, winrt::guid> mData;
 };
 
-/// Non-VR configuration of a view
-struct ViewNonVRSettings {
-  bool mEnabled {false};
-  NonVRConstrainedPosition mConstraints;
-  float mOpacity = 0.8f;
-
-  constexpr bool operator==(const ViewNonVRSettings&) const noexcept = default;
-
-  std::optional<SHM::NonVRLayer> Resolve(
-    const PreferredSize& contentSize,
-    const PixelRect& fullRect,
-    const PixelRect& contentRect,
-    const std::vector<ViewSettings>& others,
-    ResolveViewFlags flags = ResolveViewFlags::Default) const;
-};
-
 struct ViewSettings {
   winrt::guid mGuid = random_guid();
   std::string mName;
 
   ViewVRSettings mVR;
-  ViewNonVRSettings mNonVR;
 
   winrt::guid mDefaultTabID;
 
@@ -172,7 +156,6 @@ struct ViewsSettings {
     ViewSettings {
       .mName = _("Kneeboard 1"),
       .mVR = ViewVRSettings::Independent({}),
-      .mNonVR = {.mEnabled = true},
     },
   };
 

@@ -304,8 +304,6 @@ ok_add_library(
   include/OpenKneeboard/enable_shared_from_this.hpp
   include/OpenKneeboard/final_release_deleter.hpp
   include/OpenKneeboard/weak_refs.hpp
-  json/LegacyNonVRSettings.cpp
-  json/NonVRConstrainedPosition.cpp
 )
 target_compile_definitions(
   OpenKneeboard-App-Common

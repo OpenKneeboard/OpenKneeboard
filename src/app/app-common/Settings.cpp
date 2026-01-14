@@ -2,12 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/ProfileSettings.hpp>
 #include <OpenKneeboard/Settings.hpp>
 
-#include <OpenKneeboard/json/LegacyNonVRSettings.hpp>
 #include <OpenKneeboard/json/VRSettings.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -231,11 +231,6 @@ static void MigrateToViewsSettings(Settings& settings) {
   const ViewSettings primary {
     .mName = _("Kneeboard 1"),
     .mVR = ViewVRSettings::Independent(vrConfig),
-    .mNonVR = ViewNonVRSettings {
-      .mEnabled = true,
-      .mConstraints = static_cast<const NonVRConstrainedPosition&>(settings.mDeprecatedNonVR),
-      .mOpacity = settings.mDeprecatedNonVR.mOpacity,
-    },
   };
 
   if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
@@ -273,7 +268,6 @@ Settings Settings::Load(
 #define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, profileDir / #x ".json");
   OPENKNEEBOARD_PER_PROFILE_SETTINGS_SECTIONS
 #undef IT
-  MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");
 #define IT(cpptype, x) MaybeSetFromJSON(settings.m##x, #x ".json");
   OPENKNEEBOARD_GLOBAL_SETTINGS_SECTIONS
 #undef IT

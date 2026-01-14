@@ -2,13 +2,13 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/AppSettings.hpp>
 #include <OpenKneeboard/DirectInputSettings.hpp>
 #include <OpenKneeboard/DoodleSettings.hpp>
-#include <OpenKneeboard/LegacyNonVRSettings.hpp>
 #include <OpenKneeboard/TabletSettings.hpp>
 #include <OpenKneeboard/TextSettings.hpp>
 #include <OpenKneeboard/UISettings.hpp>
@@ -39,7 +39,6 @@ struct Settings final {
 #define IT(cpptype, name) cpptype m##name {};
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
-  LegacyNonVRSettings mDeprecatedNonVR {};
 
   static Settings Load(winrt::guid defaultProfile, winrt::guid activeProfile);
   void Save(winrt::guid defaultProfile, winrt::guid activeProfile) const;

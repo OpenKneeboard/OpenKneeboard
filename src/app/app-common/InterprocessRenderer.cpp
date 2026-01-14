@@ -287,13 +287,6 @@ task<SHM::LayerConfig> InterprocessRenderer::RenderLayer(
     ret.mVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
   }
 
-  if (layer.mNonVR) {
-    ret.mNonVREnabled = true;
-    ret.mNonVR = *layer.mNonVR;
-    ret.mNonVR.mLocationOnTexture.mOffset.mX += bounds.mOffset.mX;
-    ret.mNonVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
-  }
-
   co_await view->RenderWithChrome(
     mCanvas.get(),
     PixelRect {bounds.mOffset, layer.mFullSize},

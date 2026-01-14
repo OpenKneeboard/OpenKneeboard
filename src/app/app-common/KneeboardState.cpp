@@ -141,7 +141,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   }
   for (size_t i = 0; i < count; ++i) {
     const auto& viewConfig = mSettings.mViews.mViews.at(i);
-    if (!(viewConfig.mNonVR.mEnabled || viewConfig.mVR.mEnabled)) {
+    if (!viewConfig.mVR.mEnabled) {
       continue;
     }
     const auto view = mViews.at(i);
@@ -163,8 +163,6 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
         .mView = view,
         .mVR = viewConfig.mVR.Resolve(
           contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
-        .mNonVR = viewConfig.mNonVR.Resolve(
-          contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
         .mFullSize = layoutSize,
         .mIsActiveForInput = (i == mInputViewIndex),
       });
@@ -179,11 +177,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
         contentSize.mPixelSize, "PreferredPixelSize"),
       OPENKNEEBOARD_TraceLoggingRect(
         (ret.back().mVR ? ret.back().mVR->mLocationOnTexture : PixelRect {}),
-        "VRLocationOnTexture"),
-      OPENKNEEBOARD_TraceLoggingRect(
-        (ret.back().mNonVR ? ret.back().mNonVR->mLocationOnTexture
-                           : PixelRect {}),
-        "NonVRLocationOnTexture"));
+        "VRLocationOnTexture"));
   }
 
   return ret;

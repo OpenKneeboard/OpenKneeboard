@@ -6,7 +6,6 @@
 // OpenKneeboard repository.
 #pragma once
 
-#include "NonVRConstrainedPosition.hpp"
 #include "VRSettings.hpp"
 
 #include <OpenKneeboard/Pixels.hpp>
@@ -47,12 +46,6 @@ struct VRLayer {
   GazeTargetScale mGazeTargetScale {};
   VROpacitySettings mOpacity {};
   PixelRect mLocationOnTexture {};
-};
-
-struct NonVRLayer {
-  NonVRConstrainedPosition mPosition;
-  PixelRect mLocationOnTexture;
-  float mOpacity;
 };
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
@@ -135,8 +128,6 @@ struct LayerConfig final {
 
   bool mVREnabled {false};
   SHM::VRLayer mVR {};
-  bool mNonVREnabled {false};
-  SHM::NonVRLayer mNonVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/BookmarksUILayer.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/CursorRenderer.hpp>
@@ -324,38 +325,8 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
   const auto haveConsumerSize = consumerSize != PixelSize {};
-  const bool haveNonVR = haveConsumerSize
-    && (now - consumers.NotVROrViewer()) < std::chrono::milliseconds(500);
   const bool haveViewer = haveConsumerSize
     && (now - consumers.mViewer) < std::chrono::milliseconds(500);
-  if (haveNonVR) {
-    const auto views = mKneeboard->GetViewsSettings().mViews;
-    const auto view = std::ranges::find(views, mGuid, &ViewSettings::mGuid);
-    if (view != views.end()) [[likely]] {
-      const auto pos = view->mNonVR.Resolve(
-        metrics.mPreferredSize,
-        PixelRect {{0, 0}, metrics.mPreferredSize.mPixelSize},
-        unscaledContentArea,
-        views);
-      if (pos) {
-        const auto rect = pos->mPosition.Layout(consumerSize, idealSize);
-        const auto ratio
-          = static_cast<float>(rect.mSize.mWidth) / idealSize.mWidth;
-        return {
-          rect.mSize,
-          (unscaledContentArea.StaticCast<float>() * ratio)
-            .Rounded<uint32_t>()
-            .Clamped(MaxViewRenderSize),
-        };
-      }
-    } else {
-      TraceLoggingWrite(
-        gTraceProvider,
-        "KneeboardView::GetIPCRenderLayout()/ViewNotFound",
-        TraceLoggingValue(to_string(to_hstring(mGuid)).c_str(), "GUID"));
-      OPENKNEEBOARD_BREAK;
-    }
-  }
 
   const auto size
     = idealSize.ScaledToFit(haveViewer ? consumerSize : MaxViewRenderSize);

@@ -2,12 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/PreferredSize.hpp>
 #include <OpenKneeboard/ViewsSettings.hpp>
 
 #include <OpenKneeboard/json/Geometry2D.hpp>
-#include <OpenKneeboard/json/NonVRConstrainedPosition.hpp>
 #include <OpenKneeboard/json/VRSettings.hpp>
 
 #include <OpenKneeboard/json.hpp>
@@ -104,26 +104,6 @@ std::optional<SHM::VRLayer> ViewVRSettings::Resolve(
   return ret;
 }
 
-std::optional<SHM::NonVRLayer> ViewNonVRSettings::Resolve(
-  [[maybe_unused]] const PreferredSize& contentSize,
-  const PixelRect& fullRect,
-  [[maybe_unused]] const PixelRect& contentRect,
-  [[maybe_unused]] const std::vector<ViewSettings>& others,
-  ResolveViewFlags flags) const {
-  if (
-    (!mEnabled)
-    && (flags & ResolveViewFlags::IncludeDisabled)
-      != ResolveViewFlags::IncludeDisabled) {
-    return {};
-  }
-
-  return {SHM::NonVRLayer {
-    .mPosition = mConstraints,
-    .mLocationOnTexture = fullRect,
-    .mOpacity = mOpacity,
-  }};
-}
-
 static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
   if (value != decltype(value) {}) {
     j[key] = value;
@@ -211,17 +191,10 @@ void to_json(nlohmann::json& j, const ViewVRSettings& v) {
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  ViewNonVRSettings,
-  mEnabled,
-  mConstraints,
-  mOpacity);
-
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   ViewSettings,
   mGuid,
   mName,
   mVR,
-  mNonVR,
   mDefaultTabID);
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
