@@ -31,7 +31,6 @@ ok_add_executable(
   MainWindow.idl MainWindow.xaml MainWindow.xaml.cpp MainWindow.xaml.h
   MetersNumberFormatter.cpp MetersNumberFormatter.h MetersNumberFormatter.idl
   MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
-  NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
   RenameTabDialog.idl RenameTabDialog.xaml RenameTabDialog.xaml.cpp RenameTabDialog.xaml.h

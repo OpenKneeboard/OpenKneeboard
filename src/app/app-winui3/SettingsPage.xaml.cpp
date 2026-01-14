@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "SettingsPage.xaml.h"
@@ -39,7 +40,6 @@ void SettingsPage::OnItemClick(
     return; \
   }
   IT(VR)
-  IT(NonVR)
   IT(Tabs)
   IT(Input)
   IT(Advanced)
