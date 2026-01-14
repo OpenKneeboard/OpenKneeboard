@@ -2,12 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEventServer.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/DirectInputAdapter.hpp>
-#include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/InterprocessRenderer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -378,12 +378,12 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
 
 void KneeboardState::OnGameChangedEvent(
   DWORD processID,
-  const std::shared_ptr<GameInstance>& game) {
+  const std::filesystem::path& game) {
   SHM::ActiveConsumers::Clear();
-  if (processID && game) {
+  if (processID) {
     mCurrentGame = {
       processID,
-      {game},
+      game,
       std::chrono::steady_clock::now(),
     };
     mMostRecentGame = mCurrentGame;

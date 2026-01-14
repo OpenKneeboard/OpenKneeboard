@@ -2,10 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -34,8 +34,7 @@ class DCSTab : public virtual ITab, public virtual EventReceiver {
   virtual OpenKneeboard::fire_and_forget OnAPIEvent(
     APIEvent,
     std::filesystem::path installPath,
-    std::filesystem::path savedGamesPath)
-    = 0;
+    std::filesystem::path savedGamesPath) = 0;
 
   std::filesystem::path ToAbsolutePath(const std::filesystem::path&);
 

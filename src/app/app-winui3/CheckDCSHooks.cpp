@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 // clang-format off
 #include "pch.h"
@@ -11,7 +12,6 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/DCSWorldInstance.hpp>
 #include <OpenKneeboard/FilesDiffer.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -108,11 +108,14 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
 
     if (!(std::filesystem::is_directory(hooksDir)
           || std::filesystem::create_directories(hooksDir, ec))) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
-        _("Failed to create {}: {} ({:#x})"),
-        to_utf8(hooksDir),
-        ec.message(),
-        ec.value()))));
+      dialog.Content(
+        winrt::box_value(
+          winrt::to_hstring(
+            std::format(
+              _("Failed to create {}: {} ({:#x})"),
+              to_utf8(hooksDir),
+              ec.message(),
+              ec.value()))));
       continue;
     }
 
@@ -121,12 +124,15 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
           luaDest,
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
-        _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-          "close DCS, and try again."),
-        to_utf8(luaDest),
-        ec.message(),
-        ec.value()))));
+      dialog.Content(
+        winrt::box_value(
+          winrt::to_hstring(
+            std::format(
+              _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+                "close DCS, and try again."),
+              to_utf8(luaDest),
+              ec.message(),
+              ec.value()))));
       dprint.Error(
         "DCS hook copy Lua failed: {} ({:#010x}) - {}",
         ec.message(),
@@ -140,12 +146,15 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
           dllDest,
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
-        _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-          "close DCS, and try again."),
-        to_utf8(luaDest),
-        ec.message(),
-        ec.value()))));
+      dialog.Content(
+        winrt::box_value(
+          winrt::to_hstring(
+            std::format(
+              _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+                "close DCS, and try again."),
+              to_utf8(luaDest),
+              ec.message(),
+              ec.value()))));
       dprint.Error(
         "DCS hook copy DLL to failed: {} ({:#010x}) - {}",
         ec.message(),
@@ -166,10 +175,10 @@ task<std::optional<std::filesystem::path>> ChooseDCSSavedGamesFolder(
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
     dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
-    dialog.Content(
-      box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
-                             "would you like to set it now? "
-                             "This is required for the DCS tabs to work."))));
+    dialog.Content(box_value(to_hstring(
+      _("We couldn't find your DCS saved games folder; "
+        "would you like to set it now? "
+        "This is required for the DCS tabs to work."))));
     dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
     dialog.CloseButtonText(to_hstring(_("Not Now")));
     dialog.DefaultButton(ContentDialogButton::Primary);

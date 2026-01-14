@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DXResources.hpp>
@@ -94,9 +95,6 @@ class InterprocessRenderer final
 
   void InitializeCanvas(const PixelSize&);
 
-  std::shared_ptr<GameInstance> mCurrentGame;
-
-  void MarkDirty();
   task<SHM::LayerConfig> RenderLayer(
     const ViewRenderInfo&,
     const PixelRect& bounds) noexcept;
@@ -104,8 +102,6 @@ class InterprocessRenderer final
   void SubmitFrame(
     const std::vector<SHM::LayerConfig>&,
     uint64_t inputLayerID) noexcept;
-
-  void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 
   bool mVisible {true};
   bool mPreviousFrameWasVisible {false};

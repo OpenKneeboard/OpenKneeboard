@@ -2,15 +2,14 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DCSRadioLogTab.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
 #include <chrono>
-
-using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
@@ -49,10 +48,11 @@ DCSRadioLogTab::DCSRadioLogTab(
   : TabBase(persistentID, title),
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
-    mPageSource(std::make_shared<PlainTextPageSource>(
-      dxr,
-      kbs,
-      _("[waiting for radio messages]"))) {
+    mPageSource(
+      std::make_shared<PlainTextPageSource>(
+        dxr,
+        kbs,
+        _("[waiting for radio messages]"))) {
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
   this->LoadSettings(config);
 }
@@ -118,7 +118,7 @@ OpenKneeboard::fire_and_forget DCSRadioLogTab::OnAPIEvent(
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
   auto weak = weak_from_this();
-  if (event.name == DCS::EVT_SIMULATION_START) {
+  if (event.name == DCSEvents::EVT_SIMULATION_START) {
     co_await mUIThread;
     auto self = weak.lock();
     if (!self) {
@@ -134,22 +134,23 @@ OpenKneeboard::fire_and_forget DCSRadioLogTab::OnAPIEvent(
           mPageSource->ClearText();
           break;
       }
-      const auto parsed = event.ParsedValue<DCS::SimulationStartEvent>();
-      mPageSource->PushMessage(std::format(
-        _(">> Mission started at {:%T}"),
-        std::chrono::utc_seconds {
-          std::chrono::seconds {parsed.missionStartTime}}));
+      const auto parsed = event.ParsedValue<DCSEvents::SimulationStartEvent>();
+      mPageSource->PushMessage(
+        std::format(
+          _(">> Mission started at {:%T}"),
+          std::chrono::utc_seconds {
+            std::chrono::seconds {parsed.missionStartTime}}));
 
       this->evNeedsRepaintEvent.Emit();
     }
     co_return;
   }
 
-  if (event.name != DCS::EVT_MESSAGE) {
+  if (event.name != DCSEvents::EVT_MESSAGE) {
     co_return;
   }
 
-  const auto parsed = event.ParsedValue<DCS::MessageEvent>();
+  const auto parsed = event.ParsedValue<DCSEvents::MessageEvent>();
 
   co_await mUIThread;
   auto self = weak.lock();
@@ -165,15 +166,15 @@ OpenKneeboard::fire_and_forget DCSRadioLogTab::OnAPIEvent(
       std::chrono::utc_seconds {std::chrono::seconds {parsed.missionTime}});
   }
   switch (parsed.messageType) {
-    case DCS::MessageType::Radio:
+    case DCSEvents::MessageType::Radio:
       break;
-    case DCS::MessageType::Show:
+    case DCSEvents::MessageType::Show:
       formatted += "[show] ";
       break;
-    case DCS::MessageType::Trigger:
+    case DCSEvents::MessageType::Trigger:
       formatted += ">> ";
       break;
-    case DCS::MessageType::Invalid:
+    case DCSEvents::MessageType::Invalid:
       dprint("Invalid DCS message type");
       OPENKNEEBOARD_BREAK;
       co_return;

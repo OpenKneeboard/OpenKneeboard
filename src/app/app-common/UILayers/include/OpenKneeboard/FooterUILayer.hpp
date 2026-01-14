@@ -2,16 +2,17 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/UILayerBase.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <chrono>
 #include <memory>
@@ -42,7 +43,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
  private:
   void Tick();
   void OnAPIEvent(const APIEvent&);
-  void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
+  void OnGameChanged(DWORD processID, const std::filesystem::path&);
 
   audited_ptr<DXResources> mDXResources;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;

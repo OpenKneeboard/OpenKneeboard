@@ -2,15 +2,16 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Coordinates.hpp>
 #include <OpenKneeboard/DCSBriefingTab.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/DCSGrid.hpp>
 #include <OpenKneeboard/DCSMagneticModel.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/Lua.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
@@ -22,8 +23,7 @@
 #include <format>
 
 static_assert(
-  std::is_same_v<OpenKneeboard::DCSWorld::GeoReal, OpenKneeboard::GeoReal>);
-using DCS = OpenKneeboard::DCSWorld;
+  std::same_as<OpenKneeboard::DCSEvents::GeoReal, OpenKneeboard::GeoReal>);
 
 using namespace OpenKneeboard::Coordinates;
 
@@ -121,28 +121,29 @@ void DCSBriefingTab::PushMissionOverview(
   std::string_view alliedCountries;
   std::string_view enemyCountries;
   switch (mDCSState.mCoalition) {
-    case DCSWorld::Coalition::Neutral:
+    case DCSEvents::Coalition::Neutral:
       break;
-    case DCSWorld::Coalition::Blue:
+    case DCSEvents::Coalition::Blue:
       alliedCountries = blueCountries;
       enemyCountries = redCountries;
       break;
-    case DCSWorld::Coalition::Red:
+    case DCSEvents::Coalition::Red:
       alliedCountries = redCountries;
       enemyCountries = blueCountries;
   }
 
-  mTextPages->PushMessage(std::format(
-    _("MISSION OVERVIEW\n"
-      "\n"
-      "Title:    {}\n"
-      "Start at: {}\n"
-      "My side:  {}\n"
-      "Enemies:  {}"),
-    title,
-    startDateTime,
-    alliedCountries,
-    enemyCountries));
+  mTextPages->PushMessage(
+    std::format(
+      _("MISSION OVERVIEW\n"
+        "\n"
+        "Title:    {}\n"
+        "Start at: {}\n"
+        "My side:  {}\n"
+        "Enemies:  {}"),
+      title,
+      startDateTime,
+      alliedCountries,
+      enemyCountries));
 } catch (const LuaIndexError& e) {
   dprint("LuaIndexError when loading mission overview: {}", e.what());
 }
@@ -158,29 +159,30 @@ void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
   DCSBriefingWind windAt2000 {wind["at2000"]};
   DCSBriefingWind windAt8000 {wind["at8000"]};
 
-  mTextPages->PushMessage(std::format(
-    _("WEATHER\n"
-      "\n"
-      "Temperature: {:+d}°\n"
-      "QNH:         {} / {:.02f}\n"
-      "Cloud cover: Base {}\n"
-      "Nav wind:    At GRND {:.0f} m/s, {}° Meteo {}°\n"
-      "             At 2000m {:.0f} m/s, {}° Meteo {}°\n"
-      "             At 8000m {:.0f} m/s, {}° Meteo {}°"),
-    temperature,
-    // Match DCS: round down, not to nearest
-    static_cast<int>(qnhMmHg),
-    qnhInHg,
-    cloudBase,
-    windAtGround.mSpeed,
-    windAtGround.mDirection,
-    windAtGround.mStandardDirection,
-    windAt2000.mSpeed,
-    windAt2000.mDirection,
-    windAt2000.mStandardDirection,
-    windAt8000.mSpeed,
-    windAt8000.mDirection,
-    windAt8000.mStandardDirection));
+  mTextPages->PushMessage(
+    std::format(
+      _("WEATHER\n"
+        "\n"
+        "Temperature: {:+d}°\n"
+        "QNH:         {} / {:.02f}\n"
+        "Cloud cover: Base {}\n"
+        "Nav wind:    At GRND {:.0f} m/s, {}° Meteo {}°\n"
+        "             At 2000m {:.0f} m/s, {}° Meteo {}°\n"
+        "             At 8000m {:.0f} m/s, {}° Meteo {}°"),
+      temperature,
+      // Match DCS: round down, not to nearest
+      static_cast<int>(qnhMmHg),
+      qnhInHg,
+      cloudBase,
+      windAtGround.mSpeed,
+      windAtGround.mDirection,
+      windAtGround.mStandardDirection,
+      windAt2000.mSpeed,
+      windAt2000.mDirection,
+      windAt2000.mStandardDirection,
+      windAt8000.mSpeed,
+      windAt8000.mDirection,
+      windAt8000.mStandardDirection));
 
 } catch (const LuaIndexError& e) {
   dprint("LuaIndexError when loading mission weather: {}", e.what());
@@ -190,7 +192,7 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   if (!mDCSState.mOrigin) {
     return;
   }
-  if (mDCSState.mCoalition == DCS::Coalition::Neutral) {
+  if (mDCSState.mCoalition == DCSEvents::Coalition::Neutral) {
     return;
   }
 
@@ -203,8 +205,8 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   const auto startDate = mission.at("date");
   const auto xyBulls = mission["coalition"][key]["bullseye"];
   const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
-    xyBulls["x"].Get<DCSWorld::GeoReal>(),
-    xyBulls["y"].Get<DCSWorld::GeoReal>());
+    xyBulls["x"].Get<DCSEvents::GeoReal>(),
+    xyBulls["y"].Get<DCSEvents::GeoReal>());
 
   DCSMagneticModel magModel(mInstallationPath);
   magVar = magModel.GetMagneticVariation(
@@ -216,22 +218,23 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
     static_cast<float>(bullsLat),
     static_cast<float>(bullsLong));
 
-  mTextPages->PushMessage(std::format(
-    _("BULLSEYE\n"
-      "\n"
-      "Position: {} {}\n"
-      "          {}   {}\n"
-      "          {:08.4f}, {:08.4f}\n"
-      "          {}\n"
-      "MagVar:   {:.01f}°"),
-    DMSFormat(bullsLat, 'N', 'S'),
-    DMSFormat(bullsLong, 'E', 'W'),
-    DMFormat(bullsLat, 'N', 'S'),
-    DMFormat(bullsLong, 'E', 'W'),
-    bullsLat,
-    bullsLong,
-    MGRSFormat(bullsLat, bullsLong),
-    magVar));
+  mTextPages->PushMessage(
+    std::format(
+      _("BULLSEYE\n"
+        "\n"
+        "Position: {} {}\n"
+        "          {}   {}\n"
+        "          {:08.4f}, {:08.4f}\n"
+        "          {}\n"
+        "MagVar:   {:.01f}°"),
+      DMSFormat(bullsLat, 'N', 'S'),
+      DMSFormat(bullsLong, 'E', 'W'),
+      DMFormat(bullsLat, 'N', 'S'),
+      DMFormat(bullsLong, 'E', 'W'),
+      bullsLat,
+      bullsLong,
+      MGRSFormat(bullsLat, bullsLong),
+      magVar));
 
   if (!mDCSState.mAircraft.starts_with("A-10C")) {
     return;
@@ -244,38 +247,39 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   DCSBriefingWind windAt2000 {wind["at2000"]};
   DCSBriefingWind windAt8000 {wind["at8000"]};
 
-  mTextPages->PushMessage(std::format(
-    _("A-10C LASTE WIND\n"
-      "\n"
-      "Using bullseye magvar: {:.1f}°\n"
-      "\n"
-      "ALT WIND   TEMP\n"
-      "00  {:03.0f}/{:02.0f} {}\n"
-      "01  {:03.0f}/{:02.0f} {}\n"
-      "02  {:03.0f}/{:02.0f} {}\n"
-      "07  {:03.0f}/{:02.0f} {}\n"
-      "26  {:03.0f}/{:02.0f} {}"),
-    magVar,
-    // 0ft/ground
-    windAtGround.mStandardDirection - magVar,
-    windAtGround.mSpeedInKnots,
-    temperature,
-    // 1000ft
-    windAtGround.mStandardDirection - magVar,
-    windAtGround.mSpeedInKnots * 2,
-    temperature - 2,
-    // 2000ft
-    windAtGround.mStandardDirection - magVar,
-    windAtGround.mSpeedInKnots * 2,
-    temperature - (2 * 2),
-    // 7000ft/2000m
-    windAt2000.mStandardDirection - magVar,
-    windAt2000.mSpeedInKnots,
-    temperature - (2 * 7),
-    // 26000ft/8000m
-    windAt8000.mStandardDirection - magVar,
-    windAt8000.mSpeedInKnots,
-    temperature - (2 * 26)));
+  mTextPages->PushMessage(
+    std::format(
+      _("A-10C LASTE WIND\n"
+        "\n"
+        "Using bullseye magvar: {:.1f}°\n"
+        "\n"
+        "ALT WIND   TEMP\n"
+        "00  {:03.0f}/{:02.0f} {}\n"
+        "01  {:03.0f}/{:02.0f} {}\n"
+        "02  {:03.0f}/{:02.0f} {}\n"
+        "07  {:03.0f}/{:02.0f} {}\n"
+        "26  {:03.0f}/{:02.0f} {}"),
+      magVar,
+      // 0ft/ground
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots,
+      temperature,
+      // 1000ft
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots * 2,
+      temperature - 2,
+      // 2000ft
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots * 2,
+      temperature - (2 * 2),
+      // 7000ft/2000m
+      windAt2000.mStandardDirection - magVar,
+      windAt2000.mSpeedInKnots,
+      temperature - (2 * 7),
+      // 26000ft/8000m
+      windAt8000.mStandardDirection - magVar,
+      windAt8000.mSpeedInKnots,
+      temperature - (2 * 26)));
 } catch (const LuaIndexError& e) {
   dprint("LuaIndexError when loading mission bullseye data: {}", e.what());
 }
@@ -295,11 +299,12 @@ std::string DCSBriefingTab::GetMissionText(
 void DCSBriefingTab::PushMissionSituation(
   const LuaRef& mission,
   const LuaRef& dictionary) try {
-  mTextPages->PushMessage(std::format(
-    _("SITUATION\n"
-      "\n"
-      "{}"),
-    GetMissionText(mission, dictionary, "descriptionText")));
+  mTextPages->PushMessage(
+    std::format(
+      _("SITUATION\n"
+        "\n"
+        "{}"),
+      GetMissionText(mission, dictionary, "descriptionText")));
 } catch (const LuaIndexError& e) {
   dprint("LuaIndexError when loading mission situation: {}", e.what());
 }
@@ -307,17 +312,18 @@ void DCSBriefingTab::PushMissionSituation(
 void DCSBriefingTab::PushMissionObjective(
   const LuaRef& mission,
   const LuaRef& dictionary) try {
-  mTextPages->PushMessage(std::format(
-    _("OBJECTIVE\n"
-      "\n"
-      "{}"),
-    GetMissionText(
-      mission,
-      dictionary,
-      CoalitionKey(
-        "descriptionNeutralTask",
-        "descriptionRedTask",
-        "descriptionBlueTask"))));
+  mTextPages->PushMessage(
+    std::format(
+      _("OBJECTIVE\n"
+        "\n"
+        "{}"),
+      GetMissionText(
+        mission,
+        dictionary,
+        CoalitionKey(
+          "descriptionNeutralTask",
+          "descriptionRedTask",
+          "descriptionBlueTask"))));
 } catch (const LuaIndexError& e) {
   dprint("LuaIndexError when loading mission objective: {}", e.what());
 }

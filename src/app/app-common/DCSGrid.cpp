@@ -19,9 +19,9 @@ const auto& UTM() {
 }// namespace
 namespace OpenKneeboard {
 
-static_assert(std::is_same_v<GeographicLib::Math::real, DCSWorld::GeoReal>);
+static_assert(std::is_same_v<GeographicLib::Math::real, GeoReal>);
 
-DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
+DCSGrid::DCSGrid(GeoReal originLat, GeoReal originLong) {
   const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
   mZoneMeridian = (6.0 * zone - 183);
 
@@ -36,13 +36,12 @@ DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
     mOffsetY);
 }
 
-std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> DCSGrid::LatLongFromXY(
-  DCSWorld::GeoReal dcsX,
-  DCSWorld::GeoReal dcsY) const {
+std::tuple<GeoReal, GeoReal> DCSGrid::LatLongFromXY(GeoReal dcsX, GeoReal dcsY)
+  const {
   // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
   const auto x = mOffsetX + dcsY;
   const auto y = mOffsetY + dcsX;
-  DCSWorld::GeoReal retLat {}, retLong {};
+  GeoReal retLat {}, retLong {};
 
   UTM().Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};

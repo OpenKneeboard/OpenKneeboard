@@ -47,6 +47,5 @@ if (NOT ENABLE_APP)
 endif ()
 
 add_subdirectory(dcs-hook)
-add_subdirectory(games)
 add_subdirectory(utilities)
 add_subdirectory(app)

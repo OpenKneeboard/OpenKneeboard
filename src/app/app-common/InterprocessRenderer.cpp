@@ -9,7 +9,6 @@
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/CursorRenderer.hpp>
 #include <OpenKneeboard/D3D11.hpp>
-#include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/GetSystemColor.hpp>
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/InterprocessRenderer.hpp>
@@ -34,29 +33,6 @@
 #include <wincodec.h>
 
 namespace OpenKneeboard {
-
-static SHM::ConsumerPattern GetConsumerPatternForGame(
-  const std::shared_ptr<GameInstance>& game) {
-  if (!game) {
-    return {};
-  }
-
-  switch (game->mOverlayAPI) {
-    case OverlayAPI::None:
-      return {SHM::ConsumerKind::Viewer};
-    case OverlayAPI::AutoDetect:
-      return {};
-    case OverlayAPI::SteamVR:
-      return {SHM::ConsumerKind::OpenVR};
-    case OverlayAPI::OpenXR:
-      return {SHM::ConsumerKind::OpenXR};
-    default:
-      dprint(
-        "Unhandled overlay API: {}", std::to_underlying(game->mOverlayAPI));
-      OPENKNEEBOARD_BREAK;
-      return {};
-  }
-}
 
 void InterprocessRenderer::SubmitFrame(
   const std::vector<SHM::LayerConfig>& shmLayers,
@@ -109,7 +85,6 @@ void InterprocessRenderer::SubmitFrame(
     .mGlobalInputLayerID
     = mKneeboard->GetActiveInGameView()->GetRuntimeID().GetTemporaryValue(),
     .mVR = static_cast<const VRRenderSettings&>(mKneeboard->GetVRSettings()),
-    .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };
   const auto tint = mKneeboard->GetUISettings().mTint;
@@ -273,16 +248,7 @@ InterprocessRenderer::InterprocessRenderer(const audited_ptr<DXResources>& dxr)
 }
 
 void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
-  auto currentGame = kneeboard->GetCurrentGame();
-  if (currentGame) {
-    mCurrentGame = currentGame->mGameInstance.lock();
-  }
-
   mKneeboard = kneeboard;
-
-  AddEventListener(
-    kneeboard->evGameChangedEvent,
-    {weak_from_this(), &InterprocessRenderer::OnGameChanged});
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -395,13 +361,6 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
   }
 
   this->SubmitFrame(shmLayers, inputLayerID);
-}
-
-void InterprocessRenderer::OnGameChanged(
-  DWORD processID,
-  const std::shared_ptr<GameInstance>& game) {
-  mCurrentGame = game;
-  mKneeboard->SetRepaintNeeded();
 }
 
 }// namespace OpenKneeboard

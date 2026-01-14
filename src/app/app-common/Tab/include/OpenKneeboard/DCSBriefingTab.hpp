@@ -2,13 +2,14 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "DCSTab.hpp"
 #include "TabBase.hpp"
 
-#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
@@ -62,14 +63,14 @@ class DCSBriefingTab final : public TabBase,
   std::filesystem::path mInstallationPath;
 
   struct LatLong {
-    DCSWorld::GeoReal mLat;
-    DCSWorld::GeoReal mLong;
+    DCSEvents::GeoReal mLat;
+    DCSEvents::GeoReal mLong;
 
     auto operator<=>(const LatLong&) const noexcept = default;
   };
 
   struct DCSState {
-    DCSWorld::Coalition mCoalition {DCSWorld::Coalition::Neutral};
+    DCSEvents::Coalition mCoalition {DCSEvents::Coalition::Neutral};
     int mCountry = -1;
     std::string mAircraft;
     std::optional<LatLong> mOrigin;
@@ -83,11 +84,11 @@ class DCSBriefingTab final : public TabBase,
     const char* redforKey,
     const char* blueforKey) {
     switch (mDCSState.mCoalition) {
-      case DCSWorld::Coalition::Neutral:
+      case DCSEvents::Coalition::Neutral:
         return neutralKey;
-      case DCSWorld::Coalition::Red:
+      case DCSEvents::Coalition::Red:
         return redforKey;
-      case DCSWorld::Coalition::Blue:
+      case DCSEvents::Coalition::Blue:
         return blueforKey;
     }
     throw std::logic_error("Invalid coalition");

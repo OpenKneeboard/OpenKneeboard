@@ -44,7 +44,6 @@ class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
 struct BaseSetTabEvent;
-struct GameInstance;
 class APIEventServer;
 
 struct ViewRenderInfo {
@@ -57,7 +56,7 @@ struct ViewRenderInfo {
 
 struct GameProcess {
   DWORD mProcessID = 0;
-  std::weak_ptr<GameInstance> mGameInstance;
+  std::filesystem::path mLastSeenPath;
   std::chrono::steady_clock::time_point mSince {};
 };
 
@@ -100,7 +99,7 @@ class KneeboardState final
   Event<> evInputDevicesChangedEvent;
   Event<UserAction> evUserActionEvent;
   Event<APIEvent> evAPIEvent;
-  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
+  Event<DWORD, std::filesystem::path> evGameChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
@@ -214,9 +213,7 @@ class KneeboardState final
 
   bool mSaveSettingsEnabled = true;
 
-  void OnGameChangedEvent(
-    DWORD processID,
-    const std::shared_ptr<GameInstance>& game);
+  void OnGameChangedEvent(DWORD processID, const std::filesystem::path&);
   void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
 

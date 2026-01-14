@@ -15,7 +15,6 @@
 #include "Globals.h"
 
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/GameInstance.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
@@ -447,18 +446,13 @@ std::string HelpPage::GetActiveConsumers() noexcept {
           ret += std::format("{}: none\n", name);
           return;
         }
-        const auto info = process->mGameInstance.lock();
-        if (info) {
-          ret += std::format(
-            "{}: {} (PID {}, started {} ago)\n",
-            name,
-            info->mLastSeenPath.string(),
-            process->mProcessID,
-            std::chrono::duration_cast<std::chrono::seconds>(
-              std::chrono::steady_clock::now() - process->mSince));
-        } else {
-          ret += std::format("{}: {}\n", name, process->mProcessID);
-        }
+        ret += std::format(
+          "{}: '{}' (PID {}, started {} ago)\n",
+          name,
+          process->mLastSeenPath.string(),
+          process->mProcessID,
+          std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - process->mSince));
       };
 
   const auto kb = gKneeboard.lock();

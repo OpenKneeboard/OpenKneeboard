@@ -2,10 +2,11 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/FooterUILayer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -203,8 +204,8 @@ task<void> FooterUILayer::Render(
 }
 
 void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
-  if (ev.name == DCSWorld::EVT_SIMULATION_START) {
-    const auto mission = ev.ParsedValue<DCSWorld::SimulationStartEvent>();
+  if (ev.name == DCSEvents::EVT_SIMULATION_START) {
+    const auto mission = ev.ParsedValue<DCSEvents::SimulationStartEvent>();
 
     const auto startTime = std::chrono::seconds(mission.missionStartTime);
 
@@ -212,8 +213,8 @@ void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
     return;
   }
 
-  if (ev.name == DCSWorld::EVT_MISSION_TIME) {
-    const auto times = ev.TryParsedValue<DCSWorld::MissionTimeEvent>();
+  if (ev.name == DCSEvents::EVT_MISSION_TIME) {
+    const auto times = ev.TryParsedValue<DCSEvents::MissionTimeEvent>();
     if (!times) {
       dprint("Failed to parse mission times: {}", times.error().what);
       return;
@@ -233,7 +234,7 @@ void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
 
 void FooterUILayer::OnGameChanged(
   DWORD processID,
-  const std::shared_ptr<GameInstance>&) {
+  const std::filesystem::path&) {
   if (processID == mCurrentGamePID) {
     return;
   }

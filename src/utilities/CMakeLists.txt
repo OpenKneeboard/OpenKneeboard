@@ -23,20 +23,6 @@ endfunction()
 
 include(remote-control.cmake)
 
-ok_add_executable(
-  test-apievent-feeder
-  test-apievent-feeder.cpp
-  remote-traceprovider.cpp
-)
-target_link_libraries(
-  test-apievent-feeder
-  PRIVATE
-  OpenKneeboard-APIEvent
-  OpenKneeboard-consolelib
-  OpenKneeboard-games
-  OpenKneeboard-tracing
-)
-
 add_utility_executable(
   OpenKneeboard-Plugin-Tab-Action
   WIN32
@@ -114,19 +100,6 @@ target_link_libraries(
   System::Dcomp
   System::Dxgi
   ThirdParty::DirectXTK
-)
-
-ok_add_executable(
-  fake-dcs
-  fake-dcs.cpp
-  remote-traceprovider.cpp
-)
-target_link_libraries(
-  fake-dcs
-  PRIVATE
-  OpenKneeboard-APIEvent
-  OpenKneeboard-games
-  OpenKneeboard-tracing
 )
 
 add_helper_executable(

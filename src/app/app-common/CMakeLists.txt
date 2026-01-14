@@ -262,6 +262,7 @@ ok_add_library(
   include/OpenKneeboard/Coordinates.hpp
   include/OpenKneeboard/CursorRenderer.hpp
   include/OpenKneeboard/DCSExtractedMission.hpp
+  include/OpenKneeboard/DCSEvents.hpp
   include/OpenKneeboard/DCSGrid.hpp
   include/OpenKneeboard/DCSMagneticModel.hpp
   include/OpenKneeboard/DebugPrivileges.hpp
@@ -337,7 +338,6 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-fatal
-  OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_exit
   OpenKneeboard-semver

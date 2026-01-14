@@ -2,15 +2,14 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DCSTerrainTab.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-
-using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
@@ -71,7 +70,7 @@ OpenKneeboard::fire_and_forget DCSTerrainTab::OnAPIEvent(
   APIEvent event,
   std::filesystem::path installPath,
   std::filesystem::path savedGamesPath) {
-  if (event.name != DCS::EVT_TERRAIN) {
+  if (event.name != DCSEvents::EVT_TERRAIN) {
     co_return;
   }
   if (event.value == mTerrain) {
@@ -116,8 +115,9 @@ OpenKneeboard::fire_and_forget DCSTerrainTab::OnAPIEvent(
 
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (auto& path: paths) {
-    delegates.push_back(std::static_pointer_cast<IPageSource>(
-      co_await FolderPageSource::Create(mDXR, mKneeboard, path)));
+    delegates.push_back(
+      std::static_pointer_cast<IPageSource>(
+        co_await FolderPageSource::Create(mDXR, mKneeboard, path)));
   }
   co_await this->SetDelegates(delegates);
 }

@@ -2,12 +2,13 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DCSBriefingTab.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 #include <OpenKneeboard/Lua.hpp>
 #include <OpenKneeboard/NavigationTab.hpp>
@@ -16,8 +17,6 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
-
-using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
@@ -155,7 +154,7 @@ OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
   std::filesystem::path installPath,
   std::filesystem::path) {
   mInstallationPath = installPath;
-  if (event.name == DCS::EVT_MISSION) {
+  if (event.name == DCSEvents::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
       dprint("Briefing tab: mission '{}' does not exist", event.value);
@@ -175,13 +174,14 @@ OpenKneeboard::fire_and_forget DCSBriefingTab::OnAPIEvent(
   }
 
   auto state = mDCSState;
-  if (event.name == DCS::EVT_SELF_DATA) {
+  if (event.name == DCSEvents::EVT_SELF_DATA) {
     auto raw = nlohmann::json::parse(event.value);
-    state.mCoalition = static_cast<DCSWorld::Coalition>(
-      raw.at("CoalitionID").get<std::underlying_type_t<DCSWorld::Coalition>>()),
+    state.mCoalition = static_cast<DCSEvents::Coalition>(
+      raw.at("CoalitionID")
+        .get<std::underlying_type_t<DCSEvents::Coalition>>()),
     state.mCountry = raw.at("Country");
     state.mAircraft = raw.at("Name");
-  } else if (event.name == DCS::EVT_ORIGIN) {
+  } else if (event.name == DCSEvents::EVT_ORIGIN) {
     auto raw = nlohmann::json::parse(event.value);
     state.mOrigin = LatLong {
       .mLat = raw["latitude"],

@@ -78,7 +78,6 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-fatal
-  OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-semver
   OpenKneeboard-tracing

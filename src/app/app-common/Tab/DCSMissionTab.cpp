@@ -2,16 +2,15 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
+#include <OpenKneeboard/DCSEvents.hpp>
 #include <OpenKneeboard/DCSExtractedMission.hpp>
 #include <OpenKneeboard/DCSMissionTab.hpp>
-#include <OpenKneeboard/DCSWorld.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-
-using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
@@ -100,7 +99,7 @@ OpenKneeboard::fire_and_forget DCSMissionTab::OnAPIEvent(
   APIEvent event,
   [[maybe_unused]] std::filesystem::path installPath,
   [[maybe_unused]] std::filesystem::path savedGamePath) {
-  if (event.name == DCS::EVT_MISSION) {
+  if (event.name == DCSEvents::EVT_MISSION) {
     const auto missionZip = this->ToAbsolutePath(event.value);
     if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
       dprint("MissionTab: mission '{}' does not exist", event.value);
@@ -116,7 +115,7 @@ OpenKneeboard::fire_and_forget DCSMissionTab::OnAPIEvent(
     co_return;
   }
 
-  if (event.name == DCS::EVT_AIRCRAFT) {
+  if (event.name == DCSEvents::EVT_AIRCRAFT) {
     if (event.value == mAircraft) {
       co_return;
     }
