@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include "viewer-d3d12.hpp"
 
@@ -57,6 +58,9 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
     D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
     D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
     1);
+
+  mSHM = std::make_unique<SHM::D3D12::Reader>(
+    SHM::ConsumerKind::Viewer, mDevice.get());
 }
 
 D3D12Renderer::~D3D12Renderer() = default;
@@ -65,16 +69,15 @@ std::wstring_view D3D12Renderer::GetName() const noexcept {
   return {L"D3D12"};
 }
 
-SHM::CachedReader* D3D12Renderer::GetSHM() {
-  return &mSHM;
+SHM::Reader& D3D12Renderer::GetSHM() {
+  return *mSHM;
 }
 
 void D3D12Renderer::Initialize(uint8_t swapchainLength) {
-  mSHM.InitializeCache(mDevice.get(), mCommandQueue.get(), swapchainLength);
 }
 
 uint64_t D3D12Renderer::Render(
-  SHM::IPCClientTexture* sourceTexture,
+  SHM::Frame rawSource,
   const PixelRect& sourceRect,
   HANDLE destTextureHandle,
   const PixelSize& destTextureDimensions,
@@ -82,6 +85,8 @@ uint64_t D3D12Renderer::Render(
   HANDLE fenceHandle,
   uint64_t fenceValueIn) {
   OPENKNEEBOARD_TraceLoggingScope("Viewer::D3D12Renderer::Render");
+
+  const auto source = mSHM->Map(std::move(rawSource));
 
   RenderDoc::NestedFrameCapture renderDocFrame(
     mDevice.get(), "D3D12Renderer::Render()");
@@ -102,7 +107,6 @@ uint64_t D3D12Renderer::Render(
     mFenceHandle = fenceHandle;
   }
 
-  auto source = reinterpret_cast<SHM::D3D12::Texture*>(sourceTexture);
   auto dest = mDestRTVHeap->GetFirstCpuHandle();
   mDevice->CreateRenderTargetView(mDestTexture.get(), nullptr, dest);
 
@@ -118,7 +122,7 @@ uint64_t D3D12Renderer::Render(
 
   auto cl = mCommandList.get();
 
-  ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
+  ID3D12DescriptorHeap* heaps[] {source.mShaderResourceViewHeap};
   cl->SetDescriptorHeaps(std::size(heaps), heaps);
 
   D3D12_RESOURCE_BARRIER inBarriers[] {
@@ -135,7 +139,7 @@ uint64_t D3D12Renderer::Render(
 
   mSpriteBatch->Begin(cl, dest, destTextureDimensions);
   mSpriteBatch->Draw(
-    source->GetD3D12Texture(), source->GetDimensions(), sourceRect, destRect);
+    source.mTexture, source.mTextureDimensions, sourceRect, destRect);
   mSpriteBatch->End();
 
   D3D12_RESOURCE_BARRIER outBarriers[] {
@@ -168,18 +172,13 @@ uint64_t D3D12Renderer::Render(
   return fenceValueOut;
 }
 
-void D3D12Renderer::SaveTextureToFile(
-  SHM::IPCClientTexture* texture,
+void D3D12Renderer::SaveToDDSFile(
+  SHM::Frame raw,
   const std::filesystem::path& path) {
-  SaveTextureToFile(
-    reinterpret_cast<SHM::D3D12::Texture*>(texture)->GetD3D12Texture(), path);
-}
-void D3D12Renderer::SaveTextureToFile(
-  ID3D12Resource* texture,
-  const std::filesystem::path& path) {
+  const auto frame = mSHM->Map(std::move(raw));
   check_hresult(
     DirectX::SaveDDSTextureToFile(
-      mCommandQueue.get(), texture, path.wstring().c_str()));
+      mCommandQueue.get(), frame.mTexture, path.wstring().c_str()));
 }
 
 }// namespace OpenKneeboard::Viewer

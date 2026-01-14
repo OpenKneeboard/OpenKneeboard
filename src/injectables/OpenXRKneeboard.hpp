@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #pragma once
 
@@ -52,17 +53,15 @@ class OpenXRKneeboard : public VRKneeboard {
   virtual void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerSprite>& layers)
-    = 0;
-  virtual SHM::CachedReader* GetSHM() = 0;
+    SHM::Frame frame,
+    const std::span<SHM::LayerSprite>& layers) = 0;
+  virtual SHM::Reader& GetSHM() = 0;
 
   OpenXRNext* GetOpenXR();
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
   XrInstance mXRInstance;
-  uint64_t mSessionID {};
 
   uint32_t mMaxLayerCount {};
 

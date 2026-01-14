@@ -36,18 +36,18 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   static DXGIFormats GetDXGIFormats(OpenXRNext*, XrSession);
 
  protected:
-  virtual SHM::CachedReader* GetSHM() override;
-  virtual XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
-  virtual void ReleaseSwapchainResources(XrSwapchain) override;
+  SHM::Reader& GetSHM() override;
+  XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
+  void ReleaseSwapchainResources(XrSwapchain) override;
 
-  virtual void RenderLayers(
+  void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
+    SHM::Frame,
     const std::span<SHM::LayerSprite>& layers) override;
 
  private:
-  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR_D3D11};
+  std::unique_ptr<SHM::D3D11::Reader> mSHM;
 
   winrt::com_ptr<ID3D11Device> mDevice;
   winrt::com_ptr<ID3D11DeviceContext1> mImmediateContext;

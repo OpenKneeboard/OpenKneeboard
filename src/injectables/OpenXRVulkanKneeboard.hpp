@@ -46,13 +46,13 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   ~OpenXRVulkanKneeboard();
 
  protected:
-  virtual SHM::CachedReader* GetSHM() override;
-  virtual XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
-  virtual void ReleaseSwapchainResources(XrSwapchain) override;
-  virtual void RenderLayers(
+  SHM::Reader& GetSHM() override;
+  XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
+  void ReleaseSwapchainResources(XrSwapchain) override;
+  void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
+    SHM::Frame,
     const std::span<SHM::LayerSprite>& layers) override;
 
  private:
@@ -89,7 +89,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
   std::optional<SwapchainResources> mSwapchainResources;
 
-  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR_Vulkan2};
+  std::unique_ptr<SHM::Vulkan::Reader> mSHM;
 
   void WaitForAllFences();
 };

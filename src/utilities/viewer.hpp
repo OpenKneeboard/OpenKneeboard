@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "viewer-settings.hpp"
@@ -17,16 +18,13 @@ namespace OpenKneeboard::Viewer {
 class Renderer {
  public:
   virtual ~Renderer();
-  virtual SHM::CachedReader* GetSHM() = 0;
+  virtual SHM::Reader& GetSHM() = 0;
 
   virtual std::wstring_view GetName() const noexcept = 0;
 
   virtual void Initialize(uint8_t swapchainLength) = 0;
 
-  virtual void SaveTextureToFile(
-    SHM::IPCClientTexture*,
-    const std::filesystem::path&)
-    = 0;
+  virtual void SaveToDDSFile(SHM::Frame, const std::filesystem::path&) = 0;
 
   /** Render the texture.
    *
@@ -36,14 +34,13 @@ class Renderer {
    * @return a fence value to wait on
    */
   virtual uint64_t Render(
-    SHM::IPCClientTexture* sourceTexture,
+    SHM::Frame,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
     const PixelRect& destRect,
     HANDLE fence,
-    uint64_t fenceValueIn)
-    = 0;
+    uint64_t fenceValueIn) = 0;
 };
 
 }// namespace OpenKneeboard::Viewer

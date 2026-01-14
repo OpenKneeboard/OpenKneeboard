@@ -36,17 +36,17 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   ~OpenXRD3D12Kneeboard();
 
  protected:
-  virtual SHM::CachedReader* GetSHM() override;
-  virtual XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
-  virtual void ReleaseSwapchainResources(XrSwapchain) override;
-  virtual void RenderLayers(
+  SHM::Reader& GetSHM() override;
+  XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
+  void ReleaseSwapchainResources(XrSwapchain) override;
+  void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
+    SHM::Frame,
     const std::span<SHM::LayerSprite>& layers) override;
 
  private:
-  SHM::D3D12::CachedReader mSHM {SHM::ConsumerKind::OpenXR_D3D12};
+  std::unique_ptr<SHM::D3D12::Reader> mSHM;
 
   std::unique_ptr<DirectX::GraphicsMemory> mGraphicsMemory;
 

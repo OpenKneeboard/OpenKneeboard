@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "viewer.hpp"
@@ -20,19 +21,17 @@ class D3D11Renderer final : public Renderer {
  public:
   D3D11Renderer() = delete;
   D3D11Renderer(const winrt::com_ptr<ID3D11Device>&);
-  virtual ~D3D11Renderer();
-  virtual std::wstring_view GetName() const noexcept override;
+  ~D3D11Renderer() override;
+  std::wstring_view GetName() const noexcept override;
 
-  virtual SHM::CachedReader* GetSHM() override;
+  SHM::Reader& GetSHM() override;
 
-  virtual void Initialize(uint8_t swapchainLength) override;
+  void Initialize(uint8_t swapchainLength) override;
 
-  virtual void SaveTextureToFile(
-    SHM::IPCClientTexture*,
-    const std::filesystem::path&) override;
+  void SaveToDDSFile(SHM::Frame frame, const std::filesystem::path&) override;
 
-  virtual uint64_t Render(
-    SHM::IPCClientTexture* sourceTexture,
+  uint64_t Render(
+    SHM::Frame,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
@@ -41,7 +40,7 @@ class D3D11Renderer final : public Renderer {
     uint64_t fenceValueIn) override;
 
  private:
-  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+  std::unique_ptr<SHM::D3D11::Reader> mSHM;
 
   uint64_t mSessionID {};
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/D3D11/Renderer.hpp>
 
 #include <OpenKneeboard/hresult.hpp>
@@ -27,31 +28,37 @@ SwapchainBufferResources::SwapchainBufferResources(
 }
 
 Renderer::Renderer(ID3D11Device* device) {
+  // `query_to` jump because we can't directly fetch an ID3D11DeviceContext4,
+  // which we need for ID3D11Fence support
+  wil::com_ptr<ID3D11DeviceContext> ctx;
+  device->GetImmediateContext(ctx.put());
+  ctx.query_to(mContext.put());
+
   mSpriteBatch = std::make_unique<SpriteBatch>(device);
 }
 
 void Renderer::RenderLayers(
   const SwapchainResources& sr,
   uint32_t swapchainTextureIndex,
-  const SHM::Snapshot& snapshot,
+  const SHM::D3D11::Frame& frame,
   const std::span<SHM::LayerSprite>& layers,
   RenderMode renderMode) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::Renderer::RenderLayers()");
 
-  auto source
-    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
+  const auto source = frame.mShaderResourceView;
 
   const auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
   auto dest = br.mRenderTargetView.get();
 
+  check_hresult(mContext->Wait(frame.mFence, frame.mFenceIn));
   mSpriteBatch->Begin(dest, sr.mDimensions);
 
   if (renderMode == RenderMode::ClearAndRender) {
     mSpriteBatch->Clear();
   }
 
-  const auto baseTint = snapshot.GetConfig().mTint;
+  const auto baseTint = frame.mConfig.mTint;
 
   for (const auto& layer: layers) {
     const DirectX::XMVECTORF32 layerTint {

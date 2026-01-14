@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "viewer.hpp"
@@ -21,17 +22,15 @@ class VulkanRenderer final : public Renderer {
   VulkanRenderer(uint64_t luid);
   virtual ~VulkanRenderer();
 
-  virtual SHM::CachedReader* GetSHM() override;
-  virtual std::wstring_view GetName() const noexcept override;
+  SHM::Reader& GetSHM() override;
+  std::wstring_view GetName() const noexcept override;
 
-  virtual void Initialize(uint8_t swapchainLength) override;
+  void Initialize(uint8_t swapchainLength) override;
 
-  virtual void SaveTextureToFile(
-    SHM::IPCClientTexture*,
-    const std::filesystem::path&) override;
+  void SaveToDDSFile(SHM::Frame frame, const std::filesystem::path&) override;
 
-  virtual uint64_t Render(
-    SHM::IPCClientTexture* sourceTexture,
+  uint64_t Render(
+    SHM::Frame,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
@@ -74,7 +73,7 @@ class VulkanRenderer final : public Renderer {
   // Last as it caches some Vulkan resources; as Vulkan doesn't internally use
   // refcounting, we need to make sure these are released before the `unique_vk`
   // above.
-  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+  std::unique_ptr<SHM::Vulkan::Reader> mSHM;
   std::unique_ptr<OpenKneeboard::Vulkan::SpriteBatch> mSpriteBatch;
 
   void InitializeSemaphore(HANDLE);

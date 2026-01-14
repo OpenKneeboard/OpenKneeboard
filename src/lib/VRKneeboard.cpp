@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/RayIntersectsRect.hpp>
 #include <OpenKneeboard/SHM/ActiveConsumers.hpp>
 #include <OpenKneeboard/VRKneeboard.hpp>
@@ -92,27 +93,24 @@ void VRKneeboard::Recenter(const VRRenderSettings& vr, const Pose& hmdPose) {
 }
 
 std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
-  const SHM::Snapshot& snapshot,
+  const SHM::Config& config,
+  const std::span<const SHM::LayerConfig>& layers,
   const Pose& hmdPose) {
   if (!mEyeHeight) {
     mEyeHeight = {hmdPose.mPosition.y};
   }
 
-  const auto totalLayers = snapshot.GetLayerCount();
-
   std::vector<Layer> ret;
-  ret.reserve(totalLayers);
-  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
-    const auto layerConfig = snapshot.GetLayerConfig(layerIndex);
-    if (!layerConfig->mVREnabled) {
+  ret.reserve(layers.size());
+  for (const auto& layerConfig: layers) {
+    if (!layerConfig.mVREnabled) {
       continue;
     }
 
-    ret.push_back(Layer {
-      layerConfig, GetRenderParameters(snapshot, *layerConfig, hmdPose)});
+    ret.push_back(
+      Layer {&layerConfig, GetRenderParameters(config, layerConfig, hmdPose)});
   }
 
-  const auto config = snapshot.GetConfig();
   if (!config.mVR.mEnableGazeInputFocus) {
     return ret;
   }
@@ -142,26 +140,17 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
 }
 
 VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
-  const SHM::Snapshot& snapshot,
+  const SHM::Config& config,
   const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
-  auto config = snapshot.GetConfig();
   const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
   const auto isLookingAtKneeboard
     = this->IsLookingAtKneeboard(config, layer, hmdPose, kneeboardPose);
-
-  auto cacheKey = snapshot.GetRenderCacheKey();
-  if (isLookingAtKneeboard) {
-    cacheKey |= 1ui64;
-  } else {
-    cacheKey &= ~(1ui64);
-  }
 
   return {
     .mKneeboardPose = kneeboardPose,
     .mKneeboardSize
     = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
-    .mCacheKey = cacheKey,
     .mKneeboardOpacity = isLookingAtKneeboard ? layer.mVR.mOpacity.mGaze
                                               : layer.mVR.mOpacity.mNormal,
     .mIsLookingAtKneeboard = isLookingAtKneeboard,

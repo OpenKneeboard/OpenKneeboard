@@ -2,13 +2,15 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include "viewer-d3d11.hpp"
 
 #include <OpenKneeboard/D3D11.hpp>
 
 #include <OpenKneeboard/hresult.hpp>
+
 #include <directxtk/ScreenGrab.h>
 
 namespace OpenKneeboard::Viewer {
@@ -19,6 +21,9 @@ D3D11Renderer::D3D11Renderer(const winrt::com_ptr<ID3D11Device>& device) {
   device->GetImmediateContext(mD3D11ImmediateContext.put());
 
   mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(device.get());
+
+  mSHM = std::make_unique<SHM::D3D11::Reader>(
+    SHM::ConsumerKind::Viewer, device.get());
 }
 
 D3D11Renderer::~D3D11Renderer() = default;
@@ -27,16 +32,15 @@ std::wstring_view D3D11Renderer::GetName() const noexcept {
   return {L"D3D11"};
 }
 
-SHM::CachedReader* D3D11Renderer::GetSHM() {
-  return &mSHM;
+SHM::Reader& D3D11Renderer::GetSHM() {
+  return *mSHM.get();
 }
 
 void D3D11Renderer::Initialize(uint8_t swapchainLength) {
-  mSHM.InitializeCache(mD3D11Device.get(), swapchainLength);
 }
 
 uint64_t D3D11Renderer::Render(
-  SHM::IPCClientTexture* sourceTexture,
+  SHM::Frame rawFrame,
   const PixelRect& sourceRect,
   HANDLE destTextureHandle,
   const PixelSize& destTextureDimensions,
@@ -45,9 +49,6 @@ uint64_t D3D11Renderer::Render(
   uint64_t fenceValueIn) {
   OPENKNEEBOARD_TraceLoggingScope("Viewer::D3D11Renderer::Render");
   if (mDestDimensions != destTextureDimensions) {
-    mDestHandle = {};
-  }
-  if (mSessionID != mSHM.GetSessionID()) {
     mDestHandle = {};
   }
   if (mDestHandle != destTextureHandle) {
@@ -62,8 +63,8 @@ uint64_t D3D11Renderer::Render(
     mDestDimensions = destTextureDimensions;
   }
 
-  auto sourceSRV = reinterpret_cast<SHM::D3D11::Texture*>(sourceTexture)
-                     ->GetD3D11ShaderResourceView();
+  const auto frame = mSHM->Map(std::move(rawFrame));
+  const auto sourceSRV = frame.mShaderResourceView;
 
   // We could just use CopySubResourceRegion(), but we might as test
   // D3D11::SpriteBatch a little :)
@@ -78,13 +79,14 @@ uint64_t D3D11Renderer::Render(
   return fenceValueIn;
 }
 
-void D3D11Renderer::SaveTextureToFile(
-  SHM::IPCClientTexture* texture,
+void D3D11Renderer::SaveToDDSFile(
+  SHM::Frame raw,
   const std::filesystem::path& path) {
-  check_hresult(DirectX::SaveDDSTextureToFile(
-    mD3D11ImmediateContext.get(),
-    reinterpret_cast<SHM::D3D11::Texture*>(texture)->GetD3D11Texture(),
-    path.wstring().c_str()));
+  const auto frame = mSHM->Map(std::move(raw));
+
+  check_hresult(
+    DirectX::SaveDDSTextureToFile(
+      mD3D11ImmediateContext.get(), frame.mTexture, path.wstring().c_str()));
 }
 
 }// namespace OpenKneeboard::Viewer

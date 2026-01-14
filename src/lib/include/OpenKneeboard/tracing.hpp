@@ -172,4 +172,7 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
       ##__VA_ARGS__); \
   }};
 
+#define OPENKNEEBOARD_TraceLoggingStringView(value, name) \
+  TraceLoggingCountedUtf8String(value.data(), value.size(), name)
+
 }// namespace OpenKneeboard

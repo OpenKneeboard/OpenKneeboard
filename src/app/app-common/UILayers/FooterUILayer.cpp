@@ -4,6 +4,8 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
+#include "OpenKneeboard/InterprocessRenderer.hpp"
+
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DCSEvents.hpp>
@@ -191,9 +193,12 @@ task<void> FooterUILayer::Render(
 
   // Frame count
   if (mKneeboard->GetUISettings().mInGameUI.mFooterFrameCountEnabled) {
-    drawClock(
-      std::format(L"OKB Frame {}", mSHM.GetFrameCountForMetricsOnly()),
-      DWRITE_TEXT_ALIGNMENT_CENTER);
+    auto ipc = mKneeboard->GetInterprocessRenderer();
+    if (ipc) {
+      drawClock(
+        std::format(L"OKB Frame {}", ipc->GetFrameCountForMetricsOnly()),
+        DWRITE_TEXT_ALIGNMENT_CENTER);
+    }
   }
 
   // Real time

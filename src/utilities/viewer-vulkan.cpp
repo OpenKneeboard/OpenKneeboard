@@ -275,6 +275,15 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   };
   mCompletionFence
     = mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
+
+  mSHM = std::make_unique<SHM::Vulkan::Reader>(
+    SHM::ConsumerKind::Viewer,
+    mVK.get(),
+    mVKInstance.get(),
+    mDevice.get(),
+    mVKPhysicalDevice,
+    mQueueFamilyIndex,
+    nullptr);
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -290,8 +299,8 @@ VulkanRenderer::~VulkanRenderer() {
     mDevice.get(), mCommandPool.get(), 1, &mCommandBuffer);
 }
 
-SHM::CachedReader* VulkanRenderer::GetSHM() {
-  return &mSHM;
+SHM::Reader& VulkanRenderer::GetSHM() {
+  return *mSHM.get();
 }
 
 std::wstring_view VulkanRenderer::GetName() const noexcept {
@@ -304,28 +313,19 @@ void VulkanRenderer::Initialize(uint8_t swapchainLength) {
     check_vkresult(
       mVK->WaitForFences(mDevice.get(), 1, &fence, true, ~(0ui64)));
   }
-  mSHM.InitializeCache(
-    mVK.get(),
-    mVKInstance.get(),
-    mDevice.get(),
-    mVKPhysicalDevice,
-    mQueueFamilyIndex,
-    0,
-    nullptr,
-    swapchainLength);
 }
 
-void VulkanRenderer::SaveTextureToFile(
-  SHM::IPCClientTexture* texture,
+void VulkanRenderer::SaveToDDSFile(
+  SHM::Frame raw,
   const std::filesystem::path& path) {
-  const auto source = reinterpret_cast<SHM::Vulkan::Texture*>(texture);
+  const auto source = mSHM->Map(std::move(raw));
 
   this->SaveTextureToFile(
-    source->GetDimensions(),
-    source->GetVKImage(),
+    source.mDimensions,
+    source.mImage,
     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    source->GetReadySemaphore(),
-    source->GetReadySemaphoreValue(),
+    source.mSemaphore,
+    source.mSemaphoreIn,
     path);
 }
 
@@ -586,13 +586,14 @@ void VulkanRenderer::SaveTextureToFile(
 }
 
 uint64_t VulkanRenderer::Render(
-  SHM::IPCClientTexture* sourceTexture,
+  SHM::Frame rawSource,
   const PixelRect& sourceRect,
   HANDLE destTexture,
   const PixelSize& destTextureDimensions,
   const PixelRect& destRect,
   HANDLE semaphoreHandle,
   uint64_t semaphoreValueIn) {
+  auto source = mSHM->Map(std::move(rawSource));
   this->InitializeSemaphore(semaphoreHandle);
   this->InitializeDest(destTexture, destTextureDimensions);
 
@@ -630,13 +631,11 @@ uint64_t VulkanRenderer::Render(
     1,
     &inBarrier);
 
-  auto source = reinterpret_cast<SHM::Vulkan::Texture*>(sourceTexture);
-
   mSpriteBatch->Begin(
     mCommandBuffer, mDestImageView.get(), destTextureDimensions);
 
   mSpriteBatch->Draw(
-    source->GetVKImageView(), source->GetDimensions(), sourceRect, destRect);
+    source.mImageView, source.mDimensions, sourceRect, destRect);
 
   mSpriteBatch->End();
 
@@ -670,11 +669,11 @@ uint64_t VulkanRenderer::Render(
 
   VkSemaphore waitSemaphores[] = {
     mSemaphore.get(),
-    source->GetReadySemaphore(),
+    source.mSemaphore,
   };
   uint64_t waitSemaphoreValues[] = {
     semaphoreValueIn,
-    source->GetReadySemaphoreValue(),
+    source.mSemaphoreIn,
   };
 
   VkSemaphore signalSemaphores[] = {

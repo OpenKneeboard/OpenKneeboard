@@ -56,9 +56,6 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
 
   KneeboardState* mKneeboard {nullptr};
 
-  // Used for frame counter only
-  SHM::Reader mSHM;
-
   using Clock = std::chrono::system_clock;
   using Duration = std::chrono::seconds;
   using TimePoint = std::chrono::time_point<Clock, Duration>;

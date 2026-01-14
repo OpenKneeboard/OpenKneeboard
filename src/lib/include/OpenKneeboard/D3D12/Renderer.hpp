@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/D3D12.hpp>
@@ -50,7 +51,7 @@ class Renderer {
   void RenderLayers(
     SwapchainResources&,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
+    const SHM::D3D12::Frame& frame,
     const std::span<SHM::LayerSprite>& layers,
     RenderMode);
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/D3D11.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/EnumerateProcesses.hpp>
@@ -34,11 +35,11 @@ using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
-SteamVRKneeboard::SteamVRKneeboard() {
+SteamVRKneeboard::SteamVRKneeboard()
+  : mSHM(SHM::ConsumerKind::OpenVR, mDXR.mD3D11Device.get()) {
   OPENKNEEBOARD_TraceLoggingScope("SteamVRKneeboard::SteamVRKneeboard()");
   auto d3d = mDXR.mD3D11Device.get();
   {
-    mSHM.InitializeCache(d3d, /* swapchainLength = */ 2);
     DXGI_ADAPTER_DESC desc;
     mDXR.mDXGIAdapter->GetDesc(&desc);
     dprint(
@@ -208,8 +209,8 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  const auto snapshot = mSHM.MaybeGet();
-  if (!snapshot.HasTexture()) {
+  const auto frame = mSHM.MaybeGetMapped();
+  if (!frame) {
     this->HideAllOverlays();
     return;
   }
@@ -220,28 +221,19 @@ void SteamVRKneeboard::Tick() {
     return;
   }
   const auto hmdPose = *maybeHMDPose;
-  const auto vrLayers = this->GetLayers(snapshot, hmdPose);
-
-  auto srv
-    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
-  if (!srv) {
-    dprint("Failed to get shared texture");
-    return;
-  }
+  const auto vrLayers
+    = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
 
   auto ctx = mDXR.mD3D11ImmediateContext.get();
   std::vector<size_t> activeLayers;
 
-  const auto baseTint = snapshot.GetConfig().mTint;
+  const auto baseTint = frame->mConfig.mTint;
 
   for (size_t layerIndex = 0; layerIndex < vrLayers.size(); ++layerIndex) {
     this->InitializeLayer(layerIndex);
     const auto [layer, renderParams] = vrLayers.at(layerIndex);
     auto& layerState = mLayers.at(layerIndex);
 
-    if (renderParams.mCacheKey == layerState.mCacheKey) {
-      continue;
-    }
     activeLayers.push_back(layerIndex);
 
     // Copy the texture as for interoperability with other systems
@@ -266,7 +258,7 @@ void SteamVRKneeboard::Tick() {
     const auto& imageSize = layer->mVR.mLocationOnTexture.mSize;
     mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize);
     mSpriteBatch->Draw(
-      srv,
+      frame->mShaderResourceView,
       layer->mVR.mLocationOnTexture,
       {
         {0, 0},
@@ -355,8 +347,6 @@ void SteamVRKneeboard::Tick() {
     };
 
     OVERLAY_CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);
-
-    layerState.mCacheKey = renderParams.mCacheKey;
   }
   for (uint8_t i = 0; i < MaxViewCount; ++i) {
     if (!mLayers.at(i).mOverlay) {
@@ -371,7 +361,7 @@ void SteamVRKneeboard::Tick() {
       continue;
     }
 
-    const auto enabled = snapshot.GetLayerConfig(i)->mVREnabled;
+    const auto enabled = frame->mLayers.at(i).mVREnabled;
     if (visible && !enabled) {
       OVERLAY_CHECK(HideOverlay, mLayers.at(i).mOverlay);
       visible = false;

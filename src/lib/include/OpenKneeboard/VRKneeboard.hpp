@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/SHM.hpp>
@@ -27,7 +28,6 @@ class VRKneeboard {
   struct RenderParameters {
     Pose mKneeboardPose;
     Vector2 mKneeboardSize;
-    uint64_t mCacheKey;
     float mKneeboardOpacity;
     bool mIsLookingAtKneeboard;
   };
@@ -38,11 +38,14 @@ class VRKneeboard {
   };
 
  protected:
-  std::vector<Layer> GetLayers(const SHM::Snapshot&, const Pose& hmdPose);
+  std::vector<Layer> GetLayers(
+    const SHM::Config&,
+    const std::span<const SHM::LayerConfig>&,
+    const Pose& hmdPose);
 
  private:
   RenderParameters GetRenderParameters(
-    const SHM::Snapshot&,
+    const SHM::Config&,
     const SHM::LayerConfig&,
     const Pose& hmdPose);
 

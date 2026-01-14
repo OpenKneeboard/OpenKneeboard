@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/StateMachine.hpp>
@@ -14,8 +15,7 @@ namespace OpenKneeboard::SHM {
 #define OPENKNEEBOARD_SHM_READER_STATES \
   IT(Unlocked) \
   IT(TryLock) \
-  IT(Locked) \
-  IT(CreatingSnapshot)
+  IT(Locked)
 
 enum class ReaderState {
 #define IT(x) x,
@@ -26,12 +26,7 @@ enum class ReaderState {
 using ReaderStateMachine = StateMachine<
   ReaderState,
   ReaderState::Unlocked,
-  array_cat(
-    lockable_transitions<ReaderState>(),
-    std::array {
-      Transition {ReaderState::Locked, ReaderState::CreatingSnapshot},
-      Transition {ReaderState::CreatingSnapshot, ReaderState::Locked},
-    }),
+  lockable_transitions<ReaderState>(),
   ReaderState::Unlocked>;
 
 static_assert(lockable_state_machine<SHM::ReaderStateMachine>);

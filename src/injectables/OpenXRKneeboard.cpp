@@ -216,36 +216,36 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  const auto shm = this->GetSHM();
+  auto& shm = this->GetSHM();
 
-  if (!(shm && *shm)) {
-    TraceLoggingWriteTagged(activity, "No feeder");
+  if (!shm) {
+    TraceLoggingWriteTagged(activity, "No SHM");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot = shm->MaybeGetMetadata();
-  if (!snapshot.HasMetadata()) {
-    TraceLoggingWriteTagged(activity, "No metadata");
+  auto frame = shm.MaybeGet();
+  if (!frame) {
+    TraceLoggingWriteTagged(
+      activity,
+      "No frame",
+      OPENKNEEBOARD_TraceLoggingStringView(
+        magic_enum::enum_name(frame.error()), "Error"));
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  if (snapshot.GetLayerCount() < 1) {
+  if (frame->mLayers.empty()) {
     TraceLoggingWriteTagged(activity, "No SHM layers");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
   const auto swapchainDimensions
-    = Spriting::GetBufferSize(snapshot.GetLayerCount());
+    = Spriting::GetBufferSize(frame->mLayers.size());
 
-  if (mSwapchain) {
-    if (
-      (mSwapchainDimensions != swapchainDimensions)
-      || (mSessionID != snapshot.GetSessionID())) {
-      OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
-      this->ReleaseSwapchainResources(mSwapchain);
-      mOpenXR->xrDestroySwapchain(mSwapchain);
-      mSwapchain = {};
-    }
+  if (mSwapchain && mSwapchainDimensions != swapchainDimensions) {
+    OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
+    this->ReleaseSwapchainResources(mSwapchain);
+    mOpenXR->xrDestroySwapchain(mSwapchain);
+    mSwapchain = {};
   }
 
   if (!mSwapchain) {
@@ -258,24 +258,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
       fatal("Failed to create swapchain");
     }
     mSwapchainDimensions = swapchainDimensions;
-    mSessionID = snapshot.GetSessionID();
     dprint(
       "Created {}x{} swapchain",
       swapchainDimensions.mWidth,
       swapchainDimensions.mHeight);
   }
 
-  if (!snapshot.HasTexture()) {
-    snapshot = this->GetSHM()->MaybeGet();
-
-    if (!snapshot.HasTexture()) {
-      TraceLoggingWriteTagged(activity, "NoTexture");
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
-  }
-
   const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
-  auto vrLayers = this->GetLayers(snapshot, hmdPose);
+  auto vrLayers = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
   const auto layerCount
     = (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
     ? vrLayers.size()
@@ -285,8 +275,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
   vrLayers.resize(layerCount);
-
-  auto config = snapshot.GetConfig();
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   nextLayers.reserve(frameEndInfo->layerCount + layerCount);
@@ -298,10 +286,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
   uint8_t topMost = layerCount - 1;
 
   std::vector<SHM::LayerSprite> layerSprites;
-  std::vector<uint64_t> cacheKeys;
   std::vector<XrCompositionLayerQuad> addedXRLayers;
   layerSprites.reserve(layerCount);
-  cacheKeys.reserve(layerCount);
   addedXRLayers.reserve(layerCount);
 
   for (size_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
@@ -314,13 +300,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_TraceLoggingRect(
         layer->mVR.mLocationOnTexture, "LocationOnTexture"));
 
-    cacheKeys.push_back(params.mCacheKey);
     PixelRect destRect {
-      Spriting::GetOffset(layerIndex, snapshot.GetLayerCount()),
+      Spriting::GetOffset(layerIndex, frame->mLayers.size()),
       layer->mVR.mLocationOnTexture.mSize,
     };
     using Upscaling = VRSettings::Quirks::Upscaling;
-    switch (config.mVR.mQuirks.mOpenXR_Upscaling) {
+    switch (frame->mConfig.mVR.mQuirks.mOpenXR_Upscaling) {
       case Upscaling::Automatic:
         if (!mIsVarjoRuntime) {
           break;
@@ -357,7 +342,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_TraceLoggingRect(layerSprites.back().mDestRect, "DestRect"),
       TraceLoggingValue(layerSprites.back().mOpacity, "Opacity"));
 
-    if (layer->mLayerID == config.mGlobalInputLayerID) {
+    if (layer->mLayerID == frame->mConfig.mGlobalInputLayerID) {
       topMost = layerIndex;
     }
 
@@ -407,16 +392,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
   {
     OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
     this->RenderLayers(
-      mSwapchain, swapchainTextureIndex, snapshot, layerSprites);
+      mSwapchain, swapchainTextureIndex, *std::move(frame), layerSprites);
   }
 
   {
     OPENKNEEBOARD_TraceLoggingScope("xrReleaseSwapchainImage()");
     check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
-  }
-
-  for (size_t i = 0; i < cacheKeys.size(); ++i) {
-    mRenderCacheKeys[i] = cacheKeys.at(i);
   }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};

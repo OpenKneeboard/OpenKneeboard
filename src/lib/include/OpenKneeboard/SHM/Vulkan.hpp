@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/Vulkan/Dispatch.hpp>
@@ -13,55 +14,17 @@ namespace OpenKneeboard::SHM::Vulkan {
 
 using OpenKneeboard::Vulkan::unique_vk;
 
-class Texture final : public SHM::IPCClientTexture {
- public:
-  Texture() = delete;
-  Texture(
-    OpenKneeboard::Vulkan::Dispatch*,
-    VkPhysicalDevice,
-    VkDevice,
-    uint32_t queueFamilyIndex,
-    const VkAllocationCallbacks*,
-    VkFence completionFence,
-    const PixelSize&,
-    uint8_t swapchainIndex);
-  virtual ~Texture();
+struct Frame {
+  using Error = SHM::Frame::Error;
+  Config mConfig {};
+  decltype(SHM::Frame::mLayers) mLayers {};
 
-  VkImage GetVKImage();
-  VkImageView GetVKImageView();
+  VkImage mImage {};
+  VkImageView mImageView {};
+  PixelSize mDimensions {};
 
-  VkSemaphore GetReadySemaphore() const;
-  uint64_t GetReadySemaphoreValue() const;
-
-  void CopyFrom(
-    VkQueue,
-    VkCommandBuffer,
-    VkImage image,
-    VkSemaphore semaphore,
-    uint64_t sempahoreValueIn) noexcept;
-
- private:
-  OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
-  VkPhysicalDevice mPhysicalDevice {VK_NULL_HANDLE};
-  VkDevice mDevice {VK_NULL_HANDLE};
-  uint32_t mQueueFamilyIndex {~(0ui32)};
-  const VkAllocationCallbacks* mAllocator {nullptr};
-
-  VkFence mCompletionFence {VK_NULL_HANDLE};
-
-  unique_vk<VkDeviceMemory> mImageMemory;
-  unique_vk<VkImage> mImage;
-  unique_vk<VkImageView> mImageView;
-
-  // This is *NOT* the IPC semaphore - it is a dedicated semaphore
-  // for clients to wait on.
-  //
-  // This is to decouple its' lifetime from the CachedReader's lifetime
-  unique_vk<VkSemaphore> mReadySemaphore;
-  uint64_t mReadySemaphoreValue {};
-
-  void InitializeCacheImage();
-  void InitializeReadySemaphore();
+  VkSemaphore mSemaphore {};
+  uint64_t mSemaphoreIn {};
 };
 
 struct InstanceCreateInfo
@@ -78,24 +41,20 @@ struct DeviceCreateInfo
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR};
 };
 
-class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
+class Reader final : public SHM::Reader {
  public:
-  CachedReader() = delete;
-  CachedReader(ConsumerKind);
-  virtual ~CachedReader();
-
-  void InitializeCache(
+  Reader(
+    ConsumerKind,
     OpenKneeboard::Vulkan::Dispatch*,
     VkInstance,
     VkDevice,
     VkPhysicalDevice,
     uint32_t queueFamilyIndex,
-    uint32_t queueIndex,
-    const VkAllocationCallbacks*,
-    uint8_t swapchainLength);
+    const VkAllocationCallbacks*);
+  ~Reader() override;
 
-  virtual Snapshot MaybeGet(
-    const std::source_location& loc = std::source_location::current()) override;
+  Frame Map(SHM::Frame);
+  std::expected<Frame, Frame::Error> MaybeGetMapped();
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
     VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
@@ -115,47 +74,29 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   };
 
  protected:
-  void InitializeCache(uint8_t swapchainLength);
-  virtual void Copy(
-    HANDLE sourceTexture,
-    IPCClientTexture* destinationTexture,
-    HANDLE fence,
-    uint64_t fenceValueIn) noexcept override;
-
-  virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
-    const PixelSize&,
-    uint8_t swapchainIndex) noexcept override;
-
-  virtual void ReleaseIPCHandles() override;
+  void OnSessionChanged() override;
 
  private:
+  struct FrameVulkanResources {
+    HANDLE mImageHandle {};
+    unique_vk<VkDeviceMemory> mMemory;
+    unique_vk<VkImage> mImage;
+    unique_vk<VkImageView> mImageView;
+    PixelSize mDimensions {};
+
+    HANDLE mSemaphoreHandle {};
+    unique_vk<VkSemaphore> mSemaphore;
+  };
+
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
   VkInstance mInstance {};
   VkDevice mDevice {};
   VkPhysicalDevice mPhysicalDevice {};
-  VkQueue mQueue {};
   uint32_t mQueueFamilyIndex {};
-
-  uint64_t mGPULUID {};
 
   const VkAllocationCallbacks* mAllocator {nullptr};
 
-  unique_vk<VkCommandPool> mCommandPool;
-  std::vector<VkCommandBuffer> mCommandBuffers;
-  std::vector<unique_vk<VkFence>> mCompletionFences;
-
-  std::unordered_map<HANDLE, unique_vk<VkSemaphore>> mIPCSemaphores;
-  VkSemaphore GetIPCSemaphore(HANDLE);
-
-  struct IPCImage {
-    unique_vk<VkDeviceMemory> mMemory;
-    unique_vk<VkImage> mImage;
-    PixelSize mDimensions;
-  };
-  std::unordered_map<HANDLE, IPCImage> mIPCImages;
-  VkImage GetIPCImage(HANDLE, const PixelSize&);
-
-  void WaitForAllFences();
+  std::array<FrameVulkanResources, SHM::SwapChainLength> mFrames {};
 };
 
-};// namespace OpenKneeboard::SHM::Vulkan
+}// namespace OpenKneeboard::SHM::Vulkan

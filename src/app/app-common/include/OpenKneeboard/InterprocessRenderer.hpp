@@ -40,7 +40,7 @@ class InterprocessRenderer final
   : private EventReceiver,
     public std::enable_shared_from_this<InterprocessRenderer> {
  public:
-  ~InterprocessRenderer();
+  ~InterprocessRenderer() override;
   static OpenKneeboard::fire_and_forget final_release(
     std::unique_ptr<InterprocessRenderer>);
 
@@ -50,6 +50,9 @@ class InterprocessRenderer final
 
   void PostUserAction(UserAction);
   [[nodiscard]] task<void> RenderNow() noexcept;
+
+  [[nodiscard]]
+  uint64_t GetFrameCountForMetricsOnly() const;
 
  private:
   InterprocessRenderer() = delete;

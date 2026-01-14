@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/D3D11.hpp>
@@ -32,17 +33,18 @@ struct SwapchainResources {
 class Renderer {
  public:
   Renderer() = delete;
-  Renderer(ID3D11Device*);
+  explicit Renderer(ID3D11Device*);
 
   void RenderLayers(
     const SwapchainResources&,
     uint32_t swapchainTextureIndex,
-    const SHM::Snapshot& snapshot,
+    const SHM::D3D11::Frame& frame,
     const std::span<SHM::LayerSprite>& layers,
     RenderMode);
 
  private:
   std::unique_ptr<SpriteBatch> mSpriteBatch;
+  wil::com_ptr<ID3D11DeviceContext4> mContext;
 };
 
 }// namespace OpenKneeboard::D3D11

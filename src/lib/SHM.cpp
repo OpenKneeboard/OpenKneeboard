@@ -16,11 +16,12 @@
 #include <OpenKneeboard/bitflags.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <Windows.h>
+
+#include <wil/resource.h>
 
 #include <bit>
 #include <concepts>
@@ -35,6 +36,10 @@ namespace OpenKneeboard::SHM {
 enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 0,
 };
+
+namespace {
+using namespace Detail;
+}
 
 }// namespace OpenKneeboard::SHM
 
@@ -80,9 +85,18 @@ class FixedSizeHandle final {
 };
 static_assert(sizeof(FixedSizeHandle) == sizeof(uint64_t));
 
-}// namespace
+struct SharedData final {
+  struct Frame {
+    FixedSizeHandle mTexture {nullptr};
+    FixedSizeHandle mFence {nullptr};
+    int64_t mReadyReadFenceValue {};
 
-struct Detail::FrameMetadata final {
+    Config mConfig {};
+    LayerConfig mLayers[MaxViewCount];
+
+    uint32_t mLayerCount {};
+  };
+
   // Use the magic string to make sure we don't have
   // uninitialized memory that happens to have the
   // feeder-attached bit set
@@ -95,64 +109,22 @@ struct Detail::FrameMetadata final {
   uint64_t mFrameNumber = 0;
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
-  Config mConfig;
-
-  uint8_t mLayerCount = 0;
-  LayerConfig mLayers[MaxViewCount];
 
   DWORD mFeederProcessID {};
-  // If you're looking for texture size, it's in Config
-  FixedSizeHandle mTexture {};
-  FixedSizeHandle mFence {};
 
-  alignas(2 * sizeof(LONG64))
-    std::array<LONG64, SHMSwapchainLength> mFrameReadyFenceValues {0};
+  alignas(2 * sizeof(LONG64)) Frame mFrames[SwapChainLength];
 
-  uint64_t GetRenderCacheKey() const;
+  [[nodiscard]]
   bool HaveFeeder() const;
 };
-using Detail::FrameMetadata;
-static_assert(std::is_standard_layout_v<FrameMetadata>);
-static constexpr DWORD SHM_SIZE = sizeof(FrameMetadata);
 
-struct Detail::IPCHandles {
- public:
-  winrt::handle mTextureHandle;
-  winrt::handle mFenceHandle;
+static_assert(std::is_standard_layout_v<SharedData>);
+constexpr DWORD SHM_SIZE = sizeof(SharedData);
+static_assert(
+  SHM_SIZE == 3024,
+  "Potential mismatch between 32-bit and 64-bit SHM layout");
 
-  const HANDLE mForeignTextureHandle {};
-  const HANDLE mForeignFenceHandle {};
-
-  IPCHandles(HANDLE feederProcess, const FrameMetadata& frame)
-    : mForeignTextureHandle(frame.mTexture), mForeignFenceHandle(frame.mFence) {
-    const auto thisProcess = GetCurrentProcess();
-    winrt::check_bool(DuplicateHandle(
-      feederProcess,
-      frame.mFence,
-      thisProcess,
-      mFenceHandle.put(),
-      NULL,
-      FALSE,
-      DUPLICATE_SAME_ACCESS));
-    winrt::check_bool(DuplicateHandle(
-      feederProcess,
-      frame.mTexture,
-      thisProcess,
-      mTextureHandle.put(),
-      NULL,
-      FALSE,
-      DUPLICATE_SAME_ACCESS));
-  }
-
-  ~IPCHandles() = default;
-
-  IPCHandles() = delete;
-  IPCHandles(const IPCHandles&) = delete;
-  IPCHandles(IPCHandles&&) = delete;
-  IPCHandles& operator=(const IPCHandles&) = delete;
-  IPCHandles& operator=(IPCHandles&&) = delete;
-};
-using Detail::IPCHandles;
+}// namespace
 
 static std::wstring SHMPath() {
   static auto sRet = LazyOnceValue<std::wstring> {[] {
@@ -174,114 +146,6 @@ static std::wstring MutexPath() {
   return sRet;
 }
 
-Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
-}
-
-Snapshot::Snapshot(incorrect_gpu_t) : mState(State::IncorrectGPU) {
-}
-
-Snapshot::Snapshot(ipc_handle_error_t) : mState(State::IPCHandleError) {
-}
-
-Snapshot::Snapshot(FrameMetadata* metadata) : mState(State::Empty) {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::Snapshot::Snapshot(FrameMetadata)");
-  mHeader = std::make_shared<FrameMetadata>(*metadata);
-
-  if (mHeader && mHeader->HaveFeeder()) {
-    mState = State::ValidWithoutTexture;
-  }
-}
-
-uint64_t Snapshot::GetSessionID() const {
-  if (!mHeader) {
-    return {};
-  }
-
-  return mHeader->mSessionID;
-}
-
-Snapshot::Snapshot(
-  FrameMetadata* metadata,
-  IPCTextureCopier* copier,
-  IPCHandles* source,
-  const std::shared_ptr<IPCClientTexture>& dest)
-  : mIPCTexture(dest), mState(State::Empty) {
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "SHM::Snapshot::Snapshot(metadataAndTextures)");
-
-  const auto textureIndex = metadata->mFrameNumber % SHMSwapchainLength;
-  auto fenceValue = &metadata->mFrameReadyFenceValues.at(textureIndex);
-  const auto fenceIn = *fenceValue;
-
-  mHeader = std::make_shared<FrameMetadata>(*metadata);
-
-  {
-    OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
-    copier->Copy(
-      source->mTextureHandle.get(),
-      dest.get(),
-      source->mFenceHandle.get(),
-      fenceIn);
-  }
-
-  if (mHeader && mHeader->HaveFeeder()) {
-    TraceLoggingWriteTagged(activity, "MarkingValid");
-    if (mHeader->mLayerCount > 0) {
-      mState = State::ValidWithTexture;
-    } else {
-      mState = State::ValidWithoutTexture;
-    }
-  }
-}
-
-Snapshot::State Snapshot::GetState() const {
-  return mState;
-}
-
-Snapshot::~Snapshot() {
-}
-
-uint64_t Snapshot::GetRenderCacheKey() const {
-  // This is lazy, and only works because:
-  // - session ID already contains random data
-  // - we're only combining *one* other value which isn't
-  // If adding more data, it either needs to be random,
-  // or need something like boost::hash_combine()
-  return mHeader->GetRenderCacheKey();
-}
-
-uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
-  if (!this->HasMetadata()) {
-    return 0;
-  }
-  return mHeader->mFrameNumber;
-}
-
-Config Snapshot::GetConfig() const {
-  if (!this->HasMetadata()) {
-    return {};
-  }
-  return mHeader->mConfig;
-}
-
-uint8_t Snapshot::GetLayerCount() const {
-  if (!this->HasMetadata()) {
-    return 0;
-  }
-  return mHeader->mLayerCount;
-}
-
-const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
-  if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
-    fatal(
-      "Asked for layer {}, but there are {} layers",
-      layerIndex,
-      this->GetLayerCount());
-  }
-
-  return &mHeader->mLayers[layerIndex];
-}
-
 template <class T>
 concept shm_state_machine = lockable_state_machine<T> && (T::HasFinalState)
   && (T::FinalState == T::Values::Unlocked);
@@ -293,32 +157,9 @@ class Impl {
   winrt::handle mFileHandle;
   winrt::handle mMutexHandle;
   std::byte* mMapping = nullptr;
-  FrameMetadata* mHeader = nullptr;
+  SharedData* mHeader = nullptr;
 
   Impl() {
-    // For debugging 32-bit/64-bit interop stuff
-    static std::once_flag sDumpLayoutOnce;
-    std::call_once(sDumpLayoutOnce, []() {
-      dprint(
-        "SHM information:\n"
-        L"- Path: {}\n"
-        L"- Size: {}\n"
-        L"- Config offset: {}\n"
-        L"- Config size: {}\n"
-        L"- Layer config offset: {}\n"
-        L"- Layer config size: {}\n"
-        L"- Feeder PID offset: {}\n"
-        L"- Feeder PID size: {}\n",
-        SHMPath(),
-        SHM_SIZE,
-        offsetof(FrameMetadata, mConfig),
-        sizeof(FrameMetadata::mConfig),
-        offsetof(FrameMetadata, mLayers),
-        sizeof(LayerConfig),
-        offsetof(FrameMetadata, mFeederProcessID),
-        sizeof(FrameMetadata::mFeederProcessID));
-    });
-
     auto fileHandle = Win32::or_default::CreateFileMapping(
       INVALID_HANDLE_VALUE,
       NULL,
@@ -349,7 +190,7 @@ class Impl {
 
     mFileHandle = std::move(fileHandle);
     mMutexHandle = std::move(mutexHandle);
-    mHeader = reinterpret_cast<FrameMetadata*>(mMapping);
+    mHeader = reinterpret_cast<SharedData*>(mMapping);
   }
 
   ~Impl() {
@@ -457,6 +298,7 @@ class Writer::Impl : public SHM::Impl<WriterStateMachine> {
 
   DWORD mProcessID = GetCurrentProcessId();
   uint64_t mGPULUID {};
+  int64_t mReadyReadFenceValue {};
 };
 
 Writer::Writer(uint64_t gpuLUID) {
@@ -470,7 +312,7 @@ Writer::Writer(uint64_t gpuLUID) {
   }
   p->mGPULUID = gpuLUID;
 
-  *p->mHeader = FrameMetadata {};
+  *p->mHeader = SharedData {};
   dprint("Writer initialized.");
 }
 
@@ -499,8 +341,13 @@ void Writer::SubmitEmptyFrame() {
     State::Locked,
     State::SubmittingEmptyFrame,
     State::Locked>(p);
-  p->mHeader->mFrameNumber++;
-  p->mHeader->mLayerCount = 0;
+
+  const auto idx = (++p->mHeader->mFrameNumber) % SwapChainLength;
+  p->mHeader->mFrames[idx].mLayerCount = 0;
+}
+
+uint64_t Writer::GetFrameCountForMetricsOnly() const {
+  return p->mHeader->mFrameNumber;
 }
 
 Writer::NextFrameInfo Writer::BeginFrame() noexcept {
@@ -509,12 +356,10 @@ Writer::NextFrameInfo Writer::BeginFrame() noexcept {
 
   const auto textureIndex
     = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % SHMSwapchainLength);
-  auto fenceValue = &p->mHeader->mFrameReadyFenceValues[textureIndex];
-  const auto fenceOut = InterlockedIncrement64(fenceValue);
 
   return NextFrameInfo {
     .mTextureIndex = textureIndex,
-    .mFenceOut = fenceOut,
+    .mFenceOut = ++p->mReadyReadFenceValue,
   };
 }
 
@@ -532,27 +377,61 @@ bool Writer::try_lock() {
 
 class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
  public:
-  winrt::handle mFeederProcessHandle;
-  uint64_t mSessionID {~(0ui64)};
+  struct IPCHandle {
+    HANDLE mForeignHandle {};
+    wil::unique_handle mMyHandle {};
+    void Update(HANDLE sharedFrom, HANDLE sharedHandle);
 
-  std::array<std::unique_ptr<IPCHandles>, SHMSwapchainLength> mHandles;
+    operator bool() const noexcept {
+      return static_cast<bool>(mMyHandle);
+    }
+
+    operator HANDLE() const noexcept {
+      return mMyHandle.get();
+    }
+  };
+  struct FrameHandles {
+    IPCHandle mTexture {};
+    IPCHandle mFence {};
+  };
+  using FrameHandleMap = std::array<FrameHandles, SHMSwapchainLength>;
+  struct SessionResources {
+    wil::unique_process_handle mFeederProcess;
+    FrameHandleMap mFrameHandles;
+  };
+
+  uint64_t mGpuLUID {};
+  ConsumerKind mConsumerKind {};
+
+  uint64_t mSessionID {std::numeric_limits<uint64_t>::max()};
+  SessionResources mSessionResources {};
 
   void UpdateSession() {
     OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Impl::UpdateSession()");
-    const auto& metadata = *this->mHeader;
+    const auto& shared = *this->mHeader;
 
-    if (mSessionID != metadata.mSessionID) {
-      mFeederProcessHandle = {};
-      mHandles = {};
-      mSessionID = metadata.mSessionID;
+    if (shared.mSessionID != mSessionID) {
+      mSessionResources = {};
+      mSessionID = shared.mSessionID;
     }
-
-    if (mFeederProcessHandle) {
+    if (!mSessionID) {
       return;
     }
 
-    mFeederProcessHandle = winrt::handle {
-      OpenProcess(PROCESS_DUP_HANDLE, FALSE, metadata.mFeederProcessID)};
+    auto& [feeder, frames] = mSessionResources;
+    if (!feeder) {
+      feeder.reset(
+        OpenProcess(PROCESS_DUP_HANDLE, FALSE, shared.mFeederProcessID));
+    }
+    if (!feeder) {
+      OPENKNEEBOARD_BREAK;
+      return;
+    }
+    const auto index = shared.mFrameNumber % SHMSwapchainLength;
+    auto& source = shared.mFrames[index];
+    auto& [texture, fence] = frames.at(index);
+    texture.Update(feeder.get(), source.mTexture);
+    fence.Update(feeder.get(), source.mFence);
   }
 
  private:
@@ -562,22 +441,34 @@ class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
   HANDLE mForeignFenceHandle {};
 };
 
-uint64_t Reader::GetSessionID() const {
-  if (!p) {
-    return {};
+void Reader::Impl::IPCHandle::Update(
+  const HANDLE sharedFrom,
+  const HANDLE sharedHandle) {
+  if (sharedHandle == mForeignHandle && mMyHandle) {
+    return;
   }
-  if (!p->mHeader) {
-    return {};
-  }
-  return p->mHeader->mSessionID;
+
+  mForeignHandle = sharedHandle;
+
+  winrt::check_bool(DuplicateHandle(
+    sharedFrom,
+    sharedHandle,
+    GetCurrentProcess(),
+    std::out_ptr(mMyHandle),
+    NULL,
+    FALSE,
+    DUPLICATE_SAME_ACCESS));
 }
 
-Reader::Reader() {
+Reader::Reader(const ConsumerKind kind, const uint64_t gpuLUID) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Reader()");
   const auto path = SHMPath();
   dprint(L"Initializing SHM reader");
 
-  this->p = std::make_shared<Impl>();
+  p = std::make_shared<Impl>();
+  p->mGpuLUID = gpuLUID;
+  p->mConsumerKind = kind;
+
   if (!p->IsValid()) {
     p.reset();
     return;
@@ -597,93 +488,55 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-CachedReader::CachedReader(IPCTextureCopier* copier, ConsumerKind kind)
-  : mTextureCopier(copier), mConsumerKind(kind) {
-}
-
-void CachedReader::InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength) {
-  OPENKNEEBOARD_TraceLoggingScope(
-    "SHM::CachedReader::InitializeCache()",
-    TraceLoggingValue(swapchainLength, "SwapchainLength"));
-  mGPULUID = gpuLUID;
-  mCache = {};
-  mCacheKey = {};
-  mClientTextures = {swapchainLength, nullptr};
-}
-
-CachedReader::~CachedReader() = default;
-
-Snapshot Reader::MaybeGetUncached(ConsumerKind kind) {
-  return MaybeGetUncached({}, nullptr, nullptr, kind);
-}
-
-Snapshot Reader::MaybeGetUncached(
-  uint64_t gpuLUID,
-  IPCTextureCopier* copier,
-  const std::shared_ptr<IPCClientTexture>& dest,
-  ConsumerKind kind) const {
+std::expected<Frame, Frame::Error> Reader::MaybeGet() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::Reader::MaybeGetUncached()");
-  const auto transitions = make_scoped_state_transitions<
-    State::Locked,
-    State::CreatingSnapshot,
-    State::Locked>(p);
+  const auto lock = std::unique_lock(*p);
 
+  if (!(p->mHeader && p->mHeader->HaveFeeder())) {
+    return std::unexpected {Frame::Error::NoFeeder};
+  }
+  const auto previousSession = p->mSessionID;
   p->UpdateSession();
-
-  if (!(gpuLUID && copier && dest)) {
-    return Snapshot(p->mHeader);
+  if (p->mSessionID != previousSession) {
+    this->OnSessionChanged();
   }
 
-  if (p->mHeader->mGPULUID != gpuLUID) {
+  if (p->mHeader->mGPULUID != p->mGpuLUID) {
     TraceLoggingWriteTagged(
       activity,
       "SHM::Reader::MaybeGetUncached/incorrect_gpu",
       TraceLoggingValue(p->mHeader->mGPULUID, "FeederLUID"),
-      TraceLoggingValue(gpuLUID, "ReaderLUID"));
+      TraceLoggingValue(p->mGpuLUID, "ReaderLUID"));
     activity.StopWithResult("incorrect_gpu");
-    return {Snapshot::incorrect_gpu};
+    return std::unexpected {Frame::Error::IncorrectGPU};
   }
 
-  auto& handles = p->mHandles.at(p->mHeader->mFrameNumber % SHMSwapchainLength);
-  if (handles && (
-    (handles->mForeignFenceHandle != p->mHeader->mFence) 
-  ||
-    (handles->mForeignTextureHandle != p->mHeader->mTexture) )) {
-    // Impl::UpdateSession() should have nuked the whole lot
-    dprint("Replacing handles without new session ID");
-    OPENKNEEBOARD_BREAK;
-    handles = {};
+  ActiveConsumers::Set(p->mConsumerKind);
+
+  const auto index = p->mHeader->mFrameNumber % SHMSwapchainLength;
+  const auto& [texture, fence] = p->mSessionResources.mFrameHandles.at(
+    p->mHeader->mFrameNumber % SHMSwapchainLength);
+  if (!(texture && fence)) {
+    return std::unexpected {Frame::Error::UnusableHandles};
   }
-  if (!handles) {
-    try {
-      handles = std::make_unique<IPCHandles>(
-        p->mFeederProcessHandle.get(), *p->mHeader);
-    } catch (const winrt::hresult_error& e) {
-      TraceLoggingWriteTagged(
-        activity,
-        "SHM::Reader::MaybeGetUncached/ipc_handle_error",
-        TraceLoggingValue(e.code().value, "HRESULT"),
-        TraceLoggingValue(e.message().c_str(), "Message"));
-      activity.StopWithResult("ipc_handle_error");
-      return {Snapshot::ipc_handle_error};
-    }
-  }
+  const auto& frame = p->mHeader->mFrames[index];
 
-  return Snapshot(p->mHeader, copier, handles.get(), dest);
-}
-
-uint64_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
-  if (!(p && p->mHeader)) {
-    return {};
-  }
-
-  ActiveConsumers::Set(kind);
-
-  return p->mHeader->GetRenderCacheKey();
+  return Frame {
+    .mConfig = frame.mConfig,
+    .mLayers = {
+      frame.mLayers,
+      frame.mLayers + frame.mLayerCount,
+    },
+    .mTexture = texture,
+    .mFence = fence,
+    .mFenceIn = frame.mReadyReadFenceValue,
+    .mIndex = static_cast<uint8_t>(index),
+  };
 }
 
 void Writer::SubmitFrame(
+  const NextFrameInfo& info,
   const Config& config,
   const std::vector<LayerConfig>& layers,
   HANDLE texture,
@@ -703,31 +556,27 @@ void Writer::SubmitFrame(
   }
 
   p->mHeader->mGPULUID = p->mGPULUID;
-  p->mHeader->mConfig = config;
-  p->mHeader->mFrameNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
-  p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
   p->mHeader->mFeederProcessID = p->mProcessID;
-  p->mHeader->mTexture = texture;
-  p->mHeader->mFence = fence;
-  memcpy(
-    p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
+  const auto idx = (++p->mHeader->mFrameNumber) % SwapChainLength;
+  OPENKNEEBOARD_ASSERT(idx == info.mTextureIndex);
+  OPENKNEEBOARD_ASSERT(p->mReadyReadFenceValue == info.mFenceOut);
+  auto& frame = p->mHeader->mFrames[idx];
+
+  frame = {
+    .mTexture = texture,
+    .mFence = fence,
+    .mReadyReadFenceValue = info.mFenceOut,
+    .mConfig = config,
+    .mLayerCount = static_cast<uint8_t>(layers.size()),
+  };
+  memcpy(frame.mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
 }
 
-bool FrameMetadata::HaveFeeder() const {
+bool SharedData::HaveFeeder() const {
   return (mMagic == *reinterpret_cast<const uint64_t*>(Magic.data()))
     && ((mFlags & HeaderFlags::FEEDER_ATTACHED)
         == HeaderFlags::FEEDER_ATTACHED);
-}
-
-uint64_t FrameMetadata::GetRenderCacheKey() const {
-  // This is lazy, and only works because:
-  // - session ID already contains random data
-  // - we're only combining *one* other value which isn't
-  // If adding more data, it either needs to be random,
-  // or need something like boost::hash_combine()
-  std::hash<uint64_t> HashUI64;
-  return HashUI64(mSessionID) ^ HashUI64(mFrameNumber);
 }
 
 uint64_t Reader::GetFrameCountForMetricsOnly() const {
@@ -736,155 +585,5 @@ uint64_t Reader::GetFrameCountForMetricsOnly() const {
   }
   return p->mHeader->mFrameNumber;
 }
-
-Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "CachedReader::MaybeGet()");
-  if (!(*this)) {
-    TraceLoggingWriteStop(
-      activity,
-      "CachedReader::MaybeGet()",
-      TraceLoggingValue("Invalid SHM", "Result"));
-    return {nullptr};
-  }
-
-  this->UpdateSession();
-
-  ActiveConsumers::Set(mConsumerKind);
-
-  const auto swapchainIndex = mSwapchainIndex;
-  if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
-    fatal(
-      loc,
-      "swapchainIndex {} >= swapchainLength {}; did you call "
-      "InitializeCache()?",
-      swapchainIndex,
-      mClientTextures.size());
-  }
-  mSwapchainIndex = (mSwapchainIndex + 1) % mClientTextures.size();
-
-  const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
-
-  if (cacheKey == mCacheKey) {
-    const auto& cache = mCache.front();
-    if (cache.GetState() == Snapshot::State::ValidWithTexture) {
-      TraceLoggingWriteStop(
-        activity,
-        "CachedReader::MaybeGet()",
-        TraceLoggingValue("Returning cached snapshot", "Result"),
-        TraceLoggingValue(
-          static_cast<unsigned int>(cache.GetState()), "State"));
-      return cache;
-    }
-  }
-
-  TraceLoggingWriteTagged(activity, "LockingSHM");
-  std::unique_lock lock(*p);
-  TraceLoggingWriteTagged(activity, "LockedSHM");
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    maybeGetActivity, "MaybeGetUncached");
-
-  if (p->mHeader->mLayerCount == 0) {
-    maybeGetActivity.StopWithResult("NoLayers");
-    return Snapshot {p->mHeader};
-  }
-
-  const auto dimensions = p->mHeader->mConfig.mTextureSize;
-  auto dest = GetIPCClientTexture(dimensions, swapchainIndex);
-
-  auto snapshot
-    = this->MaybeGetUncached(mGPULUID, mTextureCopier, dest, mConsumerKind);
-  const auto state = snapshot.GetState();
-  maybeGetActivity.StopWithResult(static_cast<int>(state));
-
-  if (state == Snapshot::State::Empty) {
-    const auto& cache = mCache.front();
-    TraceLoggingWriteStop(
-      activity,
-      "CachedReader::MaybeGet()",
-      TraceLoggingValue("Using stale cache", "Result"),
-      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
-    return cache;
-  }
-
-  mCache.push_front(snapshot);
-  mCache.resize(mClientTextures.size(), nullptr);
-  mCacheKey = cacheKey;
-
-  TraceLoggingWriteStop(
-    activity,
-    "CachedReader::MaybeGet()",
-    TraceLoggingValue("Updated cache", "Result"),
-    TraceLoggingValue(static_cast<unsigned int>(state), "State"),
-    TraceLoggingValue(
-      snapshot.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
-  return snapshot;
-}
-
-std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
-  const PixelSize& dimensions,
-  uint8_t swapchainIndex) noexcept {
-  OPENKNEEBOARD_TraceLoggingScope(
-    "CachedReader::GetIPCClientTexture",
-    TraceLoggingValue(swapchainIndex, "swapchainIndex"));
-  auto& ret = mClientTextures.at(swapchainIndex);
-  if (ret && ret->GetDimensions() != dimensions) {
-    ret = {};
-  }
-
-  if (!ret) {
-    OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateIPCClientTexture");
-    ret = this->CreateIPCClientTexture(dimensions, swapchainIndex);
-  }
-  return ret;
-}
-
-Snapshot CachedReader::MaybeGetMetadata() {
-  OPENKNEEBOARD_TraceLoggingScope("CachedReader::MaybeGetMetadata()");
-
-  if (!*this) {
-    return {nullptr};
-  }
-
-  this->UpdateSession();
-
-  const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
-
-  if ((!mCache.empty()) && cacheKey == mCacheKey) {
-    return mCache.front();
-  }
-
-  if (!mClientTextures.empty()) {
-    return MaybeGet();
-  }
-
-  std::unique_lock lock(*p);
-  auto snapshot = this->MaybeGetUncached(mConsumerKind);
-  if (snapshot.HasMetadata()) {
-    mCache.push_front(snapshot);
-    mCacheKey = cacheKey;
-  }
-
-  return snapshot;
-}
-
-void CachedReader::UpdateSession() {
-  const auto sessionID = this->GetSessionID();
-  if (sessionID == mSessionID) {
-    return;
-  }
-  this->ReleaseIPCHandles();
-  p->UpdateSession();
-  mSessionID = sessionID;
-}
-
-IPCClientTexture::IPCClientTexture(
-  const PixelSize& dimensions,
-  uint8_t swapchainIndex)
-  : mDimensions(dimensions), mSwapchainIndex(swapchainIndex) {
-}
-
-IPCClientTexture::~IPCClientTexture() = default;
-IPCTextureCopier::~IPCTextureCopier() = default;
 
 }// namespace OpenKneeboard::SHM

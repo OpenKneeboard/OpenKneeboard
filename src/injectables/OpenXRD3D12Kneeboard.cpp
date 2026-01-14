@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include "OpenXRD3D12Kneeboard.hpp"
 
@@ -46,6 +47,9 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   mCommandQueue.copy_from(binding.queue);
   mRenderer = std::make_unique<D3D12::Renderer>(
     mDevice.get(), mCommandQueue.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
+
+  mSHM = std::make_unique<SHM::D3D12::Reader>(
+    SHM::ConsumerKind::OpenXR_D3D12, mDevice.get());
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -94,8 +98,6 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   }
 
   dprint("{} images in swapchain", imageCount);
-  mSHM.InitializeCache(
-    mDevice.get(), mCommandQueue.get(), static_cast<uint8_t>(imageCount));
 
   std::vector<XrSwapchainImageD3D12KHR> images;
   images.resize(
@@ -164,20 +166,21 @@ void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
 void OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
-  const SHM::Snapshot& snapshot,
+  SHM::Frame frame,
   const std::span<SHM::LayerSprite>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
+
   mRenderer->RenderLayers(
     mSwapchainResources.at(swapchain),
     swapchainTextureIndex,
-    snapshot,
+    mSHM->Map(std::move(frame)),
     layers,
     RenderMode::ClearAndRender);
   mGraphicsMemory->Commit(mCommandQueue.get());
 }
 
-SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {
-  return &mSHM;
+SHM::Reader& OpenXRD3D12Kneeboard::GetSHM() {
+  return *mSHM;
 }
 
 }// namespace OpenKneeboard

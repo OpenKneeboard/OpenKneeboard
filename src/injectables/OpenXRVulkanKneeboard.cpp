@@ -65,6 +65,15 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   };
   mCommandPool
     = mVK->make_unique<VkCommandPool>(mDevice, &poolCreateInfo, nullptr);
+
+  mSHM = std::make_unique<SHM::Vulkan::Reader>(
+    SHM::ConsumerKind::OpenXR_Vulkan2,
+    mVK.get(),
+    mVKInstance,
+    mDevice,
+    mPhysicalDevice,
+    mQueueFamilyIndex,
+    mAllocator);
 }
 
 OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
@@ -188,16 +197,6 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   }
   mSwapchainResources = {swapchain, std::move(buffers), size};
 
-  mSHM.InitializeCache(
-    mVK.get(),
-    mVKInstance,
-    mDevice,
-    mPhysicalDevice,
-    mQueueFamilyIndex,
-    mQueueIndex,
-    mAllocator,
-    imageCount);
-
   return swapchain;
 }
 
@@ -234,9 +233,9 @@ void OpenXRVulkanKneeboard::WaitForAllFences() {
 void OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainIndex,
-  const SHM::Snapshot& snapshot,
+  SHM::Frame rawFrame,
   const std::span<SHM::LayerSprite>& layers) {
-  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRVulkanKneeboard::RenderLayers()");
 
   if (!(mSwapchainResources && mSwapchainResources->mSwapchain == swapchain))
     [[unlikely]] {
@@ -246,9 +245,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   const auto& sr = *mSwapchainResources;
   const auto& br = sr.mBufferResources.at(swapchainIndex);
 
-  auto source = snapshot.GetTexture<SHM::Vulkan::Texture>();
   auto dest = br.mImageView.get();
-
   auto cb = br.mCommandBuffer;
 
   const VkCommandBufferBeginInfo beginInfo {
@@ -259,7 +256,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mSpriteBatch->Begin(cb, dest, sr.mDimensions);
   mSpriteBatch->Clear();
 
-  const auto baseTint = snapshot.GetConfig().mTint;
+  auto frame = mSHM->Map(std::move(rawFrame));
+  const auto baseTint = frame.mConfig.mTint;
 
   for (const auto& layer: layers) {
     const Vulkan::Color layerTint {
@@ -269,8 +267,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
       baseTint[3] * layer.mOpacity,
     };
     mSpriteBatch->Draw(
-      source->GetVKImageView(),
-      source->GetDimensions(),
+      frame.mImageView,
+      frame.mDimensions,
       layer.mSourceRect,
       layer.mDestRect,
       layerTint);
@@ -282,8 +280,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
   const auto fence = br.mCompletionFence.get();
   check_vkresult(mVK->ResetFences(mDevice, 1, &fence));
 
-  const VkSemaphore waitSemaphores[] {source->GetReadySemaphore()};
-  const uint64_t waitSemaphoreValues[] {source->GetReadySemaphoreValue()};
+  const VkSemaphore waitSemaphores[] {frame.mSemaphore};
+  const uint64_t waitSemaphoreValues[] {frame.mSemaphoreIn};
 
   const VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
@@ -306,8 +304,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fence));
 }
 
-SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {
-  return &mSHM;
+SHM::Reader& OpenXRVulkanKneeboard::GetSHM() {
+  return *mSHM;
 }
 
 }// namespace OpenKneeboard

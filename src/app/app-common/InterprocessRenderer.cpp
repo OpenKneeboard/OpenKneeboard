@@ -100,11 +100,16 @@ void InterprocessRenderer::SubmitFrame(
   {
     OPENKNEEBOARD_TraceLoggingScope("SHMSubmitFrame");
     mSHM.SubmitFrame(
+      ipcTextureInfo,
       config,
       shmLayers,
       destResources->mTextureHandle.get(),
       destResources->mFenceHandle.get());
   }
+}
+
+uint64_t InterprocessRenderer::GetFrameCountForMetricsOnly() const {
+  return mSHM.GetFrameCountForMetricsOnly();
 }
 
 void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {

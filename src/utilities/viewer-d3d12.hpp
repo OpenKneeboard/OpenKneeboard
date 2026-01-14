@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "viewer.hpp"
@@ -21,19 +22,17 @@ class D3D12Renderer final : public Renderer {
  public:
   D3D12Renderer() = delete;
   D3D12Renderer(IDXGIAdapter*);
-  virtual ~D3D12Renderer();
-  virtual SHM::CachedReader* GetSHM() override;
+  ~D3D12Renderer() override;
+  SHM::Reader& GetSHM() override;
 
   std::wstring_view GetName() const noexcept override;
 
-  virtual void Initialize(uint8_t swapchainLength) override;
+  void Initialize(uint8_t swapchainLength) override;
 
-  virtual void SaveTextureToFile(
-    SHM::IPCClientTexture*,
-    const std::filesystem::path&) override;
+  void SaveToDDSFile(SHM::Frame frame, const std::filesystem::path&) override;
 
-  virtual uint64_t Render(
-    SHM::IPCClientTexture* sourceTexture,
+  uint64_t Render(
+    SHM::Frame,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
@@ -42,7 +41,7 @@ class D3D12Renderer final : public Renderer {
     uint64_t fenceValueIn) override;
 
  private:
-  SHM::D3D12::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+  std::unique_ptr<SHM::D3D12::Reader> mSHM;
 
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
@@ -61,8 +60,6 @@ class D3D12Renderer final : public Renderer {
   winrt::com_ptr<ID3D12Fence> mFence;
 
   uint64_t mFenceValue {};
-
-  void SaveTextureToFile(ID3D12Resource*, const std::filesystem::path&);
 };
 
 }// namespace OpenKneeboard::Viewer

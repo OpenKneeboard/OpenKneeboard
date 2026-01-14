@@ -119,7 +119,6 @@ class TestViewerWindow final : private D3D11Resources {
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
-  size_t mRenderCacheKey = 0;
 
   std::optional<RECT> mWindowRect {};
   ViewerSettings mSettings {ViewerSettings::Load()};
@@ -337,7 +336,7 @@ class TestViewerWindow final : private D3D11Resources {
 
   void CheckForUpdate() {
     OPENKNEEBOARD_TraceLoggingScope("Viewer::CheckForUpdate");
-    auto& shm = *mRenderer->GetSHM();
+    auto& shm = mRenderer->GetSHM();
     if (!shm) {
       if (mFirstDetached) {
         PaintNow();
@@ -345,9 +344,7 @@ class TestViewerWindow final : private D3D11Resources {
       return;
     }
 
-    if (shm.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
-      PaintNow();
-    }
+    PaintNow();
   }
 
   PixelSize GetClientSize() const {
@@ -589,11 +586,11 @@ class TestViewerWindow final : private D3D11Resources {
   }
 
   void CaptureScreenshot() {
-    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (!snapshot.HasTexture()) {
+    auto frame = mRenderer->GetSHM().MaybeGet();
+    if (!frame) {
       return;
     }
-    if (mLayerIndex >= snapshot.GetLayerCount()) {
+    if (mLayerIndex >= frame->mLayers.size()) {
       return;
     }
 
@@ -609,8 +606,7 @@ class TestViewerWindow final : private D3D11Resources {
             std::chrono::current_zone(), std::chrono::system_clock::now()));
     std::filesystem::create_directories(path.parent_path());
 
-    mRenderer->SaveTextureToFile(
-      snapshot.GetTexture<SHM::IPCClientTexture>(), path);
+    mRenderer->SaveToDDSFile(*std::move(frame), path);
 
     Filesystem::OpenExplorerWithSelectedFile(path);
   }
@@ -793,13 +789,13 @@ class TestViewerWindow final : private D3D11Resources {
     auto text = std::format(
       L"Using {}\nFrame #{}",
       mRenderer->GetName(),
-      mRenderer->GetSHM()->GetFrameCountForMetricsOnly());
-    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (snapshot.HasTexture()) {
-      const auto layerCount = snapshot.GetLayerCount();
+      mRenderer->GetSHM().GetFrameCountForMetricsOnly());
+    const auto frame = mRenderer->GetSHM().MaybeGet();
+    if (frame) {
+      const auto layerCount = frame->mLayers.size();
       if (mLayerIndex < layerCount) {
-        const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-        const auto size = layer->mVR.mLocationOnTexture.mSize;
+        const auto& layer = frame->mLayers.at(mLayerIndex);
+        const auto size = layer.mVR.mLocationOnTexture.mSize;
         text += std::format(
           L"\nView {} of {}\n{}x{}",
           mLayerIndex + 1,
@@ -851,8 +847,8 @@ class TestViewerWindow final : private D3D11Resources {
   void PaintContent() {
     const auto clientSize = GetClientSize();
 
-    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (!snapshot.HasTexture()) {
+    auto frame = mRenderer->GetSHM().MaybeGet();
+    if (!frame) {
       if (!mSettings.mStreamerMode) {
         RenderError("No Feeder");
       }
@@ -861,15 +857,14 @@ class TestViewerWindow final : private D3D11Resources {
     }
     mFirstDetached = true;
 
-    const auto config = snapshot.GetConfig();
-    mSetInputFocus = config.mVR.mEnableGazeInputFocus;
+    mSetInputFocus = frame->mConfig.mVR.mEnableGazeInputFocus;
 
-    if (mLayerIndex >= snapshot.GetLayerCount()) {
+    if (mLayerIndex >= frame->mLayers.size()) {
       RenderError("No Layer");
       return;
     }
 
-    const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
+    const auto& layer = frame->mLayers.at(mLayerIndex);
 
     if (!layer.mVREnabled) {
       RenderError("No VR Layer");
@@ -906,7 +901,7 @@ class TestViewerWindow final : private D3D11Resources {
     check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
 
     mFenceValue = mRenderer->Render(
-      snapshot.GetTexture<SHM::IPCClientTexture>(),
+      *std::move(frame),
       sourceRect,
       mRendererTextureHandle.get(),
       mRendererTextureSize,
@@ -918,8 +913,6 @@ class TestViewerWindow final : private D3D11Resources {
 
     ctx->CopySubresourceRegion(
       mWindowTexture.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
-
-    mRenderCacheKey = snapshot.GetRenderCacheKey();
   }
 
   PixelRect GetDestRect(
