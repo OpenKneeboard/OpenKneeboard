@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "HelpPage.xaml.h"
@@ -11,6 +12,7 @@
 
 #include "CheckForUpdates.h"
 #include "FilePicker.h"
+#include "Globals.h"
 
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/GameInstance.hpp>
@@ -224,6 +226,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("renderers.txt", GetActiveConsumers());
   AddFile("version.txt", mVersionClipboardData);
+  AddFile("vram.txt", GetVRAMInfo());
 
   const auto settingsDir = Filesystem::GetSettingsDirectory();
   for (const auto entry:
@@ -720,6 +723,20 @@ void HelpPage::OnAgreeClick(
   }
   mAgreedToPrivacyWarning = true;
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
+}
+
+std::string HelpPage::GetVRAMInfo() noexcept {
+  DXGI_QUERY_VIDEO_MEMORY_INFO info {};
+  gDXResources->mDXGIAdapter->QueryVideoMemoryInfo(
+    0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
+  return std::format(
+    "VRAM usage for PID {} (`{}`):\n\n"
+    "  Budget: {} MB\n  Available: {} MB\n  Used: {} MB",
+    GetCurrentProcessId(),
+    Filesystem::GetCurrentExecutablePath().filename().string(),
+    info.Budget / 1024 / 1024,
+    info.AvailableForReservation / 1024 / 1024,
+    info.CurrentUsage / 1024 / 1024);
 }
 
 void HelpPage::DisplayLicense(
