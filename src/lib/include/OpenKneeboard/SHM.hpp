@@ -126,7 +126,6 @@ class ConsumerPattern final {
 struct Config final {
   uint64_t mGlobalInputLayerID {};
   VRRenderSettings mVR {};
-  ConsumerPattern mTarget {};
   PixelSize mTextureSize {};
   std::array<float, 4> mTint {1, 1, 1, 1};
 };
@@ -182,22 +181,19 @@ class Snapshot final {
  public:
   enum class State {
     Empty,
-    IncorrectKind,
     IncorrectGPU,
     IPCHandleError,
     ValidWithoutTexture,
     ValidWithTexture,
   };
   // marker for constructor
-  struct incorrect_kind_t {};
-  static constexpr const incorrect_kind_t incorrect_kind {};
   struct incorrect_gpu_t {};
   static constexpr const incorrect_gpu_t incorrect_gpu {};
   struct ipc_handle_error_t {};
   static constexpr const ipc_handle_error_t ipc_handle_error {};
 
+  Snapshot() = delete;
   Snapshot(nullptr_t);
-  Snapshot(incorrect_kind_t);
   Snapshot(incorrect_gpu_t);
   Snapshot(ipc_handle_error_t);
 
@@ -243,7 +239,6 @@ class Snapshot final {
 
   // Use GetRenderCacheKey() instead for almost all purposes
   uint64_t GetSequenceNumberForDebuggingOnly() const;
-  Snapshot() = delete;
 
  private:
   std::shared_ptr<Detail::FrameMetadata> mHeader;

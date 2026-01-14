@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "SHM/ReaderState.hpp"
 #include "SHM/WriterState.hpp"
 
@@ -174,9 +175,6 @@ static std::wstring MutexPath() {
 }
 
 Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
-}
-
-Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 }
 
 Snapshot::Snapshot(incorrect_gpu_t) : mState(State::IncorrectGPU) {
@@ -631,17 +629,6 @@ Snapshot Reader::MaybeGetUncached(
     State::CreatingSnapshot,
     State::Locked>(p);
 
-  if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
-    TraceLoggingWriteTagged(
-      activity,
-      "SHM::Reader::MaybeGetUncached/incorrect_kind",
-      TraceLoggingValue(std::to_underlying(kind), "Consumer kind"),
-      TraceLoggingValue(
-        p->mHeader->mConfig.mTarget.GetRawMaskForDebugging(), "Target kind"));
-    activity.StopWithResult("incorrect_kind");
-    return {Snapshot::incorrect_kind};
-  }
-
   p->UpdateSession();
 
   if (!(gpuLUID && copier && dest)) {
@@ -691,9 +678,7 @@ uint64_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
     return {};
   }
 
-  if (p->mHeader->mConfig.mTarget.Matches(kind)) {
-    ActiveConsumers::Set(kind);
-  }
+  ActiveConsumers::Set(kind);
 
   return p->mHeader->GetRenderCacheKey();
 }
