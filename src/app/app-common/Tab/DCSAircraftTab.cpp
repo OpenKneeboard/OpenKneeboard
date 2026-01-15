@@ -25,7 +25,7 @@ std::string GetModuleNameForLuaAircraft(const std::string_view luaName) {
 
   const auto findLuaName = [&mapping = sMapping, luaName]() {
     return std::ranges::find_if(
-      *sMapping, [luaName](const auto& pair) { return pair.first == luaName; });
+      *mapping, [luaName](const auto& pair) { return pair.first == luaName; });
   };
 
   if (sMapping) {

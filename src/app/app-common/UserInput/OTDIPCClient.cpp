@@ -522,6 +522,7 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::Header& header) {
       this->ProcessMessage(reinterpret_cast<const DebugMessage&>(header));
       return;
     case MessageType::Ping:
+    case MessageType::Experimental:
       // nothing to do
       return;
   }
