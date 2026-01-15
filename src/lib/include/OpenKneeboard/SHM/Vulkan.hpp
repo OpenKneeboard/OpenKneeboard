@@ -49,6 +49,7 @@ class Reader final : public SHM::Reader {
     VkInstance,
     VkDevice,
     VkPhysicalDevice,
+    VkQueue,
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*);
   ~Reader() override;
@@ -92,11 +93,14 @@ class Reader final : public SHM::Reader {
   VkInstance mInstance {};
   VkDevice mDevice {};
   VkPhysicalDevice mPhysicalDevice {};
+  VkQueue mQueue {};
   uint32_t mQueueFamilyIndex {};
 
   const VkAllocationCallbacks* mAllocator {nullptr};
 
   std::array<FrameVulkanResources, SHM::SwapChainLength> mFrames {};
+
+  void DropResources();
 };
 
 }// namespace OpenKneeboard::SHM::Vulkan

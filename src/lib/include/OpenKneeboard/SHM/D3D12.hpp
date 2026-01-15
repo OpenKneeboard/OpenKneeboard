@@ -33,7 +33,7 @@ struct Frame {
 
 class Reader final : public SHM::Reader {
  public:
-  Reader(ConsumerKind, ID3D12Device*);
+  Reader(ConsumerKind, ID3D12Device*, ID3D12CommandQueue*);
   ~Reader() override;
 
   Frame Map(SHM::Frame);
@@ -54,10 +54,12 @@ class Reader final : public SHM::Reader {
   };
 
   wil::com_ptr<ID3D12Device> mDevice;
+  wil::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
   std::unique_ptr<DirectX::DescriptorHeap> mShaderResourceViewHeap;
 
   std::array<FrameD3D12Resources, SHM::SwapChainLength> mFrames {};
+  void DropResources();
 };
 
 }// namespace OpenKneeboard::SHM::D3D12

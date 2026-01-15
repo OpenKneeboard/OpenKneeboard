@@ -60,7 +60,7 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
     1);
 
   mSHM = std::make_unique<SHM::D3D12::Reader>(
-    SHM::ConsumerKind::Viewer, mDevice.get());
+    SHM::ConsumerKind::Viewer, mDevice.get(), mCommandQueue.get());
 }
 
 D3D12Renderer::~D3D12Renderer() = default;

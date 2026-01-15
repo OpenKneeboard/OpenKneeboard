@@ -39,21 +39,25 @@ using OpenKneeboard::Vulkan::check_vkresult;
 Reader::Reader(
   const ConsumerKind kind,
   OpenKneeboard::Vulkan::Dispatch* dispatch,
-  VkInstance instance,
-  VkDevice device,
-  VkPhysicalDevice physicalDevice,
-  uint32_t queueFamilyIndex,
+  const VkInstance instance,
+  const VkDevice device,
+  const VkPhysicalDevice physicalDevice,
+  const VkQueue queue,
+  const uint32_t queueFamilyIndex,
   const VkAllocationCallbacks* allocator)
   : SHM::Reader(kind, GetGPULuid(dispatch, physicalDevice)),
     mVK(dispatch),
     mInstance(instance),
     mDevice(device),
     mPhysicalDevice(physicalDevice),
+    mQueue(queue),
     mQueueFamilyIndex(queueFamilyIndex),
     mAllocator(allocator) {
 }
 
-Reader::~Reader() = default;
+Reader::~Reader() {
+  this->DropResources();
+}
 
 std::expected<Frame, Frame::Error> Reader::MaybeGetMapped() {
   auto raw = MaybeGet();
@@ -224,6 +228,12 @@ Frame Reader::Map(SHM::Frame raw) {
 
 void Reader::OnSessionChanged() {
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Reader::OnSessionChanged");
+  this->DropResources();
+}
+
+void Reader::DropResources() {
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::Reader::DropResources");
+  mVK->QueueWaitIdle(mQueue);
   mFrames = {};
 }
 

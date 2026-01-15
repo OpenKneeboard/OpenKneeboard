@@ -49,7 +49,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
     mDevice.get(), mCommandQueue.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
 
   mSHM = std::make_unique<SHM::D3D12::Reader>(
-    SHM::ConsumerKind::OpenXR_D3D12, mDevice.get());
+    SHM::ConsumerKind::OpenXR_D3D12, mDevice.get(), mCommandQueue.get());
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {

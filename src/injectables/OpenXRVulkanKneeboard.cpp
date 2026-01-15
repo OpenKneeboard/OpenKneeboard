@@ -72,6 +72,7 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
     mVKInstance,
     mDevice,
     mPhysicalDevice,
+    mQueue,
     mQueueFamilyIndex,
     mAllocator);
 }

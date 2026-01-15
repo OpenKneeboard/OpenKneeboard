@@ -22,7 +22,6 @@
 #include <directxtk12/ResourceUploadBatch.h>
 
 namespace OpenKneeboard::SHM::D3D12 {
-
 namespace {
 
 [[nodiscard]]
@@ -32,9 +31,13 @@ uint64_t GetGPULUID(ID3D12Device* const device) {
 
 }// namespace
 
-Reader::Reader(const ConsumerKind kind, ID3D12Device* const device)
+Reader::Reader(
+  const ConsumerKind kind,
+  ID3D12Device* const device,
+  ID3D12CommandQueue* const queue)
   : SHM::Reader(kind, GetGPULUID(device)) {
   wil::com_query_to(device, mDevice.put());
+  wil::com_copy_to(queue, mCommandQueue.put());
 
   mShaderResourceViewHeap = std::make_unique<DirectX::DescriptorHeap>(
     mDevice.get(),
@@ -44,7 +47,9 @@ Reader::Reader(const ConsumerKind kind, ID3D12Device* const device)
   mShaderResourceViewHeap->Heap()->SetName(L"OpenKneeboard::SHM::D3D12 SRV");
 }
 
-Reader::~Reader() = default;
+Reader::~Reader() {
+  this->DropResources();
+}
 
 std::expected<Frame, Frame::Error> Reader::MaybeGetMapped() {
   auto raw = MaybeGet();
@@ -98,9 +103,23 @@ Frame Reader::Map(SHM::Frame raw) {
   };
 }
 
+void Reader::DropResources() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D12::Reader::DropResources");
+  wil::com_ptr<ID3D12Fence> fence;
+  check_hresult(
+    mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.put())));
+  check_hresult(mCommandQueue->Signal(fence.get(), 1));
+  wil::unique_event e;
+  e.create();
+  check_hresult(fence->SetEventOnCompletion(1, e.get()));
+  WaitForSingleObject(e.get(), INFINITE);
+
+  mFrames = {};
+}
+
 void Reader::OnSessionChanged() {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::Reader::OnSessionChanged");
-  mFrames = {};
+  this->DropResources();
 }
 
 }// namespace OpenKneeboard::SHM::D3D12

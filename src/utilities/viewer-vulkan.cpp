@@ -57,11 +57,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
     (pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "Debug"),
     severity,
     pCallbackData->pMessage);
-  if (
-    (!RenderDoc::IsPresent())
-    && (messageSeverity & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
-    OPENKNEEBOARD_BREAK;
-  }
 
   return VK_FALSE;
 }
@@ -282,6 +277,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     mVKInstance.get(),
     mDevice.get(),
     mVKPhysicalDevice,
+    mQueue,
     mQueueFamilyIndex,
     nullptr);
 }
