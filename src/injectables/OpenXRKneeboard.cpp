@@ -563,9 +563,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
         "looking "
         "for system library.");
       if (LibVulkan()) {
-        gPFN_vkGetInstanceProcAddr
-          = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
-            GetProcAddress(LibVulkan(), "vkGetInstanceProcAddr"));
+        gPFN_vkGetInstanceProcAddr = std::bit_cast<PFN_vkGetInstanceProcAddr>(
+          GetProcAddress(LibVulkan(), "vkGetInstanceProcAddr"));
       }
       if (gPFN_vkGetInstanceProcAddr) {
         dprint("Found usable system vkGetInstanceProcAddr");
@@ -861,7 +860,7 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 using namespace OpenKneeboard;
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+BOOL WINAPI DllMain(HINSTANCE, const DWORD dwReason, LPVOID /*lpReserved*/) {
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
       TraceLoggingRegister(gTraceProvider);
@@ -883,7 +882,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
 extern "C" XRAPI_ATTR XrResult XRAPI_CALL
 OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
-  const XrNegotiateLoaderInfo* loaderInfo,
+  const XrNegotiateLoaderInfo*,
   const char* layerName,
   XrNegotiateApiLayerRequest* apiLayerRequest) {
   dprint("{}", __FUNCTION__);

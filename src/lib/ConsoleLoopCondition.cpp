@@ -18,7 +18,7 @@ auto& ExitEvent() {
   return gExitEvent;
 }
 
-BOOL WINAPI ExitHandler(DWORD ignored) {
+BOOL WINAPI ExitHandler(DWORD /*ignored*/) {
   CoUninitialize();
   SetEvent(ExitEvent().get());
   return TRUE;

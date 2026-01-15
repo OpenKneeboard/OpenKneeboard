@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DirectInputAdapter.hpp>
 #include <OpenKneeboard/DirectInputDevice.hpp>
 #include <OpenKneeboard/DirectInputListener.hpp>
@@ -250,7 +251,7 @@ LRESULT DirectInputAdapter::SubclassProc(
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam,
-  UINT_PTR uIdSubclass,
+  UINT_PTR /*uIdSubclass*/,
   DWORD_PTR dwRefData) {
   auto instance = reinterpret_cast<DirectInputAdapter*>(dwRefData);
   if (uMsg == WM_DEVICECHANGE && wParam == DBT_DEVNODES_CHANGED) {

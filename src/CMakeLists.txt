@@ -4,7 +4,6 @@ add_compile_options(
 
   # All warnings as errors
   "/WX"
-  # TODO: more warnings, /W4
 
   # Lots of legacy C functions are unsafe, and raise warnings in third-party code
   "/wd4996"
@@ -14,7 +13,11 @@ add_compile_options(
 )
 if (CLANG_CL)
   add_compile_options(
+    # More warnings
+    "/W4"
     "/clang:-Wno-missing-braces"
+    "/clang:-Wno-missing-field-initializers"
+    "/clang:-Wno-sign-compare"
   )
 endif ()
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -17,10 +18,10 @@ using namespace OpenKneeboard;
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
 int WINAPI wWinMain(
-  HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  PWSTR pCmdLine,
-  int nCmdShow) {
+  HINSTANCE /*hInstance*/,
+  HINSTANCE /*hPrevInstance*/,
+  PWSTR /*pCmdLine*/,
+  int /*nCmdShow*/) {
   DPrintSettings::Set({
     .prefix = "SetTab-Remote",
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,

@@ -73,7 +73,7 @@ SHM::Reader& D3D12Renderer::GetSHM() {
   return *mSHM;
 }
 
-void D3D12Renderer::Initialize(uint8_t swapchainLength) {
+void D3D12Renderer::Initialize(uint8_t /*swapchainLength*/) {
 }
 
 uint64_t D3D12Renderer::Render(

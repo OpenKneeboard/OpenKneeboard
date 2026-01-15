@@ -94,7 +94,7 @@ std::string to_utf8(std::wstring_view in) {
     &ec);
   OPENKNEEBOARD_ASSERT(
     U_SUCCESS(ec), "u_strToUTF8 failed with {}", std::to_underlying(ec));
-  OPENKNEEBOARD_ASSERT(length == ret.size());
+  OPENKNEEBOARD_ASSERT(static_cast<std::size_t>(length) == ret.size());
   return ret;
 }
 

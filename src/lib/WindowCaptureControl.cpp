@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/RuntimeFiles.hpp>
 #include <OpenKneeboard/WindowCaptureControl.hpp>
 
@@ -50,7 +51,7 @@ Handles InstallHooks(HWND hwnd) {
 
   ret.mMessageHook.reset(SetWindowsHookExW(
     WH_GETMESSAGE,
-    reinterpret_cast<HOOKPROC>(msgProc),
+    std::bit_cast<HOOKPROC>(msgProc),
     ret.mLibrary.get(),
     threadID));
   if (!ret.mMessageHook) {
@@ -58,7 +59,7 @@ Handles InstallHooks(HWND hwnd) {
   }
   ret.mWindowProcHook.reset(SetWindowsHookExW(
     WH_CALLWNDPROC,
-    reinterpret_cast<HOOKPROC>(wndProc),
+    std::bit_cast<HOOKPROC>(wndProc),
     ret.mLibrary.get(),
     threadID));
   if (!ret.mWindowProcHook) {

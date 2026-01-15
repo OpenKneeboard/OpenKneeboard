@@ -23,9 +23,9 @@ struct API {
     if (!mModule) {
       return;
     }
-    pRENDERDOC_GetAPI RENDERDOC_GetAPI
-      = (pRENDERDOC_GetAPI)GetProcAddress(mModule, "RENDERDOC_GetAPI");
-    RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_3_0, (void**)&mRenderDoc);
+    const auto getAPI = std::bit_cast<pRENDERDOC_GetAPI>(
+      GetProcAddress(mModule, "RENDERDOC_GetAPI"));
+    getAPI(eRENDERDOC_API_Version_1_3_0, (void**)&mRenderDoc);
   }
 
   operator bool() const noexcept {

@@ -36,7 +36,7 @@ SHM::Reader& D3D11Renderer::GetSHM() {
   return *mSHM.get();
 }
 
-void D3D11Renderer::Initialize(uint8_t swapchainLength) {
+void D3D11Renderer::Initialize(uint8_t /*swapchainLength*/) {
 }
 
 uint64_t D3D11Renderer::Render(

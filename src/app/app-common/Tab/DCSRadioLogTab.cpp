@@ -114,9 +114,9 @@ PageIndex DCSRadioLogTab::GetPageCount() const {
 }
 
 OpenKneeboard::fire_and_forget DCSRadioLogTab::OnAPIEvent(
-  APIEvent event,
-  std::filesystem::path installPath,
-  std::filesystem::path savedGamesPath) {
+  const APIEvent event,
+  std::filesystem::path /*installPath*/,
+  std::filesystem::path /*savedGamesPath*/) {
   auto weak = weak_from_this();
   if (event.name == DCSEvents::EVT_SIMULATION_START) {
     co_await mUIThread;

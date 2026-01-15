@@ -175,8 +175,8 @@ void KneeboardView::SetCurrentTabByIndex(
 }
 
 void KneeboardView::SetCurrentTabByRuntimeID(
-  ITab::RuntimeID id,
-  const std::source_location& loc) {
+  const ITab::RuntimeID id,
+  const std::source_location&) {
   for (std::size_t i = 0; i < mTabViews.size(); ++i) {
     const auto tab = mTabViews.at(i)->GetRootTab().lock();
     if (!tab) {

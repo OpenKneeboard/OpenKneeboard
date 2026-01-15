@@ -190,7 +190,7 @@ struct CrashMeta {
       return;
     }
 
-    mMiniDumpWriteDump = reinterpret_cast<decltype(&MiniDumpWriteDump)>(
+    mMiniDumpWriteDump = std::bit_cast<decltype(&MiniDumpWriteDump)>(
       GetProcAddress(mDbgHelp.get(), "MiniDumpWriteDump"));
   }
 };

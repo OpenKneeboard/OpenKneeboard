@@ -544,13 +544,13 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 
 namespace {
 void WinEventHook::HookProc(
-  HWINEVENTHOOK hook,
-  DWORD event,
-  HWND hwnd,
-  LONG idObject,
-  LONG idChild,
-  DWORD idEventThread,
-  DWORD dwmsEventTime) {
+  HWINEVENTHOOK,
+  const DWORD event,
+  HWND const hwnd,
+  const LONG idObject,
+  const LONG idChild,
+  DWORD /* idEventThread */,
+  DWORD /* dwmsEventTime*/) {
   if (
     event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW
     && event != EVENT_OBJECT_LOCATIONCHANGE) {

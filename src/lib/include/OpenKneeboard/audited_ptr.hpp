@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/dprint.hpp>
@@ -82,7 +83,7 @@ class audited_ptr {
   audited_ptr& operator=(const audited_ptr&) = delete;
   audited_ptr& operator=(audited_ptr&&) = delete;
 
-  const auto use_count() const {
+  auto use_count() const {
     return mImpl.use_count();
   }
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/json_fwd.hpp>
@@ -120,7 +121,7 @@ consteval auto Wrap(const char (&str)[Len]) {
 
 template <class T>
 struct SparseJsonDetail {
-  static inline void Encode(nlohmann::json& j, const T& parent_v, const T& v) {
+  static void Encode(nlohmann::json& j, const T& /* parent_v */, const T& v) {
     j = v;
   }
 };
@@ -175,19 +176,16 @@ consteval StringWrapper<Len - 1> ConstStrSkipFirstLowerNext(
 };// namespace detail::SparseJson
 
 template <class T>
-void to_json_postprocess(nlohmann::json& j, const T& v) {
+void to_json_postprocess(nlohmann::json&, const T&) {
 }
 
 template <class T>
-void to_json_postprocess(
-  nlohmann::json& j,
-  [[maybe_unused]] const T& parent_v,
-  const T& v) {
+void to_json_postprocess(nlohmann::json& j, const T& /*parent_v*/, const T& v) {
   to_json_postprocess<T>(j, v);
 }
 
 template <class T>
-void from_json_postprocess(const nlohmann::json& j, T& v) {
+void from_json_postprocess(const nlohmann::json&, T&) {
 }
 
 #define DETAIL_OPENKNEEBOARD_FROM_JSON_DECLARE_KEY(KeyTransform) \

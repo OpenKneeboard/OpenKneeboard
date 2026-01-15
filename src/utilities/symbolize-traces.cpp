@@ -57,7 +57,7 @@ std::string wide_to_utf8(std::wstring_view wide) {
   return ret;
 }
 
-static void usage(int argc, char** argv) {
+static void usage(const int /*argc*/, const char* const* const argv) {
   std::println(
     stderr, "Usage: {} [--pdb-path FOLDER_PATH] CRASH_TEXT_FILE", argv[0]);
 }

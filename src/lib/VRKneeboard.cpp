@@ -51,7 +51,7 @@ Vector2 VRKneeboard::GetKneeboardSize(
 }
 
 VRKneeboard::Sizes VRKneeboard::GetSizes(
-  const VRRenderSettings& vrc,
+  const VRRenderSettings&,
   const SHM::LayerConfig& layer) const {
   const auto& physicalSize = layer.mVR.mPhysicalSize;
   const auto virtualWidth = physicalSize.mWidth;

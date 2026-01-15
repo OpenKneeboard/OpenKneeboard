@@ -32,7 +32,7 @@ class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
   }
 
   void OnBeforeCommandLineProcessing(
-    const CefString& process_type,
+    const CefString& /*process_type*/,
     CefRefPtr<CefCommandLine> command_line) override {
     command_line->AppendSwitch("angle");
     command_line->AppendSwitchWithValue("use-angle", "d3d11");

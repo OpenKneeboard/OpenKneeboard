@@ -83,7 +83,7 @@ luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
   return 1;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+BOOL WINAPI DllMain(HINSTANCE, const DWORD dwReason, LPVOID /* lpReserved */) {
   const auto& provider = OpenKneeboard::gTraceProvider;
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:

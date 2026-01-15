@@ -245,19 +245,19 @@ CefRefPtr<CefRequestHandler> ChromiumPageSource::Client::GetRequestHandler() {
 
 CefRefPtr<CefResourceRequestHandler>
 ChromiumPageSource::Client::GetResourceRequestHandler(
-  CefRefPtr<CefBrowser> browser,
-  CefRefPtr<CefFrame> frame,
-  CefRefPtr<CefRequest> request,
-  bool is_navigation,
-  bool is_download,
-  const CefString& request_initiator,
-  bool& disable_default_handling) {
+  CefRefPtr<CefBrowser>,
+  CefRefPtr<CefFrame>,
+  CefRefPtr<CefRequest>,
+  bool /* is_navigation */,
+  bool /* is_download */,
+  const CefString& /*request_initiator*/,
+  bool& /*disable_default_handling*/) {
   return this;
 }
 
 CefRefPtr<CefResourceHandler> ChromiumPageSource::Client::GetResourceHandler(
-  CefRefPtr<CefBrowser> browser,
-  CefRefPtr<CefFrame> frame,
+  CefRefPtr<CefBrowser>,
+  CefRefPtr<CefFrame>,
   CefRefPtr<CefRequest> request) {
   const FatalOnUncaughtExceptions exceptionBoundary;
   auto make404 = []() {
@@ -345,19 +345,19 @@ bool ChromiumPageSource::Client::OnProcessMessageReceived(
 }
 
 bool ChromiumPageSource::Client::OnBeforePopup(
-  CefRefPtr<CefBrowser> browser,
+  CefRefPtr<CefBrowser>,
   CefRefPtr<CefFrame> frame,
-  int popup_id,
+  int /*popup_id*/,
   const CefString& target_url,
   const CefString& target_frame_name,
-  CefLifeSpanHandler::WindowOpenDisposition target_disposition,
-  bool user_gesture,
-  const CefPopupFeatures& popupFeatures,
-  CefWindowInfo& windowInfo,
-  CefRefPtr<CefClient>& client,
-  CefBrowserSettings& settings,
-  CefRefPtr<CefDictionaryValue>& extra_info,
-  bool* no_javascript_access) {
+  CefLifeSpanHandler::WindowOpenDisposition,
+  bool /*user_gesture*/,
+  const CefPopupFeatures&,
+  CefWindowInfo&,
+  CefRefPtr<CefClient>&,
+  CefBrowserSettings&,
+  CefRefPtr<CefDictionaryValue>& /* extra_info */,
+  bool* /* no_javascript_access */) {
   dprint.Warning(
     "CEF - blocking popup: {} in frame '{}'",
     target_url.ToString(),

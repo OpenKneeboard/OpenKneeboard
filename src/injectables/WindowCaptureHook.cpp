@@ -168,10 +168,10 @@ static void UninstallDetours() {
 }
 
 static bool ProcessControlMessage(
-  HWND hwnd,
+  HWND,
   unsigned int message,
-  WPARAM wParam,
-  LPARAM lParam) {
+  const WPARAM wParam,
+  const LPARAM lParam) {
   static UINT sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
@@ -299,7 +299,7 @@ static std::wstring GetProgramPath() {
   return {buffer, pathLen};
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+BOOL WINAPI DllMain(HINSTANCE, const DWORD dwReason, const LPVOID reserved) {
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
       TraceLoggingRegister(gTraceProvider);

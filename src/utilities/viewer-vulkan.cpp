@@ -33,9 +33,9 @@ static constexpr std::array RequiredInstanceExtensions {
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
   VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+  VkDebugUtilsMessageTypeFlagsEXT /*messageTypes*/,
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-  void* pUserData) {
+  void* /*pUserData*/) {
   std::string_view severity;
   if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
     severity = "ERROR";
@@ -66,13 +66,13 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   if (!mVulkanLoader) {
     fatal("Failed to load vulkan-1.dll");
   }
-  auto vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
+  auto vkGetInstanceProcAddr = std::bit_cast<PFN_vkGetInstanceProcAddr>(
     GetProcAddress(mVulkanLoader.get(), "vkGetInstanceProcAddr"));
   if (!vkGetInstanceProcAddr) {
     fatal("Failed to find vkGetInstanceProcAddr");
   }
 
-  auto vkCreateInstance = reinterpret_cast<PFN_vkCreateInstance>(
+  auto vkCreateInstance = std::bit_cast<PFN_vkCreateInstance>(
     vkGetInstanceProcAddr(NULL, "vkCreateInstance"));
   if (!vkCreateInstance) {
     fatal("Failed to find vkCreateInstance");
@@ -303,7 +303,7 @@ std::wstring_view VulkanRenderer::GetName() const noexcept {
   return L"Vulkan";
 }
 
-void VulkanRenderer::Initialize(uint8_t swapchainLength) {
+void VulkanRenderer::Initialize(uint8_t /*swapchainLength*/) {
   if (mCompletionFence) {
     const auto fence = mCompletionFence.get();
     check_vkresult(

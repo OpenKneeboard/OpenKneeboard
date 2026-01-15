@@ -1110,10 +1110,10 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
 }
 
 int WINAPI wWinMain(
-  HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  PWSTR pCmdLine,
-  int nCmdShow) {
+  const HINSTANCE hInstance,
+  HINSTANCE /*hPrevInstance*/,
+  PWSTR /*pCmdLine*/,
+  const int nShowCmd) {
   TraceLoggingRegister(gTraceProvider);
   const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
@@ -1128,7 +1128,7 @@ int WINAPI wWinMain(
   winrt::init_apartment(winrt::apartment_type::single_threaded);
 
   TestViewerWindow window(hInstance);
-  ShowWindow(window.GetHWND(), nCmdShow);
+  ShowWindow(window.GetHWND(), nShowCmd);
 
   MSG msg = {};
   while (GetMessage(&msg, NULL, 0, 0) > 0) {

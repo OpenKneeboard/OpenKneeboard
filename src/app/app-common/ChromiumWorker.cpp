@@ -214,10 +214,10 @@ class BrowserApp final : public CefApp,
 
   bool Execute(
     const CefString& name,
-    CefRefPtr<CefV8Value> object,
+    CefRefPtr<CefV8Value> /*object*/,
     const CefV8ValueList& arguments,
     CefRefPtr<CefV8Value>& ret,
-    CefString& exception) override {
+    CefString& /*exception*/) override {
     const auto browser = CefV8Context::GetCurrentContext()->GetBrowser();
 
     if (name == "OKBNative_GetInitializationData") {

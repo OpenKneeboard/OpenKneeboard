@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/D3D11.hpp>
 #include <OpenKneeboard/RenderTarget.hpp>
@@ -22,7 +23,7 @@ std::shared_ptr<RenderTarget> RenderTarget::Create(
 
 std::shared_ptr<RenderTarget> RenderTarget::Create(
   const audited_ptr<DXResources>& dxr,
-  nullptr_t texture) {
+  nullptr_t /*texture*/) {
   return std::shared_ptr<RenderTarget>(new RenderTarget(dxr, nullptr));
 }
 

@@ -36,7 +36,7 @@ namespace OpenKneeboard {
 
 void InterprocessRenderer::SubmitFrame(
   const std::vector<SHM::LayerConfig>& shmLayers,
-  uint64_t inputLayerID) noexcept {
+  uint64_t /*inputLayerID*/) noexcept {
   if (!mSHM) {
     return;
   }

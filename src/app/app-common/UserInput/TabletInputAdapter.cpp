@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -38,7 +39,7 @@ namespace OpenKneeboard {
 static std::atomic_flag gHaveInstance;
 
 std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
-  HWND hwnd,
+  HWND,
   KneeboardState* kbs,
   const TabletSettings& tablet) {
   if (gHaveInstance.test_and_set()) {

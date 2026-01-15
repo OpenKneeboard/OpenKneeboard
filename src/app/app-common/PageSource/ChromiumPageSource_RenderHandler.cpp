@@ -95,7 +95,7 @@ void ChromiumPageSource::RenderHandler::OnPaint(
 void ChromiumPageSource::RenderHandler::OnAcceleratedPaint(
   CefRefPtr<CefBrowser>,
   PaintElementType,
-  const RectList& dirtyRects,
+  const RectList& /*dirtyRects*/,
   const CefAcceleratedPaintInfo& info) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::RenderHandler::OnAcceleratedPaint()");

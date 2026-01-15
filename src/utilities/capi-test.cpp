@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
   ////////////////////////////////
 
   const auto pfn_OpenKneeboard_send_utf8
-    = reinterpret_cast<decltype(&OpenKneeboard_send_utf8)>(
+    = std::bit_cast<decltype(&OpenKneeboard_send_utf8)>(
       GetProcAddress(dll, "OpenKneeboard_send_utf8"));
   if (!pfn_OpenKneeboard_send_utf8) {
     std::cout << "Failed to find 'OpenKneeboard_send_utf8': " << GetLastError()

@@ -179,7 +179,7 @@ struct TaskFinalAwaiter {
   }
 
   template <class TPromise>
-  void await_suspend(std::coroutine_handle<TPromise> handle) noexcept {
+  void await_suspend(std::coroutine_handle<TPromise>) noexcept {
     auto oldState = mPromise.mWaiting.exchange(
       TaskPromiseCompleted, std::memory_order_acq_rel);
     if (oldState == TaskPromiseAbandoned) {

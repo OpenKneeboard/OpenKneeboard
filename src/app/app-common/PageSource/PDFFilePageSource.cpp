@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CachedLayer.hpp>
 #include <OpenKneeboard/CursorClickableRegions.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
@@ -213,6 +214,7 @@ task<void> PDFFilePageSource::ReloadRenderer(
       if (doc->mPDFDocument) {
         ([](auto dq, auto deleteLater) -> OpenKneeboard::fire_and_forget {
           co_await wil::resume_foreground(dq);
+          std::ignore = deleteLater;
         })(mUIThreadDispatcherQueue, std::move(doc->mPDFDocument));
       }
       doc->mPDFDocument = std::move(document);
@@ -481,8 +483,9 @@ void PDFFilePageSource::RenderPageContent(
     .DestinationHeight = rect.Height(),
   };
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Translation(
-    rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
+  ctx->SetTransform(
+    D2D1::Matrix3x2F::Translation(
+      rect.TopLeft().StaticCast<FLOAT, D2D1_SIZE_F>()));
 
   {
     const std::unique_lock d2dlock(*mDXR);
