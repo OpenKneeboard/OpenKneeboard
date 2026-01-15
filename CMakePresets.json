@@ -13,6 +13,11 @@
         "CMAKE_TOOLCHAIN_FILE": "third-party/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-openkneeboard"
       }
+    },
+    {
+      "name": "clang-cl with vcpkg",
+      "inherits": "vcpkg",
+      "toolset": "ClangCL"
     }
   ]
 }
