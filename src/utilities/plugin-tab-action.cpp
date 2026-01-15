@@ -51,7 +51,7 @@ int WINAPI wWinMain(
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
   });
   int argc = 0;
-  auto argv = CommandLineToArgvW(pCmdLine, &argc);
+  auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
   if (argc < 1 || argc > 2) {
     dprint("Usage: ACTION_ID [CUSTOM_DATA]");

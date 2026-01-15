@@ -26,7 +26,7 @@ int WINAPI wWinMain(
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
   });
   int argc = 0;
-  auto argv = CommandLineToArgvW(pCmdLine, &argc);
+  auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
   if (argc < 2 || argc > 4) {
     dprint("Usage: (id|name|position) IDENTIFIER [PAGE] [KNEEBOARD]");
