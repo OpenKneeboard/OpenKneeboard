@@ -1125,6 +1125,10 @@ int WINAPI wWinMain(
   const scope_exit unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
 
+  // Make some launchers (e.g. CLion debugger) happier to terminate this
+  // No effect if there is no terminal
+  AttachConsole(ATTACH_PARENT_PROCESS);
+
   DPrintSettings::Set({.prefix = "OpenKneeboard-Viewer"});
 
   SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
