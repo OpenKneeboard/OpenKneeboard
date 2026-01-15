@@ -662,9 +662,9 @@ void fatal_with_exception(std::exception_ptr ep) {
       },
       nullptr);
     std::unreachable();
+  } catch (...) {
+    FatalAndDump(meta, {"Uncaught exception of unknown kind"}, nullptr);
   }
-
-  FatalAndDump(meta, {"Uncaught exception of unknown kind"}, nullptr);
 }
 
 void divert_process_failure_to_fatal() {
