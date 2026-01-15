@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/config.hpp>
@@ -153,9 +154,10 @@ void fatal(
   TLocation&& blame,
   std::format_string<Ts...> fmt,
   Ts&&... values) noexcept {
+  auto message = std::format(fmt, std::forward<Ts>(values)...);
   detail::prepare_to_fatal();
   detail::FatalData {
-    .mMessage = std::format(fmt, std::forward<Ts>(values)...),
+    .mMessage = std::move(message),
     .mBlameLocation = detail::SourceLocation {std::forward<TLocation>(blame)},
   }
     .fatal();
