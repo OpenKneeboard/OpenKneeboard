@@ -358,6 +358,8 @@ std::string DirectInputDevice::GetKeyLabel(uint64_t key) const {
       return "Insert";
     case DIK_DELETE:
       return "Delete";
+    case 0x67:
+      return "F16";
     case 0x68:
       return "F17";
     case 0x69:
