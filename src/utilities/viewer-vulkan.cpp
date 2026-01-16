@@ -32,7 +32,7 @@ static constexpr std::array RequiredInstanceExtensions {
 #endif
 };
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
+[[maybe_unused]] static VKAPI_ATTR VkBool32 VKAPI_CALL VKDebugCallback(
   VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   VkDebugUtilsMessageTypeFlagsEXT /*messageTypes*/,
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
