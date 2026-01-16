@@ -20,8 +20,7 @@ redirect_from:
 
 Use OpenTabletDriver.
 
-If you are using OpenTabletDriver, some Huion tablets have a physical switch on the side which disables the buttons on
-the tablet. Check the manual for your tablet, and make sure the switch is in the position that enables the buttons.
+Some Huion tablets have a physical switch on the side which disables the buttons on the tablet. Check the manual for your tablet, and make sure the switch is in the position that enables the buttons.
 
 If you *cannot* use OpenTabletDriver:
 
