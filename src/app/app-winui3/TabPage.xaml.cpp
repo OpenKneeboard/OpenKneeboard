@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "TabPage.xaml.h"
@@ -347,10 +348,10 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
   auto button = CreateAppBarButtonBase(item);
 
   muxc::MenuFlyout flyout;
-  for (auto& item: item->GetSubItems()) {
-    const auto flyoutItem = CreateMenuFlyoutItem(item);
+  for (auto& subitem: item->GetSubItems()) {
+    const auto flyoutItem = CreateMenuFlyoutItem(subitem);
     if (flyoutItem) {
-      AttachVisibility(item, flyoutItem);
+      AttachVisibility(subitem, flyoutItem);
       flyout.Items().Append(flyoutItem);
     }
   }
@@ -743,15 +744,17 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
     buttons |= (1 << 1);
   }
 
-  this->EnqueueCursorEvent(CursorEvent {
-    .mSource = CursorSource::WindowPointer,
-    .mTouchState = (leftClick || rightClick) ? CursorTouchState::TouchingSurface
-                                             : CursorTouchState::NearSurface,
-    .mX = canvasPoint.x,
-    .mY = canvasPoint.y,
-    .mPressure = rightClick ? 0.8f : 0.0f,
-    .mButtons = buttons,
-  });
+  this->EnqueueCursorEvent(
+    CursorEvent {
+      .mSource = CursorSource::WindowPointer,
+      .mTouchState = (leftClick || rightClick)
+        ? CursorTouchState::TouchingSurface
+        : CursorTouchState::NearSurface,
+      .mX = canvasPoint.x,
+      .mY = canvasPoint.y,
+      .mPressure = rightClick ? 0.8f : 0.0f,
+      .mButtons = buttons,
+    });
 }
 
 void TabPage::EnqueueCursorEvent(const CursorEvent& ev) {

@@ -2,7 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+
+#include "OpenKneeboard/numeric_cast.hpp"
 
 #include <OpenKneeboard/NavigationTab.hpp>
 
@@ -37,7 +40,7 @@ NavigationTab::NavigationTab(
   const auto entriesPerPage
     = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
   const auto entriesPerColumn = entriesPerPage / columns;
-  mRenderColumns = columns;
+  mRenderColumns = numeric_cast<uint16_t>(columns);
 
   auto dwf = mDXR->mDWriteFactory;
   winrt::check_hresult(dwf->CreateTextFormat(
@@ -200,7 +203,8 @@ task<void> NavigationTab::RenderPage(
   this->CalculatePreviewMetrics(pageID);
 
   const auto origin = canvasRect.TopLeft();
-  const auto pageTransform = D2D1::Matrix3x2F::Translation(origin.mX, origin.mY)
+  const auto pageTransform
+    = D2D1::Matrix3x2F::Translation(origin.X<float>(), origin.Y<float>())
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
   ctx->SetTransform(pageTransform);
 
@@ -244,7 +248,7 @@ task<void> NavigationTab::RenderPage(
     const auto& previewRect = previewMetrics.mRects.at(i);
     auto& rightEdge = columnPreviewRightEdge.at(button.mRenderColumn);
     if (previewRect.Right() > rightEdge) {
-      rightEdge = previewRect.Right();
+      rightEdge = previewRect.Right<FLOAT>();
     }
     if (button == hoverButton) {
       ctx->DrawRectangle(
@@ -317,7 +321,7 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
         button.mRect.left + m.mBleed, button.mRect.top - m.mBleed)
         .Rounded<uint32_t>(),
       Geometry2D::Size<float>(
-        static_cast<uint32_t>(nativeSize.mWidth * contentScale), height)
+        numeric_cast<float>(nativeSize.mWidth) * contentScale, height)
         .Rounded<uint32_t>(),
     };
   }

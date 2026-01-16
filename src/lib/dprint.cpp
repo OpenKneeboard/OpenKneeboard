@@ -135,7 +135,8 @@ static void WriteIPCMessage(std::wstring_view message) {
   SetEvent(dataReadyEvent.get());
 }
 
-static bool IsDebugStreamEnabledInRegistry() {
+// Only used in `if constexpr (Config::IsDebugBuild)`
+[[maybe_unused]] static bool IsDebugStreamEnabledInRegistry() {
   static std::optional<bool> sCache;
   if (sCache) {
     return *sCache;
@@ -160,11 +161,12 @@ static bool IsDebugStreamEnabledInRegistry() {
   return *sCache;
 }
 
-static inline bool IsDebugStreamEnabled() {
-#ifdef DEBUG
-  return true;
-#endif
-  return IsDebugStreamEnabledInRegistry() || IsDebuggerPresent();
+static bool IsDebugStreamEnabled() {
+  if constexpr (Config::IsDebugBuild) {
+    return true;
+  } else {
+    return IsDebugStreamEnabledInRegistry() || IsDebuggerPresent();
+  }
 }
 
 static inline bool IsConsoleOutputEnabled() {

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "MetersNumberFormatter.h"
@@ -24,11 +25,11 @@ hstring MetersNumberFormatter::FormatDouble(double value) {
 }
 
 winrt::Windows::Foundation::IReference<int64_t> MetersNumberFormatter::ParseInt(
-  hstring const& text) {
+  hstring const&) {
   throw hresult_not_implemented();
 }
 winrt::Windows::Foundation::IReference<uint64_t>
-MetersNumberFormatter::ParseUInt(hstring const& text) {
+MetersNumberFormatter::ParseUInt(hstring const&) {
   throw hresult_not_implemented();
 }
 

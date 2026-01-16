@@ -4,17 +4,24 @@ add_compile_options(
 
   # All warnings as errors
   "/WX"
+  # More warnings
+  "/W4"
 
-  # Lots of legacy C functions are unsafe, and raise warnings in third-party code
+  # Lots of legacy C functions are 'unsafe' according to MS (with Windows-specific 'safe' versions), and raise warnings
+  # in third-party code
   "/wd4996"
 
   # Informational 'warning' describing how diamond inheritance works
   "/wd4250"
+
+  # size_t -> smaller type conversion. Lots of Windows APIs want a DWORD
+  "/wd4267"
+
+  # signed vs unsigned < or >
+  "/wd4018"
 )
 if (CLANG_CL)
   add_compile_options(
-    # More warnings
-    "/W4"
     "/clang:-Wno-missing-braces"
     "/clang:-Wno-missing-field-initializers"
     "/clang:-Wno-sign-compare"

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ConfirmationUILayer.hpp>
 #include <OpenKneeboard/FlyoutMenuUILayer.hpp>
 #include <OpenKneeboard/ICheckableToolbarItem.hpp>
@@ -212,10 +213,10 @@ task<void> FlyoutMenuUILayer::Render(
     }
   }
 
-  for (const auto& rect: menu.mSeparatorRects) {
-    const auto y = rect.top + ((rect.bottom - rect.top) / 2) - 1;
-    D2D1_POINT_2F left {rect.left + (menu.mMargin * 2), y};
-    D2D1_POINT_2F right {rect.right - (menu.mMargin * 2), y};
+  for (auto&& separator: menu.mSeparatorRects) {
+    const auto y = separator.top + ((separator.bottom - separator.top) / 2) - 1;
+    D2D1_POINT_2F left {separator.left + (menu.mMargin * 2), y};
+    D2D1_POINT_2F right {separator.right - (menu.mMargin * 2), y};
     d2d->DrawLine(left, right, mMenuFGBrush.get());
   }
 }
@@ -343,15 +344,16 @@ void FlyoutMenuUILayer::UpdateLayout(
   // 2. Where can we put it?
 
   const D2D1_POINT_2F topLeft {
-    renderRect.Left()
-      + std::max<FLOAT>(margin, mPreferredTopLeft01.x * canvasSize.mWidth),
+    renderRect.Left<FLOAT>()
+      + std::max(
+        numeric_cast<FLOAT>(margin), mPreferredTopLeft01.x * canvasSize.mWidth),
     renderRect.Top() + (mPreferredTopLeft01.y * canvasSize.mHeight),
   };
   const D2D1_POINT_2F topRight {
     renderRect.Left()
-      + std::min<FLOAT>(
+      + std::min(
         (mPreferredTopRight01.x * canvasSize.mWidth) - maxItemWidth,
-        canvasSize.mWidth - margin),
+        numeric_cast<FLOAT>(canvasSize.mWidth - margin)),
     renderRect.Top() + (mPreferredTopRight01.y * canvasSize.mHeight),
   };
   const auto preferred
@@ -467,7 +469,7 @@ void FlyoutMenuUILayer::UpdateLayout(
     });
 
   mMenu = {
-    .mMargin = margin,
+    .mMargin = numeric_cast<FLOAT>(margin),
     .mRect = menuRect,
     .mCursorImpl = std::move(cursorImpl),
     .mSeparatorRects = std::move(separators),

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CreateTabActions.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/HeaderUILayer.hpp>
@@ -362,9 +363,9 @@ void HeaderUILayer::LayoutToolbar(
       .top = static_cast<float>(margin),
       .bottom = static_cast<float>(margin + buttonHeight),
     };
-    button.left = primaryLeft;
-    button.right = primaryLeft + buttonHeight,
-    primaryLeft = button.right + margin;
+    button.left = numeric_cast<float>(primaryLeft);
+    button.right = numeric_cast<float>(primaryLeft + buttonHeight),
+    primaryLeft += buttonHeight + margin;
 
     buttons.push_back({button, selectable});
   }
@@ -391,7 +392,7 @@ void HeaderUILayer::LayoutToolbar(
     };
     button.right = static_cast<float>(secondaryRight);
     button.left = static_cast<float>(secondaryRight - buttonHeight);
-    secondaryRight = button.left - margin;
+    secondaryRight -= buttonHeight + margin;
 
     buttons.push_back({button, selectable});
   }

@@ -8,6 +8,7 @@
 #include "viewer-vulkan.hpp"
 
 #include "DDS.hpp"
+#include "OpenKneeboard/numeric_cast.hpp"
 
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/Vulkan.hpp>
@@ -218,7 +219,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     if (it == queueFamilies.end()) {
       fatal("No graphics queues found");
     }
-    mQueueFamilyIndex = (it - queueFamilies.begin());
+    mQueueFamilyIndex = numeric_cast<uint32_t>(it - queueFamilies.begin());
   }
 
   float queuePriorities[] {1.0f};

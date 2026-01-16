@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/D2DErrorRenderer.hpp>
 #include <OpenKneeboard/DXResources.hpp>
@@ -10,6 +11,7 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/numeric_cast.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <Unknwn.h>
@@ -53,7 +55,12 @@ void PlainTextPageSource::UpdateLayoutLimits() {
   const auto size = this->GetPreferredSize({nullptr})->mPixelSize;
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
-    L"m", 1, mTextFormat.get(), size.mWidth, size.mHeight, textLayout.put());
+    L"m",
+    1,
+    mTextFormat.get(),
+    size.Width<FLOAT>(),
+    size.Height<FLOAT>(),
+    textLayout.put());
   DWRITE_TEXT_METRICS metrics;
   textLayout->GetMetrics(&metrics);
 
@@ -155,10 +162,10 @@ task<void> PlainTextPageSource::RenderPage(
   const auto virtualSize = this->GetPreferredSize(pageID)->mPixelSize;
   const auto renderSize = virtualSize.ScaledToFit(rect.mSize);
 
-  const float renderLeft
-    = rect.Left() + ((rect.Width() - renderSize.Width()) / 2);
-  const float renderTop
-    = rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
+  const auto renderLeft = numeric_cast<float>(
+    rect.Left() + ((rect.Width() - renderSize.Width()) / 2));
+  const float renderTop = numeric_cast<float>(
+    rect.Top() + ((rect.Height() - renderSize.Height()) / 2));
 
   const auto scale = renderSize.Height<float>() / virtualSize.Height();
 
@@ -367,28 +374,28 @@ void PlainTextPageSource::LayoutMessages() {
     }
 
     std::vector<std::string_view> wrappedLines;
-    for (auto remaining: rawLines) {
+    for (auto&& line: rawLines) {
       while (true) {
-        if (remaining.size() <= mColumns) {
-          wrappedLines.push_back(remaining);
+        if (line.size() <= mColumns) {
+          wrappedLines.push_back(line);
           break;
         }
 
-        auto space = remaining.find_last_of(" ", mColumns);
-        if (space != remaining.npos) {
-          wrappedLines.push_back(remaining.substr(0, space));
-          if (remaining.size() <= space) {
+        auto space = line.find_last_of(" ", mColumns);
+        if (space != line.npos) {
+          wrappedLines.push_back(line.substr(0, space));
+          if (line.size() <= space) {
             break;
           }
-          remaining = remaining.substr(space + 1);
+          line = line.substr(space + 1);
           continue;
         }
 
-        wrappedLines.push_back(remaining.substr(0, mColumns));
-        if (remaining.size() <= mColumns) {
+        wrappedLines.push_back(line.substr(0, mColumns));
+        if (line.size() <= mColumns) {
           break;
         }
-        remaining = remaining.substr(mColumns);
+        line = line.substr(mColumns);
       }
     }
 

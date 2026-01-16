@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/BookmarksUILayer.hpp>
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -167,7 +168,7 @@ task<void> BookmarksUILayer::Render(
     DWRITE_FONT_WEIGHT_REGULAR,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    (textHeight * 96) / (2 * dpiy),
+    numeric_cast<float>((textHeight * 96) / (2 * dpiy)),
     L"",
     textFormat.put()));
   textFormat->SetReadingDirection(DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);

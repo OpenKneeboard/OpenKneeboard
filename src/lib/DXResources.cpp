@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DXResources.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -171,16 +172,16 @@ D3D11Resources::D3D11Resources() {
       .PrivateDriverDataSize = sizeof(caps),
     };
     if (D3DKMTQueryAdapterInfo(&capsQuery) != 0 /* STATUS_SUCCESS */) {
-      D3DKMT_WDDM_2_7_CAPS caps {};
+      D3DKMT_WDDM_2_7_CAPS caps27 {};
       capsQuery.Type = KMTQAITYPE_WDDM_2_7_CAPS;
-      capsQuery.pPrivateDriverData = &caps;
-      capsQuery.PrivateDriverDataSize = sizeof(caps);
+      capsQuery.pPrivateDriverData = &caps27;
+      capsQuery.PrivateDriverDataSize = sizeof(caps27);
       if (D3DKMTQueryAdapterInfo(&capsQuery) == 0) {
-        if (caps.HwSchEnabled) {
+        if (caps27.HwSchEnabled) {
           dprint("    HAGS: enabled");
-        } else if (caps.HwSchEnabledByDefault) {
+        } else if (caps27.HwSchEnabledByDefault) {
           dprint("    HAGS: manually disabled");
-        } else if (caps.HwSchSupported) {
+        } else if (caps27.HwSchSupported) {
           dprint("    HAGS: disabled (supported but off-by-default)");
         } else {
           dprint("   HAGS: unsupported");

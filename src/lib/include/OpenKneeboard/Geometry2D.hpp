@@ -2,8 +2,11 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
+
+#include <OpenKneeboard/numeric_cast.hpp>
 
 #include <d3d11.h>
 
@@ -65,19 +68,19 @@ struct Size {
 
   template <class TV = T>
   constexpr auto Width() const noexcept {
-    return static_cast<TV>(mWidth);
+    return numeric_cast<TV>(mWidth);
   }
 
   template <class TV = T>
   constexpr auto Height() const noexcept {
-    return static_cast<TV>(mHeight);
+    return numeric_cast<TV>(mHeight);
   }
 
   constexpr Size<T> ScaledToFit(
     const Size<T>& container,
     ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {
-    const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
-    const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
+    const auto scaleX = numeric_cast<float>(container.mWidth) / mWidth;
+    const auto scaleY = numeric_cast<float>(container.mHeight) / mHeight;
     const auto scale = std::min(scaleX, scaleY);
 
     if (scale > 1 && mode == ScaleToFitMode::ShrinkOnly) {
@@ -102,15 +105,15 @@ struct Size {
   constexpr Size<T> IntegerScaledToFit(
     const Size<T>& container,
     ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {
-    const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
-    const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
+    const auto scaleX = numeric_cast<float>(container.mWidth) / mWidth;
+    const auto scaleY = numeric_cast<float>(container.mHeight) / mHeight;
     const auto scale = std::min(scaleX, scaleY);
 
     if (scale > 1) {
       if (mode == ScaleToFitMode::ShrinkOnly) {
         return *this;
       }
-      const auto mult = static_cast<uint32_t>(std::floor(scale));
+      const auto mult = numeric_cast<uint32_t>(std::floor(scale));
       return {
         mWidth * mult,
         mHeight * mult,
@@ -121,7 +124,7 @@ struct Size {
       return *this;
     }
 
-    const auto divisor = static_cast<uint32_t>(std::ceil(1 / scale));
+    const auto divisor = numeric_cast<uint32_t>(std::ceil(1 / scale));
     return {
       mWidth / divisor,
       mHeight / divisor,
@@ -140,8 +143,8 @@ struct Size {
   template <std::integral TValue, class TSize = Size<TValue>>
   constexpr TSize Floor() const noexcept {
     return TSize {
-      static_cast<TValue>(std::floor(mWidth)),
-      static_cast<TValue>(std::floor(mHeight)),
+      numeric_cast<TValue>(std::floor(mWidth)),
+      numeric_cast<TValue>(std::floor(mHeight)),
     };
   }
 
@@ -149,8 +152,8 @@ struct Size {
     requires std::floating_point<T>
   constexpr TSize Rounded() const noexcept {
     return {
-      static_cast<TValue>(std::lround(mWidth)),
-      static_cast<TValue>(std::lround(mHeight)),
+      numeric_cast<TValue>(std::lround(mWidth)),
+      numeric_cast<TValue>(std::lround(mHeight)),
     };
   }
 
@@ -172,12 +175,12 @@ struct Point {
 
   template <class TV = T>
   constexpr auto X() const {
-    return static_cast<TV>(mX);
+    return numeric_cast<TV>(mX);
   }
 
   template <class TV = T>
   constexpr auto Y() const {
-    return static_cast<TV>(mY);
+    return numeric_cast<TV>(mY);
   }
 
   constexpr Point<T> operator/(const T divisor) const noexcept {
@@ -214,8 +217,8 @@ struct Point {
   template <class TValue, class TPoint = Point<TValue>>
   constexpr TPoint StaticCast() const noexcept {
     return TPoint {
-      static_cast<TValue>(mX),
-      static_cast<TValue>(mY),
+      numeric_cast<TValue>(mX),
+      numeric_cast<TValue>(mY),
     };
   }
 
@@ -223,8 +226,8 @@ struct Point {
     requires std::floating_point<T>
   constexpr TPoint Rounded() const noexcept {
     return {
-      static_cast<TValue>(std::lround(mX)),
-      static_cast<TValue>(std::lround(mY)),
+      numeric_cast<TValue>(std::lround(mX)),
+      numeric_cast<TValue>(std::lround(mY)),
     };
   }
 
@@ -354,12 +357,12 @@ struct Rect {
   constexpr TRect StaticCast() const noexcept {
     return {
       {
-        static_cast<TValue>(mOffset.mX),
-        static_cast<TValue>(mOffset.mY),
+        numeric_cast<TValue>(mOffset.mX),
+        numeric_cast<TValue>(mOffset.mY),
       },
       {
-        static_cast<TValue>(mSize.mWidth),
-        static_cast<TValue>(mSize.mHeight),
+        numeric_cast<TValue>(mSize.mWidth),
+        numeric_cast<TValue>(mSize.mHeight),
       },
     };
   }
@@ -367,10 +370,10 @@ struct Rect {
   template <class TValue, class TRect>
   constexpr TRect StaticCastWithBottomRight() const noexcept {
     return {
-      static_cast<TValue>(mOffset.mX),
-      static_cast<TValue>(mOffset.mY),
-      static_cast<TValue>(mOffset.mX + mSize.mWidth),
-      static_cast<TValue>(mOffset.mY + mSize.mHeight),
+      numeric_cast<TValue>(mOffset.mX),
+      numeric_cast<TValue>(mOffset.mY),
+      numeric_cast<TValue>(mOffset.mX + mSize.mWidth),
+      numeric_cast<TValue>(mOffset.mY + mSize.mHeight),
     };
   }
 

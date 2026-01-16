@@ -4,6 +4,7 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
+#include "OpenKneeboard/numeric_cast.hpp"
 #include "SHM/ReaderState.hpp"
 #include "SHM/WriterState.hpp"
 
@@ -112,7 +113,8 @@ struct SharedData final {
 
   DWORD mFeederProcessID {};
 
-  alignas(2 * sizeof(LONG64)) Frame mFrames[SwapChainLength];
+  uint8_t mPadding[8];
+  Frame mFrames[SwapChainLength];
 
   [[nodiscard]]
   bool HaveFeeder() const;
@@ -429,7 +431,7 @@ class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
     }
     const auto index = shared.mFrameNumber % SHMSwapchainLength;
     auto& source = shared.mFrames[index];
-    auto& [texture, fence] = frames.at(index);
+    auto& [texture, fence] = frames.at(numeric_cast<std::size_t>(index));
     texture.Update(feeder.get(), source.mTexture);
     fence.Update(feeder.get(), source.mFence);
   }

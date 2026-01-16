@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/CursorClickableRegions.hpp>
@@ -88,7 +89,7 @@ class ConfirmationUILayer final
   };
 
   struct Dialog {
-    uint32_t mMargin {};
+    float mMargin {};
 
     D2D1_RECT_F mBoundingBox {};
 

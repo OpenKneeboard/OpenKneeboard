@@ -2,7 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+
+#include "OpenKneeboard/numeric_cast.hpp"
 
 #include <OpenKneeboard/D3D12/SpriteBatch.hpp>
 #include <OpenKneeboard/Shaders/SpriteBatch/DXIL.hpp>
@@ -168,7 +171,8 @@ SpriteBatch::SpriteBatch(
     D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
     D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
     MaxSpritesPerBatch * MaxInflightFrames);
-  check_hresult(mShaderResourceViewHeap->Heap()->SetName(L"OpenKneeboard::D3D12::SpriteBatch::mShaderResourceViewHeap"));
+  check_hresult(mShaderResourceViewHeap->Heap()->SetName(
+    L"OpenKneeboard::D3D12::SpriteBatch::mShaderResourceViewHeap"));
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -275,7 +279,8 @@ void SpriteBatch::End() {
     mDevice->CreateShaderResourceView(
       sprite.mSource,
       nullptr,
-      mShaderResourceViewHeap->GetCpuHandle(heapOffset + i));
+      mShaderResourceViewHeap->GetCpuHandle(
+        numeric_cast<std::size_t>(heapOffset + i)));
 
     constantData.mSourceDimensions[i] = {
       sprite.mSourceSize.Width<float>(),
@@ -350,7 +355,9 @@ void SpriteBatch::End() {
   const auto heap = mShaderResourceViewHeap->Heap();
   commandList->SetDescriptorHeaps(1, &heap);
   commandList->SetGraphicsRootDescriptorTable(
-    1, mShaderResourceViewHeap->GetGpuHandle(heapOffset));
+    1,
+    mShaderResourceViewHeap->GetGpuHandle(
+      numeric_cast<std::size_t>(heapOffset)));
   commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
   commandList->DrawInstanced(vertices.size(), 1, 0, 0);
 }

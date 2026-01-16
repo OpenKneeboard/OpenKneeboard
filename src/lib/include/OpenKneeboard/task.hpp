@@ -196,8 +196,21 @@ struct TaskFinalAwaiter {
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
       oldState.mNext.resume();
-      return;
+    } else {
+      resume_on_required_thread(oldState);
     }
+  }
+
+  void await_resume() const noexcept {
+  }
+
+ private:
+  struct ResumeData {
+    TaskContext mContext;
+    std::coroutine_handle<> mCoro;
+  };
+
+  void resume_on_required_thread(const TaskPromiseWaiting oldState) {
     const auto& context = mPromise.mContext;
     if (context.mThreadID == std::this_thread::get_id()) {
       oldState.mNext.resume();
@@ -219,15 +232,6 @@ struct TaskFinalAwaiter {
       "Failed to enqueue resumption on thread pool: {:010x}",
       static_cast<uint32_t>(threadPoolError));
   }
-
-  void await_resume() const noexcept {
-  }
-
- private:
-  struct ResumeData {
-    TaskContext mContext;
-    std::coroutine_handle<> mCoro;
-  };
 
   static void resume_on_thread_pool(
     PTP_CALLBACK_INSTANCE,

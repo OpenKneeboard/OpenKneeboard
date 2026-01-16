@@ -445,7 +445,8 @@ std::optional<PreferredSize> PDFFilePageSource::GetPreferredSize(PageID id) {
   if (it == mDocumentResources->mPageIDs.end()) {
     return std::nullopt;
   }
-  const auto index = it - mDocumentResources->mPageIDs.begin();
+  const auto index
+    = numeric_cast<PageIndex>(it - mDocumentResources->mPageIDs.begin());
   auto size = mDocumentResources->mPDFDocument.GetPage(index).Size();
 
   return PreferredSize {
@@ -471,7 +472,7 @@ void PDFFilePageSource::RenderPageContent(
   if (pageIt == doc->mPageIDs.end()) {
     return;
   }
-  const auto index = pageIt - doc->mPageIDs.begin();
+  const auto index = numeric_cast<PageIndex>(pageIt - doc->mPageIDs.begin());
 
   auto page = doc->mPDFDocument.GetPage(index);
 

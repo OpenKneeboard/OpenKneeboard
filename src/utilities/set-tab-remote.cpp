@@ -7,6 +7,7 @@
 #include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
+#include <OpenKneeboard/numeric_cast.hpp>
 
 using namespace OpenKneeboard;
 
@@ -40,10 +41,10 @@ int WINAPI wWinMain(
   BaseSetTabEvent base {};
 
   if (argc >= 3) {
-    base.mPageNumber = wcstoull(argv[2], nullptr, 10);
+    base.mPageNumber = numeric_cast<uint8_t>(wcstoull(argv[2], nullptr, 10));
   }
   if (argc >= 4) {
-    base.mKneeboard = wcstoull(argv[3], nullptr, 10);
+    base.mKneeboard = numeric_cast<uint8_t>(wcstoull(argv[3], nullptr, 10));
   }
 
   if (kind == L"id") {

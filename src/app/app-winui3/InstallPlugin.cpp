@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 // clang-format off
 #include "pch.h"
@@ -219,17 +220,20 @@ static task<void> InstallPlugin(
       dialog.XamlRoot(xamlRoot);
       dialog.Title(
         winrt::box_value(to_hstring(_(L"Plugin Already Installed"))));
-      dialog.Content(winrt::box_value(to_hstring(std::format(
-        _("Plugin '{}' v{} is already installed."),
-        plugin.mMetadata.mPluginName,
-        plugin.mMetadata.mPluginReadableVersion))));
+      dialog.Content(
+        winrt::box_value(to_hstring(
+          std::format(
+            _("Plugin '{}' v{} is already installed."),
+            plugin.mMetadata.mPluginName,
+            plugin.mMetadata.mPluginReadableVersion))));
       dialog.PrimaryButtonText(_(L"Tab Settings"));
       dialog.CloseButtonText(_(L"OK"));
       dialog.DefaultButton(ContentDialogButton::Close);
 
       if (co_await dialog.ShowAsync() == ContentDialogResult::Primary) {
-        co_await LaunchURI(std::format(
-          "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
+        co_await LaunchURI(
+          std::format(
+            "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
       }
       co_return;
     }
@@ -237,9 +241,11 @@ static task<void> InstallPlugin(
       ContentDialog dialog;
       dialog.XamlRoot(xamlRoot);
       dialog.Title(winrt::box_value(to_hstring(_(L"Install Plugin?"))));
-      dialog.Content(winrt::box_value(to_hstring(std::format(
-        _("Do you want to install the plugin '{}'?"),
-        plugin.mMetadata.mPluginName))));
+      dialog.Content(
+        winrt::box_value(to_hstring(
+          std::format(
+            _("Do you want to install the plugin '{}'?"),
+            plugin.mMetadata.mPluginName))));
       dialog.PrimaryButtonText(_(L"Install"));
       dialog.CloseButtonText(_(L"Cancel"));
       dialog.DefaultButton(ContentDialogButton::Close);
@@ -254,11 +260,14 @@ static task<void> InstallPlugin(
       ContentDialog dialog;
       dialog.XamlRoot(xamlRoot);
       dialog.Title(winrt::box_value(to_hstring(_(L"Update Plugin?"))));
-      dialog.Content(winrt::box_value(to_hstring(std::format(
-        _("Do you want to update the plugin '{}' to version {}? Any tabs from "
-          "this plugin will be reloaded."),
-        plugin.mMetadata.mPluginName,
-        plugin.mMetadata.mPluginReadableVersion))));
+      dialog.Content(
+        winrt::box_value(to_hstring(
+          std::format(
+            _("Do you want to update the plugin '{}' to version {}? Any tabs "
+              "from "
+              "this plugin will be reloaded."),
+            plugin.mMetadata.mPluginName,
+            plugin.mMetadata.mPluginReadableVersion))));
       dialog.PrimaryButtonText(_(L"Update"));
       dialog.CloseButtonText(_(L"Cancel"));
       dialog.DefaultButton(ContentDialogButton::Primary);
@@ -350,17 +359,20 @@ static task<void> InstallPlugin(
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
     dialog.Title(winrt::box_value(to_hstring(_(L"Plugin Updated"))));
-    dialog.Content(winrt::box_value(to_hstring(std::format(
-      _("'{}' has been updated to v{}"),
-      plugin.mMetadata.mPluginName,
-      plugin.mMetadata.mPluginReadableVersion))));
+    dialog.Content(
+      winrt::box_value(to_hstring(
+        std::format(
+          _("'{}' has been updated to v{}"),
+          plugin.mMetadata.mPluginName,
+          plugin.mMetadata.mPluginReadableVersion))));
     dialog.PrimaryButtonText(_(L"Tab Settings"));
     dialog.CloseButtonText(_(L"OK"));
     dialog.DefaultButton(ContentDialogButton::Close);
 
     if (co_await dialog.ShowAsync() == ContentDialogResult::Primary) {
-      co_await LaunchURI(std::format(
-        "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
+      co_await LaunchURI(
+        std::format(
+          "{}:///{}", SpecialURIs::Scheme, SpecialURIs::Paths::SettingsTabs));
     }
     co_return;
   }
@@ -388,10 +400,11 @@ static task<void> InstallPlugin(
 
     TextBlock caption;
     layout.Children().Append(caption);
-    caption.Text(to_hstring(std::format(
-      _("The plugin '{}' is now installed; would you like to add tabs from "
-        "this plugin?"),
-      plugin.mMetadata.mPluginName)));
+    caption.Text(to_hstring(
+      std::format(
+        _("The plugin '{}' is now installed; would you like to add tabs from "
+          "this plugin?"),
+        plugin.mMetadata.mPluginName)));
     caption.TextWrapping(TextWrapping::WrapWholeWords);
 
     auto tabsToAppend = plugin.mTabTypes
@@ -430,12 +443,13 @@ static task<void> InstallPlugin(
     auto tabsStore = kneeboard->GetTabsList();
     auto tabs = tabsStore->GetTabs();
     for (const auto& id: tabsToAppend) {
-      tabs.push_back(co_await PluginTab::Create(
-        kneeboard->GetDXResources(),
-        kneeboard.get(),
-        {},
-        std::ranges::find(plugin.mTabTypes, id, &Plugin::TabType::mID)->mName,
-        {.mPluginTabTypeID = id}));
+      tabs.push_back(
+        co_await PluginTab::Create(
+          kneeboard->GetDXResources(),
+          kneeboard.get(),
+          {},
+          std::ranges::find(plugin.mTabTypes, id, &Plugin::TabType::mID)->mName,
+          {.mPluginTabTypeID = id}));
     }
     co_await tabsStore->SetTabs(tabs);
   }
@@ -471,7 +485,6 @@ static task<void> InstallPluginFromPath(
   if (zipErrorCode) {
     unique_zip_error zerror;
     zip_error_init_with_code(&zerror, zipErrorCode);
-    const auto errorString = zip_error_strerror(&zerror);
     co_await ShowPluginInstallationError(
       xamlRoot,
       path,

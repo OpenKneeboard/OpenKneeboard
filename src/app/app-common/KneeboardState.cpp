@@ -222,7 +222,7 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
       "Giving input focus to view {} at index {}",
       mViews.at(i)->GetPersistentGUID(),
       i);
-    mInputViewIndex = i;
+    mInputViewIndex = numeric_cast<uint8_t>(i);
     this->SetRepaintNeeded();
     evActiveViewChangedEvent.Emit();
     return;

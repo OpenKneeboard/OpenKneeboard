@@ -638,7 +638,7 @@ void fatal_with_exception(std::exception_ptr ep) {
   if (!ep) {
     FatalAndDump(
       meta, {"fatal_with_exception() called without an exception"}, nullptr);
-    std::unreachable();
+    OPENKNEEBOARD_UNREACHABLE;
   }
 
   try {
@@ -661,7 +661,7 @@ void fatal_with_exception(std::exception_ptr ep) {
           "Uncaught std::exception ({}): {}", typeid(e).name(), e.what()),
       },
       nullptr);
-    std::unreachable();
+    OPENKNEEBOARD_UNREACHABLE;
   } catch (...) {
     FatalAndDump(meta, {"Uncaught exception of unknown kind"}, nullptr);
   }

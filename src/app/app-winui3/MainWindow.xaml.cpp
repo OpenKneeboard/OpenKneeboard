@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "MainWindow.xaml.h"
@@ -429,10 +430,10 @@ void MainWindow::WinEventProc(
   HWINEVENTHOOK,
   DWORD event,
   HWND hwnd,
-  LONG idObject,
-  LONG idChild,
-  DWORD idEventThread,
-  DWORD dwmsEventTime) {
+  LONG /*idObject*/,
+  LONG /*idChild*/,
+  DWORD /*idEventThread*/,
+  DWORD /*dwmsEventTime*/) {
   if (event != EVENT_SYSTEM_FOREGROUND) {
     return;
   }
@@ -1208,7 +1209,7 @@ LRESULT MainWindow::SubclassProc(
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam,
-  UINT_PTR uIdSubclass,
+  UINT_PTR /*uIdSubclass*/,
   DWORD_PTR dwRefData) {
   auto self = reinterpret_cast<MainWindow*>(dwRefData);
   switch (uMsg) {

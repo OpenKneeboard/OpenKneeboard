@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ConfirmationUILayer.hpp>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.hpp>
 #include <OpenKneeboard/ToolbarAction.hpp>
@@ -131,10 +132,10 @@ task<void> ConfirmationUILayer::Render(
 void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
   const auto canvasSize = canvasRect.mSize;
 
-  const auto titleFontSize = static_cast<uint32_t>(
-    std::lround(canvasSize.mHeight * (HeaderPercent / 100.0f) * 0.5f));
-  const auto maxTextWidth = static_cast<std::uint32_t>(
-    std::floor(std::min<float>(titleFontSize * 40, canvasSize.mWidth * 0.8f)));
+  const auto titleFontSize
+    = std::round(canvasSize.mHeight * (HeaderPercent / 100.0f) * 0.5f);
+  const auto maxTextWidth
+    = std::floor(std::min<float>(titleFontSize * 40, canvasSize.mWidth * 0.8f));
 
   auto dwf = mDXResources->mDWriteFactory;
 
@@ -288,18 +289,19 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
     cursor.y + cancelButtonSize.height,
   };
 
-  auto buttons = CursorClickableRegions<Button>::Create(std::vector<Button> {
-    Button {
-      .mAction = ButtonAction::Confirm,
-      .mRect = confirmButtonRect,
-      .mLabel = confirmButtonTextInfo.mWinString,
-    },
-    Button {
-      .mAction = ButtonAction::Cancel,
-      .mRect = cancelButtonRect,
-      .mLabel = cancelButtonTextInfo.mWinString,
-    },
-  });
+  auto buttons = CursorClickableRegions<Button>::Create(
+    std::vector<Button> {
+      Button {
+        .mAction = ButtonAction::Confirm,
+        .mRect = confirmButtonRect,
+        .mLabel = confirmButtonTextInfo.mWinString,
+      },
+      Button {
+        .mAction = ButtonAction::Cancel,
+        .mRect = cancelButtonRect,
+        .mLabel = cancelButtonTextInfo.mWinString,
+      },
+    });
   AddEventListener(
     buttons->evClicked,
     [](auto self, auto, auto button) -> OpenKneeboard::fire_and_forget {

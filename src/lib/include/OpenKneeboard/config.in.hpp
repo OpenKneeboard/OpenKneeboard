@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Pixels.hpp>
@@ -51,6 +52,7 @@ constexpr unsigned int FooterPercent = HeaderPercent;
 constexpr unsigned int BookmarksBarPercent = HeaderPercent;
 
 constexpr const std::string_view BuildType {detail::Config::BuildType};
+constexpr bool IsDebugBuild {BuildType == "Debug"};
 
 constexpr const char ProjectReverseDomainA[] {"@PROJECT_REVERSE_DOMAIN@"};
 constexpr const wchar_t ProjectReverseDomainW[] {L"@PROJECT_REVERSE_DOMAIN@"};
@@ -76,7 +78,9 @@ constexpr const wchar_t FixedWidthContentFont[] {L"Consolas"};
 #endif
 
 // clang-format off
+// @formatter:off
 #define OPENKNEEBOARD_BUILD_BITNESS @BUILD_BITNESS@
+// @formatter:on
 // clang-format on
 #if (OPENKNEEBOARD_BUILD_BITNESS == 32)
 #define OPENKNEEBOARD_32BIT_BUILD 1

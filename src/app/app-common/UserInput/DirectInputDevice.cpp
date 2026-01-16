@@ -2,7 +2,10 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
+
+#include "OpenKneeboard/numeric_cast.hpp"
 
 #include <OpenKneeboard/DirectInputDevice.hpp>
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
@@ -403,26 +406,29 @@ void DirectInputDevice::SetButtonBindings(
 }
 
 void DirectInputDevice::PostButtonStateChange(uint8_t id, bool pressed) {
-  evButtonEvent.Emit(UserInputButtonEvent {
-    this->shared_from_this(),
-    id,
-    pressed,
-  });
+  evButtonEvent.Emit(
+    UserInputButtonEvent {
+      this->shared_from_this(),
+      id,
+      pressed,
+    });
 }
 
 void DirectInputDevice::PostVScroll(
   DirectInputDevice::VScrollDirection direction) {
   const auto button = EncodeVScroll(direction);
-  evButtonEvent.Emit(UserInputButtonEvent {
-    this->shared_from_this(),
-    button,
-    /* pressed = */ true,
-  });
-  evButtonEvent.Emit(UserInputButtonEvent {
-    this->shared_from_this(),
-    button,
-    /* pressed = */ false,
-  });
+  evButtonEvent.Emit(
+    UserInputButtonEvent {
+      this->shared_from_this(),
+      button,
+      /* pressed = */ true,
+    });
+  evButtonEvent.Emit(
+    UserInputButtonEvent {
+      this->shared_from_this(),
+      button,
+      /* pressed = */ false,
+    });
 }
 
 void DirectInputDevice::PostHatStateChange(
@@ -440,19 +446,21 @@ void DirectInputDevice::PostHatStateChange(
   newValue &= 0xffff;
 
   if (oldValue != center) {
-    evButtonEvent.Emit(UserInputButtonEvent {
-      this->shared_from_this(),
-      EncodeHat(hat, static_cast<uint32_t>(oldValue)),
-      false,
-    });
+    evButtonEvent.Emit(
+      UserInputButtonEvent {
+        this->shared_from_this(),
+        EncodeHat(hat, numeric_cast<uint16_t>(oldValue)),
+        false,
+      });
   }
 
   if (newValue != center) {
-    evButtonEvent.Emit(UserInputButtonEvent {
-      this->shared_from_this(),
-      EncodeHat(hat, static_cast<uint32_t>(newValue)),
-      true,
-    });
+    evButtonEvent.Emit(
+      UserInputButtonEvent {
+        this->shared_from_this(),
+        EncodeHat(hat, numeric_cast<uint16_t>(newValue)),
+        true,
+      });
   }
 }
 

@@ -6,6 +6,7 @@
 // OpenKneeboard repository.
 #include "viewer.hpp"
 
+#include "OpenKneeboard/numeric_cast.hpp"
 #include "viewer-d3d11.hpp"
 #include "viewer-d3d12.hpp"
 #include "viewer-vulkan.hpp"
@@ -320,7 +321,7 @@ class TestViewerWindow final : private D3D11Resources {
     ctx->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
     check_hresult(ctx->CreateSolidColorBrush(
-      D2D1::ColorF(0, 0, 0, 0.8), mOverlayBackground.put()));
+      D2D1::ColorF(0, 0, 0, 0.8f), mOverlayBackground.put()));
     check_hresult(ctx->CreateSolidColorBrush(
       D2D1::ColorF(1, 1, 1, 1), mOverlayForeground.put()));
 
@@ -528,7 +529,7 @@ class TestViewerWindow final : private D3D11Resources {
         desc.Flags);
 
       mSwapChainSize = clientSize;
-      mRenderer->Initialize(desc.BufferCount);
+      mRenderer->Initialize(numeric_cast<uint8_t>(desc.BufferCount));
       return;
     }
 
@@ -564,7 +565,7 @@ class TestViewerWindow final : private D3D11Resources {
     }
 
     mSwapChainSize = clientSize;
-    mRenderer->Initialize(swapChainDesc.BufferCount);
+    mRenderer->Initialize(numeric_cast<uint8_t>(swapChainDesc.BufferCount));
   }
 
   void OnFocus() {
@@ -726,7 +727,7 @@ class TestViewerWindow final : private D3D11Resources {
   void PaintBackground() {
     static constexpr ShaderFillInfo CheckerboardFill {
       {1, 1, 1, 1},
-      {0.9, 0.9, 0.9, 1},
+      {0.9f, 0.9f, 0.9f, 1},
       /* colorStride = */ 20,
     };
 

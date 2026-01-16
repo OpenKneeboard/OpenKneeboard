@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 // Helper macros when joining or stringifying other macros, e.g.:
@@ -34,4 +35,11 @@
 #if OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION
 static_assert(
   OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION_HELPER(123) == 123);
+#endif
+
+// https://developercommunity.visualstudio.com/t/std::unreachable-causes-warning-4702-un/10720390
+#if defined(_MSC_VER) && !defined(__clang__)
+#define OPENKNEEBOARD_UNREACHABLE __assume(0)
+#else
+#define OPENKNEEBOARD_UNREACHABLE std::unreachable();
 #endif

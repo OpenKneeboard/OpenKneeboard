@@ -164,7 +164,7 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
   OPENKNEEBOARD_TraceLoggingWrite( \
     OKBTL_NAME, TraceLoggingOpcode(WINEVENT_OPCODE_START), ##__VA_ARGS__); \
   const ::OpenKneeboard::scope_exit OPENKNEEBOARD_CONCAT2( \
-    _okbtllcoro__, _COUNTER__) {[&, n = std::uncaught_exceptions()]() { \
+    _okbtllcoro__, __COUNTER__) {[&, n = std::uncaught_exceptions()]() { \
     OPENKNEEBOARD_TraceLoggingWrite( \
       OKBTL_NAME, \
       TraceLoggingOpcode(WINEVENT_OPCODE_STOP), \

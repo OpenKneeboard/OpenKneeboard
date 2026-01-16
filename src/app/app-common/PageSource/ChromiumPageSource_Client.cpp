@@ -891,7 +891,9 @@ task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
     tablet->mMaxX,
     tablet->mMaxY,
   };
-  const auto gcd = std::gcd<uint32_t, uint32_t>(tablet->mMaxX, tablet->mMaxY);
+  const auto gcd = std::gcd(
+    numeric_cast<uint32_t>(tablet->mMaxX),
+    numeric_cast<uint32_t>(tablet->mMaxY));
   auto suggested = Geometry2D::Size {
     tablet->mMaxX / gcd,
     tablet->mMaxY / gcd,

@@ -99,17 +99,16 @@ static HMODULE LibVulkan() {
   return data.get();
 }
 
-static inline std::string_view xrresult_to_string(XrResult code) {
+static std::string_view xrresult_to_string(const XrResult code) {
   // xrResultAsString exists, but isn't reliably giving useful results, e.g.
   // it fails on the Meta XR Simulator.
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name}; \
+    return {#enum_name};
     XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
 #undef XR_RESULT_CASE
-    default:
-      return {};
+      default : return {};
   }
 }
 
