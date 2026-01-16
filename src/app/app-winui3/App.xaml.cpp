@@ -242,6 +242,7 @@ enum class DamagingEnvironmentFlags : uint8_t {
   UacIsDisabled = (1 << 3) | ElevationRelated | Fatal,
   UacWasPreviouslyDisabled = (1 << 4) | ElevationRelated,
   OlderThanWin10 = (1 << 5),
+  Wine = (1 << 6),
 };
 
 constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
@@ -250,6 +251,15 @@ constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
 
 static void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
   using enum DamagingEnvironmentFlags;
+  if ((flags & Wine) == Wine) {
+    MessageBoxW(
+      nullptr,
+      L"Wine is detected; this is unsupported and problems should be expected. "
+      L"Wine compatibility issues are not considered bugs.",
+      L"OpenKneeboard",
+      MB_OK | MB_ICONWARNING);
+    return;
+  }
 
   std::wstring_view elevationProblem;
   if ((flags & IsElevated) == IsElevated) {
@@ -316,6 +326,21 @@ static DamagingEnvironmentFlags LogSystemInformation() {
   dprint("----------");
 
   DamagingEnvironmentFlags ret = DamagingEnvironmentFlags::None;
+
+  const auto isWine = static_cast<bool>(
+    GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "wine_get_version"));
+  const auto setWineFlags = scope_exit([&] {
+    if (isWine) {
+      if (
+        (ret & DamagingEnvironmentFlags::Fatal)
+        == DamagingEnvironmentFlags::Fatal) {
+        dprint.Warning(
+          "Allowing execution despite hard-blocked environment because Wine "
+          "detected; assuming checks are inaccurate");
+      }
+      ret = DamagingEnvironmentFlags::Wine;
+    }
+  });
 
   {
     OSVERSIONINFOEXA osVersion {sizeof(OSVERSIONINFOEXA)};
@@ -418,6 +443,13 @@ static DamagingEnvironmentFlags LogSystemInformation() {
         .value_or(0)) {
     dprint.Warning("UAC was previously disabled.");
     ret |= DamagingEnvironmentFlags::UacWasPreviouslyDisabled;
+  }
+
+  if (isWine) {
+    ret = DamagingEnvironmentFlags::Wine;
+    dprint.Warning("Wine detected; no environment checks are fatal");
+  } else {
+    dprint("✅ Wine not detected");
   }
 
   CPINFOEXW codePageInfo;
