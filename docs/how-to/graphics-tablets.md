@@ -36,3 +36,7 @@ OpenKneeboard's built-in WinTab support will be removed in a future version.
 
 If your manufacturer driver supports setting the buttons to launch programs, you may find
 the [remote controls](remote-controls.md) useful.
+
+## The WinTab option in OpenKneeboard
+
+This remains in v1.12 as I won't usually remove features in bugfix releases. If you encounter *any* issues while using it, follow the updated advice above. It remains functional, depending on the quality of the manufacturer's wintab driver.
