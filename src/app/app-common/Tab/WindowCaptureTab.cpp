@@ -13,6 +13,8 @@
 #include <Psapi.h>
 #include <Shlwapi.h>
 
+#include <wil/resource.h>
+
 #include <dwmapi.h>
 
 namespace OpenKneeboard {
@@ -52,7 +54,7 @@ struct WinEventHook {
     DWORD idEventThread,
     DWORD dwmsEventTime);
 
-  unique_hwineventhook mHook;
+  wil::unique_hwineventhook mHook;
 };
 
 }// namespace

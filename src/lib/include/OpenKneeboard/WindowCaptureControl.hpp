@@ -2,11 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #pragma once
 
-#include <OpenKneeboard/handles.hpp>
+#include <wil/resource.h>
 
 namespace OpenKneeboard::WindowCaptureControl {
 
@@ -20,9 +21,9 @@ enum class WParam : unsigned int {
 };
 
 struct Handles {
-  unique_hmodule mLibrary;
-  unique_hhook mMessageHook;
-  unique_hhook mWindowProcHook;
+  wil::unique_hmodule mLibrary;
+  wil::unique_hhook mMessageHook;
+  wil::unique_hhook mWindowProcHook;
 
   bool IsValid() const;
 };

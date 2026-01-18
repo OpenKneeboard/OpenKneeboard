@@ -65,7 +65,7 @@ static constexpr std::array RequiredInstanceExtensions {
 }
 
 VulkanRenderer::VulkanRenderer(uint64_t luid) {
-  mVulkanLoader = unique_hmodule {LoadLibraryA("vulkan-1.dll")};
+  mVulkanLoader.reset(LoadLibraryA("vulkan-1.dll"));
   if (!mVulkanLoader) {
     fatal("Failed to load vulkan-1.dll");
   }

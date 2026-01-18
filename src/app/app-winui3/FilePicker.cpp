@@ -2,10 +2,11 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include "FilePicker.h"
 
-#include <OpenKneeboard/handles.hpp>
+#include <wil/resource.h>
 
 #include <algorithm>
 #include <ranges>
@@ -127,7 +128,7 @@ std::optional<std::filesystem::path> FilePicker::PickSaveFile() const {
 }
 
 std::filesystem::path FilePicker::GetPathFromShellItem(IShellItem* shellItem) {
-  unique_co_task_ptr<wchar_t> pathStr;
+  wil::unique_cotaskmem_string pathStr;
   winrt::check_hresult(
     shellItem->GetDisplayName(SIGDN_FILESYSPATH, std::out_ptr(pathStr)));
   const std::filesystem::path path(std::wstring_view(pathStr.get()));

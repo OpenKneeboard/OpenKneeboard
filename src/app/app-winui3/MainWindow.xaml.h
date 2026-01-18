@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "MainWindow.g.h"
@@ -11,7 +12,6 @@
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/Bookmark.hpp>
 #include <OpenKneeboard/Events.hpp>
-#include <OpenKneeboard/Handles.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
@@ -69,7 +69,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   HWND mHwnd;
   winrt::handle mHwndFile;
   std::shared_ptr<KneeboardView> mKneeboardView;
-  unique_hwineventhook mWinEventHook;
+  wil::unique_hwineventhook mWinEventHook;
 
   FrameworkElement mProfileSwitcher {nullptr};
 

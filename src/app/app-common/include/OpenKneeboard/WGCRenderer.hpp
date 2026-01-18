@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DXResources.hpp>
@@ -15,7 +16,6 @@
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/enable_shared_from_this.hpp>
-#include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/task.hpp>
 
 #include <shims/winrt/base.h>
@@ -67,11 +67,9 @@ class WGCRenderer : public virtual EventReceiver,
 
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
-    const
-    = 0;
+    const = 0;
   virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
-  CreateWGCaptureItem()
-    = 0;
+  CreateWGCaptureItem() = 0;
   virtual PixelRect GetContentRect(const PixelSize& captureSize) const = 0;
   virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) const
     = 0;

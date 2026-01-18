@@ -18,7 +18,6 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/tracing.hpp>
 #include <OpenKneeboard/version.hpp>
 
@@ -33,6 +32,8 @@
 #define XR_USE_GRAPHICS_API_D3D12
 #define XR_USE_GRAPHICS_API_VULKAN
 #include <shims/openxr/openxr.h>
+
+#include <wil/resource.h>
 
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr_reflection.h>
@@ -95,7 +96,7 @@ static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 static const VkAllocationCallbacks* gVKAllocator {nullptr};
 
 static HMODULE LibVulkan() {
-  static unique_hmodule data {LoadLibraryW(L"vulkan-1.dll")};
+  static wil::unique_hmodule data {LoadLibraryW(L"vulkan-1.dll")};
   return data.get();
 }
 

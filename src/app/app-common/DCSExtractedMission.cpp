@@ -9,9 +9,9 @@
 #include <OpenKneeboard/Filesystem.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
 
 #include <felly/guarded_data.hpp>
+#include <felly/unique_any.hpp>
 
 #include <array>
 #include <fstream>
@@ -36,7 +36,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   int err = 0;
   auto zipPathString = zipPath.string();
 
-  using unique_zip_ptr = std::unique_ptr<zip_t, CPtrDeleter<zip_t, &zip_close>>;
+  using unique_zip_ptr = felly::unique_any<zip_t*, &zip_close>;
   unique_zip_ptr zip {zip_open(zipPathString.c_str(), ZIP_RDONLY, &err)};
   if (err) {
     dprint("Failed to open zip '{}': {}", zipPathString, err);
@@ -55,8 +55,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
       continue;
     }
 
-    using unique_zip_file_ptr
-      = std::unique_ptr<zip_file_t, CPtrDeleter<zip_file_t, &zip_fclose>>;
+    using unique_zip_file_ptr = felly::unique_any<zip_file_t*, &zip_fclose>;
     unique_zip_file_ptr zipFile {zip_fopen_index(zip.get(), i, 0)};
     if (!zipFile) {
       dprint("Failed to open zip index {}", i);

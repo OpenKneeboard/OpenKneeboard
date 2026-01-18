@@ -8,9 +8,9 @@
 #include <OpenKneeboard/DCSMagneticModel.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
 
 #include <felly/numeric_cast.hpp>
+#include <felly/unique_any.hpp>
 
 using felly::numeric_cast;
 
@@ -93,9 +93,8 @@ float DCSMagneticModel::GetMagneticVariation(
   MAG_GeodeticToSpherical(ellipsoid, geoCoord, &sphereCoord);
 
   MAGtype_MagneticModel* model = this->GetModel(date);
-  using unique_magmodel_ptr = std::unique_ptr<
-    MAGtype_MagneticModel,
-    CPtrDeleter<MAGtype_MagneticModel, &MAG_FreeMagneticModelMemory>>;
+  using unique_magmodel_ptr
+    = felly::unique_any<MAGtype_MagneticModel*, &MAG_FreeMagneticModelMemory>;
 
   // Taken from wmm_point.c sample
   const auto nMax = model->nMax;

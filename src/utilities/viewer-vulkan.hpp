@@ -11,7 +11,7 @@
 #include <OpenKneeboard/SHM/Vulkan.hpp>
 #include <OpenKneeboard/Vulkan/SpriteBatch.hpp>
 
-#include <OpenKneeboard/handles.hpp>
+#include <wil/resource.h>
 
 #include <cinttypes>
 
@@ -39,7 +39,7 @@ class VulkanRenderer final : public Renderer {
     uint64_t fenceValueIn) override;
 
  private:
-  unique_hmodule mVulkanLoader;
+  wil::unique_hmodule mVulkanLoader;
 
   template <class T>
   using unique_vk = OpenKneeboard::Vulkan::unique_vk<T>;

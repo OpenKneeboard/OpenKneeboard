@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/HWNDPageSource.hpp>
@@ -11,7 +12,8 @@
 #include <OpenKneeboard/TabBase.hpp>
 
 #include <OpenKneeboard/audited_ptr.hpp>
-#include <OpenKneeboard/handles.hpp>
+
+#include <wil/resource.h>
 
 namespace OpenKneeboard {
 
@@ -118,7 +120,7 @@ class WindowCaptureTab final : public TabBase,
   HWNDPageSource::Options mCaptureOptions {};
   std::shared_ptr<HWNDPageSource> mDelegate;
 
-  unique_hwineventhook mEventHook;
+  wil::unique_hwineventhook mEventHook;
 };
 
 }// namespace OpenKneeboard

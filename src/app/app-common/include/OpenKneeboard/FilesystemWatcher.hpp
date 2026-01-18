@@ -2,17 +2,19 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
 
 #include <OpenKneeboard/final_release_deleter.hpp>
-#include <OpenKneeboard/handles.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Storage.Search.h>
+
+#include <wil/resource.h>
 
 #include <filesystem>
 #include <memory>
@@ -24,8 +26,6 @@ namespace OpenKneeboard {
 class FilesystemWatcher final
   : public std::enable_shared_from_this<FilesystemWatcher> {
  public:
-  using unique_changenotification = std::
-    unique_ptr<HANDLE, CHandleDeleter<HANDLE, &FindCloseChangeNotification>>;
   static std::shared_ptr<FilesystemWatcher> Create(
     const std::filesystem::path&);
 
@@ -51,7 +51,7 @@ class FilesystemWatcher final
   std::filesystem::file_time_type mLastWriteTime;
   bool mSettling = false;
 
-  unique_changenotification mHandle;
+  wil::unique_hfind_change mHandle {};
   std::stop_source mStop;
 };
 

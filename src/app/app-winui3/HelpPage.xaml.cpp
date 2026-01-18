@@ -23,7 +23,6 @@
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
 #include <OpenKneeboard/config.hpp>
-#include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/utf8.hpp>
 #include <OpenKneeboard/version.hpp>
@@ -37,6 +36,8 @@
 #include <wil/registry.h>
 
 #include <microsoft.ui.xaml.window.h>
+
+#include <felly/unique_any.hpp>
 
 #include <expected>
 #include <format>
@@ -188,7 +189,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   const scope_exit openWhenDone(
     [zipPath]() { Filesystem::OpenExplorerWithSelectedFile(zipPath); });
 
-  using unique_zip = std::unique_ptr<zip_t, CHandleDeleter<zip_t*, &zip_close>>;
+  using unique_zip = felly::unique_any<zip_t*, &zip_close>;
 
   int ze;
   std::vector<std::string> retainedBuffers;
@@ -367,7 +368,7 @@ void HelpPage::PopulateLicenses() noexcept {
 }
 
 std::string HelpPage::GetUpdateLog() noexcept {
-  unique_hkey key;
+  wil::unique_hkey key;
   {
     HKEY buffer {};
     RegOpenKeyExW(
@@ -485,18 +486,14 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
     "Installed {}-bit Runtimes\n------------------\n\n",
     static_cast<int>(view));
 
-  unique_hkey key;
-  {
-    HKEY buffer {};
-    RegOpenKeyExW(
-      HKEY_LOCAL_MACHINE,
-      L"SOFTWARE\\Khronos\\OpenXR\\1\\AvailableRuntimes",
-      0,
-      KEY_READ
-        | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
-      &buffer);
-    key.reset(buffer);
-  }
+  wil::unique_hkey key;
+  RegOpenKeyExW(
+    HKEY_LOCAL_MACHINE,
+    L"SOFTWARE\\Khronos\\OpenXR\\1\\AvailableRuntimes",
+    0,
+    KEY_READ
+      | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
+    std::out_ptr(key));
 
   if (!key) {
     // Registering an 'available runtime' is a *should*, and some runtimes
@@ -590,18 +587,14 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
 }
 
 std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
-  unique_hkey key;
-  {
-    HKEY buffer {};
-    RegOpenKeyExW(
-      root,
-      L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
-      0,
-      KEY_READ
-        | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
-      &buffer);
-    key.reset(buffer);
-  }
+  wil::unique_hkey key;
+  RegOpenKeyExW(
+    root,
+    L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
+    0,
+    KEY_READ
+      | ((view == RegistryView::Wow64_64) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY),
+    std::out_ptr(key));
 
   if (!key) {
     return "No layers.\n";

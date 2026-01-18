@@ -13,12 +13,13 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
-#include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/version.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
+
+#include <wil/resource.h>
 
 #include <detours/detours.h>
 #include <felly/guarded_data.hpp>
@@ -177,7 +178,7 @@ struct CrashMeta {
              extension);
   }
 
-  unique_hmodule mDbgHelp;
+  wil::unique_hmodule mDbgHelp;
   decltype(&MiniDumpWriteDump) mMiniDumpWriteDump {nullptr};
   bool mLoadedDbgHelp {false};
 

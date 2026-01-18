@@ -18,7 +18,6 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/handles.hpp>
 
 #include <shims/nlohmann/json.hpp>
 
