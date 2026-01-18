@@ -207,6 +207,10 @@ InterprocessRenderer::GetIPCTextureResources(
 
   check_hresult(
     device->CreateTexture2D(&textureDesc, nullptr, ret.mTexture.put()));
+  // Our IPC textures will be used within SHM::SwapchainLength (3) frames, so
+  // evicting them from VRAM to RAM will pretty much always cause problems.
+  ret.mTexture->SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM);
+
   check_hresult(device->CreateRenderTargetView(
     ret.mTexture.get(), nullptr, ret.mRenderTargetView.put()));
   check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
