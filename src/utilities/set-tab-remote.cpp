@@ -7,7 +7,8 @@
 #include <OpenKneeboard/APIEvent.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/numeric_cast.hpp>
+
+#include <felly/numeric_cast.hpp>
 
 using namespace OpenKneeboard;
 
@@ -15,6 +16,8 @@ using namespace OpenKneeboard;
 #include <shellapi.h>
 
 #include <cstdlib>
+
+using namespace felly::numeric_cast_types;
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing

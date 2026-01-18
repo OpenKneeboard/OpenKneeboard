@@ -6,7 +6,6 @@
 // OpenKneeboard repository.
 #include "viewer.hpp"
 
-#include "OpenKneeboard/numeric_cast.hpp"
 #include "viewer-d3d11.hpp"
 #include "viewer-d3d12.hpp"
 #include "viewer-vulkan.hpp"
@@ -35,6 +34,8 @@
 #include <d3d11.h>
 #include <shellapi.h>
 
+#include <felly/numeric_cast.hpp>
+
 #include <format>
 #include <memory>
 #include <type_traits>
@@ -54,6 +55,7 @@
 
 using namespace OpenKneeboard;
 
+using felly::numeric_cast;
 using OpenKneeboard::SHM::ActiveConsumers;
 
 namespace OpenKneeboard {

@@ -5,8 +5,6 @@
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
 
-#include "OpenKneeboard/numeric_cast.hpp"
-
 #include <OpenKneeboard/DirectInputDevice.hpp>
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
@@ -15,7 +13,11 @@
 
 #include <shims/winrt/base.h>
 
+#include <felly/numeric_cast.hpp>
+
 #include <format>
+
+using felly::numeric_cast;
 
 namespace OpenKneeboard {
 

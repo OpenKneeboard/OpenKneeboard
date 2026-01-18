@@ -4,8 +4,6 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
-#include "OpenKneeboard/numeric_cast.hpp"
-
 #include <OpenKneeboard/D3D11.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/EnumerateProcesses.hpp>
@@ -24,6 +22,7 @@
 #include <d3d11.h>
 
 #include <directxtk/SimpleMath.h>
+#include <felly/numeric_cast.hpp>
 
 #include <filesystem>
 #include <source_location>
@@ -475,7 +474,7 @@ task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
       this->Tick();
       if (this->mIVROverlay) {
         this->mIVROverlay->WaitFrameSync(
-          numeric_cast<uint32_t>(frameSleep.count()));
+          felly::numeric_cast<uint32_t>(frameSleep.count()));
       } else {
         co_await resume_after(frameSleep, stopToken);
       }

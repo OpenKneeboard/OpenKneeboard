@@ -5,8 +5,6 @@
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
 
-#include "OpenKneeboard/numeric_cast.hpp"
-
 #include <OpenKneeboard/D3D12/SpriteBatch.hpp>
 #include <OpenKneeboard/Shaders/SpriteBatch/DXIL.hpp>
 #include <OpenKneeboard/Win32.hpp>
@@ -14,7 +12,11 @@
 #include <OpenKneeboard/hresult.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
+#include <felly/numeric_cast.hpp>
+
 #include <directxtk12/GraphicsMemory.h>
+
+using namespace felly::numeric_cast_types;
 
 namespace OpenKneeboard::D3D12 {
 

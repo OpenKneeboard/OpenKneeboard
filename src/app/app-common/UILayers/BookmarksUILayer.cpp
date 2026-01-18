@@ -168,7 +168,7 @@ task<void> BookmarksUILayer::Render(
     DWRITE_FONT_WEIGHT_REGULAR,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    numeric_cast<float>((textHeight * 96) / (2 * dpiy)),
+    felly::numeric_cast<float>((textHeight * 96) / (2 * dpiy)),
     L"",
     textFormat.put()));
   textFormat->SetReadingDirection(DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);

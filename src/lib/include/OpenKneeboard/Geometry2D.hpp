@@ -6,9 +6,9 @@
 // OpenKneeboard repository.
 #pragma once
 
-#include <OpenKneeboard/numeric_cast.hpp>
-
 #include <d3d11.h>
+
+#include <felly/numeric_cast.hpp>
 
 #include <algorithm>
 #include <array>
@@ -19,6 +19,8 @@
 #include <d2d1.h>
 
 namespace OpenKneeboard::Geometry2D {
+
+using namespace felly::numeric_cast_types;
 
 enum class ScaleToFitMode {
   ShrinkOrGrow,

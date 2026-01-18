@@ -8,7 +8,6 @@
 #include "viewer-vulkan.hpp"
 
 #include "DDS.hpp"
-#include "OpenKneeboard/numeric_cast.hpp"
 
 #include <OpenKneeboard/RenderDoc.hpp>
 #include <OpenKneeboard/Vulkan.hpp>
@@ -16,8 +15,11 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
 
+#include <felly/numeric_cast.hpp>
+
 #include <fstream>
 
+using felly::numeric_cast;
 using OpenKneeboard::Vulkan::check_vkresult;
 
 namespace OpenKneeboard::Viewer {

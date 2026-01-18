@@ -10,8 +10,9 @@
       "kind": "git",
       "repository": "https://github.com/fredemmott/vcpkg-registry",
       "reference": "master",
-      "baseline": "d5c48362d00665dba7260336ee13c71f8a4b2549",
+      "baseline": "5e3d1072865b5bd1a005956388f1a24bf684f58e",
       "packages": [
+        "felly",
         "compressed-embed",
         "magic-args"
       ]

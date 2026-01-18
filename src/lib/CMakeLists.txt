@@ -1,6 +1,7 @@
 ok_add_library(OpenKneeboard-Lib-Headers INTERFACE)
 target_include_directories(OpenKneeboard-Lib-Headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.in.hpp"
   "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.hpp"
@@ -23,6 +24,8 @@ target_include_directories(
   "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/include"
 )
 target_link_libraries(OpenKneeboard-config INTERFACE OpenKneeboard-Lib-Headers)
+
+include(Geometry2D.cmake)
 
 ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)
 target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC OpenKneeboard-Lib-Headers)

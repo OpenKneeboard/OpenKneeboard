@@ -19,6 +19,8 @@
 
 #include <dwrite.h>
 
+using felly::numeric_cast;
+
 namespace OpenKneeboard {
 
 std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(

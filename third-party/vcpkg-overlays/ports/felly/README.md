@@ -1,1 +1,0 @@
-This overlay exists because it's not yet in any registry :)

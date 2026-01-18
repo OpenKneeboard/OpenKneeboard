@@ -6,9 +6,9 @@
 // OpenKneeboard repository.
 #pragma once
 
-#include "numeric_cast.hpp"
-
 #include <OpenKneeboard/config.hpp>
+
+#include <felly/numeric_cast.hpp>
 
 #include <concepts>
 #include <functional>
@@ -41,6 +41,6 @@ template <class T>
   requires std::derived_from<T, OpenKneeboard::Opaque64BitHandle<T>>
 struct std::hash<T> {
   constexpr size_t operator()(const T& handle) const noexcept {
-    return OpenKneeboard::numeric_cast<size_t>(handle.mRawValue);
+    return felly::numeric_cast<size_t>(handle.mRawValue);
   }
 };

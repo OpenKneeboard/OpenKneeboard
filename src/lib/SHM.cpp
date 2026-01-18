@@ -4,7 +4,6 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
-#include "OpenKneeboard/numeric_cast.hpp"
 #include "SHM/ReaderState.hpp"
 #include "SHM/WriterState.hpp"
 
@@ -24,6 +23,8 @@
 
 #include <wil/resource.h>
 
+#include <felly/numeric_cast.hpp>
+
 #include <bit>
 #include <concepts>
 #include <format>
@@ -31,6 +32,8 @@
 #include <utility>
 
 #include <processthreadsapi.h>
+
+using namespace felly::numeric_cast_types;
 
 namespace OpenKneeboard::SHM {
 

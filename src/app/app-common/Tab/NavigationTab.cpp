@@ -5,15 +5,17 @@
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
 
-#include "OpenKneeboard/numeric_cast.hpp"
-
 #include <OpenKneeboard/NavigationTab.hpp>
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
+#include <felly/numeric_cast.hpp>
+
 #include <cstring>
+
+using felly::numeric_cast;
 
 namespace OpenKneeboard {
 

@@ -363,8 +363,8 @@ void HeaderUILayer::LayoutToolbar(
       .top = static_cast<float>(margin),
       .bottom = static_cast<float>(margin + buttonHeight),
     };
-    button.left = numeric_cast<float>(primaryLeft);
-    button.right = numeric_cast<float>(primaryLeft + buttonHeight),
+    button.left = felly::numeric_cast<float>(primaryLeft);
+    button.right = felly::numeric_cast<float>(primaryLeft + buttonHeight),
     primaryLeft += buttonHeight + margin;
 
     buttons.push_back({button, selectable});

@@ -18,6 +18,7 @@
 #include <Windows.h>
 
 #include <boost/container/static_vector.hpp>
+#include <felly/non_copyable.hpp>
 
 #include <concepts>
 #include <cstddef>
@@ -121,18 +122,7 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
-struct NonCopyable {
-  constexpr NonCopyable() = default;
-  constexpr ~NonCopyable() = default;
-
-  NonCopyable(const NonCopyable&) = delete;
-  NonCopyable& operator=(const NonCopyable&) = delete;
-
-  constexpr NonCopyable(NonCopyable&&) noexcept = default;
-  constexpr NonCopyable& operator=(NonCopyable&&) noexcept = default;
-};
-
-struct Frame : NonCopyable {
+struct Frame : felly::non_copyable {
   enum class Error {
     IncorrectGPU,
     NoFeeder,

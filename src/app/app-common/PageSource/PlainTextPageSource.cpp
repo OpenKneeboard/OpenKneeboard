@@ -11,10 +11,11 @@
 
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
-#include <OpenKneeboard/numeric_cast.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <Unknwn.h>
+
+#include <felly/numeric_cast.hpp>
 
 #include <algorithm>
 #include <format>
@@ -162,9 +163,9 @@ task<void> PlainTextPageSource::RenderPage(
   const auto virtualSize = this->GetPreferredSize(pageID)->mPixelSize;
   const auto renderSize = virtualSize.ScaledToFit(rect.mSize);
 
-  const auto renderLeft = numeric_cast<float>(
+  const auto renderLeft = felly::numeric_cast<float>(
     rect.Left() + ((rect.Width() - renderSize.Width()) / 2));
-  const float renderTop = numeric_cast<float>(
+  const float renderTop = felly::numeric_cast<float>(
     rect.Top() + ((rect.Height() - renderSize.Height()) / 2));
 
   const auto scale = renderSize.Height<float>() / virtualSize.Height();

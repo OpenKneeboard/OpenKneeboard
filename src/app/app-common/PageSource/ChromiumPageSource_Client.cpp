@@ -20,6 +20,8 @@
 #include <include/cef_parser.h>
 #include <include/wrapper/cef_stream_resource_handler.h>
 
+using felly::numeric_cast;
+
 namespace OpenKneeboard {
 namespace {
 struct ExperimentalFeatureView {
