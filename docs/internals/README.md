@@ -24,16 +24,17 @@ OpenKneeboard currently only targets Visual Studio 2022 - not clang - due to lim
 
 ## Building
 
-Visual Studio 2022 must be installed; the free 'community' edition is fine.
+Visual Studio 2022 must be installed; the free 'community' edition is fine. Make sure that support for 'CMake Presets' is enabled
 
 If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary. Then, just click 'build'
+If you use CLion, open the folder as a project, and everything should 'just work'.
 
 Alternatively, from a developer command prompt:
 
 ```
 mkdir build
 cd build
-cmake ..
+cmake .. --preset vcpkg
 cmake --build . --config Debug --parallel
 ```
 
