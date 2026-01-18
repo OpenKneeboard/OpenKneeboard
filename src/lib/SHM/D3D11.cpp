@@ -48,6 +48,9 @@ void Texture::CopyFrom(
     sourceTexture->GetDesc(&desc);
     check_hresult(
       mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
+    // Will be needed within 3 frames, so never allow it to be booted from
+    // VRAM to RAM
+    mCacheTexture->SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM);
   }
 
   {
