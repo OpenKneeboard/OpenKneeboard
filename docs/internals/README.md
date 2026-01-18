@@ -48,7 +48,7 @@ If you are distributing OpenKneeboard or a derivative work, please change the fo
 - `PROJECT_OPENXR_API_LAYER_NAME`: e.g. `XR_APILAYER_FREDEMMOTT_OpenKneeboard`; replace both the project name and vendor ID. You can register your own OpenXR vendor ID, or `NOVENDOR` is a common alternative.
 - `PROJECT_OPENXR_API_LAYER_DESCRIPTION`: a short, human-readable description of your project.
 
-To avoid user confusion, you should avoid using the word 'OpenKneeboard' in the name or description of your project.
+To avoid user confusion or violating OpenKneeboard's license, you should avoid using the word 'OpenKneeboard' or `XR_APILAYER_FREDEMMOTT` in the name or description of your project. Read the license for details on your obligation to remove names and unique identifiers when distributing binaries.
 
 Despite these options, OpenKneeboard is not an SDK, and no support is available for building other projects using it.
 
