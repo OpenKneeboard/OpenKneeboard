@@ -27,10 +27,12 @@ If this does not solve the problem, try unplugging any graphics tablets (e.g. Wa
 - Do not run OpenKneeboard or the game elevated/as administrator.
 - Follow the [additional steps](wmr-kneeboard-position.md) for WMR if you are using a WMR headset (e.g. HP Reverb G2).
 - If the game is in OpenKneeboard's games list, make sure the API is either set to 'Auto-detect', or 'SteamVR' or 'OpenXR' depending on what you want. If the game is not listed (or if the path is different) that's fine for SteamVR or OpenXR - in which case, ignore this step.
+- If you have a recent version of the Ultraleap driver, use [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI) to make the Ultraleap driver the last layer. This is required because current versions of the Ultraleap driver bypass any later layers.
 
 ## Kneeboard is visible in SteamVR, but not OpenXR
 
-Make sure OpenXR support is enabled in OpenKneeboard's VR settings page.
+- Make sure OpenXR support is enabled in OpenKneeboard's VR settings page.
+- If you have a recent version of the Ultraleap driver, use [OpenXR API Layers GUI](https://github.com/fredemmott/OpenXR-API-Layers-GUI) to make the Ultraleap driver the last layer. This is required because current versions of the Ultraleap driver bypass any later layers.
 
 ## Kneeboard is visible in OpenXR, but not SteamVR
 
