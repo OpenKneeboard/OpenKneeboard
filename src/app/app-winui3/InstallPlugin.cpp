@@ -35,6 +35,7 @@
 
 #include <wil/resource.h>
 
+#include <felly/unique_any.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -59,12 +60,49 @@ enum class PluginInstallAction {
   NothingToDo,// Already up to date.
 };
 
-using unique_zip_ptr
-  = wil::unique_any<zip_t*, decltype(&zip_close), &zip_close>;
-using unique_zip_error
-  = wil::unique_struct<zip_error_t, decltype(&zip_error_fini), &zip_error_fini>;
-using unique_zip_file
-  = wil::unique_any<zip_file_t*, decltype(&zip_fclose), &zip_fclose>;
+struct unique_zip_error_traits {
+  using value_type = zip_error_t;
+  using storage_type = std::optional<zip_error_t>;
+
+  static constexpr auto default_value() {
+    return std::nullopt;
+  }
+
+  static constexpr bool has_value(const storage_type& s) {
+    return s.has_value();
+  }
+  static constexpr bool has_value(const value_type&) {
+    return true;
+  }
+
+  template <class S>
+  static constexpr decltype(auto) value(S&& storage) {
+    return std::forward<S>(storage).value();
+  }
+
+  static void destroy(storage_type& s) {
+    zip_error_fini(&s.value());
+    s.reset();
+  }
+
+  static void construct(storage_type& s) {
+    s.emplace();
+    zip_error_init(&s.value());
+  }
+
+  static void construct(storage_type& s, const int error_code) {
+    s.emplace();
+    zip_error_init_with_code(&s.value(), error_code);
+  }
+
+  static void construct(storage_type& s, value_type&& v) {
+    s.emplace(std::move(v));
+  }
+};
+
+using unique_zip_ptr = felly::unique_any<zip_t*, &zip_close>;
+using unique_zip_error = felly::basic_unique_any<unique_zip_error_traits>;
+using unique_zip_file = felly::unique_any<zip_file_t*, &zip_fclose>;
 }// namespace
 
 namespace OpenKneeboard {
@@ -483,8 +521,7 @@ static task<void> InstallPluginFromPath(
   unique_zip_ptr zip {
     zip_open(path.string().c_str(), ZIP_RDONLY, &zipErrorCode)};
   if (zipErrorCode) {
-    unique_zip_error zerror;
-    zip_error_init_with_code(&zerror, zipErrorCode);
+    unique_zip_error zerror {std::in_place, zipErrorCode};
     co_await ShowPluginInstallationError(
       xamlRoot,
       path,
