@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Elevation.hpp>
@@ -35,8 +36,9 @@ class TabletInputAdapter final
     public std::enable_shared_from_this<TabletInputAdapter>,
     public IHasDisposeAsync {
  public:
-  static std::shared_ptr<TabletInputAdapter>
-  Create(HWND, KneeboardState*, const TabletSettings&);
+  static std::shared_ptr<TabletInputAdapter> Create(
+    KneeboardState*,
+    const TabletSettings&);
   ~TabletInputAdapter() override;
 
   task<void> DisposeAsync() noexcept override;

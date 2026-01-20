@@ -811,8 +811,7 @@ void KneeboardState::StartOpenVRThread() {
 }
 
 void KneeboardState::StartTabletInput() {
-  mTabletInput
-    = TabletInputAdapter::Create(mHwnd, this, mSettings.mTabletInput);
+  mTabletInput = TabletInputAdapter::Create(this, mSettings.mTabletInput);
   AddEventListener(
     mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
   AddEventListener(mTabletInput->evUserActionEvent, [this](auto action) {

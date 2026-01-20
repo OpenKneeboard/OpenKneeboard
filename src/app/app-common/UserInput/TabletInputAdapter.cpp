@@ -38,7 +38,6 @@ namespace OpenKneeboard {
 static std::atomic_flag gHaveInstance;
 
 std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
-  HWND,
   KneeboardState* kbs,
   const TabletSettings& tablet) {
   if (gHaveInstance.test_and_set()) {
