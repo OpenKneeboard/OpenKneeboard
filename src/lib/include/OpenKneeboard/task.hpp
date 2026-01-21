@@ -211,15 +211,16 @@ struct TaskFinalAwaiter {
   }
 
   template <class TPromise>
-  void await_suspend(std::coroutine_handle<TPromise>) noexcept {
+  std::coroutine_handle<> await_suspend(
+    std::coroutine_handle<TPromise>) noexcept {
     auto oldState = mPromise.mWaiting.exchange(
       TaskPromiseCompleted, std::memory_order_acq_rel);
     if (oldState == TaskPromiseAbandoned) {
       mPromise.destroy();
-      return;
+      return std::noop_coroutine();
     }
     if (oldState == TaskPromiseRunning) {
-      return;
+      return std::noop_coroutine();
     }
 
     // Must have a valid pointer, or we have corruption
@@ -227,9 +228,9 @@ struct TaskFinalAwaiter {
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
-      oldState.GetHandle().resume();
+      return oldState.GetHandle();
     } else {
-      resume_on_required_thread(oldState);
+      return resume_on_required_thread(oldState);
     }
   }
 
@@ -242,11 +243,12 @@ struct TaskFinalAwaiter {
     std::coroutine_handle<> mCoro;
   };
 
-  void resume_on_required_thread(const TaskPromiseWaiting oldState) {
+  [[nodiscard]]
+  std::coroutine_handle<> resume_on_required_thread(
+    const TaskPromiseWaiting oldState) {
     const auto& context = mPromise.mContext;
     if (context.mThreadID == std::this_thread::get_id()) {
-      oldState.GetHandle().resume();
-      return;
+      return oldState.GetHandle();
     }
 
     auto resumeData = new ResumeData {
@@ -256,13 +258,14 @@ struct TaskFinalAwaiter {
     const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
       &TaskFinalAwaiter<TTraits>::resume_on_thread_pool, resumeData, nullptr);
     if (threadPoolSuccess) [[likely]] {
-      return;
+      return std::noop_coroutine();
     }
     const auto threadPoolError = GetLastError();
     delete resumeData;
     context.fatal(
       "Failed to enqueue resumption on thread pool: {:010x}",
       static_cast<uint32_t>(threadPoolError));
+    // Above is no return, so we don't need to return noop_coroutine()
   }
 
   static void resume_on_thread_pool(
@@ -606,7 +609,7 @@ struct TaskAwaiter {
     return waiting == TaskPromiseCompleted;
   }
 
-  bool await_suspend(std::coroutine_handle<> caller) {
+  std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
     auto oldState
       = mPromise->mWaiting.exchange(caller, std::memory_order_acq_rel);
     TraceLoggingWrite(
@@ -621,7 +624,11 @@ struct TaskAwaiter {
         std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
-    return oldState == TaskPromiseRunning;
+    if (oldState == TaskPromiseRunning) {
+      return std::noop_coroutine();
+    }
+    // Coroutine already completed, resume immediately
+    return caller;
   }
 
   decltype(auto) await_resume() {
