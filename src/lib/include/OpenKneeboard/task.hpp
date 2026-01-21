@@ -53,36 +53,67 @@ enum class TaskPromiseResultState {
   ReturnedVoid,
 };
 
-/* Union so we can do std::atomic.
+/* Function as a union so we can do std::atomic.
  *
  * - TaskPromiseState is sizeof(ptr), but always an invalid pointer
  * - coroutine handles actually contain a pointer
  */
-union TaskPromiseWaiting {
-  TaskPromiseState mState {TaskPromiseState::Running};
-  std::coroutine_handle<> mNext;
+struct TaskPromiseWaiting {
+  // `nullptr` is considered to be a handle
+  static_assert(!magic_enum::enum_contains<TaskPromiseState>(0));
+
+  constexpr TaskPromiseWaiting() = default;
+  constexpr TaskPromiseWaiting(const TaskPromiseState state)
+    : mStorage {std::to_underlying(state)} {
+  }
+
+  constexpr TaskPromiseWaiting(std::coroutine_handle<> handle)
+    : mStorage(std::bit_cast<uintptr_t>(handle)) {
+  }
+
+  constexpr bool ContainsState() const {
+    return magic_enum::enum_contains<TaskPromiseState>(mStorage);
+  }
+
+  constexpr bool ContainsHandle() const {
+    return !ContainsState();
+  }
+
+  constexpr TaskPromiseState GetState() const {
+    OPENKNEEBOARD_ASSERT(ContainsState());
+    return static_cast<TaskPromiseState>(mStorage);
+  }
+
+  constexpr std::coroutine_handle<> GetHandle() const {
+    OPENKNEEBOARD_ASSERT(ContainsHandle());
+    return std::bit_cast<std::coroutine_handle<>>(mStorage);
+  }
+
+  constexpr bool operator==(const TaskPromiseWaiting&) const = default;
+
+ private:
+  uintptr_t mStorage {std::to_underlying(TaskPromiseState::Running)};
 };
+static_assert(
+  std::is_trivially_copyable_v<TaskPromiseWaiting>,
+  "TaskPromiseWaiting must be trivially copyable for use with std::atomic");
 static_assert(sizeof(TaskPromiseWaiting) == sizeof(TaskPromiseState));
 static_assert(sizeof(TaskPromiseWaiting) == sizeof(std::coroutine_handle<>));
 
-constexpr auto to_string(TaskPromiseWaiting value) {
-  if (magic_enum::enum_contains(value.mState)) {
-    return std::format("{}", value.mState);
+inline constexpr auto to_string(const TaskPromiseWaiting value) {
+  if (value.ContainsState()) {
+    return std::format("{}", value.GetState());
   }
   return std::format(
-    "{:#018x}", reinterpret_cast<uintptr_t>(value.mNext.address()));
+    "{:#018x}", reinterpret_cast<uintptr_t>(value.GetHandle().address()));
 }
 
-constexpr TaskPromiseWaiting TaskPromiseRunning {
-  .mState = TaskPromiseState::Running};
-constexpr TaskPromiseWaiting TaskPromiseAbandoned {
-  .mState = TaskPromiseState::Abandoned};
-constexpr TaskPromiseWaiting TaskPromiseCompleted {
-  .mState = TaskPromiseState::Completed};
-
-constexpr bool operator==(TaskPromiseWaiting a, TaskPromiseWaiting b) noexcept {
-  return a.mNext == b.mNext;
-}
+inline constexpr TaskPromiseWaiting TaskPromiseRunning {
+  TaskPromiseState::Running};
+inline constexpr TaskPromiseWaiting TaskPromiseAbandoned {
+  TaskPromiseState::Abandoned};
+inline constexpr TaskPromiseWaiting TaskPromiseCompleted {
+  TaskPromiseState::Completed};
 
 struct TaskContext {
   wil::com_ptr<IContextCallback> mCOMCallback;
@@ -195,7 +226,7 @@ struct TaskFinalAwaiter {
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
-      oldState.mNext.resume();
+      oldState.GetHandle().resume();
     } else {
       resume_on_required_thread(oldState);
     }
@@ -213,13 +244,13 @@ struct TaskFinalAwaiter {
   void resume_on_required_thread(const TaskPromiseWaiting oldState) {
     const auto& context = mPromise.mContext;
     if (context.mThreadID == std::this_thread::get_id()) {
-      oldState.mNext.resume();
+      oldState.GetHandle().resume();
       return;
     }
 
     auto resumeData = new ResumeData {
       .mContext = context,
-      .mCoro = oldState.mNext,
+      .mCoro = oldState.GetHandle(),
     };
     const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
       &TaskFinalAwaiter<TTraits>::resume_on_thread_pool, resumeData, nullptr);
@@ -575,8 +606,8 @@ struct TaskAwaiter {
   }
 
   bool await_suspend(std::coroutine_handle<> caller) {
-    auto oldState = mPromise->mWaiting.exchange(
-      {.mNext = caller}, std::memory_order_acq_rel);
+    auto oldState
+      = mPromise->mWaiting.exchange(caller, std::memory_order_acq_rel);
     TraceLoggingWrite(
       gTraceProvider,
       "TaskAwaiter<>::await_suspend()",
