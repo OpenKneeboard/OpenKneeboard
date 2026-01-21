@@ -68,7 +68,7 @@ struct TaskPromiseWaiting {
   }
 
   constexpr TaskPromiseWaiting(std::coroutine_handle<> handle)
-    : mStorage(std::bit_cast<uintptr_t>(handle)) {
+    : mStorage(std::bit_cast<uintptr_t>(handle.address())) {
   }
 
   constexpr bool ContainsState() const {
@@ -86,7 +86,8 @@ struct TaskPromiseWaiting {
 
   constexpr std::coroutine_handle<> GetHandle() const {
     OPENKNEEBOARD_ASSERT(ContainsHandle());
-    return std::bit_cast<std::coroutine_handle<>>(mStorage);
+    return std::coroutine_handle<>::from_address(
+      std::bit_cast<void*>(mStorage));
   }
 
   constexpr bool operator==(const TaskPromiseWaiting&) const = default;
