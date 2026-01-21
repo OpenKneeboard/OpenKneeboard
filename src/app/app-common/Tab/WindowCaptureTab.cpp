@@ -8,6 +8,7 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/json.hpp>
+#include <OpenKneeboard/task/resume_after.hpp>
 #include <OpenKneeboard/weak_refs.hpp>
 
 #include <Psapi.h>

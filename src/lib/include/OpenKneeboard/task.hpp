@@ -805,5 +805,3 @@ struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
 };
 
 }// namespace OpenKneeboard
-
-#include "task/resume_after.hpp"
