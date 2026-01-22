@@ -57,9 +57,8 @@ struct TimerAwaitable {
     };
   }
 
-  inline TimerResult result() const {
-    const auto state = mState.Get();
-    switch (state) {
+  TimerResult result() const {
+    switch (const auto state = mState.Get()) {
       case State::Timeout:
         return TimerResult::Timeout;
       case State::Cancelled:
@@ -70,27 +69,40 @@ struct TimerAwaitable {
     }
   }
 
-  inline ~TimerAwaitable() {
+  ~TimerAwaitable() {
     mStopCallback.reset();
 
-    if (mTPTimer) {
+    using enum State;
+    switch (const auto state = mState.Get())
+    {
+    case Init:
+    case StartingWait:
+    case Waiting:
+      fatal("resume_after torn down in invalid state {}", magic_enum::enum_name(state));
+    case CancelledBeforeWait:
+      OPENKNEEBOARD_ASSERT(!mTPTimer, "Cancelled before wait, but have a wait");
+      break;
+    case Cancelled:
+      OPENKNEEBOARD_ASSERT(mTPTimer, "cancelled after wait, but no wait");
+      SetThreadpoolTimer(mTPTimer, nullptr, 0, 0);
+      WaitForThreadpoolTimerCallbacks(mTPTimer, true);
+      [[fallthrough]];
+    case Timeout:
+      OPENKNEEBOARD_ASSERT(mTPTimer, "timeout or signalled, but no wait");
       CloseThreadpoolTimer(mTPTimer);
-    }
+      break;
 
-    const auto state = mState.Get();
-    OPENKNEEBOARD_ASSERT(
-      state != State::Init && state != State::StartingWait
-      && state != State::Waiting);
+    }
   }
 
-  inline bool await_ready() const {
+  bool await_ready() const {
     return false;
   }
 
-  inline void await_resume() const {
+  void await_resume() const {
   }
 
-  inline void await_suspend(std::coroutine_handle<> coro) {
+  void await_suspend(std::coroutine_handle<> coro) {
     if (!mState.TryTransition<State::Init, State::StartingWait>()) {
       mState.Assert(State::CancelledBeforeWait);
       coro.resume();
@@ -101,13 +113,24 @@ struct TimerAwaitable {
     mTPTimer = CreateThreadpoolTimer(
       [](auto, auto rawThis, auto) {
         auto self = reinterpret_cast<TimerAwaitable*>(rawThis);
-        self->mState.Transition<State::Waiting, State::Timeout>();
-        self->mCoro.resume();
+        const auto transition = self->mState.TryTransition<State::Waiting, State::Timeout>();
+        if (transition) {
+          self->mCoro.resume();
+          return;
+        }
+        OPENKNEEBOARD_ASSERT(transition.error() == State::Cancelled);
       },
       this,
       nullptr);
-    mState.Transition<State::StartingWait, State::Waiting>();
-    SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
+    const auto transitioned = mState.TryTransition<State::StartingWait, State::Waiting>();
+    if (transitioned)
+    {
+      SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
+      return;
+    }
+    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Cancelled);
+    coro.resume();
+    // Cleanup is dealt with in ~TimerAwaitable
   }
 
  private:
@@ -126,21 +149,45 @@ struct TimerAwaitable {
       Transition {State::Init, State::CancelledBeforeWait},
       Transition {State::Init, State::StartingWait},
       Transition {State::StartingWait, State::Waiting},
+      Transition {State::StartingWait, State::Cancelled},
       Transition {State::Waiting, State::Timeout},
       Transition {State::Waiting, State::Cancelled},
     }>
     mState;
 
-  inline void cancel() {
+  void cancel()
+  {
     if (mState.TryTransition<State::Init, State::CancelledBeforeWait>()) {
       return;
     }
 
     OPENKNEEBOARD_ASSERT(mTPTimer);
 
-    if (SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0)) {
-      mState.Transition<State::Waiting, State::Cancelled>();
+    SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0);
+    if (mState.TryTransition<State::StartingWait, State::Cancelled>()) {
+      // handled by await_suspend
+      return;
+    }
+
+    const auto transitioned = mState.TryTransition<State::Waiting, State::Cancelled>();
+    if (transitioned)
+    {
       mCoro.resume();
+      return;
+    }
+
+    using enum State;
+    switch (transitioned.error()) {
+      case Init:
+      case CancelledBeforeWait:
+      case StartingWait:
+      case Waiting:
+      case Cancelled:
+        fatal("Impossible state {} in TimerAwaitable::cancel()", magic_enum::enum_name(transitioned.error()));
+        break;
+      case Timeout:
+        // nothing to do
+        break;
     }
   }
 
