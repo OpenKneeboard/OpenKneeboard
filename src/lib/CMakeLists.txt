@@ -250,6 +250,7 @@ target_link_libraries(
   OpenKneeboard-shims
   OpenKneeboard-version
   OpenKneeboard-win32
+  Boost::container
 )
 
 ok_add_library(

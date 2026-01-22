@@ -20,6 +20,7 @@ configure_file(
 set(OKB_VCPKG_SHARE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share")
 
 scoped_include(bindline.cmake)
+scoped_include(boost.cmake)
 scoped_include(cef.cmake)
 scoped_include(cppwinrt.cmake)
 scoped_include(detours.cmake)
