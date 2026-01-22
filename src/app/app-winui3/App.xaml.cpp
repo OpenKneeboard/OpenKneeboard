@@ -814,6 +814,10 @@ static int AppMain(
 
 int __stdcall
 wWinMain(const HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
+  // Makes debuggers happier (e.g. CLion's 'stop' button), but has no effect
+  // if there's no console attached
+  AttachConsole(ATTACH_PARENT_PROCESS);
+
   OutputDebugStringW(
     std::format(L"OKB process: {}", GetCommandLineW()).c_str());
   {
