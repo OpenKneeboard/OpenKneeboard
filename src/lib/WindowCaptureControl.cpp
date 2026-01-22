@@ -38,13 +38,13 @@ Handles InstallHooks(HWND hwnd) {
     dprint("Failed to load hook library: {}", GetLastError());
   }
 
-  auto msgProc
-    = GetProcAddress(ret.mLibrary.get(), "GetMsgProc_WindowCaptureHook");
+  auto msgProc =
+    GetProcAddress(ret.mLibrary.get(), "GetMsgProc_WindowCaptureHook");
   if (!msgProc) {
     dprint("Failed to find msgProc hook address: {}", GetLastError());
   }
-  auto wndProc
-    = GetProcAddress(ret.mLibrary.get(), "CallWndProc_WindowCaptureHook");
+  auto wndProc =
+    GetProcAddress(ret.mLibrary.get(), "CallWndProc_WindowCaptureHook");
   if (!msgProc) {
     dprint("Failed to find wndProc hook address: {}", GetLastError());
   }

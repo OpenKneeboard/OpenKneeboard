@@ -2,13 +2,12 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/D3D.hpp>
 #include <OpenKneeboard/Pixels.hpp>
-
-#include <directxtk12/DescriptorHeap.h>
 #include <OpenKneeboard/Shaders/SpriteBatch.hpp>
 
 #include <shims/winrt/base.h>
@@ -18,6 +17,8 @@
 #include <span>
 
 #include <DirectXColors.h>
+
+#include <directxtk12/DescriptorHeap.h>
 
 namespace OpenKneeboard::D3D12 {
 
@@ -58,12 +59,12 @@ class SpriteBatch {
   using CBuffer = Shaders::SpriteBatch::UniformBuffer;
   static constexpr auto MaxInflightFrames = 2;
 
-  static constexpr auto MaxSpritesPerBatch
-    = Shaders::SpriteBatch::MaxSpritesPerBatch;
-  static constexpr auto VerticesPerSprite
-    = Shaders::SpriteBatch::VerticesPerSprite;
-  static constexpr auto MaxVerticesPerBatch
-    = Shaders::SpriteBatch::MaxVerticesPerBatch;
+  static constexpr auto MaxSpritesPerBatch =
+    Shaders::SpriteBatch::MaxSpritesPerBatch;
+  static constexpr auto VerticesPerSprite =
+    Shaders::SpriteBatch::VerticesPerSprite;
+  static constexpr auto MaxVerticesPerBatch =
+    Shaders::SpriteBatch::MaxVerticesPerBatch;
 
   ID3D12Device* mDevice {nullptr};
   ID3D12CommandQueue* mCommandQueue {nullptr};
@@ -76,7 +77,7 @@ class SpriteBatch {
   uint64_t mDrawCount {};
 
   struct Sprite {
-    ID3D12Resource* mSource { nullptr };
+    ID3D12Resource* mSource {nullptr};
     PixelSize mSourceSize;
     PixelRect mSourceRect;
     PixelRect mDestRect;

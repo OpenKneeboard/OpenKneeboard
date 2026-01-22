@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <array>
@@ -37,4 +38,4 @@ static_assert(
   array_cat(std::array {1, 2}, std::array {34, 5}, std::array {678, 910})
   == std::array {1, 2, 34, 5, 678, 910});
 
-}
+}// namespace OpenKneeboard

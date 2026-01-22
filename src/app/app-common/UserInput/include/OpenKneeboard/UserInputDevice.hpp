@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
@@ -25,12 +26,11 @@ class UserInputDevice : protected EventReceiver {
   virtual std::string GetID() const = 0;
 
   virtual std::string GetButtonComboDescription(
-    const std::unordered_set<uint64_t>& ids) const
-    = 0;
+    const std::unordered_set<uint64_t>& ids) const = 0;
 
   virtual std::vector<UserInputButtonBinding> GetButtonBindings() const = 0;
-  virtual void SetButtonBindings(const std::vector<UserInputButtonBinding>&)
-    = 0;
+  virtual void SetButtonBindings(
+    const std::vector<UserInputButtonBinding>&) = 0;
 
   Event<UserInputButtonEvent> evButtonEvent;
   /** Automatically emitted based on the bindings and evButtonEvent.

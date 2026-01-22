@@ -18,9 +18,7 @@ DCSTab::DCSTab(KneeboardState* kbs) {
     kbs->evAPIEvent, [this](const APIEvent& ev) { this->OnAPIEvent(ev); });
 }
 
-DCSTab::~DCSTab() {
-  this->RemoveEventListener(mAPIEventToken);
-}
+DCSTab::~DCSTab() { this->RemoveEventListener(mAPIEventToken); }
 
 void DCSTab::OnAPIEvent(const APIEvent& event) {
   if (event.name == DCSEvents::EVT_INSTALL_PATH) {

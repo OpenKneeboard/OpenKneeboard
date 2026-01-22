@@ -62,11 +62,9 @@ struct Size {
 
   constexpr bool operator==(const Size<T>&) const noexcept = default;
 
-  constexpr Size() {
-  }
+  constexpr Size() {}
 
-  constexpr Size(T width, T height) : mWidth(width), mHeight(height) {
-  }
+  constexpr Size(T width, T height) : mWidth(width), mHeight(height) {}
 
   template <class TV = T>
   constexpr auto Width() const noexcept {
@@ -206,9 +204,7 @@ struct Point {
     return lhs;
   }
 
-  constexpr Point<T> operator-() const noexcept {
-    return (*this) * -1;
-  };
+  constexpr Point<T> operator-() const noexcept { return (*this) * -1; };
 
   constexpr auto operator-(const Point<T>& other) const noexcept {
     return *this + (-other);
@@ -256,9 +252,7 @@ struct Rect {
 
   Origin mOrigin {Origin::TopLeft};
 
-  constexpr operator bool() const noexcept {
-    return mSize;
-  }
+  constexpr operator bool() const noexcept { return mSize; }
 
   constexpr Rect<T> operator/(const T divisor) const noexcept {
     return {
@@ -307,13 +301,9 @@ struct Rect {
     return Top<TV>() - mSize.mHeight;
   }
 
-  constexpr Point<T> TopLeft() const {
-    return mOffset;
-  }
+  constexpr Point<T> TopLeft() const { return mOffset; }
 
-  constexpr Point<T> BottomRight() const {
-    return {Right(), Bottom()};
-  }
+  constexpr Point<T> BottomRight() const { return {Right(), Bottom()}; }
 
   template <class TV = T>
   constexpr auto Width() const noexcept {

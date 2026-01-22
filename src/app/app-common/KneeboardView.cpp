@@ -34,7 +34,10 @@ KneeboardView::KneeboardView(
   KneeboardState* kneeboard,
   const winrt::guid& guid,
   std::string_view name)
-  : mDXR(dxr), mKneeboard(kneeboard), mGuid(guid), mName(name) {
+  : mDXR(dxr),
+    mKneeboard(kneeboard),
+    mGuid(guid),
+    mName(name) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
 
@@ -98,17 +101,13 @@ KneeboardView::~KneeboardView() {
   this->RemoveAllEventListeners();
 }
 
-winrt::guid KneeboardView::GetPersistentGUID() const noexcept {
-  return mGuid;
-}
+winrt::guid KneeboardView::GetPersistentGUID() const noexcept { return mGuid; }
 
 KneeboardViewID KneeboardView::GetRuntimeID() const noexcept {
   return mRuntimeID;
 }
 
-std::string_view KneeboardView::GetName() const noexcept {
-  return mName;
-}
+std::string_view KneeboardView::GetName() const noexcept { return mName; }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   mThreadGuard.CheckThread();
@@ -267,8 +266,8 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     rest,
     {
       .mTabView = mCurrentTabView,
-      .mKneeboardView
-      = std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
+      .mKneeboardView =
+        std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
       .mIsActiveForInput = false,
     });
 
@@ -328,8 +327,8 @@ KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   const bool haveViewer = haveConsumerSize
     && (now - consumers.mViewer) < std::chrono::milliseconds(500);
 
-  const auto size
-    = idealSize.ScaledToFit(haveViewer ? consumerSize : MaxViewRenderSize);
+  const auto size =
+    idealSize.ScaledToFit(haveViewer ? consumerSize : MaxViewRenderSize);
   const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
   return {
     size,
@@ -494,8 +493,8 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
 
   const auto& contentArea = mapping.mContentArea;
   const auto contentSize = contentArea.mSize;
-  const auto& canvasSize
-    = mapping.mPreferredSize.mPixelSize.StaticCast<float>();
+  const auto& canvasSize =
+    mapping.mPreferredSize.mPixelSize.StaticCast<float>();
 
   D2D1_POINT_2F point {contentPoint};
   point.x *= contentSize.Width();
@@ -706,8 +705,8 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
   }
   const auto currentTabID = tab->GetRuntimeID();
   const auto pages = mCurrentTabView->GetPageIDs();
-  const auto currentPageIt
-    = std::ranges::find(pages, mCurrentTabView->GetPageID());
+  const auto currentPageIt =
+    std::ranges::find(pages, mCurrentTabView->GetPageID());
   if (currentPageIt == pages.end()) {
     return {};
   }
@@ -814,8 +813,8 @@ void KneeboardView::SetTabViews(
 void KneeboardView::PostCustomAction(
   std::string_view id,
   const nlohmann::json& arg) {
-  const auto it = std::dynamic_pointer_cast<PluginTab>(
-    mCurrentTabView->GetRootTab().lock());
+  const auto it =
+    std::dynamic_pointer_cast<PluginTab>(mCurrentTabView->GetRootTab().lock());
   if (!it) {
     return;
   }

@@ -2,15 +2,16 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/D2DErrorRenderer.hpp>
 #include <OpenKneeboard/DXResources.hpp>
-
-#include <Unknwn.h>
 
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/hresult.hpp>
+
+#include <Unknwn.h>
 
 #include <dwrite.h>
 
@@ -22,8 +23,7 @@ struct D2DErrorRenderer::Impl final {
 };
 
 D2DErrorRenderer::D2DErrorRenderer(const audited_ptr<DXResources>& dxr)
-  : D2DErrorRenderer(dxr->mDWriteFactory.get(), dxr->mBlackBrush.get()) {
-}
+  : D2DErrorRenderer(dxr->mDWriteFactory.get(), dxr->mBlackBrush.get()) {}
 
 D2DErrorRenderer::D2DErrorRenderer(
   IDWriteFactory* dwrite,
@@ -33,8 +33,7 @@ D2DErrorRenderer::D2DErrorRenderer(
   p->mTextBrush.copy_from(brush);
 }
 
-D2DErrorRenderer::~D2DErrorRenderer() {
-}
+D2DErrorRenderer::~D2DErrorRenderer() {}
 
 void D2DErrorRenderer::Render(
   ID2D1DeviceContext* ctx,

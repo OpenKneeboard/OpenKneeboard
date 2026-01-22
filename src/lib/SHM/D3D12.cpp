@@ -47,9 +47,7 @@ Reader::Reader(
   mShaderResourceViewHeap->Heap()->SetName(L"OpenKneeboard::SHM::D3D12 SRV");
 }
 
-Reader::~Reader() {
-  this->DropResources();
-}
+Reader::~Reader() { this->DropResources(); }
 
 std::expected<Frame, Frame::Error> Reader::MaybeGetMapped() {
   auto raw = MaybeGet();
@@ -77,14 +75,14 @@ Frame Reader::Map(SHM::Frame raw) {
     check_hresult(mDevice->OpenSharedHandle(
       com.mTextureHandle, IID_PPV_ARGS(com.mTexture.put())));
     const auto desc = com.mTexture->GetDesc();
-    com.mTextureDimensions
-      = {static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};
+    com.mTextureDimensions = {
+      static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};
   }
   if (!com.mShaderResourceViewGPUHandle.ptr) {
     const auto cpuHandle = mShaderResourceViewHeap->GetCpuHandle(raw.mIndex);
     mDevice->CreateShaderResourceView(com.mTexture.get(), nullptr, cpuHandle);
-    com.mShaderResourceViewGPUHandle
-      = mShaderResourceViewHeap->GetGpuHandle(raw.mIndex);
+    com.mShaderResourceViewGPUHandle =
+      mShaderResourceViewHeap->GetGpuHandle(raw.mIndex);
   }
   if (!com.mFence) {
     check_hresult(mDevice->OpenSharedHandle(

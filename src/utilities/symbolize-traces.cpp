@@ -207,9 +207,9 @@ int main(int argc, char** argv) {
   if (pdbDirectory.empty()) {
     wchar_t buf[MAX_PATH];
     auto charCount = GetModuleFileNameW(nullptr, buf, MAX_PATH);
-    pdbDirectory
-      = std::filesystem::path {std::wstring_view {buf, charCount - 1}}
-          .parent_path();
+    pdbDirectory =
+      std::filesystem::path {std::wstring_view {buf, charCount - 1}}
+        .parent_path();
   }
 
   std::ifstream f(logFile, std::ios::binary);

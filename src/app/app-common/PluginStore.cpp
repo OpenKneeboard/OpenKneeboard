@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/Elevation.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
@@ -38,8 +39,8 @@ void PluginStore::LoadPluginsFromRegistry() {
 }
 
 void PluginStore::LoadPluginsFromRegistry(HKEY root) {
-  const auto subkeyPath
-    = std::format(L"{}\\Plugins\\v1", Config::RegistrySubKey);
+  const auto subkeyPath =
+    std::format(L"{}\\Plugins\\v1", Config::RegistrySubKey);
   const auto expected = Registry::open_unique_key(root, subkeyPath.c_str());
   if (!expected) {
     return;
@@ -90,15 +91,14 @@ void PluginStore::LoadPluginsFromFilesystem() {
   }
 }
 
-PluginStore::~PluginStore() {
-}
+PluginStore::~PluginStore() {}
 
 void PluginStore::TryAppend(const std::filesystem::path& jsonPath) {
   dprint("Loading plugin from `{}`", jsonPath);
   try {
-    auto plugin
-      = nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
-          .get<Plugin>();
+    auto plugin =
+      nlohmann::json::parse(std::ifstream {jsonPath, std::ios::binary})
+        .get<Plugin>();
     plugin.mJSONPath = jsonPath;
     dprint(
       "Parsed plugin ID `{}` (`{}`), version `{}`",

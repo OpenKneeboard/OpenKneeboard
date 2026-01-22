@@ -75,8 +75,8 @@ Renderer::Renderer(
   ID3D12Device* device,
   ID3D12CommandQueue* commandQueue,
   DXGI_FORMAT destFormat) {
-  mSpriteBatch
-    = std::make_unique<SpriteBatch>(device, commandQueue, destFormat);
+  mSpriteBatch =
+    std::make_unique<SpriteBatch>(device, commandQueue, destFormat);
 
   mDevice.copy_from(device);
   mQueue.copy_from(commandQueue);

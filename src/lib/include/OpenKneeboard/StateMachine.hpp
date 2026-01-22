@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/dprint.hpp>
@@ -72,8 +73,7 @@ template <class State>
   requires std::is_scoped_enum_v<State>
 struct Transition final {
   Transition() = delete;
-  consteval Transition(State in, State out) : mIn(in), mOut(out) {
-  }
+  consteval Transition(State in, State out) : mIn(in), mOut(out) {}
 
   const State mIn;
   const State mOut;
@@ -83,8 +83,8 @@ template <class T, size_t N>
 using Transitions = std::array<Transition<T>, N>;
 
 template <class T, auto V>
-constexpr bool is_optional_value_v
-  = std::same_as<std::nullopt_t, decltype(V)> || std::same_as<T, decltype(V)>;
+constexpr bool is_optional_value_v =
+  std::same_as<std::nullopt_t, decltype(V)> || std::same_as<T, decltype(V)>;
 
 /// Use either StateMachine or AtomicStateMachine instead
 template <
@@ -101,14 +101,13 @@ class StateMachineBase {
   using Values = State;
   static constexpr auto InitialState = TInitialState;
   static constexpr auto FinalState = TFinalState;
-  static constexpr auto HasFinalState
-    = std::same_as<State, std::decay_t<decltype(FinalState)>>;
+  static constexpr auto HasFinalState =
+    std::same_as<State, std::decay_t<decltype(FinalState)>>;
 
   StateMachineBase() = delete;
   constexpr StateMachineBase(
     const std::source_location& creator = std::source_location::current())
-    : mCreator(creator) {
-  }
+    : mCreator(creator) {}
 
   ~StateMachineBase() {
     if constexpr (HasFinalState) {
@@ -116,9 +115,7 @@ class StateMachineBase {
     }
   }
 
-  constexpr State Get() const noexcept {
-    return mState;
-  }
+  constexpr State Get() const noexcept { return mState; }
 
   constexpr void Assert(
     State expected,
@@ -187,8 +184,7 @@ class StateMachine final : public Base {
  public:
   constexpr StateMachine(
     const std::source_location& caller = std::source_location::current())
-    : Base(caller) {
-  }
+    : Base(caller) {}
 
   template <State in, State out>
   [[nodiscard]]
@@ -219,8 +215,7 @@ class AtomicStateMachine final : public Base {
  public:
   constexpr AtomicStateMachine(
     const std::source_location& caller = std::source_location::current())
-    : Base(caller) {
-  }
+    : Base(caller) {}
 
   /** Attempt to transition, and fail with the current state if it is not the
    * expected state */
@@ -254,7 +249,8 @@ class ScopedStateTransitions final {
   constexpr ScopedStateTransitions(
     TStateMachine* impl,
     const std::source_location& loc = std::source_location::current())
-    : mImpl(impl), mSourceLocation(loc) {
+    : mImpl(impl),
+      mSourceLocation(loc) {
     mImpl->template Transition<pre, state>(loc);
   }
 
@@ -311,8 +307,8 @@ template <auto pre, auto state, auto post>
 auto make_scoped_state_transitions(
   Detail::any_pointer auto&& stateMachine,
   const std::source_location& loc = std::source_location::current()) {
-  auto smPtr
-    = Detail::get_pointer(std::forward<decltype(stateMachine)>(stateMachine));
+  auto smPtr =
+    Detail::get_pointer(std::forward<decltype(stateMachine)>(stateMachine));
   static_assert(Detail::raw_pointer<decltype(smPtr)>);
   static_assert(!Detail::any_pointer<decltype(*smPtr)>);
   using TStateMachine = std::remove_cvref_t<decltype(*smPtr)>;
@@ -340,12 +336,13 @@ using LockState = StateMachine<
   lockable_transitions<LockStates>()>;
 
 template <class T>
-concept lockable_state_machine = requires() {
-  { T::Values::Unlocked } -> std::same_as<typename T::Values>;
-  { T::Values::TryLock } -> std::same_as<typename T::Values>;
-  { T::Values::Locked } -> std::same_as<typename T::Values>;
-}
-// clang-format off
+concept lockable_state_machine =
+  requires() {
+    { T::Values::Unlocked } -> std::same_as<typename T::Values>;
+    { T::Values::TryLock } -> std::same_as<typename T::Values>;
+    { T::Values::Locked } -> std::same_as<typename T::Values>;
+  }
+  // clang-format off
     && T::template IsValidTransition<T::Values::Unlocked, T::Values::TryLock>()
     && T::template IsValidTransition<T::Values::TryLock, T::Values::Locked>()
     && T::template IsValidTransition<T::Values::TryLock, T::Values::Unlocked>()

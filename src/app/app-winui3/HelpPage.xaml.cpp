@@ -66,8 +66,8 @@ std::expected<std::wstring, LSTATUS> GetRegistryStringValue(
     | ((view == RegistryView::Wow64_64) ? RRF_SUBKEY_WOW6464KEY
                                         : RRF_SUBKEY_WOW6432KEY);
 
-  const auto getSizeResult
-    = RegGetValueW(hkey, subKey, value, flags, nullptr, nullptr, &byteCount);
+  const auto getSizeResult =
+    RegGetValueW(hkey, subKey, value, flags, nullptr, nullptr, &byteCount);
   if (getSizeResult != ERROR_SUCCESS) {
     return std::unexpected {getSizeResult};
   }
@@ -94,16 +94,14 @@ HelpPage::HelpPage() {
   this->PopulateLicenses();
 
   QuickStartLink().Click([]() -> OpenKneeboard::fire_and_forget {
-    const auto quickStartPath = RuntimeFiles::GetInstallationDirectory()
-      / RuntimeFiles::QUICK_START_PDF;
+    const auto quickStartPath =
+      RuntimeFiles::GetInstallationDirectory() / RuntimeFiles::QUICK_START_PDF;
 
     co_await LaunchURI(to_utf8(quickStartPath));
   } | drop_winrt_event_args());
 }
 
-HelpPage::~HelpPage() {
-  this->RemoveAllEventListeners();
-}
+HelpPage::~HelpPage() { this->RemoveAllEventListeners(); }
 
 void HelpPage::PopulateVersion() {
   auto details = std::format(
@@ -242,8 +240,8 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
       continue;
     }
 
-    const auto relative = to_utf8(
-      std::filesystem::proximate(path, settingsDir).generic_wstring());
+    const auto relative =
+      to_utf8(std::filesystem::proximate(path, settingsDir).generic_wstring());
     // v1.8 and below; PID etc. Now in %LOCALAPPDATA% / OpenKneeboard /
     // instance.txt
     if (relative == ".instance") {
@@ -264,8 +262,8 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   std::vector<Dump> dumps;
 
   {
-    const auto crashDumps
-      = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / L"CrashDumps";
+    const auto crashDumps =
+      Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / L"CrashDumps";
     if (std::filesystem::is_directory(crashDumps)) {
       for (const auto entry:
            std::filesystem::recursive_directory_iterator(crashDumps)) {
@@ -325,8 +323,8 @@ OpenKneeboard::fire_and_forget HelpPage::OnCheckForUpdatesClick(
 }
 
 void HelpPage::PopulateLicenses() noexcept {
-  const auto docDir
-    = Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
+  const auto docDir =
+    Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
 
   if (!std::filesystem::exists(docDir)) {
     return;
@@ -335,14 +333,14 @@ void HelpPage::PopulateLicenses() noexcept {
   auto children = Licenses().Children();
   children.Clear();
 
-  auto addEntry
-    = [&](const std::string& label, const std::filesystem::path& path) {
-        Controls::HyperlinkButton link;
-        link.Content(box_value(to_hstring(label)));
-        link.Click(
-          [=](const auto&, const auto&) { this->DisplayLicense(label, path); });
-        children.Append(link);
-      };
+  auto addEntry =
+    [&](const std::string& label, const std::filesystem::path& path) {
+      Controls::HyperlinkButton link;
+      link.Content(box_value(to_hstring(label)));
+      link.Click(
+        [=](const auto&, const auto&) { this->DisplayLicense(label, path); });
+      children.Append(link);
+    };
 
   addEntry("OpenKneeboard", docDir / "LICENSE.txt");
 
@@ -404,8 +402,8 @@ std::string HelpPage::GetUpdateLog() noexcept {
        i++,
              valueNameLength = static_cast<DWORD>(std::size(valueName)),
              dataLength = static_cast<DWORD>(std::size(data))) {
-    const auto timestamp
-      = std::stoull(std::string {valueName, valueNameLength});
+    const auto timestamp =
+      std::stoull(std::string {valueName, valueNameLength});
     ret += std::format(
       "- {:%F %T%z}: {}\n",
       ReadableTime(
@@ -443,20 +441,20 @@ std::string HelpPage::GetActiveConsumers() noexcept {
     consumers.mNonVRPixelSize.mWidth,
     consumers.mNonVRPixelSize.mHeight);
 
-  const auto logGame
-    = [&](const auto name, const std::optional<GameProcess>& process) {
-        if (!process) {
-          ret += std::format("{}: none\n", name);
-          return;
-        }
-        ret += std::format(
-          "{}: '{}' (PID {}, started {} ago)\n",
-          name,
-          process->mLastSeenPath.string(),
-          process->mProcessID,
-          std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - process->mSince));
-      };
+  const auto logGame =
+    [&](const auto name, const std::optional<GameProcess>& process) {
+      if (!process) {
+        ret += std::format("{}: none\n", name);
+        return;
+      }
+      ret += std::format(
+        "{}: '{}' (PID {}, started {} ago)\n",
+        name,
+        process->mLastSeenPath.string(),
+        process->mProcessID,
+        std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::steady_clock::now() - process->mSince));
+    };
 
   const auto kb = gKneeboard.lock();
   logGame("Current game", kb->GetCurrentGame());
@@ -537,8 +535,8 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
         break;
     }
 
-    const auto pathUtf8
-      = winrt::to_string(std::wstring_view {path, pathLength});
+    const auto pathUtf8 =
+      winrt::to_string(std::wstring_view {path, pathLength});
 
     if (dataType != REG_DWORD) {
       ret += std::format(
@@ -551,8 +549,8 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
       continue;
     }
 
-    const auto fspath
-      = std::filesystem::path(std::wstring_view {path, pathLength});
+    const auto fspath =
+      std::filesystem::path(std::wstring_view {path, pathLength});
     if (!std::filesystem::exists(fspath)) {
       ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
       continue;
@@ -571,8 +569,8 @@ static std::string GetOpenXRRuntime(RegistryView view) noexcept {
       dllPath = (fspath.parent_path() / dllPath).lexically_normal();
     }
 
-    const auto runtimeName
-      = (runtime.contains("name") && runtime.at("name").is_string())
+    const auto runtimeName =
+      (runtime.contains("name") && runtime.at("name").is_string())
       ? runtime.at("name").get<std::string>()
       : "Unnamed Runtime";
     ret += std::format(
@@ -631,8 +629,8 @@ std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
         moreLayers = false;
         continue;
     }
-    const auto pathUtf8
-      = winrt::to_string(std::wstring_view {path, pathLength});
+    const auto pathUtf8 =
+      winrt::to_string(std::wstring_view {path, pathLength});
     if (dataType != REG_DWORD) {
       ret += std::format(
         "- ERROR - INVALID REGISTRY VALUE (not DWORD): {}\n", pathUtf8);
@@ -644,8 +642,8 @@ std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
       continue;
     }
 
-    const auto fspath
-      = std::filesystem::path(std::wstring_view {path, pathLength});
+    const auto fspath =
+      std::filesystem::path(std::wstring_view {path, pathLength});
     if (!std::filesystem::exists(fspath)) {
       ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
       continue;

@@ -55,8 +55,8 @@ task<std::shared_ptr<HWNDPageSource>> HWNDPageSource::Create(
   HWND window,
   Options options) noexcept {
   if (!gControlMessage) {
-    gControlMessage
-      = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+    gControlMessage =
+      RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
     if (!gControlMessage) {
       dprint("Failed to Register a window message: {}", GetLastError());
     }
@@ -154,8 +154,8 @@ HWNDPageSource::CreateWGCaptureItem() {
       dprint("Failed to get window rect");
       return nullptr;
     }
-    const auto monitor
-      = MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
+    const auto monitor =
+      MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
     MONITORINFOEXW monitorInfo {sizeof(MONITORINFOEXW)};
     if (!GetMonitorInfoW(monitor, &monitorInfo)) {
       dprint("Failed to get monitor info");
@@ -185,8 +185,8 @@ HWNDPageSource::CreateWGCaptureItem() {
   {
     // DisplayInformation::CreateForWindowId only works for windows owned by
     // this thread (and process)... so we'll jump through some hoops.
-    const auto monitor
-      = MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
+    const auto monitor =
+      MonitorFromWindow(mCaptureWindow, MONITOR_DEFAULTTONULL);
     auto displayID = winrt::Microsoft::UI::GetDisplayIdFromMonitor(monitor);
     auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
       CreateForDisplayId(displayID);
@@ -244,8 +244,8 @@ HWNDPageSource::HWNDPageSource(
     WGCRenderer::evNeedsRepaintEvent, IPageSource::evNeedsRepaintEvent);
   // Handle UWP input
   if (
-    HWND child
-    = FindWindowExW(window, {}, L"ApplicationFrameInputSinkWindow", nullptr)) {
+    HWND child =
+      FindWindowExW(window, {}, L"ApplicationFrameInputSinkWindow", nullptr)) {
     mInputWindow = child;
   } else {
     mInputWindow = window;
@@ -316,10 +316,10 @@ PixelSize HWNDPageSource::GetSwapchainDimensions(
   if (!GetMonitorInfoW(monitor, &info)) {
     return contentSize;
   }
-  const auto monitorWidth
-    = static_cast<uint32_t>(info.rcMonitor.right - info.rcMonitor.left);
-  const auto monitorHeight
-    = static_cast<uint32_t>(info.rcMonitor.bottom - info.rcMonitor.top);
+  const auto monitorWidth =
+    static_cast<uint32_t>(info.rcMonitor.right - info.rcMonitor.left);
+  const auto monitorHeight =
+    static_cast<uint32_t>(info.rcMonitor.bottom - info.rcMonitor.top);
   dprint(L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
   return {
     std::max(contentSize.mWidth, monitorWidth),
@@ -345,8 +345,8 @@ static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
   while (true) {
     clientPoint = screenPoint;
     ScreenToClient(parent, &clientPoint);
-    const auto child
-      = ChildWindowFromPointEx(parent, clientPoint, CWP_SKIPTRANSPARENT);
+    const auto child =
+      ChildWindowFromPointEx(parent, clientPoint, CWP_SKIPTRANSPARENT);
     if (child == parent) {
       break;
     }
@@ -434,13 +434,9 @@ void HWNDPageSource::PostCursorEvent(
   }
 }
 
-bool HWNDPageSource::CanClearUserInput() const {
-  return false;
-}
+bool HWNDPageSource::CanClearUserInput() const { return false; }
 
-bool HWNDPageSource::CanClearUserInput(PageID) const {
-  return false;
-}
+bool HWNDPageSource::CanClearUserInput(PageID) const { return false; }
 
 void HWNDPageSource::ClearUserInput(PageID) {
   // nothing to do here
@@ -544,9 +540,7 @@ PageIndex HWNDPageSource::GetPageCount() const {
   return WGCRenderer::HaveCaptureItem() ? 1 : 0;
 }
 
-std::vector<PageID> HWNDPageSource::GetPageIDs() const {
-  return {mPageID};
-}
+std::vector<PageID> HWNDPageSource::GetPageIDs() const { return {mPageID}; }
 
 std::optional<PreferredSize> HWNDPageSource::GetPreferredSize(PageID) {
   return WGCRenderer::GetPreferredSize();

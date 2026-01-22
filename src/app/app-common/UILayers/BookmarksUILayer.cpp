@@ -16,8 +16,8 @@ std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* state,
   KneeboardView* view) {
-  auto ret
-    = std::shared_ptr<BookmarksUILayer>(new BookmarksUILayer(dxr, state, view));
+  auto ret =
+    std::shared_ptr<BookmarksUILayer>(new BookmarksUILayer(dxr, state, view));
   ret->Init();
   return ret;
 }
@@ -59,9 +59,7 @@ void BookmarksUILayer::Init() {
     });
 }
 
-BookmarksUILayer::~BookmarksUILayer() {
-  this->RemoveAllEventListeners();
-}
+BookmarksUILayer::~BookmarksUILayer() { this->RemoveAllEventListeners(); }
 
 void BookmarksUILayer::PostCursorEvent(
   const IUILayer::NextList& next,
@@ -139,8 +137,8 @@ task<void> BookmarksUILayer::Render(
   }
 
   const auto metrics = this->GetMetrics(next, context);
-  const auto scale
-    = rect.Width<float>() / metrics.mPreferredSize.mPixelSize.mWidth;
+  const auto scale =
+    rect.Width<float>() / metrics.mPreferredSize.mPixelSize.mWidth;
 
   auto d2d = rc.d2d();
   d2d->FillRectangle(
@@ -221,8 +219,8 @@ task<void> BookmarksUILayer::Render(
   }
 
   d2d.Release();
-  auto nextArea
-    = (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
+  auto nextArea =
+    (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
   nextArea.mOffset += rect.mOffset;
   co_await first->Render(rc, rest, context, nextArea);
   d2d.Reacquire();

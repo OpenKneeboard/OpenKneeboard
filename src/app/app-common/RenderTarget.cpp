@@ -62,13 +62,9 @@ void RenderTarget::SetD3DTexture(
   mDimensions = {desc.Width, desc.Height};
 }
 
-PixelSize RenderTarget::GetDimensions() const {
-  return mDimensions;
-}
+PixelSize RenderTarget::GetDimensions() const { return mDimensions; }
 
-RenderTargetID RenderTarget::GetID() const {
-  return mID;
-}
+RenderTargetID RenderTarget::GetID() const { return mID; }
 
 RenderTarget::D2D RenderTarget::d2d(const std::source_location& loc) {
   if (!mD3DTexture) {
@@ -112,7 +108,8 @@ void RenderTargetWithMultipleIdentities::SetActiveIdentity(size_t index) {
 RenderTarget::D2D::D2D(
   const std::shared_ptr<RenderTarget>& parent,
   const std::source_location& loc)
-  : mParent(parent), mSourceLocation(loc) {
+  : mParent(parent),
+    mSourceLocation(loc) {
   if (!parent) {
     OPENKNEEBOARD_BREAK;
     return;

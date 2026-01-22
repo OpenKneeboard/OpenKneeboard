@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/DoodleRenderer.hpp>
@@ -18,7 +19,8 @@ namespace OpenKneeboard {
 DoodleRenderer::DoodleRenderer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : mDXR(dxr), mKneeboard(kbs) {
+  : mDXR(dxr),
+    mKneeboard(kbs) {
   mBrush = dxr->mBlackBrush;
   mEraser = dxr->mEraserBrush;
   mDrawingContext = mDXR->mD2DBackBufferDeviceContext;
@@ -26,13 +28,9 @@ DoodleRenderer::DoodleRenderer(
 
 DoodleRenderer::~DoodleRenderer() = default;
 
-void DoodleRenderer::Clear() {
-  mDrawings.clear();
-}
+void DoodleRenderer::Clear() { mDrawings.clear(); }
 
-void DoodleRenderer::ClearPage(PageID pageID) {
-  mDrawings.erase(pageID);
-}
+void DoodleRenderer::ClearPage(PageID pageID) { mDrawings.erase(pageID); }
 
 void DoodleRenderer::ClearExcept(const std::unordered_set<PageID>& keep) {
   for (auto it = mDrawings.begin(); it != mDrawings.end(); /* no increment */) {

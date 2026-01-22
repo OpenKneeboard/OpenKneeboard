@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DebugPrivileges.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -40,8 +41,8 @@ DebugPrivileges::DebugPrivileges() {
         nullptr,
         nullptr)) {
     const auto code = GetLastError();
-    const auto message
-      = std::system_category().default_error_condition(code).message();
+    const auto message =
+      std::system_category().default_error_condition(code).message();
     dprint.Warning(
       "Failed to acquire debug privileges: {:#x} ({})",
       std::bit_cast<uint32_t>(code),

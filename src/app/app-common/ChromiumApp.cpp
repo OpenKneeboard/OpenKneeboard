@@ -24,8 +24,7 @@ namespace OpenKneeboard {
 
 class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
  public:
-  Impl() {
-  }
+  Impl() {}
 
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
     return this;

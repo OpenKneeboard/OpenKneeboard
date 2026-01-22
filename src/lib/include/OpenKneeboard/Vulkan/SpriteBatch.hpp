@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "Dispatch.hpp"
@@ -114,12 +115,12 @@ class SpriteBatch {
     Color mColor;
   };
 
-  static constexpr auto MaxSpritesPerBatch
-    = Shaders::SpriteBatch::MaxSpritesPerBatch;
-  static constexpr auto VerticesPerSprite
-    = Shaders::SpriteBatch::VerticesPerSprite;
-  static constexpr auto MaxVerticesPerBatch
-    = Shaders::SpriteBatch::MaxVerticesPerBatch;
+  static constexpr auto MaxSpritesPerBatch =
+    Shaders::SpriteBatch::MaxSpritesPerBatch;
+  static constexpr auto VerticesPerSprite =
+    Shaders::SpriteBatch::VerticesPerSprite;
+  static constexpr auto MaxVerticesPerBatch =
+    Shaders::SpriteBatch::MaxVerticesPerBatch;
 
   std::vector<Sprite> mSprites;
 

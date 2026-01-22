@@ -65,16 +65,11 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
 
 D3D12Renderer::~D3D12Renderer() = default;
 
-std::wstring_view D3D12Renderer::GetName() const noexcept {
-  return {L"D3D12"};
-}
+std::wstring_view D3D12Renderer::GetName() const noexcept { return {L"D3D12"}; }
 
-SHM::Reader& D3D12Renderer::GetSHM() {
-  return *mSHM;
-}
+SHM::Reader& D3D12Renderer::GetSHM() { return *mSHM; }
 
-void D3D12Renderer::Initialize(uint8_t /*swapchainLength*/) {
-}
+void D3D12Renderer::Initialize(uint8_t /*swapchainLength*/) {}
 
 uint64_t D3D12Renderer::Render(
   SHM::Frame rawSource,
@@ -128,11 +123,12 @@ uint64_t D3D12Renderer::Render(
   D3D12_RESOURCE_BARRIER inBarriers[] {
     D3D12_RESOURCE_BARRIER {
       .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-      .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
-        .pResource = mDestTexture.get(),
-        .StateBefore = D3D12_RESOURCE_STATE_COMMON,
-        .StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
-      },
+      .Transition =
+        D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = mDestTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_COMMON,
+          .StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        },
     },
   };
   cl->ResourceBarrier(std::size(inBarriers), inBarriers);
@@ -145,11 +141,12 @@ uint64_t D3D12Renderer::Render(
   D3D12_RESOURCE_BARRIER outBarriers[] {
     D3D12_RESOURCE_BARRIER {
       .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-      .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
-        .pResource = mDestTexture.get(),
-        .StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET,
-        .StateAfter = D3D12_RESOURCE_STATE_COMMON,
-      },
+      .Transition =
+        D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = mDestTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET,
+          .StateAfter = D3D12_RESOURCE_STATE_COMMON,
+        },
     },
   };
   cl->ResourceBarrier(std::size(outBarriers), outBarriers);

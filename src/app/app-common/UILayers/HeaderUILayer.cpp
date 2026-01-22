@@ -38,7 +38,8 @@ HeaderUILayer::HeaderUILayer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   KneeboardView* kneeboardView)
-  : mDXResources(dxr), mKneeboardState(kneeboardState) {
+  : mDXResources(dxr),
+    mKneeboardState(kneeboardState) {
   auto ctx = dxr->mD2DDeviceContext;
 
   AddEventListener(
@@ -63,9 +64,7 @@ HeaderUILayer::HeaderUILayer(
   mActiveViewSeparatorBrush = mDXResources->mBlackBrush;
 }
 
-HeaderUILayer::~HeaderUILayer() {
-  this->RemoveAllEventListeners();
-}
+HeaderUILayer::~HeaderUILayer() { this->RemoveAllEventListeners(); }
 
 void HeaderUILayer::OnTabChanged() {
   mToolbar.reset();
@@ -154,8 +153,8 @@ task<void> HeaderUILayer::Render(
 
   const auto scale = rect.Height<float>() / preferredSize.mPixelSize.mHeight;
 
-  const auto contentHeight
-    = static_cast<uint32_t>(std::lround(scale * metrics.mContentArea.Height()));
+  const auto contentHeight =
+    static_cast<uint32_t>(std::lround(scale * metrics.mContentArea.Height()));
   const auto headerHeight = static_cast<uint32_t>(
     std::lround(contentHeight * (HeaderPercent / 100.0f)));
 
@@ -235,8 +234,8 @@ void HeaderUILayer::DrawToolbar(
     return;
   }
 
-  const auto buttonHeight
-    = buttons.front().mRect.bottom - buttons.front().mRect.top;
+  const auto buttonHeight =
+    buttons.front().mRect.bottom - buttons.front().mRect.top;
   const auto strokeWidth = buttonHeight / 15;
 
   FLOAT dpix {}, dpiy {};
@@ -328,12 +327,12 @@ void HeaderUILayer::LayoutToolbar(
   }
 
   const auto& kneeboardView = context.mKneeboardView;
-  const auto actions
-    = InGameActions::Create(mKneeboardState, kneeboardView, tabView);
+  const auto actions =
+    InGameActions::Create(mKneeboardState, kneeboardView, tabView);
   std::vector<Button> buttons;
 
-  const auto buttonHeight
-    = static_cast<uint32_t>(std::lround(headerRect.Height() * 0.75f));
+  const auto buttonHeight =
+    static_cast<uint32_t>(std::lround(headerRect.Height() * 0.75f));
   const auto margin = (headerRect.Height() - buttonHeight) / 2;
 
   auto primaryLeft = 2 * margin;
@@ -345,16 +344,16 @@ void HeaderUILayer::LayoutToolbar(
   };
 
   for (const auto& item: actions.mLeft) {
-    const auto selectable
-      = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    const auto selectable =
+      std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
     if (!selectable) {
       OPENKNEEBOARD_BREAK;
       continue;
     }
     AddEventListener(selectable->evStateChangedEvent, resetToolbar);
 
-    const auto visibility
-      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    const auto visibility =
+      std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
     if (visibility && !visibility->IsVisible()) {
       continue;
     }
@@ -372,16 +371,16 @@ void HeaderUILayer::LayoutToolbar(
 
   auto secondaryRight = headerRect.Width() - (2 * margin);
   for (const auto& item: actions.mRight) {
-    const auto selectable
-      = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    const auto selectable =
+      std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
     if (!selectable) {
       OPENKNEEBOARD_BREAK;
       continue;
     }
     AddEventListener(selectable->evStateChangedEvent, resetToolbar);
 
-    const auto visibility
-      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    const auto visibility =
+      std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
     if (visibility && !visibility->IsVisible()) {
       continue;
     }
@@ -406,8 +405,8 @@ void HeaderUILayer::LayoutToolbar(
       }
     });
 
-  const auto buttonSpace
-    = std::max<uint32_t>(primaryLeft, headerRect.Width() - secondaryRight);
+  const auto buttonSpace =
+    std::max<uint32_t>(primaryLeft, headerRect.Width() - secondaryRight);
 
   *headerTextRect = {
     headerRect.mOffset + PixelPoint {primaryLeft, 0},
@@ -439,8 +438,8 @@ void HeaderUILayer::DrawHeaderText(
     return;
   }
 
-  const std::shared_ptr<ITab> tab
-    = tabView ? tabView->GetRootTab().lock() : nullptr;
+  const std::shared_ptr<ITab> tab =
+    tabView ? tabView->GetRootTab().lock() : nullptr;
   const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
   auto& dwf = mDXResources->mDWriteFactory;
 

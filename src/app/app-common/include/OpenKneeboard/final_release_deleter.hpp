@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <shims/winrt/base.h>
@@ -39,9 +40,7 @@ concept with_final_release = std::is_invocable_r_v<
  */
 template <with_final_release T>
 struct final_release_deleter {
-  void operator()(T* p) {
-    T::final_release(std::unique_ptr<T>(p));
-  }
+  void operator()(T* p) { T::final_release(std::unique_ptr<T>(p)); }
 };
 
 template <with_final_release T>

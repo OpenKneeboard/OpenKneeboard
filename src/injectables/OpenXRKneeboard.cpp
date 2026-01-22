@@ -202,9 +202,7 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   }
 }
 
-OpenXRNext* OpenXRKneeboard::GetOpenXR() {
-  return mOpenXR.get();
-}
+OpenXRNext* OpenXRKneeboard::GetOpenXR() { return mOpenXR.get(); }
 
 XrResult OpenXRKneeboard::xrEndFrame(
   XrSession session,
@@ -238,8 +236,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  const auto swapchainDimensions
-    = Spriting::GetBufferSize(frame->mLayers.size());
+  const auto swapchainDimensions =
+    Spriting::GetBufferSize(frame->mLayers.size());
 
   if (mSwapchain && mSwapchainDimensions != swapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
@@ -266,8 +264,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
   auto vrLayers = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
-  const auto layerCount
-    = (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
+  const auto layerCount =
+    (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
     ? vrLayers.size()
     : (mMaxLayerCount - frameEndInfo->layerCount);
   if (layerCount == 0) {
@@ -312,8 +310,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
         }
         [[fallthrough]];
       case Upscaling::AlwaysOn: {
-        const auto upscaled
-          = destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
+        const auto upscaled =
+          destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
         TraceLoggingWriteTagged(
           layerActivity,
           "OpenXRKneeboard::xrEndFrame()/LayerSprites/Upscale",
@@ -356,13 +354,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
       .space = mLocalSpace,
       .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
-      .subImage = XrSwapchainSubImage {
-        .swapchain = mSwapchain,
-        .imageRect = destRect.StaticCast<int, XrRect2Di>(),
-        .imageArrayIndex = 0,
-      },
+      .subImage =
+        XrSwapchainSubImage {
+          .swapchain = mSwapchain,
+          .imageRect = destRect.StaticCast<int, XrRect2Di>(),
+          .imageArrayIndex = 0,
+        },
       .pose = this->GetXrPosef(params.mKneeboardPose),
-      .size = { params.mKneeboardSize.x, params.mKneeboardSize.y },
+      .size = {params.mKneeboardSize.x, params.mKneeboardSize.y},
     });
 
     nextLayers.push_back(
@@ -437,8 +436,8 @@ OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
   }
 
   XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
-  const auto locateResult
-    = mOpenXR->xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location);
+  const auto locateResult =
+    mOpenXR->xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location);
   if (locateResult != XR_SUCCESS) {
     TraceLoggingWriteStop(
       activity,
@@ -778,8 +777,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetInstanceProcAddr(
 #undef HOOK_EXT_FUNC
 
   if (name == "xrEnumerateApiLayerProperties") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
+    *function =
+      reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
     return XR_SUCCESS;
   }
 
@@ -897,7 +896,7 @@ OpenKneeboard_xrNegotiateLoaderApiLayerInterface(
   apiLayerRequest->layerInterfaceVersion = XR_CURRENT_LOADER_API_LAYER_VERSION;
   apiLayerRequest->layerApiVersion = XR_CURRENT_API_VERSION;
   apiLayerRequest->getInstanceProcAddr = &OpenKneeboard::xrGetInstanceProcAddr;
-  apiLayerRequest->createApiLayerInstance
-    = &OpenKneeboard::xrCreateApiLayerInstance;
+  apiLayerRequest->createApiLayerInstance =
+    &OpenKneeboard::xrCreateApiLayerInstance;
   return XR_SUCCESS;
 }

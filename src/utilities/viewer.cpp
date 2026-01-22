@@ -142,16 +142,17 @@ class TestViewerWindow final : private D3D11Resources {
 
     // Create a solid fill
     constexpr ShaderFillInfo(const D3DCOLORVALUE& a)
-      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(a) {
-    }
+      : mD3DCOLORVALUE0(a),
+        mD3DCOLORVALUE1(a) {}
 
     // Create a checkerboard fill
     constexpr ShaderFillInfo(
       const D3DCOLORVALUE& a,
       const D3DCOLORVALUE& b,
       uint32_t colorStride)
-      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(b), mColorStride(colorStride) {
-    }
+      : mD3DCOLORVALUE0(a),
+        mD3DCOLORVALUE1(b),
+        mColorStride(colorStride) {}
   };
 
   struct Vertex {
@@ -222,10 +223,10 @@ class TestViewerWindow final : private D3D11Resources {
     const POINT bottomRight = POINT(
       topLeft.x + mSettings.mWindowWidth, topLeft.y + mSettings.mWindowHeight);
 
-    const HMONITOR topLeftMonitor
-      = MonitorFromPoint(topLeft, MONITOR_DEFAULTTONULL);
-    const HMONITOR bottomRightMonitor
-      = MonitorFromPoint(bottomRight, MONITOR_DEFAULTTONULL);
+    const HMONITOR topLeftMonitor =
+      MonitorFromPoint(topLeft, MONITOR_DEFAULTTONULL);
+    const HMONITOR bottomRightMonitor =
+      MonitorFromPoint(bottomRight, MONITOR_DEFAULTTONULL);
 
     if (topLeftMonitor == NULL || topLeftMonitor != bottomRightMonitor) {
       mSettings.mWindowX = CW_USEDEFAULT;
@@ -333,9 +334,7 @@ class TestViewerWindow final : private D3D11Resources {
       mD2D->mDWriteFactory.get(), mErrorForeground.get());
   }
 
-  HWND GetHWND() const {
-    return mHwnd;
-  }
+  HWND GetHWND() const { return mHwnd; }
 
   void CheckForUpdate() {
     OPENKNEEBOARD_TraceLoggingScope("Viewer::CheckForUpdate");
@@ -450,10 +449,11 @@ class TestViewerWindow final : private D3D11Resources {
     ctx->IASetInputLayout(mShaderInputLayout.get());
 
     const ShaderDrawInfo drawInfo {
-      .mDimensions = {
-        viewport.Width,
-        viewport.Height,
-      },
+      .mDimensions =
+        {
+          viewport.Width,
+          viewport.Height,
+        },
     };
 
     {
@@ -507,8 +507,8 @@ class TestViewerWindow final : private D3D11Resources {
         .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
         .SampleDesc = {1, 0},
         .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
-        .MiscFlags
-        = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+        .MiscFlags =
+          D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
       };
       check_hresult(
         mD3D11Device->CreateTexture2D(&desc, nullptr, mRendererTexture.put()));
@@ -597,16 +597,16 @@ class TestViewerWindow final : private D3D11Resources {
       return;
     }
 
-    const auto path
-      = Filesystem::GetKnownFolderPath<FOLDERID_Pictures>() / "OpenKneeboard"
+    const auto path =
+      Filesystem::GetKnownFolderPath<FOLDERID_Pictures>() / "OpenKneeboard"
       / std::format(
-          "capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
-          Version::Major,
-          Version::Minor,
-          Version::Patch,
-          Version::Build,
-          std::chrono::zoned_time(
-            std::chrono::current_zone(), std::chrono::system_clock::now()));
+        "capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
+        Version::Major,
+        Version::Minor,
+        Version::Patch,
+        Version::Build,
+        std::chrono::zoned_time(
+          std::chrono::current_zone(), std::chrono::system_clock::now()));
     std::filesystem::create_directories(path.parent_path());
 
     mRenderer->SaveToDDSFile(*std::move(frame), path);
@@ -806,8 +806,8 @@ class TestViewerWindow final : private D3D11Resources {
           size.mWidth,
           size.mHeight);
       } else {
-        text += std::format(
-          L"\nView {} of {}\nINVALID", mLayerIndex + 1, layerCount);
+        text +=
+          std::format(L"\nView {} of {}\nINVALID", mLayerIndex + 1, layerCount);
       }
     } else {
       text += L"\nNo snapshot.";
@@ -1099,10 +1099,10 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
       if (gInstance->mWindowRect.has_value()) {
         gInstance->mSettings.mWindowX = gInstance->mWindowRect->left;
         gInstance->mSettings.mWindowY = gInstance->mWindowRect->top;
-        gInstance->mSettings.mWindowWidth
-          = gInstance->mWindowRect->right - gInstance->mWindowRect->left;
-        gInstance->mSettings.mWindowHeight
-          = gInstance->mWindowRect->bottom - gInstance->mWindowRect->top;
+        gInstance->mSettings.mWindowWidth =
+          gInstance->mWindowRect->right - gInstance->mWindowRect->left;
+        gInstance->mSettings.mWindowHeight =
+          gInstance->mWindowRect->bottom - gInstance->mWindowRect->top;
       }
 
       gInstance->mSettings.Save();

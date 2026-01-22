@@ -22,9 +22,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 using namespace OpenKneeboard;
 
-SettingsPage::SettingsPage() {
-  InitializeComponent();
-}
+SettingsPage::SettingsPage() { InitializeComponent(); }
 
 void SettingsPage::OnItemClick(
   const IInspectable&,
@@ -48,25 +46,15 @@ void SettingsPage::OnItemClick(
   OPENKNEEBOARD_BREAK;
 }// namespace winrt::OpenKneeboardApp::implementation
 
-hstring SettingsSubpageData::Title() {
-  return mTitle;
-}
+hstring SettingsSubpageData::Title() { return mTitle; }
 
-void SettingsSubpageData::Title(hstring const& value) {
-  mTitle = value;
-}
+void SettingsSubpageData::Title(hstring const& value) { mTitle = value; }
 
-hstring SettingsSubpageData::Glyph() {
-  return mGlyph;
-}
+hstring SettingsSubpageData::Glyph() { return mGlyph; }
 
-void SettingsSubpageData::Glyph(hstring const& value) {
-  mGlyph = value;
-}
+void SettingsSubpageData::Glyph(hstring const& value) { mGlyph = value; }
 
-hstring SettingsSubpageData::Description() {
-  return mDescription;
-}
+hstring SettingsSubpageData::Description() { return mDescription; }
 
 void SettingsSubpageData::Description(hstring const& value) {
   mDescription = value;

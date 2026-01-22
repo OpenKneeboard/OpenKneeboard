@@ -68,8 +68,8 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
 
     size_t toCopy = zstat.size;
     while (toCopy > 0) {
-      size_t toWrite
-        = zip_fread(zipFile.get(), fileBuffer->data(), fileBuffer->size());
+      size_t toWrite =
+        zip_fread(zipFile.get(), fileBuffer->data(), fileBuffer->size());
       if (toWrite <= 0) {
         break;
       }

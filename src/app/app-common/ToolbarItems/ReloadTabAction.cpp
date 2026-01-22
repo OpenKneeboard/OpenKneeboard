@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/ReloadTabAction.hpp>
@@ -26,16 +27,11 @@ ReloadTabAction::ReloadTabAction(
 ReloadTabAction::ReloadTabAction(KneeboardState* kbs, AllTabs_t)
   : ToolbarAction({}, _("All tabs")),
     mMode(Mode::AllTabs),
-    mKneeboardState(kbs) {
-}
+    mKneeboardState(kbs) {}
 
-ReloadTabAction::~ReloadTabAction() {
-  this->RemoveAllEventListeners();
-}
+ReloadTabAction::~ReloadTabAction() { this->RemoveAllEventListeners(); }
 
-bool ReloadTabAction::IsEnabled() const {
-  return true;
-}
+bool ReloadTabAction::IsEnabled() const { return true; }
 
 task<void> ReloadTabAction::Execute() {
   if (mMode == Mode::ThisTab) {

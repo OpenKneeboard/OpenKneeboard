@@ -114,8 +114,8 @@ static void WriteIPCMessage(std::wstring_view message) {
     return;
   }
 
-  void* shm
-    = MapViewOfFile(mapping.get(), FILE_MAP_WRITE, 0, 0, sizeof(DPrintMessage));
+  void* shm =
+    MapViewOfFile(mapping.get(), FILE_MAP_WRITE, 0, 0, sizeof(DPrintMessage));
   if (!shm) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -237,8 +237,8 @@ DPrintReceiver::DPrintReceiver() {
     mBufferReadyEvent = {};
   });
 
-  mMutex = Win32::or_default::CreateMutex(
-    nullptr, true, GetDPrintMutexName().data());
+  mMutex =
+    Win32::or_default::CreateMutex(nullptr, true, GetDPrintMutexName().data());
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -293,17 +293,15 @@ DPrintReceiver::~DPrintReceiver() {
   }
 }
 
-bool DPrintReceiver::IsUsable() const {
-  return mUsable;
-}
+bool DPrintReceiver::IsUsable() const { return mUsable; }
 
 void DPrintReceiver::Run(std::stop_token stopToken) {
   if (!this->IsUsable()) {
     return;
   }
 
-  const auto stopEvent
-    = Win32::or_default::CreateEvent(nullptr, false, false, nullptr);
+  const auto stopEvent =
+    Win32::or_default::CreateEvent(nullptr, false, false, nullptr);
   std::stop_callback stopCallback(
     stopToken, [&]() { SetEvent(stopEvent.get()); });
 

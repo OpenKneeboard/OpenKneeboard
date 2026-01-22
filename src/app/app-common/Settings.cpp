@@ -25,8 +25,8 @@ namespace OpenKneeboard {
 
 template <class T>
 static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
-  const auto fullPath
-    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
+  const auto fullPath =
+    path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
   if (!std::filesystem::exists(fullPath)) {
     return;
   }
@@ -52,8 +52,8 @@ static void MaybeSaveJSON(
   const T& parentValue,
   const T& value,
   const std::filesystem::path& path) {
-  const auto fullPath
-    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
+  const auto fullPath =
+    path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
 
   nlohmann::json j;
   // If a profile already modified a setting, keep that setting even if it
@@ -92,8 +92,8 @@ void MaybeSaveJSON<nlohmann::json>(
   const nlohmann::json& parentValue,
   const nlohmann::json& value,
   const std::filesystem::path& path) {
-  const auto fullPath
-    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
+  const auto fullPath =
+    path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
 
   if (value == parentValue && std::filesystem::exists(fullPath)) {
     std::filesystem::remove(fullPath);
@@ -112,8 +112,8 @@ void MaybeSaveJSON<nlohmann::json>(
 void Settings::Save(
   const winrt::guid defaultProfile,
   const winrt::guid activeProfile) const {
-  const Settings previousSettings
-    = Settings::Load(defaultProfile, activeProfile);
+  const Settings previousSettings =
+    Settings::Load(defaultProfile, activeProfile);
 
   if (previousSettings == *this) {
     return;
@@ -200,8 +200,8 @@ static void MigrateToProfiles(
     return;
   }
 
-  auto legacySettingsFile
-    = Filesystem::GetSettingsDirectory() / "Settings.json";
+  auto legacySettingsFile =
+    Filesystem::GetSettingsDirectory() / "Settings.json";
   if (!std::filesystem::exists(legacySettingsFile)) {
     return;
   }
@@ -218,10 +218,11 @@ static void MigrateToViewsSettings(Settings& settings) {
 
   IndependentViewVRSettings vrConfig {
     .mPose = oldVR.mPrimaryLayer,
-    .mMaximumPhysicalSize = {
-      oldVR.mMaxWidth,
-      oldVR.mMaxHeight,
-    },
+    .mMaximumPhysicalSize =
+      {
+        oldVR.mMaxWidth,
+        oldVR.mMaxHeight,
+      },
     .mEnableGazeZoom = oldVR.mEnableGazeZoom,
     .mZoomScale = oldVR.mZoomScale,
     .mGazeTargetScale = oldVR.mGazeTargetScale,

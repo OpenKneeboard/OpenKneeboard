@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "ProfilesPage.xaml.h"
@@ -108,16 +109,17 @@ OpenKneeboard::fire_and_forget ProfilesPage::RemoveProfile(
   RoutedEventArgs) {
   const auto id {unbox_value<winrt::guid>(sender.as<Button>().Tag())};
   auto profileSettings = mKneeboard->GetProfileSettings();
-  const auto profile
-    = *std::ranges::find(profileSettings.mProfiles, id, &Profile::mGuid);
+  const auto profile =
+    *std::ranges::find(profileSettings.mProfiles, id, &Profile::mGuid);
   const auto sorted = profileSettings.GetSortedProfiles();
   const auto index = std::ranges::find(sorted, profile) - sorted.begin();
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(_(L"Remove profile?")));
-  dialog.Content(box_value(to_hstring(std::format(
-    _("Are you sure you want to delete the profile '{}'?"), profile.mName))));
+  dialog.Content(box_value(to_hstring(
+    std::format(
+      _("Are you sure you want to delete the profile '{}'?"), profile.mName))));
   dialog.PrimaryButtonText(
     to_hstring(std::format(_("Delete '{}'"), profile.mName)));
   dialog.CloseButtonText(_(L"Cancel"));
@@ -204,28 +206,16 @@ OpenKneeboard::fire_and_forget ProfilesPage::CreateProfile(
   }
 }
 
-winrt::guid ProfileUIData::ID() {
-  return mGuid;
-}
+winrt::guid ProfileUIData::ID() { return mGuid; }
 
-void ProfileUIData::ID(winrt::guid value) {
-  mGuid = value;
-}
+void ProfileUIData::ID(winrt::guid value) { mGuid = value; }
 
-hstring ProfileUIData::Name() {
-  return mName;
-}
+hstring ProfileUIData::Name() { return mName; }
 
-void ProfileUIData::Name(hstring value) {
-  mName = value;
-}
+void ProfileUIData::Name(hstring value) { mName = value; }
 
-bool ProfileUIData::CanDelete() {
-  return mCanDelete;
-}
+bool ProfileUIData::CanDelete() { return mCanDelete; }
 
-void ProfileUIData::CanDelete(bool value) {
-  mCanDelete = value;
-}
+void ProfileUIData::CanDelete(bool value) { mCanDelete = value; }
 
 }// namespace winrt::OpenKneeboardApp::implementation

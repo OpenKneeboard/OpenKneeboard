@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/UserAction.hpp>
@@ -20,8 +21,7 @@ class UserActionHandler {
   virtual ~UserActionHandler();
   virtual bool IsEnabled() const = 0;
   [[nodiscard]]
-  virtual task<void> Execute()
-    = 0;
+  virtual task<void> Execute() = 0;
 
   static std::unique_ptr<UserActionHandler> Create(
     KneeboardState* kneeboard,

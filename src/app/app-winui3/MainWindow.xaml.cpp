@@ -152,8 +152,8 @@ task<void> MainWindow::Init() {
     }
   }
 
-  const auto hwndMappingName
-    = std::format("Local\\{}.hwnd", ProjectReverseDomainA);
+  const auto hwndMappingName =
+    std::format("Local\\{}.hwnd", ProjectReverseDomainA);
   // Initially leak for the duration of the app
   auto hwndFile = Win32::UTF8::CreateFileMapping(
     INVALID_HANDLE_VALUE,
@@ -176,8 +176,8 @@ task<void> MainWindow::Init() {
     mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(MainWindowInfo));
   *reinterpret_cast<MainWindowInfo*>(mapping) = {
     .mHwnd = mHwnd,
-    .mVersion
-    = {Version::Major, Version::Minor, Version::Patch, Version::Build},
+    .mVersion =
+      {Version::Major, Version::Minor, Version::Patch, Version::Build},
   };
   UnmapViewOfFile(mapping);
 
@@ -223,10 +223,10 @@ task<void> MainWindow::FrameLoop() {
   co_await this_task::fatal_on_uncaught_exception();
 
   const auto stop = mFrameLoopStopSource.get_token();
-  constexpr auto NanosPerFrame
-    = std::chrono::nanoseconds(static_cast<int64_t>(1e9) / FramesPerSecond);
-  using HighResolutionTimerTick
-    = std::chrono::duration<int64_t, std::ratio<1, 1'0'000'000>>;
+  constexpr auto NanosPerFrame =
+    std::chrono::nanoseconds(static_cast<int64_t>(1e9) / FramesPerSecond);
+  using HighResolutionTimerTick =
+    std::chrono::duration<int64_t, std::ratio<1, 1'0'000'000>>;
 
   const wil::unique_event timer {CreateWaitableTimerExW(
     nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS)};
@@ -244,8 +244,8 @@ task<void> MainWindow::FrameLoop() {
       continue;
     }
     const LARGE_INTEGER waitTime {
-      .QuadPart
-      = -std::chrono::duration_cast<HighResolutionTimerTick>(wait).count()};
+      .QuadPart =
+        -std::chrono::duration_cast<HighResolutionTimerTick>(wait).count()};
     if (!SetWaitableTimer(timer.get(), &waitTime, 0, nullptr, nullptr, 0)) {
       dprint.Error(
         "Failed to set frame timer: {}",
@@ -413,8 +413,8 @@ OpenKneeboard::fire_and_forget MainWindow::OnLoaded() {
   auto xamlRoot = this->Content().XamlRoot();
   mFrameLoop = this->FrameLoop();
 
-  const auto updateResult
-    = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
+  const auto updateResult =
+    co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
   if (updateResult == UpdateResult::InstallingUpdate) {
     co_return;
   }
@@ -727,8 +727,7 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
   dprint("Removing instance data...");
   try {
     std::filesystem::remove(MainWindow::GetInstanceDataPath());
-  } catch (const std::filesystem::filesystem_error&) {
-  }
+  } catch (const std::filesystem::filesystem_error&) {}
   gShuttingDown = true;
 
   if (mWindowPosition) {
@@ -1166,8 +1165,8 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
   auto str = winrt::unbox_value<winrt::hstring>(value);
   auto json = nlohmann::json::parse(to_string(str));
   NavigationTag ret {
-    .mTabID
-    = ITab::RuntimeID::FromTemporaryValue(json.at("tab").get<uint64_t>()),
+    .mTabID =
+      ITab::RuntimeID::FromTemporaryValue(json.at("tab").get<uint64_t>()),
   };
   if (json.contains("page")) {
     ret.mPageID = PageID::FromTemporaryValue(json.at("page").get<uint64_t>());

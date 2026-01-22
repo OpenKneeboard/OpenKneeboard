@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Pixels.hpp>
@@ -42,16 +43,16 @@ struct PreferredSize {
     using Direction = PhysicalSize::Direction;
     switch (p.mDirection) {
       case Direction::Vertical:
-        p.mLength
-          *= (static_cast<float>(ret.mPixelSize.mHeight) / mPixelSize.mHeight);
+        p.mLength *=
+          (static_cast<float>(ret.mPixelSize.mHeight) / mPixelSize.mHeight);
         break;
       case Direction::Horizontal:
-        p.mLength
-          *= (static_cast<float>(ret.mPixelSize.mWidth) / mPixelSize.mWidth);
+        p.mLength *=
+          (static_cast<float>(ret.mPixelSize.mWidth) / mPixelSize.mWidth);
         break;
       case Direction::Diagonal: {
-        const auto aspectRatio
-          = static_cast<float>(mPixelSize.mWidth) / mPixelSize.mHeight;
+        const auto aspectRatio =
+          static_cast<float>(mPixelSize.mWidth) / mPixelSize.mHeight;
         const auto height = std::sqrtf(
           (p.mLength * p.mLength) / ((aspectRatio * aspectRatio) + 1));
         p.mLength = height

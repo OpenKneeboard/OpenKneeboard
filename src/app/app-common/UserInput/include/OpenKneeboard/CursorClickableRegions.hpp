@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/CursorEvent.hpp>
@@ -31,8 +32,7 @@ class CursorClickableRegions final
     return SharedPtr(new CursorClickableRegions<Button>(buttons));
   }
 
-  ~CursorClickableRegions() {
-  }
+  ~CursorClickableRegions() {}
 
   std::optional<Button> GetHoverButton() const {
     const auto keepAlive = this->shared_from_this();
@@ -135,8 +135,7 @@ class CursorClickableRegions final
   };
 
   CursorClickableRegions(const std::vector<Button>& buttons)
-    : mButtons(buttons) {
-  }
+    : mButtons(buttons) {}
 };
 
 }// namespace OpenKneeboard

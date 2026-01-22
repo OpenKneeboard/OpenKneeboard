@@ -283,8 +283,7 @@ ChromiumPageSource::ChromiumPageSource(
     mKneeboard(kbs),
     mKind(kind),
     mSettings(settings),
-    mSpriteBatch(dxr->mD3D11Device.get()) {
-}
+    mSpriteBatch(dxr->mD3D11Device.get()) {}
 
 void ChromiumPageSource::Init() {
   // Not in the constructor because we must be fully initialized and in an

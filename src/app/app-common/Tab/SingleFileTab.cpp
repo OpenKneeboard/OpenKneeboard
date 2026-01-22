@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
@@ -24,8 +25,7 @@ SingleFileTab::SingleFileTab(
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
-    mKneeboard(kbs) {
-}
+    mKneeboard(kbs) {}
 
 task<std::shared_ptr<SingleFileTab>> SingleFileTab::Create(
   const audited_ptr<DXResources>& dxr,
@@ -60,8 +60,7 @@ task<std::shared_ptr<SingleFileTab>> SingleFileTab::Create(
   co_return ret;
 }
 
-SingleFileTab::~SingleFileTab() {
-}
+SingleFileTab::~SingleFileTab() {}
 
 nlohmann::json SingleFileTab::GetSettings() const {
   return {{"Path", GetPath()}};
@@ -82,13 +81,9 @@ std::string SingleFileTab::GetGlyph() const {
   }
 }
 
-std::string SingleFileTab::GetStaticGlyph() {
-  return "\ue8e5";
-}
+std::string SingleFileTab::GetStaticGlyph() { return "\ue8e5"; }
 
-std::filesystem::path SingleFileTab::GetPath() const {
-  return mPath;
-}
+std::filesystem::path SingleFileTab::GetPath() const { return mPath; }
 
 task<void> SingleFileTab::Reload() {
   mKind = Kind::Unknown;

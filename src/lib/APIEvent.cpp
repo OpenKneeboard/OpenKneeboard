@@ -67,9 +67,7 @@ namespace OpenKneeboard {
     return {}; \
   }
 
-APIEvent::operator bool() const {
-  return !(name.empty() || value.empty());
-}
+APIEvent::operator bool() const { return !(name.empty() || value.empty()); }
 
 APIEvent APIEvent::Unserialize(std::string_view packet) {
   // "{:08x}!{}!{:08x}!{}!", name size, name, value size, value
@@ -92,8 +90,8 @@ APIEvent APIEvent::Unserialize(std::string_view packet) {
 }
 
 std::vector<std::byte> APIEvent::Serialize() const {
-  const auto str = std::format(
-    "{:08x}!{}!{:08x}!{}!", name.size(), name, value.size(), value);
+  const auto str =
+    std::format("{:08x}!{}!{:08x}!{}!", name.size(), name, value.size(), value);
   const auto first = reinterpret_cast<const std::byte*>(str.data());
   return {first, first + str.size()};
 }

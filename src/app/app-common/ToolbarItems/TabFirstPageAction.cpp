@@ -2,21 +2,21 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/TabFirstPageAction.hpp>
 #include <OpenKneeboard/TabView.hpp>
 
 namespace OpenKneeboard {
 
 TabFirstPageAction::TabFirstPageAction(const std::shared_ptr<TabView>& state)
-  : ToolbarAction("\uE892", _("First Page")), mTabView(state) {
+  : ToolbarAction("\uE892", _("First Page")),
+    mTabView(state) {
   AddEventListener(state->evPageChangedEvent, this->evStateChangedEvent);
   AddEventListener(state->evContentChangedEvent, this->evStateChangedEvent);
 }
 
-TabFirstPageAction::~TabFirstPageAction() {
-  this->RemoveAllEventListeners();
-}
+TabFirstPageAction::~TabFirstPageAction() { this->RemoveAllEventListeners(); }
 
 bool TabFirstPageAction::IsEnabled() const {
   auto tv = mTabView.lock();

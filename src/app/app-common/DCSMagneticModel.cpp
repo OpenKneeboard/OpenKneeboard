@@ -93,8 +93,8 @@ float DCSMagneticModel::GetMagneticVariation(
   MAG_GeodeticToSpherical(ellipsoid, geoCoord, &sphereCoord);
 
   MAGtype_MagneticModel* model = this->GetModel(date);
-  using unique_magmodel_ptr
-    = felly::unique_any<MAGtype_MagneticModel*, &MAG_FreeMagneticModelMemory>;
+  using unique_magmodel_ptr =
+    felly::unique_any<MAGtype_MagneticModel*, &MAG_FreeMagneticModelMemory>;
 
   // Taken from wmm_point.c sample
   const auto nMax = model->nMax;

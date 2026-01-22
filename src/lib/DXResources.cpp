@@ -63,23 +63,27 @@ static std::
   }
 
   for (auto&& path: paths) {
-    DISPLAYCONFIG_SOURCE_DEVICE_NAME source {.header =
-      DISPLAYCONFIG_DEVICE_INFO_HEADER {
-        .type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
-        .size = sizeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME),
-        .adapterId = path.sourceInfo.adapterId,
-        .id = path.sourceInfo.id,
-      },
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME source {
+      .header =
+        DISPLAYCONFIG_DEVICE_INFO_HEADER {
+          .type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+          .size = sizeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME),
+          .adapterId = path.sourceInfo.adapterId,
+          .id = path.sourceInfo.id,
+        },
     };
     if (FAILED(DisplayConfigGetDeviceInfo(&source.header))) {
       continue;
     }
-    DISPLAYCONFIG_TARGET_DEVICE_NAME target {.header = DISPLAYCONFIG_DEVICE_INFO_HEADER {
-      .type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
-      .size = sizeof(DISPLAYCONFIG_TARGET_DEVICE_NAME),
-      .adapterId = path.targetInfo.adapterId,
-      .id = path.targetInfo.id,
-    },};
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target {
+      .header =
+        DISPLAYCONFIG_DEVICE_INFO_HEADER {
+          .type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
+          .size = sizeof(DISPLAYCONFIG_TARGET_DEVICE_NAME),
+          .adapterId = path.targetInfo.adapterId,
+          .id = path.targetInfo.id,
+        },
+    };
     if (FAILED(DisplayConfigGetDeviceInfo(&target.header))) {
       continue;
     }
@@ -135,8 +139,8 @@ D3D11Resources::D3D11Resources() {
       DXGI_OUTPUT_DESC outputDesc {};
       output->GetDesc(&outputDesc);
       const auto nameIt = displayNames.find(outputDesc.DeviceName);
-      const auto monitorNames
-        = (nameIt != displayNames.end() && !nameIt->second.empty())
+      const auto monitorNames =
+        (nameIt != displayNames.end() && !nameIt->second.empty())
         ? std::ranges::to<std::wstring>(std::views::join_with(
             displayNames.at(outputDesc.DeviceName), L" + "))
         : L"UNNAMED";

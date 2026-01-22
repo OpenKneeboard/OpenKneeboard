@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
@@ -21,8 +22,7 @@ PlainTextFilePageSource::PlainTextFilePageSource(
   KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(
-      std::make_shared<PlainTextPageSource>(dxr, kbs, _("[empty file]"))) {
-}
+      std::make_shared<PlainTextPageSource>(dxr, kbs, _("[empty file]"))) {}
 
 PlainTextFilePageSource::~PlainTextFilePageSource() {
   this->RemoveAllEventListeners();
@@ -42,9 +42,7 @@ task<std::shared_ptr<PlainTextFilePageSource>> PlainTextFilePageSource::Create(
   co_return ret;
 }
 
-std::filesystem::path PlainTextFilePageSource::GetPath() const {
-  return mPath;
-}
+std::filesystem::path PlainTextFilePageSource::GetPath() const { return mPath; }
 
 void PlainTextFilePageSource::SetPath(const std::filesystem::path& path) {
   OPENKNEEBOARD_TraceLoggingScope(

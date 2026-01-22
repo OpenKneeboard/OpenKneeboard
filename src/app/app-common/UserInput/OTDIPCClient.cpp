@@ -40,8 +40,8 @@ namespace {
 
 std::vector<std::filesystem::path> GetSocketPaths() try {
   std::unordered_map<std::string, std::filesystem::path> socketsByID;
-  const auto discoveryRoot
-    = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / "otd-ipc"
+  const auto discoveryRoot =
+    Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / "otd-ipc"
     / "servers" / "v2";
   for (auto&& entry:
        std::filesystem::directory_iterator(discoveryRoot / "available")) {
@@ -186,8 +186,8 @@ ReadFromSocket(SOCKET s, void* buf, const std::size_t bytesToRead) {
     return 0;
   }
 
-  const auto socketReadResult
-    = recv(s, reinterpret_cast<char*>(buf), static_cast<int>(bytesToRead), 0);
+  const auto socketReadResult =
+    recv(s, reinterpret_cast<char*>(buf), static_cast<int>(bytesToRead), 0);
   if (socketReadResult == 0) {
     return std::unexpected {SocketClosedSocketReadError {}};
   }
@@ -259,9 +259,7 @@ OTDIPCClient::OTDIPCClient() {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
 }
 
-OTDIPCClient::~OTDIPCClient() {
-  dprint("{}", __FUNCTION__);
-}
+OTDIPCClient::~OTDIPCClient() { dprint("{}", __FUNCTION__); }
 
 task<void> OTDIPCClient::DisposeAsync() noexcept {
   OPENKNEEBOARD_TraceLoggingCoro("OTDIPCClient::DisposeAsync()");
@@ -539,8 +537,8 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::DeviceInfo& msg) {
     .mMaxPressure = msg.maxPressure,
     .mDeviceName = std::string {StringViewFromFixedSizedBuffer(msg.name)},
   };
-  info.mDevicePersistentID
-    = std::string {StringViewFromFixedSizedBuffer(msg.persistentId)};
+  info.mDevicePersistentID =
+    std::string {StringViewFromFixedSizedBuffer(msg.persistentId)};
 
   dprint(
     "Received OTD-IPC device: '{}' - {}",
@@ -606,8 +604,8 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State& msg) {
   } else if (msg.HasData(Bits::Position)) {
     // e.g. Huion does not have proximity
     state.mIsActive = true;
-    mTabletsToTimeout[msg.nonPersistentTabletId]
-      = TimeoutClock::now() + std::chrono::milliseconds(100);
+    mTabletsToTimeout[msg.nonPersistentTabletId] =
+      TimeoutClock::now() + std::chrono::milliseconds(100);
   }
 
   OPENKNEEBOARD_TraceLoggingScope("OTDIPCClient::evTabletInputEvent");

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/config.hpp>
@@ -22,26 +23,18 @@ class _UniqueIDImpl {
 template <class T>
 class UniqueIDBase : private _UniqueIDImpl {
  public:
-  UniqueIDBase() {
-    mValue = _UniqueIDImpl::GetAndIncrementNextValue();
-  }
-  constexpr UniqueIDBase(nullptr_t) {
-    mValue = 0;
-  }
+  UniqueIDBase() { mValue = _UniqueIDImpl::GetAndIncrementNextValue(); }
+  constexpr UniqueIDBase(nullptr_t) { mValue = 0; }
 
   UniqueIDBase(const UniqueIDBase<T>&) = default;
   UniqueIDBase(UniqueIDBase<T>&&) = default;
   UniqueIDBase& operator=(const UniqueIDBase<T>&) = default;
   UniqueIDBase& operator=(UniqueIDBase<T>&&) = default;
 
-  constexpr operator bool() const noexcept {
-    return mValue != 0;
-  }
+  constexpr operator bool() const noexcept { return mValue != 0; }
 
   // Values *must not* be persisted and restored
-  constexpr uint64_t GetTemporaryValue() const noexcept {
-    return mValue;
-  }
+  constexpr uint64_t GetTemporaryValue() const noexcept { return mValue; }
 
   static constexpr T FromTemporaryValue(uint64_t value) noexcept {
     T ret;

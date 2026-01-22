@@ -30,8 +30,7 @@ class audited_ptr {
 
  public:
   audited_ptr() = default;
-  audited_ptr(nullptr_t) {
-  }
+  audited_ptr(nullptr_t) {}
 
   audited_ptr(
     T* ptr,
@@ -51,8 +50,8 @@ class audited_ptr {
 
   audited_ptr(
     audited_ptr&& other,
-    const std::source_location& loc
-    = std::source_location::current()) noexcept {
+    const std::source_location& loc =
+      std::source_location::current()) noexcept {
     copy_from(other, loc);
   }
 
@@ -63,17 +62,11 @@ class audited_ptr {
     mRefData->mRefs.erase(mRefID);
   }
 
-  T* get() const noexcept {
-    return mImpl.get();
-  }
+  T* get() const noexcept { return mImpl.get(); }
 
-  T& operator*() const noexcept {
-    return *mImpl;
-  }
+  T& operator*() const noexcept { return *mImpl; }
 
-  T* operator->() const noexcept {
-    return mImpl.get();
-  }
+  T* operator->() const noexcept { return mImpl.get(); }
 
   audited_ptr& operator=(nullptr_t) {
     copy_from({nullptr});
@@ -83,9 +76,7 @@ class audited_ptr {
   audited_ptr& operator=(const audited_ptr&) = delete;
   audited_ptr& operator=(audited_ptr&&) = delete;
 
-  auto use_count() const {
-    return mImpl.use_count();
-  }
+  auto use_count() const { return mImpl.use_count(); }
 
   void dump_refs(std::string_view debugLabel) const {
     const auto refs = mRefData->mRefs;
@@ -119,9 +110,7 @@ class audited_ptr {
     return *this;
   }
 
-  operator bool() const {
-    return !!mImpl;
-  }
+  operator bool() const { return !!mImpl; }
 };
 
 }// namespace OpenKneeboard

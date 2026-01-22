@@ -59,8 +59,8 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     reinterpret_cast<ID2D1SolidColorBrush**>(mMenuDisabledFGBrush.put()));
 
   for (const auto& item: mItems) {
-    auto visibility
-      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    auto visibility =
+      std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
     if (visibility) {
       AddEventListener(
         visibility->evStateChangedEvent, this->evNeedsRepaintEvent);
@@ -68,9 +68,7 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
   }
 }
 
-FlyoutMenuUILayer::~FlyoutMenuUILayer() {
-  RemoveAllEventListeners();
-}
+FlyoutMenuUILayer::~FlyoutMenuUILayer() { RemoveAllEventListeners(); }
 
 void FlyoutMenuUILayer::PostCursorEvent(
   const NextList& next,
@@ -163,8 +161,8 @@ task<void> FlyoutMenuUILayer::Render(
   auto [hoverMenuItem, menuItems] = menu.mCursorImpl->GetState();
 
   for (const auto& menuItem: menuItems) {
-    auto selectable
-      = std::dynamic_pointer_cast<ISelectableToolbarItem>(menuItem.mItem);
+    auto selectable =
+      std::dynamic_pointer_cast<ISelectableToolbarItem>(menuItem.mItem);
     if (!selectable) {
       continue;
     }
@@ -173,8 +171,8 @@ task<void> FlyoutMenuUILayer::Render(
       d2d->FillRectangle(menuItem.mRect, mMenuHoverBGBrush.get());
     }
 
-    auto fgBrush = selectable->IsEnabled() ? mMenuFGBrush.get()
-                                           : mMenuDisabledFGBrush.get();
+    auto fgBrush =
+      selectable->IsEnabled() ? mMenuFGBrush.get() : mMenuDisabledFGBrush.get();
 
     d2d->DrawTextW(
       menuItem.mLabel.data(),
@@ -193,8 +191,8 @@ task<void> FlyoutMenuUILayer::Render(
         fgBrush);
     }
 
-    auto checkable
-      = std::dynamic_pointer_cast<ICheckableToolbarItem>(menuItem.mItem);
+    auto checkable =
+      std::dynamic_pointer_cast<ICheckableToolbarItem>(menuItem.mItem);
     if (checkable && checkable->IsChecked()) {
       d2d->DrawTextW(
         checkmark.data(),
@@ -277,8 +275,8 @@ void FlyoutMenuUILayer::UpdateLayout(
   bool haveGlyphOrCheck = false;
 
   for (const auto& item: mItems) {
-    auto visibility
-      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    auto visibility =
+      std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
     if (visibility && !visibility->IsVisible()) {
       continue;
     }
@@ -358,10 +356,10 @@ void FlyoutMenuUILayer::UpdateLayout(
         numeric_cast<FLOAT>(canvasSize.mWidth - margin)),
     renderRect.Top() + (mPreferredTopRight01.y * canvasSize.mHeight),
   };
-  const auto preferred
-    = (mPreferredAnchor == Corner::TopLeft) ? topLeft : topRight;
-  const auto fallback
-    = (mPreferredAnchor == Corner::TopLeft) ? topRight : topLeft;
+  const auto preferred =
+    (mPreferredAnchor == Corner::TopLeft) ? topLeft : topRight;
+  const auto fallback =
+    (mPreferredAnchor == Corner::TopLeft) ? topRight : topLeft;
   D2D1_POINT_2F origin = preferred;
   if (
     origin.x < renderRect.Left()
@@ -391,8 +389,8 @@ void FlyoutMenuUILayer::UpdateLayout(
   std::vector<MenuItem> menuItems;
   std::vector<D2D1_RECT_F> separators;
   for (const auto& item: mItems) {
-    auto visibility
-      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    auto visibility =
+      std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
     if (visibility && !visibility->IsVisible()) {
       continue;
     }
@@ -455,8 +453,8 @@ void FlyoutMenuUILayer::UpdateLayout(
   DWRITE_TRIMMING trimming {DWRITE_TRIMMING_GRANULARITY_CHARACTER};
   winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
 
-  auto cursorImpl
-    = CursorClickableRegions<MenuItem>::Create(std::move(menuItems));
+  auto cursorImpl =
+    CursorClickableRegions<MenuItem>::Create(std::move(menuItems));
   AddEventListener(
     cursorImpl->evClickedWithoutButton, [weak = weak_from_this()]() {
       if (auto self = weak.lock()) {
@@ -492,8 +490,8 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
     return;
   }
 
-  auto confirmable
-    = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(item.mItem);
+  auto confirmable =
+    std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(item.mItem);
   if (confirmable) {
     auto prev = ConfirmationUILayer::Create(mDXResources, confirmable);
     AddEventListener(prev->evNeedsRepaintEvent, this->evNeedsRepaintEvent);

@@ -14,8 +14,7 @@
 
 namespace OpenKneeboard {
 
-FilePicker::FilePicker(HWND parent) : mParent(parent) {
-}
+FilePicker::FilePicker(HWND parent) : mParent(parent) {}
 
 void FilePicker::SettingsIdentifier(const winrt::guid& guid) {
   mSettingsIdentifier = guid;
@@ -80,8 +79,8 @@ void FilePicker::ApplySettings(
 
 std::optional<std::filesystem::path> FilePicker::PickSingle(
   FILEOPENDIALOGOPTIONS options) const {
-  auto picker
-    = winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
+  auto picker =
+    winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
 
   // Not part of ApplySettings() as it Should be the first thing called
   if (mSettingsIdentifier) {
@@ -104,8 +103,8 @@ std::optional<std::filesystem::path> FilePicker::PickSingle(
 }
 
 std::optional<std::filesystem::path> FilePicker::PickSaveFile() const {
-  auto picker
-    = winrt::create_instance<IFileSaveDialog>(CLSID_FileSaveDialog, CLSCTX_ALL);
+  auto picker =
+    winrt::create_instance<IFileSaveDialog>(CLSID_FileSaveDialog, CLSCTX_ALL);
 
   // Not part of ApplySettings() as it Should be the first thing called
   if (mSettingsIdentifier) {
@@ -139,13 +138,11 @@ std::filesystem::path FilePicker::GetPathFromShellItem(IShellItem* shellItem) {
   }
 }
 
-void FilePicker::SetTitle(const std::wstring& title) {
-  mTitle = title;
-}
+void FilePicker::SetTitle(const std::wstring& title) { mTitle = title; }
 
 std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {
-  auto picker
-    = winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
+  auto picker =
+    winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
 
   // Not part of ApplySettings() as it Should be the first thing called
   if (mSettingsIdentifier) {

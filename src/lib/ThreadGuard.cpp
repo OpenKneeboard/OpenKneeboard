@@ -35,8 +35,6 @@ void ThreadGuard::CheckThread(const std::source_location& loc) const {
   }
 }
 
-ThreadGuard::~ThreadGuard() {
-  this->CheckThread();
-}
+ThreadGuard::~ThreadGuard() { this->CheckThread(); }
 
 }// namespace OpenKneeboard

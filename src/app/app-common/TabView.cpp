@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.hpp>
 #include <OpenKneeboard/IPageSourceWithNavigation.hpp>
@@ -22,7 +23,10 @@ TabView::TabView(
   KneeboardState* kneeboard,
   const std::shared_ptr<ITab>& tab,
   KneeboardViewID id)
-  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mKneeboardViewID(id) {
+  : mDXR(dxr),
+    mKneeboard(kneeboard),
+    mRootTab(tab),
+    mKneeboardViewID(id) {
   const auto rootPageIDs = tab->GetPageIDs();
   if (!rootPageIDs.empty()) {
     mRootTabPage = {rootPageIDs.front(), 0};
@@ -50,13 +54,9 @@ TabView::TabView(
   AddEventListener(tab->evBookmarksChangedEvent, this->evBookmarksChangedEvent);
 }
 
-TabView::~TabView() {
-  this->RemoveAllEventListeners();
-}
+TabView::~TabView() { this->RemoveAllEventListeners(); }
 
-std::weak_ptr<ITab> TabView::GetRootTab() const {
-  return mRootTab;
-}
+std::weak_ptr<ITab> TabView::GetRootTab() const { return mRootTab; }
 
 std::weak_ptr<ITab> TabView::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
@@ -224,9 +224,7 @@ std::optional<PreferredSize> TabView::GetPreferredSize() const {
   return tab->GetPreferredSize(currentPage);
 }
 
-TabMode TabView::GetTabMode() const {
-  return mTabMode;
-}
+TabMode TabView::GetTabMode() const { return mTabMode; }
 
 bool TabView::SupportsTabMode(TabMode mode) const {
   switch (mode) {

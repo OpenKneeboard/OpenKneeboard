@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 // clang-format off
 #include "pch.h"
@@ -10,6 +11,7 @@
 // clang-format on
 
 #include <shellapi.h>
+
 #include <wincodec.h>
 
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
@@ -21,8 +23,7 @@ ExecutableIconFactory::ExecutableIconFactory() {
   mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 }
 
-ExecutableIconFactory::~ExecutableIconFactory() {
-}
+ExecutableIconFactory::~ExecutableIconFactory() {}
 
 winrt::com_ptr<IWICBitmap> ExecutableIconFactory::CreateWICBitmap(
   const std::filesystem::path& executable) {

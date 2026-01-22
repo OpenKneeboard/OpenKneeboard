@@ -46,15 +46,12 @@ using std::operator""s;
 using namespace OpenKneeboard;
 
 namespace {
-[[noreturn]] void fast_fail() {
-  __fastfail(FAST_FAIL_FATAL_APP_EXIT);
-}
+[[noreturn]] void fast_fail() { __fastfail(FAST_FAIL_FATAL_APP_EXIT); }
 
 struct SkipStacktraceEntries {
   SkipStacktraceEntries() = delete;
 
-  explicit SkipStacktraceEntries(size_t count) : mCount(count) {
-  }
+  explicit SkipStacktraceEntries(size_t count) : mCount(count) {}
 
   size_t mCount;
 };
@@ -69,9 +66,7 @@ struct ExceptionRecord {
   Flags mFlags {};
 };
 
-consteval bool supports_bitflags(ExceptionRecord::Flags) {
-  return true;
-}
+consteval bool supports_bitflags(ExceptionRecord::Flags) { return true; }
 
 auto ThreadNames() {
   using T = std::unordered_map<std::thread::id, std::wstring>;
@@ -138,8 +133,7 @@ struct CrashMeta {
   CrashMeta(SkipStacktraceEntries skipCount = SkipStacktraceEntries {0})
     : mStacktrace(StackTrace::Current(skipCount.mCount + 1)),
       mCrashLogPath(GetCrashFilePath(L"txt")),
-      mCrashDumpPath(GetCrashFilePath(L"dmp")) {
-  }
+      mCrashDumpPath(GetCrashFilePath(L"dmp")) {}
 
   bool CanWriteDump() noexcept {
     this->LoadDbgHelp();
@@ -251,10 +245,10 @@ static void CreateDump(
   if (!extraData.empty()) {
     extraDataStream = {
       .Type = CommentStreamW,
-      .BufferSize
-      = static_cast<ULONG>(extraDataW.size() * sizeof(extraDataW[0])),
-      .Buffer
-      = const_cast<void*>(reinterpret_cast<const void*>(extraDataW.data())),
+      .BufferSize =
+        static_cast<ULONG>(extraDataW.size() * sizeof(extraDataW[0])),
+      .Buffer =
+        const_cast<void*>(reinterpret_cast<const void*>(extraDataW.data())),
     };
     userStreams = {
       .UserStreamCount = 1,
@@ -289,12 +283,10 @@ SourceLocation::SourceLocation(const std::source_location& loc) noexcept
   : mFunctionName(loc.function_name()),
     mFileName(loc.file_name()),
     mLine(loc.line()),
-    mColumn(loc.column()) {
-}
+    mColumn(loc.column()) {}
 
 SourceLocation::SourceLocation(StackFramePointer frame) noexcept
-  : SourceLocation(std::bit_cast<std::stacktrace_entry>(frame.mValue)) {
-}
+  : SourceLocation(std::bit_cast<std::stacktrace_entry>(frame.mValue)) {}
 
 OPENKNEEBOARD_NOINLINE
 static std::string GetFatalLogContents(
@@ -434,16 +426,14 @@ OPENKNEEBOARD_NOINLINE
       if (!IsElevated()) {
         Filesystem::OpenExplorerWithSelectedFile(meta.mCrashDumpPath);
       }
-    } catch (...) {
-    }
+    } catch (...) {}
 
     fast_fail();
   }
 
   try {
     Filesystem::OpenExplorerWithSelectedFile(meta.mCrashLogPath);
-  } catch (...) {
-  }
+  } catch (...) {}
 
   fast_fail();
 }
@@ -458,9 +448,7 @@ struct WILResultInfo {
   std::wstring mDebugMessage;
 };
 
-static void OnTerminate() {
-  fatal("std::terminate() called");
-}
+static void OnTerminate() { fatal("std::terminate() called"); }
 
 LONG __callback WINAPI
 OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
@@ -478,8 +466,8 @@ static void __stdcall OnWILResult(
   wil = {
     .mCreationStack = StackTrace::Current(),
     .mHR = failure->hr,
-    .mMessage
-    = std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
+    .mMessage =
+      std::wstring {debugMessage, wcsnlen_s(debugMessage, debugMessageChars)},
   };
   if (failure->hr == HRESULT_FROM_WIN32(ERROR_UNHANDLED_EXCEPTION) && ex) {
     wil->mException = *ex;
@@ -546,8 +534,8 @@ extern "C" HRESULT __stdcall SetThreadDescriptionHook(
   } else {
     // Depend on the assertion that windows thread IDs are the same as
     // std::thread:ids
-    names[std::bit_cast<std::thread::id>(GetThreadId(hThread))]
-      = lpThreadDescription;
+    names[std::bit_cast<std::thread::id>(GetThreadId(hThread))] =
+      lpThreadDescription;
   }
   return gSetThreadDescription(hThread, lpThreadDescription);
 }
@@ -701,8 +689,7 @@ std::string StackFramePointer::to_string() const noexcept {
 }
 
 FatalOnUncaughtExceptions::FatalOnUncaughtExceptions()
-  : mUncaughtExceptions(std::uncaught_exceptions()) {
-}
+  : mUncaughtExceptions(std::uncaught_exceptions()) {}
 
 FatalOnUncaughtExceptions::~FatalOnUncaughtExceptions() {
   if (std::uncaught_exceptions() > mUncaughtExceptions) {

@@ -242,8 +242,8 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
         .pQueueCreateInfos = &queueCreateInfo,
       });
 
-  mDevice
-    = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
+  mDevice =
+    mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
 
   mVK->GetDeviceQueue(mDevice.get(), mQueueFamilyIndex, 0, &mQueue);
 
@@ -256,8 +256,8 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
     .queueFamilyIndex = mQueueFamilyIndex,
   };
-  mCommandPool
-    = mVK->make_unique<VkCommandPool>(mDevice.get(), &poolCreateInfo, nullptr);
+  mCommandPool =
+    mVK->make_unique<VkCommandPool>(mDevice.get(), &poolCreateInfo, nullptr);
 
   VkCommandBufferAllocateInfo commandAllocInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -271,8 +271,8 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
     .flags = VK_FENCE_CREATE_SIGNALED_BIT,
   };
-  mCompletionFence
-    = mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
+  mCompletionFence =
+    mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
 
   mSHM = std::make_unique<SHM::Vulkan::Reader>(
     SHM::ConsumerKind::Viewer,
@@ -298,13 +298,9 @@ VulkanRenderer::~VulkanRenderer() {
     mDevice.get(), mCommandPool.get(), 1, &mCommandBuffer);
 }
 
-SHM::Reader& VulkanRenderer::GetSHM() {
-  return *mSHM.get();
-}
+SHM::Reader& VulkanRenderer::GetSHM() { return *mSHM.get(); }
 
-std::wstring_view VulkanRenderer::GetName() const noexcept {
-  return L"Vulkan";
-}
+std::wstring_view VulkanRenderer::GetName() const noexcept { return L"Vulkan"; }
 
 void VulkanRenderer::Initialize(uint8_t /*swapchainLength*/) {
   if (mCompletionFence) {
@@ -360,8 +356,8 @@ void VulkanRenderer::SaveTextureToFile(
     .pQueueFamilyIndices = &mQueueFamilyIndex,
     .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
   };
-  auto dest
-    = mVK->make_unique<VkImage>(mDevice.get(), &imageCreateInfo, nullptr);
+  auto dest =
+    mVK->make_unique<VkImage>(mDevice.get(), &imageCreateInfo, nullptr);
   VkMemoryRequirements memoryRequirements {};
   mVK->GetImageMemoryRequirements(
     mDevice.get(), dest.get(), &memoryRequirements);
@@ -387,8 +383,8 @@ void VulkanRenderer::SaveTextureToFile(
     .allocationSize = memoryRequirements.size,
     .memoryTypeIndex = *memoryType,
   };
-  auto destMemory
-    = mVK->make_unique<VkDeviceMemory>(mDevice.get(), &allocInfo, nullptr);
+  auto destMemory =
+    mVK->make_unique<VkDeviceMemory>(mDevice.get(), &allocInfo, nullptr);
 
   const VkBindImageMemoryInfoKHR bindInfo {
     .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
@@ -415,11 +411,12 @@ void VulkanRenderer::SaveTextureToFile(
       .oldLayout = sourceLayout,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       .image = source,
-      .subresourceRange = VkImageSubresourceRange {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = 1,
-        .layerCount = 1,
-      },
+      .subresourceRange =
+        VkImageSubresourceRange {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .levelCount = 1,
+          .layerCount = 1,
+        },
     },
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -427,11 +424,12 @@ void VulkanRenderer::SaveTextureToFile(
       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .image = dest.get(),
-      .subresourceRange = VkImageSubresourceRange {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = 1,
-        .layerCount = 1,
-      },
+      .subresourceRange =
+        VkImageSubresourceRange {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .levelCount = 1,
+          .layerCount = 1,
+        },
     },
   };
 
@@ -448,15 +446,17 @@ void VulkanRenderer::SaveTextureToFile(
     inBarriers);
 
   const VkImageCopy region {
-    .srcSubresource = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .layerCount = 1,
-    },
-    .dstSubresource = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .layerCount = 1,
-    },
-    .extent = { dimensions.mWidth, dimensions.mHeight, 1 },
+    .srcSubresource =
+      {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+    .dstSubresource =
+      {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+    .extent = {dimensions.mWidth, dimensions.mHeight, 1},
   };
 
   mVK->CmdCopyImage(
@@ -475,11 +475,12 @@ void VulkanRenderer::SaveTextureToFile(
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       .newLayout = sourceLayout,
       .image = source,
-      .subresourceRange = VkImageSubresourceRange {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = 1,
-        .layerCount = 1,
-      },
+      .subresourceRange =
+        VkImageSubresourceRange {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .levelCount = 1,
+          .layerCount = 1,
+        },
     },
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -487,11 +488,12 @@ void VulkanRenderer::SaveTextureToFile(
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .newLayout = VK_IMAGE_LAYOUT_GENERAL,
       .image = dest.get(),
-      .subresourceRange = VkImageSubresourceRange {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = 1,
-        .layerCount = 1,
-      },
+      .subresourceRange =
+        VkImageSubresourceRange {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .levelCount = 1,
+          .layerCount = 1,
+        },
     },
   };
 
@@ -565,17 +567,19 @@ void VulkanRenderer::SaveTextureToFile(
     .dwHeight = dimensions.mHeight,
     .dwWidth = dimensions.mWidth,
     .dwPitchOrLinearSize = static_cast<DWORD>(layout.rowPitch),
-    .ddspf = DDS::PixelFormat {
-      .dwFlags = [] {
-        using enum DDS::PixelFormat::Flags;
-        return AlphaPixels | RGB;
-      }(),
-      .dwRGBBitCount = 32,
-      .dwRBitMask = 0x00FF0000,
-      .dwGBitMask = 0x0000FF00,
-      .dwBBitMask = 0x000000FF,
-      .dwABitMask = 0xFF000000,
-    },
+    .ddspf =
+      DDS::PixelFormat {
+        .dwFlags =
+          [] {
+            using enum DDS::PixelFormat::Flags;
+            return AlphaPixels | RGB;
+          }(),
+        .dwRGBBitCount = 32,
+        .dwRBitMask = 0x00FF0000,
+        .dwGBitMask = 0x0000FF00,
+        .dwBBitMask = 0x000000FF,
+        .dwABitMask = 0xFF000000,
+      },
     .dwCaps = DDS::Header::Caps::Texture,
   };
   std::ofstream f(path, std::ios::binary | std::ios::trunc);
@@ -611,11 +615,12 @@ uint64_t VulkanRenderer::Render(
     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     .image = mDestImage.get(),
-    .subresourceRange = VkImageSubresourceRange {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
-    },
+    .subresourceRange =
+      VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
   };
 
   mVK->CmdPipelineBarrier(
@@ -639,17 +644,18 @@ uint64_t VulkanRenderer::Render(
   mSpriteBatch->End();
 
   const VkImageMemoryBarrier outBarrier {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-      .image = mDestImage.get(),
-      .subresourceRange = VkImageSubresourceRange {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+    .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+    .image = mDestImage.get(),
+    .subresourceRange =
+      VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = 1,
         .layerCount = 1,
       },
-    };
+  };
   mVK->CmdPipelineBarrier(
     mCommandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -802,8 +808,8 @@ void VulkanRenderer::InitializeDest(
     .memoryTypeIndex = *memoryType,
   };
 
-  mDestImageMemory
-    = mVK->make_unique<VkDeviceMemory>(mDevice.get(), &allocInfo, nullptr);
+  mDestImageMemory =
+    mVK->make_unique<VkDeviceMemory>(mDevice.get(), &allocInfo, nullptr);
 
   VkBindImageMemoryInfoKHR bindInfo {
     .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
@@ -814,19 +820,20 @@ void VulkanRenderer::InitializeDest(
   check_vkresult(mVK->BindImageMemory2KHR(mDevice.get(), 1, &bindInfo));
 
   VkImageViewCreateInfo viewCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-      .image = mDestImage.get(),
-      .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_B8G8R8A8_UNORM,
-      .subresourceRange = VkImageSubresourceRange {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+    .image = mDestImage.get(),
+    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+    .format = VK_FORMAT_B8G8R8A8_UNORM,
+    .subresourceRange =
+      VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = 1,
         .layerCount = 1,
       },
-    };
+  };
 
-  mDestImageView
-    = mVK->make_unique<VkImageView>(mDevice.get(), &viewCreateInfo, nullptr);
+  mDestImageView =
+    mVK->make_unique<VkImageView>(mDevice.get(), &viewCreateInfo, nullptr);
 
   mDestHandle = handle;
   mDestImageDimensions = dimensions;
@@ -851,8 +858,8 @@ void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
     .pNext = &typeCreateInfo,
   };
 
-  mSemaphore
-    = mVK->make_unique<VkSemaphore>(mDevice.get(), &createInfo, nullptr);
+  mSemaphore =
+    mVK->make_unique<VkSemaphore>(mDevice.get(), &createInfo, nullptr);
 
   VkImportSemaphoreWin32HandleInfoKHR importInfo {
     .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,

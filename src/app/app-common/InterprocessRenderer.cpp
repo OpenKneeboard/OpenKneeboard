@@ -61,8 +61,8 @@ void InterprocessRenderer::SubmitFrame(
   TraceLoggingWriteTagged(activity, "AcquireSHMLock/stop");
 
   auto ipcTextureInfo = mSHM.BeginFrame();
-  auto destResources
-    = this->GetIPCTextureResources(ipcTextureInfo.mTextureIndex, mCanvasSize);
+  auto destResources =
+    this->GetIPCTextureResources(ipcTextureInfo.mTextureIndex, mCanvasSize);
 
   auto fence = destResources->mFence.get();
   {
@@ -82,8 +82,8 @@ void InterprocessRenderer::SubmitFrame(
   }
 
   SHM::Config config {
-    .mGlobalInputLayerID
-    = mKneeboard->GetActiveInGameView()->GetRuntimeID().GetTemporaryValue(),
+    .mGlobalInputLayerID =
+      mKneeboard->GetActiveInGameView()->GetRuntimeID().GetTemporaryValue(),
     .mVR = static_cast<const VRRenderSettings&>(mKneeboard->GetVRSettings()),
     .mTextureSize = destResources->mTextureSize,
   };
@@ -138,8 +138,8 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
 
   winrt::com_ptr<ID3D11Texture2D> texture;
   check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
-  mCanvas
-    = RenderTargetWithMultipleIdentities::Create(mDXR, texture, MaxViewCount);
+  mCanvas =
+    RenderTargetWithMultipleIdentities::Create(mDXR, texture, MaxViewCount);
   mCanvasSize = size;
 
   // Let's force a clean start on the clients, including resetting the session
@@ -201,8 +201,8 @@ InterprocessRenderer::GetIPCTextureResources(
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags
-    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+    .MiscFlags =
+      D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
   };
 
   check_hresult(
@@ -252,7 +252,9 @@ OpenKneeboard::fire_and_forget InterprocessRenderer::final_release(
 std::mutex InterprocessRenderer::sSingleInstance;
 
 InterprocessRenderer::InterprocessRenderer(const audited_ptr<DXResources>& dxr)
-  : mInstanceLock(sSingleInstance), mDXR(dxr), mSHM(dxr->mAdapterLUID) {
+  : mInstanceLock(sSingleInstance),
+    mDXR(dxr),
+    mSHM(dxr->mAdapterLUID) {
   dprint(__FUNCTION__);
 }
 

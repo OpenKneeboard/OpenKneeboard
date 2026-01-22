@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/DebugTimer.hpp>
 #include <OpenKneeboard/PDFNavigation.hpp>
@@ -48,8 +49,7 @@ struct PDF::Impl {
   Impl& operator=(Impl&&) = delete;
 };
 
-PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {
-}
+PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {}
 
 PDF::PDF(PDF&&) = default;
 PDF::~PDF() = default;
@@ -237,11 +237,11 @@ static std::vector<Link> ExtractLinks(
     const auto pdfRect = annotation.getRect();
     const D2D1_RECT_F linkRect {
       .left = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
-      .top
-      = 1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
+      .top =
+        1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
       .right = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
-      .bottom
-      = 1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
+      .bottom =
+        1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
     };
 
     auto handle = annotation.getObjectHandle();

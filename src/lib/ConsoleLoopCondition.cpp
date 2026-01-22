@@ -24,8 +24,8 @@ BOOL WINAPI ExitHandler(DWORD /*ignored*/) {
   return TRUE;
 }
 
-using FILETIME_RESOLUTION
-  = std::chrono::duration<int64_t, std::ratio_multiply<std::hecto, std::nano>>;
+using FILETIME_RESOLUTION =
+  std::chrono::duration<int64_t, std::ratio_multiply<std::hecto, std::nano>>;
 }// namespace
 
 class ConsoleLoopCondition::Impl final {

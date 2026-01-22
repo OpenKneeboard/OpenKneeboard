@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <shims/nlohmann/json.hpp>
@@ -24,15 +25,9 @@ constexpr auto _(const T (&str)[N]) {
 }
 
 // Allow construction of std::string and std::string_view
-constexpr std::string to_utf8(const std::string& in) {
-  return in;
-}
-constexpr std::string_view to_utf8(std::string_view in) {
-  return in;
-}
-constexpr std::string_view to_utf8(const char* in) {
-  return in;
-}
+constexpr std::string to_utf8(const std::string& in) { return in; }
+constexpr std::string_view to_utf8(std::string_view in) { return in; }
+constexpr std::string_view to_utf8(const char* in) { return in; }
 
 template <size_t N>
 constexpr std::string_view to_utf8(const char (&in)[N]) {

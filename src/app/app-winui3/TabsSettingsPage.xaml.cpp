@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "TabsSettingsPage.xaml.h"
@@ -103,9 +104,7 @@ IVector<IInspectable> TabsSettingsPage::Tabs() noexcept {
   return tabs;
 }
 
-TabsSettingsPage::~TabsSettingsPage() {
-  this->RemoveAllEventListeners();
-}
+TabsSettingsPage::~TabsSettingsPage() { this->RemoveAllEventListeners(); }
 
 void TabsSettingsPage::CreateAddTabMenu(
   const Button& button,
@@ -155,9 +154,9 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::RestoreDefaults(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
-  dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default tabs list, "
-                           "removing your preferences?"))));
+  dialog.Content(box_value(to_hstring(
+    _("Do you want to restore the default tabs list, "
+      "removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);
@@ -213,8 +212,9 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::ShowDebugInfo(
 
   DebugInfoText().Text(to_hstring(info));
 
-  DebugInfoDialog().Title(winrt::box_value(
-    to_hstring(std::format("'{}' - Debug Information", tab->GetTitle()))));
+  DebugInfoDialog().Title(
+    winrt::box_value(
+      to_hstring(std::format("'{}' - Debug Information", tab->GetTitle()))));
   CopyDebugInfoButton().Tag(winrt::box_value(to_hstring(info)));
   co_await DebugInfoDialog().ShowAsync();
 }
@@ -310,8 +310,8 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::RemoveTab(
 OpenKneeboard::fire_and_forget TabsSettingsPage::CreatePluginTab(
   IInspectable sender,
   RoutedEventArgs) noexcept {
-  const auto id
-    = to_string(unbox_value<winrt::hstring>(sender.as<MenuFlyoutItem>().Tag()));
+  const auto id =
+    to_string(unbox_value<winrt::hstring>(sender.as<MenuFlyoutItem>().Tag()));
   const auto tabTypes = mKneeboard->GetPluginStore()->GetTabTypes();
   const auto it = std::ranges::find(tabTypes, id, &Plugin::TabType::mID);
   if (it == tabTypes.end()) {
@@ -463,8 +463,8 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
     windowSpec->mWindowClass.starts_with("HwndWrapper[")
     || windowSpec->mWindowClass.starts_with("WindowsForms")) {
     matchSpec.mMatchWindowClass = false;
-    matchSpec.mMatchTitle
-      = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
+    matchSpec.mMatchTitle =
+      WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
 
   const std::unordered_set<std::string_view> alwaysMatchWindowTitle {
@@ -481,8 +481,8 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::CreateWindowCaptureTab() {
   // for Discord
   if (alwaysMatchWindowTitle.contains(
         windowSpec->mExecutableLastSeenPath.filename().string())) {
-    matchSpec.mMatchTitle
-      = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
+    matchSpec.mMatchTitle =
+      WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
   // Electron apps tend to have versioned installation directories; detect,
   // and use a wildcard for the version
@@ -607,8 +607,8 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::OnTabsChanged(
 
   std::vector<std::shared_ptr<ITab>> reorderedTabs;
   for (auto item: items) {
-    auto id
-      = ITab::RuntimeID::FromTemporaryValue(item.as<TabUIData>()->InstanceID());
+    auto id =
+      ITab::RuntimeID::FromTemporaryValue(item.as<TabUIData>()->InstanceID());
     auto it = std::ranges::find(tabs, id, &ITab::GetRuntimeID);
     if (it == tabs.end()) {
       continue;
@@ -618,9 +618,7 @@ OpenKneeboard::fire_and_forget TabsSettingsPage::OnTabsChanged(
   co_await tabsList->SetTabs(reorderedTabs);
 }
 
-TabUIData::~TabUIData() {
-  this->RemoveAllEventListeners();
-}
+TabUIData::~TabUIData() { this->RemoveAllEventListeners(); }
 
 hstring TabUIData::Title() const {
   const auto tab = mTab.lock();
@@ -816,8 +814,8 @@ uint8_t WindowCaptureTabUIData::MatchWindowTitle() {
 OpenKneeboard::fire_and_forget WindowCaptureTabUIData::MatchWindowTitle(
   uint8_t value) {
   auto spec = GetTab()->GetMatchSpecification();
-  spec.mMatchTitle
-    = static_cast<WindowCaptureTab::MatchSpecification::TitleMatchKind>(value);
+  spec.mMatchTitle =
+    static_cast<WindowCaptureTab::MatchSpecification::TitleMatchKind>(value);
   co_await GetTab()->SetMatchSpecification(spec);
 }
 
@@ -944,4 +942,4 @@ DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
   return this->SelectTemplateCore(item);
 }
 
-}// namespace winrt::OpenKneeboardApp::implementa
+}// namespace winrt::OpenKneeboardApp::implementation

@@ -51,8 +51,8 @@ task<void> WGCRenderer::Init() {
   // Requires Windows 11
   bool supportsBorderRemoval = false;
   try {
-    supportsBorderRemoval
-      = winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
+    supportsBorderRemoval =
+      winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
         L"Windows.Graphics.Capture.GraphicsCaptureSession",
         L"IsBorderRequired");
     if (supportsBorderRemoval) {
@@ -97,8 +97,8 @@ task<void> WGCRenderer::Init() {
     this->GetPixelFormat(),
     WGCRenderer::SwapchainLength,
     size);
-  mSwapchainDimensions
-    = {static_cast<uint32_t>(size.Width), static_cast<uint32_t>(size.Height)};
+  mSwapchainDimensions = {
+    static_cast<uint32_t>(size.Width), static_cast<uint32_t>(size.Height)};
 
   mCaptureSession = mFramePool.CreateCaptureSession(item);
   mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
@@ -114,7 +114,8 @@ WGCRenderer::WGCRenderer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const Options& options)
-  : mDXR(dxr), mOptions(options) {
+  : mDXR(dxr),
+    mOptions(options) {
   if (!WGC::GraphicsCaptureSession::IsSupported()) {
     return;
   }
@@ -210,9 +211,9 @@ void WGCRenderer::OnWGCFrame(
   d3dSurface->GetDesc(&surfaceDesc);
   const auto captureSize = frame.ContentSize();
 
-  const auto swapchainDimensions
-    = ((captureSize.Width <= mSwapchainDimensions.mWidth)
-       && (captureSize.Height <= mSwapchainDimensions.mHeight))
+  const auto swapchainDimensions =
+    ((captureSize.Width <= mSwapchainDimensions.mWidth)
+     && (captureSize.Height <= mSwapchainDimensions.mHeight))
     ? mSwapchainDimensions
     : this->GetSwapchainDimensions({
         static_cast<uint32_t>(captureSize.Width),

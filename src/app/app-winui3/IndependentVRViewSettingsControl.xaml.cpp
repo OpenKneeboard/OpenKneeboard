@@ -181,8 +181,8 @@ void IndependentVRViewSettingsControl::KneeboardRX(float degrees) {
     degrees += 360;
   }
   auto view = this->GetViewConfig();
-  view.mPose.mRX
-    = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
+  view.mPose.mRX =
+    DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
   this->SetViewConfig(view);
 }
 
@@ -329,9 +329,7 @@ void IndependentVRViewSettingsControl::IsUIVisible(bool visible) {
   this->SetViewConfig(view);
 }
 
-winrt::guid IndependentVRViewSettingsControl::ViewID() {
-  return mViewID;
-}
+winrt::guid IndependentVRViewSettingsControl::ViewID() { return mViewID; }
 
 void IndependentVRViewSettingsControl::ViewID(const winrt::guid& v) {
   mViewID = v;

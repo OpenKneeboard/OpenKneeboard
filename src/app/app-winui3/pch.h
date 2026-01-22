@@ -2,14 +2,16 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 // CLion pulls in this header at configure-time when tyring to identify
 // the compiler, so several of the things we pull in (including
 // both winrt-generated files and ExternalProject_Add dependencies) are
 // unavailable. Check for a sentinel file to figure out whether or not we're
 // actually building
-#if __has_include("openkneeboard-build-time-marker.hpp") && !defined(OPENKNEEBOARD_PCH_H)
+#if __has_include( \
+  "openkneeboard-build-time-marker.hpp") && !defined(OPENKNEEBOARD_PCH_H)
 #define OPENKNEEBOARD_PCH_H
 
 #define NOMINMAX 1
@@ -32,6 +34,10 @@
 #include <ctxtcall.h>
 // clang-format on
 
+#include <OpenKneeboard/bindline.hpp>
+#include <OpenKneeboard/task.hpp>
+#include <OpenKneeboard/weak_refs.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Composition.h>
@@ -51,10 +57,6 @@
 #include <winrt/Windows.ApplicationModel.Activation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
-
-#include <OpenKneeboard/bindline.hpp>
-#include <OpenKneeboard/task.hpp>
-#include <OpenKneeboard/weak_refs.hpp>
 
 #include <wil/cppwinrt_helpers.h>
 

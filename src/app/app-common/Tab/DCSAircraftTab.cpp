@@ -92,8 +92,7 @@ std::string GetModuleNameForLuaAircraft(const std::string_view luaName) {
 DCSAircraftTab::DCSAircraftTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : DCSAircraftTab(dxr, kbs, {}, _("Aircraft")) {
-}
+  : DCSAircraftTab(dxr, kbs, {}, _("Aircraft")) {}
 
 DCSAircraftTab::DCSAircraftTab(
   const audited_ptr<DXResources>& dxr,
@@ -105,20 +104,13 @@ DCSAircraftTab::DCSAircraftTab(
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs),
-    mDebugInformation(_("No data from DCS.")) {
-}
+    mDebugInformation(_("No data from DCS.")) {}
 
-DCSAircraftTab::~DCSAircraftTab() {
-  this->RemoveAllEventListeners();
-}
+DCSAircraftTab::~DCSAircraftTab() { this->RemoveAllEventListeners(); }
 
-std::string DCSAircraftTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string DCSAircraftTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string DCSAircraftTab::GetStaticGlyph() {
-  return "\uE709";
-}
+std::string DCSAircraftTab::GetStaticGlyph() { return "\uE709"; }
 
 task<void> DCSAircraftTab::Reload() {
   mPaths = {};

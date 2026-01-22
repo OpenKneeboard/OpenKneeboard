@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Plugin.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -24,8 +25,8 @@ std::string Plugin::GetIDHash() const noexcept {
   buffer.Length(size);
   memcpy(buffer.data(), mID.data(), mID.size());
 
-  const auto hashProvider
-    = HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Sha256());
+  const auto hashProvider =
+    HashAlgorithmProvider::OpenAlgorithm(HashAlgorithmNames::Sha256());
   auto hashObj = hashProvider.CreateHash();
   hashObj.Append(buffer);
   return winrt::to_string(
@@ -110,8 +111,8 @@ void to_json_postprocess<Plugin::TabType>(
     v.mImplementation == Implementation::Invalid
     && std::holds_alternative<InvalidImplementationArgs>(
       v.mImplementationArgs)) {
-    const auto& args
-      = std::get<InvalidImplementationArgs>(v.mImplementationArgs);
+    const auto& args =
+      std::get<InvalidImplementationArgs>(v.mImplementationArgs);
     j["Implementation"] = args.mName;
   }
 }

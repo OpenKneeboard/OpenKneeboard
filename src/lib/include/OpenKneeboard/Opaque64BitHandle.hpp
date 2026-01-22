@@ -26,13 +26,11 @@ struct Opaque64BitHandle {
   constexpr Opaque64BitHandle(const Opaque64BitHandle<T>&) = default;
   constexpr Opaque64BitHandle(Opaque64BitHandle<T>&&) = default;
 
-  constexpr Opaque64BitHandle<T>& operator=(const Opaque64BitHandle<T>&)
-    = default;
+  constexpr Opaque64BitHandle<T>& operator=(const Opaque64BitHandle<T>&) =
+    default;
 
   constexpr Opaque64BitHandle<T>& operator=(Opaque64BitHandle<T>&&) = default;
-  constexpr operator bool() const {
-    return mRawValue != 0;
-  }
+  constexpr operator bool() const { return mRawValue != 0; }
 };
 
 }// namespace OpenKneeboard

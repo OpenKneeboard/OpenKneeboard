@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
@@ -38,8 +39,8 @@ wchar_t* GetFullPathForCurrentExecutable() {
       return;
     }
     auto characterCount = static_cast<DWORD>(std::size(buffer));
-    const auto result
-      = QueryFullProcessImageNameW(process.get(), 0, buffer, &characterCount);
+    const auto result =
+      QueryFullProcessImageNameW(process.get(), 0, buffer, &characterCount);
     if (result == 0) {
       dprint(
         "QueryFullProcessImageNameW() returned {}, failed with {:#018x} @ {}",

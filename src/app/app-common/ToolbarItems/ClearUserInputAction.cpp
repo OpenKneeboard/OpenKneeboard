@@ -77,8 +77,8 @@ bool ClearUserInputAction::IsEnabled() const {
       return wce && wce->CanClearUserInput();
     case Mode::AllTabs:
       for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
-        auto tabWce
-          = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tab);
+        auto tabWce =
+          std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tab);
         if (tabWce && tabWce->CanClearUserInput()) {
           return true;
         }

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/RunnerThread.hpp>
@@ -24,29 +25,30 @@ RunnerThread::RunnerThread(
   const std::source_location& loc)
   : mName(std::string {name}) {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
-  mCompletionEvent
-    = winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  mCompletionEvent =
+    winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 
-  mDQC.DispatcherQueue().TryEnqueue(std::bind_front(
-    [](auto name, auto impl, auto stop, auto loc, auto event)
-      -> OpenKneeboard::fire_and_forget {
-      const scope_exit setEventOnExit([event, name]() {
-        TraceLoggingWrite(
-          gTraceProvider,
-          "RunnerThread/SetEvent",
-          TraceLoggingString(winrt::to_string(name).c_str(), "Name"));
-        SetEvent(event);
-      });
-      ProcessShutdownBlock block(loc);
-      SetThreadDescription(GetCurrentThread(), name.c_str());
-      ThreadGuard threadGuard;
-      co_await impl(stop);
-    },
-    winrt::to_hstring(name),
-    impl,
-    mStopSource.get_token(),
-    loc,
-    mCompletionEvent.get()));
+  mDQC.DispatcherQueue().TryEnqueue(
+    std::bind_front(
+      [](auto name, auto impl, auto stop, auto loc, auto event)
+        -> OpenKneeboard::fire_and_forget {
+        const scope_exit setEventOnExit([event, name]() {
+          TraceLoggingWrite(
+            gTraceProvider,
+            "RunnerThread/SetEvent",
+            TraceLoggingString(winrt::to_string(name).c_str(), "Name"));
+          SetEvent(event);
+        });
+        ProcessShutdownBlock block(loc);
+        SetThreadDescription(GetCurrentThread(), name.c_str());
+        ThreadGuard threadGuard;
+        co_await impl(stop);
+      },
+      winrt::to_hstring(name),
+      impl,
+      mStopSource.get_token(),
+      loc,
+      mCompletionEvent.get()));
 }
 
 RunnerThread::~RunnerThread() {

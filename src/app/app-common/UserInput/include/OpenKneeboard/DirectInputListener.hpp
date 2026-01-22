@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
@@ -40,8 +41,7 @@ class DirectInputListener {
     const std::shared_ptr<DirectInputDevice>& device);
 
   [[nodiscard]]
-  virtual std::expected<void, HRESULT> Poll()
-    = 0;
+  virtual std::expected<void, HRESULT> Poll() = 0;
   virtual void SetDataFormat() noexcept = 0;
   virtual void OnAcquired() noexcept = 0;
 

@@ -28,16 +28,11 @@ D3D11Renderer::D3D11Renderer(const winrt::com_ptr<ID3D11Device>& device) {
 
 D3D11Renderer::~D3D11Renderer() = default;
 
-std::wstring_view D3D11Renderer::GetName() const noexcept {
-  return {L"D3D11"};
-}
+std::wstring_view D3D11Renderer::GetName() const noexcept { return {L"D3D11"}; }
 
-SHM::Reader& D3D11Renderer::GetSHM() {
-  return *mSHM.get();
-}
+SHM::Reader& D3D11Renderer::GetSHM() { return *mSHM.get(); }
 
-void D3D11Renderer::Initialize(uint8_t /*swapchainLength*/) {
-}
+void D3D11Renderer::Initialize(uint8_t /*swapchainLength*/) {}
 
 uint64_t D3D11Renderer::Render(
   SHM::Frame rawFrame,

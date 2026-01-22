@@ -77,8 +77,7 @@ class FixedSizeHandle final {
   FixedSizeHandle() noexcept = default;
 
   FixedSizeHandle(HANDLE value) noexcept
-    : mValue(std::bit_cast<uintptr_t>(value)) {
-  }
+    : mValue(std::bit_cast<uintptr_t>(value)) {}
 
   operator HANDLE() const noexcept {
     return std::bit_cast<HANDLE>(static_cast<uintptr_t>(mValue));
@@ -146,8 +145,8 @@ static std::wstring SHMPath() {
 }
 
 static std::wstring MutexPath() {
-  static auto sRet
-    = LazyOnceValue<std::wstring> {[] { return SHMPath() + L".mutex"; }};
+  static auto sRet =
+    LazyOnceValue<std::wstring> {[] { return SHMPath() + L".mutex"; }};
   return sRet;
 }
 
@@ -178,8 +177,8 @@ class Impl {
       return;
     }
 
-    auto mutexHandle
-      = Win32::or_default::CreateMutex(nullptr, FALSE, MutexPath().c_str());
+    auto mutexHandle =
+      Win32::or_default::CreateMutex(nullptr, FALSE, MutexPath().c_str());
     if (!mutexHandle) {
       dprint("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
       return;
@@ -198,13 +197,9 @@ class Impl {
     mHeader = reinterpret_cast<SharedData*>(mMapping);
   }
 
-  ~Impl() {
-    UnmapViewOfFile(mMapping);
-  }
+  ~Impl() { UnmapViewOfFile(mMapping); }
 
-  bool IsValid() const {
-    return mMapping;
-  }
+  bool IsValid() const { return mMapping; }
 
   template <State in, State out>
   void Transition(
@@ -359,8 +354,8 @@ Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   using State = WriterState;
   p->Transition<State::Locked, State::FrameInProgress>();
 
-  const auto textureIndex
-    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % SHMSwapchainLength);
+  const auto textureIndex =
+    static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % SHMSwapchainLength);
 
   return NextFrameInfo {
     .mTextureIndex = textureIndex,
@@ -368,17 +363,11 @@ Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   };
 }
 
-void Writer::lock() {
-  p->lock();
-}
+void Writer::lock() { p->lock(); }
 
-void Writer::unlock() {
-  p->unlock();
-}
+void Writer::unlock() { p->unlock(); }
 
-bool Writer::try_lock() {
-  return p->try_lock();
-}
+bool Writer::try_lock() { return p->try_lock(); }
 
 class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
  public:
@@ -387,13 +376,9 @@ class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
     wil::unique_handle mMyHandle {};
     void Update(HANDLE sharedFrom, HANDLE sharedHandle);
 
-    operator bool() const noexcept {
-      return static_cast<bool>(mMyHandle);
-    }
+    operator bool() const noexcept { return static_cast<bool>(mMyHandle); }
 
-    operator HANDLE() const noexcept {
-      return mMyHandle.get();
-    }
+    operator HANDLE() const noexcept { return mMyHandle.get(); }
   };
   struct FrameHandles {
     IPCHandle mTexture {};
@@ -481,17 +466,13 @@ Reader::Reader(const ConsumerKind kind, const uint64_t gpuLUID) {
   dprint("Reader initialized.");
 }
 
-Reader::~Reader() {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::~Reader()");
-}
+Reader::~Reader() { OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::~Reader()"); }
 
 Reader::operator bool() const {
   return p && p->IsValid() && p->mHeader->HaveFeeder();
 }
 
-Writer::operator bool() const {
-  return (bool)p;
-}
+Writer::operator bool() const { return (bool)p; }
 
 std::expected<Frame, Frame::Error> Reader::MaybeGet() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
@@ -529,10 +510,11 @@ std::expected<Frame, Frame::Error> Reader::MaybeGet() {
 
   return Frame {
     .mConfig = frame.mConfig,
-    .mLayers = {
-      frame.mLayers,
-      frame.mLayers + frame.mLayerCount,
-    },
+    .mLayers =
+      {
+        frame.mLayers,
+        frame.mLayers + frame.mLayerCount,
+      },
     .mTexture = texture,
     .mFence = fence,
     .mFenceIn = frame.mReadyReadFenceValue,

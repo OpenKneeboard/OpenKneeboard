@@ -36,8 +36,7 @@ DCSBriefingTab::DCSBriefingTab(
     mKneeboard(kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(
-      std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {
-}
+      std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {}
 
 task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
   audited_ptr<DXResources> dxr,
@@ -53,17 +52,11 @@ task<std::shared_ptr<DCSBriefingTab>> DCSBriefingTab::Create(
   co_return ret;
 }
 
-DCSBriefingTab::~DCSBriefingTab() {
-  this->RemoveAllEventListeners();
-}
+DCSBriefingTab::~DCSBriefingTab() { this->RemoveAllEventListeners(); }
 
-std::string DCSBriefingTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string DCSBriefingTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string DCSBriefingTab::GetStaticGlyph() {
-  return "\uE95D";
-}
+std::string DCSBriefingTab::GetStaticGlyph() { return "\uE95D"; }
 
 task<void> DCSBriefingTab::Reload() noexcept {
   const scope_exit emitEvents([this]() {

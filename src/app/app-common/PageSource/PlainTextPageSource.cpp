@@ -28,7 +28,9 @@ PlainTextPageSource::PlainTextPageSource(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   std::string_view placeholderText)
-  : mDXR(dxr), mKneeboard(kbs), mPlaceholderText(placeholderText) {
+  : mDXR(dxr),
+    mKneeboard(kbs),
+    mPlaceholderText(placeholderText) {
   mFontSize = kbs->GetTextSettings().mFontSize;
 
   auto dwf = mDXR->mDWriteFactory;
@@ -66,14 +68,12 @@ void PlainTextPageSource::UpdateLayoutLimits() {
   textLayout->GetMetrics(&metrics);
 
   mPadding = mRowHeight = metrics.height;
-  mRows
-    = static_cast<int>((size.mHeight - (2 * mPadding)) / metrics.height) - 2;
+  mRows =
+    static_cast<int>((size.mHeight - (2 * mPadding)) / metrics.height) - 2;
   mColumns = static_cast<int>((size.mWidth - (2 * mPadding)) / metrics.width);
 }
 
-PlainTextPageSource::~PlainTextPageSource() {
-  this->RemoveAllEventListeners();
-}
+PlainTextPageSource::~PlainTextPageSource() { this->RemoveAllEventListeners(); }
 
 void PlainTextPageSource::OnSettingsChanged() {
   auto newFontSize = mKneeboard->GetTextSettings().mFontSize;

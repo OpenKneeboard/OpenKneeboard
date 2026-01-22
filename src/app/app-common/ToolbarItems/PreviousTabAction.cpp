@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/AppSettings.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
@@ -23,9 +24,7 @@ PreviousTabAction::PreviousTabAction(
     kneeboardState->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
-PreviousTabAction::~PreviousTabAction() {
-  this->RemoveAllEventListeners();
-}
+PreviousTabAction::~PreviousTabAction() { this->RemoveAllEventListeners(); }
 
 bool PreviousTabAction::IsEnabled() const {
   auto kbv = mKneeboardView.lock();

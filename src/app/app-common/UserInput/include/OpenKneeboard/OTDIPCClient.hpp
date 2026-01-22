@@ -88,8 +88,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
 
   template <
     class T,
-    class TTablet
-    = std::conditional_t<std::is_const_v<T>, const Tablet, Tablet>>
+    class TTablet =
+      std::conditional_t<std::is_const_v<T>, const Tablet, Tablet>>
   std::optional<TTablet*> GetTabletFromPersistentID(
     this T& self,
     const std::string& persistentID);

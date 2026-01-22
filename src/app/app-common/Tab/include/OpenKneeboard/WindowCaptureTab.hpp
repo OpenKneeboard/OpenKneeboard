@@ -27,8 +27,8 @@ class WindowCaptureTab final : public TabBase,
     std::string mWindowClass;
     std::string mTitle;
 
-    constexpr bool operator==(const WindowSpecification&) const noexcept
-      = default;
+    constexpr bool operator==(const WindowSpecification&) const noexcept =
+      default;
   };
   struct MatchSpecification : public WindowSpecification {
     enum class TitleMatchKind : uint8_t {
@@ -41,8 +41,8 @@ class WindowCaptureTab final : public TabBase,
     bool mMatchWindowClass {true};
     bool mMatchExecutable {true};
 
-    constexpr bool operator==(const MatchSpecification&) const noexcept
-      = default;
+    constexpr bool operator==(const MatchSpecification&) const noexcept =
+      default;
   };
   struct Settings {
     MatchSpecification mSpec {};

@@ -63,8 +63,8 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
       | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
     .queueFamilyIndex = mQueueFamilyIndex,
   };
-  mCommandPool
-    = mVK->make_unique<VkCommandPool>(mDevice, &poolCreateInfo, nullptr);
+  mCommandPool =
+    mVK->make_unique<VkCommandPool>(mDevice, &poolCreateInfo, nullptr);
 
   mSHM = std::make_unique<SHM::Vulkan::Reader>(
     SHM::ConsumerKind::OpenXR_Vulkan2,
@@ -110,8 +110,8 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 
   XrSwapchain swapchain {nullptr};
   {
-    const auto ret
-      = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
+    const auto ret =
+      oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
     if (XR_FAILED(ret)) {
       dprint("next->xrCreateSwapchain failed: {}", ret);
       return nullptr;
@@ -120,8 +120,8 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 
   uint32_t imageCount = 0;
   {
-    const auto res
-      = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
+    const auto res =
+      oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
     if (XR_FAILED(res) || imageCount == 0) {
       dprint("No images in swapchain: {}", res);
       return nullptr;
@@ -172,11 +172,12 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
     .viewType = VK_IMAGE_VIEW_TYPE_2D,
     .format = vkImageViewFormat,
-    .subresourceRange = VkImageSubresourceRange {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
-    },
+    .subresourceRange =
+      VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
   };
   VkFenceCreateInfo fenceCreateInfo {
     .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -189,10 +190,10 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     buffers.push_back(
       SwapchainBufferResources {
         .mImage = xrImage.image,
-        .mImageView
-        = mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator),
-        .mCompletionFence
-        = mVK->make_unique<VkFence>(mDevice, &fenceCreateInfo, mAllocator),
+        .mImageView =
+          mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator),
+        .mCompletionFence =
+          mVK->make_unique<VkFence>(mDevice, &fenceCreateInfo, mAllocator),
         .mCommandBuffer = mCommandBuffers.at(buffers.size()),
       });
   }
@@ -305,8 +306,6 @@ void OpenXRVulkanKneeboard::RenderLayers(
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fence));
 }
 
-SHM::Reader& OpenXRVulkanKneeboard::GetSHM() {
-  return *mSHM;
-}
+SHM::Reader& OpenXRVulkanKneeboard::GetSHM() { return *mSHM; }
 
 }// namespace OpenKneeboard

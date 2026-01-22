@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/FolderPageSource.hpp>
 #include <OpenKneeboard/FolderTab.hpp>
 
@@ -20,8 +21,7 @@ FolderTab::FolderTab(
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXResources(dxr),
-    mKneeboard(kbs) {
-}
+    mKneeboard(kbs) {}
 
 task<std::shared_ptr<FolderTab>> FolderTab::Create(
   const audited_ptr<DXResources>& dxr,
@@ -44,28 +44,17 @@ task<std::shared_ptr<FolderTab>> FolderTab::Create(
   co_return ret;
 }
 
-FolderTab::~FolderTab() {
-}
+FolderTab::~FolderTab() {}
 
-nlohmann::json FolderTab::GetSettings() const {
-  return {{"Path", GetPath()}};
-}
+nlohmann::json FolderTab::GetSettings() const { return {{"Path", GetPath()}}; }
 
-std::string FolderTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string FolderTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string FolderTab::GetStaticGlyph() {
-  return "\uE838";
-}
+std::string FolderTab::GetStaticGlyph() { return "\uE838"; }
 
-task<void> FolderTab::Reload() {
-  return mPageSource->Reload();
-}
+task<void> FolderTab::Reload() { return mPageSource->Reload(); }
 
-std::filesystem::path FolderTab::GetPath() const {
-  return mPath;
-}
+std::filesystem::path FolderTab::GetPath() const { return mPath; }
 
 task<void> FolderTab::SetPath(std::filesystem::path path) {
   if (path == mPath) {
@@ -75,8 +64,8 @@ task<void> FolderTab::SetPath(std::filesystem::path path) {
   if (mPageSource) {
     co_await mPageSource->SetPath(path);
   } else {
-    mPageSource
-      = co_await FolderPageSource::Create(mDXResources, mKneeboard, path);
+    mPageSource =
+      co_await FolderPageSource::Create(mDXResources, mKneeboard, path);
     co_await this->SetDelegates({mPageSource});
   }
   mPath = path;

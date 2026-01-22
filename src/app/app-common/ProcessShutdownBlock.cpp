@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 
@@ -82,9 +83,7 @@ struct ShutdownData {
   }
 
  private:
-  ShutdownData() {
-    mMyID = this->Increment(std::source_location::current());
-  }
+  ShutdownData() { mMyID = this->Increment(std::source_location::current()); }
 
   std::atomic_uint64_t mBlockCount {0};
   std::atomic_flag mShuttingDown;
@@ -102,8 +101,7 @@ struct ShutdownData {
 }// namespace
 
 ProcessShutdownBlock::ProcessShutdownBlock(const std::source_location& loc)
-  : mID(ShutdownData::Get().Increment(loc)) {
-}
+  : mID(ShutdownData::Get().Increment(loc)) {}
 
 ProcessShutdownBlock::~ProcessShutdownBlock() {
   ShutdownData::Get().Decrement(mID);

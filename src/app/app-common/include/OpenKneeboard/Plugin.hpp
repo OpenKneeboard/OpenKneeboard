@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Pixels.hpp>
@@ -49,8 +50,8 @@ struct Plugin {
       std::string mName;
       nlohmann::json mArgs;
 
-      bool operator==(const InvalidImplementationArgs&) const noexcept
-        = default;
+      bool operator==(const InvalidImplementationArgs&) const noexcept =
+        default;
     };
     struct WebBrowserArgs {
       std::string mURI;
@@ -58,8 +59,8 @@ struct Plugin {
 
       bool operator==(const WebBrowserArgs&) const noexcept = default;
     };
-    using ImplementationArgs
-      = std::variant<EmptyArgs, InvalidImplementationArgs, WebBrowserArgs>;
+    using ImplementationArgs =
+      std::variant<EmptyArgs, InvalidImplementationArgs, WebBrowserArgs>;
 
     std::string mID;
     std::string mName;

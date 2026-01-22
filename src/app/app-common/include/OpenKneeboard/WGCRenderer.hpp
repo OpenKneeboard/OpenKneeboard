@@ -71,8 +71,8 @@ class WGCRenderer : public virtual EventReceiver,
   virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
   CreateWGCaptureItem() = 0;
   virtual PixelRect GetContentRect(const PixelSize& captureSize) const = 0;
-  virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) const
-    = 0;
+  virtual PixelSize GetSwapchainDimensions(
+    const PixelSize& captureSize) const = 0;
 
   ThreadGuard mThreadGuard;
 

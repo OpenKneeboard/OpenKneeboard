@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/FilesystemWatcher.hpp>
 #include <OpenKneeboard/Win32.hpp>
@@ -24,8 +25,8 @@ std::shared_ptr<FilesystemWatcher> FilesystemWatcher::Create(
 
 FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
   : mPath(path) {
-  const auto watchedPath
-    = std::filesystem::is_directory(mPath) ? mPath : mPath.parent_path();
+  const auto watchedPath =
+    std::filesystem::is_directory(mPath) ? mPath : mPath.parent_path();
   const auto handle = FindFirstChangeNotificationW(
     watchedPath.wstring().c_str(),
     /* watch subtree = */

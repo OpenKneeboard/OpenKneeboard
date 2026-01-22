@@ -29,9 +29,7 @@ class UTF8CaseMap {
     ucasemap_close(mImpl);
   }
 
-  inline operator const UCaseMap*() const noexcept {
-    return mImpl;
-  }
+  inline operator const UCaseMap*() const noexcept { return mImpl; }
 
   UTF8CaseMap() = delete;
   UTF8CaseMap(const UTF8CaseMap&) = delete;

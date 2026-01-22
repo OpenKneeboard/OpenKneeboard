@@ -32,10 +32,10 @@ struct RootInfo {
 
     using OpenKneeboard::Win32;
     const auto message = Win32::UTF8::to_wide(exitCode.error().output);
-    const auto title
-      = std::filesystem::path {Win32::Wide::or_throw::GetModuleFileName()}
-          .stem()
-          .wstring();
+    const auto title =
+      std::filesystem::path {Win32::Wide::or_throw::GetModuleFileName()}
+        .stem()
+        .wstring();
 
     MessageBoxW(
       nullptr,

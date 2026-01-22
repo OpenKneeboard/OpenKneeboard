@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CachedLayer.hpp>
 #include <OpenKneeboard/DoodleRenderer.hpp>
 #include <OpenKneeboard/PageSourceWithDelegates.hpp>
@@ -133,12 +134,12 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
     return mPageDelegates.at(pageID).lock();
   }
 
-  auto delegate
-    = std::ranges::find_if(mDelegates, [pageID](const auto& delegate) {
-        auto pageIDs = delegate->GetPageIDs();
-        auto it = std::ranges::find(pageIDs, pageID);
-        return it != pageIDs.end();
-      });
+  auto delegate =
+    std::ranges::find_if(mDelegates, [pageID](const auto& delegate) {
+      auto pageIDs = delegate->GetPageIDs();
+      auto it = std::ranges::find(pageIDs, pageID);
+      return it != pageIDs.end();
+    });
   if (delegate == mDelegates.end()) {
     return {nullptr};
   }
@@ -165,8 +166,8 @@ task<void> PageSourceWithDelegates::RenderPage(
     co_return;
   }
 
-  auto withInternalCaching
-    = std::dynamic_pointer_cast<IPageSourceWithInternalCaching>(delegate);
+  auto withInternalCaching =
+    std::dynamic_pointer_cast<IPageSourceWithInternalCaching>(delegate);
   if (withInternalCaching) {
     co_await delegate->RenderPage(rc, pageID, rect);
   } else {
@@ -174,8 +175,8 @@ task<void> PageSourceWithDelegates::RenderPage(
       delegate.get(), rc.GetRenderTarget(), pageID, rect);
   }
 
-  auto withCursorEvents
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  auto withCursorEvents =
+    std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
 
   if (!withCursorEvents) {
     mDoodles->Render(rc.GetRenderTarget(), pageID, rect);
@@ -261,8 +262,8 @@ void PageSourceWithDelegates::ClearUserInput(PageID pageID) {
   const scope_exit updateState(
     [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
 
-  auto withCursorEvents
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  auto withCursorEvents =
+    std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
     withCursorEvents->ClearUserInput(pageID);
   } else {
@@ -276,8 +277,8 @@ void PageSourceWithDelegates::ClearUserInput() {
 
   mDoodles->Clear();
   for (const auto& delegate: mDelegates) {
-    auto withCursorEvents
-      = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+    auto withCursorEvents =
+      std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
     if (withCursorEvents) {
       withCursorEvents->ClearUserInput();
     }
@@ -292,8 +293,8 @@ std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
   const {
   std::vector<NavigationEntry> entries;
   for (const auto& delegate: mDelegates) {
-    const auto withNavigation
-      = std::dynamic_pointer_cast<IPageSourceWithNavigation>(delegate);
+    const auto withNavigation =
+      std::dynamic_pointer_cast<IPageSourceWithNavigation>(delegate);
     if (!withNavigation) {
       continue;
     }
@@ -308,8 +309,8 @@ bool PageSourceWithDelegates::HasDeveloperTools(PageID id) const {
   if (!delegate) {
     return false;
   }
-  auto devTools
-    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
+  auto devTools =
+    std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
   if (!devTools) {
     return false;
   }
@@ -323,8 +324,8 @@ fire_and_forget PageSourceWithDelegates::OpenDeveloperToolsWindow(
   if (!delegate) {
     co_return;
   }
-  auto devTools
-    = std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
+  auto devTools =
+    std::dynamic_pointer_cast<IPageSourceWithDeveloperTools>(delegate);
   if (!devTools) {
     co_return;
   }

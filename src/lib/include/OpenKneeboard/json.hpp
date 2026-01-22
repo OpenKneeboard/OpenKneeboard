@@ -101,9 +101,7 @@ struct StringWrapper {
     return std::string_view {mBuffer, Len - 1};
   }
 
-  operator std::string() const noexcept {
-    return {mBuffer, Len - 1};
-  }
+  operator std::string() const noexcept { return {mBuffer, Len - 1}; }
 
   static consteval StringWrapper Create(const char (&str)[Len]) {
     StringWrapper<Len> ret;
@@ -176,8 +174,7 @@ consteval StringWrapper<Len - 1> ConstStrSkipFirstLowerNext(
 };// namespace detail::SparseJson
 
 template <class T>
-void to_json_postprocess(nlohmann::json&, const T&) {
-}
+void to_json_postprocess(nlohmann::json&, const T&) {}
 
 template <class T>
 void to_json_postprocess(nlohmann::json& j, const T& /*parent_v*/, const T& v) {
@@ -185,12 +182,11 @@ void to_json_postprocess(nlohmann::json& j, const T& /*parent_v*/, const T& v) {
 }
 
 template <class T>
-void from_json_postprocess(const nlohmann::json&, T&) {
-}
+void from_json_postprocess(const nlohmann::json&, T&) {}
 
 #define DETAIL_OPENKNEEBOARD_FROM_JSON_DECLARE_KEY(KeyTransform) \
-  constexpr auto ok_json_field_key_##KeyTransform \
-    = detail::SparseJson::ConstStr##KeyTransform(wrapped);
+  constexpr auto ok_json_field_key_##KeyTransform = \
+    detail::SparseJson::ConstStr##KeyTransform(wrapped);
 #define DETAIL_OPENKNEEBOARD_FROM_JSON_TRY_KEY(v1, KeyTransform) \
   if (nlohmann_json_j.contains(ok_json_field_key_##KeyTransform)) { \
     nlohmann_json_v.v1 = nlohmann_json_j.at(ok_json_field_key_##KeyTransform) \
@@ -206,8 +202,8 @@ void from_json_postprocess(const nlohmann::json&, T&) {
   }
 
 #define DETAIL_OPENKNEEBOARD_TO_SPARSE_JSON(v1) \
-  constexpr auto ok_json_field_key_##v1 \
-    = detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
+  constexpr auto ok_json_field_key_##v1 = \
+    detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
   const bool persist_##v1 = nlohmann_json_j.contains(ok_json_field_key_##v1) \
     || (nlohmann_json_default_object.v1 != nlohmann_json_v.v1); \
   if (persist_##v1) { \
@@ -275,8 +271,8 @@ void from_json_postprocess(const nlohmann::json&, T&) {
     } \
   };
 #define DETAIL_OPENKNEEBOARD_TO_JSON(v1) \
-  constexpr auto ok_json_field_key_##v1 \
-    = detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
+  constexpr auto ok_json_field_key_##v1 = \
+    detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
   SparseJsonDetail<decltype(nlohmann_json_v.v1)>::Encode( \
     nlohmann_json_j[ok_json_field_key_##v1], {}, nlohmann_json_v.v1);
 #define OPENKNEEBOARD_DEFINE_TO_JSON(T, ...) \

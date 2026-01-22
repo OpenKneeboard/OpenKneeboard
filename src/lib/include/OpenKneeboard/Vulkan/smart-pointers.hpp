@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "impl/OPENKNEEBOARD_VK_FUNCS.h"
@@ -62,8 +63,8 @@ concept destroyable_device_resource = std::invocable<
   const VkAllocationCallbacks*>;
 
 template <class T>
-concept manageable_device_resource
-  = creatable_device_resource<T> && destroyable_device_resource<T>;
+concept manageable_device_resource =
+  creatable_device_resource<T> && destroyable_device_resource<T>;
 
 // Handles that are tied to an instance, but not a device
 template <class T>
@@ -82,8 +83,8 @@ concept destroyable_instance_resource = std::invocable<
   const VkAllocationCallbacks*>;
 
 template <class T>
-concept manageable_instance_resource
-  = creatable_instance_resource<T> && destroyable_instance_resource<T>;
+concept manageable_instance_resource =
+  creatable_instance_resource<T> && destroyable_instance_resource<T>;
 
 namespace Detail {
 
@@ -97,8 +98,9 @@ class DeviceResourceDeleter {
     DestroyFun impl,
     VkDevice device,
     const VkAllocationCallbacks* allocator) noexcept
-    : mImpl(impl), mDevice(device), mAllocator(allocator) {
-  }
+    : mImpl(impl),
+      mDevice(device),
+      mAllocator(allocator) {}
 
   void operator()(T resource) const {
     std::invoke(mImpl, mDevice, resource, mAllocator);
@@ -147,12 +149,10 @@ class StandaloneDeleter {
   constexpr StandaloneDeleter(
     DestroyFun impl,
     const VkAllocationCallbacks* allocator)
-    : mImpl(impl), mAllocator(allocator) {
-  }
+    : mImpl(impl),
+      mAllocator(allocator) {}
 
-  inline void operator()(T instance) const {
-    mImpl(instance, mAllocator);
-  }
+  inline void operator()(T instance) const { mImpl(instance, mAllocator); }
 
  private:
   DestroyFun mImpl {nullptr};
@@ -173,16 +173,17 @@ template <destroyable_instance_resource T>
 class InstanceResourceDeleter {
  public:
   using pointer = T;
-  using DestroyFun
-    = void(VKAPI_PTR*)(VkInstance, T, const VkAllocationCallbacks*);
+  using DestroyFun =
+    void(VKAPI_PTR*)(VkInstance, T, const VkAllocationCallbacks*);
 
   InstanceResourceDeleter() = default;
   constexpr InstanceResourceDeleter(
     DestroyFun impl,
     VkInstance instance,
     const VkAllocationCallbacks* allocator)
-    : mImpl(impl), mInstance(instance), mAllocator(allocator) {
-  }
+    : mImpl(impl),
+      mInstance(instance),
+      mAllocator(allocator) {}
 
   inline void operator()(T resource) const {
     mImpl(mInstance, resource, mAllocator);
@@ -224,15 +225,14 @@ static_assert(manageable_instance_resource<VkDebugUtilsMessengerEXT>);
 static_assert(!manageable_device_resource<VkDebugUtilsMessengerEXT>);
 
 template <class T>
-using unique_vk
-  = std::unique_ptr<T, typename Detail::ResourceTraits<T>::Deleter>;
+using unique_vk =
+  std::unique_ptr<T, typename Detail::ResourceTraits<T>::Deleter>;
 
 template <class T>
 class MemoryMapping {
  public:
   constexpr MemoryMapping() = default;
-  constexpr MemoryMapping(nullptr_t) {
-  }
+  constexpr MemoryMapping(nullptr_t) {}
 
   MemoryMapping(
     PFN_vkMapMemory mapMemory,
@@ -242,7 +242,9 @@ class MemoryMapping {
     VkDeviceSize offset,
     VkDeviceSize size,
     VkMemoryMapFlags flags)
-    : mUnmapMemory(unmapMemory), mDevice(device), mDeviceMemory(deviceMemory) {
+    : mUnmapMemory(unmapMemory),
+      mDevice(device),
+      mDeviceMemory(deviceMemory) {
     check_vkresult(
       mapMemory(device, deviceMemory, offset, size, flags, &mData));
   }
@@ -253,13 +255,9 @@ class MemoryMapping {
     }
   }
 
-  T* get() const {
-    return reinterpret_cast<T*>(mData);
-  }
+  T* get() const { return reinterpret_cast<T*>(mData); }
 
-  constexpr operator bool() const {
-    return !!mData;
-  }
+  constexpr operator bool() const { return !!mData; }
 
   MemoryMapping(const MemoryMapping&) = delete;
   MemoryMapping(MemoryMapping&&) = delete;

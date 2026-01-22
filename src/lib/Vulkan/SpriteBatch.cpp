@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Shaders/SpriteBatch/SPIRV.hpp>
 #include <OpenKneeboard/Vulkan.hpp>
 
@@ -34,8 +35,8 @@ SpriteBatch::SpriteBatch(
       .codeSize = Shaders::PS.size(),
       .pCode = reinterpret_cast<const uint32_t*>(Shaders::PS.data()),
     };
-    mPixelShader
-      = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
+    mPixelShader =
+      dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
   }
 
   {
@@ -44,8 +45,8 @@ SpriteBatch::SpriteBatch(
       .codeSize = Shaders::VS.size(),
       .pCode = reinterpret_cast<const uint32_t*>(Shaders::VS.data()),
     };
-    mVertexShader
-      = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
+    mVertexShader =
+      dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
   }
 
   this->CreateUniformBuffer();
@@ -68,8 +69,8 @@ void SpriteBatch::CreatePipeline() {
       .setLayoutCount = std::size(descriptorSetLayouts),
       .pSetLayouts = descriptorSetLayouts,
     };
-    mPipelineLayout
-      = mVK->make_unique<VkPipelineLayout>(mDevice, &createInfo, mAllocator);
+    mPipelineLayout =
+      mVK->make_unique<VkPipelineLayout>(mDevice, &createInfo, mAllocator);
   }
 
   auto vertexDescription = GetVertexBindingDescription();
@@ -212,14 +213,14 @@ SpriteBatch::Buffer<T> SpriteBatch::CreateBuffer(
     .memoryTypeIndex = *memoryType,
   };
 
-  ret.mMemory
-    = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+  ret.mMemory =
+    mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
 
   check_vkresult(
     mVK->BindBufferMemory(mDevice, ret.mBuffer.get(), ret.mMemory.get(), 0));
 
-  ret.mMapping = mVK->MemoryMapping<T>(
-    mDevice, ret.mMemory.get(), 0, requirements.size, 0);
+  ret.mMapping =
+    mVK->MemoryMapping<T>(mDevice, ret.mMemory.get(), 0, requirements.size, 0);
 
   return ret;
 }
@@ -297,8 +298,8 @@ void SpriteBatch::End(const std::source_location& loc) {
   }
 
   UniformBuffer batchData {
-    .mTargetDimensions
-    = {mTargetDimensions.Width<float>(), mTargetDimensions.Height<float>()},
+    .mTargetDimensions =
+      {mTargetDimensions.Width<float>(), mTargetDimensions.Height<float>()},
   };
 
   std::vector<VkImageView> sources;
@@ -328,20 +329,20 @@ void SpriteBatch::End(const std::source_location& loc) {
 
     using TexCoord = std::array<float, 2>;
 
-    const TexCoord srcTL
-      = sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
-    const TexCoord srcBR
-      = sprite.mSourceRect.BottomRight().StaticCast<float, TexCoord>();
+    const TexCoord srcTL =
+      sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
+    const TexCoord srcBR =
+      sprite.mSourceRect.BottomRight().StaticCast<float, TexCoord>();
     const TexCoord srcBL {srcTL[0], srcBR[1]};
     const TexCoord srcTR {srcBR[0], srcTL[1]};
 
     using Position = Vertex::Position;
 
     // Destination coordinates in real 3d coordinates
-    const Position dstTL
-      = sprite.mDestRect.TopLeft().StaticCast<float, Position>();
-    const Position dstBR
-      = sprite.mDestRect.BottomRight().StaticCast<float, Position>();
+    const Position dstTL =
+      sprite.mDestRect.TopLeft().StaticCast<float, Position>();
+    const Position dstBR =
+      sprite.mDestRect.BottomRight().StaticCast<float, Position>();
     const Position dstTR {dstBR[0], dstTL[1]};
     const Position dstBL {dstTL[0], dstBR[1]};
 
@@ -389,8 +390,8 @@ void SpriteBatch::End(const std::source_location& loc) {
 
     VkRenderingInfoKHR renderInfo {
       .sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
-      .renderArea
-      = {{0, 0}, {mTargetDimensions.mWidth, mTargetDimensions.mHeight}},
+      .renderArea =
+        {{0, 0}, {mTargetDimensions.mWidth, mTargetDimensions.mHeight}},
       .layerCount = 1,
       .colorAttachmentCount = 1,
       .pColorAttachments = &colorAttachmentInfo,
@@ -428,10 +429,11 @@ void SpriteBatch::End(const std::source_location& loc) {
     std::vector<VkDescriptorImageInfo> sourceInfos;
     sourceInfos.reserve(sources.size());
     for (const auto& source: sources) {
-      sourceInfos.push_back(VkDescriptorImageInfo {
-        .imageView = source,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      });
+      sourceInfos.push_back(
+        VkDescriptorImageInfo {
+          .imageView = source,
+          .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        });
     }
 
     VkDescriptorBufferInfo uniformBufferInfo {
@@ -479,22 +481,29 @@ void SpriteBatch::End(const std::source_location& loc) {
     VkClearAttachment clear {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .colorAttachment = 0,
-      .clearValue = {
-        .color = {
-          .float32 = {
-            (*mClearColor)[0],
-            (*mClearColor)[1],
-            (*mClearColor)[2],
-            (*mClearColor)[3],
-          },
+      .clearValue =
+        {
+          .color =
+            {
+              .float32 =
+                {
+                  (*mClearColor)[0],
+                  (*mClearColor)[1],
+                  (*mClearColor)[2],
+                  (*mClearColor)[3],
+                },
+            },
         },
-      },
     };
     VkClearRect clearRect {
-      .rect = {
-        { 0, 0,},
-        { mTargetDimensions.mWidth, mTargetDimensions.mHeight },
-      },
+      .rect =
+        {
+          {
+            0,
+            0,
+          },
+          {mTargetDimensions.mWidth, mTargetDimensions.mHeight},
+        },
       .layerCount = 1,
     };
     mVK->CmdClearAttachments(mCommandBuffer, 1, &clear, 1, &clearRect);
@@ -590,8 +599,8 @@ void SpriteBatch::CreateDescriptorSet() {
   static_assert(std::size(bindingFlags) == std::size(layoutBindings));
 
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
-    .sType
-    = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT,
+    .sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT,
     .bindingCount = std::size(bindingFlags),
     .pBindingFlags = bindingFlags,
   };
@@ -625,8 +634,8 @@ void SpriteBatch::CreateDescriptorSet() {
     .pPoolSizes = poolSizes,
   };
 
-  mDescriptorSet.mDescriptorPool
-    = mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
+  mDescriptorSet.mDescriptorPool =
+    mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
 
   VkDescriptorSetLayout layouts[] {mDescriptorSet.mLayout.get()};
   VkDescriptorSetAllocateInfo allocInfo {
@@ -641,12 +650,11 @@ void SpriteBatch::CreateDescriptorSet() {
 
 SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
   const VkInstanceCreateInfo& base)
-  : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_INSTANCE_EXTENSIONS) {
-}
+  : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_INSTANCE_EXTENSIONS) {}
 
 template <class T>
-concept has_descriptor_indexing_flag
-  = requires(T t) { t.descriptorIndexing = true; };
+concept has_descriptor_indexing_flag =
+  requires(T t) { t.descriptorIndexing = true; };
 
 static void EnableDescriptorIndexing(auto* it) {
   if constexpr (has_descriptor_indexing_flag<decltype(*it)>) {
@@ -679,8 +687,8 @@ SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
         continue;
       }
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR: {
-        auto it
-          = reinterpret_cast<VkPhysicalDeviceDynamicRenderingFeaturesKHR*>(mut);
+        auto it =
+          reinterpret_cast<VkPhysicalDeviceDynamicRenderingFeaturesKHR*>(mut);
         it->dynamicRendering = true;
         enabledDynamicRendering = true;
         continue;

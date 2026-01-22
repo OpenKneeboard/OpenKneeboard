@@ -15,12 +15,9 @@ namespace OpenKneeboard {
 
 static uint64_t sNextUniqueID = 0x1234abcdui64 << 32;
 
-uint64_t _UniqueIDImpl::GetAndIncrementNextValue() {
-  return sNextUniqueID++;
-}
+uint64_t _UniqueIDImpl::GetAndIncrementNextValue() { return sNextUniqueID++; }
 
-EventReceiver::EventReceiver() {
-}
+EventReceiver::EventReceiver() {}
 
 EventReceiver::~EventReceiver() {
   if (!mSenders.empty()) {
@@ -78,9 +75,7 @@ struct GlobalData {
     return true;
   }
 
-  void FinishEvent() {
-    this->Sub1();
-  }
+  void FinishEvent() { this->Sub1(); }
 
   void Shutdown(HANDLE event) {
     mShutdownEvent = event;
@@ -153,9 +148,7 @@ struct ThreadData {
 
 }// namespace
 
-void EventBase::Shutdown(HANDLE event) {
-  GlobalData::Get().Shutdown(event);
-}
+void EventBase::Shutdown(HANDLE event) { GlobalData::Get().Shutdown(event); }
 
 void EventBase::InvokeOrEnqueue(
   std::function<void()> func,

@@ -2,14 +2,15 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Pixels.hpp>
 
-#include <shims/winrt/base.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <d2d1.h>
 namespace OpenKneeboard {

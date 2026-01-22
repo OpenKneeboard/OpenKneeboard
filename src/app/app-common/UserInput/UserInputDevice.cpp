@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 #include <OpenKneeboard/UserInputButtonEvent.hpp>
 #include <OpenKneeboard/UserInputDevice.hpp>
@@ -14,9 +15,7 @@ UserInputDevice::UserInputDevice() {
     evButtonEvent, std::bind_front(&UserInputDevice::OnButtonEvent, this));
 }
 
-UserInputDevice::~UserInputDevice() {
-  this->RemoveAllEventListeners();
-}
+UserInputDevice::~UserInputDevice() { this->RemoveAllEventListeners(); }
 
 void UserInputDevice::OnButtonEvent(UserInputButtonEvent ev) {
   if (ev.IsPressed()) {

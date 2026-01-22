@@ -43,7 +43,8 @@ std::shared_ptr<DirectInputAdapter> DirectInputAdapter::Create(
 DirectInputAdapter::DirectInputAdapter(
   HWND hwnd,
   const DirectInputSettings& settings)
-  : mWindow(hwnd), mSettings(settings) {
+  : mWindow(hwnd),
+    mSettings(settings) {
   mID = gNextID++;
   SetWindowSubclass(
     hwnd,
@@ -107,8 +108,8 @@ OpenKneeboard::fire_and_forget DirectInputAdapter::UpdateDevices() {
     co_return;
   }
 
-  auto instances
-    = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
+  auto instances =
+    GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
   std::vector<task<void>> stoppingListeners;
 
@@ -218,8 +219,8 @@ DirectInputSettings DirectInputAdapter::GetSettings() const {
   std::shared_lock lock(mDevicesMutex);
   for (const auto& [deviceID, state]: mDevices) {
     const auto& device = state.mDevice;
-    const auto kind
-      = (device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
+    const auto kind =
+      (device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
       ? "Keyboard"
       : "GameController";
 

@@ -52,12 +52,9 @@ Reader::Reader(
     mPhysicalDevice(physicalDevice),
     mQueue(queue),
     mQueueFamilyIndex(queueFamilyIndex),
-    mAllocator(allocator) {
-}
+    mAllocator(allocator) {}
 
-Reader::~Reader() {
-  this->DropResources();
-}
+Reader::~Reader() { this->DropResources(); }
 
 std::expected<Frame, Frame::Error> Reader::MaybeGetMapped() {
   auto raw = MaybeGet();
@@ -162,8 +159,8 @@ Frame Reader::Map(SHM::Frame raw) {
       .memoryTypeIndex = *memoryType,
     };
 
-    vk.mMemory
-      = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+    vk.mMemory =
+      mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
 
     VkBindImageMemoryInfoKHR bindInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
@@ -180,15 +177,16 @@ Frame Reader::Map(SHM::Frame raw) {
       .image = vk.mImage.get(),
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
       .format = VK_FORMAT_B8G8R8A8_UNORM,
-      .subresourceRange = VkImageSubresourceRange {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = 1,
-        .layerCount = 1,
-      },
+      .subresourceRange =
+        VkImageSubresourceRange {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .levelCount = 1,
+          .layerCount = 1,
+        },
     };
 
-    vk.mImageView
-      = mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator);
+    vk.mImageView =
+      mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator);
   }
 
   if (!vk.mSemaphore) {
@@ -202,8 +200,8 @@ Frame Reader::Map(SHM::Frame raw) {
       .pNext = &typeCreateInfo,
     };
 
-    vk.mSemaphore
-      = mVK->make_unique<VkSemaphore>(mDevice, &createInfo, mAllocator);
+    vk.mSemaphore =
+      mVK->make_unique<VkSemaphore>(mDevice, &createInfo, mAllocator);
 
     VkImportSemaphoreWin32HandleInfoKHR importInfo {
       .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
@@ -238,8 +236,7 @@ void Reader::DropResources() {
 }
 
 InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)
-  : ExtendedCreateInfo(base, Reader::REQUIRED_INSTANCE_EXTENSIONS) {
-}
+  : ExtendedCreateInfo(base, Reader::REQUIRED_INSTANCE_EXTENSIONS) {}
 
 DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
   : ExtendedCreateInfo(base, Reader::REQUIRED_DEVICE_EXTENSIONS) {
@@ -256,9 +253,8 @@ DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
         continue;
       }
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR: {
-        auto it
-          = reinterpret_cast<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR*>(
-            mut);
+        auto it =
+          reinterpret_cast<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR*>(mut);
         it->timelineSemaphore = true;
         enabledTimelineSemaphores = true;
         continue;

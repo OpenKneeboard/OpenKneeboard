@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 // clang-format off
 #include "pch.h"
@@ -61,9 +62,7 @@ struct WindowPickerUIData : WindowPickerUIDataT<WindowPickerUIData> {
     return xaml_typename<OpenKneeboardApp::WindowPickerUIData>();
   }
 
-  auto GetCustomProperty(const auto&) {
-    return ICustomProperty {nullptr};
-  }
+  auto GetCustomProperty(const auto&) { return ICustomProperty {nullptr}; }
 
   auto GetIndexedProperty(const auto&, const auto&) {
     return ICustomProperty {nullptr};

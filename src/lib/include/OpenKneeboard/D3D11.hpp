@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/D3D.hpp>
@@ -25,13 +26,9 @@ class DeviceContextState final {
   DeviceContextState() = default;
   DeviceContextState(ID3D11Device1*);
 
-  inline bool IsValid() const noexcept {
-    return !!mState;
-  }
+  inline bool IsValid() const noexcept { return !!mState; }
 
-  inline auto Get() const noexcept {
-    return mState.get();
-  }
+  inline auto Get() const noexcept { return mState.get(); }
 
  private:
   winrt::com_ptr<ID3DDeviceContextState> mState;
@@ -50,11 +47,10 @@ class ScopedDeviceContextStateChange final {
   ~ScopedDeviceContextStateChange();
 
   ScopedDeviceContextStateChange() = delete;
-  ScopedDeviceContextStateChange(const ScopedDeviceContextStateChange&)
-    = delete;
+  ScopedDeviceContextStateChange(const ScopedDeviceContextStateChange&) =
+    delete;
   ScopedDeviceContextStateChange& operator=(
-    const ScopedDeviceContextStateChange&)
-    = delete;
+    const ScopedDeviceContextStateChange&) = delete;
 
  private:
   winrt::com_ptr<ID3D11DeviceContext1> mContext;

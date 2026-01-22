@@ -212,8 +212,7 @@ std::string TroubleshootingStore::GetAPIEventsDebugLogAsString() const {
         "No events as of {}", ReadableTime(std::chrono::system_clock::now())));
 }
 
-TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {
-}
+TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {}
 
 std::vector<TroubleshootingStore::DPrintEntry>
 TroubleshootingStore::DPrintReceiver::GetMessages() {

@@ -222,8 +222,8 @@ void SteamVRKneeboard::Tick() {
     return;
   }
   const auto hmdPose = *maybeHMDPose;
-  const auto vrLayers
-    = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
+  const auto vrLayers =
+    this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
 
   auto ctx = mDXR.mD3D11ImmediateContext.get();
   std::vector<size_t> activeLayers;
@@ -460,8 +460,8 @@ task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
   }
 
   const auto inactiveSleep = std::chrono::seconds(1);
-  const auto frameSleep
-    = std::chrono::microseconds((1000 * 1000) / FramesPerSecond);
+  const auto frameSleep =
+    std::chrono::microseconds((1000 * 1000) / FramesPerSecond);
 
   dprint("Initializing OpenVR support");
 

@@ -43,8 +43,8 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   if (gHaveInstance.test_and_set()) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
-  auto ret
-    = std::shared_ptr<TabletInputAdapter>(new TabletInputAdapter(kbs, tablet));
+  auto ret =
+    std::shared_ptr<TabletInputAdapter>(new TabletInputAdapter(kbs, tablet));
   ret->Init();
 
   return ret;
@@ -58,9 +58,7 @@ TabletInputAdapter::TabletInputAdapter(
   LoadSettings(settings);
 }
 
-void TabletInputAdapter::Init() {
-  this->StartOTDIPC();
-}
+void TabletInputAdapter::Init() { this->StartOTDIPC(); }
 
 bool TabletInputAdapter::HaveAnyTablet() const {
   if (!mOTDDevices.empty()) {

@@ -31,15 +31,15 @@ struct ExperimentalFeatureView {
   ExperimentalFeatureView() = delete;
   template <std::size_t N>
   constexpr ExperimentalFeatureView(const char (&name)[N], uint64_t version)
-    : mName(name), mVersion(version) {
-  }
+    : mName(name),
+      mVersion(version) {}
 
   ExperimentalFeatureView(const ExperimentalFeature& f)
-    : mName(f.mName), mVersion(f.mVersion) {
-  }
+    : mName(f.mName),
+      mVersion(f.mVersion) {}
 
-  constexpr bool operator==(const ExperimentalFeatureView&) const noexcept
-    = default;
+  constexpr bool operator==(const ExperimentalFeatureView&) const noexcept =
+    default;
 };
 void to_json(nlohmann::json& j, const ExperimentalFeatureView& v) {
   j = nlohmann::json::object({
@@ -181,7 +181,8 @@ constexpr std::array SupportedExperimentalFeatures {
 ChromiumPageSource::Client::Client(
   std::shared_ptr<ChromiumPageSource> pageSource,
   std::optional<KneeboardViewID> viewID)
-  : mPageSource(pageSource), mViewID(viewID) {
+  : mPageSource(pageSource),
+    mViewID(viewID) {
   mRenderHandler = new RenderHandler(pageSource);
   mShutdownEvent.reset(CreateEventW(nullptr, FALSE, FALSE, nullptr));
 }
@@ -205,8 +206,7 @@ void ChromiumPageSource::Client::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
 }
 
 void ChromiumPageSource::Client::OnDevToolsAgentDetached(
-  CefRefPtr<CefBrowser>) {
-}
+  CefRefPtr<CefBrowser>) {}
 
 CefRefPtr<CefLifeSpanHandler> ChromiumPageSource::Client::GetLifeSpanHandler() {
   return this;
@@ -382,8 +382,8 @@ fire_and_forget ChromiumPageSource::Client::OnJSAsyncRequest(
   CefProcessId process,
   CefRefPtr<CefProcessMessage> message) {
   const auto callID = message->GetArgumentList()->GetInt(0);
-  const auto args = nlohmann::json::parse(
-    message->GetArgumentList()->GetString(1).ToString());
+  const auto args =
+    nlohmann::json::parse(message->GetArgumentList()->GetString(1).ToString());
 
   this->SendJSAsyncResult(
     frame, process, callID, co_await JSInvoke<TMethod>(this, args));
@@ -692,10 +692,11 @@ task<JSAPIResult> ChromiumPageSource::Client::SetPages(
     state->mPages = pages;
   }
 
-  const auto messageBody = 
+  const auto messageBody =
     nlohmann::json {
       {"pages", pages},
-    }.dump();
+    }
+      .dump();
 
   {
     std::shared_lock lock(pageSource->mStateMutex);
@@ -840,9 +841,7 @@ task<JSAPIResult> ChromiumPageSource::Client::SendMessageToPeers(
   co_return {};
 }
 
-void ChromiumPageSource::Client::SetViewID(KneeboardViewID id) {
-  mViewID = id;
-}
+void ChromiumPageSource::Client::SetViewID(KneeboardViewID id) { mViewID = id; }
 
 void ChromiumPageSource::Client::PostCustomAction(
   std::string_view actionID,
@@ -896,11 +895,14 @@ task<JSAPIResult> ChromiumPageSource::Client::GetGraphicsTabletInfo() {
   const auto gcd = std::gcd(
     numeric_cast<uint32_t>(tablet->mMaxX),
     numeric_cast<uint32_t>(tablet->mMaxY));
-  auto suggested = Geometry2D::Size {
-    tablet->mMaxX / gcd,
-    tablet->mMaxY / gcd,
-  }.Rounded<uint32_t>().IntegerScaledToFit(
-    {1024, 1024}, Geometry2D::ScaleToFitMode::ShrinkOrGrow);
+  auto suggested =
+    Geometry2D::Size {
+      tablet->mMaxX / gcd,
+      tablet->mMaxY / gcd,
+    }
+      .Rounded<uint32_t>()
+      .IntegerScaledToFit(
+        {1024, 1024}, Geometry2D::ScaleToFitMode::ShrinkOrGrow);
 
   using TO = TabletOrientation;
   if (orientation == TO::RotateCW270 || orientation == TO::RotateCW90) {

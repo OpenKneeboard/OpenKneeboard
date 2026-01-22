@@ -109,14 +109,12 @@ void DCSBriefingTab::PushMissionOverview(
   std::string redCountries = _("Unknown.");
   try {
     redCountries = GetCountries(mission["coalition"]["red"]["country"]);
-  } catch (const LuaIndexError&) {
-  }
+  } catch (const LuaIndexError&) {}
 
   std::string blueCountries = _("Unknown.");
   try {
     blueCountries = GetCountries(mission["coalition"]["blue"]["country"]);
-  } catch (const LuaIndexError&) {
-  }
+  } catch (const LuaIndexError&) {}
 
   std::string_view alliedCountries;
   std::string_view enemyCountries;

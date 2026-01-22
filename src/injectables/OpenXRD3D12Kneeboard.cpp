@@ -90,8 +90,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   }
 
   uint32_t imageCount = 0;
-  nextResult
-    = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
+  nextResult =
+    oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
   if (imageCount == 0 || nextResult != XR_SUCCESS) {
     dprint("No images in swapchain: {}", nextResult);
     return nullptr;
@@ -129,8 +129,11 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     swapchain,
     SwapchainResources {
       .mDimensions = size,
-      .mRenderTargetViewHeap
-      = {mDevice.get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, imageCount},
+      .mRenderTargetViewHeap =
+        {mDevice.get(),
+         D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+         D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+         imageCount},
     });
 
   static std::atomic<uint64_t> sSwapChainCount;
@@ -179,8 +182,6 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   mGraphicsMemory->Commit(mCommandQueue.get());
 }
 
-SHM::Reader& OpenXRD3D12Kneeboard::GetSHM() {
-  return *mSHM;
-}
+SHM::Reader& OpenXRD3D12Kneeboard::GetSHM() { return *mSHM; }
 
 }// namespace OpenKneeboard

@@ -52,7 +52,8 @@ std::shared_ptr<PluginStore> KneeboardState::GetPluginStore() const {
 }
 
 KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
-  : mHwnd(hwnd), mDXResources(dxr) {
+  : mHwnd(hwnd),
+    mDXResources(dxr) {
   mQueueFlushedEvent = Win32::or_throw::CreateEventW(
     nullptr,
     /* bManualReset = */ TRUE,
@@ -134,8 +135,8 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     activity, "KneeboardState::GetViewRenderInfo()");
   std::vector<ViewRenderInfo> ret;
 
-  const auto count
-    = std::min<std::size_t>(mSettings.mViews.mViews.size(), MaxViewCount);
+  const auto count =
+    std::min<std::size_t>(mSettings.mViews.mViews.size(), MaxViewCount);
   if (count > mViews.size()) [[unlikely]] {
     fatal("View count mismatch");
   }
@@ -148,8 +149,8 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     const auto contentSize = view->GetPreferredSize();
 
     const auto layout = view->GetIPCRenderLayout();
-    const auto layoutSize
-      = (layout.mSize == PixelSize {}) ? ErrorPixelSize : layout.mSize;
+    const auto layoutSize =
+      (layout.mSize == PixelSize {}) ? ErrorPixelSize : layout.mSize;
     const auto contentLocation = (layout.mSize == PixelSize {})
       ? PixelRect {{0, 0}, ErrorPixelSize}
       : layout.mContent;
@@ -349,16 +350,16 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
     case UserAction::INCREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mUI.mTint;
       tint.mEnabled = true;
-      tint.mBrightness
-        = std::clamp(tint.mBrightness + tint.mBrightnessStep, 0.0f, 1.0f);
+      tint.mBrightness =
+        std::clamp(tint.mBrightness + tint.mBrightnessStep, 0.0f, 1.0f);
       this->SaveSettings();
       co_return;
     }
     case UserAction::DECREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mUI.mTint;
       tint.mEnabled = true;
-      tint.mBrightness
-        = std::clamp(tint.mBrightness - tint.mBrightnessStep, 0.0f, 1.0f);
+      tint.mBrightness =
+        std::clamp(tint.mBrightness - tint.mBrightnessStep, 0.0f, 1.0f);
       this->SaveSettings();
       co_return;
     }
@@ -534,8 +535,8 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     if (!mProfiles.mEnabled) {
       dprint("Asked to switch profiles, but profiles are disabled");
     }
-    auto it
-      = std::ranges::find(mProfiles.mProfiles, parsed.mName, &Profile::mName);
+    auto it =
+      std::ranges::find(mProfiles.mProfiles, parsed.mName, &Profile::mName);
     if (it == mProfiles.mProfiles.end()) {
       dprint(
         "Asked to switch to profile with ID '{}', but it doesn't exist",
@@ -569,8 +570,8 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
             parsed.mBrightness);
           co_return;
         }
-        tint.mBrightness
-          = std::clamp(tint.mBrightness + parsed.mBrightness, 0.0f, 1.0f);
+        tint.mBrightness =
+          std::clamp(tint.mBrightness + parsed.mBrightness, 0.0f, 1.0f);
         break;
     }
     this->SaveSettings();
@@ -683,9 +684,7 @@ task<void> KneeboardState::SetAppSettings(const AppSettings& value) {
   co_return;
 }
 
-TabsList* KneeboardState::GetTabsList() const {
-  return mTabsList.get();
-}
+TabsList* KneeboardState::GetTabsList() const { return mTabsList.get(); }
 
 InterprocessRenderer* KneeboardState::GetInterprocessRenderer() const {
   return mInterprocessRenderer.get();
@@ -704,9 +703,7 @@ std::optional<GameProcess> KneeboardState::GetMostRecentGame() const {
   return mMostRecentGame;
 }
 
-ProfileSettings KneeboardState::GetProfileSettings() const {
-  return mProfiles;
-}
+ProfileSettings KneeboardState::GetProfileSettings() const { return mProfiles; }
 
 task<void> KneeboardState::SetProfileSettings(
   ProfileSettings profiles,
@@ -741,8 +738,8 @@ task<void> KneeboardState::SetProfileSettings(
     co_return;
   }
 
-  const auto newSettings
-    = Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile);
+  const auto newSettings =
+    Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile);
   mSettings = newSettings;
 
   // Avoid partially overwriting the new profile with
@@ -888,8 +885,8 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
   }
   const auto profiles = mProfiles.GetSortedProfiles();
   using Profile = ProfileSettings::Profile;
-  const auto it
-    = std::ranges::find(profiles, mProfiles.mActiveProfile, &Profile::mGuid);
+  const auto it =
+    std::ranges::find(profiles, mProfiles.mActiveProfile, &Profile::mGuid);
   if (it == profiles.end()) {
     dprint(
       "Current profile '{}' is not in profiles list.",
@@ -897,8 +894,8 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
     co_return;
   }
   const auto oldIdx = it - profiles.begin();
-  const auto nextIdx
-    = (direction == Direction::Previous) ? (oldIdx - 1) : (oldIdx + 1);
+  const auto nextIdx =
+    (direction == Direction::Previous) ? (oldIdx - 1) : (oldIdx + 1);
   if (!mProfiles.mLoopProfiles) {
     if (nextIdx < 0 || nextIdx >= count) {
       dprint("Ignoring profile switch request, looping disabled");
@@ -907,23 +904,19 @@ task<void> KneeboardState::SwitchProfile(Direction direction) {
   }
 
   auto settings = mProfiles;
-  settings.mActiveProfile
-    = (profiles.begin() + ((nextIdx + count) % count))->mGuid;
+  settings.mActiveProfile =
+    (profiles.begin() + ((nextIdx + count) % count))->mGuid;
   co_await this->SetProfileSettings(settings);
 }
 
-bool KneeboardState::IsRepaintNeeded() const {
-  return mNeedsRepaint;
-}
+bool KneeboardState::IsRepaintNeeded() const { return mNeedsRepaint; }
 
 void KneeboardState::SetRepaintNeeded() {
   OPENKNEEBOARD_TraceLoggingWrite("KneeboardState::SetRepaintNeeded()");
   mNeedsRepaint = true;
 }
 
-void KneeboardState::Repainted() {
-  mNeedsRepaint = false;
-}
+void KneeboardState::Repainted() { mNeedsRepaint = false; }
 
 void KneeboardState::lock() {
   if (mUniqueLockThread != std::this_thread::get_id()) {
@@ -956,17 +949,11 @@ void KneeboardState::unlock() {
   }
 }
 
-void KneeboardState::lock_shared() {
-  mMutex.lock_shared();
-}
+void KneeboardState::lock_shared() { mMutex.lock_shared(); }
 
-bool KneeboardState::try_lock_shared() {
-  return mMutex.try_lock_shared();
-}
+bool KneeboardState::try_lock_shared() { return mMutex.try_lock_shared(); }
 
-void KneeboardState::unlock_shared() {
-  mMutex.unlock_shared();
-}
+void KneeboardState::unlock_shared() { mMutex.unlock_shared(); }
 
 void KneeboardState::InitializeViews() {
   const auto oldViews = mViews;
@@ -991,8 +978,8 @@ void KneeboardState::InitializeViews() {
     view->SetTabs(tabs);
 
     if (config.mDefaultTabID != winrt::guid {}) {
-      auto tabIt
-        = std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
+      auto tabIt =
+        std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
       if (tabIt != tabs.end()) {
         dprint(
           "Setting view '{}' ({}) to default tab '{}' ({})",

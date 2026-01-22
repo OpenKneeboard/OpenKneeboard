@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <array>
@@ -33,11 +34,9 @@ struct Vertex {
    public:
     constexpr Position() = default;
     constexpr Position(const std::array<float, 2>& pos_2d)
-      : std::array<float, 4> {pos_2d[0], pos_2d[0], 0, 1} {
-    }
+      : std::array<float, 4> {pos_2d[0], pos_2d[0], 0, 1} {}
 
-    constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {
-    }
+    constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {}
   };
   Position mPosition;
   std::array<float, 4> mColor {};

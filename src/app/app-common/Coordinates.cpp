@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/Coordinates.hpp>
 
@@ -38,8 +39,8 @@ std::string DMFormat(GeoReal angle, char pos, char neg) {
 }
 
 std::string MGRSFormat(GeoReal latitude, GeoReal longitude) {
-  const auto raw
-    = GeographicLib::GeoCoords(latitude, longitude).MGRSRepresentation(0);
+  const auto raw =
+    GeographicLib::GeoCoords(latitude, longitude).MGRSRepresentation(0);
   // e.g. 37TEHnnnnneeeee
   //                ^ -5
   //           ^ -10

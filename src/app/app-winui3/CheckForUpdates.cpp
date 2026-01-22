@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 // clang-format off
 #include "pch.h"
@@ -240,8 +241,8 @@ task<UpdateResult> CheckForUpdates(
       co_return UpdateResult::NotInstallingUpdate;
     }
   }
-  const auto updateURL
-    = updateAsset->at("browser_download_url").get<std::string_view>();
+  const auto updateURL =
+    updateAsset->at("browser_download_url").get<std::string_view>();
   dprint("Update installer found at {}", updateURL);
 
   ContentDialogResult result {};
@@ -312,8 +313,8 @@ task<UpdateResult> CheckForUpdates(
     dialog.Content(layout);
     dialog.CloseButtonText(_(L"Cancel"));
     bool cancelled = false;
-    auto dialogAwaitable
-      = [](bool* cancelled, ContentDialog dialog) -> task<void> {
+    auto dialogAwaitable =
+      [](bool* cancelled, ContentDialog dialog) -> task<void> {
       const auto result = co_await dialog.ShowAsync();
       if (result == ContentDialogResult::None) {
         *cancelled = true;
@@ -362,10 +363,11 @@ task<UpdateResult> CheckForUpdates(
         co_await uiThread;
         progressRing.IsIndeterminate(false);
         progressRing.Value((100.0 * bytesRead) / totalBytes);
-        progressText.Text(std::format(
-          _(L"{:0.2f}MiB of {:0.2f}MiB"),
-          bytesRead / (1024.0 * 1024),
-          totalBytes / (1024.0 * 1024)));
+        progressText.Text(
+          std::format(
+            _(L"{:0.2f}MiB of {:0.2f}MiB"),
+            bytesRead / (1024.0 * 1024),
+            totalBytes / (1024.0 * 1024)));
 
       } while (readBuffer.Length() > 0 && !cancelled);
       of.close();

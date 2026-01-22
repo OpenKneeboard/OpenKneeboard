@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DXResources.hpp>
@@ -10,16 +11,16 @@
 #include <OpenKneeboard/RenderTargetID.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
-#include <Windows.h>
-
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
+#include <Windows.h>
+#include <d3d11.h>
+
 #include <memory>
 
 #include <d2d1_3.h>
-#include <d3d11.h>
 
 namespace OpenKneeboard {
 
@@ -177,30 +178,26 @@ class RenderContext {
  public:
   RenderContext() = delete;
   constexpr RenderContext(RenderTarget* rt, KneeboardView* view)
-    : mRenderTarget(rt), mKneeboardView(view) {
-  }
+    : mRenderTarget(rt),
+      mKneeboardView(view) {}
 
   inline auto d2d(
-    const std::source_location& caller
-    = std::source_location::current()) const noexcept {
+    const std::source_location& caller =
+      std::source_location::current()) const noexcept {
     return mRenderTarget->d2d(caller);
   }
 
   inline auto d3d(
-    const std::source_location& caller
-    = std::source_location::current()) const noexcept {
+    const std::source_location& caller =
+      std::source_location::current()) const noexcept {
     return mRenderTarget->d3d(caller);
   }
 
-  constexpr auto GetRenderTarget() const noexcept {
-    return mRenderTarget;
-  }
+  constexpr auto GetRenderTarget() const noexcept { return mRenderTarget; }
 
   /// WARNING: may be nullptr for renders that aren't tied to a particular view,
   /// e.g. caches or navigation preview
-  constexpr auto GetKneeboardView() const noexcept {
-    return mKneeboardView;
-  }
+  constexpr auto GetKneeboardView() const noexcept { return mKneeboardView; }
 
  private:
   // Represents the GPU texture that is being rendered to

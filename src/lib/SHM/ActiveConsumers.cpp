@@ -167,9 +167,7 @@ ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
   });
 }
 
-ActiveConsumers::T ActiveConsumers::NotVROrViewer() const {
-  return {};
-}
+ActiveConsumers::T ActiveConsumers::NotVROrViewer() const { return {}; }
 
 ActiveConsumers::T ActiveConsumers::NotVR() const {
   const auto real = NotVROrViewer();

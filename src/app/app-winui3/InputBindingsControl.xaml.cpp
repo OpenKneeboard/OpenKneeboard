@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 // clang-format off
 #include "pch.h"
@@ -64,12 +65,12 @@ void InputBindingsControl::AppendUIRow(
   auto grid = ContentGrid();
   grid.RowDefinitions().Append({});
   const auto row = static_cast<int32_t>(mRows.size());
-  auto AddToGrid
-    = [&](Microsoft::UI::Xaml::FrameworkElement element, int32_t column) {
-        grid.Children().Append(element);
-        Grid::SetColumn(element, column);
-        Grid::SetRow(element, row);
-      };
+  auto AddToGrid =
+    [&](Microsoft::UI::Xaml::FrameworkElement element, int32_t column) {
+      grid.Children().Append(element);
+      Grid::SetColumn(element, column);
+      Grid::SetRow(element, row);
+    };
 
   TextBlock labelText;
   labelText.Style(this->Resources()
@@ -100,12 +101,9 @@ void InputBindingsControl::AppendUIRow(
   mRows.emplace(action, Row {bindingText, bindButton, clearButton});
 }
 
-InputBindingsControl::~InputBindingsControl() {
-}
+InputBindingsControl::~InputBindingsControl() {}
 
-hstring InputBindingsControl::DeviceID() {
-  return mDeviceID;
-}
+hstring InputBindingsControl::DeviceID() { return mDeviceID; }
 
 void InputBindingsControl::DeviceID(const hstring& value) {
   mDeviceID = value;
@@ -135,10 +133,10 @@ OpenKneeboard::fire_and_forget InputBindingsControl::PromptForBinding(
   auto stayingAlive = this->get_strong();
   auto weakThis = this->get_weak();
 
-  const bool isMouse
-    = mDevice->GetID() == to_string(to_hstring({GUID_SysMouse}));
-  const bool isKeyboard
-    = mDevice->GetID() == to_string(to_hstring({GUID_SysKeyboard}));
+  const bool isMouse =
+    mDevice->GetID() == to_string(to_hstring({GUID_SysMouse}));
+  const bool isKeyboard =
+    mDevice->GetID() == to_string(to_hstring({GUID_SysKeyboard}));
 
   EventHookToken hookToken;
   auto unhook = scope_exit(
@@ -178,9 +176,10 @@ OpenKneeboard::fire_and_forget InputBindingsControl::PromptForBinding(
         [](auto strongThis, auto dialog, const auto bindingDesc)
           -> OpenKneeboard::fire_and_forget {
           co_await strongThis->mUIThread;
-          dialog.Content(box_value(to_hstring(std::format(
-            _("Press then release buttons to bind input.\n\n{}"),
-            bindingDesc))));
+          dialog.Content(box_value(to_hstring(
+            std::format(
+              _("Press then release buttons to bind input.\n\n{}"),
+              bindingDesc))));
         }(strongThis, dialog, bindingDesc);
         return EventBase::HookResult::STOP_PROPAGATION;
       }
@@ -215,15 +214,15 @@ OpenKneeboard::fire_and_forget InputBindingsControl::PromptForBinding(
     bindings.erase(sameAction);
   }
   while (true) {
-    auto conflictingButtons
-      = std::ranges::find_if(bindings, [&](const auto& it) {
-          for (auto button: it.GetButtonIDs()) {
-            if (!pressedButtons.contains(button)) {
-              return false;
-            }
+    auto conflictingButtons =
+      std::ranges::find_if(bindings, [&](const auto& it) {
+        for (auto button: it.GetButtonIDs()) {
+          if (!pressedButtons.contains(button)) {
+            return false;
           }
-          return true;
-        });
+        }
+        return true;
+      });
     if (conflictingButtons == bindings.end()) {
       break;
     }

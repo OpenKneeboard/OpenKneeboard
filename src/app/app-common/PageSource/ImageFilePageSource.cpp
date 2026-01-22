@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -56,10 +57,10 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
     CLSID clsID {};
     winrt::check_hresult(info->GetCLSID(&clsID));
 
-    const auto name = variable_sized_string_mem_fn(
-      info, &IWICBitmapCodecInfo::GetFriendlyName);
-    const auto author
-      = variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
+    const auto name =
+      variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetFriendlyName);
+    const auto author =
+      variable_sized_string_mem_fn(info, &IWICBitmapCodecInfo::GetAuthor);
     const auto extensions = variable_sized_string_mem_fn(
       info, &IWICBitmapCodecInfo::GetFileExtensions);
 
@@ -99,16 +100,16 @@ GetFileFormatProvidersUncached(IWICImagingFactory* wic) {
       continue;
     }
 
-    const ImageFilePageSource::FileFormatProvider provider{
+    const ImageFilePageSource::FileFormatProvider provider {
       .mGuid = {clsID},
       .mContainerGuid = containerGUID,
       .mVendorGuid = vendorGUID,
-      .mExtensions = (std::views::split(*extensions, L',')
-        | std::views::transform(
-          [](auto range) {
-            return winrt::to_string({range.begin(), range.end()});
-          })
-        | std::ranges::to<std::vector>()),
+      .mExtensions =
+        (std::views::split(*extensions, L',')
+         | std::views::transform([](auto range) {
+             return winrt::to_string({range.begin(), range.end()});
+           })
+         | std::ranges::to<std::vector>()),
     };
     ret.push_back(provider);
   }
@@ -136,8 +137,7 @@ std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
 }
 
 ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr)
-  : mDXR(dxr) {
-}
+  : mDXR(dxr) {}
 
 void ImageFilePageSource::SetPaths(
   const std::vector<std::filesystem::path>& paths) {
@@ -189,9 +189,7 @@ std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
   return {view.begin(), view.end()};
 }
 
-ImageFilePageSource::~ImageFilePageSource() {
-  this->RemoveAllEventListeners();
-}
+ImageFilePageSource::~ImageFilePageSource() { this->RemoveAllEventListeners(); }
 
 bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
   return ImageFilePageSource::CanOpenFile(mDXR, path);
@@ -200,8 +198,8 @@ bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
 bool ImageFilePageSource::CanOpenFile(
   const audited_ptr<DXResources>& dxr,
   const std::filesystem::path& path) {
-  auto decoder
-    = ImageFilePageSource::GetDecoderFromFileName(dxr->mWIC.get(), path);
+  auto decoder =
+    ImageFilePageSource::GetDecoderFromFileName(dxr->mWIC.get(), path);
   if (!decoder) {
     return false;
   }
@@ -242,10 +240,10 @@ winrt::com_ptr<IWICBitmapDecoder> ImageFilePageSource::GetDecoderFromFileName(
   };
 
   const auto providers = ImageFilePageSource::GetFileFormatProviders(wic);
-  const auto provider
-    = std::ranges::find_if(providers, [&](const auto& provider) {
-        return std::ranges::any_of(provider.mExtensions, hasExtension);
-      });
+  const auto provider =
+    std::ranges::find_if(providers, [&](const auto& provider) {
+      return std::ranges::any_of(provider.mExtensions, hasExtension);
+    });
   if (provider == providers.end()) {
     return nullptr;
   }
@@ -297,13 +295,13 @@ task<void> ImageFilePageSource::RenderPage(
   }
   const auto pageSize = bitmap->GetPixelSize();
 
-  const auto renderSize
-    = PixelSize(pageSize.width, pageSize.height).ScaledToFit(rect.mSize);
+  const auto renderSize =
+    PixelSize(pageSize.width, pageSize.height).ScaledToFit(rect.mSize);
 
-  const auto renderLeft
-    = rect.Left() + ((rect.Width() - renderSize.Width()) / 2);
-  const auto renderTop
-    = rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
+  const auto renderLeft =
+    rect.Left() + ((rect.Width() - renderSize.Width()) / 2);
+  const auto renderTop =
+    rect.Top() + ((rect.Height() - renderSize.Height()) / 2);
 
   auto ctx = rc.d2d();
   ctx->DrawBitmap(
@@ -395,16 +393,16 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
 
   // For WIC, this MUST be B8G8R8A8_UNORM, not _UNORM_SRGB, or the copy
   // silently fails.
-  winrt::check_hresult(
-    ctx->CreateBitmap(
-      sharedBitmap->GetPixelSize(),
-      D2D1_BITMAP_PROPERTIES{
-        .pixelFormat = {
+  winrt::check_hresult(ctx->CreateBitmap(
+    sharedBitmap->GetPixelSize(),
+    D2D1_BITMAP_PROPERTIES {
+      .pixelFormat =
+        {
           .format = DXGI_FORMAT_B8G8R8A8_UNORM,
           .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
         },
-      },
-      page.mBitmap.put()));
+    },
+    page.mBitmap.put()));
 
   if (!page.mBitmap) {
     return {};

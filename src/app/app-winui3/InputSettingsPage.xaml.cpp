@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "InputSettingsPage.xaml.h"
@@ -32,9 +33,7 @@ InputSettingsPage::InputSettingsPage() {
       | bind_refs_front(this) | bind_winrt_context(mUIThread));
 }
 
-InputSettingsPage::~InputSettingsPage() {
-  this->RemoveAllEventListeners();
-}
+InputSettingsPage::~InputSettingsPage() { this->RemoveAllEventListeners(); }
 
 OpenKneeboard::fire_and_forget InputSettingsPage::RestoreDefaults(
   IInspectable,
@@ -42,9 +41,9 @@ OpenKneeboard::fire_and_forget InputSettingsPage::RestoreDefaults(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
-  dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default input settings, "
-                           "removing your preferences?"))));
+  dialog.Content(box_value(to_hstring(
+    _("Do you want to restore the default input settings, "
+      "removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);

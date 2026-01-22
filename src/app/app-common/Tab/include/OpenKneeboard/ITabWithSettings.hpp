@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "ITab.hpp"
@@ -27,8 +28,8 @@ struct TabSettingsTraits<T> {
 };
 
 template <class T>
-concept tab_with_deserializable_settings
-  = std::derived_from<T, ITabWithSettings>
+concept tab_with_deserializable_settings =
+  std::derived_from<T, ITabWithSettings>
   && json_deserializable<typename T::Settings>;
 
 template <tab_with_deserializable_settings T>

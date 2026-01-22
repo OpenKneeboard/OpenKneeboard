@@ -22,7 +22,8 @@ std::shared_ptr<ConfirmationUILayer> ConfirmationUILayer::Create(
 ConfirmationUILayer::ConfirmationUILayer(
   const audited_ptr<DXResources>& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item)
-  : mDXResources(dxr), mItem(item) {
+  : mDXResources(dxr),
+    mItem(item) {
   auto d2d = dxr->mD2DDeviceContext.get();
 
   d2d->CreateSolidColorBrush(
@@ -41,9 +42,7 @@ ConfirmationUILayer::ConfirmationUILayer(
     mHoverButtonFillBrush.put());
 }
 
-ConfirmationUILayer::~ConfirmationUILayer() {
-  RemoveAllEventListeners();
-}
+ConfirmationUILayer::~ConfirmationUILayer() { RemoveAllEventListeners(); }
 
 void ConfirmationUILayer::PostCursorEvent(
   const NextList& next,
@@ -113,8 +112,8 @@ task<void> ConfirmationUILayer::Render(
 
   const auto [hoverButton, buttons] = dialog.mButtons->GetState();
   for (const auto& button: buttons) {
-    const auto rr
-      = D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin);
+    const auto rr =
+      D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin);
     if (button == hoverButton) {
       d2d->FillRoundedRectangle(rr, mHoverButtonFillBrush.get());
     }
@@ -132,10 +131,10 @@ task<void> ConfirmationUILayer::Render(
 void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
   const auto canvasSize = canvasRect.mSize;
 
-  const auto titleFontSize
-    = std::round(canvasSize.mHeight * (HeaderPercent / 100.0f) * 0.5f);
-  const auto maxTextWidth
-    = std::floor(std::min<float>(titleFontSize * 40, canvasSize.mWidth * 0.8f));
+  const auto titleFontSize =
+    std::round(canvasSize.mHeight * (HeaderPercent / 100.0f) * 0.5f);
+  const auto maxTextWidth =
+    std::floor(std::min<float>(titleFontSize * 40, canvasSize.mWidth * 0.8f));
 
   auto dwf = mDXResources->mDWriteFactory;
 
@@ -181,8 +180,8 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
   buttonFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
   buttonFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
-  auto titleTextInfo = GetTextRenderInfo(
-    titleFormat, maxTextWidth, mItem->GetConfirmationTitle());
+  auto titleTextInfo =
+    GetTextRenderInfo(titleFormat, maxTextWidth, mItem->GetConfirmationTitle());
   auto detailsTextInfo = GetTextRenderInfo(
     detailsFormat, maxTextWidth, mItem->GetConfirmationDescription());
   auto confirmButtonTextInfo = GetTextRenderInfo(
@@ -268,8 +267,8 @@ void ConfirmationUILayer::UpdateLayout(const PixelRect& canvasRect) {
     confirmButtonSize.height,
   };
 
-  const auto buttonsWidth
-    = confirmButtonSize.width + cancelButtonSize.width + margin;
+  const auto buttonsWidth =
+    confirmButtonSize.width + cancelButtonSize.width + margin;
 
   cursor.x = dialogRect.left + ((dialogSize.width - buttonsWidth) / 2);
 

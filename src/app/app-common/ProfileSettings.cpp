@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/ProfileSettings.hpp>
 #include <OpenKneeboard/Settings.hpp>
@@ -154,8 +155,8 @@ void from_json(const nlohmann::json& j, ProfileSettings& v) {
         v.mProfiles.push_back(profile);
       }
       v.mDefaultProfile = oldValue.at("default").mGuid;
-      v.mActiveProfile
-        = oldValue.at(j.at("ActiveProfile").get<std::string>()).mGuid;
+      v.mActiveProfile =
+        oldValue.at(j.at("ActiveProfile").get<std::string>()).mGuid;
       v.mMigrated = true;
     }
   }

@@ -36,13 +36,13 @@ static HWND gTopLevelWindow {};
 
 auto& FunctionTable() {
   static struct {
-    decltype(&GetForegroundWindow) gPFN_GetForegroundWindow
-      = &GetForegroundWindow;
-    decltype(&SetForegroundWindow) gPFN_SetForegroundWindow
-      = &SetForegroundWindow;
+    decltype(&GetForegroundWindow) gPFN_GetForegroundWindow =
+      &GetForegroundWindow;
+    decltype(&SetForegroundWindow) gPFN_SetForegroundWindow =
+      &SetForegroundWindow;
     decltype(&GetCursorPos) gPFN_GetCursorPos = &GetCursorPos;
-    decltype(&GetPhysicalCursorPos) gPFN_GetPhysicalCursorPos
-      = &GetPhysicalCursorPos;
+    decltype(&GetPhysicalCursorPos) gPFN_GetPhysicalCursorPos =
+      &GetPhysicalCursorPos;
     decltype(&GetMessagePos) gPFN_GetMessagePos = &GetMessagePos;
     decltype(&GetFocus) gPFN_GetFocus = &GetFocus;
     decltype(&IsWindowEnabled) gPFN_IsWindowEnabled = &IsWindowEnabled;
@@ -172,8 +172,8 @@ static bool ProcessControlMessage(
   unsigned int message,
   const WPARAM wParam,
   const LPARAM lParam) {
-  static UINT sControlMessage
-    = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+  static UINT sControlMessage =
+    RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
   if (message != sControlMessage) {
     return false;

@@ -29,9 +29,7 @@ struct PixelFormat {
   DWORD dwBBitMask {};
   DWORD dwABitMask {};
 };
-constexpr bool supports_bitflags(PixelFormat::Flags) {
-  return true;
-}
+constexpr bool supports_bitflags(PixelFormat::Flags) { return true; }
 
 // DDS_HEADER
 struct Header {
@@ -66,12 +64,8 @@ struct Header {
   DWORD dwReserved2;
 };
 
-constexpr bool supports_bitflags(Header::Flags) {
-  return true;
-}
+constexpr bool supports_bitflags(Header::Flags) { return true; }
 
-constexpr bool supports_bitflags(Header::Caps) {
-  return true;
-}
+constexpr bool supports_bitflags(Header::Caps) { return true; }
 
 }// namespace OpenKneeboard::DDS

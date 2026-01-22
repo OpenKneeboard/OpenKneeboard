@@ -70,8 +70,8 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
   const std::function<void( \
     OpenKneeboard::UncategorizedTraceLoggingThreadActivity&)> \
-    OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY) \
-    = [&, loc = std::source_location::current()]( \
+    OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY) = \
+      [&, loc = std::source_location::current()]( \
         OpenKneeboard::UncategorizedTraceLoggingThreadActivity& activity) { \
         TraceLoggingWriteStart( \
           activity, \
@@ -109,9 +109,7 @@ using UncategorizedTraceLoggingThreadActivity = TraceLoggingThreadActivity<
         TraceLoggingWriteStop(*this, OKBTL_NAME); \
       } \
     } \
-    void CancelAutoStop() { \
-      mAutoStop = false; \
-    } \
+    void CancelAutoStop() { mAutoStop = false; } \
     _OPENKNEEBOARD_TRACELOGGING_IMPL_StopWithResult(OKBTL_NAME, int); \
     _OPENKNEEBOARD_TRACELOGGING_IMPL_StopWithResult(OKBTL_NAME, const char*); \
 \

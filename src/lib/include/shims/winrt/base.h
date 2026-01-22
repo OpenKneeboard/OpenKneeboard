@@ -49,8 +49,8 @@ namespace OpenKneeboard {
 
 #if __has_include(<winrt/Microsoft.UI.Dispatching.h>)
 using DispatcherQueue = winrt::Microsoft::UI::Dispatching::DispatcherQueue;
-using DispatcherQueueController
-  = winrt::Microsoft::UI::Dispatching::DispatcherQueueController;
+using DispatcherQueueController =
+  winrt::Microsoft::UI::Dispatching::DispatcherQueueController;
 
 template <class... Args>
 inline void disown_later(Args&&... args) {

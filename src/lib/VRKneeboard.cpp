@@ -59,8 +59,9 @@ VRKneeboard::Sizes VRKneeboard::GetSizes(
 
   return {
     .mNormalSize = {virtualWidth, virtualHeight},
-    .mZoomedSize
-    = {virtualWidth * layer.mVR.mZoomScale, virtualHeight * layer.mVR.mZoomScale},
+    .mZoomedSize =
+      {virtualWidth * layer.mVR.mZoomScale,
+       virtualHeight * layer.mVR.mZoomScale},
   };
 }
 
@@ -116,10 +117,10 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
   }
   const auto activeLayerID = config.mGlobalInputLayerID;
 
-  const auto activeIt
-    = std::ranges::find(ret, activeLayerID, [](const Layer& layer) {
-        return layer.mLayerConfig->mLayerID;
-      });
+  const auto activeIt =
+    std::ranges::find(ret, activeLayerID, [](const Layer& layer) {
+      return layer.mLayerConfig->mLayerID;
+    });
   if (
     (activeIt != ret.end())
     && (activeIt->mRenderParameters.mIsLookingAtKneeboard)) {
@@ -144,13 +145,13 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
   const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
-  const auto isLookingAtKneeboard
-    = this->IsLookingAtKneeboard(config, layer, hmdPose, kneeboardPose);
+  const auto isLookingAtKneeboard =
+    this->IsLookingAtKneeboard(config, layer, hmdPose, kneeboardPose);
 
   return {
     .mKneeboardPose = kneeboardPose,
-    .mKneeboardSize
-    = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
+    .mKneeboardSize =
+      this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
     .mKneeboardOpacity = isLookingAtKneeboard ? layer.mVR.mOpacity.mGaze
                                               : layer.mVR.mOpacity.mNormal,
     .mIsLookingAtKneeboard = isLookingAtKneeboard,
@@ -171,8 +172,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
   }
 
   const auto sizes = this->GetSizes(config.mVR, layer);
-  auto currentSize
-    = isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
+  auto currentSize =
+    isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 
   currentSize.x *= layer.mVR.mGazeTargetScale.mHorizontal;
   currentSize.y *= layer.mVR.mGazeTargetScale.mVertical;

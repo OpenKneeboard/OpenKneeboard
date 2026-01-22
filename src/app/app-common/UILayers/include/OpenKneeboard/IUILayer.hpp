@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
@@ -36,15 +37,13 @@ class IUILayer {
     const NextList&,
     const Context&,
     KneeboardViewID,
-    const CursorEvent&)
-    = 0;
+    const CursorEvent&) = 0;
 
   [[nodiscard]] virtual task<void> Render(
     const RenderContext&,
     const NextList&,
     const Context&,
-    const PixelRect&)
-    = 0;
+    const PixelRect&) = 0;
 
   struct Metrics {
     PreferredSize mPreferredSize {};
@@ -58,8 +57,7 @@ class IUILayer {
       PixelRect contentArea)
       : mPreferredSize(preferredSize),
         mNextArea(nextArea),
-        mContentArea(contentArea) {
-    }
+        mContentArea(contentArea) {}
   };
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const = 0;

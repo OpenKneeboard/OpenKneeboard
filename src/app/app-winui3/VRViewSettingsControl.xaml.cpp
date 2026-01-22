@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "VRViewSettingsControl.xaml.h"
@@ -36,9 +37,7 @@ VRViewSettingsControl::~VRViewSettingsControl() {
   this->RemoveAllEventListeners();
 }
 
-winrt::guid VRViewSettingsControl::ViewID() {
-  return mViewID;
-}
+winrt::guid VRViewSettingsControl::ViewID() { return mViewID; }
 
 IInspectable VRViewSettingsControl::SelectedKind() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
@@ -217,8 +216,8 @@ IInspectable VRViewSettingsControl::SelectedDefaultTab() {
 
 Visibility VRViewSettingsControl::TooManyViewsVisibility() {
   const auto settings = mKneeboard->GetViewsSettings();
-  const auto it
-    = std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
+  const auto it =
+    std::ranges::find(settings.mViews, mViewID, &ViewSettings::mGuid);
   if (it - settings.mViews.begin() >= MaxViewCount) {
     return Visibility::Visible;
   }
@@ -227,8 +226,8 @@ Visibility VRViewSettingsControl::TooManyViewsVisibility() {
 
 OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
   IInspectable item) {
-  const auto guid
-    = unbox_value_or<winrt::guid>(item.as<UIDataItem>().Tag(), {});
+  const auto guid =
+    unbox_value_or<winrt::guid>(item.as<UIDataItem>().Tag(), {});
 
   {
     auto settings = mKneeboard->GetViewsSettings();
@@ -238,8 +237,8 @@ OpenKneeboard::fire_and_forget VRViewSettingsControl::SelectedDefaultTab(
   }
 
   const auto viewStates = mKneeboard->GetAllViewsInFixedOrder();
-  const auto stateIt
-    = std::ranges::find(viewStates, mViewID, &KneeboardView::GetPersistentGUID);
+  const auto stateIt =
+    std::ranges::find(viewStates, mViewID, &KneeboardView::GetPersistentGUID);
   if (stateIt == viewStates.end()) {
     co_return;
   }

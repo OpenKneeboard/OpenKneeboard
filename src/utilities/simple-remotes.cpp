@@ -18,8 +18,8 @@ int main(const UserAction action, const Args& args) {
       APIEvent {APIEvent::EVT_REMOTE_USER_ACTION, ActionString}.Send();
       return EXIT_SUCCESS;
     default: {
-      const auto single = nlohmann::json::array(
-        {APIEvent::EVT_REMOTE_USER_ACTION, ActionString});
+      const auto single =
+        nlohmann::json::array({APIEvent::EVT_REMOTE_USER_ACTION, ActionString});
 
       auto payload = nlohmann::json::array();
       for (std::size_t i = 0; i < count; ++i) {

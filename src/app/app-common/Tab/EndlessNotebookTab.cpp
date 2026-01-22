@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DoodleRenderer.hpp>
 #include <OpenKneeboard/EndlessNotebookTab.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
@@ -19,7 +20,9 @@ EndlessNotebookTab::EndlessNotebookTab(
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)
-  : TabBase(persistentID, title), mDXR(dxr), mKneeboard(kbs) {
+  : TabBase(persistentID, title),
+    mDXR(dxr),
+    mKneeboard(kbs) {
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
 
   AddEventListener(
@@ -63,25 +66,19 @@ task<std::shared_ptr<EndlessNotebookTab>> EndlessNotebookTab::Create(
   co_return ret;
 }
 
-EndlessNotebookTab::~EndlessNotebookTab() {
-  this->RemoveAllEventListeners();
-}
+EndlessNotebookTab::~EndlessNotebookTab() { this->RemoveAllEventListeners(); }
 
 nlohmann::json EndlessNotebookTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
-std::string EndlessNotebookTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string EndlessNotebookTab::GetGlyph() const { return GetStaticGlyph(); }
 
 std::string EndlessNotebookTab::GetStaticGlyph() {
   return "\ue8ed";// RepeatOne
 }
 
-std::filesystem::path EndlessNotebookTab::GetPath() const {
-  return mPath;
-}
+std::filesystem::path EndlessNotebookTab::GetPath() const { return mPath; }
 
 task<void> EndlessNotebookTab::Reload() {
   const scope_exit contentChanged([this]() { evContentChangedEvent.Emit(); });
@@ -145,13 +142,9 @@ void EndlessNotebookTab::OnSourceContentChanged() {
   evContentChangedEvent.Emit();
 }
 
-PageIndex EndlessNotebookTab::GetPageCount() const {
-  return mPageIDs.size();
-}
+PageIndex EndlessNotebookTab::GetPageCount() const { return mPageIDs.size(); }
 
-std::vector<PageID> EndlessNotebookTab::GetPageIDs() const {
-  return mPageIDs;
-}
+std::vector<PageID> EndlessNotebookTab::GetPageIDs() const { return mPageIDs; }
 
 std::optional<PreferredSize> EndlessNotebookTab::GetPreferredSize(PageID) {
   if (mSource) {

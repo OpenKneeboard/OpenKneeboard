@@ -58,8 +58,8 @@ std::optional<SHM::VRLayer> ViewVRSettings::Resolve(
           break;
         }
         case PhysicalSize::Direction::Diagonal: {
-          const auto current
-            = sqrt((size.mWidth * size.mWidth) + (size.mHeight * size.mHeight));
+          const auto current =
+            sqrt((size.mWidth * size.mWidth) + (size.mHeight * size.mHeight));
           const auto scale = ps.mLength / current;
           size.mWidth *= scale;
           size.mHeight *= scale;
@@ -75,15 +75,15 @@ std::optional<SHM::VRLayer> ViewVRSettings::Resolve(
       .mZoomScale = config.mZoomScale,
       .mGazeTargetScale = config.mGazeTargetScale,
       .mOpacity = config.mOpacity,
-      .mLocationOnTexture
-      = (config.mDisplayArea == ViewDisplayArea::Full) ? fullRect : contentRect,
+      .mLocationOnTexture =
+        (config.mDisplayArea == ViewDisplayArea::Full) ? fullRect : contentRect,
     };
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
 
-  const auto it
-    = std::ranges::find(others, GetMirrorOfGUID(), &ViewSettings::mGuid);
+  const auto it =
+    std::ranges::find(others, GetMirrorOfGUID(), &ViewSettings::mGuid);
   if (it == others.end()) {
     return {};
   }

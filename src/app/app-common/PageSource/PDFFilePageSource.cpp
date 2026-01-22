@@ -57,8 +57,8 @@ namespace OpenKneeboard {
 // Convenience wrapper to make it easy to wrap all locks in `DPrintLifetime`
 static constexpr auto wrap_lock(
   auto&& lock,
-  [[maybe_unused]] const std::source_location& location
-  = std::source_location::current()) {
+  [[maybe_unused]] const std::source_location& location =
+    std::source_location::current()) {
   if constexpr (false) {
     return DPrintLifetime<std::decay_t<decltype(lock)>> {
       "PDFLock", std::move(lock), location};
@@ -123,8 +123,8 @@ struct PDFFilePageSource::DocumentResources final {
   DocumentResources(
     const std::filesystem::path& path,
     std::shared_ptr<FilesystemWatcher>&& watcher)
-    : mPath(path), mWatcher(std::move(watcher)) {
-  }
+    : mPath(path),
+      mWatcher(std::move(watcher)) {}
 
   DispatcherQueue mDispatcherQueue = DispatcherQueue::GetForCurrentThread();
 };
@@ -141,9 +141,7 @@ PDFFilePageSource::PDFFilePageSource(
     mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
 }
 
-PDFFilePageSource::~PDFFilePageSource() {
-  this->RemoveAllEventListeners();
-}
+PDFFilePageSource::~PDFFilePageSource() { this->RemoveAllEventListeners(); }
 
 task<std::shared_ptr<PDFFilePageSource>> PDFFilePageSource::Create(
   const audited_ptr<DXResources>& dxr,
@@ -374,8 +372,8 @@ task<void> PDFFilePageSource::Reload() try {
                     ++sCount,
                     doc->mPath.stem().wstring().substr(0, 16),
                     doc->mPath.extension());
-    doc->mCopy
-      = std::make_shared<Filesystem::TemporaryCopy>(doc->mPath, tempPath);
+    doc->mCopy =
+      std::make_shared<Filesystem::TemporaryCopy>(doc->mPath, tempPath);
   }
 
   co_await uiThread;
@@ -445,8 +443,8 @@ std::optional<PreferredSize> PDFFilePageSource::GetPreferredSize(PageID id) {
   if (it == mDocumentResources->mPageIDs.end()) {
     return std::nullopt;
   }
-  const auto index
-    = felly::numeric_cast<PageIndex>(it - mDocumentResources->mPageIDs.begin());
+  const auto index =
+    felly::numeric_cast<PageIndex>(it - mDocumentResources->mPageIDs.begin());
   auto size = mDocumentResources->mPDFDocument.GetPage(index).Size();
 
   return PreferredSize {
@@ -472,8 +470,8 @@ void PDFFilePageSource::RenderPageContent(
   if (pageIt == doc->mPageIDs.end()) {
     return;
   }
-  const auto index
-    = felly::numeric_cast<PageIndex>(pageIt - doc->mPageIDs.begin());
+  const auto index =
+    felly::numeric_cast<PageIndex>(pageIt - doc->mPageIDs.begin());
 
   auto page = doc->mPDFDocument.GetPage(index);
 
@@ -539,13 +537,9 @@ bool PDFFilePageSource::CanClearUserInput() const {
   return mDoodles->HaveDoodles();
 }
 
-void PDFFilePageSource::ClearUserInput(PageID id) {
-  mDoodles->ClearPage(id);
-}
+void PDFFilePageSource::ClearUserInput(PageID id) { mDoodles->ClearPage(id); }
 
-void PDFFilePageSource::ClearUserInput() {
-  mDoodles->Clear();
-}
+void PDFFilePageSource::ClearUserInput() { mDoodles->Clear(); }
 
 void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
@@ -559,8 +553,8 @@ void PDFFilePageSource::RenderOverDoodles(
   if (!mDocumentResources->mLinks.contains(pageID)) {
     return;
   }
-  const auto hoverButton
-    = mDocumentResources->mLinks.at(pageID)->GetHoverButton();
+  const auto hoverButton =
+    mDocumentResources->mLinks.at(pageID)->GetHoverButton();
   if (!hoverButton) {
     return;
   }
@@ -588,8 +582,8 @@ task<void> PDFFilePageSource::SetPath(const std::filesystem::path& path) {
     co_return;
   }
 
-  mDocumentResources
-    = DocumentResources::Create(path, FilesystemWatcher::Create(path));
+  mDocumentResources =
+    DocumentResources::Create(path, FilesystemWatcher::Create(path));
 
   AddEventListener(
     mDocumentResources->mWatcher->evFilesystemModifiedEvent,
@@ -632,8 +626,8 @@ PDFFilePageSource::RenderPage(RenderContext rc, PageID pageID, PixelRect rect) {
     co_return;
   }
 
-  const auto cacheDimensions
-    = preferredSize->mPixelSize.IntegerScaledToFit(MaxViewRenderSize);
+  const auto cacheDimensions =
+    preferredSize->mPixelSize.IntegerScaledToFit(MaxViewRenderSize);
   co_await mDocumentResources->mCache[rtid]->Render(
     rect,
     pageID.GetTemporaryValue(),

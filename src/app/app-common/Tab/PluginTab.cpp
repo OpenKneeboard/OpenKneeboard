@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/ChromiumPageSource.hpp>
 #include <OpenKneeboard/D2DErrorRenderer.hpp>
@@ -46,8 +47,7 @@ task<std::shared_ptr<PluginTab>> PluginTab::Create(
   co_return ret;
 }
 
-PluginTab::~PluginTab() {
-}
+PluginTab::~PluginTab() {}
 
 std::string PluginTab::GetGlyph() const {
   static const std::string sDefault = "\uea86";// puzzle
@@ -63,13 +63,11 @@ std::string PluginTab::GetGlyph() const {
   return mTabType->mGlyph;
 }
 
-nlohmann::json PluginTab::GetSettings() const {
-  return mSettings;
-}
+nlohmann::json PluginTab::GetSettings() const { return mSettings; }
 
 task<void> PluginTab::Reload() {
-  const auto disposable
-    = std::dynamic_pointer_cast<IHasDisposeAsync>(mDelegate);
+  const auto disposable =
+    std::dynamic_pointer_cast<IHasDisposeAsync>(mDelegate);
   if (disposable) {
     co_await disposable->DisposeAsync();
   }
@@ -119,8 +117,8 @@ task<void> PluginTab::Reload() {
 
       const std::string_view pluginScheme {"plugin://"};
       if (settings.mURI.starts_with(pluginScheme)) {
-        const auto vhost = std::format(
-          "{}.openkneeboardplugins.localhost", plugin.GetIDHash());
+        const auto vhost =
+          std::format("{}.openkneeboardplugins.localhost", plugin.GetIDHash());
         const auto path = plugin.mJSONPath.parent_path();
         settings.mVirtualHosts.emplace(vhost, path);
         settings.mURI.replace(
@@ -168,8 +166,8 @@ void PluginTab::PostCustomAction(
     return;
   }
 
-  const auto postable
-    = std::dynamic_pointer_cast<ChromiumPageSource>(mDelegate);
+  const auto postable =
+    std::dynamic_pointer_cast<ChromiumPageSource>(mDelegate);
   if (postable) {
     postable->PostCustomAction(viewID, id, arg);
   }

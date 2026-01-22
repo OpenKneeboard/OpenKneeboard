@@ -3,15 +3,16 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 #include <OpenKneeboard/ThreadGuard.hpp>
+
+#include <OpenKneeboard/task.hpp>
 
 #include <shims/winrt/base.h>
 
 #include <winrt/Microsoft.UI.Dispatching.h>
-
-#include <OpenKneeboard/task.hpp>
 
 #include <functional>
 #include <stop_token>
@@ -28,9 +29,7 @@ class RunnerThread final {
     const std::source_location& loc = std::source_location::current());
   ~RunnerThread();
 
-  inline operator bool() const {
-    return !!mDQC;
-  }
+  inline operator bool() const { return !!mDQC; }
 
   RunnerThread(const RunnerThread&) = delete;
   RunnerThread& operator=(const RunnerThread&) = delete;

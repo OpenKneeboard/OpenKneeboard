@@ -17,8 +17,7 @@ namespace OpenKneeboard {
 DCSMissionTab::DCSMissionTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : DCSMissionTab(dxr, kbs, {}, _("Mission")) {
-}
+  : DCSMissionTab(dxr, kbs, {}, _("Mission")) {}
 
 DCSMissionTab::DCSMissionTab(
   const audited_ptr<DXResources>& dxr,
@@ -30,20 +29,13 @@ DCSMissionTab::DCSMissionTab(
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs),
-    mDebugInformation(_("No data from DCS.")) {
-}
+    mDebugInformation(_("No data from DCS.")) {}
 
-DCSMissionTab::~DCSMissionTab() {
-  this->RemoveAllEventListeners();
-}
+DCSMissionTab::~DCSMissionTab() { this->RemoveAllEventListeners(); }
 
-std::string DCSMissionTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string DCSMissionTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string DCSMissionTab::GetStaticGlyph() {
-  return "\uF0E3";
-}
+std::string DCSMissionTab::GetStaticGlyph() { return "\uF0E3"; }
 
 task<void> DCSMissionTab::Reload() {
   if (mMission.empty()) {

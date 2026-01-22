@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DirectInputDevice.hpp>
 #include <OpenKneeboard/DirectInputJoystickListener.hpp>
 #include <OpenKneeboard/DirectInputKeyboardListener.hpp>
@@ -22,7 +23,8 @@ DirectInputListener::DirectInputListener(
   const std::stop_token& stopToken,
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device)
-  : mStopToken(stopToken), mDevice(device) {
+  : mStopToken(stopToken),
+    mDevice(device) {
   di->CreateDevice(
     device->GetDIDeviceInstance().guidInstance, mDIDevice.put(), NULL);
   if (!mDIDevice) {

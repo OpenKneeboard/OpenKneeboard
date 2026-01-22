@@ -127,8 +127,8 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   }
 
   uint32_t imageCount = 0;
-  nextResult
-    = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
+  nextResult =
+    oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
   if (imageCount == 0 || XR_FAILED(nextResult)) {
     dprint("No images in swapchain: {}", nextResult);
     return nullptr;
@@ -205,8 +205,6 @@ void OpenXRD3D11Kneeboard::RenderLayers(
     RenderMode::ClearAndRender);
 }
 
-SHM::Reader& OpenXRD3D11Kneeboard::GetSHM() {
-  return *mSHM;
-}
+SHM::Reader& OpenXRD3D11Kneeboard::GetSHM() { return *mSHM; }
 
 }// namespace OpenKneeboard

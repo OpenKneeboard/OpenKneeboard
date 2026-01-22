@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/TabletInputDevice.hpp>
 #include <OpenKneeboard/UserInputButtonBinding.hpp>
 
@@ -16,19 +17,15 @@ TabletInputDevice::TabletInputDevice(
   const std::string& name,
   const std::string& id,
   TabletOrientation orientation)
-  : mName(name), mID(id), mOrientation(orientation) {
-}
+  : mName(name),
+    mID(id),
+    mOrientation(orientation) {}
 
-TabletInputDevice::~TabletInputDevice() {
-}
+TabletInputDevice::~TabletInputDevice() {}
 
-std::string TabletInputDevice::GetName() const {
-  return mName;
-}
+std::string TabletInputDevice::GetName() const { return mName; }
 
-std::string TabletInputDevice::GetID() const {
-  return mID;
-}
+std::string TabletInputDevice::GetID() const { return mID; }
 
 std::string TabletInputDevice::GetButtonComboDescription(
   const std::unordered_set<uint64_t>& ids) const {

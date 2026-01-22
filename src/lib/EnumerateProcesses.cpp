@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 
 #include <OpenKneeboard/EnumerateProcesses.hpp>
 
@@ -11,12 +12,11 @@
 
 namespace OpenKneeboard {
 
-ProcessList::ProcessList() : ProcessList(nullptr, 0) {
-}
+ProcessList::ProcessList() : ProcessList(nullptr, 0) {}
 
 ProcessList::ProcessList(element_type* list, DWORD count)
-  : mList(list), mCount(count) {
-}
+  : mList(list),
+    mCount(count) {}
 
 ProcessList::ProcessList(ProcessList&& other) noexcept {
   *this = std::move(other);
@@ -29,9 +29,7 @@ ProcessList& ProcessList::operator=(ProcessList&& other) noexcept {
   return *this;
 }
 
-ProcessList::~ProcessList() {
-  this->Release();
-}
+ProcessList::~ProcessList() { this->Release(); }
 
 void ProcessList::Release() {
   if (!mList) {

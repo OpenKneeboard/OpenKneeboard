@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
 
@@ -19,8 +20,9 @@ namespace OpenKneeboard {
 FolderPageSource::FolderPageSource(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
-}
+  : PageSourceWithDelegates(dxr, kbs),
+    mDXR(dxr),
+    mKneeboard(kbs) {}
 
 task<std::shared_ptr<FolderPageSource>> FolderPageSource::Create(
   audited_ptr<DXResources> dxr,
@@ -33,9 +35,7 @@ task<std::shared_ptr<FolderPageSource>> FolderPageSource::Create(
   co_return ret;
 }
 
-FolderPageSource::~FolderPageSource() {
-  this->RemoveAllEventListeners();
-}
+FolderPageSource::~FolderPageSource() { this->RemoveAllEventListeners(); }
 
 task<void> FolderPageSource::Reload() noexcept {
   const auto weakThis = this->weak_from_this();
@@ -116,9 +116,7 @@ OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
   co_await this->SetDelegates(delegates);
 }
 
-std::filesystem::path FolderPageSource::GetPath() const {
-  return mPath;
-}
+std::filesystem::path FolderPageSource::GetPath() const { return mPath; }
 
 task<void> FolderPageSource::SetPath(std::filesystem::path path) {
   if (path == mPath) {

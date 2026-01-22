@@ -57,9 +57,7 @@ DCSRadioLogTab::DCSRadioLogTab(
   this->LoadSettings(config);
 }
 
-DCSRadioLogTab::~DCSRadioLogTab() {
-  this->RemoveAllEventListeners();
-}
+DCSRadioLogTab::~DCSRadioLogTab() { this->RemoveAllEventListeners(); }
 
 void DCSRadioLogTab::LoadSettings(const nlohmann::json& json) {
   if (json.is_null()) {
@@ -99,13 +97,9 @@ void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
   this->evSettingsChangedEvent.Emit();
 }
 
-std::string DCSRadioLogTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string DCSRadioLogTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string DCSRadioLogTab::GetStaticGlyph() {
-  return "\uF12E";
-}
+std::string DCSRadioLogTab::GetStaticGlyph() { return "\uF12E"; }
 
 PageIndex DCSRadioLogTab::GetPageCount() const {
   const auto count = mPageSource->GetPageCount();

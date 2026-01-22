@@ -140,8 +140,8 @@ OpenKneeboard::fire_and_forget App::OnLaunched(
 }
 
 static void MigrateBackups(const std::filesystem::path& backupsDirectory) {
-  const auto oldBackupsDirectory
-    = Filesystem::GetLocalAppDataDirectory() / "Backups";
+  const auto oldBackupsDirectory =
+    Filesystem::GetLocalAppDataDirectory() / "Backups";
   if (!std::filesystem::exists(oldBackupsDirectory)) {
     return;
   }
@@ -156,8 +156,8 @@ static void MigrateBackups(const std::filesystem::path& backupsDirectory) {
     if (!it.is_regular_file()) {
       continue;
     }
-    const auto relative
-      = std::filesystem::relative(it.path(), oldBackupsDirectory);
+    const auto relative =
+      std::filesystem::relative(it.path(), oldBackupsDirectory);
     std::filesystem::rename(it.path(), backupsDirectory / relative);
   }
   std::filesystem::remove_all(oldBackupsDirectory);
@@ -182,8 +182,8 @@ static void BackupSettings() {
   // Now we create backups outside of that so that people who manually delete
   // the entire `%LOCALAPPDATA%\OpenKneeboard` folder don't *accidentally*
   // delete the backups too
-  const auto backupsDirectory
-    = Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>()
+  const auto backupsDirectory =
+    Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>()
     / "OpenKneeboard Backups";
   std::filesystem::create_directories(backupsDirectory);
   MigrateBackups(backupsDirectory);
@@ -245,9 +245,7 @@ enum class DamagingEnvironmentFlags : uint8_t {
   Wine = (1 << 6),
 };
 
-constexpr bool supports_bitflags(DamagingEnvironmentFlags) {
-  return true;
-}
+constexpr bool supports_bitflags(DamagingEnvironmentFlags) { return true; }
 
 static void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
   using enum DamagingEnvironmentFlags;
@@ -410,11 +408,11 @@ static DamagingEnvironmentFlags LogSystemInformation() {
         L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
         hkey)
       == ERROR_SUCCESS) {
-    const auto enableLua
-      = wil::reg::try_get_value_dword(hkey.get(), L"EnableLUA").value_or(0);
-    const auto cpba
-      = wil::reg::try_get_value_dword(hkey.get(), L"ConsentPromptBehaviorAdmin")
-          .value_or(0);
+    const auto enableLua =
+      wil::reg::try_get_value_dword(hkey.get(), L"EnableLUA").value_or(0);
+    const auto cpba =
+      wil::reg::try_get_value_dword(hkey.get(), L"ConsentPromptBehaviorAdmin")
+        .value_or(0);
     for (auto&& [name, value, isValid]: {
            std::tuple {"EnableLUA", enableLua, enableLua == 1},
            std::tuple {
@@ -664,17 +662,17 @@ static int AppMain(
     return 1;
   }
 
-  const auto fullDumps
-    = wil::reg::try_get_value_dword(
-        HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"CreateFullDumps")
-        .value_or(0);
+  const auto fullDumps =
+    wil::reg::try_get_value_dword(
+      HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"CreateFullDumps")
+      .value_or(0);
   SetDumpType(fullDumps ? DumpType::FullDump : DumpType::MiniDump);
 
   // CreateMutex can set ERROR_ALREADY_EXISTS on success, so we need to
   // have a known-succeeding initial state.
   SetLastError(ERROR_SUCCESS);
-  auto mutex
-    = Win32::CreateMutex(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
+  auto mutex =
+    Win32::CreateMutex(nullptr, TRUE, OpenKneeboard::ProjectReverseDomainW);
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     // This can still be success
     const auto hwnd = GetMainHWND();
@@ -820,8 +818,8 @@ wWinMain(const HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
     std::format(L"OKB process: {}", GetCommandLineW()).c_str());
   {
     const auto thisExe = wil::GetModuleFileNameW();
-    const auto cefPath
-      = std::filesystem::path {thisExe.get()}.parent_path().parent_path()
+    const auto cefPath =
+      std::filesystem::path {thisExe.get()}.parent_path().parent_path()
       / "libexec" / "cef";
     SetDllDirectoryW(cefPath.c_str());
   }

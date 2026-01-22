@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/cppwinrt.hpp>
@@ -22,15 +23,14 @@ using namespace bindline;
 template <::FredEmmott::weak_refs::weak_ref... TWeak>
 struct task_front_refs_binder_t
   : public ::FredEmmott::bindline_extension_api::bindable_t {
-  using ordering_t
-    = ::FredEmmott::bindline_extension_api::ordering_requirements_t;
-  static constexpr ordering_t ordering_requirements_v
-    = ordering_t::invoke_after_context_switch;
+  using ordering_t =
+    ::FredEmmott::bindline_extension_api::ordering_requirements_t;
+  static constexpr ordering_t ordering_requirements_v =
+    ordering_t::invoke_after_context_switch;
 
   template <FredEmmott::weak_refs::convertible_to_weak_ref... TInit>
   task_front_refs_binder_t(TInit&&... inits)
-    : mWeaks(std::decay_t<TInit> {std::forward<TInit>(inits)}...) {
-  }
+    : mWeaks(std::decay_t<TInit> {std::forward<TInit>(inits)}...) {}
 
   template <class Self, class TFn>
   constexpr auto bind_to(this const Self& self, TFn&& fn) {
@@ -86,14 +86,13 @@ constexpr auto task_bind_refs_front(TArgs&&... args) {
 template <class TQueue>
 struct ordered_enqueue_binder_t
   : public ::FredEmmott::bindline_extension_api::bindable_t {
-  using ordering_t
-    = ::FredEmmott::bindline_extension_api::ordering_requirements_t;
-  static constexpr ordering_t ordering_requirements_v
-    = ordering_t::invoke_after_context_switch;
+  using ordering_t =
+    ::FredEmmott::bindline_extension_api::ordering_requirements_t;
+  static constexpr ordering_t ordering_requirements_v =
+    ordering_t::invoke_after_context_switch;
 
   ordered_enqueue_binder_t() = delete;
-  constexpr ordered_enqueue_binder_t(TQueue* kbs) : mKneeboard(kbs) {
-  }
+  constexpr ordered_enqueue_binder_t(TQueue* kbs) : mKneeboard(kbs) {}
 
   template <class TFn>
   constexpr auto bind_to(TFn&& fn) const {

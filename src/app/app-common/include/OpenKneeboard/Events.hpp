@@ -41,8 +41,8 @@ template <class... Args>
 class EventHandler;
 
 template <class TInvocable, class... TArgs>
-concept drop_extra_back_invocable
-  = std::invocable<TInvocable, TArgs...>
+concept drop_extra_back_invocable =
+  std::invocable<TInvocable, TArgs...>
   || ((sizeof...(TArgs) > 0) && requires(TInvocable fn) {
        fn | drop_n_back<1>() | drop_extra_back();
        {
@@ -60,8 +60,8 @@ template <class T>
 concept not_must_await_task = not must_await_task<T>;
 
 template <class TInvocable, class... TArgs>
-concept event_handler_invocable
-  = drop_extra_back_invocable<TInvocable, TArgs...>
+concept event_handler_invocable =
+  drop_extra_back_invocable<TInvocable, TArgs...>
   && requires(TInvocable fn, TArgs... args) {
        { std::invoke(drop_extra_back(fn), args...) } -> not_must_await_task;
      };
@@ -82,22 +82,19 @@ class EventHandler final {
   EventHandler& operator=(const EventHandler&) = default;
   EventHandler& operator=(EventHandler&&) = default;
 
-  constexpr operator bool() const noexcept {
-    return static_cast<bool>(mImpl);
-  }
+  constexpr operator bool() const noexcept { return static_cast<bool>(mImpl); }
 
   template <class T>
     requires(!std::same_as<self_t, std::decay_t<T>>)
     && event_handler_invocable<T, Args...>
-  constexpr EventHandler(T&& fn) : mImpl(drop_extra_back(std::forward<T>(fn))) {
-  }
+  constexpr EventHandler(T&& fn)
+    : mImpl(drop_extra_back(std::forward<T>(fn))) {}
 
   /// Convenience wrapper for `{this, &MyClass::myMethod}`
   template <class F, convertible_to_weak_ref Bind>
   constexpr EventHandler(Bind&& bind, F&& f)
     : EventHandler(
-        bind_refs_front(std::forward<F>(f), std::forward<Bind>(bind))) {
-  }
+        bind_refs_front(std::forward<F>(f), std::forward<Bind>(bind))) {}
 
   /** Deleting so error mesages lead here :)
    *
@@ -109,9 +106,7 @@ class EventHandler final {
     requires(!convertible_to_weak_ref<Bind*>)
   constexpr EventHandler(Bind*, F&& f) = delete;
 
-  void operator()(Args... args) const noexcept {
-    mImpl(args...);
-  }
+  void operator()(Args... args) const noexcept { mImpl(args...); }
 
  private:
   Callback mImpl;
@@ -184,8 +179,8 @@ class EventConnection final
     public std::enable_shared_from_this<EventConnection<Args...>> {
  private:
   EventConnection(EventHandler<Args...> handler, std::source_location location)
-    : mHandler(handler), mSourceLocation(location) {
-  }
+    : mHandler(handler),
+      mSourceLocation(location) {}
 
  public:
   EventConnection() = delete;
@@ -227,9 +222,7 @@ class EventConnection final
     }
   }
 
-  virtual void Invalidate() override {
-    mHandler = {};
-  }
+  virtual void Invalidate() override { mHandler = {}; }
 
  private:
   EventHandler<Args...> mHandler;
@@ -245,9 +238,7 @@ class Event final : public EventBase {
   using Hook = std::function<HookResult(Args...)>;
   using Handler = EventHandler<Args...>;
 
-  Event() {
-    mImpl = std::shared_ptr<Impl>(new Impl());
-  }
+  Event() { mImpl = std::shared_ptr<Impl>(new Impl()); }
   ~Event();
 
   void Emit(
@@ -382,8 +373,7 @@ void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
 }
 
 template <class... Args>
-Event<Args...>::~Event() {
-}
+Event<Args...>::~Event() {}
 
 template <class... Args>
 Event<Args...>::Impl::~Impl() {

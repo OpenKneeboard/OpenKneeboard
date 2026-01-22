@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/Lua.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -25,13 +26,9 @@ class LuaStateImpl final {
   LuaStateImpl& operator=(const LuaStateImpl&) = delete;
   LuaStateImpl& operator=(LuaStateImpl&&) = delete;
 
-  ~LuaStateImpl() {
-    lua_close(mLua);
-  }
+  ~LuaStateImpl() { lua_close(mLua); }
 
-  operator lua_State*() const noexcept {
-    return mLua;
-  }
+  operator lua_State*() const noexcept { return mLua; }
 
  private:
   lua_State* mLua = nullptr;
@@ -44,9 +41,7 @@ class LuaRefImpl final {
     mRef = luaL_ref(*lua, LUA_REGISTRYINDEX);
   }
 
-  ~LuaRefImpl() {
-    luaL_unref(*mLua, LUA_REGISTRYINDEX, mRef);
-  }
+  ~LuaRefImpl() { luaL_unref(*mLua, LUA_REGISTRYINDEX, mRef); }
 
   void PushValueToStack() {
     if (mRef == LUA_NOREF) {
@@ -55,13 +50,9 @@ class LuaRefImpl final {
     lua_rawgeti(*mLua, LUA_REGISTRYINDEX, mRef);
   }
 
-  std::shared_ptr<LuaStateImpl> GetLua() const noexcept {
-    return mLua;
-  }
+  std::shared_ptr<LuaStateImpl> GetLua() const noexcept { return mLua; }
 
-  LuaType GetType() const noexcept {
-    return mType;
-  }
+  LuaType GetType() const noexcept { return mType; }
 
   LuaRefImpl() = delete;
   LuaRefImpl(const LuaRefImpl&) = delete;
@@ -116,9 +107,7 @@ using LuaRefImpl = detail::LuaRefImpl;
 using LuaStateImpl = detail::LuaStateImpl;
 using LuaStackCheck = detail::LuaStackCheck;
 
-LuaState::LuaState() {
-  mLua = std::make_shared<LuaStateImpl>();
-}
+LuaState::LuaState() { mLua = std::make_shared<LuaStateImpl>(); }
 
 LuaState::~LuaState() = default;
 
@@ -132,10 +121,11 @@ LuaState::operator lua_State*() const noexcept {
 void LuaState::DoFile(const std::filesystem::path& path) {
   const auto error = luaL_dofile(*mLua, to_utf8(path).c_str());
   if (error) {
-    throw LuaError(std::format(
-      "Failed to load lua file '{}': {}",
-      to_utf8(path),
-      lua_tostring(*mLua, -1)));
+    throw LuaError(
+      std::format(
+        "Failed to load lua file '{}': {}",
+        to_utf8(path),
+        lua_tostring(*mLua, -1)));
   }
 }
 
@@ -167,9 +157,10 @@ std::string LuaTypeTraits<std::string>::Get(detail::LuaRefImpl* p) {
   const LuaStackCheck stackCheck(lua);
 
   if (p->GetType() != LuaType::TString) {
-    throw LuaTypeError(std::format(
-      "A string was requested, but the value is a {}",
-      lua_typename(*lua, static_cast<int>(p->GetType()))));
+    throw LuaTypeError(
+      std::format(
+        "A string was requested, but the value is a {}",
+        lua_typename(*lua, static_cast<int>(p->GetType()))));
   }
 
   p->PushValueToStack();
@@ -189,9 +180,10 @@ lua_Integer LuaTypeTraits<lua_Integer>::Get(detail::LuaRefImpl* p) {
   const LuaStackCheck stackCheck(lua);
 
   if (p->GetType() != LuaType::TNumber) {
-    throw LuaTypeError(std::format(
-      "An integer was requested, but the value is a {}",
-      lua_typename(*lua, static_cast<int>(p->GetType()))));
+    throw LuaTypeError(
+      std::format(
+        "An integer was requested, but the value is a {}",
+        lua_typename(*lua, static_cast<int>(p->GetType()))));
   }
 
   p->PushValueToStack();
@@ -209,9 +201,10 @@ lua_Number LuaTypeTraits<lua_Number>::Get(detail::LuaRefImpl* p) {
   const LuaStackCheck stackCheck(lua);
 
   if (p->GetType() != LuaType::TNumber) {
-    throw LuaTypeError(std::format(
-      "A number was requested, but the value is a {}",
-      lua_typename(*lua, static_cast<int>(p->GetType()))));
+    throw LuaTypeError(
+      std::format(
+        "A number was requested, but the value is a {}",
+        lua_typename(*lua, static_cast<int>(p->GetType()))));
   }
 
   p->PushValueToStack();
@@ -229,9 +222,10 @@ LuaRef LuaRef::at(const char* wantedKey) const {
   const LuaStackCheck stackCheck(lua);
 
   if (p->GetType() != LuaType::TTable) {
-    throw LuaTypeError(std::format(
-      "Attempted to index a {} as if it were a table",
-      lua_typename(*lua, static_cast<int>(p->GetType()))));
+    throw LuaTypeError(
+      std::format(
+        "Attempted to index a {} as if it were a table",
+        lua_typename(*lua, static_cast<int>(p->GetType()))));
   }
 
   for (const auto& [key, value]: *this) {
@@ -258,9 +252,10 @@ LuaRef LuaRef::at(const LuaRef& key) const {
       // TODO
       [[fallthrough]];
     default:
-      throw LuaTypeError(std::format(
-        "Don't know how to use a {} as a key",
-        lua_typename(*p->GetLua(), static_cast<int>(key.GetType()))));
+      throw LuaTypeError(
+        std::format(
+          "Don't know how to use a {} as a key",
+          lua_typename(*p->GetLua(), static_cast<int>(key.GetType()))));
   }
 }
 
@@ -287,9 +282,7 @@ LuaRef::const_iterator LuaRef::begin() const noexcept {
   return const_iterator(p);
 }
 
-LuaRef::const_iterator LuaRef::end() const noexcept {
-  return const_iterator();
-}
+LuaRef::const_iterator LuaRef::end() const noexcept { return const_iterator(); }
 
 LuaRef::const_iterator::const_iterator() = default;
 
@@ -301,9 +294,10 @@ LuaRef::const_iterator::const_iterator(
   }
   auto lua = table->GetLua();
   if (table->GetType() != LuaType::TTable) {
-    throw LuaTypeError(std::format(
-      "Can't iterate a {}",
-      lua_typename(*lua, static_cast<int>(table->GetType()))));
+    throw LuaTypeError(
+      std::format(
+        "Can't iterate a {}",
+        lua_typename(*lua, static_cast<int>(table->GetType()))));
   }
 
   mTable = table;

@@ -24,10 +24,11 @@ SpriteBatch::SpriteBatch(
   ID3D12Device* device,
   ID3D12CommandQueue* queue,
   DXGI_FORMAT format)
-  : mDevice(device), mCommandQueue(queue) {
+  : mDevice(device),
+    mCommandQueue(queue) {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::SpriteBatch()");
-  constexpr D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags
-    = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+  constexpr D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
     | D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
     | D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
     | D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
@@ -43,9 +44,10 @@ SpriteBatch::SpriteBatch(
   const auto rootParameters = std::array {
     D3D12_ROOT_PARAMETER1 {
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-      .Descriptor = D3D12_ROOT_DESCRIPTOR1 {
-        .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
-      },
+      .Descriptor =
+        D3D12_ROOT_DESCRIPTOR1 {
+          .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+        },
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
     },
     D3D12_ROOT_PARAMETER1 {
@@ -67,13 +69,14 @@ SpriteBatch::SpriteBatch(
 
   const D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootDesc {
     .Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-    .Desc_1_1 = D3D12_ROOT_SIGNATURE_DESC1 {
-      .NumParameters = rootParameters.size(),
-      .pParameters = rootParameters.data(),
-      .NumStaticSamplers = 1,
-      .pStaticSamplers = &samplerDesc,
-      .Flags = rootSignatureFlags,
-    },
+    .Desc_1_1 =
+      D3D12_ROOT_SIGNATURE_DESC1 {
+        .NumParameters = rootParameters.size(),
+        .pParameters = rootParameters.data(),
+        .NumStaticSamplers = 1,
+        .pStaticSamplers = &samplerDesc,
+        .Flags = rootSignatureFlags,
+      },
   };
 
   winrt::com_ptr<ID3DBlob> signature;
@@ -265,15 +268,15 @@ void SpriteBatch::End() {
 
   const auto& targetSize = mNextFrame->mRenderTargetViewSize;
   CBuffer constantData {
-    .mTargetDimensions
-    = {targetSize.Width<float>(), targetSize.Height<float>()},
+    .mTargetDimensions =
+      {targetSize.Width<float>(), targetSize.Height<float>()},
   };
 
   std::vector<Vertex> vertices;
   vertices.reserve(mNextFrame->mSprites.size() * VerticesPerSprite);
 
-  const auto heapOffset
-    = (mDrawCount++ % MaxInflightFrames) * MaxSpritesPerBatch;
+  const auto heapOffset =
+    (mDrawCount++ % MaxInflightFrames) * MaxSpritesPerBatch;
 
   for (uint32_t i = 0; i < mNextFrame->mSprites.size(); i++) {
     const auto& sprite = mNextFrame->mSprites[i];
@@ -298,20 +301,20 @@ void SpriteBatch::End() {
 
     using TexCoord = std::array<float, 2>;
 
-    const TexCoord srcTL
-      = sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
-    const TexCoord srcBR
-      = sprite.mSourceRect.BottomRight().StaticCast<float, TexCoord>();
+    const TexCoord srcTL =
+      sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
+    const TexCoord srcBR =
+      sprite.mSourceRect.BottomRight().StaticCast<float, TexCoord>();
     const TexCoord srcBL {srcTL[0], srcBR[1]};
     const TexCoord srcTR {srcBR[0], srcTL[1]};
 
     using Position = Vertex::Position;
 
     // Destination coordinates in real 3d coordinates
-    const Position dstTL
-      = sprite.mDestRect.TopLeft().StaticCast<float, Position>();
-    const Position dstBR
-      = sprite.mDestRect.BottomRight().StaticCast<float, Position>();
+    const Position dstTL =
+      sprite.mDestRect.TopLeft().StaticCast<float, Position>();
+    const Position dstBR =
+      sprite.mDestRect.BottomRight().StaticCast<float, Position>();
     const Position dstTR {dstBR[0], dstTL[1]};
     const Position dstBL {dstTL[0], dstBR[1]};
 
@@ -339,8 +342,8 @@ void SpriteBatch::End() {
 
   auto& graphicsMemory = DirectX::DX12::GraphicsMemory::Get(mDevice);
   const auto constantBuffer = graphicsMemory.AllocateConstant(constantData);
-  const auto vertexBuffer
-    = graphicsMemory.Allocate(sizeof(Vertex) * vertices.size());
+  const auto vertexBuffer =
+    graphicsMemory.Allocate(sizeof(Vertex) * vertices.size());
   memcpy(
     vertexBuffer.Memory(), vertices.data(), sizeof(Vertex) * vertices.size());
 

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/SwitchTabAction.hpp>
@@ -21,9 +22,7 @@ SwitchTabAction::SwitchTabAction(
     kneeboardView->evCurrentTabChangedEvent, this->evStateChangedEvent);
 }
 
-SwitchTabAction::~SwitchTabAction() {
-  this->RemoveAllEventListeners();
-}
+SwitchTabAction::~SwitchTabAction() { this->RemoveAllEventListeners(); }
 
 bool SwitchTabAction::IsChecked() const {
   auto kbv = mKneeboardView.lock();
@@ -34,9 +33,7 @@ bool SwitchTabAction::IsChecked() const {
   return tab && tab->GetRuntimeID() == mTabID;
 }
 
-bool SwitchTabAction::IsEnabled() const {
-  return true;
-}
+bool SwitchTabAction::IsEnabled() const { return true; }
 
 task<void> SwitchTabAction::Execute() {
   if (auto kbv = mKneeboardView.lock()) {

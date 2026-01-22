@@ -79,8 +79,7 @@ std::shared_ptr<DirectInputDevice> DirectInputDevice::Create(
 }
 
 DirectInputDevice::DirectInputDevice(const DIDEVICEINSTANCEW& device)
-  : mDevice(device) {
-}
+  : mDevice(device) {}
 
 std::string DirectInputDevice::GetName() const {
   return to_utf8(mDevice.tszInstanceName);

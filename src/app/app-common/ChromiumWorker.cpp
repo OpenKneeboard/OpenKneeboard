@@ -27,9 +27,7 @@ CefString GetOpenKneeboardAPIJS() {
   return JSSources::Get().OpenKneeboardAPI<CefString>();
 }
 
-CefString GetSimHubJS() {
-  return JSSources::Get().SimHub<CefString>();
-}
+CefString GetSimHubJS() { return JSSources::Get().SimHub<CefString>(); }
 
 }// namespace
 
@@ -38,8 +36,7 @@ class BrowserApp final : public CefApp,
                          public CefRenderProcessHandler,
                          public CefV8Handler {
  public:
-  BrowserApp() {
-  }
+  BrowserApp() {}
 
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
     return this;
@@ -57,8 +54,8 @@ class BrowserApp final : public CefApp,
       BrowserData {
         .mInitializationData = extraInfo->GetString("InitData"),
         .mIntegrateWithSimHub = extraInfo->GetBool("IntegrateWithSimHub"),
-        .mExposeOpenKneeboardAPIs
-        = extraInfo->GetBool("ExposeOpenKneeboardAPIs"),
+        .mExposeOpenKneeboardAPIs =
+          extraInfo->GetBool("ExposeOpenKneeboardAPIs"),
       });
   }
 
@@ -100,9 +97,7 @@ class BrowserApp final : public CefApp,
       using T = decltype(context.get());
       T mContext {};
 
-      ~exit_context_t() {
-        mContext->Exit();
-      }
+      ~exit_context_t() { mContext->Exit(); }
     } exitContext {context.get()};
     CefRefPtr<CefV8Value> ret;
     CefRefPtr<CefV8Exception> exception;
@@ -153,8 +148,8 @@ class BrowserApp final : public CefApp,
       return;
     }
     auto& data = mBrowserData.at(id);
-    const auto isMainWorldContext = data.mJS.mMainWorldContext
-      && context->IsSame(data.mJS.mMainWorldContext);
+    const auto isMainWorldContext =
+      data.mJS.mMainWorldContext && context->IsSame(data.mJS.mMainWorldContext);
     if (!isMainWorldContext) {
       return;
     }
@@ -242,8 +237,8 @@ class BrowserApp final : public CefApp,
       return false;
     }
 
-    ret = CefV8Value::CreateString(
-      mBrowserData.at(browserID).mInitializationData);
+    ret =
+      CefV8Value::CreateString(mBrowserData.at(browserID).mInitializationData);
     return true;
   }
 

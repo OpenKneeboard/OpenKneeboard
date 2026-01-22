@@ -16,8 +16,7 @@ namespace OpenKneeboard {
 DCSTerrainTab::DCSTerrainTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
-  : DCSTerrainTab(dxr, kbs, {}, _("Theater")) {
-}
+  : DCSTerrainTab(dxr, kbs, {}, _("Theater")) {}
 
 DCSTerrainTab::DCSTerrainTab(
   const audited_ptr<DXResources>& dxr,
@@ -29,20 +28,13 @@ DCSTerrainTab::DCSTerrainTab(
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs),
-    mDebugInformation(_("No data from DCS.")) {
-}
+    mDebugInformation(_("No data from DCS.")) {}
 
-DCSTerrainTab::~DCSTerrainTab() {
-  this->RemoveAllEventListeners();
-}
+DCSTerrainTab::~DCSTerrainTab() { this->RemoveAllEventListeners(); }
 
-std::string DCSTerrainTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string DCSTerrainTab::GetGlyph() const { return GetStaticGlyph(); }
 
-std::string DCSTerrainTab::GetStaticGlyph() {
-  return "\uE909";
-}
+std::string DCSTerrainTab::GetStaticGlyph() { return "\uE909"; }
 
 std::string DCSTerrainTab::GetDebugInformation() const {
   return mDebugInformation;

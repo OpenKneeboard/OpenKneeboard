@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/StateMachine.hpp>
@@ -19,8 +20,7 @@ class IHasDisposeAsync {
   // This is an alternative to `final_release()`, where consumers (or
   // subclasses) may need to be able to wait for async cleanup
   [[nodiscard]]
-  virtual task<void> DisposeAsync() noexcept
-    = 0;
+  virtual task<void> DisposeAsync() noexcept = 0;
 };
 
 /** Helper for tracking disposal states.
@@ -78,12 +78,9 @@ class DisposalState final {
       return *this;
     }
 
-    UniqueDisposal(UniqueDisposal&& other) {
-      *this = std::move(other);
-    }
+    UniqueDisposal(UniqueDisposal&& other) { *this = std::move(other); }
 
-    constexpr UniqueDisposal(StateMachine* impl) : mStateMachine(impl) {
-    }
+    constexpr UniqueDisposal(StateMachine* impl) : mStateMachine(impl) {}
 
     inline ~UniqueDisposal() {
       if (mStateMachine) {
@@ -91,9 +88,7 @@ class DisposalState final {
       }
     }
 
-    constexpr operator bool() const noexcept {
-      return mStateMachine;
-    }
+    constexpr operator bool() const noexcept { return mStateMachine; }
 
    private:
     StateMachine* mStateMachine {nullptr};
@@ -102,8 +97,7 @@ class DisposalState final {
  public:
   constexpr DisposalState(
     const std::source_location& caller = std::source_location::current())
-    : mStateMachine(caller) {
-  }
+    : mStateMachine(caller) {}
 
   /** Start, wait or pending, or return immediately.
    *

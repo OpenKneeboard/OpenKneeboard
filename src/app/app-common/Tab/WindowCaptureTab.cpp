@@ -200,8 +200,8 @@ task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     co_return false;
   }
 
-  auto source
-    = co_await HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
+  auto source =
+    co_await HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
   if (!source) {
     co_return false;
   }
@@ -244,9 +244,7 @@ OpenKneeboard::fire_and_forget WindowCaptureTab::TryToStartCapture() {
   }
 }
 
-WindowCaptureTab::~WindowCaptureTab() {
-  this->RemoveAllEventListeners();
-}
+WindowCaptureTab::~WindowCaptureTab() { this->RemoveAllEventListeners(); }
 
 OpenKneeboard::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   auto weak = weak_from_this();
@@ -258,9 +256,7 @@ OpenKneeboard::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   co_await this->Reload();
 }
 
-std::string WindowCaptureTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string WindowCaptureTab::GetGlyph() const { return GetStaticGlyph(); }
 
 task<void> WindowCaptureTab::DisposeAsync() noexcept {
   const auto disposing = co_await mDisposal.StartOnce();
@@ -417,9 +413,7 @@ task<void> WindowCaptureTab::SetMatchSpecification(
   }
 }
 
-bool WindowCaptureTab::IsInputEnabled() const {
-  return mSendInput;
-}
+bool WindowCaptureTab::IsInputEnabled() const { return mSendInput; }
 
 void WindowCaptureTab::SetIsInputEnabled(bool value) {
   if (value == mSendInput) {

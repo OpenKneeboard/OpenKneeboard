@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <magic_enum/magic_enum.hpp>
@@ -35,8 +36,8 @@ struct std::formatter<T, char> {
       return std::copy(value.begin(), value.end(), ctx.out());
     }
 
-    const auto combined
-      = std::format("{}::{}", magic_enum::enum_type_name<T>(), value);
+    const auto combined =
+      std::format("{}::{}", magic_enum::enum_type_name<T>(), value);
     return std::copy(combined.begin(), combined.end(), ctx.out());
   }
 

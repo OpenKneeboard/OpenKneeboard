@@ -39,8 +39,8 @@ NavigationTab::NavigationTab(
         static_cast<uint32_t>(
           (mPreferredSize.mWidth * 1.5f) / mPreferredSize.mHeight))
     : 1;
-  const auto entriesPerPage
-    = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
+  const auto entriesPerPage =
+    std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
   const auto entriesPerColumn = entriesPerPage / columns;
   mRenderColumns = numeric_cast<uint16_t>(columns);
 
@@ -144,13 +144,9 @@ NavigationTab::NavigationTab(
   }
 }
 
-NavigationTab::~NavigationTab() {
-  this->RemoveAllEventListeners();
-}
+NavigationTab::~NavigationTab() { this->RemoveAllEventListeners(); }
 
-std::string NavigationTab::GetGlyph() const {
-  return mRootTab->GetGlyph();
-}
+std::string NavigationTab::GetGlyph() const { return mRootTab->GetGlyph(); }
 
 PageIndex NavigationTab::GetPageCount() const {
   return static_cast<PageIndex>(mButtonTrackers.size());
@@ -160,9 +156,7 @@ std::optional<PreferredSize> NavigationTab::GetPreferredSize(PageID) {
   return PreferredSize {mPreferredSize, ScalingKind::Vector};
 }
 
-std::vector<PageID> NavigationTab::GetPageIDs() const {
-  return mPageIDs;
-}
+std::vector<PageID> NavigationTab::GetPageIDs() const { return mPageIDs; }
 
 void NavigationTab::PostCursorEvent(
   KneeboardViewID ctx,
@@ -175,13 +169,9 @@ void NavigationTab::PostCursorEvent(
   mButtonTrackers.at(pageID)->PostCursorEvent(ctx, ev);
 }
 
-bool NavigationTab::CanClearUserInput(PageID) const {
-  return false;
-}
+bool NavigationTab::CanClearUserInput(PageID) const { return false; }
 
-bool NavigationTab::CanClearUserInput() const {
-  return false;
-}
+bool NavigationTab::CanClearUserInput() const { return false; }
 
 void NavigationTab::ClearUserInput(PageID) {
   // nothing to do here
@@ -205,8 +195,8 @@ task<void> NavigationTab::RenderPage(
   this->CalculatePreviewMetrics(pageID);
 
   const auto origin = canvasRect.TopLeft();
-  const auto pageTransform
-    = D2D1::Matrix3x2F::Translation(origin.X<float>(), origin.Y<float>())
+  const auto pageTransform =
+    D2D1::Matrix3x2F::Translation(origin.X<float>(), origin.Y<float>())
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
   ctx->SetTransform(pageTransform);
 
@@ -263,8 +253,8 @@ task<void> NavigationTab::RenderPage(
 
   for (const auto& button: buttons) {
     auto rect = button.mRect;
-    rect.left
-      = columnPreviewRightEdge.at(button.mRenderColumn) + previewMetrics.mBleed;
+    rect.left =
+      columnPreviewRightEdge.at(button.mRenderColumn) + previewMetrics.mBleed;
     ctx->DrawTextW(
       button.mName.data(),
       static_cast<UINT32>(button.mName.size()),
@@ -312,10 +302,10 @@ void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
 
-    const auto height
-      = (button.mRect.bottom - button.mRect.top) + (2 * m.mBleed);
-    const auto nativeSize
-      = mRootTab->GetPreferredSize(button.mPageID)->mPixelSize;
+    const auto height =
+      (button.mRect.bottom - button.mRect.top) + (2 * m.mBleed);
+    const auto nativeSize =
+      mRootTab->GetPreferredSize(button.mPageID)->mPixelSize;
     const auto contentScale = height / nativeSize.mHeight;
 
     m.mRects.at(i) = PixelRect {
@@ -339,8 +329,8 @@ task<void> NavigationTab::RenderPreviewLayer(
   const auto& m = mPreviewMetrics.at(pageID);
   const auto buttons = mButtonTrackers.at(pageID)->GetButtons();
 
-  const auto scale
-    = size.Height<float>() / this->GetPreferredSize(pageID)->mPixelSize.mHeight;
+  const auto scale =
+    size.Height<float>() / this->GetPreferredSize(pageID)->mPixelSize.mHeight;
 
   const RenderContext rc {rt, nullptr};
 
@@ -353,8 +343,6 @@ task<void> NavigationTab::RenderPreviewLayer(
   }
 }
 
-task<void> NavigationTab::Reload() {
-  co_return;
-}
+task<void> NavigationTab::Reload() { co_return; }
 
 }// namespace OpenKneeboard

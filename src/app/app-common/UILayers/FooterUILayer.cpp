@@ -23,7 +23,8 @@ namespace OpenKneeboard {
 FooterUILayer::FooterUILayer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard)
-  : mDXResources(dxr), mKneeboard(kneeboard) {
+  : mDXResources(dxr),
+    mKneeboard(kneeboard) {
   AddEventListener(
     kneeboard->evFrameTimerPreEvent,
     std::bind_front(&FooterUILayer::Tick, this));
@@ -45,9 +46,7 @@ FooterUILayer::FooterUILayer(
     reinterpret_cast<ID2D1SolidColorBrush**>(mForegroundBrush.put()));
 }
 
-FooterUILayer::~FooterUILayer() {
-  this->RemoveAllEventListeners();
-}
+FooterUILayer::~FooterUILayer() { this->RemoveAllEventListeners(); }
 
 void FooterUILayer::Tick() {
   TraceLoggingThreadActivity<gTraceProvider> activity;
@@ -152,28 +151,28 @@ task<void> FooterUILayer::Render(
 
   const auto margin = footerHeight / 4;
 
-  const auto now
-    = std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
+  const auto now =
+    std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
   mLastRenderAt = std::chrono::time_point_cast<Duration>(Clock::now());
   mRenderState = RenderState::UpToDate;
 
-  const auto drawClock
-    = [&](const std::wstring& clock, DWRITE_TEXT_ALIGNMENT alignment) {
-        winrt::com_ptr<IDWriteTextLayout> clockLayout;
-        winrt::check_hresult(dwf->CreateTextLayout(
-          clock.c_str(),
-          static_cast<UINT32>(clock.size()),
-          clockFormat.get(),
-          float(mLastRenderSize->width - (2 * margin)),
-          float(footerHeight),
-          clockLayout.put()));
-        clockLayout->SetTextAlignment(alignment);
-        clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-        d2d->DrawTextLayout(
-          {margin + rect.Left<float>(), rect.Bottom<float>() - footerHeight},
-          clockLayout.get(),
-          mForegroundBrush.get());
-      };
+  const auto drawClock =
+    [&](const std::wstring& clock, DWRITE_TEXT_ALIGNMENT alignment) {
+      winrt::com_ptr<IDWriteTextLayout> clockLayout;
+      winrt::check_hresult(dwf->CreateTextLayout(
+        clock.c_str(),
+        static_cast<UINT32>(clock.size()),
+        clockFormat.get(),
+        float(mLastRenderSize->width - (2 * margin)),
+        float(footerHeight),
+        clockLayout.put()));
+      clockLayout->SetTextAlignment(alignment);
+      clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+      d2d->DrawTextLayout(
+        {margin + rect.Left<float>(), rect.Bottom<float>() - footerHeight},
+        clockLayout.get(),
+        mForegroundBrush.get());
+    };
 
   // Mission time
   if (mMissionTime) {
@@ -224,8 +223,8 @@ void FooterUILayer::OnAPIEvent(const APIEvent& ev) {
       dprint("Failed to parse mission times: {}", times.error().what);
       return;
     }
-    const auto currentTime
-      = std::chrono::seconds(static_cast<uint64_t>(times->currentTime));
+    const auto currentTime =
+      std::chrono::seconds(static_cast<uint64_t>(times->currentTime));
 
     if ((!mMissionTime) || mMissionTime != currentTime) {
       mMissionTime = currentTime;

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/D3D11/SpriteBatch.hpp>
 #include <OpenKneeboard/Shaders/Sprite/DXBC.hpp>
 
@@ -263,10 +264,11 @@ void SpriteBatch::DrawPendingVertices() {
     const auto uniform = reinterpret_cast<ShaderData::Uniform*>(mapping.pData);
 
     *uniform = ShaderData::Uniform {
-      .mSourceDimensions = {
-        static_cast<float>(mPendingSourceDesc.Width),
-        static_cast<float>(mPendingSourceDesc.Height),
-      },
+      .mSourceDimensions =
+        {
+          static_cast<float>(mPendingSourceDesc.Width),
+          static_cast<float>(mPendingSourceDesc.Height),
+        },
       .mDestDimensions = {mTargetDimensions[0], mTargetDimensions[1]},
     };
 

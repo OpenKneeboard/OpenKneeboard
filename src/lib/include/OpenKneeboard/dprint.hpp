@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/config.hpp>
@@ -110,13 +111,9 @@ class DebugPrinter {
   const WarningLevel Warning;
   const ErrorLevel Error;
 
-  void operator()(std::string_view what) const noexcept {
-    Verbose(what);
-  }
+  void operator()(std::string_view what) const noexcept { Verbose(what); }
 
-  void operator()(std::wstring_view what) const noexcept {
-    Verbose(what);
-  }
+  void operator()(std::wstring_view what) const noexcept { Verbose(what); }
 
   template <class... Args>
     requires(sizeof...(Args) >= 1)
@@ -199,13 +196,9 @@ class DPrintLifetime final {
       mLoc.line());
   }
 
-  operator T&() noexcept {
-    return mValue;
-  }
+  operator T&() noexcept { return mValue; }
 
-  operator const T&() const noexcept {
-    return mValue;
-  }
+  operator const T&() const noexcept { return mValue; }
 
  private:
   const T mValue;
@@ -250,8 +243,8 @@ struct DPrintMessage {
  public:
   using PortableSize = uint64_t;
   static constexpr PortableSize StructSize = 4096;
-  static constexpr PortableSize MaxMessageLength
-    = (StructSize - (sizeof(DPrintMessageHeader) + sizeof(PortableSize)))
+  static constexpr PortableSize MaxMessageLength =
+    (StructSize - (sizeof(DPrintMessageHeader) + sizeof(PortableSize)))
     / sizeof(wchar_t);
 
   DPrintMessageHeader mHeader {};

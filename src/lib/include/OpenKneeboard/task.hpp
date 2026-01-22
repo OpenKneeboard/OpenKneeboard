@@ -83,8 +83,7 @@ struct TaskPromiseWaiting {
 
   constexpr TaskPromiseWaiting() = default;
   constexpr TaskPromiseWaiting(const DetachedState state)
-    : mStorage {std::to_underlying(state)} {
-  }
+    : mStorage {std::to_underlying(state)} {}
 
   constexpr TaskPromiseWaiting(std::coroutine_handle<> consumer)
     : mStorage(std::bit_cast<uintptr_t>(consumer.address())) {
@@ -95,9 +94,7 @@ struct TaskPromiseWaiting {
     return magic_enum::enum_contains<DetachedState>(mStorage);
   }
 
-  constexpr bool ContainsConsumerHandle() const {
-    return !IsDetached();
-  }
+  constexpr bool ContainsConsumerHandle() const { return !IsDetached(); }
 
   constexpr DetachedState GetDetachedState() const {
     OPENKNEEBOARD_ASSERT(IsDetached());
@@ -232,9 +229,7 @@ struct TaskFinalAwaiter {
     }
   }
 
-  bool await_ready() const noexcept {
-    return false;
-  }
+  bool await_ready() const noexcept { return false; }
 
   template <class TPromise>
   std::coroutine_handle<> await_suspend(
@@ -291,8 +286,7 @@ struct TaskFinalAwaiter {
     }
   }
 
-  void await_resume() const noexcept {
-  }
+  void await_resume() const noexcept {}
 
  private:
   struct ResumeData {
@@ -329,8 +323,8 @@ struct TaskFinalAwaiter {
       reinterpret_cast<ResumeData*>(userData)};
 
     ComCallData comData {.pUserDefined = resumeData.get()};
-    const auto result
-      = resumeData->mPromise.mContext.mCOMCallback->ContextCallback(
+    const auto result =
+      resumeData->mPromise.mContext.mCOMCallback->ContextCallback(
         &TaskFinalAwaiter<TTraits>::target_thread_callback,
         &comData,
         IID_ICallbackWithNoReentrancyToApplicationSTA,
@@ -353,8 +347,8 @@ struct TaskFinalAwaiter {
         std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
       TraceLoggingPointer(comData, "ComData"));
 
-    const auto& resumeData
-      = *reinterpret_cast<ResumeData*>(comData->pUserDefined);
+    const auto& resumeData =
+      *reinterpret_cast<ResumeData*>(comData->pUserDefined);
     const auto context = resumeData.mPromise.mContext;
 
     TraceLoggingWrite(
@@ -426,7 +420,8 @@ struct TaskPromiseBase {
   TaskPromiseBase(
     TaskContext&& context,
     const std::coroutine_handle<> self) noexcept
-    : mContext(std::move(context)), mProducerHandle(self) {
+    : mContext(std::move(context)),
+      mProducerHandle(self) {
     TraceLoggingWrite(
       gTraceProvider,
       "TaskPromiseBase<>::TaskPromiseBase()",
@@ -441,9 +436,7 @@ struct TaskPromiseBase {
         "ResultState"));
   }
 
-  auto get_return_object() {
-    return static_cast<TaskPromise<TTraits>*>(this);
-  }
+  auto get_return_object() { return static_cast<TaskPromise<TTraits>*>(this); }
 
   void unhandled_exception() noexcept {
     TraceLoggingWrite(
@@ -480,8 +473,8 @@ struct TaskPromiseBase {
   }
 
   void resumed() {
-    const auto oldState = mWaiting.exchange(
-      TaskPromiseConsumerResumed, std::memory_order_acq_rel);
+    const auto oldState =
+      mWaiting.exchange(TaskPromiseConsumerResumed, std::memory_order_acq_rel);
     if (oldState.ContainsConsumerHandle()) [[unlikely]] {
       mContext.fatal(
         "Have a handle in TaskPromiseBase::resuem(), expected Destroyed or "
@@ -591,8 +584,7 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
         caller.value_or(StackFramePointer::caller(2)),
-        std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {
-  }
+        std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
   typename TTraits::result_type mResult;
 
@@ -625,8 +617,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
         caller.value_or(StackFramePointer::caller(3)),
-        std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {
-  }
+        std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
   void return_void() noexcept {
     // clang-cl dislikes 'this' in TraceLoggingValue
@@ -685,8 +676,8 @@ struct TaskAwaiter {
   }
 
   std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
-    const auto oldState
-      = mPromise.mWaiting.exchange(caller, std::memory_order_acq_rel);
+    const auto oldState =
+      mPromise.mWaiting.exchange(caller, std::memory_order_acq_rel);
     TraceLoggingWrite(
       gTraceProvider,
       "TaskAwaiter<>::await_suspend()",
@@ -759,8 +750,8 @@ struct TaskAwaiter {
 
 template <class TTraits>
 struct [[nodiscard]] Task {
-  static constexpr bool must_await_v
-    = TTraits::Awaiting == TaskAwaiting::Required;
+  static constexpr bool must_await_v =
+    TTraits::Awaiting == TaskAwaiting::Required;
 
   using promise_t = TaskPromise<TTraits>;
   using promise_ptr_t = promise_t*;
@@ -828,8 +819,7 @@ struct [[nodiscard]] Task {
 
   // just to give nice compiler error messages
   struct cannot_await_lvalue_use_std_move {
-    void await_ready() {
-    }
+    void await_ready() {}
   };
   cannot_await_lvalue_use_std_move operator co_await() & = delete;
 

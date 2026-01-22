@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/DCSAircraftTab.hpp>
 #include <OpenKneeboard/DCSMissionTab.hpp>
 #include <OpenKneeboard/DCSRadioLogTab.hpp>
@@ -26,8 +27,8 @@ namespace OpenKneeboard {
 TabsList::TabsList(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard)
-  : mDXR(dxr), mKneeboard(kneeboard) {
-}
+  : mDXR(dxr),
+    mKneeboard(kneeboard) {}
 
 task<std::shared_ptr<TabsList>> TabsList::Create(
   const audited_ptr<DXResources>& dxr,
@@ -38,9 +39,7 @@ task<std::shared_ptr<TabsList>> TabsList::Create(
   co_return ret;
 }
 
-TabsList::~TabsList() {
-  this->RemoveAllEventListeners();
-}
+TabsList::~TabsList() { this->RemoveAllEventListeners(); }
 
 static std::tuple<std::string, nlohmann::json> MigrateTab(
   const std::string& type,
@@ -195,9 +194,7 @@ nlohmann::json TabsList::GetSettings() const {
   return ret;
 }
 
-std::vector<std::shared_ptr<ITab>> TabsList::GetTabs() const {
-  return mTabs;
-}
+std::vector<std::shared_ptr<ITab>> TabsList::GetTabs() const { return mTabs; }
 
 task<void> TabsList::SetTabs(std::vector<std::shared_ptr<ITab>> tabs) {
   if (std::ranges::equal(tabs, mTabs)) {

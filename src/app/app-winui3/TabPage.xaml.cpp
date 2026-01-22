@@ -84,8 +84,8 @@ TabPage::TabPage() {
   mDXR.copy_from(gDXResources);
   mKneeboard = gKneeboard.lock();
 
-  auto brush
-    = Background().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
+  auto brush =
+    Background().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
   auto color = brush.Color();
   mBackgroundColor = {
     color.R / 255.0f,
@@ -94,8 +94,8 @@ TabPage::TabPage() {
     color.A / 255.0f,
   };
   brush = {nullptr};
-  brush
-    = Foreground().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
+  brush =
+    Foreground().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
   color = brush.Color();
 
   winrt::check_hresult(mDXR->mD2DDeviceContext->CreateSolidColorBrush(
@@ -120,9 +120,7 @@ TabPage::TabPage() {
     });
 }
 
-TabPage::~TabPage() {
-  OPENKNEEBOARD_TraceLoggingScope("TabPage::~TabPage()");
-}
+TabPage::~TabPage() { OPENKNEEBOARD_TraceLoggingScope("TabPage::~TabPage()"); }
 
 OpenKneeboard::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
@@ -275,8 +273,8 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
 task<void> TabPage::OnToolbarActionClick(
   std::shared_ptr<ToolbarAction> action) {
-  auto confirm
-    = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
+  auto confirm =
+    std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
   if (!confirm) {
     co_await action->Execute();
     co_return;
@@ -398,8 +396,8 @@ OpenKneeboard::fire_and_forget TabPage::UpdateToolbar() {
     co_return;
   }
 
-  auto actions
-    = InAppActions::Create(mKneeboard.get(), mKneeboardView, mTabView);
+  auto actions =
+    InAppActions::Create(mKneeboard.get(), mKneeboardView, mTabView);
   {
     std::vector keepAlive = actions.mPrimary;
     keepAlive.reserve(keepAlive.size() + actions.mSecondary.size());
@@ -664,15 +662,15 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   OPENKNEEBOARD_ASSERT(
     mTabView, "Attempt to fetch Page Metrics without a TabView");
 
-  const auto preferredSize
-    = mTabView->GetPreferredSize().value_or(PreferredSize {mPanelDimensions});
+  const auto preferredSize =
+    mTabView->GetPreferredSize().value_or(PreferredSize {mPanelDimensions});
 
   const auto& contentNativeSize = preferredSize.mPixelSize;
 
-  const auto contentRenderSize
-    = contentNativeSize.StaticCast<float>()
-        .ScaledToFit(mPanelDimensions.StaticCast<float>())
-        .Rounded<uint32_t>();
+  const auto contentRenderSize =
+    contentNativeSize.StaticCast<float>()
+      .ScaledToFit(mPanelDimensions.StaticCast<float>())
+      .Rounded<uint32_t>();
 
   // Use floor() to pixel-align raster sources
   const auto padX = static_cast<uint32_t>(

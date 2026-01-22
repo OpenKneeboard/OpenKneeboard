@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 
@@ -13,22 +14,12 @@
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
-hstring InputDeviceUIData::Name() {
-  return mName;
-}
-void InputDeviceUIData::Name(const hstring& value) {
-  mName = value;
-}
-hstring InputDeviceUIData::DeviceID() {
-  return mDeviceID;
-}
-void InputDeviceUIData::DeviceID(const hstring& value) {
-  mDeviceID = value;
-}
+hstring InputDeviceUIData::Name() { return mName; }
+void InputDeviceUIData::Name(const hstring& value) { mName = value; }
+hstring InputDeviceUIData::DeviceID() { return mDeviceID; }
+void InputDeviceUIData::DeviceID(const hstring& value) { mDeviceID = value; }
 
-uint8_t TabletInputDeviceUIData::Orientation() {
-  return mOrientation;
-}
+uint8_t TabletInputDeviceUIData::Orientation() { return mOrientation; }
 
 void TabletInputDeviceUIData::Orientation(uint8_t value) {
   mOrientation = value;

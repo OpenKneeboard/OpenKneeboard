@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/Events.hpp>
@@ -69,8 +70,8 @@ class PDFFilePageSource final
   winrt::apartment_context mUIThread;
   // Useful because `wil::resume_foreground()` will *always* enqueue, never
   // execute immediately
-  DispatcherQueue mUIThreadDispatcherQueue
-    = DispatcherQueue::GetForCurrentThread();
+  DispatcherQueue mUIThreadDispatcherQueue =
+    DispatcherQueue::GetForCurrentThread();
 
   audited_ptr<DXResources> mDXR;
   mutable std::shared_mutex mMutex;

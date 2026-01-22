@@ -64,16 +64,12 @@ struct unique_zip_error_traits {
   using value_type = zip_error_t;
   using storage_type = std::optional<zip_error_t>;
 
-  static constexpr auto default_value() {
-    return std::nullopt;
-  }
+  static constexpr auto default_value() { return std::nullopt; }
 
   static constexpr bool has_value(const storage_type& s) {
     return s.has_value();
   }
-  static constexpr bool has_value(const value_type&) {
-    return true;
-  }
+  static constexpr bool has_value(const value_type&) { return true; }
 
   template <class S>
   static constexpr decltype(auto) value(S&& storage) {
@@ -317,8 +313,8 @@ static task<void> InstallPlugin(
     }
   }
 
-  const auto extractRoot
-    = Filesystem::GetInstalledPluginsDirectory() / plugin.GetIDHash();
+  const auto extractRoot =
+    Filesystem::GetInstalledPluginsDirectory() / plugin.GetIDHash();
   if (std::filesystem::exists(extractRoot)) {
     dprint.Warning(
       "Removing previous plugin installation from {}", extractRoot);
@@ -358,8 +354,8 @@ static task<void> InstallPlugin(
 
       decltype(stat.size) bytesRead = 0;
       while (bytesRead < stat.size) {
-        const auto bytesReadThisChunk
-          = zip_fread(zipFile.get(), buffer, std::size(buffer));
+        const auto bytesReadThisChunk =
+          zip_fread(zipFile.get(), buffer, std::size(buffer));
         if (bytesReadThisChunk <= 0) {
           const auto zipError = zip_file_get_error(zipFile.get());
           dprint.Error(
@@ -376,8 +372,8 @@ static task<void> InstallPlugin(
   }
 
   if (action == PluginInstallAction::Update) {
-    const auto pluginTabIDs
-      = std::views::transform(plugin.mTabTypes, &Plugin::TabType::mID)
+    const auto pluginTabIDs =
+      std::views::transform(plugin.mTabTypes, &Plugin::TabType::mID)
       | std::ranges::to<std::unordered_set>();
     auto reloads = kneeboard->GetTabsList()->GetTabs()
       | std::views::transform([](auto tab) {

@@ -31,24 +31,19 @@ struct StackFramePointer {
 
   StackFramePointer() = delete;
 
-  constexpr StackFramePointer(std::nullptr_t) noexcept {
-  }
+  constexpr StackFramePointer(std::nullptr_t) noexcept {}
 
   explicit constexpr StackFramePointer(std::stacktrace_entry entry) noexcept
-    : mValue(std::bit_cast<void*>(entry)) {
-  }
+    : mValue(std::bit_cast<void*>(entry)) {}
 
   explicit constexpr StackFramePointer(
     std::type_identity_t<void*> value) noexcept
-    : mValue(value) {
-  }
+    : mValue(value) {}
 
   auto operator->() const noexcept {
     struct wrapper_t {
       std::stacktrace_entry mValue;
-      auto operator->() const noexcept {
-        return &mValue;
-      }
+      auto operator->() const noexcept { return &mValue; }
     };
     return wrapper_t(std::bit_cast<std::stacktrace_entry>(mValue));
   }
@@ -125,9 +120,7 @@ inline void break_if_debugger_present() {
   }
 }
 
-inline void prepare_to_fatal() {
-  break_if_debugger_present();
-}
+inline void prepare_to_fatal() { break_if_debugger_present(); }
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
@@ -181,8 +174,8 @@ class FatalOnUncaughtExceptions final {
 
   FatalOnUncaughtExceptions(const FatalOnUncaughtExceptions&) = delete;
   FatalOnUncaughtExceptions(FatalOnUncaughtExceptions&&) = delete;
-  FatalOnUncaughtExceptions& operator=(const FatalOnUncaughtExceptions&)
-    = delete;
+  FatalOnUncaughtExceptions& operator=(const FatalOnUncaughtExceptions&) =
+    delete;
   FatalOnUncaughtExceptions& operator=(FatalOnUncaughtExceptions&&) = delete;
 
  private:

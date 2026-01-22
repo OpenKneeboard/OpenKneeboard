@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/GetMainHWND.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -29,15 +30,15 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   gCache.mInfo = {};
   const scope_exit updateCacheTime([&]() { gCache.mCacheTime = now; });
 
-  auto name
-    = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectReverseDomainW);
+  auto name =
+    std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectReverseDomainW);
   winrt::handle hwndFile {OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
   if (!hwndFile) {
     return {};
   }
 
-  void* mapping = MapViewOfFile(
-    hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(MainWindowInfo));
+  void* mapping =
+    MapViewOfFile(hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(MainWindowInfo));
   if (!mapping) {
     return {};
   }

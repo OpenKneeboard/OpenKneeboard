@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DirectInputSettings.hpp>
@@ -10,12 +11,12 @@
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/UserAction.hpp>
 
+#include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/json_fwd.hpp>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Foundation.h>
-
-#include <OpenKneeboard/final_release_deleter.hpp>
-#include <OpenKneeboard/json_fwd.hpp>
 
 #include <memory>
 #include <shared_mutex>

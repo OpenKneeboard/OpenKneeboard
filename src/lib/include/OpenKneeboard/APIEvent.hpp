@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/json_fwd.hpp>
@@ -75,8 +76,8 @@ struct APIEvent final {
   static constexpr char EVT_SET_BRIGHTNESS[] = "SetBrightness";
 
   // struct PluginTabCustomActionEvent
-  static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[]
-    = "Plugin/Tab/CustomAction";
+  static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
+    "Plugin/Tab/CustomAction";
 
   /// JSON: "[ [name, value], [name, value], ... ]"
   static constexpr char EVT_MULTI_EVENT[] = "MultiEvent";
@@ -86,9 +87,7 @@ struct APIEvent final {
   // to UTF-8
   static constexpr char EVT_OKB_EXECUTABLE_LAUNCHED[] = "OKBExecutableLaunched";
 
-  inline static void Send(const APIEvent& ev) {
-    ev.Send();
-  }
+  inline static void Send(const APIEvent& ev) { ev.Send(); }
 };
 
 struct BaseSetTabEvent {

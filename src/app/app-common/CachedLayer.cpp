@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/CachedLayer.hpp>
 #include <OpenKneeboard/D3D11.hpp>
 #include <OpenKneeboard/SHM.hpp>
@@ -14,11 +15,9 @@
 
 namespace OpenKneeboard {
 
-CachedLayer::CachedLayer(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
-}
+CachedLayer::CachedLayer(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {}
 
-CachedLayer::~CachedLayer() {
-}
+CachedLayer::~CachedLayer() {}
 
 task<void> CachedLayer::Render(
   const PixelRect& destRect,
@@ -28,8 +27,8 @@ task<void> CachedLayer::Render(
   const std::optional<PixelSize>& providedCacheDimensions) {
   std::scoped_lock lock(mCacheMutex);
 
-  const PixelSize cacheDimensions
-    = providedCacheDimensions ? *providedCacheDimensions : destRect.mSize;
+  const PixelSize cacheDimensions =
+    providedCacheDimensions ? *providedCacheDimensions : destRect.mSize;
 
   if (cacheDimensions.IsEmpty()) [[unlikely]] {
     OPENKNEEBOARD_BREAK;

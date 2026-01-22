@@ -155,9 +155,7 @@ class KneeboardState final
   bool try_lock_shared();
   void unlock_shared();
 
-  auto GetDXResources() const noexcept {
-    return mDXResources;
-  }
+  auto GetDXResources() const noexcept { return mDXResources; }
 
   task<void> FlushOrderedEventQueue(
     std::chrono::time_point<std::chrono::steady_clock> stopAt);

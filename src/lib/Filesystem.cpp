@@ -96,8 +96,8 @@ bool IsDirectoryShortcut(const std::filesystem::path& link) noexcept {
     return false;
   }
 
-  const auto shortcut
-    = winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
+  const auto shortcut =
+    winrt::create_instance<IShellLinkW>(CLSID_FolderShortcut);
   const auto persist = shortcut.as<IPersistFile>();
   return SUCCEEDED(persist->Load(link.wstring().c_str(), STGM_READ));
 }
@@ -180,8 +180,8 @@ void MigrateSettingsDirectory() {
   if (!std::filesystem::is_empty(newPath)) {
     return;
   }
-  const auto oldPath
-    = GetKnownFolderPath<FOLDERID_SavedGames>() / "OpenKneeboard";
+  const auto oldPath =
+    GetKnownFolderPath<FOLDERID_SavedGames>() / "OpenKneeboard";
   if (!std::filesystem::exists(oldPath)) {
     return;
   }
@@ -269,8 +269,8 @@ std::filesystem::path GetLocalAppDataDirectory() {
 std::filesystem::path GetLogsDirectory() {
   static LazyPath sPath {[]() -> std::filesystem::path {
     const auto oldPath = GetLocalAppDataDirectory() / "Logs";
-    const auto path
-      = GetKnownFolderPath<FOLDERID_LocalAppData>() / "OpenKneeboard Logs";
+    const auto path =
+      GetKnownFolderPath<FOLDERID_LocalAppData>() / "OpenKneeboard Logs";
 
     if (std::filesystem::exists(oldPath) && !std::filesystem::exists(path)) {
       std::filesystem::rename(oldPath, path);
@@ -325,8 +325,7 @@ void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
   check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
 }
 
-ScopedDeleter::ScopedDeleter(const std::filesystem::path& path) : mPath(path) {
-}
+ScopedDeleter::ScopedDeleter(const std::filesystem::path& path) : mPath(path) {}
 
 ScopedDeleter::~ScopedDeleter() noexcept {
   if (std::filesystem::exists(mPath)) {
@@ -348,11 +347,7 @@ TemporaryCopy::TemporaryCopy(
   mCopy = destination;
 }
 
-TemporaryCopy::~TemporaryCopy() noexcept {
-  std::filesystem::remove(mCopy);
-}
+TemporaryCopy::~TemporaryCopy() noexcept { std::filesystem::remove(mCopy); }
 
-std::filesystem::path TemporaryCopy::GetPath() const noexcept {
-  return mCopy;
-}
+std::filesystem::path TemporaryCopy::GetPath() const noexcept { return mCopy; }
 };// namespace OpenKneeboard::Filesystem

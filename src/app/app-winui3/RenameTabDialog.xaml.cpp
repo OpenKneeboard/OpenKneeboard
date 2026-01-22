@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "RenameTabDialog.xaml.h"
@@ -38,9 +39,7 @@ void RenameTabDialog::TabTitle(const winrt::hstring& title) noexcept {
     box_value(std::format(_(L"Rename '{}'"), std::wstring_view {title})));
 }
 
-winrt::hstring RenameTabDialog::Prompt() const noexcept {
-  return mPrompt;
-}
+winrt::hstring RenameTabDialog::Prompt() const noexcept { return mPrompt; }
 
 void RenameTabDialog::Prompt(const winrt::hstring& prompt) noexcept {
   mPrompt = prompt;

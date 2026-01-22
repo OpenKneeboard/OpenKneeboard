@@ -52,16 +52,14 @@ void WindowPickerDialog::OnListSelectionChanged(
     mHwnd = {};
     this->IsPrimaryButtonEnabled(false);
   } else {
-    auto selected
-      = args.AddedItems().GetAt(0).as<OpenKneeboardApp::WindowPickerUIData>();
+    auto selected =
+      args.AddedItems().GetAt(0).as<OpenKneeboardApp::WindowPickerUIData>();
     mHwnd = selected.Hwnd();
     this->IsPrimaryButtonEnabled(true);
   }
 }
 
-uint64_t WindowPickerDialog::Hwnd() {
-  return mHwnd;
-}
+uint64_t WindowPickerDialog::Hwnd() { return mHwnd; }
 
 void WindowPickerDialog::OnAutoSuggestTextChanged(
   const AutoSuggestBox& box,
@@ -147,37 +145,21 @@ void WindowPickerDialog::OnAutoSuggestQuerySubmitted(
 
 WindowPickerUIData::WindowPickerUIData() = default;
 
-BitmapSource WindowPickerUIData::Icon() {
-  return mIcon;
-}
+BitmapSource WindowPickerUIData::Icon() { return mIcon; }
 
-void WindowPickerUIData::Icon(const BitmapSource& value) {
-  mIcon = value;
-}
+void WindowPickerUIData::Icon(const BitmapSource& value) { mIcon = value; }
 
-uint64_t WindowPickerUIData::Hwnd() {
-  return mHwnd;
-}
+uint64_t WindowPickerUIData::Hwnd() { return mHwnd; }
 
-void WindowPickerUIData::Hwnd(uint64_t value) {
-  mHwnd = value;
-}
+void WindowPickerUIData::Hwnd(uint64_t value) { mHwnd = value; }
 
-hstring WindowPickerUIData::Title() {
-  return mTitle;
-}
+hstring WindowPickerUIData::Title() { return mTitle; }
 
-void WindowPickerUIData::Title(const hstring& value) {
-  mTitle = value;
-}
+void WindowPickerUIData::Title(const hstring& value) { mTitle = value; }
 
-hstring WindowPickerUIData::Path() {
-  return mPath;
-}
+hstring WindowPickerUIData::Path() { return mPath; }
 
-void WindowPickerUIData::Path(const hstring& value) {
-  mPath = value;
-}
+void WindowPickerUIData::Path(const hstring& value) { mPath = value; }
 
 hstring WindowPickerUIData::GetStringRepresentation() {
   return hstring {std::format(

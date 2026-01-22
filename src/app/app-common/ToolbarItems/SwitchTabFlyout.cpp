@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/ITab.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
@@ -16,25 +17,18 @@ namespace OpenKneeboard {
 SwitchTabFlyout::SwitchTabFlyout(
   KneeboardState* kbs,
   const std::shared_ptr<KneeboardView>& kneeboardView)
-  : mKneeboardState(kbs), mKneeboardView(kneeboardView) {
+  : mKneeboardState(kbs),
+    mKneeboardView(kneeboardView) {
   AddEventListener(
     kbs->GetTabsList()->evTabsChangedEvent, this->evStateChangedEvent);
 }
 
-SwitchTabFlyout::~SwitchTabFlyout() {
-  RemoveAllEventListeners();
-}
+SwitchTabFlyout::~SwitchTabFlyout() { RemoveAllEventListeners(); }
 
-std::string_view SwitchTabFlyout::GetGlyph() const {
-  return {};
-}
-std::string_view SwitchTabFlyout::GetLabel() const {
-  return _("Switch tab");
-}
+std::string_view SwitchTabFlyout::GetGlyph() const { return {}; }
+std::string_view SwitchTabFlyout::GetLabel() const { return _("Switch tab"); }
 
-bool SwitchTabFlyout::IsEnabled() const {
-  return true;
-}
+bool SwitchTabFlyout::IsEnabled() const { return true; }
 
 std::vector<std::shared_ptr<IToolbarItem>> SwitchTabFlyout::GetSubItems()
   const {

@@ -22,8 +22,7 @@ ChromiumPageSource::RenderHandler::RenderHandler(
     0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
 }
 
-ChromiumPageSource::RenderHandler::~RenderHandler() {
-}
+ChromiumPageSource::RenderHandler::~RenderHandler() {}
 
 void ChromiumPageSource::RenderHandler::GetViewRect(
   CefRefPtr<CefBrowser>,
@@ -187,9 +186,7 @@ void ChromiumPageSource::RenderHandler::SetSize(const PixelSize& size) {
   mSize = size;
 }
 
-PixelSize ChromiumPageSource::RenderHandler::GetSize() const {
-  return mSize;
-}
+PixelSize ChromiumPageSource::RenderHandler::GetSize() const { return mSize; }
 
 void ChromiumPageSource::RenderHandler::RenderPage(
   RenderContext rc,

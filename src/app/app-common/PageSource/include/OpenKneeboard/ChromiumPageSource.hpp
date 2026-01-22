@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include "IPageSourceWithCursorEvents.hpp"
@@ -69,9 +70,7 @@ class ChromiumPageSource final
     std::string_view,
     const nlohmann::json& arg);
 
-  bool HasDeveloperTools(PageID) const override {
-    return true;
-  }
+  bool HasDeveloperTools(PageID) const override { return true; }
   fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
  private:

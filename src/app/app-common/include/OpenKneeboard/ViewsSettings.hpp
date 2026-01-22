@@ -46,8 +46,8 @@ struct IndependentViewVRSettings {
   VROpacitySettings mOpacity {};
   ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
-  constexpr bool operator==(const IndependentViewVRSettings&) const noexcept
-    = default;
+  constexpr bool operator==(const IndependentViewVRSettings&) const noexcept =
+    default;
 };
 
 /** VR configuration of a view.
@@ -65,9 +65,7 @@ struct ViewVRSettings {
 
   bool mEnabled {true};
 
-  constexpr Type GetType() const {
-    return mType;
-  }
+  constexpr Type GetType() const { return mType; }
 
   constexpr auto GetIndependentSettings() const {
     if (mType != Type::Independent) [[unlikely]] {

@@ -28,9 +28,7 @@ struct API {
     getAPI(eRENDERDOC_API_Version_1_3_0, (void**)&mRenderDoc);
   }
 
-  operator bool() const noexcept {
-    return mRenderDoc;
-  }
+  operator bool() const noexcept { return mRenderDoc; }
 
   auto operator->() const noexcept {
     OPENKNEEBOARD_ALWAYS_ASSERT(mRenderDoc);
@@ -53,12 +51,10 @@ NestedFrameCapture::NestedFrameCapture(
   const char* title)
   : NestedFrameCapture(
       RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance),
-      title) {
-}
+      title) {}
 
 NestedFrameCapture::NestedFrameCapture(ID3D12Device* device, const char* title)
-  : NestedFrameCapture(static_cast<void*>(device), title) {
-}
+  : NestedFrameCapture(static_cast<void*>(device), title) {}
 
 NestedFrameCapture::NestedFrameCapture(void* rdDevice, const char* title) {
   auto rd = API::Get();

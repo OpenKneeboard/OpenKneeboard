@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #include <OpenKneeboard/BrowserTab.hpp>
 
 #include <OpenKneeboard/json/Geometry2D.hpp>
@@ -24,8 +25,7 @@ BrowserTab::BrowserTab(
     mDXR(dxr),
     mKneeboard(kbs),
     mSettings(settings),
-    mHaveTitle(!title.empty()) {
-}
+    mHaveTitle(!title.empty()) {}
 
 task<std::shared_ptr<BrowserTab>> BrowserTab::Create(
   audited_ptr<DXResources> dxr,
@@ -44,9 +44,7 @@ BrowserTab::~BrowserTab() {
   this->RemoveAllEventListeners();
 }
 
-std::string BrowserTab::GetGlyph() const {
-  return GetStaticGlyph();
-}
+std::string BrowserTab::GetGlyph() const { return GetStaticGlyph(); }
 
 std::string BrowserTab::GetStaticGlyph() {
   // Website
@@ -78,9 +76,7 @@ task<void> BrowserTab::Reload() {
   co_await this->SetDelegates({mDelegate});
 }
 
-nlohmann::json BrowserTab::GetSettings() const {
-  return mSettings;
-}
+nlohmann::json BrowserTab::GetSettings() const { return mSettings; }
 
 bool BrowserTab::IsSimHubIntegrationEnabled() const {
   return mSettings.mIntegrateWithSimHub;

@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 #pragma once
 
 #include <OpenKneeboard/DXResources.hpp>
@@ -41,9 +42,7 @@ class TabView final : private EventReceiver {
   ~TabView();
 
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
-  constexpr auto GetRuntimeID() const noexcept {
-    return mRuntimeID;
-  }
+  constexpr auto GetRuntimeID() const noexcept { return mRuntimeID; }
 
   void SetPageID(PageID);
   PageID GetPageID() const;

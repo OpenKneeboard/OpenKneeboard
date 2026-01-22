@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "VRSettingsPage.xaml.h"
@@ -26,8 +27,8 @@ using namespace winrt::Microsoft::UI::Xaml::Data;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-static const wchar_t gOpenXRLayerSubkey[]
-  = L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
+static const wchar_t gOpenXRLayerSubkey[] =
+  L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
 
 VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
@@ -38,9 +39,7 @@ VRSettingsPage::VRSettingsPage() {
     {get_weak(), &VRSettingsPage::PopulateViews});
 }
 
-VRSettingsPage::~VRSettingsPage() {
-  this->RemoveAllEventListeners();
-}
+VRSettingsPage::~VRSettingsPage() { this->RemoveAllEventListeners(); }
 
 OpenKneeboard::fire_and_forget VRSettingsPage::RestoreDefaults(
   IInspectable,
@@ -48,9 +47,9 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RestoreDefaults(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
-  dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default VR settings, "
-                           "removing your preferences?"))));
+  dialog.Content(box_value(to_hstring(
+    _("Do you want to restore the default VR settings, "
+      "removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);
@@ -273,8 +272,8 @@ OpenKneeboard::fire_and_forget VRSettingsPage::RemoveView(
 
   for (uint32_t i = 0; i < items.Size(); /* no increment */) {
     const auto& item = items.GetAt(i);
-    const auto itemView
-      = unbox_value<winrt::guid>(item.as<TabViewItem>().Tag());
+    const auto itemView =
+      unbox_value<winrt::guid>(item.as<TabViewItem>().Tag());
     const auto it = std::ranges::find(
       settings.mViews, itemView, [](const ViewSettings& view) {
         return view.mGuid;
