@@ -1,12 +1,12 @@
-if(BUILD_IS_32BIT)
+if (BUILD_IS_32BIT)
   add_custom_target(build32)
   return()
-endif()
+endif ()
 
 include(ExternalProject)
 
 ExternalProject_Add(
-  build32 
+  build32
   SOURCE_DIR "${CMAKE_SOURCE_DIR}"
   STAMP_DIR "${CMAKE_BINARY_DIR}/stamp32"
   BINARY_DIR "${CMAKE_BINARY_DIR}/build32"

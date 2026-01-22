@@ -17,10 +17,10 @@ function(DownloadCEF platform version download_dir)
   set(CEF_ROOT "${CEF_DOWNLOAD_DIR}/${CEF_DISTRIBUTION}" CACHE INTERNAL "CEF_ROOT")
 
   # Download and/or extract the binary distribution if necessary.
-  if(NOT IS_DIRECTORY "${CEF_ROOT}")
+  if (NOT IS_DIRECTORY "${CEF_ROOT}")
     set(CEF_DOWNLOAD_FILENAME "${CEF_DISTRIBUTION}.tar.bz2")
     set(CEF_DOWNLOAD_PATH "${CEF_DOWNLOAD_DIR}/${CEF_DOWNLOAD_FILENAME}")
-    if(NOT EXISTS "${CEF_DOWNLOAD_PATH}")
+    if (NOT EXISTS "${CEF_DOWNLOAD_PATH}")
       set(CEF_DOWNLOAD_URL "https://cef-builds.spotifycdn.com/${CEF_DOWNLOAD_FILENAME}")
       string(REPLACE "+" "%2B" CEF_DOWNLOAD_URL_ESCAPED ${CEF_DOWNLOAD_URL})
 
@@ -35,14 +35,14 @@ function(DownloadCEF platform version download_dir)
         DOWNLOAD "${CEF_DOWNLOAD_URL_ESCAPED}" "${CEF_DOWNLOAD_PATH}"
         EXPECTED_HASH SHA1=${CEF_SHA1}
         SHOW_PROGRESS
-        )
-    endif()
+      )
+    endif ()
 
     # Extract the binary distribution.
     message(STATUS "Extracting ${CEF_DOWNLOAD_PATH}...")
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E tar xzf "${CEF_DOWNLOAD_DIR}/${CEF_DOWNLOAD_FILENAME}"
       WORKING_DIRECTORY ${CEF_DOWNLOAD_DIR}
-      )
-  endif()
+    )
+  endif ()
 endfunction()

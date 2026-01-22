@@ -52,11 +52,11 @@ configure_file(
 # Keep the un-suffixed name to keep compatibility with previous installations
 set(64BIT_OPENXR_JSON "${BUILD_OUT_BINDIR}/OpenKneeboard-OpenXR.json")
 set(32BIT_OPENXR_JSON "${BUILD_OUT_BINDIR}/OpenKneeboard-OpenXR32.json")
-if(BUILD_IS_32BIT)
+if (BUILD_IS_32BIT)
   set(OPENXR_JSON_OUT "${32BIT_OPENXR_JSON}")
-else()
+else ()
   set(OPENXR_JSON_OUT "${64BIT_OPENXR_JSON}")
-endif()
+endif ()
 file(
   GENERATE
   OUTPUT "${OPENXR_JSON_OUT}"

@@ -4,7 +4,7 @@ include_guard(GLOBAL)
 find_package(directx-dxc CONFIG REQUIRED)
 add_executable(ThirdParty::dxc IMPORTED GLOBAL)
 set_target_properties(
-    ThirdParty::dxc
-    PROPERTIES
-    IMPORTED_LOCATION "${DIRECTX_DXC_TOOL}"
+  ThirdParty::dxc
+  PROPERTIES
+  IMPORTED_LOCATION "${DIRECTX_DXC_TOOL}"
 )

@@ -10,62 +10,62 @@ function(ok_postprocess_target TARGET)
 
   get_target_property(ALIAS "${TARGET}" ALIASED_TARGET)
 
-  if(ALIAS)
+  if (ALIAS)
     return()
-  endif()
+  endif ()
 
-  if(POSTPROCESS_ARG_32BIT_ONLY OR POSTPROCESS_ARG_DUALARCH)
+  if (POSTPROCESS_ARG_32BIT_ONLY OR POSTPROCESS_ARG_DUALARCH)
     set(BUILD_32BIT_TARGET ON)
-  endif()
-  if(NOT POSTPROCESS_ARG_32BIT_ONLY)
+  endif ()
+  if (NOT POSTPROCESS_ARG_32BIT_ONLY)
     set(BUILD_64BIT_TARGET ON)
-  endif()
+  endif ()
 
-  if(POSTPROCESS_ARG_OUTPUT_SUBDIR)
+  if (POSTPROCESS_ARG_OUTPUT_SUBDIR)
     set(OUTPUT_SUBDIR ${POSTPROCESS_ARG_OUTPUT_SUBDIR})
-  else()
+  else ()
     set(OUTPUT_SUBDIR "bin")
-  endif()
+  endif ()
 
-  if(POSTPROCESS_ARG_OUTPUT_NAME)
+  if (POSTPROCESS_ARG_OUTPUT_NAME)
     set(OUTPUT_NAME ${POSTPROCESS_ARG_OUTPUT_NAME})
-  else()
+  else ()
     get_target_property(OUTPUT_NAME "${TARGET}" OUTPUT_NAME)
-    if(NOT OUTPUT_NAME)
+    if (NOT OUTPUT_NAME)
       set(OUTPUT_NAME "${TARGET}")
-    endif() 
-  endif()
+    endif ()
+  endif ()
   set(32BIT_OUTPUT_NAME "${OUTPUT_NAME}32")
-  if(POSTPROCESS_ARG_DUALARCH)
+  if (POSTPROCESS_ARG_DUALARCH)
     set(64BIT_OUTPUT_NAME "${OUTPUT_NAME}64")
-  else()
+  else ()
     set(64BIT_OUTPUT_NAME "${OUTPUT_NAME}")
-  endif()
-  if(BUILD_IS_64BIT)
+  endif ()
+  if (BUILD_IS_64BIT)
     set_target_properties(
       "${TARGET}"
       PROPERTIES
       OUTPUT_NAME "${64BIT_OUTPUT_NAME}"
     )
-  endif()
-  if(BUILD_IS_32BIT)
+  endif ()
+  if (BUILD_IS_32BIT)
     set_target_properties(
       "${TARGET}"
       PROPERTIES
       OUTPUT_NAME "${32BIT_OUTPUT_NAME}"
     )
-  endif()
+  endif ()
 
   get_target_property(TARGET_TYPE "${TARGET}" TYPE)
 
-  if(BUILD_32BIT_TARGET)
+  if (BUILD_32BIT_TARGET)
     set(32BIT_TARGET "${TARGET}32")
     add_library("${32BIT_TARGET}" INTERFACE IMPORTED GLOBAL)
-    if(TARGET_TYPE STREQUAL "EXECUTABLE")
+    if (TARGET_TYPE STREQUAL "EXECUTABLE")
       set(IMPORTED_FILENAME "${32BIT_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
-    else()
+    else ()
       set(IMPORTED_FILENAME "${32BIT_OUTPUT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endif()
+    endif ()
     set(IMPORTED_LOCATION "${BUILD_OUT_ROOT}/${OUTPUT_SUBDIR}/${IMPORTED_FILENAME}")
     set_property(SOURCE "${IMPORTED_LOCATION}" PROPERTY GENERATED ON)
 
@@ -76,39 +76,39 @@ function(ok_postprocess_target TARGET)
       IMPORTED_LOCATION "${IMPORTED_LOCATION}"
     )
 
-    if(BUILD_IS_64BIT)
+    if (BUILD_IS_64BIT)
       add_dependencies("${32BIT_TARGET}" build32)
-      if(POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
+      if (POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
         add_dependencies(runtime-dependencies "${32BIT_TARGET}")
-      endif()
-    endif()
-    if(BUILD_IS_32BIT)
+      endif ()
+    endif ()
+    if (BUILD_IS_32BIT)
       add_dependencies("${32BIT_TARGET}" "${TARGET}")
       add_dependencies(build32 ${TARGET})
-    endif()
-  endif()
+    endif ()
+  endif ()
 
-  if(BUILD_32BIT_TARGET AND BUILD_IS_64BIT AND POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
+  if (BUILD_32BIT_TARGET AND BUILD_IS_64BIT AND POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
     cmake_path(GET IMPORTED_LOCATION STEM STEM)
     set(PDB_PATH "${BUILD_OUT_PDBDIR}/${STEM}.pdb")
-  endif()
+  endif ()
 
-  if((BUILD_IS_64BIT AND NOT BUILD_64BIT_TARGET) OR (BUILD_IS_32BIT AND NOT BUILD_32BIT_TARGET))
+  if ((BUILD_IS_64BIT AND NOT BUILD_64BIT_TARGET) OR (BUILD_IS_32BIT AND NOT BUILD_32BIT_TARGET))
     set_target_properties(
       "${TARGET}"
       PROPERTIES
       EXCLUDE_FROM_ALL ON
     )
     return()
-  endif()
+  endif ()
 
-  if(POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
+  if (POSTPROCESS_ARG_RUNTIME_DEPENDENCY)
     add_dependencies(runtime-dependencies ${TARGET})
-  endif()
+  endif ()
 
-  if(NOT TARGET_TYPE MATCHES "^(EXECUTABLE|(SHARED|MODULE)_LIBRARY)$")
+  if (NOT TARGET_TYPE MATCHES "^(EXECUTABLE|(SHARED|MODULE)_LIBRARY)$")
     return()
-  endif()
+  endif ()
 
   add_version_rc(${TARGET})
   set_target_properties(
@@ -124,5 +124,5 @@ function(ok_postprocess_target TARGET)
       LIBRARY_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/${OUTPUT_SUBDIR}"
       PDB_OUTPUT_DIRECTORY "${BUILD_OUT_PDBDIR}"
     )
-  endif()
+  endif ()
 endfunction()

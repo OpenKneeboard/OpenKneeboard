@@ -7,11 +7,11 @@ macro(ok_add_license_file SOURCE DESTINATION)
 
   if (NOT arg_DEPENDS)
     file(
-        GENERATE
-        OUTPUT "${DESTINATION_PATH}"
-        INPUT "${SOURCE}"
+      GENERATE
+      OUTPUT "${DESTINATION_PATH}"
+      INPUT "${SOURCE}"
     )
-  else()
+  else ()
     cmake_path(GET DESTINATION_PATH PARENT_PATH DESTINATION_DIRECTORY)
     add_custom_command(
       TARGET "${arg_DEPENDS}"
@@ -24,5 +24,5 @@ macro(ok_add_license_file SOURCE DESTINATION)
       "${DESTINATION_PATH}"
       VERBATIM
     )
-  endif()
+  endif ()
 endmacro()

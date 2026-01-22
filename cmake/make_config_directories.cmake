@@ -5,8 +5,8 @@ include_guard(GLOBAL)
 # This is useful for `target_include_directories(${TARGET} INTERFACE "${GENEX})`,
 # as CMake requires all expansions exist
 function(make_config_directories GENEX)
-  foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
+  foreach (CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
     string(REPLACE "$<CONFIG>" "${CONFIG}" EXPANDED "${GENEX}")
     file(MAKE_DIRECTORY "${EXPANDED}")
-  endforeach()
+  endforeach ()
 endfunction()

@@ -7,6 +7,6 @@ add_library(ThirdParty::RenderDoc ALIAS renderdoc)
 
 include(ok_add_license_file)
 ok_add_license_file(
-	"${SOURCE_DIR}/LICENSE.md"
-	"LICENSE-ThirdParty-RenderDoc.txt"
+  "${SOURCE_DIR}/LICENSE.md"
+  "LICENSE-ThirdParty-RenderDoc.txt"
 )

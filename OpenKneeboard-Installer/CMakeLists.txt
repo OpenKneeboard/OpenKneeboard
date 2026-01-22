@@ -1,6 +1,6 @@
-if(NOT BUILD_IS_64BIT)
+if (NOT BUILD_IS_64BIT)
   return()
-endif()
+endif ()
 
 set(VERSION_JSON "${BUILD_OUT_ROOT}/installer/version.json")
 message(STATUS "Creating ${VERSION_JSON}")
