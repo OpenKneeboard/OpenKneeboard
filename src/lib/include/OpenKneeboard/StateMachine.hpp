@@ -120,7 +120,8 @@ class StateMachineBase {
   constexpr void Assert(
     State expected,
     std::string_view message = "Assertion failure",
-    const std::source_location& caller = std::source_location::current()) {
+    const std::source_location& caller =
+      std::source_location::current()) const {
     const auto actual = Get();
     if (actual == expected) [[likely]] {
       return;
