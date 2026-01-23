@@ -77,32 +77,7 @@ struct SignalAwaitable {
     __assume(false);
   }
 
-  ~SignalAwaitable() {
-    mState.Assert(State::Resumed);
-
-    // We definitely don't want to invoke the callback while we're in the
-    // destructor
-    mStopCallback.reset();
-
-    using enum State;
-    switch (const auto state = mState.Get()) {
-      case Init:
-      case StartingWait:
-      case Waiting:
-        fatal(
-          "resume_on_signal torn down in invalid state {}",
-          magic_enum::enum_name(state));
-      case CanceledBeforeWait:
-        OPENKNEEBOARD_ASSERT(
-          !mTPSignal, "Canceled before wait, but have a wait");
-        break;
-      case Canceled:
-      case Timeout:
-      case Signaled:
-        // nothing to do
-        break;
-    }
-  }
+  ~SignalAwaitable() { mState.Assert(State::Resumed); }
 
   bool await_ready() const { return false; }
 
@@ -151,6 +126,7 @@ struct SignalAwaitable {
     Signaled,
     Timeout,
     Canceled,
+    Resuming,
     Resumed,
   };
   AtomicStateMachine<
@@ -165,10 +141,11 @@ struct SignalAwaitable {
       Transition {State::Waiting, State::Timeout},
       Transition {State::Waiting, State::Canceled},
       // Resumed from any canceled or completed state
-      Transition {State::Signaled, State::Resumed},
-      Transition {State::Timeout, State::Resumed},
-      Transition {State::Canceled, State::Resumed},
-      Transition {State::CanceledBeforeWait, State::Resumed},
+      Transition {State::Signaled, State::Resuming},
+      Transition {State::Timeout, State::Resuming},
+      Transition {State::Canceled, State::Resuming},
+      Transition {State::CanceledBeforeWait, State::Resuming},
+      Transition {State::Resuming, State::Resumed},
     }>
     mState;
 
@@ -183,7 +160,9 @@ struct SignalAwaitable {
   template <State From>
   void resume_from() {
     OPENKNEEBOARD_ASSERT(mResult != Result::Pending);
-    mState.Transition<From, State::Resumed>();
+
+    mState.Transition<From, State::Resuming>();
+    mStopCallback.reset();
 
     const auto wait = std::exchange(mTPSignal, nullptr);
     const auto coro = std::exchange(mCoro, {});
@@ -195,10 +174,12 @@ struct SignalAwaitable {
         WaitForThreadpoolWaitCallbacks(wait, true);
       }
     }
-    coro.resume();
     if (wait) {
       CloseThreadpoolWait(wait);
     }
+
+    mState.Transition<State::Resuming, State::Resumed>();
+    coro.resume();
   }
 
   void cancel() {
