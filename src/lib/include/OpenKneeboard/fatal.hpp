@@ -134,9 +134,11 @@ void SetDumpType(DumpType);
 template <class... Ts>
 OPENKNEEBOARD_NOINLINE [[noreturn]]
 void fatal(std::format_string<Ts...> fmt, Ts&&... values) noexcept {
+  const auto message =
+    std::vformat(fmt.get(), std::make_format_args(values...));
   detail::prepare_to_fatal();
   detail::FatalData {
-    .mMessage = std::format(fmt, std::forward<Ts>(values)...),
+    .mMessage = message,
   }
     .fatal();
 }
