@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 enum class ResumeOnSignalError {
   Timeout,
-  Cancelled,
+  Canceled,
 };
 using ResumeOnSignalResult = std::expected<void, ResumeOnSignalError>;
 
@@ -62,21 +62,24 @@ struct SignalAwaitable {
   }
 
   ResumeOnSignalResult result() const {
-    const auto state = mState.Get();
-    switch (state) {
-      case State::Signalled:
+    mState.Assert(State::Resumed);
+    using enum Result;
+    switch (mResult) {
+      case Success:
         return {};
-      case State::Timeout:
+      case Timeout:
         return std::unexpected {ResumeOnSignalError::Timeout};
-      case State::Cancelled:
-      case State::CancelledBeforeWait:
-        return std::unexpected {ResumeOnSignalError::Cancelled};
-      default:
-        fatal("Can't fetch result for a SignalAwaitable with state {}", state);
+      case Canceled:
+        return std::unexpected {ResumeOnSignalError::Canceled};
+      case Pending:
+        fatal("resume_on_signal::result() called while pending");
     }
+    __assume(false);
   }
 
   ~SignalAwaitable() {
+    mState.Assert(State::Resumed);
+
     // We definitely don't want to invoke the callback while we're in the
     // destructor
     mStopCallback.reset();
@@ -89,19 +92,14 @@ struct SignalAwaitable {
         fatal(
           "resume_on_signal torn down in invalid state {}",
           magic_enum::enum_name(state));
-      case CancelledBeforeWait:
+      case CanceledBeforeWait:
         OPENKNEEBOARD_ASSERT(
-          !mTPSignal, "Cancelled before wait, but have a wait");
+          !mTPSignal, "Canceled before wait, but have a wait");
         break;
-      case Cancelled:
-        OPENKNEEBOARD_ASSERT(mTPSignal, "cancelled after wait, but no wait");
-        SetThreadpoolWait(mTPSignal, nullptr, nullptr);
-        WaitForThreadpoolWaitCallbacks(mTPSignal, true);
-        [[fallthrough]];
+      case Canceled:
       case Timeout:
-      case Signalled:
-        OPENKNEEBOARD_ASSERT(mTPSignal, "timeout or signalled, but no wait");
-        CloseThreadpoolWait(mTPSignal);
+      case Signaled:
+        // nothing to do
         break;
     }
   }
@@ -109,36 +107,25 @@ struct SignalAwaitable {
   bool await_ready() const { return false; }
 
   void await_resume() const {}
-
   void await_suspend(std::coroutine_handle<> coro) {
+    OPENKNEEBOARD_ASSERT(!mCoro, "await_suspend called twice");
+    mCoro = coro;
+
     if (!mState.TryTransition<State::Init, State::StartingWait>()) {
-      mState.Assert(State::CancelledBeforeWait);
-      coro.resume();
+      mResult = Result::Canceled;
+      resume_from<State::CanceledBeforeWait>();
       return;
     }
 
-    mCoro = std::move(coro);
     mTPSignal = CreateThreadpoolWait(
-      [](auto, auto rawThis, auto, const TP_WAIT_RESULT result) {
-        auto self = reinterpret_cast<SignalAwaitable*>(rawThis);
+      [](const auto ctx, auto rawThis, auto, const TP_WAIT_RESULT result) {
+        auto& self = *reinterpret_cast<SignalAwaitable*>(rawThis);
         if (result == WAIT_OBJECT_0) {
-          const auto transition =
-            self->mState.TryTransition<State::Waiting, State::Signalled>();
-          if (transition) {
-            self->mCoro.resume();
-            return;
-          }
-          OPENKNEEBOARD_ASSERT(transition.error() == State::Cancelled);
-        } else {
-          OPENKNEEBOARD_ASSERT(result == WAIT_TIMEOUT);
-          const auto transition =
-            self->mState.TryTransition<State::Waiting, State::Timeout>();
-          if (transition) {
-            self->mCoro.resume();
-            return;
-          }
-          OPENKNEEBOARD_ASSERT(transition.error() == State::Cancelled);
+          self.thread_pool_callback<State::Signaled, Result::Success>(ctx);
+          return;
         }
+        OPENKNEEBOARD_ASSERT(result == WAIT_TIMEOUT);
+        self.thread_pool_callback<State::Timeout, Result::Timeout>(ctx);
       },
       this,
       nullptr);
@@ -149,65 +136,101 @@ struct SignalAwaitable {
         mTPSignal, mHandle, mTimeout ? &mTimeout.value() : nullptr);
       return;
     }
-    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Cancelled);
-    coro.resume();
-    // Cleanup of the wait is dealt with in ~SignalAwaitable();
+    // Specifically, StartingWait -> Canceled is our responsibility
+    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Canceled);
+    mResult = Result::Canceled;
+    resume_from<State::Canceled>();
   }
 
  private:
   enum class State {
     Init,
-    CancelledBeforeWait,
+    CanceledBeforeWait,
     StartingWait,
     Waiting,
-    Signalled,
+    Signaled,
     Timeout,
-    Cancelled,
+    Canceled,
+    Resumed,
   };
   AtomicStateMachine<
     State,
     State::Init,
     std::array {
-      Transition {State::Init, State::CancelledBeforeWait},
+      Transition {State::Init, State::CanceledBeforeWait},
       Transition {State::Init, State::StartingWait},
-      Transition {State::StartingWait, State::Cancelled},
+      Transition {State::StartingWait, State::Canceled},
       Transition {State::StartingWait, State::Waiting},
-      Transition {State::Waiting, State::Signalled},
+      Transition {State::Waiting, State::Signaled},
       Transition {State::Waiting, State::Timeout},
-      Transition {State::Waiting, State::Cancelled},
+      Transition {State::Waiting, State::Canceled},
+      // Resumed from any canceled or completed state
+      Transition {State::Signaled, State::Resumed},
+      Transition {State::Timeout, State::Resumed},
+      Transition {State::Canceled, State::Resumed},
+      Transition {State::CanceledBeforeWait, State::Resumed},
     }>
     mState;
 
+  enum class Result {
+    Pending,
+    Success,
+    Timeout,
+    Canceled,
+  };
+  Result mResult {Result::Pending};
+
+  template <State From>
+  void resume_from() {
+    OPENKNEEBOARD_ASSERT(mResult != Result::Pending);
+    mState.Transition<From, State::Resumed>();
+
+    const auto wait = std::exchange(mTPSignal, nullptr);
+    const auto coro = std::exchange(mCoro, {});
+
+    if constexpr (
+      From == State::Canceled || From == State::CanceledBeforeWait) {
+      if (wait) {
+        SetThreadpoolWait(wait, nullptr, nullptr);
+        WaitForThreadpoolWaitCallbacks(wait, true);
+      }
+    }
+    coro.resume();
+    if (wait) {
+      CloseThreadpoolWait(wait);
+    }
+  }
+
   void cancel() {
-    if (mState.TryTransition<State::Init, State::CancelledBeforeWait>()) {
+    if (mState.TryTransition<State::Init, State::CanceledBeforeWait>()) {
       return;
     }
     OPENKNEEBOARD_ASSERT(mTPSignal);
 
     SetThreadpoolWaitEx(mTPSignal, NULL, nullptr, 0);
-    if (mState.TryTransition<State::StartingWait, State::Cancelled>()) {
+    if (mState.TryTransition<State::StartingWait, State::Canceled>()) {
       // handled by await_suspend
       return;
     }
 
     const auto transitioned =
-      mState.TryTransition<State::Waiting, State::Cancelled>();
+      mState.TryTransition<State::Waiting, State::Canceled>();
     if (transitioned) {
-      mCoro.resume();
+      resume_from<State::Canceled>();
       return;
     }
     using enum State;
     switch (transitioned.error()) {
       case Init:
-      case CancelledBeforeWait:
+      case CanceledBeforeWait:
       case StartingWait:
       case Waiting:
-      case Cancelled:
+      case Canceled:
         fatal(
           "Impossible state {} in SignalAwaitable::cancel()",
           magic_enum::enum_name(transitioned.error()));
         break;
-      case Signalled:
+      case Signaled:
       case Timeout:
         // nothing to do
         break;
@@ -220,6 +243,20 @@ struct SignalAwaitable {
   std::coroutine_handle<> mCoro;
 
   std::optional<std::stop_callback<std::function<void()>>> mStopCallback;
+
+  template <State TTargetState, Result TResult>
+  void thread_pool_callback(PTP_CALLBACK_INSTANCE const pci) {
+    const auto transition =
+      mState.TryTransition<State::Waiting, TTargetState>();
+    if (!transition) {
+      OPENKNEEBOARD_ASSERT(transition.error() == State::Canceled);
+      return;
+    }
+
+    DisassociateCurrentThreadFromCallback(pci);
+    mResult = TResult;
+    resume_from<TTargetState>();
+  }
 };
 
 }// namespace OpenKneeboard::detail
