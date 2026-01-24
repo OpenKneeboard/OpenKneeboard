@@ -53,7 +53,7 @@ struct VRSettingsPage
     muxc::TabViewTabCloseRequestedEventArgs) noexcept;
 
  private:
-  std::shared_ptr<KneeboardState> mKneeboard;
+  OpenKneeboard::audited_ptr<KneeboardState> mKneeboard;
   void PopulateViews() noexcept;
 
   void AppendViewTab(const ViewSettings& view) noexcept;

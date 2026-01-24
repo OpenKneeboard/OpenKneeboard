@@ -46,7 +46,7 @@ struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl>,
   winrt::Microsoft::UI::Xaml::Visibility TooManyViewsVisibility();
 
  private:
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   winrt::guid mViewID;
 

@@ -100,7 +100,7 @@ struct AdvancedSettingsPage
 
  private:
   winrt::apartment_context mUIThread {};
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  OpenKneeboard::audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

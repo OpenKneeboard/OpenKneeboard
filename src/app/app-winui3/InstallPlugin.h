@@ -10,6 +10,7 @@
 #include "pch.h"
 // clang-format on
 
+#include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/task.hpp>
 
 #include <shims/winrt/base.h>
@@ -24,7 +25,7 @@ namespace OpenKneeboard {
 class KneeboardState;
 
 task<void> InstallPlugin(
-  std::weak_ptr<KneeboardState>,
+  audited_weak_ptr<KneeboardState>,
   winrt::Microsoft::UI::Xaml::XamlRoot,
   const wchar_t* const commandLine);
 

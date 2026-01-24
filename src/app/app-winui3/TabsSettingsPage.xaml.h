@@ -92,7 +92,7 @@ struct TabsSettingsPage : TabsSettingsPageT<TabsSettingsPage>,
   bool mUIIsChangingTabs = false;
 
   OpenKneeboard::audited_ptr<OpenKneeboard::DXResources> mDXR;
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  OpenKneeboard::audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 
 struct TabUIData : TabUIDataT<TabUIData>,

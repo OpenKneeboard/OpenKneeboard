@@ -80,7 +80,7 @@ struct IndependentVRViewSettingsControl
   void GazeOpacity(uint8_t);
 
  private:
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  OpenKneeboard::audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   OpenKneeboard::IndependentViewVRSettings GetViewConfig();
   OpenKneeboard::fire_and_forget SetViewConfig(

@@ -72,7 +72,7 @@ class KneeboardState final
     public std::enable_shared_from_this<KneeboardState> {
  public:
   KneeboardState() = delete;
-  static task<std::shared_ptr<KneeboardState>> Create(
+  static task<audited_ptr<KneeboardState>> Create(
     HWND mainWindow,
     audited_ptr<DXResources>);
   ~KneeboardState() noexcept;

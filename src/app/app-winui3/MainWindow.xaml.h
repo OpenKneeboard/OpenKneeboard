@@ -145,7 +145,7 @@ struct MainWindow : MainWindowT<MainWindow>,
     DWORD dwmsEventTime);
 
   audited_ptr<DXResources> mDXR;
-  std::shared_ptr<KneeboardState> mKneeboard;
+  audited_ptr<KneeboardState> mKneeboard;
 
   void ResetKneeboardView();
 };

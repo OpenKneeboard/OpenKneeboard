@@ -43,7 +43,7 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
   void UpdateList();
   Windows::Foundation::Collections::IObservableVector<IInspectable>
     mUIProfiles {single_threaded_observable_vector<IInspectable>()};
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  OpenKneeboard::audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 
 struct ProfileUIData : ProfileUIDataT<ProfileUIData> {

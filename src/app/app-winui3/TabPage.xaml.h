@@ -138,7 +138,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const TabView::RuntimeID&);
 
   audited_ptr<OpenKneeboard::DXResources> mDXR;
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  audited_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   ThreadGuard mThreadGuard;
 };

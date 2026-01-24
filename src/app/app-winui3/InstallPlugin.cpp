@@ -182,7 +182,7 @@ static PluginInstallAction GetPluginInstallAction(
 }
 
 static task<void> InstallPlugin(
-  std::weak_ptr<KneeboardState> weakKneeboard,
+  audited_weak_ptr<KneeboardState> weakKneeboard,
   XamlRoot xamlRoot,
   std::filesystem::path path,
   Plugin plugin,
@@ -490,7 +490,7 @@ static task<void> InstallPlugin(
 }
 
 static task<void> InstallPluginFromPath(
-  std::weak_ptr<KneeboardState> kneeboard,
+  audited_weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   std::filesystem::path path) {
   dprint("Attempting to install plugin `{}`", path);
@@ -639,7 +639,7 @@ static task<void> InstallPluginFromPath(
 }
 
 task<void> InstallPlugin(
-  std::weak_ptr<KneeboardState> kneeboard,
+  audited_weak_ptr<KneeboardState> kneeboard,
   XamlRoot xamlRoot,
   const wchar_t* const commandLine) {
   int argc {};

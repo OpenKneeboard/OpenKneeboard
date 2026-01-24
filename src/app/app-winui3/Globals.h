@@ -21,7 +21,7 @@ class KneeboardState;
 class TroubleshootingStore;
 
 extern HWND gMainWindow;
-extern std::weak_ptr<KneeboardState> gKneeboard;
+extern audited_weak_ptr<KneeboardState> gKneeboard;
 extern audited_ptr<DXResources> gDXResources;
 extern winrt::handle gMutex;
 extern std::weak_ptr<TroubleshootingStore> gTroubleshootingStore;

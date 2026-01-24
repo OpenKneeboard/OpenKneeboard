@@ -33,10 +33,10 @@
 
 namespace OpenKneeboard {
 
-task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
+task<audited_ptr<KneeboardState>> KneeboardState::Create(
   HWND hwnd,
   audited_ptr<DXResources> dxr) {
-  std::shared_ptr<KneeboardState> ret {new KneeboardState(hwnd, dxr)};
+  audited_ptr<KneeboardState> ret {new KneeboardState(hwnd, dxr)};
   co_await ret->Init();
   co_return ret;
 }

@@ -90,6 +90,7 @@ task<void> App::CleanupAndExitAsync() {
   mWindow = {nullptr};
 
   const auto waitStart = std::chrono::steady_clock::now();
+
   winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
   ProcessShutdownBlock::SetEventOnCompletion(event.get());
 
@@ -100,7 +101,15 @@ task<void> App::CleanupAndExitAsync() {
   if (!co_await winrt::resume_on_signal(event.get(), std::chrono::seconds(1))) {
     dprint("Failed to cleanup after 1 second, quitting anyway.");
     ProcessShutdownBlock::DumpActiveBlocks();
+    auto kbs = gKneeboard.lock();
+    if (kbs) {
+      kbs.dump_refs("KneeboardState owners");
+    }
   }
+  const auto duration = std::chrono::steady_clock::now() - waitStart;
+  dprint(
+    "Shutdown blockers took {}ms",
+    std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 
   dprint("Exiting app");
 
