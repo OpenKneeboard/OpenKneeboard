@@ -93,11 +93,11 @@ struct SignalAwaitable {
       [](const auto ctx, auto rawThis, auto, const TP_WAIT_RESULT result) {
         auto& self = *reinterpret_cast<SignalAwaitable*>(rawThis);
         if (result == WAIT_OBJECT_0) {
-          self.thread_pool_callback<State::Signaled, Result::Success>(ctx);
+          self.thread_pool_callback<Result::Success>(ctx);
           return;
         }
         OPENKNEEBOARD_ASSERT(result == WAIT_TIMEOUT);
-        self.thread_pool_callback<State::Timeout, Result::Timeout>(ctx);
+        self.thread_pool_callback<Result::Timeout>(ctx);
       },
       this,
       nullptr);
@@ -117,32 +117,30 @@ struct SignalAwaitable {
  private:
   enum class State {
     Init,
-    CanceledBeforeWait,
     StartingWait,
     Waiting,
-    Signaled,
-    Timeout,
-    Canceled,
+    Signaled,// thread-pool callback; also includes timeout
     Resuming,
     Resumed,
+    CanceledBeforeWait,
+    Canceled,
   };
   AtomicStateMachine<
     State,
     State::Init,
     std::array {
-      Transition {State::Init, State::CanceledBeforeWait},
+      // Normal path
       Transition {State::Init, State::StartingWait},
-      Transition {State::StartingWait, State::Canceled},
       Transition {State::StartingWait, State::Waiting},
       Transition {State::Waiting, State::Signaled},
-      Transition {State::Waiting, State::Timeout},
-      Transition {State::Waiting, State::Canceled},
-      // Resumed from any canceled or completed state
       Transition {State::Signaled, State::Resuming},
-      Transition {State::Timeout, State::Resuming},
+      Transition {State::Resuming, State::Resumed},
+      // Cancellation paths
+      Transition {State::Init, State::CanceledBeforeWait},
+      Transition {State::StartingWait, State::Canceled},
+      Transition {State::Waiting, State::Canceled},
       Transition {State::Canceled, State::Resuming},
       Transition {State::CanceledBeforeWait, State::Resuming},
-      Transition {State::Resuming, State::Resumed},
     }>
     mState;
 
@@ -212,7 +210,6 @@ struct SignalAwaitable {
       case Resuming:
       case Resumed:
       case Signaled:
-      case Timeout:
         // nothing to do
         break;
     }
@@ -240,10 +237,10 @@ struct SignalAwaitable {
 
   std::optional<std::stop_callback<Canceler>> mStopCallback;
 
-  template <State TTargetState, Result TResult>
+  template <Result TResult>
   void thread_pool_callback(PTP_CALLBACK_INSTANCE const pci) {
     const auto transition =
-      mState.TryTransition<State::Waiting, TTargetState>();
+      mState.TryTransition<State::Waiting, State::Signaled>();
     if (!transition) {
       OPENKNEEBOARD_ASSERT(transition.error() == State::Canceled);
       return;
@@ -251,7 +248,7 @@ struct SignalAwaitable {
 
     DisassociateCurrentThreadFromCallback(pci);
     mResult = TResult;
-    resume_from<TTargetState>();
+    resume_from<State::Signaled>();
   }
 };
 
