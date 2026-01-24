@@ -160,11 +160,11 @@ struct TaskPromiseWaiting {
       case ConsumerResumed:
       case ReadyWithoutSuspend:
       case ProducerResumingConsumer:
+      case ProducerCompleted:
         return Owner::Consumer;
       case ProducerPending:
       case ConsumerDestroyed:
       case ProducerCompleting:
-      case ProducerCompleted:
         return Owner::Producer;
     }
     __assume(false);
