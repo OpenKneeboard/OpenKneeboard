@@ -45,18 +45,18 @@ constexpr bool DebugTaskCoroutines = true;
  * pointer' flag
  */
 enum class DetachedState : uintptr_t {
-  ProducerPending = (1 << 1) | 1,
-  ProducerCompleting = (2 << 1) | 1,
-  ProducerResumingConsumer = (3 << 1) | 1,
-  ProducerCompleted = (4 << 1) | 1,
-  ConsumerResumed = (5 << 1) | 1,
+  ProducerPending = 0,
+  ProducerCompleting = (1 << 1) | 1,
+  ProducerResumingConsumer = (2 << 1) | 1,
+  ProducerCompleted = (3 << 1) | 1,
+  ConsumerResumed = (4 << 1) | 1,
   // Coroutine complete by the time await_ready is called, consumer is never
   // suspended (await_ready returns true)
-  ReadyWithoutSuspend = (6 << 1) | 1,
+  ReadyWithoutSuspend = (5 << 1) | 1,
   // While typically this is reached after ConsumerResumed or
   // ReadyWithoutSuspend, in the case of abandoned tasks (e.g. fire_and_forget),
   // it can be set at any earlier point
-  ConsumerDestroyed = (7 << 1) | 1,
+  ConsumerDestroyed = (6 << 1) | 1,
 };
 
 enum class TaskPromiseResultState {
@@ -105,20 +105,33 @@ struct TaskContext {
  * - coroutine handles actually contain a pointer
  */
 struct TaskPromiseWaiting {
-  // `nullptr` is considered to be a handle
-  static_assert(!magic_enum::enum_contains<DetachedState>(0));
-
   constexpr TaskPromiseWaiting() = default;
   constexpr TaskPromiseWaiting(const DetachedState state)
     : mStorage {std::to_underlying(state)} {}
 
   constexpr TaskPromiseWaiting(std::coroutine_handle<> consumer)
     : mStorage(std::bit_cast<uintptr_t>(consumer.address())) {
-    OPENKNEEBOARD_ASSERT((mStorage & 1) == 0);
+    OPENKNEEBOARD_ASSERT(
+      (mStorage & 1) == 0,
+      "pointer with set LSB is unsupported, as LSB is used as discriminator "
+      "bit");
+    OPENKNEEBOARD_ASSERT(mStorage, "nullptr isn't a valid coroutine handle");
   }
 
   constexpr bool IsDetached() const {
-    return magic_enum::enum_contains<DetachedState>(mStorage);
+    if (mStorage == 0) {
+      static_assert(std::to_underlying(DetachedState::ProducerPending) == 0);
+      return true;
+    }
+    if ((mStorage & 1)) {
+      OPENKNEEBOARD_ASSERT(
+        magic_enum::enum_contains<DetachedState>(mStorage),
+        "discriminator indicates DetachedState, but {} is not a member of "
+        "DetachedState",
+        mStorage);
+      return true;
+    }
+    return false;
   }
 
   constexpr bool ContainsConsumerHandle() const { return !IsDetached(); }
