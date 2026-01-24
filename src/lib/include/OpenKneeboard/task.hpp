@@ -383,7 +383,6 @@ struct TaskFinalAwaiter {
     void* userData) noexcept {
     const std::unique_ptr<ResumeData> resumeData {
       static_cast<ResumeData*>(userData)};
-    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     ComCallData comData {.pUserDefined = userData};
     const auto result =
       resumeData->mPromise.mContext.mCOMCallback->ContextCallback(
