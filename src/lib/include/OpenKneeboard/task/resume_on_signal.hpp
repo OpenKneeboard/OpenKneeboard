@@ -15,7 +15,6 @@
 #include <chrono>
 #include <coroutine>
 #include <expected>
-#include <functional>
 #include <optional>
 #include <stop_token>
 
@@ -85,7 +84,7 @@ struct SignalAwaitable {
 
     if (!mState.TryTransition<State::Init, State::StartingWait>()) {
       mResult = Result::Canceled;
-      resume_from<State::CanceledBeforeWait>();
+      resume_from<State::Canceled>();
       return;
     }
 
@@ -122,7 +121,6 @@ struct SignalAwaitable {
     Signaled,// thread-pool callback; also includes timeout
     Resuming,
     Resumed,
-    CanceledBeforeWait,
     Canceled,
   };
   AtomicStateMachine<
@@ -136,11 +134,10 @@ struct SignalAwaitable {
       Transition {State::Signaled, State::Resuming},
       Transition {State::Resuming, State::Resumed},
       // Cancellation paths
-      Transition {State::Init, State::CanceledBeforeWait},
+      Transition {State::Init, State::Canceled},
       Transition {State::StartingWait, State::Canceled},
       Transition {State::Waiting, State::Canceled},
       Transition {State::Canceled, State::Resuming},
-      Transition {State::CanceledBeforeWait, State::Resuming},
     }>
     mState;
 
@@ -162,8 +159,7 @@ struct SignalAwaitable {
     const auto wait = std::exchange(mTPSignal, nullptr);
     const auto coro = std::exchange(mCoro, {});
 
-    if constexpr (
-      From == State::Canceled || From == State::CanceledBeforeWait) {
+    if constexpr (From == State::Canceled) {
       if (wait) {
         SetThreadpoolWait(wait, nullptr, nullptr);
         WaitForThreadpoolWaitCallbacks(wait, true);
@@ -178,7 +174,7 @@ struct SignalAwaitable {
   }
 
   void cancel() {
-    if (mState.TryTransition<State::Init, State::CanceledBeforeWait>()) {
+    if (mState.TryTransition<State::Init, State::Canceled>()) {
       return;
     }
     OPENKNEEBOARD_ASSERT(mTPSignal);
@@ -199,7 +195,6 @@ struct SignalAwaitable {
     using enum State;
     switch (transitioned.error()) {
       case Init:
-      case CanceledBeforeWait:
       case StartingWait:
       case Waiting:
       case Canceled:
