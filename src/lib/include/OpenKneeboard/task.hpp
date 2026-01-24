@@ -810,6 +810,11 @@ struct [[nodiscard]] Task {
 
   static_assert(TTraits::Awaiting != TaskAwaiting::Optional);
 
+  [[nodiscard]]
+  constexpr bool is_moved() const noexcept {
+    return !mPromise;
+  }
+
   Task(Task&& other) noexcept {
     mPromise = std::exchange(other.mPromise, nullptr);
     TraceLoggingWrite(
