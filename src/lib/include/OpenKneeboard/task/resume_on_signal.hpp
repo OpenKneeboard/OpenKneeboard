@@ -211,6 +211,8 @@ struct SignalAwaitable {
           "Impossible state {} in SignalAwaitable::cancel()",
           magic_enum::enum_name(transitioned.error()));
         break;
+      case Resuming:
+      case Resumed:
       case Signaled:
       case Timeout:
         // nothing to do
