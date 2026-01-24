@@ -884,7 +884,8 @@ struct [[nodiscard]] Task {
 
     OPENKNEEBOARD_ASSERT(
       mPromise, "Can't await a task that has been moved or already awaited");
-    return TaskAwaiter<TTraits> {*mPromise};
+    // We're an rvalue-reference (move), so we should wipe our promise
+    return TaskAwaiter<TTraits> {*std::exchange(mPromise, nullptr)};
   }
 
   promise_ptr_t mPromise {};
