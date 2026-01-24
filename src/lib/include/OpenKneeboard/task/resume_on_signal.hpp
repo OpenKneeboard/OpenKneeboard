@@ -197,6 +197,7 @@ struct SignalAwaitable {
     const auto transitioned =
       mState.TryTransition<State::Waiting, State::Canceled>();
     if (transitioned) {
+      mResult = Result::Canceled;
       resume_from<State::Canceled>();
       return;
     }
