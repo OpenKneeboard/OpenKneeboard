@@ -40,10 +40,7 @@ struct SignalAwaitable {
     std::stop_token stopToken,
     std::chrono::duration<Rep, Period> timeout)
     : mHandle(handle),
-      mStopCallback(
-        std::in_place,
-        stopToken,
-        std::bind_front(&SignalAwaitable::cancel, this)) {
+      mStopCallback(std::in_place, stopToken, this) {
     if (timeout == decltype(timeout)::zero()) {
       return;
     }
@@ -226,7 +223,22 @@ struct SignalAwaitable {
   PTP_WAIT mTPSignal {nullptr};
   std::coroutine_handle<> mCoro;
 
-  std::optional<std::stop_callback<std::function<void()>>> mStopCallback;
+  /* Slightly more efficient (especially space) than passing a capturing lambda
+   * as std::function<void()>
+   *
+   * Standard specifically permits this to be reentrant into ~stop_callback,
+   * which it is (via coro.resume());
+   */
+  struct Canceler {
+    void operator()() { mSelf->cancel(); }
+    Canceler() = delete;
+    explicit Canceler(SignalAwaitable* self) : mSelf(self) {}
+
+   private:
+    SignalAwaitable* mSelf {nullptr};
+  };
+
+  std::optional<std::stop_callback<Canceler>> mStopCallback;
 
   template <State TTargetState, Result TResult>
   void thread_pool_callback(PTP_CALLBACK_INSTANCE const pci) {
