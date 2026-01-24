@@ -86,6 +86,10 @@ task<void> App::CleanupAndExitAsync() {
   auto keepAlive = get_strong();
   winrt::apartment_context uiThread;
   dprint("Starting app shutdown");
+  co_await mWindow.as<implementation::MainWindow>()->DisposeAsync();
+  mWindow = {nullptr};
+
+  const auto waitStart = std::chrono::steady_clock::now();
   winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
   ProcessShutdownBlock::SetEventOnCompletion(event.get());
 

@@ -86,7 +86,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   Title(L"OpenKneeboard");
   ExtendsContentIntoTitleBar(true);
   SetTitleBar(AppTitleBar());
-  Closed([this](const auto&, const auto&) { this->Shutdown(); });
+  Closed([this](const auto&, const auto&) { this->TriggerApplicationExit(); });
 
   auto bigIcon = LoadImageW(
     GetModuleHandleW(nullptr),
@@ -719,10 +719,15 @@ void MainWindow::SaveWindowPosition() {
   mWindowPosition = windowRect;
 }
 
-OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
-  TraceLoggingWrite(gTraceProvider, "MainWindow::Shutdown()");
-
+OpenKneeboard::task<void> MainWindow::DisposeAsync() noexcept {
   auto self = get_strong();
+  OPENKNEEBOARD_TraceLoggingScope("MainWindow::DisposeAsync()");
+
+  const auto disposing = co_await mDisposal.StartOnce();
+  if (!disposing) {
+    co_return;
+  }
+
   self->RemoveAllEventListeners();
   mWinEventHook.reset();
   // TODO: a lot of this should be moved to the Application class.
@@ -772,8 +777,10 @@ OpenKneeboard::fire_and_forget MainWindow::Shutdown() {
 
   self->mKneeboard = {};
   self->mDXR = nullptr;
+}
 
-  TryEnqueue(self->DispatcherQueue(), []() -> task<void> {
+void MainWindow::TriggerApplicationExit() {
+  TryEnqueue(this->DispatcherQueue(), []() -> task<void> {
     auto app = winrt::Microsoft::UI::Xaml::Application::Current().as<App>();
     co_await app.as<App>()->CleanupAndExitAsync();
   });
@@ -1223,7 +1230,7 @@ LRESULT MainWindow::SubclassProc(
       // This won't complete as the window message loop is never re-entered,
       // but we want to do as much as we can, especially clearing the 'unsafe
       // shutdown' marker
-      self->Shutdown();
+      self->TriggerApplicationExit();
       break;
     default:
       // Just the default behavior

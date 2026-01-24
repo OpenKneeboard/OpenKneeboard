@@ -29,7 +29,8 @@ using namespace OpenKneeboard;
 namespace winrt::OpenKneeboardApp::implementation {
 struct MainWindow : MainWindowT<MainWindow>,
                     EventReceiver,
-                    OpenKneeboard::WithPropertyChangedEvent {
+                    OpenKneeboard::WithPropertyChangedEvent,
+                    IHasDisposeAsync {
   MainWindow();
   ~MainWindow();
 
@@ -51,6 +52,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   Windows::Foundation::Collections::IVector<IInspectable>
   NavigationItems() noexcept;
 
+  task<void> DisposeAsync() noexcept override;
+
  private:
   struct NavigationTag {
     ITab::RuntimeID mTabID;
@@ -61,6 +64,8 @@ struct MainWindow : MainWindowT<MainWindow>,
 
     constexpr bool operator==(const NavigationTag&) const = default;
   };
+  DisposalState mDisposal;
+
   winrt::Windows::Foundation::Collections::IVector<
     winrt::Windows::Foundation::IInspectable>
     mNavigationItems {nullptr};
@@ -108,7 +113,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   task<void> PromptForViewMode();
   OpenKneeboard::fire_and_forget UpdateProfileSwitcherVisibility();
   OpenKneeboard::fire_and_forget RenameTab(std::shared_ptr<ITab>);
-  OpenKneeboard::fire_and_forget Shutdown();
+  void TriggerApplicationExit();
 
   void CheckForElevatedConsumer();
   OpenKneeboard::fire_and_forget ShowWarningIfElevated(DWORD pid);
