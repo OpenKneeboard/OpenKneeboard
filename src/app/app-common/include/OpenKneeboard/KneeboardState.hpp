@@ -78,9 +78,6 @@ class KneeboardState final
   ~KneeboardState() noexcept;
   [[nodiscard]] virtual task<void> DisposeAsync() noexcept override;
 
-  static OpenKneeboard::fire_and_forget final_release(
-    std::unique_ptr<KneeboardState>);
-
   std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
   std::shared_ptr<KneeboardView> GetActiveInGameView() const;
   void SetActiveInGameView(KneeboardViewID runtimeID);

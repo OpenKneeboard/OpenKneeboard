@@ -36,7 +36,7 @@ namespace OpenKneeboard {
 task<std::shared_ptr<KneeboardState>> KneeboardState::Create(
   HWND hwnd,
   audited_ptr<DXResources> dxr) {
-  auto ret = shared_with_final_release(new KneeboardState(hwnd, dxr));
+  std::shared_ptr<KneeboardState> ret {new KneeboardState(hwnd, dxr)};
   co_await ret->Init();
   co_return ret;
 }
@@ -112,17 +112,6 @@ task<void> KneeboardState::Init() {
 KneeboardState::~KneeboardState() noexcept {
   OPENKNEEBOARD_TraceLoggingScope("KneeboardState::~KneeboardState()");
   dprint("~KneeboardState()");
-}
-
-OpenKneeboard::fire_and_forget KneeboardState::final_release(
-  std::unique_ptr<KneeboardState> self) {
-  TraceLoggingWrite(gTraceProvider, "KneeboardState::final_release()");
-  self->RemoveAllEventListeners();
-  co_await self->ReleaseExclusiveResources();
-
-  // Implied, but let's get some perf tracing on the member's destructors
-  self = {};
-  TraceLoggingWrite(gTraceProvider, "KneeboardState::~final_release()");
 }
 
 std::vector<std::shared_ptr<KneeboardView>>
@@ -270,6 +259,9 @@ task<void> KneeboardState::DisposeAsync() noexcept {
   if (mFlushingQueue) {
     co_await winrt::resume_on_signal(mQueueFlushedEvent.get());
   }
+
+  RemoveAllEventListeners();
+  co_await ReleaseExclusiveResources();
 }
 
 task<void> KneeboardState::PostUserAction(UserAction action) {
