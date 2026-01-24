@@ -256,7 +256,9 @@ task<void> MainWindow::FrameLoop() {
       gTraceProvider,
       "MainWindow::FrameLoop()/WaitStart",
       TraceLoggingValue(waitTime.QuadPart, "interval"));
-    co_await OpenKneeboard::resume_on_signal(timer.get(), stop);
+    if (!co_await OpenKneeboard::resume_on_signal(timer.get(), stop)) {
+      co_return;
+    }
     TraceLoggingWrite(gTraceProvider, "MainWindow::FrameLoop()/WaitComplete");
   }
   co_return;

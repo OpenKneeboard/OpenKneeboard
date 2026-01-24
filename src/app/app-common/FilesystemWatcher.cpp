@@ -59,8 +59,7 @@ task<void> FilesystemWatcher::Run() {
   auto stop = mStop.get_token();
   while (!stop.stop_requested()) {
     winrt::check_bool(FindNextChangeNotification(handle));
-    co_await resume_on_signal(handle, stop);
-    if (stop.stop_requested()) {
+    if (!co_await resume_on_signal(handle, stop)) {
       co_return;
     }
     if (!mSettling) {

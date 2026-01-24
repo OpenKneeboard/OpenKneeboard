@@ -220,7 +220,7 @@ auto WaitForReadFromSocket(
     if (!holds_alternative<WouldBlockSocketReadError>(ret.error())) {
       co_return ret;
     }
-    co_await resume_on_signal(event, {});
+    co_await resume_on_signal(event);
     ret = ReadFromSocket(s, buf, size);
   }
   co_return ret;

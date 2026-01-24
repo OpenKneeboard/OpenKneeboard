@@ -121,8 +121,7 @@ task<bool> APIEventServer::RunSingle(
   }
 
   TraceLoggingWrite(gTraceProvider, "APIEventServer::RunSingle()/Wait");
-  co_await resume_on_signal(notifyEvent, stop);
-  if (stop.stop_requested()) {
+  if (!co_await resume_on_signal(notifyEvent, stop)) {
     co_return false;
   }
   GetOverlappedResult(mailslot, &overlapped, &bytesRead, TRUE);

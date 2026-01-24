@@ -332,7 +332,7 @@ void ChromiumPageSource::PostCustomAction(
 fire_and_forget ChromiumPageSource::OpenDeveloperToolsWindow(
   KneeboardViewID view,
   PageID) {
-  co_await GetOrCreateClient(view)->OpenDeveloperToolsWindow();
+  std::ignore = co_await GetOrCreateClient(view)->OpenDeveloperToolsWindow();
 }
 
 }// namespace OpenKneeboard
