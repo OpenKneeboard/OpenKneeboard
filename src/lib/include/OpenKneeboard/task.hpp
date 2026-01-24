@@ -692,7 +692,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
 template <class TTraits>
 struct TaskAwaiter {
   using promise_t = TaskPromise<TTraits>;
-  promise_t& mPromise;
+  promise_t* mPromise;
 
   TaskAwaiter() = delete;
   TaskAwaiter(const TaskAwaiter&) = delete;
@@ -701,95 +701,106 @@ struct TaskAwaiter {
   TaskAwaiter(TaskAwaiter&&) = delete;
   TaskAwaiter& operator=(TaskAwaiter&&) = delete;
 
-  TaskAwaiter(promise_t& init) : mPromise(init) {
+  TaskAwaiter(promise_t* init) : mPromise(init) {
+    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
+
     TraceLoggingWrite(
       gTraceProvider,
       "TaskAwaiter<>::TaskAwaiter()",
       TraceLoggingKeyword(
         std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
       TraceLoggingPointer(&mPromise, "Promise"),
-      TraceLoggingCodePointer(mPromise.mContext.mCaller.mValue, "Caller"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
       TraceLoggingValue(
-        to_string(mPromise.mWaiting.load(std::memory_order_relaxed)).c_str(),
+        to_string(mPromise->mWaiting.load(std::memory_order_relaxed)).c_str(),
         "Waiting"),
       TraceLoggingValue(
-        std::format("{}", mPromise.mResultState.Get(std::memory_order_relaxed))
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
   }
 
   [[nodiscard]]
   bool await_ready() const noexcept {
-    return mPromise.is_ready_without_suspend();
+    return mPromise->is_ready_without_suspend();
   }
 
   void await_suspend(std::coroutine_handle<> caller) {
     auto previous = TaskPromiseProducerPending;
-    if (mPromise.mWaiting.compare_exchange_strong(
+    if (mPromise->mWaiting.compare_exchange_strong(
           previous, caller, std::memory_order_acq_rel)) {
       return;
     }
 
     if (!previous.IsDetached()) [[unlikely]] {
-      mPromise.mContext.fatal("tasks can only be awaited once");
+      mPromise->mContext.fatal("tasks can only be awaited once");
     }
 
     if (previous == TaskPromiseProducerCompleting) {
-      if (mPromise.mWaiting.compare_exchange_strong(
+      if (mPromise->mWaiting.compare_exchange_strong(
             previous, caller, std::memory_order_acq_rel)) {
         return;
       }
     }
 
     if (previous == TaskPromiseProducerCompleted) {
-      if (mPromise.mWaiting.compare_exchange_strong(
+      if (mPromise->mWaiting.compare_exchange_strong(
             previous,
             TaskPromiseReadyWithoutSuspend,
             std::memory_order_acq_rel)) {
-        mPromise.resumed();
+        mPromise->resumed();
         caller.resume();
         return;
       }
     }
 
-    mPromise.mContext.fatal(
+    mPromise->mContext.fatal(
       "Invalid state `{}` in TaskAwaiter::await_suspend",
       magic_enum::enum_name(previous.GetDetachedState()));
     __assume(0);
   }
 
-  decltype(auto) await_resume() {
-    const auto waiting = mPromise.mWaiting.load(std::memory_order_acquire);
+  auto await_resume() {
+    OPENKNEEBOARD_ASSERT(
+      mPromise, "can't resume a moved or already-resumed task");
+
+    const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
     TraceLoggingWrite(
       gTraceProvider,
       "TaskAwaiter<>::await_resume()",
       TraceLoggingKeyword(
         std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
       TraceLoggingPointer(&mPromise, "Promise"),
-      TraceLoggingCodePointer(mPromise.mContext.mCaller.mValue, "Caller"),
+      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
       TraceLoggingValue(to_string(waiting).c_str(), "Waiting"),
       TraceLoggingValue(
-        std::format("{}", mPromise.mResultState.Get(std::memory_order_relaxed))
+        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
           .c_str(),
         "ResultState"));
     OPENKNEEBOARD_ASSERT(
       waiting == TaskPromiseConsumerResumed
       || waiting == TaskPromiseReadyWithoutSuspend);
 
+    OPENKNEEBOARD_ASSERT(
+      waiting.GetOwner() == TaskPromiseWaiting::Owner::Consumer);
+    const auto cleanup =
+      scope_exit([pp = &mPromise] { std::exchange(*pp, nullptr)->destroy(); });
+
     using enum TaskPromiseResultState;
-    if (mPromise.mUncaught) {
-      mPromise.mResultState
+    if (mPromise->mUncaught) {
+      mPromise->mResultState
         .template Transition<HaveException, ThrownException>();
-      StackTrace::SetForNextException(std::move(mPromise.mUncaughtStack));
-      std::rethrow_exception(std::move(mPromise.mUncaught));
+      StackTrace::SetForNextException(std::move(mPromise->mUncaughtStack));
+      std::rethrow_exception(std::move(mPromise->mUncaught));
     }
 
     if constexpr (std::same_as<typename TTraits::result_type, void>) {
-      mPromise.mResultState.template Transition<HaveVoidResult, ReturnedVoid>();
+      mPromise->mResultState
+        .template Transition<HaveVoidResult, ReturnedVoid>();
       return;
     } else {
-      mPromise.mResultState.template Transition<HaveResult, ReturnedResult>();
-      return std::move(mPromise.mResult);
+      mPromise->mResultState.template Transition<HaveResult, ReturnedResult>();
+      return std::move(mPromise->mResult);
     }
   }
 };
@@ -890,7 +901,7 @@ struct [[nodiscard]] Task {
     OPENKNEEBOARD_ASSERT(
       mPromise, "Can't await a task that has been moved or already awaited");
     // We're an rvalue-reference (move), so we should wipe our promise
-    return TaskAwaiter<TTraits> {*std::exchange(mPromise, nullptr)};
+    return TaskAwaiter<TTraits> {std::exchange(mPromise, nullptr)};
   }
 
   promise_ptr_t mPromise {};
