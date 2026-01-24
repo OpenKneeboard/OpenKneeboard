@@ -268,7 +268,7 @@ namespace OpenKneeboard {
  */
 template <class T>
 task<ResumeOnSignalResult>
-resume_on_signal(HANDLE handle, std::stop_token token, T&& timeout) {
+resume_on_signal(HANDLE const handle, std::stop_token token, T&& timeout) {
   detail::SignalAwaitable impl(handle, token, std::forward<T>(timeout));
   co_await impl;
   co_return impl.result();
@@ -282,12 +282,18 @@ resume_on_signal(HANDLE handle, std::stop_token token, T&& timeout) {
  * it can also effect timing, making intermittent issues harder to reproduce.
  */
 inline task<ResumeOnSignalResult> resume_on_signal(
-  HANDLE handle,
-  std::stop_token token) {
+  HANDLE const handle,
+  const std::stop_token token) {
   detail::SignalAwaitable impl(
     handle, token, std::chrono::milliseconds::zero());
   co_await impl;
   co_return impl.result();
+}
+
+inline task<void> resume_on_signal(HANDLE const handle) {
+  detail::SignalAwaitable impl(handle, {}, std::chrono::milliseconds::zero());
+  co_await impl;
+  co_return;
 }
 
 }// namespace OpenKneeboard
