@@ -10,7 +10,6 @@
 
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/enum.hpp>
-#include <OpenKneeboard/task.hpp>
 
 #include <coroutine>
 #include <expected>

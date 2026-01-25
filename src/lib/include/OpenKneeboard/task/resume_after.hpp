@@ -9,13 +9,9 @@
 #include "ThreadPoolAwaitable.hpp"
 
 #include <OpenKneeboard/fatal.hpp>
-#include <OpenKneeboard/format/enum.hpp>
 #include <OpenKneeboard/task.hpp>
 
 #include <chrono>
-#include <coroutine>
-#include <functional>
-#include <optional>
 #include <stop_token>
 
 #include <threadpoolapiset.h>
