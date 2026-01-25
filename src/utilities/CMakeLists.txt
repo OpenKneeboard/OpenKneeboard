@@ -161,3 +161,14 @@ add_custom_command(
   "${DIASDK_DLL}"
   "$<TARGET_FILE_DIR:symbolize-traces>/"
 )
+
+add_executable(
+  task-test
+  task-test.cpp
+)
+target_link_libraries(
+  task-test
+  PRIVATE
+  ThirdParty::WIL
+  OpenKneeboard-task
+)
