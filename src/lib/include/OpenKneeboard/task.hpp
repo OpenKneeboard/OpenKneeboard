@@ -10,10 +10,11 @@
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
-#include <OpenKneeboard/format/enum.hpp>
 
 #include <combaseapi.h>
 #include <ctxtcall.h>
+
+#include <felly/guarded_data.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -30,46 +31,23 @@
 
 namespace OpenKneeboard::detail {
 
-constexpr bool DebugTaskCoroutines = true;
-
-/* The state of the Task, unless there's a pending `co_await` on the task
- * itself.
- *
- * If there is a pending co_await on the task, TaskPromiseWaiting contains the
- * coroutine handle to resume on completion, otherwise it stores one of these
- * values.
- *
- * If someone has odd-aligned pointers, they deserve everything that happens to
- * them. As we're assuming odd-aligned pointers, we can use the LSB as a 'not a
- * pointer' flag
- */
-enum class DetachedState : uintptr_t {
-  ProducerPending = 0,
-  ProducerCompleting = (1 << 1) | 1,
-  ProducerResumingConsumer = (2 << 1) | 1,
-  ProducerCompleted = (3 << 1) | 1,
-  ConsumerResumed = (4 << 1) | 1,
-  // Coroutine complete by the time await_ready is called, consumer is never
-  // suspended (await_ready returns true)
-  ReadyWithoutSuspend = (5 << 1) | 1,
-  // While typically this is reached after ConsumerResumed or
-  // ReadyWithoutSuspend, in the case of abandoned tasks (e.g. fire_and_forget),
-  // it can be set at any earlier point
-  ConsumerDestroyed = (6 << 1) | 1,
+// Non-awaitable coroutine; useful as it has a handle
+struct DetachedTask {
+  struct promise_type {
+    DetachedTask get_return_object() noexcept {
+      return {std::coroutine_handle<promise_type>::from_promise(*this)};
+    }
+    std::suspend_always initial_suspend() noexcept { return {}; }
+    std::suspend_never final_suspend() noexcept { return {}; }
+    void return_void() noexcept {}
+    void unhandled_exception() noexcept { std::terminate(); }
+  };
+  std::coroutine_handle<promise_type> mHandle;
 };
 
-enum class TaskPromiseResultState {
-  Invalid = 0,// Moved or never initialized
-  NoResult,
-
-  HaveException,
-  ThrownException,
-
-  HaveResult,
-  ReturnedResult,
-
-  HaveVoidResult,
-  ReturnedVoid,
+enum class TaskCompletionThread {
+  OriginalThread,
+  AnyThread,
 };
 
 struct TaskContext {
@@ -98,109 +76,92 @@ struct TaskContext {
   }
 };
 
-/* Functions as a union so we can do std::atomic.
- *
- * - DetachedState is sizeof(ptr), but always an invalid pointer
- * - coroutine handles actually contain a pointer
- */
-struct TaskPromiseWaiting {
-  constexpr TaskPromiseWaiting() = default;
-  constexpr TaskPromiseWaiting(const DetachedState state)
-    : mStorage {std::to_underlying(state)} {}
+enum class TaskExceptionBehavior {
+  StoreAndRethrow,
+  Terminate,
+};
 
-  constexpr TaskPromiseWaiting(std::coroutine_handle<> consumer)
-    : mStorage(std::bit_cast<uintptr_t>(consumer.address())) {
-    OPENKNEEBOARD_ASSERT(
-      (mStorage & 1) == 0,
-      "pointer with set LSB is unsupported, as LSB is used as discriminator "
-      "bit");
-    OPENKNEEBOARD_ASSERT(mStorage, "nullptr isn't a valid coroutine handle");
+template <class TTraits>
+struct TaskState {
+  struct exception_t {
+    std::exception_ptr exception {};
+    StackTrace stack;
+  };
+  struct void_t {};
+  struct value_t {
+    using value_type = std::conditional_t<
+      std::is_void_v<typename TTraits::result_type>,
+      void_t,
+      typename TTraits::result_type>;
+    FELLY_NO_UNIQUE_ADDRESS value_type value;
+  };
+  struct used_result_t {};
+
+  // Monostate means moved, 'pending, or otherwise invalid
+  using result_type =
+    std::variant<std::monostate, exception_t, value_t, used_result_t>;
+  result_type mResult {};
+  TaskExceptionBehavior mOnException = TTraits::OnException;
+
+  std::coroutine_handle<> mConsumerHandle {};
+
+  [[nodiscard]]
+  bool have_used_result() const {
+    return holds_alternative<used_result_t>(mResult);
   }
 
-  constexpr bool IsDetached() const {
-    if (mStorage == 0) {
-      static_assert(std::to_underlying(DetachedState::ProducerPending) == 0);
-      return true;
-    }
-    if ((mStorage & 1)) {
-      OPENKNEEBOARD_ASSERT(
-        magic_enum::enum_contains<DetachedState>(mStorage),
-        "discriminator indicates DetachedState, but {} is not a member of "
-        "DetachedState",
-        mStorage);
-      return true;
-    }
-    return false;
+  [[nodiscard]]
+  bool has_result() const {
+    return holds_alternative<value_t>(mResult)
+      || holds_alternative<exception_t>(mResult);
   }
 
-  constexpr bool ContainsConsumerHandle() const { return !IsDetached(); }
-
-  constexpr DetachedState GetDetachedState() const {
-    OPENKNEEBOARD_ASSERT(IsDetached());
-    return static_cast<DetachedState>(mStorage);
+  void return_void() {
+    OPENKNEEBOARD_ASSERT(holds_alternative<std::monostate>(mResult));
+    mResult.template emplace<value_t>();
   }
 
-  constexpr std::coroutine_handle<> GetConsumerHandle() const {
-    OPENKNEEBOARD_ASSERT(ContainsConsumerHandle());
-    return std::coroutine_handle<>::from_address(
-      std::bit_cast<void*>(mStorage));
+  template <class U = typename TTraits::result_type>
+    requires(!std::is_void_v<std::remove_cvref_t<U>>)
+  void return_value(U&& result) {
+    OPENKNEEBOARD_ASSERT(holds_alternative<std::monostate>(mResult));
+    mResult.template emplace<value_t>(std::forward<U>(result));
   }
 
-  constexpr bool operator==(const TaskPromiseWaiting&) const = default;
-
-  enum class Owner { Producer, Consumer };
-
-  [[nodiscard]] constexpr Owner GetOwner() const noexcept {
-    if (ContainsConsumerHandle()) {
-      return Owner::Consumer;
+  void store_current_exception() {
+    OPENKNEEBOARD_ASSERT(holds_alternative<std::monostate>(mResult));
+    switch (mOnException) {
+      case TaskExceptionBehavior::StoreAndRethrow:
+        mResult = exception_t {
+          std::current_exception(),
+          StackTrace::GetForMostRecentException(),
+        };
+        return;
+      case TaskExceptionBehavior::Terminate:
+        fatal_with_exception(std::current_exception());
     }
-    using enum DetachedState;
-    switch (GetDetachedState()) {
-      case ConsumerResumed:
-      case ReadyWithoutSuspend:
-      case ProducerResumingConsumer:
-      case ProducerCompleted:
-        return Owner::Consumer;
-      case ProducerPending:
-      case ConsumerDestroyed:
-      case ProducerCompleting:
-        return Owner::Producer;
-    }
-    __assume(false);
+    __assume(0);
+  }
+
+  // Returns true if consumer should delete
+  [[nodiscard]] bool release_consumer() {
+    OPENKNEEBOARD_ASSERT(mRefBits & ConsumerBit);
+    mRefBits &= ~ConsumerBit;
+    return !mRefBits;
+  }
+
+  // Returns true if producer should delete
+  [[nodiscard]] bool release_producer() {
+    OPENKNEEBOARD_ASSERT(mRefBits & ProducerBit);
+    mRefBits &= ~ProducerBit;
+    return !mRefBits;
   }
 
  private:
-  uintptr_t mStorage {std::to_underlying(DetachedState::ProducerPending)};
+  static constexpr uint8_t ProducerBit = 1;
+  static constexpr uint8_t ConsumerBit = 2;
+  uint8_t mRefBits {ProducerBit | ConsumerBit};
 };
-static_assert(
-  std::is_trivially_copyable_v<TaskPromiseWaiting>,
-  "TaskPromiseWaiting must be trivially copyable for use with std::atomic");
-static_assert(sizeof(TaskPromiseWaiting) == sizeof(DetachedState));
-static_assert(sizeof(TaskPromiseWaiting) == sizeof(std::coroutine_handle<>));
-
-inline constexpr auto to_string(const TaskPromiseWaiting value) {
-  if (value.IsDetached()) {
-    return std::format("{}", value.GetDetachedState());
-  }
-  return std::format(
-    "{:#018x}",
-    reinterpret_cast<uintptr_t>(value.GetConsumerHandle().address()));
-}
-
-inline constexpr TaskPromiseWaiting TaskPromiseProducerPending {
-  DetachedState::ProducerPending};
-inline constexpr TaskPromiseWaiting TaskPromiseConsumerDestroyed {
-  DetachedState::ConsumerDestroyed};
-inline constexpr TaskPromiseWaiting TaskPromiseProducerCompleted {
-  DetachedState::ProducerCompleted};
-inline constexpr TaskPromiseWaiting TaskPromiseProducerCompleting {
-  DetachedState::ProducerCompleting};
-inline constexpr TaskPromiseWaiting TaskPromiseProducerResumingConsumer {
-  DetachedState::ProducerResumingConsumer};
-inline constexpr TaskPromiseWaiting TaskPromiseConsumerResumed {
-  DetachedState::ConsumerResumed};
-inline constexpr TaskPromiseWaiting TaskPromiseReadyWithoutSuspend {
-  DetachedState::ReadyWithoutSuspend};
 
 template <class TTraits>
 struct TaskPromiseBase;
@@ -208,20 +169,10 @@ struct TaskPromiseBase;
 template <class TTraits>
 struct TaskPromise;
 
-enum class TaskExceptionBehavior {
-  StoreAndRethrow,
-  Terminate,
-};
-
 enum class TaskAwaiting {
   Required,
   Optional,
   NotSupported,
-};
-
-enum class TaskCompletionThread {
-  OriginalThread,
-  AnyThread,
 };
 
 template <class TResult>
@@ -254,176 +205,77 @@ struct TaskFinalAwaiter {
   TaskPromiseBase<TTraits>& mPromise;
 
   TaskFinalAwaiter() = delete;
-  TaskFinalAwaiter(TaskPromiseBase<TTraits>& promise) : mPromise(promise) {
-    if constexpr (!DebugTaskCoroutines) {
-      return;
-    }
-
-    using enum TaskPromiseResultState;
-    switch (const auto state = mPromise.mResultState.Get()) {
-      case HaveException:
-      case HaveResult:
-      case HaveVoidResult:
-        return;
-      default:
-        mPromise.mContext.fatal("Invalid state for final awaiter: {:#}", state);
-    }
-  }
+  TaskFinalAwaiter(TaskPromiseBase<TTraits>& promise) : mPromise(promise) {}
 
   bool await_ready() const noexcept { return false; }
 
-  template <class TPromise>
-  void await_suspend(std::coroutine_handle<TPromise>) noexcept {
-    auto oldState = mPromise.mWaiting.exchange(
-      TaskPromiseProducerCompleting, std::memory_order_acq_rel);
-    auto& context = mPromise.mContext;
-    if (oldState.IsDetached()) {
-      using enum DetachedState;
-      switch (oldState.GetDetachedState()) {
-        case ProducerPending: {
-          auto previous = TaskPromiseProducerCompleting;
-          if (mPromise.mWaiting.compare_exchange_strong(
-                previous,
-                TaskPromiseProducerCompleted,
-                std::memory_order_acq_rel)) {
-            return;
-          }
-          if (previous == TaskPromiseConsumerDestroyed) {
-            OPENKNEEBOARD_ASSERT(
-              previous.GetOwner() == TaskPromiseWaiting::Owner::Producer);
-            mPromise.destroy();
-            return;
-          }
-          if (previous == TaskPromiseReadyWithoutSuspend) {
-            return;
-          }
-          OPENKNEEBOARD_ASSERT(previous.ContainsConsumerHandle());
-          oldState = previous;
-          if (!mPromise.mWaiting.compare_exchange_strong(
-                previous,
-                TaskPromiseProducerCompleting,
-                std::memory_order_acq_rel)) {
-            if (previous.GetOwner() == TaskPromiseWaiting::Owner::Producer)
-              [[likely]] {
-              mPromise.destroy();
-              return;
-            }
-            if (previous != oldState) {
-              context.fatal("Task double-awaited");
-            }
-            context.fatal(
-              "non-producer task state change after await: coro handle -> {}",
-              magic_enum::enum_name(previous.GetDetachedState()));
-          }
-          break;
-        }
-        // completed twice
-        case ProducerCompleting:
-        case ProducerCompleted:
-        case ProducerResumingConsumer:
-        // must happen *after* completion
-        case ConsumerResumed:
-        case ReadyWithoutSuspend:
-          context.fatal(
-            "Invalid state in TaskFinalAwaiter::await_suspend: {}",
-            magic_enum::enum_name(oldState.GetDetachedState()));
-        case ConsumerDestroyed:
-          OPENKNEEBOARD_ASSERT(
-            oldState.GetOwner() == TaskPromiseWaiting::Owner::Producer);
-          mPromise.destroy();
-          return;
-      }
-    }
-
-    OPENKNEEBOARD_ASSERT(oldState.ContainsConsumerHandle());
-    if (auto expected = TaskPromiseProducerCompleting;
-        !mPromise.mWaiting.compare_exchange_strong(
-          expected,
-          TaskPromiseProducerResumingConsumer,
-          std::memory_order_acq_rel)) [[unlikely]] {
-      if (expected.ContainsConsumerHandle()) {
-        context.fatal("Double-resume in TaskFinalAwaiter::await_suspend");
-      }
-      context.fatal(
-        "Unexpected state change (coro -> {}) in "
-        "TaskFinalAwaiter::await_suspend",
-        magic_enum::enum_name(expected.GetDetachedState()));
-    }
+  template <std::derived_from<TaskPromiseBase<TTraits>> TPromise>
+  std::coroutine_handle<> await_suspend(
+    std::coroutine_handle<TPromise> producer) noexcept {
+    auto& promise = producer.promise();
+    auto state = promise.mState.lock();
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
-      mPromise.resumed();
-      oldState.GetConsumerHandle().resume();
+      return promise.resume_on_this_thread(std::move(state));
     } else {
-      if (context.mThreadID == std::this_thread::get_id()) {
-        mPromise.resumed();
-        oldState.GetConsumerHandle().resume();
-        return;
+      if (promise.mContext.mThreadID == std::this_thread::get_id()) {
+        return promise.resume_on_this_thread(std::move(state));
       }
-      bounce_to_thread_pool(oldState.GetConsumerHandle());
+
+      return [](TaskPromiseBase<TTraits>* const promise) -> DetachedTask {
+        TaskFinalAwaiter::bounce_to_thread_pool(promise);
+        co_return;
+      }(&promise)
+                                                              .mHandle;
     }
   }
 
   void await_resume() const noexcept {}
 
  private:
-  struct ResumeData {
-    TaskPromiseBase<TTraits>& mPromise;
-    void* mConsumer {};
-  };
-
-  void bounce_to_thread_pool(const std::coroutine_handle<> handle) {
-    const auto& context = mPromise.mContext;
-
-    auto resumeData = new ResumeData {
-      .mPromise = mPromise,
-      .mConsumer = handle.address(),
-    };
-    OPENKNEEBOARD_ASSERT(
-      resumeData->mConsumer != std::noop_coroutine().address());
+  static void bounce_to_thread_pool(
+    TaskPromiseBase<TTraits>* promise) noexcept {
     const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
-      &TaskFinalAwaiter<TTraits>::thread_pool_callback, resumeData, nullptr);
+      &TaskFinalAwaiter<TTraits>::thread_pool_callback, promise, nullptr);
 
     if (threadPoolSuccess) [[likely]] {
       return;
     }
-    delete resumeData;
     const auto threadPoolError = GetLastError();
-    context.fatal(
+    promise->mContext.fatal(
       "Failed to enqueue resumption on thread pool: {:010x}",
       static_cast<uint32_t>(threadPoolError));
-    // Above is no return, so we don't need to return noop_coroutine()
+    __assume(false);
   }
 
   static void thread_pool_callback(
     PTP_CALLBACK_INSTANCE,
     void* userData) noexcept {
-    const std::unique_ptr<ResumeData> resumeData {
-      static_cast<ResumeData*>(userData)};
+    auto promise = static_cast<TaskPromiseBase<TTraits>*>(userData);
+
     ComCallData comData {.pUserDefined = userData};
-    const auto result =
-      resumeData->mPromise.mContext.mCOMCallback->ContextCallback(
-        &TaskFinalAwaiter<TTraits>::target_thread_callback,
-        &comData,
-        IID_ICallbackWithNoReentrancyToApplicationSTA,
-        5,
-        NULL);
+    const auto result = promise->mContext.mCOMCallback->ContextCallback(
+      &TaskFinalAwaiter<TTraits>::target_thread_callback,
+      &comData,
+      IID_ICallbackWithNoReentrancyToApplicationSTA,
+      5,
+      NULL);
     if (SUCCEEDED(result)) [[likely]] {
       return;
     }
-    resumeData->mPromise.mContext.fatal(
+    promise->mContext.fatal(
       "Failed to enqueue coroutine resumption for the desired thread: "
       "{:#010x}",
       static_cast<uint32_t>(result));
   }
 
   static HRESULT target_thread_callback(ComCallData* comData) noexcept {
-    const auto resumeData = *static_cast<ResumeData*>(comData->pUserDefined);
-    const auto context = resumeData.mPromise.mContext;
+    const auto promise =
+      static_cast<TaskPromiseBase<TTraits>*>(comData->pUserDefined);
 
     try {
-      resumeData.mPromise.resumed();
-      std::coroutine_handle<>::from_address(resumeData.mConsumer).resume();
+      promise->resume_on_this_thread(promise->mState.lock()).resume();
     } catch (...) {
       dprint.Warning("std::coroutine_handle<>::resume() threw an exception");
       fatal_with_exception(std::current_exception());
@@ -439,31 +291,10 @@ struct Task;
 template <class TTraits>
 struct TaskPromiseBase {
   using traits_type = TTraits;
-  using enum TaskPromiseResultState;
-  AtomicStateMachine<
-    TaskPromiseResultState,
-    NoResult,
-    std::array {
-      Transition {NoResult, HaveResult},
-      Transition {HaveResult, ReturnedResult},
-
-      Transition {NoResult, HaveException},
-      Transition {HaveException, ThrownException},
-
-      Transition {NoResult, HaveVoidResult},
-      Transition {HaveVoidResult, ReturnedVoid},
-    },
-    std::nullopt>
-    mResultState;
-
-  StackTrace mUncaughtStack;
-  std::exception_ptr mUncaught {};
-
-  std::atomic<TaskPromiseWaiting> mWaiting {TaskPromiseProducerPending};
 
   TaskContext mContext;
   const std::coroutine_handle<> mProducerHandle;
-  TaskExceptionBehavior mOnException = TTraits::OnException;
+  felly::guarded_data<TaskState<TTraits>> mState;
 
   TaskPromiseBase() = delete;
   TaskPromiseBase(const TaskPromiseBase<TTraits>&) = delete;
@@ -478,66 +309,46 @@ struct TaskPromiseBase {
     : mContext(std::move(context)),
       mProducerHandle(self) {}
 
+  ~TaskPromiseBase() {}
+
   auto get_return_object() { return static_cast<TaskPromise<TTraits>*>(this); }
 
   void unhandled_exception() noexcept {
-    // Might not actually be likely, but let's optimize the path that doesn't
-    // result in immediate program termination, as we don't really care about
-    // performance at that point :)
-    if (mOnException == TaskExceptionBehavior::StoreAndRethrow) [[likely]] {
-      mUncaught = std::current_exception();
-      mUncaughtStack = StackTrace::GetForMostRecentException();
-      mResultState.Transition<NoResult, HaveException>();
-    } else {
-      OPENKNEEBOARD_ASSERT(mOnException == TaskExceptionBehavior::Terminate);
-      fatal_with_exception(std::current_exception());
-    }
-  }
-
-  void resumed() {
-    const auto oldState =
-      mWaiting.exchange(TaskPromiseConsumerResumed, std::memory_order_acq_rel);
-    if (oldState.ContainsConsumerHandle()) [[unlikely]] {
-      mContext.fatal(
-        "Have a handle in TaskPromiseBase::resume(), expected Destroyed or "
-        "Completing");
-      return;
-    }
-
-    if (oldState.GetOwner() == TaskPromiseWaiting::Owner::Producer) {
-      destroy();
-    }
-  }
-
-  void destroy() {
-    // Kept as a method in case we want tracing or similar later
-    mProducerHandle.destroy();
+    mState.lock()->store_current_exception();
   }
 
   void consumer_destroyed() {
-    const auto oldState = mWaiting.exchange(
-      TaskPromiseConsumerDestroyed, std::memory_order_acq_rel);
-    OPENKNEEBOARD_ASSERT(
-      oldState.IsDetached(), "task destroyed while being awaited");
+    auto state = mState.lock();
+
     if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
-      if (
-        oldState != TaskPromiseConsumerResumed
-        && oldState != TaskPromiseReadyWithoutSuspend) [[unlikely]] {
-        mContext.fatal(
-          "task must be moved or awaited - destroyed in state `{}`",
-          magic_enum::enum_name(oldState.GetDetachedState()));
-      }
+      OPENKNEEBOARD_ASSERT(
+        state->have_used_result(), "tasks must be moved or awaited");
     }
-    if (oldState.GetOwner() == TaskPromiseWaiting::Owner::Consumer) {
-      destroy();
+
+    if (state->release_consumer()) {
+      state.unlock();
+      mProducerHandle.destroy();
     }
   }
 
   [[nodiscard]]
-  bool is_ready_without_suspend() {
-    auto expected = TaskPromiseProducerCompleted;
-    return mWaiting.compare_exchange_strong(
-      expected, TaskPromiseReadyWithoutSuspend, std::memory_order_acq_rel);
+  std::coroutine_handle<> resume_on_this_thread(
+    felly::unique_guarded_data_lock<TaskState<TTraits>> state) noexcept {
+    if (state->release_producer()) {
+      return [](std::coroutine_handle<> producer) -> DetachedTask {
+        producer.destroy();
+        co_return;
+      }(mProducerHandle)
+                                                       .mHandle;
+    }
+
+    // Still have a consumer...
+    // ... that is waiting
+    if (state->mConsumerHandle) {
+      return state->mConsumerHandle;
+    }
+    // ... that is not yet waiting
+    return std::noop_coroutine();
   }
 
   constexpr std::suspend_never initial_suspend() noexcept { return {}; };
@@ -550,7 +361,7 @@ struct TaskPromiseBase {
   }
 
   auto await_transform(noexcept_task_t) noexcept {
-    mOnException = TaskExceptionBehavior::Terminate;
+    mState.lock()->mOnException = TaskExceptionBehavior::Terminate;
     return std::suspend_never {};
   }
 };
@@ -562,12 +373,8 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
         caller.value_or(StackFramePointer::caller(2)),
         std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
-  typename TTraits::result_type mResult;
-
   void return_value(typename TTraits::result_type&& result) noexcept {
-    using enum TaskPromiseResultState;
-    mResult = std::move(result);
-    this->mResultState.template Transition<NoResult, HaveResult>();
+    this->mState.lock()->return_value(std::move(result));
   }
 };
 
@@ -579,10 +386,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
         caller.value_or(StackFramePointer::caller(3)),
         std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
-  void return_void() noexcept {
-    using enum TaskPromiseResultState;
-    this->mResultState.template Transition<NoResult, HaveVoidResult>();
-  }
+  void return_void() noexcept { this->mState.lock()->return_void(); }
 };
 
 template <class TTraits>
@@ -603,73 +407,44 @@ struct TaskAwaiter {
 
   [[nodiscard]]
   bool await_ready() const noexcept {
-    return mPromise->is_ready_without_suspend();
+    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
+    const auto state = mPromise->mState.lock();
+    return state->has_result();
   }
 
-  void await_suspend(std::coroutine_handle<> caller) {
-    auto previous = TaskPromiseProducerPending;
-    if (mPromise->mWaiting.compare_exchange_strong(
-          previous, caller, std::memory_order_acq_rel)) {
-      return;
+  std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
+    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
+    auto state = mPromise->mState.lock();
+    if (state->has_result()) {
+      return caller;
     }
-
-    if (!previous.IsDetached()) [[unlikely]] {
-      mPromise->mContext.fatal("tasks can only be awaited once");
-    }
-
-    if (previous == TaskPromiseProducerCompleting) {
-      if (mPromise->mWaiting.compare_exchange_strong(
-            previous, caller, std::memory_order_acq_rel)) {
-        return;
-      }
-    }
-
-    if (previous == TaskPromiseProducerCompleted) {
-      if (mPromise->mWaiting.compare_exchange_strong(
-            previous,
-            TaskPromiseReadyWithoutSuspend,
-            std::memory_order_acq_rel)) {
-        mPromise->resumed();
-        caller.resume();
-        return;
-      }
-    }
-
-    mPromise->mContext.fatal(
-      "Invalid state `{}` in TaskAwaiter::await_suspend",
-      magic_enum::enum_name(previous.GetDetachedState()));
-    __assume(0);
+    OPENKNEEBOARD_ASSERT(
+      !state->mConsumerHandle, "tasks can only be resumed once");
+    state->mConsumerHandle = caller;
+    return std::noop_coroutine();
   }
 
   auto await_resume() {
     OPENKNEEBOARD_ASSERT(
       mPromise, "can't resume a moved or already-resumed task");
 
-    const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
-    OPENKNEEBOARD_ASSERT(
-      waiting == TaskPromiseConsumerResumed
-      || waiting == TaskPromiseReadyWithoutSuspend);
+    auto state = mPromise->mState.lock();
 
-    OPENKNEEBOARD_ASSERT(
-      waiting.GetOwner() == TaskPromiseWaiting::Owner::Consumer);
-    const auto cleanup =
-      scope_exit([pp = &mPromise] { std::exchange(*pp, nullptr)->destroy(); });
+    OPENKNEEBOARD_ASSERT(state->has_result());
 
-    using enum TaskPromiseResultState;
-    if (mPromise->mUncaught) {
-      mPromise->mResultState
-        .template Transition<HaveException, ThrownException>();
-      StackTrace::SetForNextException(std::move(mPromise->mUncaughtStack));
-      std::rethrow_exception(std::move(mPromise->mUncaught));
+    using value_type = typename TaskState<TTraits>::value_t;
+    using exception_t = typename TaskState<TTraits>::exception_t;
+    using used_result_t = typename TaskState<TTraits>::used_result_t;
+
+    auto result = std::exchange(state->mResult, used_result_t {});
+
+    if (auto p = get_if<exception_t>(&result)) {
+      StackTrace::SetForNextException(std::move(p->stack));
+      std::rethrow_exception(p->exception);
     }
 
-    if constexpr (std::same_as<typename TTraits::result_type, void>) {
-      mPromise->mResultState
-        .template Transition<HaveVoidResult, ReturnedVoid>();
-      return;
-    } else {
-      mPromise->mResultState.template Transition<HaveResult, ReturnedResult>();
-      return std::move(mPromise->mResult);
+    if constexpr (!std::same_as<typename TTraits::result_type, void>) {
+      return std::move(get<value_type>(result).value);
     }
   }
 };
@@ -687,8 +462,6 @@ struct [[nodiscard]] Task {
   Task() = delete;
   Task(const Task&) = delete;
   Task& operator=(const Task&) = delete;
-
-  static_assert(TTraits::Awaiting != TaskAwaiting::Optional);
 
   [[nodiscard]]
   constexpr bool is_moved() const noexcept {
