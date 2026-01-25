@@ -292,7 +292,9 @@ task<void> OTDIPCClient::Run() {
 
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
-    co_await resume_after(std::chrono::seconds(1), mStopper.get_token());
+    if (!co_await resume_after(std::chrono::seconds(1), mStopper.get_token())) {
+      break;
+    }
   }
 }
 

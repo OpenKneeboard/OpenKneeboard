@@ -476,12 +476,16 @@ task<void> SteamVRKneeboard::Run(std::stop_token stopToken) {
         this->mIVROverlay->WaitFrameSync(
           felly::numeric_cast<uint32_t>(frameSleep.count()));
       } else {
-        co_await resume_after(frameSleep, stopToken);
+        if (!co_await resume_after(frameSleep, stopToken)) {
+          co_return;
+        }
       }
       continue;
     }
 
-    co_await resume_after(inactiveSleep, stopToken);
+    if (!co_await resume_after(inactiveSleep, stopToken)) {
+      co_return;
+    }
   }
   dprint("Shutting down OpenVR support - stop requested");
 

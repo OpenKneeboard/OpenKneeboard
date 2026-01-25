@@ -6,7 +6,7 @@
 // OpenKneeboard repository.
 #pragma once
 
-#include <OpenKneeboard/StateMachine.hpp>
+#include "ThreadPoolAwaitable.hpp"
 
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/enum.hpp>
@@ -21,29 +21,24 @@
 #include <threadpoolapiset.h>
 #include <winnt.h>
 
-namespace OpenKneeboard {
-enum class TimerResult {
-  Timeout,
-  Cancelled,
-};
-}
-
 namespace OpenKneeboard::detail {
-struct TimerAwaitable {
-  TimerAwaitable() = delete;
-  TimerAwaitable(const TimerAwaitable&) = delete;
-  TimerAwaitable(TimerAwaitable&&) = delete;
-  TimerAwaitable& operator=(const TimerAwaitable&) = delete;
-  TimerAwaitable& operator=(TimerAwaitable&&) = delete;
+
+enum class TimerAwaitableResult {
+  Pending,
+  Success,
+  Canceled,
+};
+
+struct TimerAwaitable
+  : ThreadPoolAwaitable<TimerAwaitable, TimerAwaitableResult> {
+  static constexpr auto pending_result = TimerAwaitableResult::Pending;
+  static constexpr auto canceled_result = TimerAwaitableResult::Canceled;
 
   template <class Rep, class Period = std::ratio<1>>
   TimerAwaitable(
     std::chrono::duration<Rep, Period> delay,
-    std::stop_token stopToken)
-    : mStopCallback(
-        std::in_place,
-        stopToken,
-        std::bind_front(&TimerAwaitable::cancel, this)) {
+    const std::stop_token stopToken)
+    : ThreadPoolAwaitable<TimerAwaitable, TimerAwaitableResult>(stopToken) {
     OPENKNEEBOARD_ASSERT(
       delay > decltype(delay)::zero(), "Sleep duration must be > 0");
 
@@ -58,150 +53,51 @@ struct TimerAwaitable {
     };
   }
 
-  TimerResult result() const {
-    switch (const auto state = mState.Get()) {
-      case State::Timeout:
-        return TimerResult::Timeout;
-      case State::Cancelled:
-      case State::CancelledBeforeWait:
-        return TimerResult::Cancelled;
-      default:
-        fatal("Can't get result from TimerAwaitable in state {}", state);
-    }
+  void InitThreadPool() {
+    OPENKNEEBOARD_ASSERT(!mTPTimer);
+    mTPTimer =
+      CreateThreadpoolTimer(&TimerAwaitable::ThreadPoolCallback, this, nullptr);
+    SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
   }
 
-  ~TimerAwaitable() {
-    mStopCallback.reset();
-
-    using enum State;
-    switch (const auto state = mState.Get()) {
-      case Init:
-      case StartingWait:
-      case Waiting:
-        fatal(
-          "resume_after torn down in invalid state {}",
-          magic_enum::enum_name(state));
-      case CancelledBeforeWait:
-        OPENKNEEBOARD_ASSERT(
-          !mTPTimer, "Cancelled before wait, but have a wait");
-        break;
-      case Cancelled:
-        OPENKNEEBOARD_ASSERT(mTPTimer, "cancelled after wait, but no wait");
-        SetThreadpoolTimer(mTPTimer, nullptr, 0, 0);
-        WaitForThreadpoolTimerCallbacks(mTPTimer, true);
-        [[fallthrough]];
-      case Timeout:
-        OPENKNEEBOARD_ASSERT(mTPTimer, "timeout or signalled, but no wait");
-        CloseThreadpoolTimer(mTPTimer);
-        break;
+  template <ThreadPoolAwaitableState From>
+  void CleanupThreadPool() {
+    const auto timer = std::exchange(mTPTimer, nullptr);
+    if (!timer) {
+      return;
     }
+    if constexpr (From == ThreadPoolAwaitableState::Canceling) {
+      SetThreadpoolTimer(timer, nullptr, 0, 0);
+      WaitForThreadpoolTimerCallbacks(timer, true);
+    }
+    CloseThreadpoolTimer(timer);
   }
 
-  bool await_ready() const { return false; }
-
-  void await_resume() const {}
-
-  void await_suspend(std::coroutine_handle<> coro) {
-    if (!mState.TryTransition<State::Init, State::StartingWait>()) {
-      mState.Assert(State::CancelledBeforeWait);
-      coro.resume();
-      return;
-    }
-
-    mCoro = std::move(coro);
-    mTPTimer = CreateThreadpoolTimer(
-      [](auto, auto rawThis, auto) {
-        auto self = reinterpret_cast<TimerAwaitable*>(rawThis);
-        const auto transition =
-          self->mState.TryTransition<State::Waiting, State::Timeout>();
-        if (transition) {
-          self->mCoro.resume();
-          return;
-        }
-        OPENKNEEBOARD_ASSERT(transition.error() == State::Cancelled);
-      },
-      this,
-      nullptr);
-    const auto transitioned =
-      mState.TryTransition<State::StartingWait, State::Waiting>();
-    if (transitioned) {
-      SetThreadpoolTimer(mTPTimer, &mTime, 0, 0);
-      return;
-    }
-    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Cancelled);
-    coro.resume();
-    // Cleanup is dealt with in ~TimerAwaitable
+  void CancelThreadPool() {
+    OPENKNEEBOARD_ASSERT(mTPTimer);
+    SetThreadpoolTimer(mTPTimer, nullptr, 0, 0);
   }
 
  private:
-  enum class State {
-    Init,
-    CancelledBeforeWait,
-    StartingWait,
-    Waiting,
-    Timeout,
-    Cancelled,
-  };
-  AtomicStateMachine<
-    State,
-    State::Init,
-    std::array {
-      Transition {State::Init, State::CancelledBeforeWait},
-      Transition {State::Init, State::StartingWait},
-      Transition {State::StartingWait, State::Waiting},
-      Transition {State::StartingWait, State::Cancelled},
-      Transition {State::Waiting, State::Timeout},
-      Transition {State::Waiting, State::Cancelled},
-    }>
-    mState;
-
-  void cancel() {
-    if (mState.TryTransition<State::Init, State::CancelledBeforeWait>()) {
-      return;
-    }
-
-    OPENKNEEBOARD_ASSERT(mTPTimer);
-
-    SetThreadpoolTimerEx(mTPTimer, nullptr, 0, 0);
-    if (mState.TryTransition<State::StartingWait, State::Cancelled>()) {
-      // handled by await_suspend
-      return;
-    }
-
-    const auto transitioned =
-      mState.TryTransition<State::Waiting, State::Cancelled>();
-    if (transitioned) {
-      mCoro.resume();
-      return;
-    }
-
-    using enum State;
-    switch (transitioned.error()) {
-      case Init:
-      case CancelledBeforeWait:
-      case StartingWait:
-      case Waiting:
-      case Cancelled:
-        fatal(
-          "Impossible state {} in TimerAwaitable::cancel()",
-          magic_enum::enum_name(transitioned.error()));
-        break;
-      case Timeout:
-        // nothing to do
-        break;
-    }
-  }
-
   FILETIME mTime {};
   PTP_TIMER mTPTimer {nullptr};
-  std::coroutine_handle<> mCoro;
 
-  std::optional<std::stop_callback<std::function<void()>>> mStopCallback;
+  static void ThreadPoolCallback(
+    PTP_CALLBACK_INSTANCE const instance,
+    void* context,
+    PTP_TIMER) {
+    auto& self = *reinterpret_cast<TimerAwaitable*>(context);
+    self.OnResult<TimerAwaitableResult::Success>(instance);
+  }
 };
 
 }// namespace OpenKneeboard::detail
 
 namespace OpenKneeboard {
+
+enum class TimerError {
+  Canceled,
+};
 
 /** Alternative to `winrt::resume_after()` that can cancel without exceptions.
  *
@@ -209,10 +105,26 @@ namespace OpenKneeboard {
  * when debugging program shutdown; as well as the irrelevant breakpoints,
  * it can also effect timing, making intermittent issues harder to reproduce.
  */
-task<TimerResult> resume_after(auto duration, std::stop_token token = {}) {
-  detail::TimerAwaitable impl(duration, token);
-  co_await impl;
-  co_return impl.result();
+task<std::expected<void, TimerError>> resume_after(
+  auto duration,
+  std::stop_token token) {
+  using enum detail::TimerAwaitableResult;
+  switch (co_await detail::TimerAwaitable {duration, token}) {
+    case Pending:
+      fatal("TimerAwaitable returned 'pending'");
+    case Success:
+      co_return {};
+    case Canceled:
+      co_return std::unexpected {TimerError::Canceled};
+  }
+}
+
+task<void> resume_after(auto duration) {
+  [[maybe_unused]] const auto timeout = co_await resume_after(duration, {});
+  OPENKNEEBOARD_ASSERT(
+    timeout,
+    "Got a cancellation from an awaitable without a cancellation token");
+  co_return;
 }
 
 }// namespace OpenKneeboard
