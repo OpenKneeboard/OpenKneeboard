@@ -29,20 +29,22 @@ enum class ThreadPoolAwaitableState {
   HaveResult,// signaled, timeout, etc. *not* canceled
   Resuming,
   Resumed,
-  Canceled,
+  Canceling,
+  CancelingBeforeDispatch,
 };
 template <class Derived, class TResultType>
 struct ThreadPoolAwaitable {
   using result_type = TResultType;
 
-  ThreadPoolAwaitable(std::stop_token& stopToken)
+  ThreadPoolAwaitable(const std::stop_token stopToken)
     : mStopCallback(std::in_place, stopToken, this) {}
   ~ThreadPoolAwaitable() { mState.Assert(State::Resumed); }
 
-  bool await_ready() const { return mState.Get() == State::Canceled; }
+  bool await_ready() const { return false; }
 
   auto await_resume() const {
     mState.Assert(State::Resumed);
+    OPENKNEEBOARD_ASSERT(mResult != Derived::pending_result);
     return mResult;
   }
 
@@ -50,9 +52,13 @@ struct ThreadPoolAwaitable {
     OPENKNEEBOARD_ASSERT(!mCoro, "await_suspend called twice");
     mCoro = coro;
 
-    if (!mState.TryTransition<State::Init, State::StartingWait>()) {
+    if (const auto transitioned =
+          mState.TryTransition<State::Init, State::StartingWait>();
+        !transitioned) {
+      OPENKNEEBOARD_ASSERT(
+        transitioned.error() == State::CancelingBeforeDispatch);
       mResult = Derived::canceled_result;
-      ResumeFrom<State::Canceled>();
+      ResumeFrom<State::CancelingBeforeDispatch>();
       return;
     }
 
@@ -62,10 +68,10 @@ struct ThreadPoolAwaitable {
       static_cast<Derived&>(*this).InitThreadPool();
       return;
     }
-    // Specifically, StartingWait -> Canceled is our responsibility
-    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Canceled);
+
+    OPENKNEEBOARD_ASSERT(transitioned.error() == State::Canceling);
     mResult = Derived::canceled_result;
-    ResumeFrom<State::Canceled>();
+    ResumeFrom<State::Canceling>();
   }
 
   template <result_type Result>
@@ -73,7 +79,7 @@ struct ThreadPoolAwaitable {
     const auto transition =
       mState.TryTransition<State::Waiting, State::HaveResult>();
     if (!transition) {
-      OPENKNEEBOARD_ASSERT(transition.error() == State::Canceled);
+      OPENKNEEBOARD_ASSERT(transition.error() == State::Canceling);
       return;
     }
 
@@ -96,10 +102,11 @@ struct ThreadPoolAwaitable {
       Transition {State::HaveResult, State::Resuming},
       Transition {State::Resuming, State::Resumed},
       // Cancellation paths
-      Transition {State::Init, State::Canceled},
-      Transition {State::StartingWait, State::Canceled},
-      Transition {State::Waiting, State::Canceled},
-      Transition {State::Canceled, State::Resuming},
+      Transition {State::Init, State::CancelingBeforeDispatch},
+      Transition {State::StartingWait, State::Canceling},
+      Transition {State::Waiting, State::Canceling},
+      Transition {State::CancelingBeforeDispatch, State::Resuming},
+      Transition {State::Canceling, State::Resuming},
     }>
     mState;
 
@@ -121,21 +128,22 @@ struct ThreadPoolAwaitable {
   }
 
   void Cancel() {
-    if (mState.TryTransition<State::Init, State::Canceled>()) {
+    if (mState.TryTransition<State::Init, State::CancelingBeforeDispatch>()) {
+      // handled by await_suspend
       return;
     }
 
     static_cast<Derived&>(*this).CancelThreadPool();
-    if (mState.TryTransition<State::StartingWait, State::Canceled>()) {
+    if (mState.TryTransition<State::StartingWait, State::Canceling>()) {
       // handled by await_suspend
       return;
     }
 
     const auto transitioned =
-      mState.TryTransition<State::Waiting, State::Canceled>();
+      mState.TryTransition<State::Waiting, State::Canceling>();
     if (transitioned) {
       mResult = Derived::canceled_result;
-      ResumeFrom<State::Canceled>();
+      ResumeFrom<State::Canceling>();
       return;
     }
 
@@ -144,7 +152,7 @@ struct ThreadPoolAwaitable {
       case Init:
       case StartingWait:
       case Waiting:
-      case Canceled:
+      case Canceling:
         fatal(
           "Impossible state {} in ThreadPoolAwaitable::cancel()",
           magic_enum::enum_name(transitioned.error()));
@@ -184,14 +192,13 @@ enum class SignalAwaitableResult {
 };
 struct SignalAwaitable
   : ThreadPoolAwaitable<SignalAwaitable, SignalAwaitableResult> {
-  using ThreadPoolAwaitable::ThreadPoolAwaitable;
   static constexpr auto pending_result = SignalAwaitableResult::Pending;
   static constexpr auto canceled_result = SignalAwaitableResult::Canceled;
 
   template <class Rep, class Period = std::ratio<1>>
   SignalAwaitable(
-    HANDLE handle,
-    std::stop_token& token,
+    HANDLE const handle,
+    const std::stop_token token,
     std::chrono::duration<Rep, Period> timeout)
     : ThreadPoolAwaitable<SignalAwaitable, SignalAwaitableResult>(token),
       mHandle(handle) {
@@ -227,7 +234,7 @@ struct SignalAwaitable
       return;
     }
 
-    if constexpr (From == ThreadPoolAwaitableState::Canceled) {
+    if constexpr (From == ThreadPoolAwaitableState::Canceling) {
       SetThreadpoolWait(wait, nullptr, nullptr);
       WaitForThreadpoolWaitCallbacks(wait, true);
     }
@@ -297,9 +304,7 @@ resume_on_signal(HANDLE const handle, std::stop_token token, T&& timeout) {
   __assume(false);
 }
 
-inline auto resume_on_signal(
-  HANDLE const handle,
-  const std::stop_token& token) {
+inline auto resume_on_signal(HANDLE const handle, const std::stop_token token) {
   return resume_on_signal(handle, token, std::chrono::milliseconds::zero());
 }
 
