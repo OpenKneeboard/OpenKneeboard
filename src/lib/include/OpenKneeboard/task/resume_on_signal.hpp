@@ -110,6 +110,7 @@ namespace OpenKneeboard {
 enum class ResumeOnSignalError {
   Timeout,
   Canceled,
+  InvalidArgument,
 };
 
 /** Alternative to `winrt::resume_on_signal()` that can cancel without
@@ -122,6 +123,9 @@ enum class ResumeOnSignalError {
 template <class T>
 task<std::expected<void, ResumeOnSignalError>>
 resume_on_signal(HANDLE const handle, std::stop_token token, T&& timeout) {
+  if ((!handle) || handle == INVALID_HANDLE_VALUE) {
+    co_return std::unexpected {ResumeOnSignalError::InvalidArgument};
+  }
   const auto result = co_await detail::SignalAwaitable {
     handle,
     token,

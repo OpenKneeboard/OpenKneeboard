@@ -234,6 +234,11 @@ struct TaskTraits {
   using result_type = TResult;
 };
 
+template <class TResult>
+struct AnyThreadTaskTraits : TaskTraits<TResult> {
+  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
+};
+
 struct FireAndForgetTraits {
   static constexpr auto OnException = TaskExceptionBehavior::Terminate;
   static constexpr auto Awaiting = TaskAwaiting::NotSupported;
@@ -583,21 +588,7 @@ struct TaskPromiseBase {
       expected, TaskPromiseReadyWithoutSuspend, std::memory_order_acq_rel);
   }
 
-  std::suspend_never initial_suspend() noexcept {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromiseBase<>::initial_suspend()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
-        "ResultState"));
-    return {};
-  };
+  constexpr std::suspend_never initial_suspend() noexcept { return {}; };
 
   TaskFinalAwaiter<TTraits> final_suspend() noexcept {
     TraceLoggingWrite(
@@ -929,6 +920,18 @@ namespace OpenKneeboard::inline task_ns {
 template <class T>
 using task = detail::Task<detail::TaskTraits<T>>;
 
+template <class T>
+using any_thread_task = detail::Task<detail::AnyThreadTaskTraits<T>>;
+
+struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
+  using detail::Task<detail::FireAndForgetTraits>::Task;
+
+  static fire_and_forget wrap(auto toWrap, auto... args) {
+    co_await std::invoke(std::move(toWrap), std::move(args)...);
+    co_return;
+  }
+};
+
 namespace this_task {
 /** Call `OpenKneeboard::fatal()` if this task throws an exception.
  *
@@ -946,16 +949,3 @@ constexpr detail::noexcept_task_t fatal_on_uncaught_exception() noexcept {
 }// namespace this_task
 
 }// namespace OpenKneeboard::inline task_ns
-
-namespace OpenKneeboard {
-
-struct fire_and_forget : detail::Task<detail::FireAndForgetTraits> {
-  using detail::Task<detail::FireAndForgetTraits>::Task;
-
-  static fire_and_forget wrap(auto toWrap, auto... args) {
-    co_await std::invoke(std::move(toWrap), std::move(args)...);
-    co_return;
-  }
-};
-
-}// namespace OpenKneeboard
