@@ -11,7 +11,6 @@
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/format/enum.hpp>
-#include <OpenKneeboard/tracing.hpp>
 
 #include <combaseapi.h>
 #include <ctxtcall.h>
@@ -419,23 +418,8 @@ struct TaskFinalAwaiter {
   }
 
   static HRESULT target_thread_callback(ComCallData* comData) noexcept {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskFinalAwaiter<>::target_thread_callback()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(comData, "ComData"));
-
     const auto resumeData = *static_cast<ResumeData*>(comData->pUserDefined);
     const auto context = resumeData.mPromise.mContext;
-
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskFinalAwaiter<>::target_thread_callback()/ResumeCoro",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(comData, "ComData"),
-      TraceLoggingCodePointer(context.mCaller.mValue, "Caller"));
 
     try {
       resumeData.mPromise.resumed();
@@ -445,13 +429,6 @@ struct TaskFinalAwaiter {
       fatal_with_exception(std::current_exception());
     }
 
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskFinalAwaiter<>::target_thread_callback()/CoroComplete",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(comData, "ComData"),
-      TraceLoggingCodePointer(context.mCaller.mValue, "Caller"));
     return S_OK;
   }
 };
@@ -499,36 +476,11 @@ struct TaskPromiseBase {
     TaskContext&& context,
     const std::coroutine_handle<> self) noexcept
     : mContext(std::move(context)),
-      mProducerHandle(self) {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromiseBase<>::TaskPromiseBase()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
-        "ResultState"));
-  }
+      mProducerHandle(self) {}
 
   auto get_return_object() { return static_cast<TaskPromise<TTraits>*>(this); }
 
   void unhandled_exception() noexcept {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromiseBase<>::unhandled_exception()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
-        "ResultState"));
     // Might not actually be likely, but let's optimize the path that doesn't
     // result in immediate program termination, as we don't really care about
     // performance at that point :)
@@ -590,22 +542,7 @@ struct TaskPromiseBase {
 
   constexpr std::suspend_never initial_suspend() noexcept { return {}; };
 
-  TaskFinalAwaiter<TTraits> final_suspend() noexcept {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromiseBase<>::final_suspend()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(mWaiting.load(std::memory_order_relaxed)).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mResultState.Get(std::memory_order_relaxed)).c_str(),
-        "ResultState"),
-      TraceLoggingValue(std::uncaught_exceptions(), "UncaughtExceptions"));
-    return {*this};
-  }
+  TaskFinalAwaiter<TTraits> final_suspend() noexcept { return {*this}; }
 
   template <class TAwaitable>
   TAwaitable&& await_transform(TAwaitable&& it) noexcept {
@@ -628,22 +565,6 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
   typename TTraits::result_type mResult;
 
   void return_value(typename TTraits::result_type&& result) noexcept {
-    // clang-cl dislikes 'this' in TraceLoggingValue
-    const auto& self = *this;
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromise<>::return_value()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(self.mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(self.mWaiting.load(std::memory_order_relaxed)).c_str(),
-        "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", self.mResultState.Get(std::memory_order_relaxed))
-          .c_str(),
-        "ResultState"));
     using enum TaskPromiseResultState;
     mResult = std::move(result);
     this->mResultState.template Transition<NoResult, HaveResult>();
@@ -659,22 +580,6 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
         std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
   void return_void() noexcept {
-    // clang-cl dislikes 'this' in TraceLoggingValue
-    const auto& self = *this;
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskPromise<void>::return_void()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Promise"),
-      TraceLoggingCodePointer(this->mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(self.mWaiting.load(std::memory_order_relaxed)).c_str(),
-        "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", self.mResultState.Get(std::memory_order_relaxed))
-          .c_str(),
-        "ResultState"));
     using enum TaskPromiseResultState;
     this->mResultState.template Transition<NoResult, HaveVoidResult>();
   }
@@ -694,21 +599,6 @@ struct TaskAwaiter {
 
   TaskAwaiter(promise_t* init) : mPromise(init) {
     OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskAwaiter<>::TaskAwaiter()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(&mPromise, "Promise"),
-      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(
-        to_string(mPromise->mWaiting.load(std::memory_order_relaxed)).c_str(),
-        "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
-          .c_str(),
-        "ResultState"));
   }
 
   [[nodiscard]]
@@ -756,18 +646,6 @@ struct TaskAwaiter {
       mPromise, "can't resume a moved or already-resumed task");
 
     const auto waiting = mPromise->mWaiting.load(std::memory_order_acquire);
-    TraceLoggingWrite(
-      gTraceProvider,
-      "TaskAwaiter<>::await_resume()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(&mPromise, "Promise"),
-      TraceLoggingCodePointer(mPromise->mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(to_string(waiting).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", mPromise->mResultState.Get(std::memory_order_relaxed))
-          .c_str(),
-        "ResultState"));
     OPENKNEEBOARD_ASSERT(
       waiting == TaskPromiseConsumerResumed
       || waiting == TaskPromiseReadyWithoutSuspend);
@@ -819,54 +697,19 @@ struct [[nodiscard]] Task {
 
   Task(Task&& other) noexcept {
     mPromise = std::exchange(other.mPromise, nullptr);
-    TraceLoggingWrite(
-      gTraceProvider,
-      "Task<>::Task(Task&&)",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Task"),
-      TraceLoggingPointer(mPromise, "Promise"));
   }
 
   Task& operator=(Task&& other) noexcept {
     mPromise = std::exchange(other.mPromise, nullptr);
-    TraceLoggingWrite(
-      gTraceProvider,
-      "Task<>::operator=(Task&&)",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Task"),
-      TraceLoggingPointer(mPromise, "Promise"));
     return *this;
   }
 
   Task(std::nullptr_t) = delete;
   Task(promise_t* promise) : mPromise(promise) {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "Task<>::Task(promise_t*)",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Task"),
-      TraceLoggingPointer(promise, "Promise"),
-      TraceLoggingCodePointer(promise->mContext.mCaller.mValue, "Caller"),
-      TraceLoggingValue(to_string(promise->mWaiting).c_str(), "Waiting"),
-      TraceLoggingValue(
-        std::format("{}", promise->mResultState.Get(std::memory_order_relaxed))
-          .c_str(),
-        "ResultState"));
-
     OPENKNEEBOARD_ASSERT(promise);
   }
 
   ~Task() {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "Task<>::~Task()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Task"),
-      TraceLoggingPointer(mPromise, "Promise"));
     if (mPromise) {
       mPromise->consumer_destroyed();
     }
@@ -881,14 +724,6 @@ struct [[nodiscard]] Task {
   auto operator co_await() && noexcept
     requires(TTraits::Awaiting != TaskAwaiting::NotSupported)
   {
-    TraceLoggingWrite(
-      gTraceProvider,
-      "Task<>::operator co_await()",
-      TraceLoggingKeyword(
-        std::to_underlying(TraceLoggingEventKeywords::TaskCoro)),
-      TraceLoggingPointer(this, "Task"),
-      TraceLoggingPointer(mPromise, "Promise"));
-
     OPENKNEEBOARD_ASSERT(
       mPromise, "Can't await a task that has been moved or already awaited");
     // We're an rvalue-reference (move), so we should wipe our promise
