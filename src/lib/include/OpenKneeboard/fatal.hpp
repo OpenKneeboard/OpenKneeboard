@@ -149,11 +149,12 @@ void fatal(
   TLocation&& blame,
   std::format_string<Ts...> fmt,
   Ts&&... values) noexcept {
+  auto location = detail::SourceLocation {std::forward<TLocation>(blame)};
   auto message = std::format(fmt, std::forward<Ts>(values)...);
   detail::prepare_to_fatal();
   detail::FatalData {
     .mMessage = std::move(message),
-    .mBlameLocation = detail::SourceLocation {std::forward<TLocation>(blame)},
+    .mBlameLocation = std::move(location),
   }
     .fatal();
 }
