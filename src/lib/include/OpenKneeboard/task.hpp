@@ -111,9 +111,45 @@ struct TaskState {
   }
 
   [[nodiscard]]
-  bool has_result() const {
-    return holds_alternative<value_t>(mResult)
-      || holds_alternative<exception_t>(mResult);
+  constexpr bool await_ready() const noexcept {
+    // What does it mean for coroutine to be "finished"?
+    //
+    // The coroutine (producer) returning isn't enough - we need it to
+    // completely finish, including any relevant destructors after the
+    // `co_return`, e.g.:
+    //
+    // task<int> foo() {
+    //    auto guard = scope_exit([] { my_cleanup_function(); });
+    //    bar();
+    //    co_return 123;
+    // }
+    //
+    // 1. bar() is called
+    // 2. co_return stores `123` as the return value of the coroutine
+    // 3. scope_exit's destructor is called
+    // 4. scope_exit's destructor calls my_cleanup_function();
+    // 5. coroutine is now finished; the return value can be retrieved with
+    //   `co_await`
+    //
+    // auto x = co_await foo();
+    //        ^ we want to guarantee that ~scope_exit() and bar() are called
+    //          before this assignment
+    if ((mRefBits & ProducerBit)) {
+      return false;
+    }
+    // If we reach here, the coroutine's finished - but we need to still have a
+    // stored value (from co_return) or uncaught exception. We should
+    // *always* have one here because:
+    // - if the state is pending, we should still have a producer
+    // - all tasks must be awaited or moved; they can't be copied
+    // - we only reach the 'result used' state after a co_await; as we can't be
+    //   awaited twice, we should never have the 'result used' state when
+    //   the compiler is checking if co_await is blocking, as that would be a
+    //   double-await
+    OPENKNEEBOARD_ASSERT(
+      holds_alternative<value_t>(mResult)
+      || holds_alternative<exception_t>(mResult));
+    return true;
   }
 
   void return_void() {
@@ -408,14 +444,13 @@ struct TaskAwaiter {
   [[nodiscard]]
   bool await_ready() const noexcept {
     OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-    const auto state = mPromise->mState.lock();
-    return state->has_result();
+    return mPromise->mState.lock()->await_ready();
   }
 
   std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
     OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
     auto state = mPromise->mState.lock();
-    if (state->has_result()) {
+    if (state->await_ready()) {
       return caller;
     }
     OPENKNEEBOARD_ASSERT(
@@ -430,7 +465,7 @@ struct TaskAwaiter {
 
     auto state = mPromise->mState.lock();
 
-    OPENKNEEBOARD_ASSERT(state->has_result());
+    OPENKNEEBOARD_ASSERT(state->await_ready());
 
     using value_type = typename TaskState<TTraits>::value_t;
     using exception_t = typename TaskState<TTraits>::exception_t;

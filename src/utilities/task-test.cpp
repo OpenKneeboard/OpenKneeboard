@@ -74,10 +74,14 @@ fire_and_forget do_test() {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    co_await [] -> task<void> {
+    std::atomic<std::size_t> deleteCount = 0;
+    co_await [](auto* p) -> task<void> {
+      const auto setter = scope_exit([p] { ++*p; });
       co_await winrt::resume_background();
       co_return;
-    }();
+    }(&deleteCount);
+    const auto count = deleteCount.load();
+    OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("resume_background");
 
@@ -86,7 +90,13 @@ fire_and_forget do_test() {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    co_await [] -> task<void> { co_return; }();
+    std::atomic<std::size_t> deleteCount = 0;
+    co_await [](auto* p) -> task<void> {
+      const auto setter = scope_exit([p] { ++*p; });
+      co_return;
+    }(&deleteCount);
+    const auto count = deleteCount.load();
+    OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("immediate return");
 
@@ -95,12 +105,16 @@ fire_and_forget do_test() {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    auto coro = [] -> task<void> {
+    std::atomic<std::size_t> deleteCount = 0;
+    auto coro = [](auto* p) -> task<void> {
+      const auto setter = scope_exit([p] { ++*p; });
       co_await winrt::resume_background();
       co_return;
-    }();
+    }(&deleteCount);
     std::this_thread::yield();
     co_await std::move(coro);
+    const auto count = deleteCount.load();
+    OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("resume_background with delay move");
 
@@ -112,13 +126,17 @@ fire_and_forget do_test() {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    auto coro = [e = e.get()]() -> task<void> {
-      co_await resume_on_signal(e);
+    std::atomic<std::size_t> deleteCount = 0;
+    auto coro = [](auto handle, auto* p) -> task<void> {
+      const auto setter = scope_exit([p] { ++*p; });
+      co_await resume_on_signal(handle);
       co_return;
-    }();
+    }(e.get(), &deleteCount);
     std::this_thread::yield();
     e.SetEvent();
     co_await std::move(coro);
+    const auto count = deleteCount.load();
+    OPENKNEEBOARD_ASSERT(count == 1);
     e.ResetEvent();
   }
   testTimers.mark("delayed ready");
@@ -128,16 +146,20 @@ fire_and_forget do_test() {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    auto coro = [e = e.get(), i]() -> task<void> {
-      co_await resume_on_signal(e);
-      throw std::runtime_error(std::format("testy mctestface {}", i));
-    }();
+    std::atomic<std::size_t> deleteCount = 0;
+    auto coro = [](auto handle, auto index, auto p) -> task<void> {
+      const auto setter = scope_exit([p] { ++*p; });
+      co_await resume_on_signal(handle);
+      throw std::runtime_error(std::format("testy mctestface {}", index));
+    }(e.get(), i, &deleteCount);
     std::this_thread::yield();
     e.SetEvent();
     try {
       co_await std::move(coro);
       fatal("exception not rethrown");
     } catch (const std::runtime_error& ex) {
+      const auto count = deleteCount.load();
+      OPENKNEEBOARD_ASSERT(count == 1);
       const auto msg = ex.what();
       OPENKNEEBOARD_ASSERT(msg == std::format("testy mctestface {}", i));
     }
