@@ -712,6 +712,22 @@ namespace this_task {
 constexpr detail::noexcept_task_t fatal_on_uncaught_exception() noexcept {
   return {};
 }
+
+// Suspend the coroutine (not the thread)
+//
+// usage: `co_await this_task::yield()`
+[[nodiscard]]
+inline auto yield() noexcept {
+  struct suspend_once {
+    bool await_ready() const noexcept { return false; }
+    void await_suspend(std::coroutine_handle<> handle) const noexcept {
+      handle.resume();
+    }
+    void await_resume() const noexcept {}
+  };
+  return suspend_once {};
+}
+
 }// namespace this_task
 
 }// namespace OpenKneeboard::inline task_ns
