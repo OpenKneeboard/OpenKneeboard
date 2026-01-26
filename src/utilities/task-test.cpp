@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <OpenKneeboard/task.hpp>
+#include <OpenKneeboard/task/resume_on_context.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
 
 #include <wil/com.h>
@@ -65,11 +66,30 @@ struct timers {
 };
 
 wil::unique_event TestFinished;
-
 fire_and_forget do_test() {
+  constexpr std::size_t TestIterations = 1'000'000;
   timers testTimers;
+  std::println("task_context");
+  for (int i = 0; i < TestIterations; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+
+    const auto originalThread = std::this_thread::get_id();
+    auto context = this_thread::get_task_context();
+
+    co_await winrt::resume_background();
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
+    co_await resume_on_context(context);
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
+    co_await winrt::resume_background();
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
+    co_await resume_on_context(context);
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
+  }
+  testTimers.mark("task_context");
   std::println("Switch back from empty coroutine");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -83,7 +103,7 @@ fire_and_forget do_test() {
   testTimers.mark("Switch back from empty coroutine");
 
   std::println("Coro parameter destructors test");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -97,7 +117,7 @@ fire_and_forget do_test() {
   testTimers.mark("Coro parameter destructors");
 
   std::println("resume_background test");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -113,7 +133,7 @@ fire_and_forget do_test() {
   testTimers.mark("resume_background");
 
   std::println("immediate return test");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -128,7 +148,7 @@ fire_and_forget do_test() {
   testTimers.mark("immediate return");
 
   std::println("resume_background with delay move");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -149,7 +169,7 @@ fire_and_forget do_test() {
   e.create();
 
   std::println("delayed ready");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
@@ -169,7 +189,7 @@ fire_and_forget do_test() {
   testTimers.mark("delayed ready");
 
   std::println("delayed exception");
-  for (int i = 0; i < 1'000'000; ++i) {
+  for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
