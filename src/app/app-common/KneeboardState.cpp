@@ -38,7 +38,7 @@ task<audited_ptr<KneeboardState>> KneeboardState::Create(
   audited_ptr<DXResources> dxr) {
   audited_ptr<KneeboardState> ret {new KneeboardState(hwnd, dxr)};
   co_await ret->Init();
-  co_return ret;
+  co_return std::move(ret);
 }
 
 task<void> KneeboardState::ReleaseHwndResources() {
