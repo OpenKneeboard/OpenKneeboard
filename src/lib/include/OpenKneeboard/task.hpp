@@ -179,14 +179,20 @@ struct TaskState {
     __assume(0);
   }
 
-  // Returns true if consumer should delete
+  // Returns true if consumer should delete, i.e. if the producer had already
+  // completed and detached
+  //
+  // If true, the consumer was the last owner
   [[nodiscard]] bool release_consumer() {
     OPENKNEEBOARD_ASSERT(mRefBits & ConsumerBit);
     mRefBits &= ~ConsumerBit;
     return !mRefBits;
   }
 
-  // Returns true if producer should delete
+  // Returns true if producer should delete, i.e. we're an
+  // orphaned/detached/fire_and_forget coroutine
+  //
+  // If true, the producer was the last co-owner.
   [[nodiscard]] bool release_producer() {
     OPENKNEEBOARD_ASSERT(mRefBits & ProducerBit);
     mRefBits &= ~ProducerBit;
@@ -473,6 +479,30 @@ struct TaskAwaiter {
 
     auto result = std::exchange(state->mResult, used_result_t {});
 
+    /* We must *fully* clean up the producer before we resume, otherwise
+     * parameter destructors won't be called, and the parameters will be leaked.
+     *
+     * For example, in this code...
+     *
+     *     task<int> foo(auto destroyedAfterReturn) {
+     *       co_return 123;
+     *     };
+     *
+     *     auto x = co_await foo(scope_exit([] { bar(); }));
+     *
+     *  ... we need ~scope_exit() - and bar() - to be called before co_await
+     *  completes, and before the assignment
+     */
+    const auto dispose = state->release_consumer();
+    OPENKNEEBOARD_ASSERT(
+      dispose,
+      "TaskAwaiter::await_resume() should never be called while the coroutine "
+      "is still running");
+    if (dispose) [[likely]] {
+      state.unlock();
+      std::exchange(mPromise, nullptr)->mProducerHandle.destroy();
+    }
+
     if (auto p = get_if<exception_t>(&result)) {
       StackTrace::SetForNextException(std::move(p->stack));
       std::rethrow_exception(p->exception);
@@ -549,12 +579,12 @@ namespace OpenKneeboard::inline task_ns {
  * - to implement that, requires that it is called from a thread with a COM
  * apartment
  * - calls fatal() if not awaited
- * - statically requires that the reuslt is discarded via [[nodiscard]]
+ * - statically requires that the result is discarded via [[nodiscard]]
  * - calls fatal() if there is an uncaught exception
  * - propagates uncaught exceptions back to the caller
  *
  * This is similar to wil::com_task(), except that it doesn't have as many
- * dependencies/unwanted interaections with various parts of Windows.h and
+ * dependencies/unwanted interactions with various parts of Windows.h and
  * ole2.h
  *
  * If you want to store one, use an `std::optional<task<T>>`; to co_await the

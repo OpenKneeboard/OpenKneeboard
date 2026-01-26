@@ -68,6 +68,19 @@ wil::unique_event TestFinished;
 
 fire_and_forget do_test() {
   timers testTimers;
+  std::println("Coro parameter destructors test");
+  for (int i = 0; i < 1'000'000; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+
+    std::atomic<std::size_t> count;
+    co_await [](auto atExit) -> task<void> {
+      co_return;
+    }(scope_exit([&count] { ++count; }));
+    OPENKNEEBOARD_ASSERT(count == 1);
+  }
+  testTimers.mark("Coro parameter destructors");
 
   std::println("resume_background test");
   for (int i = 0; i < 1'000'000; ++i) {
