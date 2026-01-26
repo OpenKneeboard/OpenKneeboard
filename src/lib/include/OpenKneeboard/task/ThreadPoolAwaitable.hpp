@@ -148,6 +148,7 @@ struct ThreadPoolAwaitable {
       case StartingWait:
       case Waiting:
       case Canceling:
+      case CancelingBeforeDispatch:
         fatal(
           "Impossible state {} in ThreadPoolAwaitable::cancel()",
           magic_enum::enum_name(transitioned.error()));
