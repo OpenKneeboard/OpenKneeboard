@@ -47,6 +47,7 @@ struct StackFramePointer {
     };
     return wrapper_t(std::bit_cast<std::stacktrace_entry>(mValue));
   }
+  constexpr operator bool() const noexcept { return mValue; }
 
   OPENKNEEBOARD_FORCEINLINE
   static StackFramePointer caller(size_t skip = 0) {

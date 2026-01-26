@@ -23,16 +23,17 @@ class audited_weak_ptr;
 template <class T>
 class audited_ptr {
  private:
+  using caller_type = StackFramePointer;
   uint64_t mRefID {~(0ui64)};
 
   struct RefData {
-    std::unordered_map<uint64_t, std::source_location> mRefs;
+    std::unordered_map<uint64_t, caller_type> mRefs;
     uint64_t mNextID {0};
 
     [[nodiscard]]
-    uint64_t AddRef(const std::source_location& loc) {
+    uint64_t AddRef(caller_type caller) {
       const auto id = mNextID++;
-      mRefs.emplace(id, loc);
+      mRefs.emplace(id, caller);
       return id;
     }
 
@@ -43,38 +44,61 @@ class audited_ptr {
   std::shared_ptr<felly::guarded_data<RefData>> mRefData;
 
  public:
-  audited_ptr() = default;
-  audited_ptr(nullptr_t) {}
+  constexpr audited_ptr() = default;
+  constexpr audited_ptr(nullptr_t) {}
 
-  audited_ptr(
-    T* ptr,
-    const std::source_location& loc = std::source_location::current()) {
+  audited_ptr(T* ptr, caller_type caller = nullptr) {
+    if (!ptr) {
+      return;
+    }
+
+    if (!caller) {
+      caller = StackFramePointer {_ReturnAddress()};
+    }
+
     mImpl = std::shared_ptr<T>(ptr);
     RefData refData {};
-    mRefID = refData.AddRef(loc);
+    mRefID = refData.AddRef(caller);
 
     mRefData =
       std::make_shared<felly::guarded_data<RefData>>(std::move(refData));
   }
 
-  audited_ptr(
-    const audited_ptr& other,
-    const std::source_location& loc = std::source_location::current()) {
-    copy_from(other, loc);
+  audited_ptr(const audited_ptr& other, caller_type caller = nullptr) {
+    if (!caller) {
+      caller = StackFramePointer {_ReturnAddress()};
+    }
+    copy_from(other, caller);
   }
 
-  audited_ptr(audited_ptr&&) noexcept = default;
+  audited_ptr(audited_ptr&& other) noexcept {
+    move_from(std::move(other), StackFramePointer {_ReturnAddress()});
+  }
+
   audited_ptr& operator=(audited_ptr&& other) noexcept {
+    return move_from(std::move(other), StackFramePointer {_ReturnAddress()});
+  }
+
+  audited_ptr& move_from(audited_ptr&& other, caller_type caller = nullptr) {
     if (this == std::addressof(other)) {
       return *this;
     }
-
     if (mRefData) {
-      mRefData->lock()->Release(mRefID);
+      mRefData->lock()->Release(std::exchange(mRefID, ~(0ui64)));
     }
+
+    if (other.mRefData) {
+      other.mRefData->lock()->Release(std::exchange(other.mRefID, ~(0ui64)));
+    }
+
     mImpl = std::move(other.mImpl);
     mRefData = std::move(other.mRefData);
-    mRefID = std::exchange(other.mRefID, ~(0ui64));
+    if (mRefData) {
+      if (!caller) {
+        caller = StackFramePointer {_ReturnAddress()};
+      }
+      mRefID = mRefData->lock()->AddRef(caller);
+    }
     return *this;
   }
 
@@ -92,11 +116,17 @@ class audited_ptr {
   T* operator->() const noexcept { return mImpl.get(); }
 
   audited_ptr& operator=(nullptr_t) {
-    copy_from({nullptr});
+    if (mRefData) {
+      mRefData->lock()->Release(std::exchange(mRefID, ~(0ui64)));
+    }
+    mImpl.reset();
+    mRefData.reset();
     return *this;
   }
 
-  audited_ptr& operator=(const audited_ptr&) = delete;
+  audited_ptr& operator=(const audited_ptr& other) {
+    return copy_from(other, _ReturnAddress());
+  }
 
   auto use_count() const { return mImpl.use_count(); }
 
@@ -106,27 +136,28 @@ class audited_ptr {
     dprint("DEBUG: {} references remaining to `{}`", refs.size(), debugLabel);
     for (const auto& [id, loc]: refs) {
       dprint(
-        "- {} @ {}:{}:{}",
-        loc.function_name(),
-        loc.file_name(),
-        loc.line(),
-        loc.column());
+        "- {} @ {}:{}",
+        loc->description(),
+        loc->source_file(),
+        loc->source_line());
     }
   }
 
   audited_ptr& copy_from(
     const audited_ptr& other,
-    const std::source_location& loc = std::source_location::current()) {
+    caller_type caller = nullptr) {
     if (mRefData) {
-      mRefData->lock()->Release(mRefID);
+      mRefData->lock()->Release(std::exchange(mRefID, ~(0ui64)));
     }
 
     mImpl = other.mImpl;
     mRefData = other.mRefData;
-    mRefID = ~(0ui64);
 
     if (mRefData) {
-      mRefID = mRefData->lock()->AddRef(loc);
+      if (!caller) {
+        caller = StackFramePointer {_ReturnAddress()};
+      }
+      mRefID = mRefData->lock()->AddRef(caller);
     }
 
     return *this;
@@ -144,8 +175,7 @@ class audited_weak_ptr {
   audited_weak_ptr(const audited_ptr<T>& ptr)
     : mImpl(ptr.mImpl),
       mRefData(ptr.mRefData) {}
-  audited_ptr<T> lock(
-    const std::source_location& loc = std::source_location::current()) {
+  audited_ptr<T> lock(StackFramePointer caller = nullptr) {
     auto shared = mImpl.lock();
     if (!shared) {
       return {};
@@ -154,7 +184,10 @@ class audited_weak_ptr {
     ret.mImpl = std::move(shared);
     ret.mRefData = mRefData;
     if (mRefData) {
-      ret.mRefID = mRefData->lock()->AddRef(loc);
+      if (!caller) {
+        caller = StackFramePointer {_ReturnAddress()};
+      }
+      ret.mRefID = mRefData->lock()->AddRef(caller);
     }
     return std::move(ret);
   }
