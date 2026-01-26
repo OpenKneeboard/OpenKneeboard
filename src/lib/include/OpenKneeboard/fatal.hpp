@@ -160,7 +160,9 @@ void fatal(
     .fatal();
 }
 
+[[noreturn]]
 void fatal_with_hresult(HRESULT);
+[[noreturn]]
 void fatal_with_exception(std::exception_ptr);
 
 /// Hook std::terminate() and SetUnhandledExceptionFilter()
