@@ -68,6 +68,20 @@ wil::unique_event TestFinished;
 
 fire_and_forget do_test() {
   timers testTimers;
+  std::println("Switch back from empty coroutine");
+  for (int i = 0; i < 1'000'000; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+    const auto originalThread = std::this_thread::get_id();
+    auto resumeOriginal = [] -> task<void> { co_return; }();
+    co_await winrt::resume_background();
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
+    co_await std::move(resumeOriginal);
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
+  }
+  testTimers.mark("Switch back from empty coroutine");
+
   std::println("Coro parameter destructors test");
   for (int i = 0; i < 1'000'000; ++i) {
     if (i % 10'000 == 0) {

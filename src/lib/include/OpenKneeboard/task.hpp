@@ -25,11 +25,65 @@
 #pragma clang diagnostic pop
 #endif
 
-#include <atomic>
 #include <coroutine>
-#include <memory>
 
 namespace OpenKneeboard::detail {
+
+/* using `__assume(false)` instead of `std::unreachable()` throughout as - as of
+ * 2026-01-26 - MSVC will raise 'unreachable code' warnings for
+ * `std::unreachable()` but not for `__assume(false)`
+ *
+ * https://developercommunity.visualstudio.com/t/std::unreachable-causes-warning-4702-un/10720390
+ */
+
+enum class TaskAwaiting {
+  Required,
+  Optional,
+  NotSupported,
+};
+
+enum class TaskCompletionThread {
+  OriginalThread,
+  AnyThread,
+};
+
+enum class TaskExceptionBehavior {
+  StoreAndRethrow,
+  Terminate,
+};
+
+template <class T>
+concept task_traits = requires {
+  typename T::result_type;
+  { T::OnException } -> std::convertible_to<TaskExceptionBehavior>;
+  { T::Awaiting } -> std::convertible_to<TaskAwaiting>;
+  { T::CompletionThread } -> std::convertible_to<TaskCompletionThread>;
+};
+
+template <class TResult>
+struct TaskTraits {
+  static constexpr auto OnException = TaskExceptionBehavior::StoreAndRethrow;
+  static constexpr auto Awaiting = TaskAwaiting::Required;
+  static constexpr auto CompletionThread = TaskCompletionThread::OriginalThread;
+
+  using result_type = TResult;
+};
+static_assert(task_traits<TaskTraits<int>>);
+
+template <class TResult>
+struct AnyThreadTaskTraits : TaskTraits<TResult> {
+  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
+};
+static_assert(task_traits<AnyThreadTaskTraits<int>>);
+
+struct FireAndForgetTraits {
+  static constexpr auto OnException = TaskExceptionBehavior::Terminate;
+  static constexpr auto Awaiting = TaskAwaiting::NotSupported;
+  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
+
+  using result_type = void;
+};
+static_assert(task_traits<FireAndForgetTraits>);
 
 // Non-awaitable coroutine; useful as it has a handle
 struct DetachedTask {
@@ -45,9 +99,10 @@ struct DetachedTask {
   std::coroutine_handle<promise_type> mHandle;
 };
 
-enum class TaskCompletionThread {
-  OriginalThread,
-  AnyThread,
+enum class TaskAwaitReady {
+  NotReady,
+  Ready,
+  ReadyWrongThread,
 };
 
 struct TaskContext {
@@ -76,12 +131,7 @@ struct TaskContext {
   }
 };
 
-enum class TaskExceptionBehavior {
-  StoreAndRethrow,
-  Terminate,
-};
-
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskState {
   struct exception_t {
     std::exception_ptr exception {};
@@ -111,7 +161,11 @@ struct TaskState {
   }
 
   [[nodiscard]]
-  constexpr bool await_ready() const noexcept {
+  constexpr TaskAwaitReady await_ready() const noexcept {
+    if ((mRefBits & ThreadPoolBounceBit)) {
+      return TaskAwaitReady::NotReady;
+    }
+
     // What does it mean for coroutine to be "finished"?
     //
     // The coroutine (producer) returning isn't enough - we need it to
@@ -135,7 +189,7 @@ struct TaskState {
     //        ^ we want to guarantee that ~scope_exit() and bar() are called
     //          before this assignment
     if ((mRefBits & ProducerBit)) {
-      return false;
+      return TaskAwaitReady::NotReady;
     }
     // If we reach here, the coroutine's finished - but we need to still have a
     // stored value (from co_return) or uncaught exception. We should
@@ -149,7 +203,16 @@ struct TaskState {
     OPENKNEEBOARD_ASSERT(
       holds_alternative<value_t>(mResult)
       || holds_alternative<exception_t>(mResult));
-    return true;
+
+    if constexpr (
+      TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
+      return TaskAwaitReady::Ready;
+    } else {
+      if (std::this_thread::get_id() == mOriginalThread) {
+        return TaskAwaitReady::Ready;
+      }
+      return TaskAwaitReady::ReadyWrongThread;
+    }
   }
 
   void return_void() {
@@ -199,50 +262,50 @@ struct TaskState {
     return !mRefBits;
   }
 
+  [[nodiscard]] bool release_threadpool() {
+    OPENKNEEBOARD_ASSERT(mRefBits & ThreadPoolBounceBit);
+    mRefBits &= ~ThreadPoolBounceBit;
+    OPENKNEEBOARD_ASSERT(!(mRefBits & ProducerBit))
+    return !mRefBits;
+  }
+
+  // If the producer invokes the threadpool, the producer has completed
+  void swap_producer_for_threadpool_ref() {
+    OPENKNEEBOARD_ASSERT(mRefBits & ProducerBit);
+    OPENKNEEBOARD_ASSERT(!(mRefBits & ThreadPoolBounceBit));
+    mRefBits |= ThreadPoolBounceBit;
+    mRefBits &= ~ProducerBit;
+  }
+
+  // .. but the consumer invokes the threadpool if the consumer is still
+  // alive, but needs to jump to another thread
+  void add_consumer_threadpool_ref() {
+    OPENKNEEBOARD_ASSERT(
+      mRefBits == ConsumerBit,
+      "Consumer should not be bouncing via threadpool if producer is still in "
+      "progress, or resumption has already been bounced to thread pool");
+    mRefBits |= ThreadPoolBounceBit;
+  }
+
  private:
-  static constexpr uint8_t ProducerBit = 1;
-  static constexpr uint8_t ConsumerBit = 2;
+  static constexpr uint8_t ProducerBit = 1 << 0;
+  static constexpr uint8_t ConsumerBit = 1 << 1;
+  static constexpr uint8_t ThreadPoolBounceBit = 1 << 2;
   uint8_t mRefBits {ProducerBit | ConsumerBit};
+
+  const std::thread::id mOriginalThread = std::this_thread::get_id();
 };
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskPromiseBase;
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskPromise;
-
-enum class TaskAwaiting {
-  Required,
-  Optional,
-  NotSupported,
-};
-
-template <class TResult>
-struct TaskTraits {
-  static constexpr auto OnException = TaskExceptionBehavior::StoreAndRethrow;
-  static constexpr auto Awaiting = TaskAwaiting::Required;
-  static constexpr auto CompletionThread = TaskCompletionThread::OriginalThread;
-
-  using result_type = TResult;
-};
-
-template <class TResult>
-struct AnyThreadTaskTraits : TaskTraits<TResult> {
-  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
-};
-
-struct FireAndForgetTraits {
-  static constexpr auto OnException = TaskExceptionBehavior::Terminate;
-  static constexpr auto Awaiting = TaskAwaiting::NotSupported;
-  static constexpr auto CompletionThread = TaskCompletionThread::AnyThread;
-
-  using result_type = void;
-};
 
 /// Sentinel marker type handled by await_transform
 struct noexcept_task_t {};
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskFinalAwaiter {
   TaskPromiseBase<TTraits>& mPromise;
 
@@ -265,6 +328,8 @@ struct TaskFinalAwaiter {
         return promise.resume_on_this_thread(std::move(state));
       }
 
+      state->swap_producer_for_threadpool_ref();
+
       return [](TaskPromiseBase<TTraits>* const promise) -> DetachedTask {
         TaskFinalAwaiter::bounce_to_thread_pool(promise);
         co_return;
@@ -275,7 +340,6 @@ struct TaskFinalAwaiter {
 
   void await_resume() const noexcept {}
 
- private:
   static void bounce_to_thread_pool(
     TaskPromiseBase<TTraits>* promise) noexcept {
     const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
@@ -291,6 +355,7 @@ struct TaskFinalAwaiter {
     __assume(false);
   }
 
+ private:
   static void thread_pool_callback(
     PTP_CALLBACK_INSTANCE,
     void* userData) noexcept {
@@ -317,7 +382,21 @@ struct TaskFinalAwaiter {
       static_cast<TaskPromiseBase<TTraits>*>(comData->pUserDefined);
 
     try {
-      promise->resume_on_this_thread(promise->mState.lock()).resume();
+      auto state = promise->mState.lock();
+      const auto consumer = std::exchange(state->mConsumerHandle, {});
+      const auto destroy = state->release_threadpool();
+      OPENKNEEBOARD_ASSERT(
+        !destroy, "Shouldn't be resuming in threadpool without a consumer");
+      state.unlock();
+
+      if (destroy) [[unlikely]] {
+        OPENKNEEBOARD_ASSERT(!consumer);
+        promise->mProducerHandle.destroy();
+        return S_OK;
+      }
+      OPENKNEEBOARD_ASSERT(consumer);
+      consumer.resume();
+      return S_OK;
     } catch (...) {
       dprint.Warning("std::coroutine_handle<>::resume() threw an exception");
       fatal_with_exception(std::current_exception());
@@ -327,10 +406,10 @@ struct TaskFinalAwaiter {
   }
 };
 
-template <class TTraits>
+template <task_traits TTraits>
 struct Task;
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskPromiseBase {
   using traits_type = TTraits;
 
@@ -408,7 +487,7 @@ struct TaskPromiseBase {
   }
 };
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskPromise : TaskPromiseBase<TTraits> {
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
@@ -420,7 +499,7 @@ struct TaskPromise : TaskPromiseBase<TTraits> {
   }
 };
 
-template <class TTraits>
+template <task_traits TTraits>
   requires std::same_as<typename TTraits::result_type, void>
 struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
@@ -431,7 +510,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   void return_void() noexcept { this->mState.lock()->return_void(); }
 };
 
-template <class TTraits>
+template <task_traits TTraits>
 struct TaskAwaiter {
   using promise_t = TaskPromise<TTraits>;
   promise_t* mPromise;
@@ -450,19 +529,33 @@ struct TaskAwaiter {
   [[nodiscard]]
   bool await_ready() const noexcept {
     OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-    return mPromise->mState.lock()->await_ready();
+    return mPromise->mState.lock()->await_ready() == TaskAwaitReady::Ready;
   }
 
   std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
     OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
     auto state = mPromise->mState.lock();
-    if (state->await_ready()) {
-      return caller;
-    }
+
     OPENKNEEBOARD_ASSERT(
       !state->mConsumerHandle, "tasks can only be resumed once");
-    state->mConsumerHandle = caller;
-    return std::noop_coroutine();
+
+    using enum TaskAwaitReady;
+    switch (state->await_ready()) {
+      case Ready:
+        return caller;
+      case NotReady:
+        state->mConsumerHandle = caller;
+        return std::noop_coroutine();
+      case ReadyWrongThread:
+        state->add_consumer_threadpool_ref();
+        state->mConsumerHandle = caller;
+        return [](TaskPromiseBase<TTraits>* const promise) -> DetachedTask {
+          TaskFinalAwaiter<TTraits>::bounce_to_thread_pool(promise);
+          co_return;
+        }(mPromise)
+                                                                .mHandle;
+    }
+    __assume(false);
   }
 
   auto await_resume() {
@@ -471,7 +564,7 @@ struct TaskAwaiter {
 
     auto state = mPromise->mState.lock();
 
-    OPENKNEEBOARD_ASSERT(state->await_ready());
+    OPENKNEEBOARD_ASSERT(state->await_ready() == TaskAwaitReady::Ready);
 
     using value_type = typename TaskState<TTraits>::value_t;
     using exception_t = typename TaskState<TTraits>::exception_t;
@@ -514,7 +607,7 @@ struct TaskAwaiter {
   }
 };
 
-template <class TTraits>
+template <task_traits TTraits>
 struct [[nodiscard]] Task {
   static constexpr bool must_await_v =
     TTraits::Awaiting == TaskAwaiting::Required;
