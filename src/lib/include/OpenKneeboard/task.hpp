@@ -6,6 +6,9 @@
 // OpenKneeboard repository.
 #pragma once
 
+#include "task/TaskContextAwaiter.hpp"
+#include "task/task_context.hpp"
+
 #include <OpenKneeboard/StateMachine.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
@@ -105,30 +108,13 @@ enum class TaskAwaitReady {
   ReadyWrongThread,
 };
 
-struct TaskContext {
-  wil::com_ptr<IContextCallback> mCOMCallback;
-  std::thread::id mThreadID = std::this_thread::get_id();
+struct TaskContext : task_context {
+  using task_context::mCOMCallback;
+  using task_context::mThreadID;
   StackFramePointer mCaller {nullptr};
 
-  inline TaskContext(StackFramePointer&& caller) : mCaller(std::move(caller)) {
-    if (!SUCCEEDED(CoGetObjectContext(IID_PPV_ARGS(mCOMCallback.put()))))
-      [[unlikely]] {
-      this->fatal("Attempted to create a task<> from thread without COM");
-    }
-  }
-
-  template <class... Ts>
-  [[noreturn]]
-  void fatal(std::format_string<Ts...> fmt, Ts&&... values) const noexcept {
-    const auto message = std::format(fmt, std::forward<Ts>(values)...);
-    OpenKneeboard::fatal(
-      mCaller,
-      "{}\nCaller: {}\nCaller thread: {}\nFinal thread: {}",
-      message,
-      mCaller.to_string(),
-      mThreadID,
-      std::this_thread::get_id());
-  }
+  TaskContext() = delete;
+  TaskContext(StackFramePointer&& caller) : mCaller(std::move(caller)) {}
 };
 
 template <task_traits TTraits>
@@ -329,81 +315,11 @@ struct TaskFinalAwaiter {
       }
 
       state->swap_producer_for_threadpool_ref();
-
-      return [](TaskPromiseBase<TTraits>* const promise) -> DetachedTask {
-        TaskFinalAwaiter::bounce_to_thread_pool(promise);
-        co_return;
-      }(&promise)
-                                                              .mHandle;
+      return promise.resume_on_original_thread();
     }
   }
 
   void await_resume() const noexcept {}
-
-  static void bounce_to_thread_pool(
-    TaskPromiseBase<TTraits>* promise) noexcept {
-    const auto threadPoolSuccess = TrySubmitThreadpoolCallback(
-      &TaskFinalAwaiter<TTraits>::thread_pool_callback, promise, nullptr);
-
-    if (threadPoolSuccess) [[likely]] {
-      return;
-    }
-    const auto threadPoolError = GetLastError();
-    promise->mContext.fatal(
-      "Failed to enqueue resumption on thread pool: {:010x}",
-      static_cast<uint32_t>(threadPoolError));
-    __assume(false);
-  }
-
- private:
-  static void thread_pool_callback(
-    PTP_CALLBACK_INSTANCE,
-    void* userData) noexcept {
-    auto promise = static_cast<TaskPromiseBase<TTraits>*>(userData);
-
-    ComCallData comData {.pUserDefined = userData};
-    const auto result = promise->mContext.mCOMCallback->ContextCallback(
-      &TaskFinalAwaiter<TTraits>::target_thread_callback,
-      &comData,
-      IID_ICallbackWithNoReentrancyToApplicationSTA,
-      5,
-      NULL);
-    if (SUCCEEDED(result)) [[likely]] {
-      return;
-    }
-    promise->mContext.fatal(
-      "Failed to enqueue coroutine resumption for the desired thread: "
-      "{:#010x}",
-      static_cast<uint32_t>(result));
-  }
-
-  static HRESULT target_thread_callback(ComCallData* comData) noexcept {
-    const auto promise =
-      static_cast<TaskPromiseBase<TTraits>*>(comData->pUserDefined);
-
-    try {
-      auto state = promise->mState.lock();
-      const auto consumer = std::exchange(state->mConsumerHandle, {});
-      const auto destroy = state->release_threadpool();
-      OPENKNEEBOARD_ASSERT(
-        !destroy, "Shouldn't be resuming in threadpool without a consumer");
-      state.unlock();
-
-      if (destroy) [[unlikely]] {
-        OPENKNEEBOARD_ASSERT(!consumer);
-        promise->mProducerHandle.destroy();
-        return S_OK;
-      }
-      OPENKNEEBOARD_ASSERT(consumer);
-      consumer.resume();
-      return S_OK;
-    } catch (...) {
-      dprint.Warning("std::coroutine_handle<>::resume() threw an exception");
-      fatal_with_exception(std::current_exception());
-    }
-
-    return S_OK;
-  }
 };
 
 template <task_traits TTraits>
@@ -485,6 +401,24 @@ struct TaskPromiseBase {
     mState.lock()->mOnException = TaskExceptionBehavior::Terminate;
     return std::suspend_never {};
   }
+
+  [[nodiscard]]
+  std::coroutine_handle<> resume_on_original_thread() noexcept {
+    return [](auto& self) -> DetachedTask {
+      co_await TaskContextAwaiter {self.mContext};
+
+      auto state = self.mState.lock();
+      [[maybe_unused]] const auto destroy = state->release_threadpool();
+      const auto consumer = std::exchange(state->mConsumerHandle, {});
+      state.unlock();
+      OPENKNEEBOARD_ASSERT(consumer);
+      OPENKNEEBOARD_ASSERT(
+        !destroy,
+        "Shouldn't be resuming a task in threadpool without a consumer");
+      consumer.resume();
+    }(*this)
+                               .mHandle;
+  }
 };
 
 template <task_traits TTraits>
@@ -549,11 +483,7 @@ struct TaskAwaiter {
       case ReadyWrongThread:
         state->add_consumer_threadpool_ref();
         state->mConsumerHandle = caller;
-        return [](TaskPromiseBase<TTraits>* const promise) -> DetachedTask {
-          TaskFinalAwaiter<TTraits>::bounce_to_thread_pool(promise);
-          co_return;
-        }(mPromise)
-                                                                .mHandle;
+        return mPromise->resume_on_original_thread();
     }
     __assume(false);
   }
