@@ -105,11 +105,12 @@ task<void> App::CleanupAndExitAsync() {
     if (kbs) {
       kbs.dump_refs("KneeboardState owners");
     }
+  } else {
+    const auto duration = std::chrono::steady_clock::now() - waitStart;
+    dprint(
+      "Shutdown blockers took {}ms",
+      std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
   }
-  const auto duration = std::chrono::steady_clock::now() - waitStart;
-  dprint(
-    "Shutdown blockers took {}ms",
-    std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 
   dprint("Exiting app");
 
