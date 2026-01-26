@@ -12,9 +12,9 @@ namespace OpenKneeboard::inline task_ns {
  *
  * auto context  = this_thread::get_task_context();
  * ... other things, including thread switching ...
- * co_await resume_on_context(context);
+ * co_await resume_in_context(context);
  */
-inline auto resume_on_context(task_context& context) {
+inline auto resume_in_context(task_context& context) {
   return detail::TaskContextAwaiter(context);
 }
 

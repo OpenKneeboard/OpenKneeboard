@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <OpenKneeboard/task.hpp>
-#include <OpenKneeboard/task/resume_on_context.hpp>
+#include <OpenKneeboard/task/resume_in_context.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
 
 #include <wil/com.h>
@@ -80,11 +80,11 @@ fire_and_forget do_test() {
 
     co_await winrt::resume_background();
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
-    co_await resume_on_context(context);
+    co_await resume_in_context(context);
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
     co_await winrt::resume_background();
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
-    co_await resume_on_context(context);
+    co_await resume_in_context(context);
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
   }
   testTimers.mark("task_context");
