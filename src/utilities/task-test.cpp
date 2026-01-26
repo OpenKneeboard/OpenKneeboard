@@ -4,6 +4,7 @@
 #include <OpenKneeboard/task.hpp>
 #include <OpenKneeboard/task/resume_in_context.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
+#include <OpenKneeboard/task/resume_on_thread_pool.hpp>
 
 #include <wil/com.h>
 #include <wil/resource.h>
@@ -69,7 +70,7 @@ wil::unique_event TestFinished;
 fire_and_forget do_test() {
   constexpr std::size_t TestIterations = 1'000'000;
   timers testTimers;
-  std::println("task_context");
+  std::println("explicit thread switching");
   for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
@@ -78,16 +79,16 @@ fire_and_forget do_test() {
     const auto originalThread = std::this_thread::get_id();
     auto context = this_thread::get_task_context();
 
-    co_await winrt::resume_background();
+    co_await resume_on_thread_pool();
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
     co_await resume_in_context(context);
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
-    co_await winrt::resume_background();
+    co_await resume_on_thread_pool();
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
     co_await resume_in_context(context);
     OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
   }
-  testTimers.mark("task_context");
+  testTimers.mark("explicit thread switching");
   std::println("Switch back from empty coroutine");
   for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
