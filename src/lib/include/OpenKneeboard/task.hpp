@@ -325,6 +325,9 @@ struct TaskStatePtr {
   using pointer_type = value_type*;
 
   TaskStatePtr() = delete;
+  TaskStatePtr(const TaskStatePtr&) = delete;
+  TaskStatePtr& operator=(const TaskStatePtr&) = delete;
+
   template <class... Args>
   explicit TaskStatePtr(std::in_place_t, Args&&... args)
     requires(TOwner == TaskStateOwner::Producer)
@@ -390,6 +393,16 @@ struct TaskStatePtr {
     mImpl = std::exchange(other.mImpl, nullptr);
   }
 
+  TaskStatePtr& operator=(TaskStatePtr&& other) noexcept {
+    if (this == std::addressof(other)) {
+      return *this;
+    }
+
+    this->reset();
+    mImpl = std::exchange(other.mImpl, nullptr);
+    return *this;
+  }
+
   constexpr operator bool() const noexcept { return mImpl; }
 
   auto lock() const {
@@ -397,9 +410,6 @@ struct TaskStatePtr {
     return mImpl->lock();
   }
 
-  TaskStatePtr(const TaskStatePtr&) = delete;
-  TaskStatePtr& operator=(const TaskStatePtr&) = delete;
-  TaskStatePtr& operator=(TaskStatePtr&&) = delete;
   TaskStatePtr& operator=(std::nullptr_t) noexcept {
     this->reset();
     return *this;
@@ -681,16 +691,12 @@ struct [[nodiscard]] Task {
   Task(const Task&) = delete;
   Task& operator=(const Task&) = delete;
 
+  Task(Task&& other) noexcept = default;
+  Task& operator=(Task&& other) noexcept = default;
+
   [[nodiscard]]
   constexpr bool is_moved() const noexcept {
     return !mState;
-  }
-
-  Task(Task&& other) noexcept { mState = std::exchange(other.mState, {}); }
-
-  Task& operator=(Task&& other) noexcept {
-    mState = std::exchange(other.mState, nullptr);
-    return *this;
   }
 
   Task(std::nullptr_t) = delete;
