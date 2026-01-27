@@ -32,8 +32,22 @@ resume_on_any_signal(R&& handles, const std::stop_token token, T&& timeout) {
   }
 
   std::stop_source stopper;
+  // MSVC's std::stop_token can deadlock if request_stop() is called inside aa
+  // stop_callback on the same thread. Offloading to another thread avoids the
+  // deadlock.
   const std::stop_callback callback(
-    token, [&stopper] { stopper.request_stop(); });
+    token, [stopper = new std::stop_source(stopper)] {
+      const auto submitted = TrySubmitThreadpoolCallback(
+        [](PTP_CALLBACK_INSTANCE, void* context) {
+          const auto s = static_cast<std::stop_source*>(context);
+          const auto destroy = scope_exit([s] { delete s; });
+          s->request_stop();
+        },
+        stopper,
+        nullptr);
+      OPENKNEEBOARD_ALWAYS_ASSERT(
+        submitted, "threadpool submission failed: {:#010x}", GetLastError());
+    });
 
   // We use `request_stop()` as an atomic gate so only the first
   // `resume_on_signal()` writes the result; however, if the external token is
