@@ -11,12 +11,6 @@
 #include <OpenKneeboard/ProcessShutdownBlock.hpp>
 #include <OpenKneeboard/TabletInfo.hpp>
 #include <OpenKneeboard/TabletState.hpp>
-#include <OpenKneeboard/Win32.hpp>
-
-#include <shims/winrt/base.h>
-
-#include <winrt/Microsoft.UI.Dispatching.h>
-#include <winrt/Windows.Foundation.h>
 
 #include <chrono>
 #include <memory>
@@ -52,8 +46,6 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
   DisposalState mDisposal;
   ProcessShutdownBlock mShutdownBlock;
   winrt::apartment_context mUIThread;
-
-  DispatcherQueueController mDQC {nullptr};
 
   OTDIPCClient();
   task<void> Run();

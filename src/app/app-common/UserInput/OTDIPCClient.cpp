@@ -7,12 +7,15 @@
 
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/OTDIPCClient.hpp>
+#include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/task/resume_after.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
+
+#include <shims/winrt/base.h>
 
 #include <KnownFolders.h>
 
@@ -254,10 +257,7 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
   return ret;
 }
 
-OTDIPCClient::OTDIPCClient() {
-  dprint("{}", __FUNCTION__);
-  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
-}
+OTDIPCClient::OTDIPCClient() { dprint("{}", __FUNCTION__); }
 
 OTDIPCClient::~OTDIPCClient() { dprint("{}", __FUNCTION__); }
 
@@ -271,8 +271,6 @@ task<void> OTDIPCClient::DisposeAsync() noexcept {
   mStopper.request_stop();
   dprint("Waiting for OTDIPCClient coro");
   co_await std::move(mRunner).value();
-  dprint("Shutting down OTDIPCClient DQC");
-  co_await mDQC.ShutdownQueueAsync();
   dprint("OTDIPCClient::DisposeAsync() is complete");
 }
 
@@ -286,9 +284,6 @@ task<void> OTDIPCClient::Run() {
       dprint("Ending OTDIPCClient::Run");
     }
   });
-  auto workThread = mDQC.DispatcherQueue();
-  co_await wil::resume_foreground(workThread);
-  SetThreadDescription(GetCurrentThread(), L"OTD-IPC Client Thread");
 
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
