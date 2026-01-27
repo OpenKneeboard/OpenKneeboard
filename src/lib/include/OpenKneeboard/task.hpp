@@ -479,7 +479,7 @@ struct TaskFinalAwaiter {
       OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/anyThread");
       return [](auto toDestroy, auto toResume) -> DetachedTask {
         toDestroy.destroy();
-        toResume.resume()();
+        toResume.resume();
         co_return;
       }(producer, handle)
                                                     .mHandle;
