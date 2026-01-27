@@ -36,6 +36,11 @@ struct task_context {
 
   friend task_context this_thread::get_task_context();
 
+  [[nodiscard]]
+  bool is_this_thread() const noexcept {
+    return mThreadID == std::this_thread::get_id();
+  }
+
  protected:
   std::thread::id mThreadID = std::this_thread::get_id();
   wil::com_ptr<IContextCallback> mCOMCallback;

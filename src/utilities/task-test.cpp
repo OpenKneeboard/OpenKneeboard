@@ -1,10 +1,14 @@
 // Copyright 2026 Fred Emmott <fred@fredemmott.com>
 // SPDX-License-Identifier: MIT
 
+#define OPENKNEEBOARD_TASK_TRACE(EVENT_NAME, ...) \
+  TraceLoggingWrite(gTraceProvider, EVENT_NAME, ##__VA_ARGS__);
+
 #include <OpenKneeboard/task.hpp>
 #include <OpenKneeboard/task/resume_in_context.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
 #include <OpenKneeboard/task/resume_on_thread_pool.hpp>
+#include <OpenKneeboard/tracing.hpp>
 
 #include <wil/com.h>
 #include <wil/resource.h>
@@ -67,27 +71,45 @@ struct timers {
 };
 
 wil::unique_event TestFinished;
-fire_and_forget do_test() {
+
+// Using some winrt coroutines so that:
+// - we only have one `task<>` at a time, simplifying what's being tested
+// - ... which also makes traces much easier to follow
+winrt::fire_and_forget do_test() {
   constexpr std::size_t TestIterations = 1'000'000;
-  wil::unique_event e;
+  wil::unique_event e, f;
   e.create();
+  f.create();
   timers testTimers;
 
-  std::println("producer complete before await");
+  std::println("immediately completing");
   for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
       std::println("iteration: {}", i);
     }
-    auto coro = [](auto) -> task<void> {
-      co_await winrt::resume_background();
+    const auto originalThread = std::this_thread::get_id();
+    auto coro =
+      [](auto /* scope-guarded-param */, HANDLE setAtScopeExit) -> task<void> {
+      const scope_exit guard {std::bind_front(&SetEvent, setAtScopeExit)};
       co_return;
-    }(e.SetEvent_scope_exit());
-    co_await resume_on_signal(e.get());
+    }(e.SetEvent_scope_exit(), f.get());
+    OPENKNEEBOARD_ASSERT(
+      WaitForSingleObject(f.get(), 0) == WAIT_OBJECT_0,
+      "destructors are destroyed at coro completion");
+    OPENKNEEBOARD_ASSERT(
+      WaitForSingleObject(e.get(), 0) == WAIT_OBJECT_0,
+      "parameters are destroyed at coro completion");
     e.ResetEvent();
+    f.ResetEvent();
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() == originalThread);
+    co_await winrt::resume_background();
+    OPENKNEEBOARD_ASSERT(std::this_thread::get_id() != originalThread);
     co_await std::move(coro);
+    OPENKNEEBOARD_ASSERT(
+      std::this_thread::get_id() == originalThread,
+      "task<void> only bounces back to the original thread when awaited");
   }
-  testTimers.mark("producer complete before await");
-  testTimers.dump();
+  testTimers.mark("immediately completing");
   std::println("explicit thread switching");
   for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
@@ -149,21 +171,6 @@ fire_and_forget do_test() {
     OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("resume_background");
-
-  std::println("immediate return test");
-  for (int i = 0; i < TestIterations; ++i) {
-    if (i % 10'000 == 0) {
-      std::println("iteration: {}", i);
-    }
-    std::atomic<std::size_t> deleteCount = 0;
-    co_await [](auto* p) -> task<void> {
-      const auto setter = scope_exit([p] { ++*p; });
-      co_return;
-    }(&deleteCount);
-    const auto count = deleteCount.load();
-    OPENKNEEBOARD_ASSERT(count == 1);
-  }
-  testTimers.mark("immediate return");
 
   std::println("resume_background with delay move");
   for (int i = 0; i < TestIterations; ++i) {

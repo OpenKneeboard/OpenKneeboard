@@ -63,6 +63,16 @@ struct StackFramePointer {
     }
   }
 
+  // Useful with TraceLoggingCodePointer()
+  // To look up:
+  // - in LLDB: im loo -a ADDRESS
+  // - in WinDbg: ln ADDRESS
+  [[nodiscard]]
+  constexpr void* value() const noexcept {
+    return mValue;
+  }
+
+  [[nodiscard]]
   std::string to_string() const noexcept;
 };
 

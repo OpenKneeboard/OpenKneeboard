@@ -30,6 +30,10 @@
 
 #include <coroutine>
 
+#ifndef OPENKNEEBOARD_TASK_TRACE
+#define OPENKNEEBOARD_TASK_TRACE(...)
+#endif
+
 namespace OpenKneeboard::detail {
 
 /* using `__assume(false)` instead of `std::unreachable()` throughout as - as of
@@ -114,11 +118,41 @@ struct TaskContext : task_context {
   StackFramePointer mCaller {nullptr};
 
   TaskContext() = delete;
-  TaskContext(StackFramePointer&& caller) : mCaller(std::move(caller)) {}
+  TaskContext(StackFramePointer caller) : mCaller(std::move(caller)) {}
+};
+
+enum class TaskStateOwner : uint8_t {
+  Producer = 1 << 0,// promise/coroutine
+  Task = 1 << 1,
+  TaskAwaiter = 1 << 2,
+  ThreadPool = 1 << 3,
 };
 
 template <task_traits TTraits>
 struct TaskState {
+  TaskState() = delete;
+  TaskState(const TaskState&) = delete;
+  TaskState& operator=(const TaskState&) = delete;
+  TaskState(TaskState&&) = delete;
+  TaskState& operator=(TaskState&&) = delete;
+
+  explicit TaskState(
+    const TaskStateOwner initialOwner,
+    const TaskContext& context)
+    : mRefBits(std::to_underlying(initialOwner)),
+      mContext(context) {
+    OPENKNEEBOARD_TASK_TRACE(
+      "TaskState()",
+      TraceLoggingValue(mRefBits, "mRefBits"),
+      TraceLoggingCodePointer(mContext.mCaller.value(), "caller"));
+    OPENKNEEBOARD_ASSERT(initialOwner == TaskStateOwner::Producer);
+  }
+
+  ~TaskState() {
+    OPENKNEEBOARD_TASK_TRACE(
+      "~TaskState()", TraceLoggingValue(mRefBits, "mRefBits"));
+  }
+
   struct exception_t {
     std::exception_ptr exception {};
     StackTrace stack;
@@ -148,7 +182,8 @@ struct TaskState {
 
   [[nodiscard]]
   constexpr TaskAwaitReady await_ready() const noexcept {
-    if ((mRefBits & ThreadPoolBounceBit)) {
+    if ((mRefBits & ThreadPoolBit)) {
+      OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/threadPool");
       return TaskAwaitReady::NotReady;
     }
 
@@ -175,6 +210,7 @@ struct TaskState {
     //        ^ we want to guarantee that ~scope_exit() and bar() are called
     //          before this assignment
     if ((mRefBits & ProducerBit)) {
+      OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/producer");
       return TaskAwaitReady::NotReady;
     }
     // If we reach here, the coroutine's finished - but we need to still have a
@@ -194,11 +230,14 @@ struct TaskState {
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
+      OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/anyThread");
       return TaskAwaitReady::Ready;
     } else {
-      if (std::this_thread::get_id() == mOriginalThread) {
+      if (mContext.is_this_thread()) {
+        OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/ready");
         return TaskAwaitReady::Ready;
       }
+      OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/readyWrongThread");
       return TaskAwaitReady::ReadyWrongThread;
     }
   }
@@ -230,59 +269,164 @@ struct TaskState {
     __assume(0);
   }
 
-  // Returns true if consumer should delete, i.e. if the producer had already
-  // completed and detached
-  //
-  // If true, the consumer was the last owner
-  [[nodiscard]] bool release_consumer() {
-    OPENKNEEBOARD_ASSERT(mRefBits & ConsumerBit);
-    mRefBits &= ~ConsumerBit;
+  // Returns true if TOwner was the last owner, and the state should be deleted.
+  template <TaskStateOwner TOwner>
+  [[nodiscard]] bool release() noexcept {
+    constexpr auto bits = std::to_underlying(TOwner);
+    static_assert(std::popcount(bits) == 1);
+    OPENKNEEBOARD_ASSERT((mRefBits & bits) == bits);
+    if constexpr (bits & ThreadPoolBit) {
+      OPENKNEEBOARD_ASSERT(!(mRefBits & ProducerBit));
+    }
+    mRefBits &= ~bits;
+    OPENKNEEBOARD_TASK_TRACE(
+
+      "TaskState::release",
+      TraceLoggingValue(mRefBits, "mRefBits"),
+      TraceLoggingValue(magic_enum::enum_name(TOwner).data(), "removed"));
     return !mRefBits;
   }
 
-  // Returns true if producer should delete, i.e. we're an
-  // orphaned/detached/fire_and_forget coroutine
-  //
-  // If true, the producer was the last co-owner.
-  [[nodiscard]] bool release_producer() {
-    OPENKNEEBOARD_ASSERT(mRefBits & ProducerBit);
-    mRefBits &= ~ProducerBit;
-    return !mRefBits;
+  template <TaskStateOwner TOwner>
+  void add_ref() noexcept {
+    constexpr auto bits = std::to_underlying(TOwner);
+    static_assert(std::popcount(bits) == 1);
+    OPENKNEEBOARD_ASSERT(!(mRefBits & bits));
+    mRefBits |= bits;
+    OPENKNEEBOARD_TASK_TRACE(
+
+      "TaskState::add_ref",
+      TraceLoggingValue(mRefBits, "mRefBits"),
+      TraceLoggingValue(magic_enum::enum_name(TOwner).data(), "added"));
   }
 
-  [[nodiscard]] bool release_threadpool() {
-    OPENKNEEBOARD_ASSERT(mRefBits & ThreadPoolBounceBit);
-    mRefBits &= ~ThreadPoolBounceBit;
-    OPENKNEEBOARD_ASSERT(!(mRefBits & ProducerBit))
-    return !mRefBits;
+  task_context get_task_context() const noexcept { return mContext; }
+
+ private:
+  static constexpr uint8_t ProducerBit =
+    std::to_underlying(TaskStateOwner::Producer);
+  static constexpr uint8_t TaskBit = std::to_underlying(TaskStateOwner::Task);
+  static constexpr uint8_t TaskAwaiterBit =
+    std::to_underlying(TaskStateOwner::TaskAwaiter);
+  static constexpr uint8_t ThreadPoolBit =
+    std::to_underlying(TaskStateOwner::ThreadPool);
+  uint8_t mRefBits {};
+
+  TaskContext mContext;
+};
+
+template <task_traits TTraits, TaskStateOwner TOwner>
+struct TaskStatePtr {
+  template <task_traits T, TaskStateOwner U>
+  friend struct TaskStatePtr;
+
+  using value_type = felly::guarded_data<TaskState<TTraits>>;
+  using lock_type = std::remove_cvref_t<decltype(value_type {}.lock())>;
+  using pointer_type = value_type*;
+
+  TaskStatePtr() = delete;
+  template <class... Args>
+  explicit TaskStatePtr(std::in_place_t, Args&&... args)
+    requires(TOwner == TaskStateOwner::Producer)
+    : mImpl(new value_type {TOwner, std::forward<Args>(args)...}) {}
+
+  constexpr ~TaskStatePtr() { this->reset(); }
+
+  void reset() {
+    if (!mImpl) {
+      return;
+    }
+    reset(mImpl->lock());
   }
 
-  // If the producer invokes the threadpool, the producer has completed
-  void swap_producer_for_threadpool_ref() {
-    OPENKNEEBOARD_ASSERT(mRefBits & ProducerBit);
-    OPENKNEEBOARD_ASSERT(!(mRefBits & ThreadPoolBounceBit));
-    mRefBits |= ThreadPoolBounceBit;
-    mRefBits &= ~ProducerBit;
+  void reset(lock_type lock) {
+    const auto ptr = std::exchange(mImpl, nullptr);
+    OPENKNEEBOARD_ASSERT(ptr);
+
+    if (!lock->template release<TOwner>()) {
+      return;
+    }
+    if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
+      OPENKNEEBOARD_ASSERT(
+        lock->have_used_result(),
+        "all tasks must be awaited (or moved-then-awaited)");
+    }
+
+    lock.unlock();
+    delete ptr;
   }
 
-  // .. but the consumer invokes the threadpool if the consumer is still
-  // alive, but needs to jump to another thread
-  void add_consumer_threadpool_ref() {
-    OPENKNEEBOARD_ASSERT(
-      mRefBits == ConsumerBit,
-      "Consumer should not be bouncing via threadpool if producer is still in "
-      "progress, or resumption has already been bounced to thread pool");
-    mRefBits |= ThreadPoolBounceBit;
+  template <TaskStateOwner TOtherOwner>
+    requires(TOtherOwner != TOwner)
+  TaskStatePtr(const TaskStatePtr<TTraits, TOtherOwner>& other) {
+    OPENKNEEBOARD_ASSERT(other);
+    other.lock()->template add_ref<TOwner>();
+    mImpl = other.mImpl;
+  }
+
+  template <TaskStateOwner TOtherOwner>
+    requires(TOtherOwner != TOwner)
+  TaskStatePtr(
+    const TaskStatePtr<TTraits, TOtherOwner>& other,
+    lock_type& lock) {
+    OPENKNEEBOARD_ASSERT(other);
+    mImpl = other.mImpl;
+    lock->template add_ref<TOwner>();
+  }
+
+  template <TaskStateOwner TOtherOwner>
+    requires(TOtherOwner != TOwner)
+  auto copied_to(lock_type lock) {
+    return TaskStatePtr<TTraits, TOtherOwner> {*this, lock};
+  }
+
+  template <TaskStateOwner TOtherOwner>
+    requires(TOtherOwner != TOwner)
+  auto moved_to(lock_type lock) {
+    return TaskStatePtr<TTraits, TOtherOwner> {std::move(*this), lock};
+  }
+
+  TaskStatePtr(TaskStatePtr&& other) noexcept {
+    mImpl = std::exchange(other.mImpl, nullptr);
+  }
+
+  constexpr operator bool() const noexcept { return mImpl; }
+
+  auto lock() const {
+    OPENKNEEBOARD_ASSERT(mImpl);
+    return mImpl->lock();
+  }
+
+  TaskStatePtr(const TaskStatePtr&) = delete;
+  TaskStatePtr& operator=(const TaskStatePtr&) = delete;
+  TaskStatePtr& operator=(TaskStatePtr&&) = delete;
+  TaskStatePtr& operator=(std::nullptr_t) noexcept {
+    this->reset();
+    return *this;
   }
 
  private:
-  static constexpr uint8_t ProducerBit = 1 << 0;
-  static constexpr uint8_t ConsumerBit = 1 << 1;
-  static constexpr uint8_t ThreadPoolBounceBit = 1 << 2;
-  uint8_t mRefBits {ProducerBit | ConsumerBit};
-
-  const std::thread::id mOriginalThread = std::this_thread::get_id();
+  pointer_type mImpl {nullptr};
 };
+
+template <task_traits TTraits>
+[[nodiscard]]
+DetachedTask ResumeOnOriginalThread(
+  TaskStatePtr<TTraits, TaskStateOwner::ThreadPool> state) noexcept {
+  OPENKNEEBOARD_ASSERT(state);
+  auto context = state.lock()->get_task_context();
+  OPENKNEEBOARD_ASSERT(!context.is_this_thread());
+  co_await TaskContextAwaiter {context};
+
+  OPENKNEEBOARD_ASSERT(state);
+  auto lock = state.lock();
+  const auto handle = std::exchange(lock->mConsumerHandle, {});
+  OPENKNEEBOARD_ASSERT(handle);
+  state.reset(std::move(lock));
+
+  handle.resume();
+  co_return;
+}
 
 template <task_traits TTraits>
 struct TaskPromiseBase;
@@ -305,30 +449,64 @@ struct TaskFinalAwaiter {
   template <std::derived_from<TaskPromiseBase<TTraits>> TPromise>
   std::coroutine_handle<> await_suspend(
     std::coroutine_handle<TPromise> producer) noexcept {
-    auto& promise = producer.promise();
-    auto state = promise.mState.lock();
+    OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend");
+    auto state = std::move(producer.promise().mState);
 
-    if (!state->mConsumerHandle) {
-      if (std::move(state)->release_producer()) {
-        return [](std::coroutine_handle<> handle) -> DetachedTask {
-          handle.destroy();
-          co_return;
-        }(producer)
-                                                       .mHandle;
-      }
-      return std::noop_coroutine();
+    OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/acquiringLock");
+    auto lock = state.lock();
+    OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/locked");
+    const auto handle = lock->mConsumerHandle;
+    const auto context = lock->get_task_context();
+    OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/unlocked");
+
+    auto releaseStateGuard = scope_exit([&] {
+      // We need the refbit removed before the lock is released
+      state.reset(std::move(lock));
+    });
+
+    if (!handle) {
+      OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/nullHandle");
+      // We need the refcount removed before the lock is released
+      return [](auto destroy) -> DetachedTask {
+        destroy.destroy();
+        co_return;
+      }(producer)
+                                   .mHandle;
     }
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
-      return promise.resume_on_this_thread(std::move(state));
+      OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/anyThread");
+      return [](auto toDestroy, auto toResume) -> DetachedTask {
+        toDestroy.destroy();
+        toResume.resume()();
+        co_return;
+      }(producer, handle)
+                                                    .mHandle;
     } else {
-      if (promise.mContext.mThreadID == std::this_thread::get_id()) {
-        return promise.resume_on_this_thread(std::move(state));
+      if (context.is_this_thread()) {
+        OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/thisThread");
+        return [](auto toDestroy, auto toResume) -> DetachedTask {
+          toDestroy.destroy();
+          toResume.resume();
+          co_return;
+        }(producer, handle)
+                                                      .mHandle;
       }
 
-      state->swap_producer_for_threadpool_ref();
-      return promise.resume_on_original_thread();
+      OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/wrongThread");
+
+      // We're stealing the lock back
+      releaseStateGuard.release();
+      return [](auto toDestroy, auto toResume) -> DetachedTask {
+        toDestroy.destroy();
+        toResume.resume();
+        co_return;
+      }(producer,
+        ResumeOnOriginalThread<TTraits>(
+          state.template moved_to<TaskStateOwner::ThreadPool>(std::move(lock)))
+          .mHandle)
+                                                    .mHandle;
     }
   }
 
@@ -344,7 +522,7 @@ struct TaskPromiseBase {
 
   TaskContext mContext;
   const std::coroutine_handle<> mProducerHandle;
-  felly::guarded_data<TaskState<TTraits>> mState;
+  TaskStatePtr<TTraits, TaskStateOwner::Producer> mState;
 
   TaskPromiseBase() = delete;
   TaskPromiseBase(const TaskPromiseBase<TTraits>&) = delete;
@@ -356,40 +534,19 @@ struct TaskPromiseBase {
   TaskPromiseBase(
     TaskContext&& context,
     const std::coroutine_handle<> self) noexcept
-    : mContext(std::move(context)),
-      mProducerHandle(self) {}
+    : mContext(context),
+      mProducerHandle(self),
+      mState(std::in_place, std::move(context)) {}
 
   ~TaskPromiseBase() {}
 
-  auto get_return_object() { return static_cast<TaskPromise<TTraits>*>(this); }
+  auto get_return_object() {
+    OPENKNEEBOARD_TASK_TRACE("TaskPromiseBase::get_return_object");
+    return mState.template copied_to<TaskStateOwner::Task>(mState.lock());
+  }
 
   void unhandled_exception() noexcept {
     mState.lock()->store_current_exception();
-  }
-
-  void consumer_destroyed() {
-    auto state = mState.lock();
-
-    if constexpr (TTraits::Awaiting == TaskAwaiting::Required) {
-      OPENKNEEBOARD_ASSERT(
-        state->have_used_result(), "tasks must be moved or awaited");
-    }
-
-    if (state->release_consumer()) {
-      state.unlock();
-      mProducerHandle.destroy();
-    }
-  }
-
-  [[nodiscard]]
-  std::coroutine_handle<> resume_on_this_thread(
-    felly::unique_guarded_data_lock<TaskState<TTraits>> state) noexcept {
-    const auto destroy = state->release_producer();
-    OPENKNEEBOARD_ASSERT(
-      !destroy, "Shouldn't be resuming a task if there isn't a consumer ref");
-    OPENKNEEBOARD_ASSERT(
-      state->mConsumerHandle, "Can't resume without a consumer handle");
-    return state->mConsumerHandle;
   }
 
   constexpr std::suspend_never initial_suspend() noexcept { return {}; };
@@ -404,24 +561,6 @@ struct TaskPromiseBase {
   auto await_transform(noexcept_task_t) noexcept {
     mState.lock()->mOnException = TaskExceptionBehavior::Terminate;
     return std::suspend_never {};
-  }
-
-  [[nodiscard]]
-  std::coroutine_handle<> resume_on_original_thread() noexcept {
-    return [](auto& self) -> DetachedTask {
-      co_await TaskContextAwaiter {self.mContext};
-
-      auto state = self.mState.lock();
-      [[maybe_unused]] const auto destroy = state->release_threadpool();
-      const auto consumer = std::exchange(state->mConsumerHandle, {});
-      state.unlock();
-      OPENKNEEBOARD_ASSERT(consumer);
-      OPENKNEEBOARD_ASSERT(
-        !destroy,
-        "Shouldn't be resuming a task in threadpool without a consumer");
-      consumer.resume();
-    }(*this)
-                               .mHandle;
   }
 };
 
@@ -442,7 +581,7 @@ template <task_traits TTraits>
 struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
   TaskPromise(std::optional<StackFramePointer> caller = std::nullopt)
     : TaskPromiseBase<TTraits>(
-        caller.value_or(StackFramePointer::caller(3)),
+        caller.value_or(StackFramePointer::caller(2)),
         std::coroutine_handle<TaskPromise<TTraits>>::from_promise(*this)) {}
 
   void return_void() noexcept { this->mState.lock()->return_void(); }
@@ -451,7 +590,7 @@ struct TaskPromise<TTraits> : TaskPromiseBase<TTraits> {
 template <task_traits TTraits>
 struct TaskAwaiter {
   using promise_t = TaskPromise<TTraits>;
-  promise_t* mPromise;
+  TaskStatePtr<TTraits, TaskStateOwner::TaskAwaiter> mState;
 
   TaskAwaiter() = delete;
   TaskAwaiter(const TaskAwaiter&) = delete;
@@ -460,43 +599,52 @@ struct TaskAwaiter {
   TaskAwaiter(TaskAwaiter&&) = delete;
   TaskAwaiter& operator=(TaskAwaiter&&) = delete;
 
-  TaskAwaiter(promise_t* init) : mPromise(init) {
-    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-  }
+  TaskAwaiter(TaskStatePtr<TTraits, TaskStateOwner::TaskAwaiter> state) noexcept
+    : mState(std::move(state)) {}
+  ~TaskAwaiter() = default;
 
   [[nodiscard]]
   bool await_ready() const noexcept {
-    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-    return mPromise->mState.lock()->await_ready() == TaskAwaitReady::Ready;
+    OPENKNEEBOARD_ASSERT(mState, "Can't await a null promise");
+    return mState.lock()->await_ready() == TaskAwaitReady::Ready;
   }
 
   std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) {
-    OPENKNEEBOARD_ASSERT(mPromise, "Can't await a null promise");
-    auto state = mPromise->mState.lock();
+    OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend");
+    OPENKNEEBOARD_ASSERT(mState, "Can't await a null promise");
+    OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend/locking");
+    auto lock = mState.lock();
+    OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend/locked");
 
     OPENKNEEBOARD_ASSERT(
-      !state->mConsumerHandle, "tasks can only be resumed once");
+      !lock->mConsumerHandle, "tasks can only be resumed once");
 
     using enum TaskAwaitReady;
-    switch (state->await_ready()) {
+    switch (lock->await_ready()) {
       case Ready:
+        OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend/ready");
         return caller;
       case NotReady:
-        state->mConsumerHandle = caller;
+        OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend/notReady");
+        lock->mConsumerHandle = caller;
         return std::noop_coroutine();
       case ReadyWrongThread:
-        state->add_consumer_threadpool_ref();
-        state->mConsumerHandle = caller;
-        return mPromise->resume_on_original_thread();
+        OPENKNEEBOARD_TASK_TRACE("TaskAwaiter::await_suspend/readyWrongThread");
+        lock->mConsumerHandle = caller;
+        OPENKNEEBOARD_ASSERT(caller);
+        return ResumeOnOriginalThread(
+                 mState.template copied_to<TaskStateOwner::ThreadPool>(
+                   std::move(lock)))
+          .mHandle;
     }
     __assume(false);
   }
 
   auto await_resume() {
     OPENKNEEBOARD_ASSERT(
-      mPromise, "can't resume a moved or already-resumed task");
+      mState, "can't resume a moved or already-resumed task");
 
-    auto state = mPromise->mState.lock();
+    auto state = mState.lock();
 
     OPENKNEEBOARD_ASSERT(state->await_ready() == TaskAwaitReady::Ready);
 
@@ -505,30 +653,8 @@ struct TaskAwaiter {
     using used_result_t = typename TaskState<TTraits>::used_result_t;
 
     auto result = std::exchange(state->mResult, used_result_t {});
-
-    /* We must *fully* clean up the producer before we resume, otherwise
-     * parameter destructors won't be called, and the parameters will be leaked.
-     *
-     * For example, in this code...
-     *
-     *     task<int> foo(auto destroyedAfterReturn) {
-     *       co_return 123;
-     *     };
-     *
-     *     auto x = co_await foo(scope_exit([] { bar(); }));
-     *
-     *  ... we need ~scope_exit() - and bar() - to be called before co_await
-     *  completes, and before the assignment
-     */
-    const auto dispose = state->release_consumer();
-    OPENKNEEBOARD_ASSERT(
-      dispose,
-      "TaskAwaiter::await_resume() should never be called while the coroutine "
-      "is still running");
-    if (dispose) [[likely]] {
-      state.unlock();
-      std::exchange(mPromise, nullptr)->mProducerHandle.destroy();
-    }
+    state.unlock();
+    mState = nullptr;
 
     if (auto p = get_if<exception_t>(&result)) {
       StackTrace::SetForNextException(std::move(p->stack));
@@ -557,28 +683,23 @@ struct [[nodiscard]] Task {
 
   [[nodiscard]]
   constexpr bool is_moved() const noexcept {
-    return !mPromise;
+    return !mState;
   }
 
-  Task(Task&& other) noexcept {
-    mPromise = std::exchange(other.mPromise, nullptr);
-  }
+  Task(Task&& other) noexcept { mState = std::exchange(other.mState, {}); }
 
   Task& operator=(Task&& other) noexcept {
-    mPromise = std::exchange(other.mPromise, nullptr);
+    mState = std::exchange(other.mState, nullptr);
     return *this;
   }
 
   Task(std::nullptr_t) = delete;
-  Task(promise_t* promise) : mPromise(promise) {
-    OPENKNEEBOARD_ASSERT(promise);
+  Task(TaskStatePtr<TTraits, TaskStateOwner::Task> state)
+    : mState(std::move(state)) {
+    OPENKNEEBOARD_ASSERT(mState);
   }
 
-  ~Task() {
-    if (mPromise) {
-      mPromise->consumer_destroyed();
-    }
-  }
+  ~Task() {}
 
   // just to give nice compiler error messages
   struct cannot_await_lvalue_use_std_move {
@@ -590,12 +711,11 @@ struct [[nodiscard]] Task {
     requires(TTraits::Awaiting != TaskAwaiting::NotSupported)
   {
     OPENKNEEBOARD_ASSERT(
-      mPromise, "Can't await a task that has been moved or already awaited");
-    // We're an rvalue-reference (move), so we should wipe our promise
-    return TaskAwaiter<TTraits> {std::exchange(mPromise, nullptr)};
+      mState, "Can't await a task that has been moved or already awaited");
+    return TaskAwaiter<TTraits> {std::move(mState)};
   }
 
-  promise_ptr_t mPromise {};
+  TaskStatePtr<TTraits, TaskStateOwner::Task> mState {nullptr};
 };
 
 }// namespace OpenKneeboard::detail
