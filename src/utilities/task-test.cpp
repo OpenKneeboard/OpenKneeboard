@@ -69,7 +69,25 @@ struct timers {
 wil::unique_event TestFinished;
 fire_and_forget do_test() {
   constexpr std::size_t TestIterations = 1'000'000;
+  wil::unique_event e;
+  e.create();
   timers testTimers;
+
+  std::println("producer complete before await");
+  for (int i = 0; i < TestIterations; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+    auto coro = [](auto) -> task<void> {
+      co_await winrt::resume_background();
+      co_return;
+    }(e.SetEvent_scope_exit());
+    co_await resume_on_signal(e.get());
+    e.ResetEvent();
+    co_await std::move(coro);
+  }
+  testTimers.mark("producer complete before await");
+  testTimers.dump();
   std::println("explicit thread switching");
   for (int i = 0; i < TestIterations; ++i) {
     if (i % 10'000 == 0) {
@@ -110,9 +128,8 @@ fire_and_forget do_test() {
     }
 
     std::atomic<std::size_t> count;
-    co_await [](auto atExit) -> task<void> {
-      co_return;
-    }(scope_exit([&count] { ++count; }));
+    co_await
+      [](auto) -> task<void> { co_return; }(scope_exit([&count] { ++count; }));
     OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("Coro parameter destructors");
@@ -165,9 +182,6 @@ fire_and_forget do_test() {
     OPENKNEEBOARD_ASSERT(count == 1);
   }
   testTimers.mark("resume_background with delay move");
-
-  wil::unique_event e;
-  e.create();
 
   std::println("delayed ready");
   for (int i = 0; i < TestIterations; ++i) {

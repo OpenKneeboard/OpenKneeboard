@@ -188,7 +188,9 @@ struct TaskState {
     //   double-await
     OPENKNEEBOARD_ASSERT(
       holds_alternative<value_t>(mResult)
-      || holds_alternative<exception_t>(mResult));
+        || holds_alternative<exception_t>(mResult),
+      "task coroutine has completed, but we don't have a stored result or "
+      "exception; perhaps a `co_return` is missing?");
 
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
@@ -306,6 +308,17 @@ struct TaskFinalAwaiter {
     auto& promise = producer.promise();
     auto state = promise.mState.lock();
 
+    if (!state->mConsumerHandle) {
+      if (std::move(state)->release_producer()) {
+        return [](std::coroutine_handle<> handle) -> DetachedTask {
+          handle.destroy();
+          co_return;
+        }(producer)
+                                                       .mHandle;
+      }
+      return std::noop_coroutine();
+    }
+
     if constexpr (
       TTraits::CompletionThread == TaskCompletionThread::AnyThread) {
       return promise.resume_on_this_thread(std::move(state));
@@ -371,21 +384,12 @@ struct TaskPromiseBase {
   [[nodiscard]]
   std::coroutine_handle<> resume_on_this_thread(
     felly::unique_guarded_data_lock<TaskState<TTraits>> state) noexcept {
-    if (state->release_producer()) {
-      return [](std::coroutine_handle<> producer) -> DetachedTask {
-        producer.destroy();
-        co_return;
-      }(mProducerHandle)
-                                                       .mHandle;
-    }
-
-    // Still have a consumer...
-    // ... that is waiting
-    if (state->mConsumerHandle) {
-      return state->mConsumerHandle;
-    }
-    // ... that is not yet waiting
-    return std::noop_coroutine();
+    const auto destroy = state->release_producer();
+    OPENKNEEBOARD_ASSERT(
+      !destroy, "Shouldn't be resuming a task if there isn't a consumer ref");
+    OPENKNEEBOARD_ASSERT(
+      state->mConsumerHandle, "Can't resume without a consumer handle");
+    return state->mConsumerHandle;
   }
 
   constexpr std::suspend_never initial_suspend() noexcept { return {}; };
