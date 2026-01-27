@@ -13,6 +13,7 @@
 #include <OpenKneeboard/fatal.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/task/resume_after.hpp>
+#include <OpenKneeboard/task/resume_on_any_signal.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
 
 #include <shims/winrt/base.h>
@@ -20,6 +21,8 @@
 #include <KnownFolders.h>
 
 #include <wil/cppwinrt.h>
+
+#include <felly/unique_any.hpp>
 
 #include <fstream>
 #include <ranges>
@@ -41,11 +44,21 @@ namespace OpenKneeboard {
 
 namespace {
 
+[[nodiscard]]
+const auto& GetDiscoveryRoot() {
+  static const std::filesystem::path ret {
+    Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / "otd-ipc"
+    / "servers" / "v2"};
+  return ret;
+}
+
 std::vector<std::filesystem::path> GetSocketPaths() try {
   std::unordered_map<std::string, std::filesystem::path> socketsByID;
-  const auto discoveryRoot =
-    Filesystem::GetKnownFolderPath<FOLDERID_LocalAppData>() / "otd-ipc"
-    / "servers" / "v2";
+  const auto discoveryRoot = GetDiscoveryRoot();
+  if (!std::filesystem::exists(discoveryRoot)) {
+    std::filesystem::create_directories(discoveryRoot);
+    return {};
+  }
   for (auto&& entry:
        std::filesystem::directory_iterator(discoveryRoot / "available")) {
     if (!is_regular_file(entry)) {
@@ -249,6 +262,78 @@ void LogSocketReadError(const SocketReadError& err) {
 
   dprint.Error("Unrecognized error reading from OTD-IPC socket");
 }
+
+enum class [[nodiscard]] WaitForServerSocketChangeResult {
+  Retry,
+  Abort,
+};
+task<WaitForServerSocketChangeResult> WaitForServerSocketChange(
+  const std::stop_token stopToken) try {
+  dprint("Re-discovering OTD-IPC...");
+  std::vector<std::filesystem::path> watchedPaths;
+  watchedPaths.emplace_back(GetDiscoveryRoot());
+  const auto socketPaths = GetSocketPaths();
+  watchedPaths.reserve(watchedPaths.size() + socketPaths.size());
+  for (auto&& path: socketPaths) {
+    watchedPaths.emplace_back(path.parent_path());
+  }
+  std::ranges::sort(watchedPaths);
+  {
+    auto [first, last] = std::ranges::unique(watchedPaths);
+    watchedPaths.erase(first, last);
+  }
+  struct watch {
+    wil::unique_hfile mFile;
+    wil::unique_hfind_change mChange;
+  };
+  std::vector<watch> watchers;
+  for (auto&& path: watchedPaths) {
+    watch it;
+    it.mFile.reset(CreateFileW(
+      path.wstring().c_str(),
+      FILE_LIST_DIRECTORY,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS,
+      nullptr));
+    if (!it.mFile) {
+      continue;
+    }
+    it.mChange.reset(FindFirstChangeNotificationW(
+      path.wstring().c_str(),
+      TRUE,
+      FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME
+        | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE));
+    if (!it.mChange) {
+      continue;
+    }
+    watchers.emplace_back(std::move(it));
+  }
+  dprint("... waiting for OTD-IPC filesystem changes");
+  const auto waited = co_await resume_on_any_signal(
+    std::views::transform(watchers, [](auto&& w) { return w.mChange.get(); }),
+    stopToken);
+  using enum WaitForServerSocketChangeResult;
+  if (!waited) {
+    dprint.Warning(
+      "Failed to wait for OTD-IPC socket discovery: {}", waited.error());
+    co_return Abort;
+  }
+  // let things settle
+  if (!co_await resume_after(std::chrono::milliseconds(100), stopToken)) {
+    co_return Abort;
+  }
+  dprint(
+    "🔄️ Retrying OTD-IPC: detected change to {}",
+    watchedPaths.at(*waited).string());
+  co_return Retry;
+} catch (const std::filesystem::filesystem_error& ex) {
+  dprint.Warning(
+    "filesystem error when trying to watch OTD-IPC paths: {}", ex.what());
+  co_return WaitForServerSocketChangeResult::Abort;
+}
+
 }// namespace
 
 std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
@@ -287,8 +372,13 @@ task<void> OTDIPCClient::Run() {
 
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
-    if (!co_await resume_after(std::chrono::seconds(1), mStopper.get_token())) {
-      break;
+    if (
+      co_await WaitForServerSocketChange(mStopper.get_token())
+      == WaitForServerSocketChangeResult::Abort) {
+      co_return;
+    }
+    if (mStopper.stop_requested()) {
+      co_return;
     }
   }
 }
@@ -339,16 +429,15 @@ task<void> OTDIPCClient::RunSingle() {
 
   // Initialize Winsock (limited to this scope)
   WSADATA wsaData {};
-  const auto wsaStartup = WSAStartup(MAKEWORD(2, 2), &wsaData);
-  if (wsaStartup != 0) {
-    dprint("OTD-IPC WSAStartup failed: {}", wsaStartup);
+  if (const auto ret = WSAStartup(MAKEWORD(2, 2), &wsaData); ret != 0) {
+    dprint("OTD-IPC WSAStartup failed: {}", ret);
     co_return;
   }
   const scope_exit wsaCleanup([]() { WSACleanup(); });
 
   SOCKET sock = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock == INVALID_SOCKET) {
-    dprint("OTD-IPC socket(AF_UNIX) failed: {}", WSAGetLastError());
+    dprint.Warning("OTD-IPC socket(AF_UNIX) failed: {}", WSAGetLastError());
     co_return;
   }
   const scope_exit closeSock([&]() {
@@ -404,17 +493,22 @@ task<void> OTDIPCClient::RunSingle() {
     }
 
     this->TimeoutTablets();
-    const auto waitDuration = mTabletsToTimeout.empty()
-      ? std::chrono::milliseconds(1500)
-      : std::ranges::min_element(mTabletsToTimeout)->second
-        - TimeoutClock::now();
 
     WSAEventSelect(sock, event.get(), FD_READ | FD_WRITE | FD_CLOSE);
 
-    if (!co_await winrt::resume_on_signal(
-          event.get(),
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-            waitDuration))) {
+    const auto signalled =
+      co_await resume_on_signal(event.get(), mStopper.get_token());
+
+    // Must be called to reset events for the next loop
+    WSANETWORKEVENTS winsockEvents {};
+    WSAEnumNetworkEvents(sock, event.get(), &winsockEvents);
+
+    if (winsockEvents.lNetworkEvents & FD_CLOSE) {
+      dprint.Warning("OTD-IPC socket closed by server");
+      co_return;
+    }
+
+    if (!signalled) {
       for (auto&& id: std::exchange(mTabletsToTimeout, {}) | std::views::keys) {
         TimeoutTablet(id);
       }
