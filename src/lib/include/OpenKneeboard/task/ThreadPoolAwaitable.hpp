@@ -74,7 +74,10 @@ struct ThreadPoolAwaitable {
     const auto transition =
       mState.TryTransition<State::Waiting, State::HaveResult>();
     if (!transition) {
-      OPENKNEEBOARD_ASSERT(transition.error() == State::Canceling);
+      OPENKNEEBOARD_ASSERT(
+        transition.error() == State::Canceling,
+        "unexpected state: {}",
+        transition.error());
       return;
     }
 
