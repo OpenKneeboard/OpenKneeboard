@@ -57,10 +57,11 @@ struct ThreadPoolAwaitable {
       return;
     }
 
+    static_cast<Derived&>(*this).InitThreadPool();
+
     const auto transitioned =
       mState.TryTransition<State::StartingWait, State::Waiting>();
     if (transitioned) {
-      static_cast<Derived&>(*this).InitThreadPool();
       return;
     }
 
@@ -132,6 +133,7 @@ struct ThreadPoolAwaitable {
     }
 
     static_cast<Derived&>(*this).CancelThreadPool();
+
     if (mState.TryTransition<State::StartingWait, State::Canceling>()) {
       // handled by await_suspend
       return;

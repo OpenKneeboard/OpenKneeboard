@@ -66,21 +66,20 @@ struct SignalAwaitable
 
   template <ThreadPoolAwaitableState From>
   void CleanupThreadPool() {
-    const auto wait = std::exchange(mTPSignal, nullptr);
-    if (!wait) {
+    if (!mTPSignal) {
       return;
     }
 
     if constexpr (From == ThreadPoolAwaitableState::Canceling) {
-      SetThreadpoolWait(wait, nullptr, nullptr);
-      WaitForThreadpoolWaitCallbacks(wait, true);
+      this->CancelThreadPool();
     }
-    CloseThreadpoolWait(wait);
+    CloseThreadpoolWait(std::exchange(mTPSignal, nullptr));
   }
 
   void CancelThreadPool() {
     OPENKNEEBOARD_ASSERT(mTPSignal);
     SetThreadpoolWait(mTPSignal, nullptr, nullptr);
+    WaitForThreadpoolWaitCallbacks(mTPSignal, true);
   }
 
  private:
