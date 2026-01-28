@@ -58,20 +58,20 @@ struct TimerAwaitable
 
   template <ThreadPoolAwaitableState From>
   void CleanupThreadPool() {
-    const auto timer = std::exchange(mTPTimer, nullptr);
-    if (!timer) {
+    if (!mTPTimer) {
       return;
     }
     if constexpr (From == ThreadPoolAwaitableState::Canceling) {
-      SetThreadpoolTimer(timer, nullptr, 0, 0);
-      WaitForThreadpoolTimerCallbacks(timer, true);
+      this->CancelThreadPool();
     }
-    CloseThreadpoolTimer(timer);
+    CloseThreadpoolTimer(mTPTimer);
+    mTPTimer = nullptr;
   }
 
   void CancelThreadPool() {
     OPENKNEEBOARD_ASSERT(mTPTimer);
     SetThreadpoolTimer(mTPTimer, nullptr, 0, 0);
+    WaitForThreadpoolTimerCallbacks(mTPTimer, true);
   }
 
  private:
