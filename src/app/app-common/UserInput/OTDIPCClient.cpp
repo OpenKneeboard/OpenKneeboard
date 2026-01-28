@@ -509,6 +509,9 @@ task<void> OTDIPCClient::RunSingle() {
     }
 
     if (!signalled) {
+      if (signalled.error() == ResumeOnSignalError::Canceled) {
+        co_return;
+      }
       for (auto&& id: std::exchange(mTabletsToTimeout, {}) | std::views::keys) {
         TimeoutTablet(id);
       }
