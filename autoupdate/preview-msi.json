@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/276414183",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/276414183/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/276414183/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.4",
-    "id": 276414183,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/282720586",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/282720586/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/282720586/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.6",
+    "id": 282720586,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,22 +26,22 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Qeb7n",
-    "tag_name": "v1.12.4",
+    "node_id": "RE_kwDOGk0DR84Q2flK",
+    "tag_name": "v1.12.6",
     "target_commitish": "master",
-    "name": "v1.12.4",
+    "name": "v1.12.6",
     "draft": false,
     "immutable": true,
     "prerelease": false,
-    "created_at": "2026-01-13T14:56:08Z",
-    "updated_at": "2026-01-13T16:04:41Z",
-    "published_at": "2026-01-13T16:04:40Z",
+    "created_at": "2026-02-03T19:58:30Z",
+    "updated_at": "2026-02-03T21:36:39Z",
+    "published_at": "2026-02-03T21:36:38Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/340008985",
-        "id": 340008985,
-        "node_id": "RA_kwDOGk0DR84URCAZ",
-        "name": "OpenKneeboard-v1.12.4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/350225275",
+        "id": 350225275,
+        "node_id": "RA_kwDOGk0DR84U4AN7",
+        "name": "OpenKneeboard-v1.12.6-DebugSymbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -66,18 +66,18 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 170627366,
-        "digest": "sha256:4ca63526c5848f5d1eda8137ec6b8c85abe73f6d009172ac6398380ce2131fd0",
+        "size": 171519504,
+        "digest": "sha256:a62bd60165fea3d5b4611615864ae9f9afc31ec2a583337599992079a457615d",
         "download_count": 0,
-        "created_at": "2026-01-13T16:04:16Z",
-        "updated_at": "2026-01-13T16:04:29Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.4/OpenKneeboard-v1.12.4-DebugSymbols.zip"
+        "created_at": "2026-02-03T21:34:55Z",
+        "updated_at": "2026-02-03T21:35:10Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.6/OpenKneeboard-v1.12.6-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/340008862",
-        "id": 340008862,
-        "node_id": "RA_kwDOGk0DR84URB-e",
-        "name": "OpenKneeboard-v1.12.4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/350225636",
+        "id": 350225636,
+        "node_id": "RA_kwDOGk0DR84U4ATk",
+        "name": "OpenKneeboard-v1.12.6.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -102,16 +102,16 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 183369728,
-        "digest": "sha256:1595c142f3e6b05352cb4fbf2949067d01b76e8a94c204eb7a8083c99e347ef7",
+        "size": 183394304,
+        "digest": "sha256:0b9019b360582e51680a7518ac74cefe3f6edca9bb530408c71624e9ae2b46d6",
         "download_count": 0,
-        "created_at": "2026-01-13T16:03:49Z",
-        "updated_at": "2026-01-13T16:04:12Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.4/OpenKneeboard-v1.12.4.msi"
+        "created_at": "2026-02-03T21:35:45Z",
+        "updated_at": "2026-02-03T21:35:59Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.6/OpenKneeboard-v1.12.6.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.4",
-    "body": "- ⚡ Prevent reduced *OpenKneeboard* framerate on Windows 11 when in the background; this *does not* affect game framerate. As a power saving measure, Windows 11 changed to reduce the accuracy of timers of background applications, which affects frame timers.\r\n- 🐛 Fix undefined behavior when a website that integrates with OpenKneeboard requests a page change. While there were no reports of related problems, this could have potentially caused crashes or other reliability problems when using web dashboard tabs with websites that integrate with OpenKneeboard's next/previous page feature\r\n- 🩹 Fix incorrect message text for some unsupported environments. This doesn't change the overall behavior or requirements, it just corrects the text.\r\n- 🦺 Added a warning if Windows < 10 is detected. The primary reason for this check is to warn people who have turned on a compatibility mode in shortcut properties and forgotten about it. OpenKneeboard uses features that were added to Windows 10 19H1, and while it does not actively block older versions, it should not be expected to work correctly on earlier versions, or in compatibility modes that emulate older versions\r\n- ⚰️ Removed explanation text for the 'Always update swapchain\" option from advanced settings; the actual option was removed in v1.9.2.\r\n- ⚰️ Removed an option in the 'about' page to load a copyright license file that no longer exists"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.6",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.6",
+    "body": "- ⚡ VRAM that OpenKneeboard shares with the game now takes top priority when more VRAM is needed than available; as this VRAM is always needed within 3 frames, this may make things *less* bad if your system runs out of VRAM. This only affects the VRAM used to store the final rendered kneeboards\r\n- 🩹 If the F16 key is bound, the label is now shown instead of the hex key code. F1-15 and F17-24 were already handled\r\n- 🩹 The admin/UAC checks are now skipped if Wine is detected, as Wine always reports that things are running as admin. OpenKneeboard is not expected to work under Wine, however, I did not intend to put a hard block on it.\r\n- 🔊 Added VRAM usage to debug logs zip\r\n- 🔊 Added more detailed logging if an OpenXR application uses an unsupported graphics API (e.g. OpenGL)"
   }
 ]
