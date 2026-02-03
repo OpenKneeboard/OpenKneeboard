@@ -604,7 +604,21 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
     return ret;
   }
 
-  dprint("Unsupported graphics API");
+  dprint.Warning("Unsupported graphics API");
+  for (auto next = reinterpret_cast<const XrBaseInStructure*>(createInfo); next;
+       next = next->next) {
+    switch (next->type) {
+#define XR_TYPE_CASE(enum_name, value) \
+  case enum_name: \
+    dprint("xrCreateSession next chain: {}", #enum_name); \
+    break;
+      XR_LIST_ENUM_XrStructureType(XR_TYPE_CASE);
+#undef XR_TYPE_CASE
+      default:
+        dprint(
+          "xrCreateSession next chain: {}", std::to_underlying(next->type));
+    }
+  }
 
   return ret;
 }
