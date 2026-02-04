@@ -68,9 +68,18 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
 
     size_t toCopy = zstat.size;
     while (toCopy > 0) {
-      size_t toWrite
-        = zip_fread(zipFile.get(), fileBuffer->data(), fileBuffer->size());
-      if (toWrite <= 0) {
+      const auto toWrite =
+        zip_fread(zipFile.get(), fileBuffer->data(), fileBuffer->size());
+      if (toWrite == 0) {
+        break;
+      }
+      if (toWrite < 0) {
+        dprint.Warning(
+          "zip_fread failed for {}: {}",
+          zstat.name,
+          zip_error_strerror(zip_file_get_error(zipFile.get())));
+        file.close();
+        std::filesystem::remove(filePath);
         break;
       }
       file << std::string_view(fileBuffer->data(), toWrite);
