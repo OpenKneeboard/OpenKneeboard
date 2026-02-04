@@ -48,8 +48,11 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   for (auto i = 0; i < zip_get_num_entries(zip.get(), 0); i++) {
     zip_stat_t zstat {};
     if (zip_stat_index(zip.get(), i, 0, &zstat) != 0) {
+      dprint.Warning(
+        "Failed to stat zip entry at index {}: {}", i, zip_strerror(zip.get()));
       continue;
     }
+
     constexpr auto RequiredFlags = ZIP_STAT_NAME | ZIP_STAT_SIZE;
     if ((zstat.valid & RequiredFlags) != RequiredFlags) {
       continue;
