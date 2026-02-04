@@ -69,8 +69,6 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
       dprint.Warning("Invalid path in zip: {}", name);
       continue;
     }
-    std::filesystem::create_directories(filePath.parent_path());
-    std::ofstream file(filePath, std::ios::binary);
 
     using unique_zip_file_ptr = felly::unique_any<zip_file_t*, &zip_fclose>;
     unique_zip_file_ptr zipFile {zip_fopen_index(zip.get(), i, 0)};
@@ -78,6 +76,9 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
       dprint("Failed to open zip index {}", i);
       continue;
     }
+
+    std::filesystem::create_directories(filePath.parent_path());
+    std::ofstream file(filePath, std::ios::binary);
 
     size_t toCopy = zstat.size;
     while (toCopy > 0) {
