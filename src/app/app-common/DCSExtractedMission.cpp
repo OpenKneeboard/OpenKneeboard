@@ -50,6 +50,11 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
     if (zip_stat_index(zip.get(), i, 0, &zstat) != 0) {
       continue;
     }
+    constexpr auto RequiredFlags = ZIP_STAT_NAME | ZIP_STAT_SIZE;
+    if ((zstat.valid & RequiredFlags) != RequiredFlags) {
+      continue;
+    }
+
     std::string_view name(zstat.name);
     if (name.ends_with('/')) {
       continue;
