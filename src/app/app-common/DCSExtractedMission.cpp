@@ -46,7 +46,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   // Use the heap because there's 4k limit for all stack variables
   auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
   for (auto i = 0; i < zip_get_num_entries(zip.get(), 0); i++) {
-    zip_stat_t zstat;
+    zip_stat_t zstat {};
     if (zip_stat_index(zip.get(), i, 0, &zstat) != 0) {
       continue;
     }
