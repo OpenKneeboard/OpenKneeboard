@@ -87,7 +87,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
         std::filesystem::remove(filePath);
         break;
       }
-      file << std::string_view(fileBuffer->data(), toWrite);
+      file.write(fileBuffer->data(), toWrite);
       toCopy -= toWrite;
     }
     file.flush();
