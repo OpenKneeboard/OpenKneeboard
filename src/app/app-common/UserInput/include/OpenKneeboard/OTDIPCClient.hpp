@@ -19,6 +19,7 @@
 #include <OTD-IPC/DebugMessage.hpp>
 #include <OTD-IPC/DeviceInfo.hpp>
 #include <OTD-IPC/Header.hpp>
+#include <OTD-IPC/Hello.hpp>
 #include <OTD-IPC/State.hpp>
 
 namespace OpenKneeboard {
@@ -56,6 +57,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient>,
   void ProcessMessage(const OTDIPC::Messages::DeviceInfo&);
   void ProcessMessage(const OTDIPC::Messages::State&);
   void ProcessMessage(const OTDIPC::Messages::DebugMessage&);
+  void ProcessMessage(const OTDIPC::Messages::Hello&);
   void TimeoutTablet(uint32_t id);
   void TimeoutTablets();
 

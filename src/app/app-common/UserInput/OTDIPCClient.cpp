@@ -15,6 +15,7 @@
 #include <OpenKneeboard/task/resume_after.hpp>
 #include <OpenKneeboard/task/resume_on_any_signal.hpp>
 #include <OpenKneeboard/task/resume_on_signal.hpp>
+#include <OpenKneeboard/version.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -182,6 +183,12 @@ std::vector<std::filesystem::path> GetSocketPaths() try {
 template <std::size_t N>
 std::string_view StringViewFromFixedSizedBuffer(const char (&buffer)[N]) {
   return std::string_view {&buffer[0], strnlen_s(buffer, N)};
+}
+
+template <std::size_t N>
+void CopyTo(char (&dest)[N], const std::string_view src) {
+  std::ranges::fill(dest, '\0');
+  std::ranges::copy_n(src.begin(), std::min(N, src.size()), dest);
 }
 
 struct InsufficientDataSocketReadError {
@@ -463,6 +470,17 @@ task<void> OTDIPCClient::RunSingle() {
       continue;
     }
     dprint("Connected to OTD-IPC server (AF_UNIX) at `{}`", buf);
+
+    {
+      Hello msg {
+        .protocolVersion = 0x02'20260205'01,
+        .humanReadableName = "OpenKneeboard",
+        .implementationID = "openkneeboard.com",
+        .compatibilityVersion = 1,
+      };
+      CopyTo(msg.humanReadableVersion, Version::ReleaseName);
+      send(sock, reinterpret_cast<const char*>(&msg), sizeof(msg), 0);
+    }
     connected = true;
     break;
   }
@@ -617,6 +635,9 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::Header& header) {
     case MessageType::Experimental:
       // nothing to do
       return;
+    case MessageType::Hello:
+      this->ProcessMessage(reinterpret_cast<const Hello&>(header));
+      return;
   }
 }
 
@@ -708,6 +729,16 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State& msg) {
 
 void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::DebugMessage& msg) {
   dprint("Debug message from OTD-IPC server: {}", msg.message());
+}
+
+void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::Hello& msg) {
+  dprint(
+    "OTD-IPC Server: {} {} (proto {:#x}, ID '{}'/ cv {})",
+    StringViewFromFixedSizedBuffer(msg.humanReadableName),
+    StringViewFromFixedSizedBuffer(msg.humanReadableVersion),
+    msg.protocolVersion,
+    StringViewFromFixedSizedBuffer(msg.implementationID),
+    msg.compatibilityVersion);
 }
 
 }// namespace OpenKneeboard
