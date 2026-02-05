@@ -229,6 +229,7 @@ class AtomicStateMachine final : public Base {
     if (!this->mState.compare_exchange_strong(current, out)) {
       return std::unexpected {current};
     }
+    this->mState.notify_all();
     return {};
   }
 

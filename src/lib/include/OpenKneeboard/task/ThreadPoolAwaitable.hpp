@@ -22,6 +22,7 @@ enum class ThreadPoolAwaitableState {
   StartingWait,
   Waiting,
   HaveResult,// signaled, timeout, etc. *not* canceled
+  InCallbackBeforeWaiting,
   Resuming,
   Resumed,
   Canceling,
@@ -65,6 +66,18 @@ struct ThreadPoolAwaitable {
       return;
     }
 
+    if (transitioned.error() == State::InCallbackBeforeWaiting) {
+      mState.Wait(State::InCallbackBeforeWaiting);
+      mState.Assert(State::HaveResult);
+      ResumeFrom<State::HaveResult>();
+      return;
+    }
+
+    if (transitioned.error() == State::HaveResult) {
+      ResumeFrom<State::HaveResult>();
+      return;
+    }
+
     OPENKNEEBOARD_ASSERT(transitioned.error() == State::Canceling);
     mResult = Derived::canceled_result;
     ResumeFrom<State::Canceling>();
@@ -72,6 +85,14 @@ struct ThreadPoolAwaitable {
 
   template <result_type Result>
   void OnResult(PTP_CALLBACK_INSTANCE const pci) {
+    if (mState.TryTransition<
+          State::StartingWait,
+          State::InCallbackBeforeWaiting>()) {
+      mResult = Result;
+      mState.Transition<State::InCallbackBeforeWaiting, State::HaveResult>();
+      return;
+    }
+
     const auto transition =
       mState.TryTransition<State::Waiting, State::HaveResult>();
     if (!transition) {
@@ -100,6 +121,9 @@ struct ThreadPoolAwaitable {
       Transition {State::Waiting, State::HaveResult},
       Transition {State::HaveResult, State::Resuming},
       Transition {State::Resuming, State::Resumed},
+      // Early-finish path
+      Transition {State::StartingWait, State::InCallbackBeforeWaiting},
+      Transition {State::InCallbackBeforeWaiting, State::HaveResult},
       // Cancellation paths
       Transition {State::Init, State::CancelingBeforeDispatch},
       Transition {State::StartingWait, State::Canceling},
