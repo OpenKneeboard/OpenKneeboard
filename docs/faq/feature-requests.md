@@ -46,7 +46,7 @@ Add a thumbs up to the first comment on the GitHub issue. Comments equivalent to
 
 I work on OpenKneeboard when it is most fun or interesting way for me to spend my free time; similarly, your feature request will be added whenever it is the most fun or interesting way for me to spend my free time, or someone other than me implements and contributes it.
 
-If your feature request comes from an established US business in the VR, simulation, aviation, defense, or other relevant industries, I may be available for contract work; please [contact me](mailto:openkneeboard-contractwork@fred.fredemmott.com) me for details. I do not accept contracts for work from individuals, businesses outside the US, or businesses that do not have an established presence.
+If your feature request comes from an established US business in the VR, simulation, aviation, defense, or other relevant industries, I may be available for contract work; please [contact me](mailto:openkneeboard-contractwork@fred.fredemmott.com) me for details. I do not accept contracts for work from individuals, defense companies outside the US, or businesses that do not have an established presence.
 
 Outside of contract work, I do not do estimates of time or probability; requests for estimates will be ignored, and repeat requests will be considered spam.
 
