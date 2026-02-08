@@ -74,6 +74,8 @@ Usually, problems are caused by OpenComposite not being installed or configured 
 
 While OpenKneeboard is not a cheat, it does hook into the games rendering and input pipelines, which over-eager anti-cheat systems may consider ban-worthy. While this is similar to how other overlays work (e.g. Steam and Discord), it is possible that using OpenKneeboard may lead to an anti-cheat ban.
 
-As of March 19th, 2024, the developers have not received any reports of any users receiving any bans in any games, but this remains a theoretical possibility in the future.
+As of February 8th, 2026, the developers have not received any reports of any users receiving any bans in any games, but this remains a theoretical possibility in the future.
+
+IL2 have issued permanent *forum* bans for *discussing this warning*, but are not known to have issued any *game* bans for using OpenKneeboard.
 
 Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/LICENSE) and [full text of the GPLv2](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/gpl-2.0.txt) for details.
