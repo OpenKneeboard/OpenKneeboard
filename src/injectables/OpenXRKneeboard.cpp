@@ -100,16 +100,19 @@ static HMODULE LibVulkan() {
   return data.get();
 }
 
-static std::string_view xrresult_to_string(const XrResult code) {
+// xrResultAsString exists, but isn't reliably giving useful results, e.g.
+// it fails on the Meta XR Simulator.
+static std::string xrresult_to_string(const XrResult code) {
   // xrResultAsString exists, but isn't reliably giving useful results, e.g.
   // it fails on the Meta XR Simulator.
   switch (code) {
 #define XR_RESULT_CASE(enum_name, value) \
   case enum_name: \
-    return {#enum_name};
-    XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
+    return std::format("{} ({})", #enum_name, static_cast<int>(code));
+    XR_LIST_ENUM_XrResult(XR_RESULT_CASE);
 #undef XR_RESULT_CASE
-      default : return {};
+    default:
+      return std::to_string(static_cast<int>(code));
   }
 }
 
@@ -120,16 +123,8 @@ static inline XrResult check_xrresult(
     return code;
   }
 
-  // xrResultAsString exists, but isn't reliably giving useful results, e.g.
-  // it fails on the Meta XR Simulator.
   const auto codeAsString = xrresult_to_string(code);
-
-  if (codeAsString.empty()) {
-    fatal(loc, "OpenXR call failed: {}", static_cast<int>(code));
-  } else {
-    fatal(
-      loc, "OpenXR call failed: {} ({})", codeAsString, static_cast<int>(code));
-  }
+  fatal(loc, "OpenXR call failed: {}", codeAsString);
 }
 
 OpenXRKneeboard::OpenXRKneeboard(
@@ -410,15 +405,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
   if (!XR_SUCCEEDED(nextResult)) [[unlikely]] {
     const auto codeAsString = xrresult_to_string(nextResult);
-
-    if (codeAsString.empty()) {
-      dprint("next_xrEndFrame() failed: {}", static_cast<int>(nextResult));
-    } else {
-      dprint(
-        "next_xrEndFrame() failed: {} ({})",
-        codeAsString,
-        static_cast<int>(nextResult));
-    }
+    dprint.Warning("Next xrEndFrame failed: {}", codeAsString);
   }
   return nextResult;
 }
@@ -505,12 +492,12 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
 
   const auto ret = Next()->xrCreateSession(instance, createInfo, session);
   if (XR_FAILED(ret)) {
-    dprint("next xrCreateSession failed: {}", static_cast<int>(ret));
+    dprint.Warning("next xrCreateSession failed: {}", xrresult_to_string(ret));
     return ret;
   }
 
   if (gKneeboard) {
-    dprint("Already have a kneeboard, refusing to initialize twice");
+    dprint.Warning("Already have a kneeboard, refusing to initialize twice");
     return XR_ERROR_LIMIT_REACHED;
   }
 
@@ -838,7 +825,9 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   const auto nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
     info, &nextLayerInfo, instance);
   if (XR_FAILED(nextResult)) {
-    dprint("Next failed.");
+    dprint.Warning(
+      "Next xrCreateApiLayerInstance failed: {}",
+      xrresult_to_string(nextResult));
     return nextResult;
   }
 
