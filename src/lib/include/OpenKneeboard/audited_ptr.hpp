@@ -55,13 +55,7 @@ class audited_ptr {
     if (!caller) {
       caller = StackFramePointer {_ReturnAddress()};
     }
-
-    mImpl = std::shared_ptr<T>(ptr);
-    RefData refData {};
-    mRefID = refData.AddRef(caller);
-
-    mRefData =
-      std::make_shared<felly::guarded_data<RefData>>(std::move(refData));
+    reset(ptr, caller);
   }
 
   audited_ptr(const audited_ptr& other, caller_type caller = nullptr) {
@@ -71,12 +65,36 @@ class audited_ptr {
     copy_from(other, caller);
   }
 
+  audited_ptr& reset(T* ptr = nullptr, caller_type caller = nullptr) {
+    if (!caller) {
+      caller = StackFramePointer {_ReturnAddress()};
+    }
+
+    if (mRefData) {
+      mRefData->lock()->Release(std::exchange(mRefID, ~(0ui64)));
+    }
+    if (!ptr) {
+      mRefData.reset();
+      mImpl.reset();
+      return *this;
+    }
+
+    mImpl = std::shared_ptr<T>(ptr);
+    RefData refData {};
+    mRefID = refData.AddRef(caller);
+
+    mRefData =
+      std::make_shared<felly::guarded_data<RefData>>(std::move(refData));
+    return *this;
+  }
+
   audited_ptr(audited_ptr&& other) noexcept {
     move_from(std::move(other), StackFramePointer {_ReturnAddress()});
   }
 
   audited_ptr& operator=(audited_ptr&& other) noexcept {
-    return move_from(std::move(other), StackFramePointer {_ReturnAddress()});
+    move_from(std::move(other), StackFramePointer {_ReturnAddress()});
+    return *this;
   }
 
   audited_ptr& move_from(audited_ptr&& other, caller_type caller = nullptr) {

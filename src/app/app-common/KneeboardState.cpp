@@ -791,8 +791,20 @@ void KneeboardState::StartOpenVRThread() {
     [](std::stop_token stopToken) -> task<void> {
       TraceLoggingWrite(gTraceProvider, "OpenVRThread/Start");
       {
-        SteamVRKneeboard steamVR;
-        co_await steamVR.Run(stopToken);
+        try {
+          SteamVRKneeboard steamVR;
+          co_await steamVR.Run(stopToken);
+        } catch (const D3D11Resources::UnusableError& e) {
+          MessageBoxA(
+            nullptr,
+            std::format(
+              "Failed to start OpenVR overlay:\n\n{}\n\nSee "
+              "https://go.openkneeboard.com/d3d11-unusable",
+              e.what())
+              .c_str(),
+            "Direct3D11 is unusable",
+            MB_OK | MB_ICONERROR);
+        }
       }
       TraceLoggingWrite(gTraceProvider, "OpenVRThread/Stop");
     },

@@ -15,7 +15,7 @@ namespace OpenKneeboard {
 class ChromiumApp final {
  public:
   ChromiumApp() = delete;
-  explicit ChromiumApp(HINSTANCE instance, void* sandbox);
+  explicit ChromiumApp(HINSTANCE instance, LUID gpu, void* sandbox);
   ~ChromiumApp();
 
   static void* GetSandbox();

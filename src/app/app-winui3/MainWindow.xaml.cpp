@@ -73,9 +73,8 @@ using TabPage_WinRT = winrt::OpenKneeboardApp::TabPage;
 using TabPage_Implementation = winrt::OpenKneeboardApp::implementation::TabPage;
 
 namespace winrt::OpenKneeboardApp::implementation {
-MainWindow::MainWindow() : mDXR(new DXResources()) {
+MainWindow::MainWindow() : mDXR(gDXResources) {
   InitializeComponent();
-  gDXResources.copy_from(mDXR);
 
   {
     auto ref = get_strong();

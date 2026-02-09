@@ -801,7 +801,25 @@ static int AppMain(
 
   OptOutOfPowerSaving();
 
-  const ChromiumApp cefApp {instance, cefSandbox};
+  try {
+    gDXResources.reset(new DXResources());
+  } catch (D3D11Resources::UnusableError& e) {
+    dprint.Warning(e.what());
+    MessageBoxA(
+      nullptr,
+      std::format(
+        "{}\n\nSee https://go.openkneeboard.com/d3d11-unusable", e.what())
+        .c_str(),
+      "Direct3D11 is unusable",
+      MB_OK | MB_ICONERROR);
+    return EXIT_FAILURE;
+  }
+
+  const ChromiumApp cefApp {
+    instance,
+    std::bit_cast<LUID>(gDXResources->mAdapterLUID),
+    cefSandbox,
+  };
 
   DebugPrivileges privileges;
 

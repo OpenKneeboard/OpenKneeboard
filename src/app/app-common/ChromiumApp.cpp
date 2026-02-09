@@ -24,7 +24,12 @@ namespace OpenKneeboard {
 
 class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
  public:
-  Impl() {}
+  Impl() = delete;
+  Impl(const LUID gpu) {
+    const auto numeric = std::bit_cast<uint64_t>(gpu);
+    mGpuLuid = std::format(
+      "{},{}", numeric >> 32, numeric & std::numeric_limits<uint32_t>::max());
+  }
 
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
     return this;
@@ -35,7 +40,7 @@ class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
     CefRefPtr<CefCommandLine> command_line) override {
     command_line->AppendSwitch("angle");
     command_line->AppendSwitchWithValue("use-angle", "d3d11");
-    command_line->AppendSwitchWithValue("use-adapter-luid", this->GetGpuLuid());
+    command_line->AppendSwitchWithValue("use-adapter-luid", mGpuLuid);
   }
 
  private:
@@ -43,18 +48,6 @@ class ChromiumApp::Impl : public CefApp, public CefBrowserProcessHandler {
   DISALLOW_COPY_AND_ASSIGN(Impl);
 
   CefString mGpuLuid;
-
-  CefString GetGpuLuid() {
-    if (!mGpuLuid.empty()) {
-      return mGpuLuid;
-    }
-    D3D11Resources dxr;
-    const auto luid = std::bit_cast<uint64_t>(dxr.mAdapterLUID);
-    dprint("Setting CEF GPU LUID to {:#018x}", luid);
-    mGpuLuid = std::format(
-      "{},{}", luid >> 32, luid & std::numeric_limits<uint32_t>::max());
-    return mGpuLuid;
-  }
 };
 
 struct ChromiumApp::Wrapper {
@@ -64,9 +57,12 @@ struct ChromiumApp::Wrapper {
   void* mSandbox {nullptr};
 };
 
-ChromiumApp::ChromiumApp(const HINSTANCE instance, void* sandbox) {
+ChromiumApp::ChromiumApp(
+  const HINSTANCE instance,
+  const LUID gpu,
+  void* sandbox) {
   p.reset(new Wrapper {
-    .mCefApp = new Impl(),
+    .mCefApp = new Impl(gpu),
     .mSandbox = sandbox,
   });
 

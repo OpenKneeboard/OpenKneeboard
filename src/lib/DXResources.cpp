@@ -24,6 +24,18 @@
 
 namespace OpenKneeboard {
 
+std::string HResultToString(const HRESULT hr) {
+  return std::system_category().message(hr);
+}
+
+D3D11Resources::UnusableError::UnusableError(const HRESULT hr)
+  : std::runtime_error(
+      std::format(
+        "Direct3D11 is unusable: \"{}\" ({:#010x})",
+        std::system_category().message(hr),
+        std::bit_cast<uint32_t>(hr))),
+    mHR(hr) {}
+
 struct D3D11Resources::Locks {
   std::recursive_mutex mMutex;
 };
@@ -220,7 +232,7 @@ D3D11Resources::D3D11Resources() {
 
   winrt::com_ptr<ID3D11Device> d3d;
   winrt::com_ptr<ID3D11DeviceContext> d3dImmediateContext;
-  check_hresult(D3D11CreateDevice(
+  const auto createDeviceResult = D3D11CreateDevice(
     mDXGIAdapter.get(),
     // UNKNOWN is required when specifying an adapter
     D3D_DRIVER_TYPE_UNKNOWN,
@@ -231,7 +243,10 @@ D3D11Resources::D3D11Resources() {
     D3D11_SDK_VERSION,
     d3d.put(),
     nullptr,
-    d3dImmediateContext.put()));
+    d3dImmediateContext.put());
+  if (!SUCCEEDED(createDeviceResult)) {
+    throw UnusableError(createDeviceResult);
+  }
   mD3D11Device = d3d.as<ID3D11Device5>();
   mD3D11ImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
   mDXGIDevice = d3d.as<IDXGIDevice2>();
