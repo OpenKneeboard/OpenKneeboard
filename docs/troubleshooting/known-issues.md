@@ -1,6 +1,6 @@
 ---
 parent: Troubleshooting
-----
+---
 
 # Known Issues
 
