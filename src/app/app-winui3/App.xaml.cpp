@@ -2,7 +2,8 @@
 //
 // Copyright (c) 2025 Fred Emmott <fred@fredemmott.com>
 //
-// This program is open source; see the LICENSE file in the root of the OpenKneeboard repository.
+// This program is open source; see the LICENSE file in the root of the
+// OpenKneeboard repository.
 // clang-format off
 #include "pch.h"
 #include "App.xaml.h"
@@ -787,7 +788,19 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   OptOutOfPowerSaving();
 
-  ChromiumApp cefApp;
+  try {
+    gDXResources.copy_from({new DXResources()});
+  } catch (const D3D11Resources::UnusableError& e) {
+    MessageBoxA(
+      nullptr,
+      std::format(
+        "{}\n\nSee https://go.openkneeboard.com/d3d11-unusable", e.what())
+        .c_str(),
+      "Direct3D11 is unusable",
+      MB_OK | MB_ICONERROR);
+    return EXIT_FAILURE;
+  }
+  ChromiumApp cefApp { gDXResources->mAdapterLUID };
 
   DebugPrivileges privileges;
 

@@ -11,7 +11,8 @@ namespace OpenKneeboard {
 
 class ChromiumApp final {
  public:
-  ChromiumApp();
+  ChromiumApp() = delete;
+  explicit ChromiumApp(uint64_t gpuLUID);
   ~ChromiumApp();
 
  private:

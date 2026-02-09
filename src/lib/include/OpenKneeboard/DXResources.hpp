@@ -12,6 +12,7 @@
 #include <windows.data.pdf.interop.h>
 
 #include <source_location>
+#include <stdexcept>
 
 #include <d2d1_3.h>
 #include <d2d1effects_2.h>
@@ -30,6 +31,14 @@ namespace OpenKneeboard {
  * - the viewer
  */
 struct D3D11Resources {
+  class UnusableError : public std::runtime_error {
+   public:
+    explicit UnusableError(const HRESULT hr);
+    HRESULT getHRESULT() const noexcept { return mHR; }
+
+   private:
+    HRESULT mHR;
+  };
   D3D11Resources();
   ~D3D11Resources();
   D3D11Resources(const D3D11Resources&) = delete;
