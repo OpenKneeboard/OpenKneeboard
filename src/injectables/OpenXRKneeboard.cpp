@@ -488,13 +488,17 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateSession(
     sizeof(gRuntime.mName),
     instanceProps.runtimeName,
     XR_MAX_RUNTIME_NAME_SIZE);
-  dprint("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
+  dprint(
+    "In xrCreateSession with OpenXR runtime: '{}' v{:#x}",
+    gRuntime.mName,
+    gRuntime.mVersion);
 
   const auto ret = Next()->xrCreateSession(instance, createInfo, session);
   if (XR_FAILED(ret)) {
     dprint.Warning("next xrCreateSession failed: {}", xrresult_to_string(ret));
     return ret;
   }
+  dprint("Next xrCreateSession succeeded");
 
   if (gKneeboard) {
     dprint.Warning("Already have a kneeboard, refusing to initialize twice");
