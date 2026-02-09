@@ -832,8 +832,6 @@ wWinMain(const HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
   // if there's no console attached
   AttachConsole(ATTACH_PARENT_PROCESS);
 
-  OutputDebugStringW(
-    std::format(L"OKB process: {}", GetCommandLineW()).c_str());
   {
     const auto thisExe = wil::GetModuleFileNameW();
     const auto cefPath =
