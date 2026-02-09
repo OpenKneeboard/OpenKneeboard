@@ -6,7 +6,7 @@ parent: Troubleshooting
 
 ## OpenKneeboard freezes on some corrupted DCS `.miz` or .`trk` files
 
-OpenKneeboard v1.12.6 and below do not correctly handle some forms of zip file corruption, which can cause an OpenKneeboard freeze, but not a game freeze. This will be corrected later versions.
+OpenKneeboard v1.12.6 and below do not correctly handle some forms of zip file corruption, which can cause an OpenKneeboard freeze, but not a game freeze. A fix is ready for the next version of OpenKneeboard.
 
 ## Meta Link (wired) disconnects when using OpenTabletDriver
 
