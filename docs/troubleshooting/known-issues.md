@@ -47,3 +47,7 @@ In practice, this mostly seems to be an issue for people playing iRacing; common
 - exceeding VRAM capacity, even without OpenKneeboard - especially if adding additional liveries/paint jobs in iRacing, e.g. via Trading Paints
 
 You need to lower your settings to avoid exceeding your systems' capabilities.
+
+## ~~Various positinoing issues with Varjo Base~~
+
+All known issues in Varjo Base affecting OpenKneeboard were fixed in v4.14 (December 2025).
