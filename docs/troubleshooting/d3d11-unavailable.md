@@ -2,7 +2,7 @@
 parent: Troubleshooting
 ---
 
-# Direct3D11 is Unusuable
+# Direct3D11 is Unusable
 
 This is a Windows or GPU driver error; is is not an OpenKneeboard issue, and it can not be solved by OpenKneeboard.
 
