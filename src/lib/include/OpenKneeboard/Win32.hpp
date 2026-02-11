@@ -201,26 +201,27 @@ template <
   class TErrorMapper = result_identity,
   class TStringTraits = wide_traits>
 struct basic_winapi {
+ private:
   template <class T>
-  static constexpr std::expected<std::wstring, HRESULT> to_wide(T str) {
-    if constexpr (std::same_as<T, std::nullptr_t>) {
+  static constexpr std::expected<std::wstring, HRESULT> to_wide_expected(
+    T&& str) {
+    if constexpr (std::convertible_to<T, std::nullptr_t>) {
       return {};
     } else {
-      return TStringTraits::to_wide(str);
+      return TStringTraits::to_wide(std::forward<T>(str));
     }
   }
 
   template <class T>
   static constexpr std::expected<typename TStringTraits::string_type, HRESULT>
-  from_wide(T str) {
-    if constexpr (std::same_as<T, std::nullptr_t>) {
+  from_wide_expected(T str) {
+    if constexpr (std::convertible_to<T, std::nullptr_t>) {
       return {};
     } else {
-      return TStringTraits::from_wide(str);
+      return TStringTraits::from_wide(std::forward<T>(str));
     }
   }
 
- private:
   template <class T>
   static constexpr auto make_error(HRESULT hr) {
     return TErrorMapper::transform_result(
@@ -245,7 +246,7 @@ struct basic_winapi {
 
  public:
   using string_type =
-    std::remove_cvref_t<decltype(from_wide(L"foo"))>::value_type;
+    std::remove_cvref_t<decltype(from_wide_expected(L"foo"))>::value_type;
   using handle_or_null_type = typename TTraits::handle_or_null_type;
   using handle_or_invalid_type = typename TTraits::handle_or_invalid_type;
 
@@ -264,6 +265,16 @@ struct basic_winapi {
   using ACP = basic_winapi<TTraits, TErrorMapper, active_code_page_traits>;
   using Wide = basic_winapi<TTraits, TErrorMapper, wide_traits>;
 
+  static auto to_wide(auto&& in) {
+    return TErrorMapper::transform_result(
+      to_wide_expected(std::forward<decltype(in)>(in)));
+  }
+
+  static auto from_wide(auto&& in) {
+    return TErrorMapper::transform_result(
+      from_wide_expected(std::forward<decltype(in)>(in)));
+  }
+
   // We could avoid spelling out the arguments here with `static inline const
   // CreateEvent = ... pipeline
   //
@@ -276,7 +287,7 @@ struct basic_winapi {
     BOOL bManualReset,
     BOOL bInitialState,
     auto lpName = nullptr) {
-    const auto name = to_wide(lpName);
+    const auto name = to_wide_expected(lpName);
     if (!name.has_value()) {
       return make_error<handle_or_null_type>(name.error());
     }
@@ -292,7 +303,7 @@ struct basic_winapi {
     DWORD dwMaximumSizeHigh,
     DWORD dwMaximumSizeLow,
     auto lpName = nullptr) {
-    const auto name = to_wide(lpName);
+    const auto name = to_wide_expected(lpName);
     if (!name.has_value()) {
       return make_error<handle_or_null_type>(name.error());
     }
@@ -310,7 +321,7 @@ struct basic_winapi {
     LPSECURITY_ATTRIBUTES lpMutexAttributes,
     BOOL bInitialOwner = true,
     auto lpName = nullptr) {
-    const auto name = to_wide(lpName);
+    const auto name = to_wide_expected(lpName);
     if (!name.has_value()) {
       return make_error<handle_or_null_type>(name.error());
     }
@@ -323,7 +334,7 @@ struct basic_winapi {
     LPSECURITY_ATTRIBUTES lpTimerAttributes,
     BOOL bManualReset,
     auto lpTimerName = nullptr) {
-    const auto name = to_wide(lpTimerName);
+    const auto name = to_wide_expected(lpTimerName);
     if (!name.has_value()) {
       return make_error<handle_or_null_type>(name.error());
     }
@@ -342,7 +353,7 @@ struct basic_winapi {
     DWORD dwCreationDisposition,
     DWORD dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL,
     HANDLE hTemplateFile = NULL) {
-    const auto name = to_wide(lpFileName);
+    const auto name = to_wide_expected(lpFileName);
     if (!name.has_value()) {
       return make_error<handle_or_invalid_type>(name.error());
     }
@@ -361,7 +372,7 @@ struct basic_winapi {
     DWORD nMaxMessageSize,
     DWORD lReadTimeout,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes = nullptr) {
-    const auto name = to_wide(lpName);
+    const auto name = to_wide_expected(lpName);
     if (!name.has_value()) {
       return make_error<handle_or_invalid_type>(name.error());
     }
@@ -380,7 +391,7 @@ struct basic_winapi {
     if (length == 0) [[unlikely]] {
       return make_error<string_type>(HRESULT_FROM_WIN32(GetLastError()));
     }
-    return make_result(from_wide(buffer).value());
+    return make_result(from_wide_expected(buffer).value());
   }
 };
 

@@ -27,6 +27,10 @@ struct DXResources;
 class PlainTextPageSource final : public IPageSource,
                                   public virtual EventReceiver {
  public:
+  struct SourceReference {
+    std::size_t mOffset {};
+    std::size_t mLength {};
+  };
   PlainTextPageSource() = delete;
   PlainTextPageSource(
     const audited_ptr<DXResources>&,
@@ -48,14 +52,36 @@ class PlainTextPageSource final : public IPageSource,
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
  private:
+  using RenderedLine = std::wstring;
+  struct RenderedPage {
+    SourceReference mSource {};
+
+    std::vector<RenderedLine> mLines;
+
+    [[nodiscard]]
+    bool IsEmpty() const {
+      return mLines.empty();
+    }
+  };
+  struct unknown_offset_t {};
+  static constexpr unknown_offset_t unknown_offset {};
+
+  audited_ptr<DXResources> mDXR;
+  KneeboardState* mKneeboard;
+  std::string mPlaceholderText;
+
   mutable std::recursive_mutex mMutex;
   mutable std::vector<PageID> mPageIDs;
-  std::vector<std::vector<winrt::hstring>> mCompletePages;
-  std::vector<winrt::hstring> mCurrentPageLines;
-  std::vector<std::string_view> mMessagesToLayout;
-  std::vector<std::string> mAllMessages;
 
-  std::optional<PageIndex> FindPageIndex(PageID) const;
+  // All content as UTF-8; newlines may be \r\n or \n
+  std::string mContent;
+  std::string mLastLayoutContent;
+  // First offset that is modified in mContent compared to mLastRenderedContent;
+  // use `dynamic_offset` to indicate unknown
+  std::variant<std::monostate, std::size_t, unknown_offset_t>
+    mFirstModifiedOffset;
+
+  std::vector<RenderedPage> mPages;
 
   float mPadding = -1.0f;
   float mRowHeight = -1.0f;
@@ -63,14 +89,16 @@ class PlainTextPageSource final : public IPageSource,
   int mRows = -1;
   float mFontSize;
 
-  audited_ptr<DXResources> mDXR;
-  KneeboardState* mKneeboard;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
-  std::string mPlaceholderText;
+
+  std::optional<PageIndex> FindPageIndex(PageID) const;
+  void ReplaceContent(std::string_view);
+  void AppendContent(std::string_view);
 
   void UpdateLayoutLimits();
-  void LayoutMessages();
   void PushPage();
+
+  void UpdateLayout();
 };
 
 }// namespace OpenKneeboard
