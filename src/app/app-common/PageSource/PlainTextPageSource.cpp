@@ -572,7 +572,11 @@ void PlainTextPageSource::PushMessage(std::string_view message) {
     sMessage.replace(pos, 1, "    ");
   }
 
-  SetText(std::format("{}\x1d{}", mContent, sMessage));
+  if (mContent.empty()) {
+    SetText(sMessage);
+  } else {
+    SetText(std::format("{}\x1d{}", mContent, sMessage));
+  }
 }
 
 void PlainTextPageSource::EnsureNewPage() {
