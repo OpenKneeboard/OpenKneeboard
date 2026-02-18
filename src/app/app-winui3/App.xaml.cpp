@@ -442,7 +442,8 @@ static DamagingEnvironmentFlags LogSystemInformation() {
         HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"UacWasPreviouslyDisabled")
         .value_or(0)) {
     dprint.Warning("UAC was previously disabled.");
-    ret |= DamagingEnvironmentFlags::UacWasPreviouslyDisabled;
+    // Disabled from release branch as third-party issues have been fixed or worked around
+    // ret |= DamagingEnvironmentFlags::UacWasPreviouslyDisabled;
   }
 
   if (isWine) {
