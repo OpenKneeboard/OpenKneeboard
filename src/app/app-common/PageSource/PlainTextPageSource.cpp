@@ -18,15 +18,21 @@
 
 #include <felly/numeric_cast.hpp>
 #include <felly/overload.hpp>
+#include <felly/unique_ptr.hpp>
 
 #include <algorithm>
 #include <format>
 
 #include <dwrite.h>
+#include <icu.h>
 
 namespace OpenKneeboard {
 
 namespace {
+
+using unique_UText = felly::unique_ptr<UText, &utext_close>;
+using unique_UBreakIterator = felly::unique_ptr<UBreakIterator, &ubrk_close>;
+
 using SourceReference = PlainTextPageSource::SourceReference;
 // source is tracked separately as the content does not include trailing
 // separators, e.g.:
@@ -53,43 +59,66 @@ struct SourceLine {
         WrappedLine {mContent, mSourceWithDelimiter, mSourceWithoutDelimiter}};
       return;
     }
+
+    UErrorCode status = U_ZERO_ERROR;
+    const unique_UText utext {
+      utext_openUTF8(nullptr, mContent.data(), mContent.size(), &status)};
+    const unique_UBreakIterator it {
+      ubrk_open(UBRK_CHARACTER, "", nullptr, 0, &status)};
+    ubrk_setUText(it.get(), utext.get(), &status);
+
     mWrappedContent.clear();
-    auto remaining = mContent;
-    while (!remaining.empty()) {
-      const auto sourceLineOffset = remaining.data() - mContent.data();
+    ubrk_first(it.get());
+    while (ubrk_current(it.get()) < mContent.size()) {
+      const auto sourceLineOffset = ubrk_current(it.get());
       const auto sourceOffset = sourceLineOffset + mSourceWithDelimiter.mOffset;
-      if (remaining.size() <= columns) {
+
+      std::string_view outputLine {mContent.substr(sourceLineOffset)};
+      if (outputLine.size() <= columns) {
         mWrappedContent.emplace_back(
-          remaining,
+          outputLine,
           SourceReference {
             sourceOffset, mSourceWithDelimiter.mLength - sourceLineOffset},
           SourceReference {
             sourceOffset, mSourceWithoutDelimiter.mLength - sourceLineOffset});
         break;
       }
-
-      const auto unbrokenMax = remaining.substr(0, columns);
-      auto splitAt = std::ranges::find_last_if(unbrokenMax, [](const char c) {
-        return std::isspace(static_cast<unsigned char>(c));
-      });
-      if (splitAt.empty()) {
-        mWrappedContent.emplace_back(
-          unbrokenMax,
-          SourceReference {sourceOffset, columns},
-          SourceReference {sourceOffset, columns});
-        remaining = remaining.substr(columns);
-        continue;
+      std::size_t graphemeCount {};
+      std::optional<std::size_t> lastWhitespace {};
+      while (ubrk_next(it.get()) != UBRK_DONE) {
+        ++graphemeCount;
+        if (graphemeCount > columns) {
+          break;
+        }
+        const auto offset = ubrk_current(it.get());
+        const auto cp = utext_next32From(utext.get(), offset);
+        if (cp == U_SENTINEL || u_isUWhiteSpace(cp)) {
+          lastWhitespace = offset;
+        }
       }
 
-      const std::string_view brokenLine {unbrokenMax.begin(), splitAt.begin()};
-      const std::size_t sourceLengthWithDelimiter =
-        brokenLine.size() + (splitAt.end() - splitAt.begin());
+      if (graphemeCount > columns) {
+        if (lastWhitespace) {
+          // We *know* it's a boundary, but this functions as a `seek()`
+          std::ignore = ubrk_isBoundary(it.get(), *lastWhitespace);
+        } else {
+          ubrk_previous(it.get());
+        }
+        outputLine = mContent.substr(
+          sourceLineOffset, ubrk_current(it.get()) - sourceLineOffset);
+        if (lastWhitespace) {
+          ubrk_next(it.get());
+        }
+      }
+
       mWrappedContent.emplace_back(
-        brokenLine,
-        SourceReference {sourceOffset, brokenLine.size()},
-        SourceReference {sourceOffset, sourceLengthWithDelimiter});
-      remaining = remaining.substr(sourceLengthWithDelimiter);
+        outputLine,
+        SourceReference {sourceOffset, outputLine.size()},
+        SourceReference {sourceOffset, outputLine.size()});
     }
+
+    mWrappedContent.back().mSourceWithDelimiter.mLength +=
+      mSourceWithDelimiter.mLength - mSourceWithoutDelimiter.mLength;
   }
 };
 
@@ -699,7 +728,11 @@ void PlainTextPageSource::UpdateLayout() {
       | std::views::transform(&SourceLine::mWrappedContent) | std::views::join;
     page.mLines.append_range(
       wrappedLines | std::views::transform([](const auto& utf8) {
-        return Win32::UTF8::or_throw::to_wide(utf8);
+        try {
+          return Win32::UTF8::or_throw::to_wide(utf8);
+        } catch (const winrt::hresult_error& ex) {
+          return std::format(L"⚠️ UTF-8 error: {}", ex.message());
+        }
       }));
     const auto [lastStart, lastLength] =
       sourceLines.back().mSourceWithDelimiter;
