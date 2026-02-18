@@ -69,8 +69,9 @@ struct SourceLine {
       }
 
       const auto unbrokenMax = remaining.substr(0, columns);
-      auto splitAt = std::ranges::find_last_if(
-        unbrokenMax, [](const char c) { return std::isspace(c); });
+      auto splitAt = std::ranges::find_last_if(unbrokenMax, [](const char c) {
+        return std::isspace(static_cast<unsigned char>(c));
+      });
       if (splitAt.empty()) {
         mWrappedContent.emplace_back(
           unbrokenMax,
