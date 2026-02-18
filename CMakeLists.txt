@@ -230,6 +230,9 @@ endif ()
 
 option(ENABLE_APP "Build the main app, not just the injectables" ON)
 
+# Don't implicitly copy .dlls from vcpkg to runtime dirs
+set(VCPKG_APPLOCAL_DEPS OFF)
+
 add_subdirectory("cmake")
 
 add_subdirectory("third-party")
