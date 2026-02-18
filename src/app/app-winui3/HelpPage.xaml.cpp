@@ -657,10 +657,16 @@ std::string GetOpenXRLayers(RegistryView view, HKEY root) noexcept {
       continue;
     }
 
-    const auto fspath
-      = std::filesystem::path(std::wstring_view {path, pathLength});
-    if (!std::filesystem::exists(fspath)) {
-      ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
+    const auto fspath =
+      std::filesystem::path(std::wstring_view {path, pathLength});
+    try {
+      if (!std::filesystem::exists(fspath)) {
+        ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
+        continue;
+      }
+    } catch (const std::filesystem::filesystem_error& ex) {
+      ret += std::format(
+        "- EXCEPTION CALLING EXISTS('{}'): - {}\n", pathUtf8, ex.what());
       continue;
     }
 
