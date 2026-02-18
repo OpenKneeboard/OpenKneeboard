@@ -254,9 +254,8 @@ enum class DamagingEnvironmentFlags : uint8_t {
   ElevationRelated = (1 << 1),
   IsElevated = (1 << 2) | ElevationRelated | Fatal,
   UacIsDisabled = (1 << 3) | ElevationRelated | Fatal,
-  UacWasPreviouslyDisabled = (1 << 4) | ElevationRelated,
-  OlderThanWin10 = (1 << 5),
-  Wine = (1 << 6),
+  OlderThanWin10 = (1 << 4),
+  Wine = (1 << 5),
 };
 
 constexpr bool supports_bitflags(DamagingEnvironmentFlags) { return true; }
@@ -278,20 +277,6 @@ static void ShowDamagingEnvironmentError(const DamagingEnvironmentFlags flags) {
     elevationProblem = _(L"OpenKneeboard is running elevated");
   } else if ((flags & UacIsDisabled) == UacIsDisabled) {
     elevationProblem = _(L"User Account Control (UAC) is disabled");
-  } else if ((flags & UacWasPreviouslyDisabled) == UacWasPreviouslyDisabled) {
-    MessageBoxW(
-      nullptr,
-      _(L"User Account Control (UAC) was previously disabled on this "
-        L"system.\n\n"
-        L"This can cause problems with your VR drivers, tablet drivers, games, "
-        L"OpenKneeboard, and other software that can only be fixed by "
-        L"reinstalling Windows.\n\n"
-        L"DO NOT REPORT OR ASK FOR HELP WITH ANY ISSUES YOU ENCOUNTER.\n\n"
-        L"To stop this message appearing, reinstall Windows. "
-        L"This check will not be removed from OpenKneeboard."),
-      _(L"OpenKneeboard"),
-      MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
-    return;
   } else if ((flags & OlderThanWin10) == OlderThanWin10) {
     MessageBoxW(
       nullptr,
@@ -454,7 +439,6 @@ static DamagingEnvironmentFlags LogSystemInformation() {
         HKEY_LOCAL_MACHINE, Config::RegistrySubKey, L"UacWasPreviouslyDisabled")
         .value_or(0)) {
     dprint.Warning("UAC was previously disabled.");
-    ret |= DamagingEnvironmentFlags::UacWasPreviouslyDisabled;
   }
 
   if (isWine) {
