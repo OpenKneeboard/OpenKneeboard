@@ -16,15 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ]]--
-local Terrain = require('terrain')
-
-package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 local status, OpenKneeboard = pcall(require, "OpenKneeboard_LuaAPI64")
 if not status then
   return
 end
-
 OpenKneeboard.EventPrefix = "dcs/"
+
+local Terrain = require('terrain')
+
 function OpenKneeboard.send(name, value)
   OpenKneeboard.sendRaw(OpenKneeboard.EventPrefix..name, value)
 end

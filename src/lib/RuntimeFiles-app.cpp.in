@@ -7,10 +7,10 @@ const std::string_view CHROMIUM(
   "$<$<TARGET_EXISTS:OpenKneeboard-Chromium>:libexec/cef/$<TARGET_FILE_NAME:OpenKneeboard-Chromium>>");
 
 const std::string_view DCSWORLD_HOOK_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-lua-api>");
+  "$<PATH:RELATIVE_PATH,$<TARGET_FILE:OpenKneeboard-lua-api>,$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>>");
 
 const std::string_view DCSWORLD_HOOK_LUA(
-  "$<TARGET_PROPERTY:dcs-lua-ext,OUTPUT_NAME>");
+  "$<PATH:RELATIVE_PATH,$<GENEX_EVAL:$<TARGET_PROPERTY:dcs-lua-ext,OUTPUT_FILE>>,$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>>");
 
 const std::string_view OPENXR_64BIT_JSON("OpenKneeboard-OpenXR.json");
 const std::string_view OPENXR_64BIT_DLL(

@@ -31,4 +31,13 @@ function(ok_add_runtime_files TARGET)
   )
   add_custom_target(${TARGET} DEPENDS "${STAMP_FILE}")
   add_dependencies(runtime-dependencies "${TARGET}")
+
+  list(LENGTH SOURCES SOURCES_LENGTH)
+  if (SOURCES_LENGTH EQUAL 1)
+    set_target_properties(
+      "${TARGET}"
+      PROPERTIES
+      OUTPUT_FILE "${DEST}/$<PATH:GET_FILENAME,${SOURCES}>"
+    )
+  endif ()
 endfunction()

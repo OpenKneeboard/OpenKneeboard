@@ -8,13 +8,23 @@ ok_add_library(
   DUALARCH
   OUTPUT_NAME "OpenKneeboard_LuaAPI"
   OpenKneeboard_LuaAPI.cpp)
-target_link_libraries(OpenKneeboard-lua-api PUBLIC ThirdParty::Lua)
 target_link_libraries(
   OpenKneeboard-lua-api
+  PUBLIC
+  ThirdParty::Lua::DelayLoad
   PRIVATE
   OpenKneeboard-dprint
   OpenKneeboard-tracing
-  OpenKneeboard-APIEvent)
+  OpenKneeboard-APIEvent
+)
+# Install to a separate directory as for lua, we generally
+# want to modify `cpath`; let's not pollute cpath with
+# all the other dlls that OpenKneeboard needs on
+set_target_properties(
+  OpenKneeboard-lua-api
+  PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${BUILD_OUT_ROOT}/lib/lua"
+)
 
 ok_add_library(
   OpenKneeboard-c-api

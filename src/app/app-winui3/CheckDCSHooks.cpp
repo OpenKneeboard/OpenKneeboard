@@ -25,6 +25,7 @@
 #include <microsoft.ui.xaml.window.h>
 
 #include <format>
+#include <fstream>
 #include <set>
 
 #include <shobjidl.h>
@@ -35,31 +36,53 @@ using namespace winrt;
 
 namespace OpenKneeboard {
 
+std::string GetLuaContent() {
+  const auto runtimeDir = Filesystem::GetRuntimeDirectory();
+  const auto rootDir = runtimeDir.parent_path();
+  return std::format(
+    R"EOF(--[[ OpenKneeboard Hook - @{} ]]--
+local okb_path = "{}"
+--[[ Path for DLL ]]--
+package.cpath = okb_path.."/{}/?.dll;"..package.cpath
+--[[ Load the actual LUA hook; ignore failures (e.g. OKB uninstalled) ]]--
+pcall(dofile, okb_path.."/{}")
+)EOF",
+    "generated",
+    weakly_canonical(rootDir).generic_string(),
+    proximate(
+      (runtimeDir / RuntimeFiles::DCSWORLD_HOOK_DLL).parent_path(), rootDir)
+      .generic_string(),
+    proximate(runtimeDir / RuntimeFiles::DCSWORLD_HOOK_LUA, rootDir)
+      .generic_string());
+}
+
 enum DCSHookInstallState { UP_TO_DATE, OUT_OF_DATE, NOT_INSTALLED };
 
 static DCSHookInstallState GetHookInstallState(
-  const std::filesystem::path& hooksDir,
-  const std::filesystem::path& exeDir) {
-  if (!std::filesystem::is_directory(hooksDir)) {
+  const std::filesystem::path& hooksDir) {
+  if (!is_directory(hooksDir)) {
     return NOT_INSTALLED;
   }
 
-  const auto dllDest = hooksDir / RuntimeFiles::DCSWORLD_HOOK_DLL;
-  const auto luaDest = hooksDir / RuntimeFiles::DCSWORLD_HOOK_LUA;
+  const auto luaDest = hooksDir
+    / std::filesystem::path(RuntimeFiles::DCSWORLD_HOOK_LUA).filename();
 
-  if (!(std::filesystem::is_regular_file(dllDest)
-        && std::filesystem::is_regular_file(dllDest))) {
+  if (!exists(luaDest)) {
     return NOT_INSTALLED;
   }
 
-  const auto dllSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_DLL;
-  const auto luaSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_LUA;
-
-  if (FilesDiffer(dllSource, dllDest) || FilesDiffer(luaSource, luaDest)) {
+  const auto luaContent = GetLuaContent();
+  if (luaContent.size() != file_size(luaDest)) {
     return OUT_OF_DATE;
   }
 
-  return UP_TO_DATE;
+  std::ifstream f(luaDest, std::ios::binary);
+  if (std::ranges::equal(
+        std::views::istream<char>(f >> std::noskipws), luaContent)) {
+    return UP_TO_DATE;
+  }
+
+  return OUT_OF_DATE;
 }
 
 task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
@@ -77,19 +100,15 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
     co_return;
   }
 
-  const auto exeDir = Filesystem::GetRuntimeDirectory();
-
   const auto hooksDir = savedGamesPath / "Scripts" / "Hooks";
-  const auto state = GetHookInstallState(hooksDir, exeDir);
+  const auto state = GetHookInstallState(hooksDir);
 
   if (state == UP_TO_DATE) {
     co_return;
   }
 
-  const auto dllSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_DLL;
-  const auto luaSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_LUA;
-  const auto dllDest = hooksDir / RuntimeFiles::DCSWORLD_HOOK_DLL;
-  const auto luaDest = hooksDir / RuntimeFiles::DCSWORLD_HOOK_LUA;
+  const auto luaDest = hooksDir
+    / std::filesystem::path(RuntimeFiles::DCSWORLD_HOOK_LUA).filename();
 
   ContentDialog dialog;
   dialog.XamlRoot(root);
@@ -119,47 +138,21 @@ task<void> CheckDCSHooks(XamlRoot root, std::filesystem::path savedGamesPath) {
       continue;
     }
 
-    if (!std::filesystem::copy_file(
-          luaSource,
-          luaDest,
-          std::filesystem::copy_options::overwrite_existing,
-          ec)) {
+    try {
+      const auto luaContent = GetLuaContent();
+      std::ofstream f(luaDest, std::ios::binary);
+      f.exceptions(std::ios::failbit | std::ios::badbit);
+      f << luaContent;
+    } catch (const std::exception& e) {
       dialog.Content(
         winrt::box_value(
           winrt::to_hstring(
             std::format(
-              _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+              _("Failed to write to {}: {} - if DCS is running, "
                 "close DCS, and try again."),
               to_utf8(luaDest),
-              ec.message(),
-              ec.value()))));
-      dprint.Error(
-        "DCS hook copy Lua failed: {} ({:#010x}) - {}",
-        ec.message(),
-        ec.value(),
-        luaDest);
-      continue;
-    }
-
-    if (!std::filesystem::copy_file(
-          dllSource,
-          dllDest,
-          std::filesystem::copy_options::overwrite_existing,
-          ec)) {
-      dialog.Content(
-        winrt::box_value(
-          winrt::to_hstring(
-            std::format(
-              _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-                "close DCS, and try again."),
-              to_utf8(luaDest),
-              ec.message(),
-              ec.value()))));
-      dprint.Error(
-        "DCS hook copy DLL to failed: {} ({:#010x}) - {}",
-        ec.message(),
-        ec.value(),
-        dllDest);
+              e.what()))));
+      dprint.Error("DCS hook copy lua to {} failed: {}", luaDest, e.what());
       continue;
     }
 
