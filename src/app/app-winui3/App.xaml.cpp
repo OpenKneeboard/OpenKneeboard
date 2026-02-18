@@ -731,6 +731,8 @@ static int AppMain(
     .prefix = "OpenKneeboard-WinUI3",
   });
 
+  divert_process_failure_to_fatal();
+
   winrt::init_apartment(winrt::apartment_type::single_threaded);
   SetThreadDescription(GetCurrentThread(), L"UI Thread");
 
