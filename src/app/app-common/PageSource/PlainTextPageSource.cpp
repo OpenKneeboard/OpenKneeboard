@@ -82,7 +82,7 @@ struct SourceLine {
 
       const std::string_view brokenLine {unbrokenMax.begin(), splitAt.begin()};
       const std::size_t sourceLengthWithDelimiter =
-        std::ranges::distance(remaining.begin(), splitAt.end());
+        brokenLine.size() + (splitAt.end() - splitAt.begin());
       mWrappedContent.emplace_back(
         brokenLine,
         SourceReference {sourceOffset, brokenLine.size()},
