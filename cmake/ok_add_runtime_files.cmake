@@ -24,6 +24,7 @@ function(ok_add_runtime_files TARGET)
   add_custom_command(
     OUTPUT "${STAMP_FILE}"
     DEPENDS "${SOURCES}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${DEST}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCES}" "${DEST}/"
     COMMAND "${CMAKE_COMMAND}" -E touch "${STAMP_FILE}"
     VERBATIM
