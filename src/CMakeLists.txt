@@ -52,7 +52,7 @@ add_subdirectory(lib)
 add_subdirectory(api)
 add_subdirectory(injectables)
 
-if (NOT ENABLE_APP)
+if (NOT ENABLE_APP_COMMON)
   return()
 endif ()
 

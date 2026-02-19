@@ -229,6 +229,12 @@ else ()
 endif ()
 
 option(ENABLE_APP "Build the main app, not just the injectables" ON)
+option(ENABLE_APP_COMMON "Build the main app excluding the GUI, not just the injectables" "${ENABLE_APP}")
+
+if (ENABLE_APP AND CLANG_CL)
+  message(WARNING "Not building WinUI3 app - not supported by clang")
+  set(ENABLE_APP OFF)
+endif ()
 
 # Don't implicitly copy .dlls from vcpkg to runtime dirs
 set(VCPKG_APPLOCAL_DEPS OFF)

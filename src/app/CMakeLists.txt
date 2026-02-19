@@ -1,7 +1,6 @@
 add_subdirectory(app-common)
 
-if (CLANG_CL)
-  message(WARNING "Not building WinUI3 app - not supported by clang")
+if (NOT ENABLE_APP)
   return()
 endif ()
 
