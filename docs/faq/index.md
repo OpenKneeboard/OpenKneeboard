@@ -164,6 +164,16 @@ On v1.9 and above, OpenKneeboard's settings are in `%LOCALAPPDATA%\OpenKneeboard
 
 *OpenKneeboard's settings files are for its' own use only*; no help is available for modifying them, and you should not create or use any tools that modify them. OpenKneeboard makes no attempt to handle settings files that have been altered by anything other than OpenKneeboard itself. Any issues will be assumed to be your fault, and you are on your own for fixing them.
 
+## Why do I need to add something that isn't a game to the games list?
+
+You don't; anything or anyone telling you that you need to is giving you bad advice.
+
+Adding things that aren't games to the games list has *never* been necessary or beneficial, and it has often caused performance problems.
+
+## Why won't OpenKneeboard let me add some app to the games list?
+
+Because it's not a game - [you don't need to add it, and adding it would be harmful](#why-do-i-need-to-add-something-that-isnt-a-game-to-the-games-list).
+
 ## How do I remove OpenKneeboard?
 
 Uninstall it from add/remove programs. **DO NOT USE THIRD-PARTY UNINSTALLER TOOLS**.
