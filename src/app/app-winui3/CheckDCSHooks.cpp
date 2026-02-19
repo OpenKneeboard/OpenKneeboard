@@ -12,7 +12,6 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/FilesDiffer.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>

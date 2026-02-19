@@ -70,7 +70,6 @@ target_link_libraries(
   OpenKneeboard-ChromiumApp
   OpenKneeboard-ChromiumWorker
   OpenKneeboard-DXResources
-  OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-Elevation

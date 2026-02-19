@@ -76,16 +76,6 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-Lib-Headers)
 
-ok_add_library(OpenKneeboard-FilesDiffer STATIC FilesDiffer.cpp)
-target_link_libraries(
-  OpenKneeboard-FilesDiffer
-  PUBLIC
-  OpenKneeboard-Lib-Headers
-  PRIVATE
-  OpenKneeboard-fatal
-  OpenKneeboard-win32
-)
-
 ok_add_library(OpenKneeboard-handles INTERFACE)
 target_link_libraries(
   OpenKneeboard-handles
