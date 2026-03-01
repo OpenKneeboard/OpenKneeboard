@@ -24,12 +24,17 @@ OpenKneeboard currently only targets Visual Studio 2022 - not clang - due to lim
 
 ## Building
 
-Visual Studio 2022 must be installed; the free 'community' edition is fine. Make sure that support for 'CMake Presets' is enabled
+### General notes
 
-If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary. Then, just click 'build'
-If you use CLion, open the folder as a project, and everything should 'just work'.
+- Visual Studio 2022 must be installed
+  - the free 'community' edition is fine
+  - I am proactive about adopting new C++ features; if you encounter a build failure, make sure that Visual Studio 2022 is up-to-date
+  - You *must* use Visual Studio as your toolchain; other toolchains such as clang and mingw are not supported by WinUI3
+- Use the 'vcpkg' preset
 
-Alternatively, from a developer command prompt:
+## Building from terminal
+
+In a developer tools command prompt or developer tools Powershell:
 
 ```
 mkdir build
@@ -40,17 +45,29 @@ cmake --build . --config Debug --parallel
 
 The 'developer command prompt' is included with Visual Studio, and makes cmake and the compilers available.
 
-After building, the executable will be in `build/src/app/app-winui3/Debug`; the various utilities (including the test viewer) will be in `build/src/utilities/Debug`.
+After building, the various files will be in `build/out/`; this folder mirrors the installation tree. `cmake install` is not required.
 
-If you are distributing OpenKneeboard or a derivative work, please change the following CMake variables to avoid interoperability issues:
+### Using CLion as your IDE
 
-- `PROJECT_REVERSE_DOMAIN`: e.g. `com.yourdomain.yourprojectname` or `io.github.yourusername.yourprojectname`; used for IPC paths/keys
-- `PROJECT_OPENXR_API_LAYER_NAME`: e.g. `XR_APILAYER_FREDEMMOTT_OpenKneeboard`; replace both the project name and vendor ID. You can register your own OpenXR vendor ID, or `NOVENDOR` is a common alternative.
-- `PROJECT_OPENXR_API_LAYER_DESCRIPTION`: a short, human-readable description of your project.
+Open the folder and select the `vcpkg` preset when prompted. Make sure you are using the Visual Studio toolchain - CLion may default to mingw. If you want to keep mingw as your default toolchain, you will need to copy the vcpkg profile in CLion to switch the toolchain to Visual Studio.
 
-To avoid user confusion or violating OpenKneeboard's license, you should avoid using the word 'OpenKneeboard' or `XR_APILAYER_FREDEMMOTT` in the name or description of your project. Read the license for details on your obligation to remove names and unique identifiers when distributing binaries.
+### Using Visual Studio as your IDE
 
-Despite these options, OpenKneeboard is not an SDK, and no support is available for building other projects using it.
+Make sure that support for 'CMake Presets' is enabled in the IDE settings; you *must* use the `vcpkg` preset.
+
+### Using VSCode as your IDE
+
+If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary; select the vcpkg preset and selet 'build'
+
+### The 'clang-cl with vcpkg' preset
+
+This will not build the GUI app, because WinUI3 only supports the usual Visual Studio compiler.
+
+It is still useful for other parts of the codebase, as the warnings and errors can catch additional issues, or provide clearer error messages than Visual Studio.
+
+## Distribution
+
+OpenKneeboard has additional license requirements for changing names and other unique identifiers. Make sure that you read the license before distributing OpenKneeboard.
 
 ## IPC
 
