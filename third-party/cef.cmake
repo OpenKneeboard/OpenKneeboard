@@ -157,7 +157,7 @@ add_custom_target(
   VERBATIM
   COMMAND_EXPAND_LISTS
 )
-file(GLOB CEF_LOCALES "${CEF_RESOURCE_DIR}/locales/*")
+file(GLOB CEF_LOCALES RELATIVE "${CEF_RESOURCE_DIR}/locales" "${CEF_RESOURCE_DIR}/locales/*")
 add_custom_target(
   copy-cef-locales
   COMMAND
