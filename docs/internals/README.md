@@ -32,7 +32,7 @@ OpenKneeboard currently only targets Visual Studio 2022 - not clang - due to lim
   - You *must* use Visual Studio as your toolchain; other toolchains such as clang and mingw are not supported by WinUI3
 - Use the 'vcpkg' preset
 
-## Building from terminal
+### Building from terminal
 
 In a developer tools command prompt or developer tools Powershell:
 
