@@ -51,19 +51,25 @@ After building, the various files will be in `build/out/`; this folder mirrors t
 
 Open the folder and select the `vcpkg` preset when prompted. Make sure you are using the Visual Studio toolchain - CLion may default to mingw. If you want to keep mingw as your default toolchain, you will need to copy the vcpkg profile in CLion to switch the toolchain to Visual Studio.
 
+### Using VSCode as your IDE
+
+If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary; select the vcpkg preset and selet 'build'
+
 ### Using Visual Studio as your IDE
 
 Make sure that support for 'CMake Presets' is enabled in the IDE settings; you *must* use the `vcpkg` preset.
 
-### Using VSCode as your IDE
-
-If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary; select the vcpkg preset and selet 'build'
+For more information, see [Microsoft's documentation](https://learn.microsoft.com/en-us/cpp/build/cmake-presets-vs).
 
 ### The 'clang-cl with vcpkg' preset
 
 This will not build the GUI app, because WinUI3 only supports the usual Visual Studio compiler.
 
 It is still useful for other parts of the codebase, as the warnings and errors can catch additional issues, or provide clearer error messages than Visual Studio.
+
+### About Visual Studio 2026
+
+I have made test builds with Visual Studio 2026, however I will not be targetting it or supporting it until it is generally available in GitHub Actions. Once it is generally available in GitHub Actions, I expect to primarily target VS 2026, and likely drop support for VS 2022.
 
 ## Distribution
 
