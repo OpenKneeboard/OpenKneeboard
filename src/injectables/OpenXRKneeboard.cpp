@@ -840,6 +840,10 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
   for (uint32_t i = 0; i < info->enabledExtensionCount; ++i) {
     const std::string_view extensionName {info->enabledExtensionNames[i]};
     dprint("Application enabled extension: {}", extensionName);
+    if (extensionName == XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME) {
+      dprint.Warning("Application enabled XR_KHR_COMPOSITION_LAYER_DEPTH; runtime bugs are likely");
+      continue;
+    }
     if (extensionName == XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME) {
       gHaveXR_KHR_vulkan_enable2 = true;
       continue;
