@@ -8,7 +8,9 @@ Capture will work with most apps, but has limitations.
 
 ## Dialog boxes and drop-down menus
 
-On apps using older frameworks, dialog boxes and drop-down menus may not be shown. There is no fix or workaround.
+On apps using older frameworks, dialog boxes and drop-down menus may not be shown. There is no workaround.
+
+In the future, it may be supported on some versions of Windows 11; any updates will be on [the GitHub issue](https://github.com/OpenKneeboard/OpenKneeboard/issues/883).
 
 ## The captured window doesn't update when it's not visible (e.g. when in-game)
 
