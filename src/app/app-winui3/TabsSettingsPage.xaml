@@ -205,7 +205,7 @@
           Header="Show Windows mouse cursor"
           IsOn="{x:Bind IsCursorCaptureEnabled}"
           OnContent="The real mouse cursor is visible in the tab"
-          OffContent="The real mouse cursor is not not visible in the tab"/>
+          OffContent="The real mouse cursor is not visible in the tab"/>
         <TextBlock
           Style="{ThemeResource CaptionTextBlockStyle}"
           Foreground="{ThemeResource TextFillColorSecondary}">
