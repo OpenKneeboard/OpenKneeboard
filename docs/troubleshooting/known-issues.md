@@ -4,9 +4,18 @@ parent: Troubleshooting
 
 # Known Issues
 
-## OpenKneeboard freezes on some corrupted DCS `.miz` or .`trk` files
+## iRacing
 
-OpenKneeboard v1.12.6 and below do not correctly handle some forms of zip file corruption, which can cause an OpenKneeboard freeze, but not a game freeze. A fix is ready for the next version of OpenKneeboard.
+Set `DepthLayerExtensionEnabled` to `0` in your iRacing OpenXR ini file.
+
+iRacing is one of very few games that submits depth; this has uncovered bugs in various OpenXR runtimes, including:
+
+- overlays obscured by cockpit (Meta Link)
+- IPD issues (Vive Focus 2 on SteamVR)
+- performance (various)
+- 'watery' artifacts (various)
+
+If you are affected by an issue which is resolved by `DepthLayerExtensionEnabled=0`, contact your runtime vendor (usually your headset manufacturer) for support.
 
 ## Meta Link (wired) disconnects when using OpenTabletDriver
 
@@ -15,7 +24,7 @@ Meta introduced a firmware change in late 2025 which triggers this issue; the ne
 For now, your options are:
 - use Air Link, Virtual Desktop, Steam Link, or another alternative.
 - use your vendor-provided drivers instead; [wintab-adapter](https://github.com/OpenKneeboard/wintab-adapter) is recommended.
-- use a development build of OpenTabletDriver.
+- use a prerelease build of OpenTabletDriver.
 
 ## Crash or error on NVidia 591+ drivers with USB or virtual monitors
 

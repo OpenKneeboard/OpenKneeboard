@@ -32,21 +32,23 @@ Legacy SteamVR API (OpenVR): where possible, OpenXR is *strongly* recommended in
 ## Common Games
 
 | Game              | Non-VR   | Native OpenXR | Legacy Oculus SDK (OVR) | Legacy SteamVR API (OpenVR) |
-|-------------------|----------|---------------|-------------------------|-----------------------------|
-| DCS World         | ✅        | ✅             | ✅                       | ✅                           |
-| Falcon BMS        | ✅        | n/a           | n/a                     | ✅                           |
-| iRacing           | ❌        | ✅             | ❌                       | ✅                           |
-| MSFS 2020 - D3D11 | ✅        | ✅             | n/a                     | ✅                           |
-| MSFS 2020 - D3D12 | ❌        | 🧪            | n/a                     | ✅                           |
-| MSFS 2024         | ❌        | 🧪            | n/a                     | ✅                           |
-| BeamNG.drive      | untested | ❌             | n/a                     | ✅                           |
-| Elite Dangerous  | ❌ | n/a | ❌ | ✅ |
+|-------------------|----------|--------------|-------------------------|-----------------------------|
+| DCS World         | ✅        | ✅            | ✅                       | ✅                           |
+| Falcon BMS        | ✅        | n/a          | n/a                     | ✅                           |
+| iRacing           | ❌        | ✅📝          | ❌                       | ✅                           |
+| MSFS 2020 - D3D11 | ✅        | ✅            | n/a                     | ✅                           |
+| MSFS 2020 - D3D12 | ❌        | 🧪           | n/a                     | ✅                           |
+| MSFS 2024         | ❌        | 🧪           | n/a                     | ✅                           |
+| BeamNG.drive      | untested | ❌            | n/a                     | ✅                           |
+| Elite Dangerous  | ❌ | n/a          | ❌ | ✅ |
 
 ### BeamNG.drive
 
 As of April 4th, 2024, BeamNG.drive in VR is incompatible except when using SteamVR, because BeamNG.drive does not use `XR_KHR_vulkan_enable2` + `xrCreateVulkanInstanceKHR()` + `xrCreateVulkanDeviceKHR()`.
 
 ### iRacing
+
+You may need to set `DepthLayerExtensionEnabled=0` in your iRacing ini file - see [known issues](../troubleshooting/known-issues.md#iracing).
 
 Support for other APIs is blocked by the anti-cheat software.
 
