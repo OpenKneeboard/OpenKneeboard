@@ -73,21 +73,21 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
     // else handled by TabBase
   }
 
+  std::shared_ptr<ITab> result;
   try {
 #define IT(_, it) \
   if (type == #it) { \
     auto instance = co_await load_tab<it##Tab>( \
       mDXR, mKneeboard, persistentID, title, settings); \
     if (instance) { \
-      co_return instance; \
+      result = instance; \
     } \
   }
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
-    if (type == "Plugin") {
-      auto instance = co_await PluginTab::Create(
+    if (!result && type == "Plugin") {
+      result = co_await PluginTab::Create(
         mDXR, mKneeboard, persistentID, title, settings);
-      co_return instance;
     }
   } catch (const std::exception& e) {
     dprint.Error(
@@ -102,9 +102,31 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
       winrt::to_string(e.message()));
     throw;
   }
-  dprint("Couldn't load tab with type {}", rawType);
-  OPENKNEEBOARD_BREAK;
-  co_return nullptr;
+
+  if (!result) {
+    dprint("Couldn't load tab with type {}", rawType);
+    OPENKNEEBOARD_BREAK;
+    co_return nullptr;
+  }
+
+  if (tab.contains("Bookmarks")) {
+    std::vector<std::pair<PageIndex, std::string>> pending;
+    for (const auto& entry: tab.at("Bookmarks")) {
+      if (!entry.contains("PageIndex") || !entry.contains("Title")) {
+        continue;
+      }
+      pending.emplace_back(
+        entry.at("PageIndex").get<PageIndex>(),
+        entry.at("Title").get<std::string>());
+    }
+    if (!pending.empty()) {
+      if (auto tabBase = std::dynamic_pointer_cast<TabBase>(result)) {
+        tabBase->SetPendingBookmarkRestore(std::move(pending));
+      }
+    }
+  }
+
+  co_return result;
 }
 
 task<void> TabsList::LoadSettings(nlohmann::json config) {
@@ -187,6 +209,42 @@ nlohmann::json TabsList::GetSettings() const {
         savedTab.emplace("Settings", settings);
       }
     }
+
+    {
+      nlohmann::json bookmarkArray = nlohmann::json::array();
+      const auto liveBookmarks = tab->GetBookmarks();
+
+      if (!liveBookmarks.empty()) {
+        // Content is loaded: serialize live bookmarks as page indices.
+        const auto pageIDs = tab->GetPageIDs();
+        for (const auto& bookmark: liveBookmarks) {
+          const auto it = std::ranges::find(pageIDs, bookmark.mPageID);
+          if (it == pageIDs.end()) {
+            continue;
+          }
+          bookmarkArray.push_back({
+            {"PageIndex",
+             static_cast<PageIndex>(
+               std::distance(pageIDs.begin(), it))},
+            {"Title", bookmark.mTitle},
+          });
+        }
+      } else if (const auto tabBase = std::dynamic_pointer_cast<TabBase>(tab)) {
+        // Content not yet loaded (pending restore phase): pass pending data
+        // through so the startup save does not clobber the bookmark data.
+        for (const auto& [pageIndex, title]: tabBase->GetPendingBookmarkData()) {
+          bookmarkArray.push_back({
+            {"PageIndex", pageIndex},
+            {"Title", title},
+          });
+        }
+      }
+
+      if (!bookmarkArray.empty()) {
+        savedTab.emplace("Bookmarks", std::move(bookmarkArray));
+      }
+    }
+
     ret.push_back(savedTab);
     continue;
   }

@@ -25,6 +25,13 @@ class TabBase : public virtual ITab, public virtual EventReceiver {
   virtual std::vector<Bookmark> GetBookmarks() const override final;
   virtual void SetBookmarks(const std::vector<Bookmark>&) override final;
 
+  void SetPendingBookmarkRestore(
+    std::vector<std::pair<PageIndex, std::string>> pending);
+
+  // Returns pending bookmark data for serialization during startup,
+  // before content is loaded and pending bookmarks have been applied.
+  std::vector<std::pair<PageIndex, std::string>> GetPendingBookmarkData() const;
+
  protected:
   TabBase(const winrt::guid& persistentID, std::string_view title);
 
@@ -33,6 +40,7 @@ class TabBase : public virtual ITab, public virtual EventReceiver {
   const RuntimeID mRuntimeID;
   std::string mTitle;
   std::vector<Bookmark> mBookmarks;
+  std::vector<std::pair<PageIndex, std::string>> mPendingBookmarks;
 
   void OnContentChanged();
 };
