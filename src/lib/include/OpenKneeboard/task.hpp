@@ -302,6 +302,8 @@ struct TaskState {
 
   task_context get_task_context() const noexcept { return mContext; }
 
+  void update_thread_id(std::thread::id id) noexcept { mContext.mThreadID = id; }
+
  private:
   static constexpr uint8_t ProducerBit =
     std::to_underlying(TaskStateOwner::Producer);
@@ -428,8 +430,13 @@ DetachedTask ResumeOnOriginalThread(
   OPENKNEEBOARD_ASSERT(!context.is_this_thread());
   co_await TaskContextAwaiter {context};
 
+  // IContextCallback::ContextCallback() guarantees dispatch to the correct
+  // COM apartment, but the physical OS thread may differ if the original
+  // thread has exited and COM re-assigned the apartment.  Update the stored
+  // thread ID so that downstream is_this_thread() checks stay consistent.
   OPENKNEEBOARD_ASSERT(state);
   auto lock = state.lock();
+  lock->update_thread_id(std::this_thread::get_id());
   const auto handle = std::exchange(lock->mConsumerHandle, {});
   OPENKNEEBOARD_ASSERT(handle);
   state.reset(std::move(lock));

@@ -71,8 +71,6 @@ struct TaskContextAwaiter {
     OPENKNEEBOARD_ASSERT(data->mConsumerHandle);
 
     try {
-      OPENKNEEBOARD_ASSERT(
-        std::this_thread::get_id() == data->mContext.mThreadID);
       const auto consumer = std::exchange(data->mConsumerHandle, {});
       consumer.resume();
       return S_OK;
