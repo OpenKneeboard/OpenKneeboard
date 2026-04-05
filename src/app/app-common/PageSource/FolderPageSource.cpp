@@ -127,4 +127,32 @@ task<void> FolderPageSource::SetPath(std::filesystem::path path) {
   co_await this->Reload();
 }
 
+std::optional<std::pair<std::filesystem::path, PageIndex>>
+FolderPageSource::GetFileAndLocalIndexForPageID(PageID id) const {
+  for (const auto& [absPath, info]: mContents) {
+    const auto pageIDs = info.mDelegate->GetPageIDs();
+    for (PageIndex i = 0; i < static_cast<PageIndex>(pageIDs.size()); ++i) {
+      if (pageIDs[i] == id) {
+        return std::make_pair(absPath.lexically_relative(mPath), i);
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<PageID> FolderPageSource::GetPageIDForRelativeFile(
+  const std::filesystem::path& relativeFile,
+  PageIndex localIndex) const {
+  const auto full = (mPath / relativeFile).lexically_normal();
+  const auto it = mContents.find(full);
+  if (it == mContents.end()) {
+    return std::nullopt;
+  }
+  const auto pageIDs = it->second.mDelegate->GetPageIDs();
+  if (localIndex >= static_cast<PageIndex>(pageIDs.size())) {
+    return std::nullopt;
+  }
+  return pageIDs[localIndex];
+}
+
 }// namespace OpenKneeboard

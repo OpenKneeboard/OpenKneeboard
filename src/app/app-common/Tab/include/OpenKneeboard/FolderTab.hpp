@@ -12,6 +12,7 @@
 
 #include <OpenKneeboard/audited_ptr.hpp>
 
+#include <cstdint>
 #include <filesystem>
 
 namespace OpenKneeboard {
@@ -45,6 +46,22 @@ class FolderTab final : public TabBase,
   [[nodiscard]]
   virtual task<void> SetPath(std::filesystem::path);
 
+  // Returns the active FolderPageSource, or nullptr if not yet initialised.
+  const FolderPageSource* GetPageSource() const;
+
+  // Bookmark entry for folder tabs: keyed by relative file path and local
+  // page index so bookmarks survive other files being added/removed.
+  struct FolderPendingBookmark {
+    std::filesystem::path mRelFile;
+    uint64_t mFileHash {0};
+    PageIndex mLocalPageIndex {0};
+    std::string mTitle;
+  };
+
+  void SetFolderPendingBookmarkRestore(
+    std::vector<FolderPendingBookmark> pending);
+  std::vector<FolderPendingBookmark> GetFolderPendingBookmarkData() const;
+
  private:
   FolderTab(
     const audited_ptr<DXResources>&,
@@ -57,6 +74,9 @@ class FolderTab final : public TabBase,
 
   std::shared_ptr<FolderPageSource> mPageSource;
   std::filesystem::path mPath;
+
+  std::vector<FolderPendingBookmark> mPendingFolderBookmarks;
+  void OnFolderContentChanged();
 };
 
 }// namespace OpenKneeboard
