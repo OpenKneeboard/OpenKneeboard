@@ -235,6 +235,30 @@ winrt::fire_and_forget do_test() {
     e.ResetEvent();
   }
   testTimers.mark("delayed exception");
+
+  std::println("COM context token consistency after apartment round-trip");
+  for (int i = 0; i < TestIterations; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+    ULONG_PTR tokenBefore {};
+    CoGetContextToken(&tokenBefore);
+    auto context = this_thread::get_task_context();
+
+    co_await resume_on_thread_pool();
+    co_await resume_in_context(context);
+
+    ULONG_PTR tokenAfter {};
+    CoGetContextToken(&tokenAfter);
+    OPENKNEEBOARD_ASSERT(
+      tokenBefore == tokenAfter,
+      "COM context token must be identical after IContextCallback round-trip: "
+      "before={:#x} after={:#x}",
+      tokenBefore,
+      tokenAfter);
+  }
+  testTimers.mark("COM context token consistency");
+
   testTimers.dump();
   TestFinished.SetEvent();
   co_return;

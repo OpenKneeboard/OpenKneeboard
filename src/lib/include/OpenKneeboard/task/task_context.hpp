@@ -41,8 +41,17 @@ struct task_context {
     return mThreadID == std::this_thread::get_id();
   }
 
+  [[nodiscard]]
+  bool is_same_com_context() const noexcept {
+    ULONG_PTR current {};
+    [[maybe_unused]] const auto hr = CoGetContextToken(&current);
+    OPENKNEEBOARD_ASSERT(SUCCEEDED(hr));
+    return current == mCOMContextToken;
+  }
+
  protected:
   std::thread::id mThreadID = std::this_thread::get_id();
+  ULONG_PTR mCOMContextToken {};
   wil::com_ptr<IContextCallback> mCOMCallback;
 
   task_context() {
@@ -52,6 +61,11 @@ struct task_context {
       SUCCEEDED(hr),
       "Attempted to create a task_context<> without a COM context: {:#010x}",
       static_cast<uint32_t>(hr));
+    [[maybe_unused]] const auto tokenHr = CoGetContextToken(&mCOMContextToken);
+    OPENKNEEBOARD_ASSERT(
+      SUCCEEDED(tokenHr),
+      "Failed to capture COM context token: {:#010x}",
+      static_cast<uint32_t>(tokenHr));
   }
 };
 
