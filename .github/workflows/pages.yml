@@ -36,7 +36,7 @@ jobs:
           working-directory: docs/
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Build with Jekyll
         # The site is in a subdirectory...
         working-directory: docs/
