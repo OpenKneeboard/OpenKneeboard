@@ -4,6 +4,7 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
+#include <OpenKneeboard/FileHash.hpp>
 #include <OpenKneeboard/FilePageSource.hpp>
 #include <OpenKneeboard/FolderPageSource.hpp>
 
@@ -153,6 +154,45 @@ std::optional<PageID> FolderPageSource::GetPageIDForRelativeFile(
     return std::nullopt;
   }
   return pageIDs[localIndex];
+}
+
+std::optional<nlohmann::json> FolderPageSource::GetPersistentIDForPage(
+  PageID id) const {
+  const auto info = this->GetFileAndLocalIndexForPageID(id);
+  if (!info) {
+    return std::nullopt;
+  }
+  const auto absFile = mPath / info->first;
+  const auto hash = ComputeFileHash(absFile);
+  if (!hash) {
+    return std::nullopt;
+  }
+  return nlohmann::json {
+    {"File", info->first.generic_string()},
+    {"FileHash", hash},
+    {"LocalPageIndex", info->second},
+  };
+}
+
+std::optional<PageID> FolderPageSource::GetPageIDFromPersistentID(
+  const nlohmann::json& id) const {
+  if (!id.contains("File") || !id.contains("FileHash")
+      || !id.contains("LocalPageIndex")) {
+    return std::nullopt;
+  }
+  const std::filesystem::path relFile {id.at("File").get<std::string>()};
+  const auto storedHash = id.at("FileHash").get<uint64_t>();
+  const auto absFile = mPath / relFile;
+  std::error_code ec;
+  if (!std::filesystem::exists(absFile, ec) || ec) {
+    return std::nullopt;
+  }
+  const auto currentHash = ComputeFileHash(absFile);
+  if (!currentHash || currentHash != storedHash) {
+    return std::nullopt;
+  }
+  return this->GetPageIDForRelativeFile(
+    relFile, id.at("LocalPageIndex").get<PageIndex>());
 }
 
 }// namespace OpenKneeboard

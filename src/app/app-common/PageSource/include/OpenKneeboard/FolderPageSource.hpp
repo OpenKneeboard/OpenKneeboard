@@ -54,6 +54,11 @@ class FolderPageSource final : public PageSourceWithDelegates {
     const std::filesystem::path& relativeFile,
     PageIndex localIndex) const;
 
+  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    const nlohmann::json&) const override;
+
  private:
   void SubscribeToChanges();
   OpenKneeboard::fire_and_forget OnFileModified(std::filesystem::path);

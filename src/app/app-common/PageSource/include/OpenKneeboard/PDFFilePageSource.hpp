@@ -66,6 +66,11 @@ class PDFFilePageSource final
 
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
+  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    const nlohmann::json&) const override;
+
  private:
   winrt::apartment_context mUIThread;
   // Useful because `wil::resume_foreground()` will *always* enqueue, never

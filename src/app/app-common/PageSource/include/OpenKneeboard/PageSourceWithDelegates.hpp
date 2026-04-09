@@ -65,6 +65,11 @@ class PageSourceWithDelegates
   bool HasDeveloperTools(PageID) const override;
   fire_and_forget OpenDeveloperToolsWindow(KneeboardViewID, PageID) override;
 
+  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    const nlohmann::json&) const override;
+
  protected:
   DisposalState mDisposal;
 

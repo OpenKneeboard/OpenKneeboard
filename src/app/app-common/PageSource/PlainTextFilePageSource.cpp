@@ -4,6 +4,7 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
+#include <OpenKneeboard/FileHash.hpp>
 #include <OpenKneeboard/PlainTextFilePageSource.hpp>
 #include <OpenKneeboard/PlainTextPageSource.hpp>
 
@@ -133,6 +134,46 @@ std::string PlainTextFilePageSource::GetFileContent() const {
 PageIndex PlainTextFilePageSource::GetPageCount() const {
   // Show placeholder "[empty file]" instead of 'no pages' error
   return std::max<PageIndex>(1, mPageSource->GetPageCount());
+}
+
+std::optional<nlohmann::json> PlainTextFilePageSource::GetPersistentIDForPage(
+  PageID id) const {
+  if (mPath.empty()) {
+    return std::nullopt;
+  }
+  const auto pageIDs = this->GetPageIDs();
+  const auto it = std::ranges::find(pageIDs, id);
+  if (it == pageIDs.end()) {
+    return std::nullopt;
+  }
+  const auto pageIndex
+    = static_cast<PageIndex>(std::distance(pageIDs.begin(), it));
+  const auto hash = ComputeFileHash(mPath);
+  if (!hash) {
+    return std::nullopt;
+  }
+  return nlohmann::json {{"PageIndex", pageIndex}, {"FileHash", hash}};
+}
+
+std::optional<PageID> PlainTextFilePageSource::GetPageIDFromPersistentID(
+  const nlohmann::json& id) const {
+  if (mPath.empty()) {
+    return std::nullopt;
+  }
+  if (!id.contains("PageIndex") || !id.contains("FileHash")) {
+    return std::nullopt;
+  }
+  const auto storedHash = id.at("FileHash").get<uint64_t>();
+  const auto currentHash = ComputeFileHash(mPath);
+  if (!currentHash || currentHash != storedHash) {
+    return std::nullopt;
+  }
+  const auto pageIndex = id.at("PageIndex").get<PageIndex>();
+  const auto pageIDs = this->GetPageIDs();
+  if (pageIndex >= static_cast<PageIndex>(pageIDs.size())) {
+    return std::nullopt;
+  }
+  return pageIDs[pageIndex];
 }
 
 }// namespace OpenKneeboard

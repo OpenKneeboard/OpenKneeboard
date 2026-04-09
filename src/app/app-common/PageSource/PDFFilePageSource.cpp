@@ -9,6 +9,7 @@
 #include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/DoodleRenderer.hpp>
+#include <OpenKneeboard/FileHash.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
 #include <OpenKneeboard/FilesystemWatcher.hpp>
 #include <OpenKneeboard/LaunchURI.hpp>
@@ -650,4 +651,39 @@ fire_and_forget PDFFilePageSource::OnFileModified(
     co_await this->Reload();
   }
 }
+
+std::optional<nlohmann::json> PDFFilePageSource::GetPersistentIDForPage(
+  PageID id) const {
+  const auto pageIDs = this->GetPageIDs();
+  const auto it = std::ranges::find(pageIDs, id);
+  if (it == pageIDs.end()) {
+    return std::nullopt;
+  }
+  const auto pageIndex
+    = static_cast<PageIndex>(std::distance(pageIDs.begin(), it));
+  const auto hash = ComputeFileHash(this->GetPath());
+  if (!hash) {
+    return std::nullopt;
+  }
+  return nlohmann::json {{"PageIndex", pageIndex}, {"FileHash", hash}};
+}
+
+std::optional<PageID> PDFFilePageSource::GetPageIDFromPersistentID(
+  const nlohmann::json& id) const {
+  if (!id.contains("PageIndex") || !id.contains("FileHash")) {
+    return std::nullopt;
+  }
+  const auto storedHash = id.at("FileHash").get<uint64_t>();
+  const auto currentHash = ComputeFileHash(this->GetPath());
+  if (!currentHash || currentHash != storedHash) {
+    return std::nullopt;
+  }
+  const auto pageIndex = id.at("PageIndex").get<PageIndex>();
+  const auto pageIDs = this->GetPageIDs();
+  if (pageIndex >= static_cast<PageIndex>(pageIDs.size())) {
+    return std::nullopt;
+  }
+  return pageIDs[pageIndex];
+}
+
 }// namespace OpenKneeboard

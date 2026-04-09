@@ -9,10 +9,10 @@
 #include <OpenKneeboard/DCSRadioLogTab.hpp>
 #include <OpenKneeboard/DCSTerrainTab.hpp>
 #include <OpenKneeboard/Filesystem.hpp>
-#include <OpenKneeboard/FolderPageSource.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/TabBase.hpp>
 #include <OpenKneeboard/TabTypes.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
@@ -55,30 +55,6 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-// Polynomial hash over the first 64 KiB of a file plus its total size.
-// Used to detect replaced files so stale bookmarks are not silently applied.
-// Not a cryptographic hash.
-static uint64_t ComputeFileHash(const std::filesystem::path& path) noexcept {
-  try {
-    const auto size = std::filesystem::file_size(path);
-    std::ifstream file(path, std::ios::binary);
-    if (!file) {
-      return 0;
-    }
-    const auto readSize = static_cast<std::streamsize>(
-      std::min<std::uintmax_t>(size, 65536));
-    std::vector<char> buf(readSize);
-    file.read(buf.data(), readSize);
-    const auto n = static_cast<std::size_t>(file.gcount());
-    uint64_t hash = size;
-    for (std::size_t i = 0; i < n; ++i) {
-      hash = hash * 31 + static_cast<uint8_t>(buf[i]);
-    }
-    return hash ? hash : 1;
-  } catch (...) {
-    return 0;
-  }
-}
 
 task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   const nlohmann::json tab) {
@@ -139,79 +115,21 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   }
 
   if (tab.contains("Bookmarks")) {
-    if (const auto singleFile =
-          std::dynamic_pointer_cast<SingleFileTab>(result)) {
-      // SingleFileTab: {"FileHash": N, "Pages": [{"PageIndex": k, "Title": "..."}]}
-      const auto& bm = tab.at("Bookmarks");
-      if (bm.contains("FileHash") && bm.contains("Pages")) {
-        const auto storedHash = bm.at("FileHash").get<uint64_t>();
-        const auto& path = singleFile->GetPath();
-        if (!std::filesystem::exists(path)) {
-          dprint(
-            "Discarding bookmarks for '{}': file not found", path.string());
-        } else {
-          const auto currentHash = ComputeFileHash(path);
-          if (currentHash == 0 || currentHash != storedHash) {
-            dprint(
-              "Discarding bookmarks for '{}': file content has changed",
-              path.string());
-          } else {
-            TabBase::PendingBookmarkData pending;
-            pending.mFileHash = storedHash;
-            for (const auto& entry: bm.at("Pages")) {
-              if (!entry.contains("PageIndex") || !entry.contains("Title")) {
-                continue;
-              }
-              pending.mPages.emplace_back(
-                entry.at("PageIndex").get<PageIndex>(),
-                entry.at("Title").get<std::string>());
-            }
-            if (!pending.mPages.empty()) {
-              singleFile->SetPendingBookmarkRestore(std::move(pending));
-            }
-          }
-        }
-      }
-    } else if (
-      const auto folder = std::dynamic_pointer_cast<FolderTab>(result)) {
-      // FolderTab: [{"File": "...", "FileHash": N, "LocalPageIndex": k, "Title": "..."}]
-      if (!std::filesystem::is_directory(folder->GetPath())) {
-        dprint(
-          "Discarding bookmarks for folder '{}': directory not found",
-          folder->GetPath().string());
-      } else {
-        std::vector<FolderTab::FolderPendingBookmark> pending;
-        for (const auto& entry: tab.at("Bookmarks")) {
-          if (!entry.contains("File") || !entry.contains("FileHash")
-              || !entry.contains("LocalPageIndex")
-              || !entry.contains("Title")) {
-            continue;
-          }
-          const std::filesystem::path relFile {
-            entry.at("File").get<std::string>()};
-          const auto storedHash = entry.at("FileHash").get<uint64_t>();
-          const auto absFile = folder->GetPath() / relFile;
-          if (!std::filesystem::exists(absFile)) {
-            dprint(
-              "Skipping bookmark: file not found '{}'", absFile.string());
-            continue;
-          }
-          const auto currentHash = ComputeFileHash(absFile);
-          if (currentHash == 0 || currentHash != storedHash) {
-            dprint(
-              "Skipping bookmark: file content changed '{}'",
-              absFile.string());
+    if (const auto tabBase = std::dynamic_pointer_cast<TabBase>(result)) {
+      const auto& bmArray = tab.at("Bookmarks");
+      if (bmArray.is_array()) {
+        std::vector<TabBase::PendingBookmark> pending;
+        for (const auto& entry: bmArray) {
+          if (!entry.contains("PersistentID") || !entry.contains("Title")) {
             continue;
           }
           pending.push_back({
-            relFile,
-            storedHash,
-            entry.at("LocalPageIndex").get<PageIndex>(),
+            entry.at("PersistentID"),
             entry.at("Title").get<std::string>(),
           });
         }
         if (!pending.empty()) {
-          folder->SetFolderPendingBookmarkRestore(std::move(pending));
+          tabBase->SetPendingBookmarkRestore(std::move(pending));
         }
       }
     }
@@ -301,85 +219,24 @@ nlohmann::json TabsList::GetSettings() const {
       }
     }
 
-    if (const auto singleFile =
-          std::dynamic_pointer_cast<SingleFileTab>(tab)) {
-      // SingleFileTab: persist bookmarks guarded by a file content hash.
-      nlohmann::json bmJson;
-      const auto liveBookmarks = singleFile->GetBookmarks();
-      if (!liveBookmarks.empty()) {
-        const auto& path = singleFile->GetPath();
-        if (std::filesystem::exists(path)) {
-          const auto hash = ComputeFileHash(path);
-          if (hash != 0) {
-            nlohmann::json pages = nlohmann::json::array();
-            const auto pageIDs = singleFile->GetPageIDs();
-            for (const auto& bm: liveBookmarks) {
-              const auto it = std::ranges::find(pageIDs, bm.mPageID);
-              if (it == pageIDs.end()) {
-                continue;
-              }
-              pages.push_back({
-                {"PageIndex",
-                 static_cast<PageIndex>(
-                   std::distance(pageIDs.begin(), it))},
-                {"Title", bm.mTitle},
-              });
-            }
-            if (!pages.empty()) {
-              bmJson = {{"FileHash", hash}, {"Pages", std::move(pages)}};
-            }
-          }
-        }
-      } else if (const auto pending = singleFile->GetPendingBookmarkData()) {
-        // Pass-through during startup before content is loaded.
-        if (pending->mFileHash != 0 && !pending->mPages.empty()) {
-          nlohmann::json pages = nlohmann::json::array();
-          for (const auto& [idx, title]: pending->mPages) {
-            pages.push_back({{"PageIndex", idx}, {"Title", title}});
-          }
-          bmJson = {
-            {"FileHash", pending->mFileHash}, {"Pages", std::move(pages)}};
-        }
-      }
-      if (!bmJson.is_null()) {
-        savedTab.emplace("Bookmarks", std::move(bmJson));
-      }
-    } else if (
-      const auto folder = std::dynamic_pointer_cast<FolderTab>(tab)) {
-      // FolderTab: persist bookmarks keyed by relative file path and hash.
+    if (const auto tabBase = std::dynamic_pointer_cast<TabBase>(tab)) {
       nlohmann::json bmArray = nlohmann::json::array();
-      const auto liveBookmarks = folder->GetBookmarks();
+      const auto liveBookmarks = tabBase->GetBookmarks();
       if (!liveBookmarks.empty()) {
-        if (const auto* src = folder->GetPageSource()) {
-          for (const auto& bm: liveBookmarks) {
-            const auto info = src->GetFileAndLocalIndexForPageID(bm.mPageID);
-            if (!info) {
-              continue;
-            }
-            const auto absFile = folder->GetPath() / info->first;
-            if (!std::filesystem::exists(absFile)) {
-              continue;
-            }
-            const auto hash = ComputeFileHash(absFile);
-            if (hash == 0) {
-              continue;
-            }
+        for (const auto& bm: liveBookmarks) {
+          if (auto persistentID = tabBase->GetPersistentIDForPage(bm.mPageID)) {
             bmArray.push_back({
-              {"File", info->first.generic_string()},
-              {"FileHash", hash},
-              {"LocalPageIndex", info->second},
+              {"PersistentID", std::move(*persistentID)},
               {"Title", bm.mTitle},
             });
           }
         }
       } else {
         // Pass-through during startup before content is loaded.
-        for (const auto& p: folder->GetFolderPendingBookmarkData()) {
+        for (const auto& pending: tabBase->GetPendingBookmarkData()) {
           bmArray.push_back({
-            {"File", p.mRelFile.generic_string()},
-            {"FileHash", p.mFileHash},
-            {"LocalPageIndex", p.mLocalPageIndex},
-            {"Title", p.mTitle},
+            {"PersistentID", pending.mPersistentID},
+            {"Title", pending.mTitle},
           });
         }
       }

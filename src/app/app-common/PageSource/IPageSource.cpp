@@ -10,4 +10,13 @@ namespace OpenKneeboard {
 
 IPageSource::~IPageSource() = default;
 
+std::optional<nlohmann::json> IPageSource::GetPersistentIDForPage(PageID) const {
+  return std::nullopt;
+}
+
+std::optional<PageID> IPageSource::GetPageIDFromPersistentID(
+  const nlohmann::json&) const {
+  return std::nullopt;
+}
+
 }

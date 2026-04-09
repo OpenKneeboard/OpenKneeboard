@@ -22,9 +22,6 @@ FolderTab::FolderTab(
     PageSourceWithDelegates(dxr, kbs),
     mDXResources(dxr),
     mKneeboard(kbs) {
-  AddEventListener(
-    this->evContentChangedEvent,
-    std::bind_front(&FolderTab::OnFolderContentChanged, this));
 }
 
 task<std::shared_ptr<FolderTab>> FolderTab::Create(
@@ -52,51 +49,6 @@ FolderTab::~FolderTab() {}
 
 const FolderPageSource* FolderTab::GetPageSource() const {
   return mPageSource.get();
-}
-
-void FolderTab::OnFolderContentChanged() {
-  if (mPendingFolderBookmarks.empty() || !mPageSource) {
-    return;
-  }
-  const auto pageIDs = this->GetPageIDs();
-  if (pageIDs.empty()) {
-    return;
-  }
-  std::vector<Bookmark> restored;
-  for (const auto& pending: mPendingFolderBookmarks) {
-    if (const auto pageID = mPageSource->GetPageIDForRelativeFile(
-          pending.mRelFile, pending.mLocalPageIndex)) {
-      restored.push_back({GetRuntimeID(), *pageID, pending.mTitle});
-    }
-  }
-  mPendingFolderBookmarks.clear();
-  if (!restored.empty()) {
-    this->SetBookmarks(restored);
-  }
-}
-
-void FolderTab::SetFolderPendingBookmarkRestore(
-  std::vector<FolderPendingBookmark> pending) {
-  if (!mPageSource || this->GetPageIDs().empty()) {
-    mPendingFolderBookmarks = std::move(pending);
-    return;
-  }
-  // Content already loaded: resolve immediately.
-  std::vector<Bookmark> restored;
-  for (const auto& entry: pending) {
-    if (const auto pageID = mPageSource->GetPageIDForRelativeFile(
-          entry.mRelFile, entry.mLocalPageIndex)) {
-      restored.push_back({GetRuntimeID(), *pageID, entry.mTitle});
-    }
-  }
-  if (!restored.empty()) {
-    this->SetBookmarks(restored);
-  }
-}
-
-std::vector<FolderTab::FolderPendingBookmark>
-FolderTab::GetFolderPendingBookmarkData() const {
-  return mPendingFolderBookmarks;
 }
 
 nlohmann::json FolderTab::GetSettings() const { return {{"Path", GetPath()}}; }
