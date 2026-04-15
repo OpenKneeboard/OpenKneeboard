@@ -6,10 +6,14 @@
 #include "FilePicker.h"
 
 #include <OpenKneeboard/handles.hpp>
+#include "OpenKneeboard/dprint.hpp"
+
+#include <wil/resource.h>
 
 #include <algorithm>
 #include <ranges>
 #include <string>
+#include <system_error>
 
 namespace OpenKneeboard {
 
@@ -57,7 +61,9 @@ std::optional<std::filesystem::path> FilePicker::PickSingleFile() const {
 void FilePicker::ApplySettings(
   const winrt::com_ptr<IFileDialog>& picker) const {
   const auto initialFolder = this->GetInitialPath();
+  if (initialFolder) {
   picker->SetDefaultFolder(initialFolder.get());
+  }
 
   if (!mSuggestedFileName.empty()) {
     picker->SetFileName(mSuggestedFileName.c_str());
@@ -181,9 +187,34 @@ std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {
 
 winrt::com_ptr<IShellItem> FilePicker::GetInitialPath() const {
   winrt::com_ptr<IShellItem> ret;
-  winrt::check_hresult(SHGetKnownFolderItem(
-    *mSuggestedStartLocation, KF_FLAG_DEFAULT, NULL, IID_PPV_ARGS(ret.put())));
+  const auto hr = SHGetKnownFolderItem(
+    *mSuggestedStartLocation, KF_FLAG_DEFAULT, NULL, IID_PPV_ARGS(ret.put()));
+  if (SUCCEEDED(hr)) {
   return ret;
+}
+
+  const auto message = std::system_category().message(hr);
+  wil::unique_cotaskmem_string path {};
+  if (SUCCEEDED(SHGetKnownFolderPath(
+        *mSuggestedStartLocation,
+        KF_FLAG_DEFAULT | KF_FLAG_DONT_VERIFY,
+        nullptr,
+        path.put()))) {
+    dprint.Warning(
+      L"Failed to get IShellItem for FilePicker default location: {:#010x} "
+      L"('{}') when getting IShellItem for path `{}`",
+      std::bit_cast<uint32_t>(hr),
+      std::wstring_view {winrt::to_hstring(message)},
+      path.get());
+    return {};
+  }
+
+  dprint.Warning(
+    "Failed to get IShellItem or path for FilePicker default location: "
+    "{:#010x} ('{}')",
+    std::bit_cast<uint32_t>(hr),
+    message);
+  return {};
 }
 
 }// namespace OpenKneeboard
