@@ -67,7 +67,11 @@ void FolderPageSource::SubscribeToChanges() {
 }
 
 OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
-  std::filesystem::path directory) {
+  const std::filesystem::path directory) {
+  if (mDisposal.HasStarted()) {
+    co_return;
+  }
+
   const auto keepAlive = shared_from_this();
   if (directory != mPath) {
     co_return;
@@ -112,8 +116,14 @@ OpenKneeboard::fire_and_forget FolderPageSource::OnFileModified(
   }
 
   EventDelay eventDelay;
-  mContents = newContents;
-  co_await this->SetDelegates(delegates);
+  // `move` to transfer our refcount on the shared_ptr contents
+  mContents = std::move(newContents);
+  co_await this->SetDelegates(std::move(delegates));
+
+  if (mDisposal.HasStarted()) {
+    mContents.clear();
+    co_await this->SetDelegates({});
+  }
 }
 
 std::filesystem::path FolderPageSource::GetPath() const {
