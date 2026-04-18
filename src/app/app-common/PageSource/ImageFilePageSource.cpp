@@ -11,10 +11,6 @@
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
-#include <winrt/Windows.Foundation.h>
-
 #include <expected>
 #include <mutex>
 #include <ranges>
@@ -436,36 +432,22 @@ std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
 }
 
 std::optional<std::string> ImageFilePageSource::GetPersistentIDForPage(
-  PageID id) const {
-  for (PageIndex i = 0; i < static_cast<PageIndex>(mPages.size()); ++i) {
-    if (mPages[i].mID == id) {
-      const auto hash = PartialFileHash(mPages[i].mPath);
-      if (!hash) {
-        return std::nullopt;
-      }
-      return nlohmann::json {{"PageIndex", i}, {"FileHash", *hash}}.dump();
-    }
+  const PageID nonPersistentID) const {
+  const auto it = std::ranges::find(mPages, nonPersistentID, &Page::mID);
+  if (it == mPages.end()) {
+    return std::nullopt;
   }
-  return std::nullopt;
+  return it->mPath.string();
 }
 
 std::optional<PageID> ImageFilePageSource::GetPageIDFromPersistentID(
-  std::string_view id) const {
-  const auto parsed = nlohmann::json::parse(id, nullptr, false);
-  if (parsed.is_discarded() || !parsed.contains("PageIndex")
-      || !parsed.contains("FileHash")) {
+  const std::string_view persistentId) const {
+  const std::filesystem::path path {persistentId};
+  const auto it = std::ranges::find(mPages, path, &Page::mPath);
+  if (it == mPages.end()) {
     return std::nullopt;
   }
-  const auto pageIndex = parsed.at("PageIndex").get<PageIndex>();
-  const auto storedHash = parsed.at("FileHash").get<uint64_t>();
-  if (pageIndex >= static_cast<PageIndex>(mPages.size())) {
-    return std::nullopt;
-  }
-  const auto currentHash = PartialFileHash(mPages[pageIndex].mPath);
-  if (!currentHash || *currentHash != storedHash) {
-    return std::nullopt;
-  }
-  return mPages[pageIndex].mID;
+  return it->mID;
 }
 
 }// namespace OpenKneeboard
