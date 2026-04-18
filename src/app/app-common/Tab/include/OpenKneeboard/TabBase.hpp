@@ -10,8 +10,6 @@
 
 #include <OpenKneeboard/Bookmark.hpp>
 
-#include <shims/nlohmann/json.hpp>
-
 #include <optional>
 #include <string>
 #include <vector>
@@ -31,18 +29,9 @@ class TabBase : public virtual ITab, public virtual EventReceiver {
   virtual std::vector<Bookmark> GetBookmarks() const override final;
   virtual void SetBookmarks(const std::vector<Bookmark>&) override final;
 
-  // A bookmark to be restored once the page source has finished loading.
-  // The persistent ID is opaque data returned by IPageSource::GetPersistentIDForPage().
-  struct PendingBookmark {
-    nlohmann::json mPersistentID;
-    std::string mTitle;
-  };
-
-  void SetPendingBookmarkRestore(std::vector<PendingBookmark> pending);
-
-  // Returns pending bookmarks for pass-through serialization during startup,
-  // before content is loaded and pending bookmarks have been applied.
-  std::vector<PendingBookmark> GetPendingBookmarkData() const;
+  virtual void SetPendingBookmarkRestore(
+    std::vector<PendingBookmark> pending) override;
+  virtual std::vector<PendingBookmark> GetPendingBookmarkData() const override;
 
  protected:
   TabBase(const winrt::guid& persistentID, std::string_view title);

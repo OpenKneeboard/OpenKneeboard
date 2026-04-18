@@ -652,7 +652,7 @@ fire_and_forget PDFFilePageSource::OnFileModified(
   }
 }
 
-std::optional<nlohmann::json> PDFFilePageSource::GetPersistentIDForPage(
+std::optional<std::string> PDFFilePageSource::GetPersistentIDForPage(
   PageID id) const {
   const auto pageIDs = this->GetPageIDs();
   const auto it = std::ranges::find(pageIDs, id);
@@ -661,24 +661,26 @@ std::optional<nlohmann::json> PDFFilePageSource::GetPersistentIDForPage(
   }
   const auto pageIndex
     = static_cast<PageIndex>(std::distance(pageIDs.begin(), it));
-  const auto hash = ComputeFileHash(this->GetPath());
+  const auto hash = PartialFileHash(this->GetPath());
   if (!hash) {
     return std::nullopt;
   }
-  return nlohmann::json {{"PageIndex", pageIndex}, {"FileHash", hash}};
+  return nlohmann::json {{"PageIndex", pageIndex}, {"FileHash", *hash}}.dump();
 }
 
 std::optional<PageID> PDFFilePageSource::GetPageIDFromPersistentID(
-  const nlohmann::json& id) const {
-  if (!id.contains("PageIndex") || !id.contains("FileHash")) {
+  std::string_view id) const {
+  const auto parsed = nlohmann::json::parse(id, nullptr, false);
+  if (parsed.is_discarded() || !parsed.contains("PageIndex")
+      || !parsed.contains("FileHash")) {
     return std::nullopt;
   }
-  const auto storedHash = id.at("FileHash").get<uint64_t>();
-  const auto currentHash = ComputeFileHash(this->GetPath());
-  if (!currentHash || currentHash != storedHash) {
+  const auto storedHash = parsed.at("FileHash").get<uint64_t>();
+  const auto currentHash = PartialFileHash(this->GetPath());
+  if (!currentHash || *currentHash != storedHash) {
     return std::nullopt;
   }
-  const auto pageIndex = id.at("PageIndex").get<PageIndex>();
+  const auto pageIndex = parsed.at("PageIndex").get<PageIndex>();
   const auto pageIDs = this->GetPageIDs();
   if (pageIndex >= static_cast<PageIndex>(pageIDs.size())) {
     return std::nullopt;

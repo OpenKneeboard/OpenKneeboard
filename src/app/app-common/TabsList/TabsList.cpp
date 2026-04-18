@@ -55,6 +55,63 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
+static void ApplyPendingBookmarks(
+  ITab& tab,
+  const nlohmann::json& bmArray) {
+  if (!bmArray.is_array()) {
+    return;
+  }
+  std::vector<ITab::PendingBookmark> pending;
+  for (const auto& entry: bmArray) {
+    if (!entry.contains("PersistentID") || !entry.contains("Title")) {
+      continue;
+    }
+    pending.push_back({
+      entry.at("PersistentID").dump(),
+      entry.at("Title").get<std::string>(),
+    });
+  }
+  if (!pending.empty()) {
+    tab.SetPendingBookmarkRestore(std::move(pending));
+  }
+}
+
+static nlohmann::json SerializeTabBookmarks(const ITab& tab) {
+  nlohmann::json bmArray = nlohmann::json::array();
+
+  const auto liveBookmarks = tab.GetBookmarks();
+  if (!liveBookmarks.empty()) {
+    for (const auto& bm: liveBookmarks) {
+      auto persistentID = tab.GetPersistentIDForPage(bm.mPageID);
+      if (!persistentID) {
+        continue;
+      }
+      auto parsed = nlohmann::json::parse(*persistentID, nullptr, false);
+      if (parsed.is_discarded()) {
+        continue;
+      }
+      bmArray.push_back({
+        {"PersistentID", std::move(parsed)},
+        {"Title", bm.mTitle},
+      });
+    }
+    return bmArray;
+  }
+
+  // Pass-through during startup before content is loaded.
+  for (const auto& pending: tab.GetPendingBookmarkData()) {
+    auto parsed = nlohmann::json::parse(pending.mPersistentID, nullptr, false);
+    if (parsed.is_discarded()) {
+      continue;
+    }
+    bmArray.push_back({
+      {"PersistentID", std::move(parsed)},
+      {"Title", pending.mTitle},
+    });
+  }
+  return bmArray;
+}
+
 
 task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   const nlohmann::json tab) {
@@ -115,24 +172,7 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   }
 
   if (tab.contains("Bookmarks")) {
-    if (const auto tabBase = std::dynamic_pointer_cast<TabBase>(result)) {
-      const auto& bmArray = tab.at("Bookmarks");
-      if (bmArray.is_array()) {
-        std::vector<TabBase::PendingBookmark> pending;
-        for (const auto& entry: bmArray) {
-          if (!entry.contains("PersistentID") || !entry.contains("Title")) {
-            continue;
-          }
-          pending.push_back({
-            entry.at("PersistentID"),
-            entry.at("Title").get<std::string>(),
-          });
-        }
-        if (!pending.empty()) {
-          tabBase->SetPendingBookmarkRestore(std::move(pending));
-        }
-      }
-    }
+    ApplyPendingBookmarks(*result, tab.at("Bookmarks"));
   }
 
   co_return result;
@@ -219,30 +259,9 @@ nlohmann::json TabsList::GetSettings() const {
       }
     }
 
-    if (const auto tabBase = std::dynamic_pointer_cast<TabBase>(tab)) {
-      nlohmann::json bmArray = nlohmann::json::array();
-      const auto liveBookmarks = tabBase->GetBookmarks();
-      if (!liveBookmarks.empty()) {
-        for (const auto& bm: liveBookmarks) {
-          if (auto persistentID = tabBase->GetPersistentIDForPage(bm.mPageID)) {
-            bmArray.push_back({
-              {"PersistentID", std::move(*persistentID)},
-              {"Title", bm.mTitle},
-            });
-          }
-        }
-      } else {
-        // Pass-through during startup before content is loaded.
-        for (const auto& pending: tabBase->GetPendingBookmarkData()) {
-          bmArray.push_back({
-            {"PersistentID", pending.mPersistentID},
-            {"Title", pending.mTitle},
-          });
-        }
-      }
-      if (!bmArray.empty()) {
-        savedTab.emplace("Bookmarks", std::move(bmArray));
-      }
+    auto bmArray = SerializeTabBookmarks(*tab);
+    if (!bmArray.empty()) {
+      savedTab.emplace("Bookmarks", std::move(bmArray));
     }
 
     ret.push_back(savedTab);

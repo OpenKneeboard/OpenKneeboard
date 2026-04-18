@@ -89,6 +89,7 @@ ok_add_library(
   PageSource/ChromiumPageSource_Client.hpp
   PageSource/ChromiumPageSource_RenderHandler.cpp
   PageSource/ChromiumPageSource_RenderHandler.hpp
+  PageSource/FileHash.cpp
   PageSource/FilePageSource.cpp
   PageSource/FolderPageSource.cpp
   PageSource/HWNDPageSource.cpp
@@ -99,6 +100,7 @@ ok_add_library(
   PageSource/PlainTextFilePageSource.cpp
   PageSource/PlainTextPageSource.cpp
   PageSource/include/OpenKneeboard/ChromiumPageSource.hpp
+  PageSource/include/OpenKneeboard/FileHash.hpp
   PageSource/include/OpenKneeboard/FilePageSource.hpp
   PageSource/include/OpenKneeboard/FolderPageSource.hpp
   PageSource/include/OpenKneeboard/HWNDPageSource.hpp

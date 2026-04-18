@@ -16,8 +16,6 @@
 
 #include <filesystem>
 #include <memory>
-#include <optional>
-#include <utility>
 
 namespace OpenKneeboard {
 
@@ -39,25 +37,6 @@ class FolderPageSource final : public PageSourceWithDelegates {
 
   [[nodiscard]]
   task<void> Reload() noexcept;
-
-  // Returns the path relative to GetPath() and the local page index within
-  // that file for a given global PageID; returns nullopt if not found.
-  [[nodiscard]]
-  std::optional<std::pair<std::filesystem::path, PageIndex>>
-  GetFileAndLocalIndexForPageID(PageID id) const;
-
-  // Returns the global PageID for a file given by a path relative to
-  // GetPath() and a local page index within that file; returns nullopt if
-  // the file is not loaded or localIndex is out of range.
-  [[nodiscard]]
-  std::optional<PageID> GetPageIDForRelativeFile(
-    const std::filesystem::path& relativeFile,
-    PageIndex localIndex) const;
-
-  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
-    PageID) const override;
-  virtual std::optional<PageID> GetPageIDFromPersistentID(
-    const nlohmann::json&) const override;
 
  private:
   void SubscribeToChanges();

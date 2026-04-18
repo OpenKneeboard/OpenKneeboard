@@ -66,10 +66,10 @@ class PDFFilePageSource final
 
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
-  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
+  virtual std::optional<std::string> GetPersistentIDForPage(
     PageID) const override;
   virtual std::optional<PageID> GetPageIDFromPersistentID(
-    const nlohmann::json&) const override;
+    std::string_view) const override;
 
  private:
   winrt::apartment_context mUIThread;

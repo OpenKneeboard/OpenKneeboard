@@ -39,10 +39,10 @@ class PlainTextFilePageSource final : public PageSourceWithDelegates {
 
   PageIndex GetPageCount() const override;
 
-  virtual std::optional<nlohmann::json> GetPersistentIDForPage(
+  virtual std::optional<std::string> GetPersistentIDForPage(
     PageID) const override;
   virtual std::optional<PageID> GetPageIDFromPersistentID(
-    const nlohmann::json&) const override;
+    std::string_view) const override;
 
   void Reload();
 

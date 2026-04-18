@@ -82,7 +82,7 @@ void TabBase::SetPendingBookmarkRestore(std::vector<PendingBookmark> pending) {
   mPendingBookmarks = std::move(pending);
 }
 
-std::vector<TabBase::PendingBookmark> TabBase::GetPendingBookmarkData() const {
+std::vector<ITab::PendingBookmark> TabBase::GetPendingBookmarkData() const {
   return mPendingBookmarks.value_or(std::vector<PendingBookmark> {});
 }
 
