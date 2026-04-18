@@ -39,11 +39,6 @@ task<std::shared_ptr<DCSRadioLogTab>> DCSRadioLogTab::Create(
   co_return ret;
 }
 
-std::vector<ITab::PersistentBookmark> DCSRadioLogTab::GetPersistentBookmarks()
-  const {
-  // Optimization as GetPersistentIDForPage always returns null
-  return {};
-}
 DCSRadioLogTab::DCSRadioLogTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
@@ -103,7 +98,7 @@ void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
 }
 
 std::optional<std::string> DCSRadioLogTab::GetPersistentIDForPage(
-  PageID page_id) const {
+  PageID) const {
   return std::nullopt;
 }
 

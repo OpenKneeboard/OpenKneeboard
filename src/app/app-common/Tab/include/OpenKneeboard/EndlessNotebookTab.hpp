@@ -75,7 +75,6 @@ class EndlessNotebookTab final
   EndlessNotebookTab() = delete;
 
   std::optional<std::string> GetPersistentIDForPage(PageID) const override;
-  std::vector<PersistentBookmark> GetPersistentBookmarks() const override;
 
  private:
   EndlessNotebookTab(

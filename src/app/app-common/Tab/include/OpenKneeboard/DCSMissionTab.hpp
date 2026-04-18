@@ -40,7 +40,6 @@ class DCSMissionTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
   std::optional<std::string> GetPersistentIDForPage(PageID) const override;
-  std::vector<PersistentBookmark> GetPersistentBookmarks() const override;
 
  protected:
   virtual OpenKneeboard::fire_and_forget

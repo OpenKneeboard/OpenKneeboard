@@ -46,7 +46,6 @@ class DCSBriefingTab final : public TabBase,
   std::vector<NavigationEntry> GetNavigationEntries() const override;
 
   std::optional<std::string> GetPersistentIDForPage(PageID) const override;
-  std::vector<PersistentBookmark> GetPersistentBookmarks() const override;
 
  protected:
   virtual OpenKneeboard::fire_and_forget

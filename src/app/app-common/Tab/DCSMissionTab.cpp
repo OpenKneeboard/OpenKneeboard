@@ -93,16 +93,7 @@ std::optional<std::string> DCSMissionTab::GetPersistentIDForPage(PageID) const {
   // - we would need to key them to the specific mission. For single-player
   //   missions on disk, this isn't a problem, but for multiplayer, we have a
   //   different track file name each time
-
-  // If we ever return *any* persistent IDs for this tab, the
-  // `GetPersistentBookmarks()` override needs to be removed.
   return std::nullopt;
-}
-std::vector<ITab::PersistentBookmark> DCSMissionTab::GetPersistentBookmarks()
-  const {
-  // As we *always* return `std::nullopt` from `GetPersistentIDForPage()`, this
-  // is just an optimization
-  return {};
 }
 
 OpenKneeboard::fire_and_forget DCSMissionTab::OnAPIEvent(

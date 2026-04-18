@@ -19,6 +19,10 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
   return random_guid();
 }
 
+// Only used if the page does not have a 'real' persistent ID
+static constexpr std::string_view FirstPageFallbackBookmarkPersistentId {
+  "___OKB_FIRST_PAGE___"};
+
 TabBase::TabBase(const winrt::guid& persistentID, std::string_view title)
   : mPersistentID(EnsureNonNullGuid(persistentID)),
     mTitle(title) {
@@ -77,6 +81,11 @@ void TabBase::SetPersistentBookmarks(
   // called): apply immediately instead of waiting for evContentChangedEvent.
   std::vector<Bookmark> restored;
   for (auto&& [persistentID, title]: persistent) {
+    if (persistentID == FirstPageFallbackBookmarkPersistentId) {
+      restored.emplace_back(mRuntimeID, this->GetPageIDs().front(), title);
+      continue;
+    }
+
     const auto pageID = this->GetPageIDFromPersistentID(persistentID);
     if (pageID) {
       restored.emplace_back(mRuntimeID, *pageID, title);
@@ -90,12 +99,22 @@ void TabBase::SetPersistentBookmarks(
 }
 
 std::vector<ITab::PersistentBookmark> TabBase::GetPersistentBookmarks() const {
+  const auto pages = this->GetPageIDs();
+  if (pages.empty()) {
+    return mPendingBookmarks;
+  }
   std::vector<PersistentBookmark> ret;
   ret.reserve(mBookmarks.size() + mPendingBookmarks.size());
   for (const auto& bookmark: mBookmarks) {
     const auto persistentID = this->GetPersistentIDForPage(bookmark.mPageID);
     if (persistentID) {
       ret.emplace_back(*persistentID, bookmark.mTitle);
+      continue;
+    }
+
+    if (bookmark.mPageID == pages.front()) {
+      ret.emplace_back(
+        std::string {FirstPageFallbackBookmarkPersistentId}, bookmark.mTitle);
     }
   }
   ret.append_range(mPendingBookmarks);
