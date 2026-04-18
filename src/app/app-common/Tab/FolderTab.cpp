@@ -21,8 +21,7 @@ FolderTab::FolderTab(
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXResources(dxr),
-    mKneeboard(kbs) {
-}
+    mKneeboard(kbs) {}
 
 task<std::shared_ptr<FolderTab>> FolderTab::Create(
   const audited_ptr<DXResources>& dxr,
@@ -46,10 +45,6 @@ task<std::shared_ptr<FolderTab>> FolderTab::Create(
 }
 
 FolderTab::~FolderTab() {}
-
-const FolderPageSource* FolderTab::GetPageSource() const {
-  return mPageSource.get();
-}
 
 nlohmann::json FolderTab::GetSettings() const { return {{"Path", GetPath()}}; }
 

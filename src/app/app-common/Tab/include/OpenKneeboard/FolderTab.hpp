@@ -46,9 +46,6 @@ class FolderTab final : public TabBase,
   [[nodiscard]]
   virtual task<void> SetPath(std::filesystem::path);
 
-  // Returns the active FolderPageSource, or nullptr if not yet initialised.
-  const FolderPageSource* GetPageSource() const;
-
  private:
   FolderTab(
     const audited_ptr<DXResources>&,
