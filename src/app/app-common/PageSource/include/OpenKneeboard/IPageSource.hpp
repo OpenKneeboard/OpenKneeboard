@@ -17,6 +17,9 @@
 #include <OpenKneeboard/inttypes.hpp>
 
 #include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
 
 #include <d2d1_1.h>
 
@@ -39,6 +42,20 @@ class IPageSource {
 
   virtual std::optional<PreferredSize> GetPreferredSize(PageID) = 0;
   virtual task<void> RenderPage(RenderContext, PageID, PixelRect rect) = 0;
+
+  // Returns a stable, serializable identifier for a page that can survive
+  // application restarts. The identifier is an opaque string (the concrete
+  // page source chooses its own encoding, typically serialized JSON) and
+  // includes any data needed to validate that the underlying content has not
+  // changed (e.g. a file hash). Returns nullopt if this page source does not
+  // support persistent bookmarks.
+  virtual std::optional<std::string> GetPersistentIDForPage(PageID) const;
+
+  // Resolves a previously returned persistent ID back to a live PageID.
+  // Returns nullopt if the page is not found or if the underlying content has
+  // changed since the identifier was created.
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    std::string_view) const;
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;

@@ -45,6 +45,11 @@ class ImageFilePageSource final
 
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) final override;
 
+  virtual std::optional<std::string> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    std::string_view) const override;
+
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 

@@ -12,6 +12,7 @@
 
 #include <OpenKneeboard/audited_ptr.hpp>
 
+#include <cstdint>
 #include <filesystem>
 
 namespace OpenKneeboard {
@@ -44,6 +45,9 @@ class FolderTab final : public TabBase,
   std::filesystem::path GetPath() const;
   [[nodiscard]]
   virtual task<void> SetPath(std::filesystem::path);
+
+  // Returns the active FolderPageSource, or nullptr if not yet initialised.
+  const FolderPageSource* GetPageSource() const;
 
  private:
   FolderTab(

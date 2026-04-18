@@ -333,4 +333,23 @@ fire_and_forget PageSourceWithDelegates::OpenDeveloperToolsWindow(
   co_return;
 }
 
+std::optional<std::string> PageSourceWithDelegates::GetPersistentIDForPage(
+  PageID id) const {
+  auto delegate = this->FindDelegate(id);
+  if (!delegate) {
+    return std::nullopt;
+  }
+  return delegate->GetPersistentIDForPage(id);
+}
+
+std::optional<PageID> PageSourceWithDelegates::GetPageIDFromPersistentID(
+  std::string_view id) const {
+  for (const auto& delegate: mDelegates) {
+    if (auto pageID = delegate->GetPageIDFromPersistentID(id)) {
+      return pageID;
+    }
+  }
+  return std::nullopt;
+}
+
 }// namespace OpenKneeboard

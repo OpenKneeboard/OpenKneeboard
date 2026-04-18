@@ -12,6 +12,7 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/PluginTab.hpp>
 #include <OpenKneeboard/RuntimeFiles.hpp>
+#include <OpenKneeboard/TabBase.hpp>
 #include <OpenKneeboard/TabTypes.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/TabsList.hpp>
@@ -21,6 +22,9 @@
 #include <shims/nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cstdint>
+#include <fstream>
+#include <vector>
 
 namespace OpenKneeboard {
 
@@ -51,6 +55,64 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
+static void ApplyPendingBookmarks(
+  ITab& tab,
+  const nlohmann::json& bmArray) {
+  if (!bmArray.is_array()) {
+    return;
+  }
+  std::vector<ITab::PendingBookmark> pending;
+  for (const auto& entry: bmArray) {
+    if (!entry.contains("PersistentID") || !entry.contains("Title")) {
+      continue;
+    }
+    pending.push_back({
+      entry.at("PersistentID").dump(),
+      entry.at("Title").get<std::string>(),
+    });
+  }
+  if (!pending.empty()) {
+    tab.SetPendingBookmarkRestore(std::move(pending));
+  }
+}
+
+static nlohmann::json SerializeTabBookmarks(const ITab& tab) {
+  nlohmann::json bmArray = nlohmann::json::array();
+
+  const auto liveBookmarks = tab.GetBookmarks();
+  if (!liveBookmarks.empty()) {
+    for (const auto& bm: liveBookmarks) {
+      auto persistentID = tab.GetPersistentIDForPage(bm.mPageID);
+      if (!persistentID) {
+        continue;
+      }
+      auto parsed = nlohmann::json::parse(*persistentID, nullptr, false);
+      if (parsed.is_discarded()) {
+        continue;
+      }
+      bmArray.push_back({
+        {"PersistentID", std::move(parsed)},
+        {"Title", bm.mTitle},
+      });
+    }
+    return bmArray;
+  }
+
+  // Pass-through during startup before content is loaded.
+  for (const auto& pending: tab.GetPendingBookmarkData()) {
+    auto parsed = nlohmann::json::parse(pending.mPersistentID, nullptr, false);
+    if (parsed.is_discarded()) {
+      continue;
+    }
+    bmArray.push_back({
+      {"PersistentID", std::move(parsed)},
+      {"Title", pending.mTitle},
+    });
+  }
+  return bmArray;
+}
+
+
 task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   const nlohmann::json tab) {
   if (!(tab.contains("Type") && tab.contains("Title"))) {
@@ -73,21 +135,21 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
     // else handled by TabBase
   }
 
+  std::shared_ptr<ITab> result;
   try {
 #define IT(_, it) \
   if (type == #it) { \
     auto instance = co_await load_tab<it##Tab>( \
       mDXR, mKneeboard, persistentID, title, settings); \
     if (instance) { \
-      co_return instance; \
+      result = instance; \
     } \
   }
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
-    if (type == "Plugin") {
-      auto instance = co_await PluginTab::Create(
+    if (!result && type == "Plugin") {
+      result = co_await PluginTab::Create(
         mDXR, mKneeboard, persistentID, title, settings);
-      co_return instance;
     }
   } catch (const std::exception& e) {
     dprint.Error(
@@ -102,9 +164,18 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
       winrt::to_string(e.message()));
     throw;
   }
-  dprint("Couldn't load tab with type {}", rawType);
-  OPENKNEEBOARD_BREAK;
-  co_return nullptr;
+
+  if (!result) {
+    dprint("Couldn't load tab with type {}", rawType);
+    OPENKNEEBOARD_BREAK;
+    co_return nullptr;
+  }
+
+  if (tab.contains("Bookmarks")) {
+    ApplyPendingBookmarks(*result, tab.at("Bookmarks"));
+  }
+
+  co_return result;
 }
 
 task<void> TabsList::LoadSettings(nlohmann::json config) {
@@ -187,6 +258,12 @@ nlohmann::json TabsList::GetSettings() const {
         savedTab.emplace("Settings", settings);
       }
     }
+
+    auto bmArray = SerializeTabBookmarks(*tab);
+    if (!bmArray.empty()) {
+      savedTab.emplace("Bookmarks", std::move(bmArray));
+    }
+
     ret.push_back(savedTab);
     continue;
   }

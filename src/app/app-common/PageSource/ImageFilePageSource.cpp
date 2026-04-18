@@ -4,11 +4,14 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
+#include <OpenKneeboard/FileHash.hpp>
 #include <OpenKneeboard/ImageFilePageSource.hpp>
 
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
+
+#include <shims/nlohmann/json.hpp>
 
 #include <winrt/Windows.Foundation.h>
 
@@ -431,4 +434,38 @@ std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
   }
   return entries;
 }
+
+std::optional<std::string> ImageFilePageSource::GetPersistentIDForPage(
+  PageID id) const {
+  for (PageIndex i = 0; i < static_cast<PageIndex>(mPages.size()); ++i) {
+    if (mPages[i].mID == id) {
+      const auto hash = PartialFileHash(mPages[i].mPath);
+      if (!hash) {
+        return std::nullopt;
+      }
+      return nlohmann::json {{"PageIndex", i}, {"FileHash", *hash}}.dump();
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<PageID> ImageFilePageSource::GetPageIDFromPersistentID(
+  std::string_view id) const {
+  const auto parsed = nlohmann::json::parse(id, nullptr, false);
+  if (parsed.is_discarded() || !parsed.contains("PageIndex")
+      || !parsed.contains("FileHash")) {
+    return std::nullopt;
+  }
+  const auto pageIndex = parsed.at("PageIndex").get<PageIndex>();
+  const auto storedHash = parsed.at("FileHash").get<uint64_t>();
+  if (pageIndex >= static_cast<PageIndex>(mPages.size())) {
+    return std::nullopt;
+  }
+  const auto currentHash = PartialFileHash(mPages[pageIndex].mPath);
+  if (!currentHash || *currentHash != storedHash) {
+    return std::nullopt;
+  }
+  return mPages[pageIndex].mID;
+}
+
 }// namespace OpenKneeboard

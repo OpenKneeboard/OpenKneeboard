@@ -61,11 +61,49 @@ void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
   mBookmarks = bookmarks;
   evAvailableFeaturesChangedEvent.Emit();
   evBookmarksChangedEvent.Emit();
+  evSettingsChangedEvent.Emit();
+}
+
+void TabBase::SetPendingBookmarkRestore(std::vector<PendingBookmark> pending) {
+  if (!this->GetPageIDs().empty()) {
+    // Content already loaded (e.g. folder scan completed before we were called):
+    // apply immediately instead of waiting for evContentChangedEvent.
+    std::vector<Bookmark> restored;
+    for (const auto& bm: pending) {
+      if (auto pageID = this->GetPageIDFromPersistentID(bm.mPersistentID)) {
+        restored.push_back({mRuntimeID, *pageID, bm.mTitle});
+      }
+    }
+    // Event listeners are not set up yet at this point, so emitting events
+    // here is safe and harmless.
+    this->SetBookmarks(restored);
+    return;
+  }
+  mPendingBookmarks = std::move(pending);
+}
+
+std::vector<ITab::PendingBookmark> TabBase::GetPendingBookmarkData() const {
+  return mPendingBookmarks.value_or(std::vector<PendingBookmark> {});
 }
 
 void TabBase::OnContentChanged() {
-  decltype(mBookmarks) bookmarks;
   const auto pageIDs = this->GetPageIDs();
+
+  if (mPendingBookmarks.has_value()) {
+    if (!pageIDs.empty()) {
+      std::vector<Bookmark> restored;
+      for (const auto& bm: *mPendingBookmarks) {
+        if (auto pageID = this->GetPageIDFromPersistentID(bm.mPersistentID)) {
+          restored.push_back({mRuntimeID, *pageID, bm.mTitle});
+        }
+      }
+      mPendingBookmarks.reset();
+      this->SetBookmarks(restored);
+    }
+    return;
+  }
+
+  decltype(mBookmarks) bookmarks;
   for (const auto& bookmark: mBookmarks) {
     if (std::ranges::find(pageIDs, bookmark.mPageID) != pageIDs.end()) {
       bookmarks.push_back(bookmark);
