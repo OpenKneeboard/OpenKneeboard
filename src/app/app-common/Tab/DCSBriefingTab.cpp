@@ -218,4 +218,30 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
 
   return entries;
 }
+
+std::optional<std::string> DCSBriefingTab::GetPersistentIDForPage(
+  PageID) const {
+  // We could potentially support persistent bookmarks for the first page of
+  // each section, however:
+  // - we don't currently track which page is which
+  // - we don't require that sections start on a new page
+  //
+  // We also can't reasonably persist the image pages, as:
+  // - we extract them to a randomized temporary directory; we would need to
+  //   ensure that any page IDs did not depend on the full path
+  // - we would need to key them to the specific mission. For single-player
+  //   missions on disk, this isn't a problem, but for multiplayer, we have a
+  //   different track file name each time
+
+  // If we ever return *any* persistent IDs for this tab, the
+  // `GetPersistentBookmarks()` override needs to be removed.
+  return std::nullopt;
+}
+
+std::vector<ITab::PersistentBookmark> DCSBriefingTab::GetPersistentBookmarks()
+  const {
+  // As we *always* return `std::nullopt` from `GetPersistentIDForPage()`, this
+  // is just an optimization
+  return {};
+}
 }// namespace OpenKneeboard
