@@ -15,6 +15,22 @@
 
 namespace OpenKneeboard {
 
+std::optional<std::string> EndlessNotebookTab::GetPersistentIDForPage(
+  PageID) const {
+  // We can't implement persistent bookmarks until/unless we implement
+  // persistent drawings (#192)
+  //
+  // If that happens, the GetPersistentBookmarks() override also needs to be
+  // removed
+  return std::nullopt;
+}
+
+std::vector<ITab::PersistentBookmark>
+EndlessNotebookTab::GetPersistentBookmarks() const {
+  // Optimization because GetPersistentIDForPage always returns null
+  return {};
+}
+
 EndlessNotebookTab::EndlessNotebookTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,

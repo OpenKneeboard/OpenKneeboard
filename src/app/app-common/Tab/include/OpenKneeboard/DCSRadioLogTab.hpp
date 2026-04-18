@@ -59,6 +59,9 @@ class DCSRadioLogTab final : public TabBase,
   bool GetTimestampsEnabled() const;
   void SetTimestampsEnabled(bool);
 
+  std::optional<std::string> GetPersistentIDForPage(PageID) const override;
+  std::vector<PersistentBookmark> GetPersistentBookmarks() const override;
+
  protected:
   explicit DCSRadioLogTab(
     const audited_ptr<DXResources>&,
