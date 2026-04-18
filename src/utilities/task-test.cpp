@@ -235,6 +235,33 @@ winrt::fire_and_forget do_test() {
     e.ResetEvent();
   }
   testTimers.mark("delayed exception");
+
+  std::println("MTA apartment round-trip");
+  for (int i = 0; i < TestIterations; ++i) {
+    if (i % 10'000 == 0) {
+      std::println("iteration: {}", i);
+    }
+    co_await resume_on_thread_pool();
+    ULONG_PTR tokenBefore {};
+    CoGetContextToken(&tokenBefore);
+    auto context = this_thread::get_task_context();
+
+    // Hop to another thread-pool thread so await_ready() returns false and
+    // resume_in_context() actually goes through ContextCallback.
+    co_await resume_on_thread_pool();
+    co_await resume_in_context(context);
+
+    ULONG_PTR tokenAfter {};
+    CoGetContextToken(&tokenAfter);
+    OPENKNEEBOARD_ASSERT(
+      tokenBefore == tokenAfter,
+      "COM context token must be identical after IContextCallback round-trip: "
+      "before={:#x} after={:#x}",
+      tokenBefore,
+      tokenAfter);
+  }
+  testTimers.mark("MTA apartment round-trip");
+
   testTimers.dump();
   TestFinished.SetEvent();
   co_return;
