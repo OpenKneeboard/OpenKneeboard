@@ -552,4 +552,14 @@ HWNDPageSource::RenderPage(RenderContext rc, PageID, PixelRect rect) {
   co_return;
 }
 
+std::optional<std::string> HWNDPageSource::GetPersistentIDForPage(
+  PageID) const {
+  return std::nullopt;
+}
+
+std::optional<PageID> HWNDPageSource::GetPageIDFromPersistentID(
+  std::string_view) const {
+  return std::nullopt;
+}
+
 }// namespace OpenKneeboard

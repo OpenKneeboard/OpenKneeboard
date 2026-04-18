@@ -335,4 +335,16 @@ fire_and_forget ChromiumPageSource::OpenDeveloperToolsWindow(
   std::ignore = co_await GetOrCreateClient(view)->OpenDeveloperToolsWindow();
 }
 
+std::optional<std::string> ChromiumPageSource::GetPersistentIDForPage(
+  PageID) const {
+  // We might support this in the future if we add a JS API - see
+  // https://github.com/OpenKneeboard/OpenKneeboard/issues/900
+  return std::nullopt;
+}
+
+std::optional<PageID> ChromiumPageSource::GetPageIDFromPersistentID(
+  std::string_view) const {
+  return std::nullopt;
+}
+
 }// namespace OpenKneeboard

@@ -181,6 +181,15 @@ void NavigationTab::ClearUserInput() {
   // nothing to do here
 }
 
+std::optional<PageID> NavigationTab::GetPageIDFromPersistentID(
+  std::string_view) const {
+  return std::nullopt;
+}
+
+std::optional<std::string> NavigationTab::GetPersistentIDForPage(PageID) const {
+  return std::nullopt;
+}
+
 task<void> NavigationTab::RenderPage(
   RenderContext rc,
   PageID pageID,

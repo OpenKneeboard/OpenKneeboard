@@ -22,6 +22,11 @@ std::optional<std::string> EndlessNotebookTab::GetPersistentIDForPage(
   return std::nullopt;
 }
 
+std::optional<PageID> EndlessNotebookTab::GetPageIDFromPersistentID(
+  std::string_view) const {
+  return std::nullopt;
+}
+
 EndlessNotebookTab::EndlessNotebookTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,

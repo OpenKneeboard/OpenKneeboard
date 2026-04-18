@@ -10,13 +10,4 @@ namespace OpenKneeboard {
 
 IPageSource::~IPageSource() = default;
 
-std::optional<std::string> IPageSource::GetPersistentIDForPage(PageID) const {
-  return std::nullopt;
-}
-
-std::optional<PageID> IPageSource::GetPageIDFromPersistentID(
-  std::string_view) const {
-  return std::nullopt;
-}
-
 }

@@ -73,6 +73,11 @@ class HWNDPageSource final : public WGCRenderer,
 
   Event<> evWindowClosedEvent;
 
+  virtual std::optional<std::string> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    std::string_view) const override;
+
  protected:
   virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()

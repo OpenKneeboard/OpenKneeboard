@@ -51,6 +51,11 @@ class PlainTextPageSource final : public IPageSource,
   virtual std::optional<PreferredSize> GetPreferredSize(PageID) override;
   task<void> RenderPage(RenderContext, PageID, PixelRect rect) override;
 
+  virtual std::optional<std::string> GetPersistentIDForPage(
+    PageID) const override;
+  virtual std::optional<PageID> GetPageIDFromPersistentID(
+    std::string_view) const override;
+
  private:
   using RenderedLine = std::wstring;
   struct RenderedPage {

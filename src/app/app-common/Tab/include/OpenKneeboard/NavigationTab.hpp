@@ -53,6 +53,10 @@ class NavigationTab final : public TabBase,
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
+  std::optional<PageID> GetPageIDFromPersistentID(
+    std::string_view) const override;
+  std::optional<std::string> GetPersistentIDForPage(PageID) const override;
+
  private:
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;

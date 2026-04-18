@@ -545,6 +545,16 @@ task<void> PlainTextPageSource::RenderPage(
   }
 }
 
+std::optional<std::string> PlainTextPageSource::GetPersistentIDForPage(
+  PageID) const {
+  return std::nullopt;
+}
+
+std::optional<PageID> PlainTextPageSource::GetPageIDFromPersistentID(
+  std::string_view) const {
+  return std::nullopt;
+}
+
 bool PlainTextPageSource::IsEmpty() const {
   std::unique_lock lock(mMutex);
   return mPages.empty() || mPages.front().mLines.empty();

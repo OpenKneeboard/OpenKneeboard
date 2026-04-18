@@ -49,13 +49,13 @@ class IPageSource {
   // includes any data needed to validate that the underlying content has not
   // changed (e.g. a file hash). Returns nullopt if this page source does not
   // support persistent bookmarks.
-  virtual std::optional<std::string> GetPersistentIDForPage(PageID) const;
+  virtual std::optional<std::string> GetPersistentIDForPage(PageID) const = 0;
 
   // Resolves a previously returned persistent ID back to a live PageID.
   // Returns nullopt if the page is not found or if the underlying content has
   // changed since the identifier was created.
   virtual std::optional<PageID> GetPageIDFromPersistentID(
-    std::string_view) const;
+    std::string_view) const = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;
