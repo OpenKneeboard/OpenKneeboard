@@ -37,11 +37,6 @@ struct task_context {
   friend task_context this_thread::get_task_context();
 
   [[nodiscard]]
-  bool is_this_thread() const noexcept {
-    return mThreadID == std::this_thread::get_id();
-  }
-
-  [[nodiscard]]
   bool is_same_com_context() const noexcept {
     ULONG_PTR current {};
     [[maybe_unused]] const auto hr = CoGetContextToken(&current);
@@ -50,7 +45,6 @@ struct task_context {
   }
 
  protected:
-  std::thread::id mThreadID = std::this_thread::get_id();
   ULONG_PTR mCOMContextToken {};
   wil::com_ptr<IContextCallback> mCOMCallback;
 

@@ -114,7 +114,6 @@ enum class TaskAwaitReady {
 
 struct TaskContext : task_context {
   using task_context::mCOMCallback;
-  using task_context::mThreadID;
   StackFramePointer mCaller {nullptr};
 
   TaskContext() = delete;
@@ -233,7 +232,7 @@ struct TaskState {
       OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/anyThread");
       return TaskAwaitReady::Ready;
     } else {
-      if (mContext.is_this_thread()) {
+      if (mContext.is_same_com_context()) {
         OPENKNEEBOARD_TASK_TRACE("TaskState::await_ready/ready");
         return TaskAwaitReady::Ready;
       }
@@ -301,12 +300,6 @@ struct TaskState {
   }
 
   task_context get_task_context() const noexcept { return mContext; }
-
-  // IContextCallback::ContextCallback() guarantees dispatch to the correct
-  // COM apartment, but the physical OS thread may differ if the apartment
-  // is reassigned by the Windows thread pool. Call this after the COM
-  // dispatch so that downstream is_this_thread() checks stay consistent.
-  void update_thread_id(std::thread::id id) noexcept { mContext.mThreadID = id; }
 
  private:
   static constexpr uint8_t ProducerBit =
@@ -431,14 +424,11 @@ DetachedTask ResumeOnOriginalThread(
   TaskStatePtr<TTraits, TaskStateOwner::ThreadPool> state) noexcept {
   OPENKNEEBOARD_ASSERT(state);
   auto context = state.lock()->get_task_context();
-  OPENKNEEBOARD_ASSERT(!context.is_this_thread());
+  OPENKNEEBOARD_ASSERT(!context.is_same_com_context());
   co_await TaskContextAwaiter {context};
 
   OPENKNEEBOARD_ASSERT(state);
   auto lock = state.lock();
-  // Update the stored thread ID to match the actual OS thread COM dispatched
-  // to, so that await_ready() returns Ready rather than ReadyWrongThread.
-  lock->update_thread_id(std::this_thread::get_id());
   const auto handle = std::exchange(lock->mConsumerHandle, {});
   OPENKNEEBOARD_ASSERT(handle);
   state.reset(std::move(lock));
@@ -503,7 +493,7 @@ struct TaskFinalAwaiter {
       }(producer, handle)
                                                     .mHandle;
     } else {
-      if (context.is_this_thread()) {
+      if (context.is_same_com_context()) {
         OPENKNEEBOARD_TASK_TRACE("TaskFinalAwaiter::await_suspend/thisThread");
         return [](auto toDestroy, auto toResume) -> DetachedTask {
           toDestroy.destroy();

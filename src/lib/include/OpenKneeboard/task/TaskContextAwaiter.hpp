@@ -8,9 +8,7 @@ namespace OpenKneeboard::detail {
 
 struct TaskContextAwaiter {
   task_context& mContext;
-  bool await_ready() const noexcept {
-    return std::this_thread::get_id() == mContext.mThreadID;
-  }
+  bool await_ready() const noexcept { return mContext.is_same_com_context(); }
 
   void await_resume() const noexcept {}
 
