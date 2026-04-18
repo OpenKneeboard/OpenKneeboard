@@ -55,63 +55,37 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-static void ApplyPendingBookmarks(
-  ITab& tab,
-  const nlohmann::json& bmArray) {
+static void RestoreSavedBookmarks(ITab& tab, const nlohmann::json& bmArray) {
   if (!bmArray.is_array()) {
     return;
   }
-  std::vector<ITab::PendingBookmark> pending;
+
+  std::vector<ITab::PersistentBookmark> restored;
   for (const auto& entry: bmArray) {
     if (!entry.contains("PersistentID") || !entry.contains("Title")) {
       continue;
     }
-    pending.push_back({
-      entry.at("PersistentID").dump(),
-      entry.at("Title").get<std::string>(),
-    });
+    const auto title = entry.at("Title").get<std::string>();
+    const auto persistentId = entry.at("PersistentID").get<std::string>();
+    restored.emplace_back(persistentId, title);
   }
-  if (!pending.empty()) {
-    tab.SetPendingBookmarkRestore(std::move(pending));
-  }
+
+  tab.SetPersistentBookmarks(std::move(restored));
 }
 
 static nlohmann::json SerializeTabBookmarks(const ITab& tab) {
-  nlohmann::json bmArray = nlohmann::json::array();
+  nlohmann::json ret = nlohmann::json::array();
 
-  const auto liveBookmarks = tab.GetBookmarks();
-  if (!liveBookmarks.empty()) {
-    for (const auto& bm: liveBookmarks) {
-      auto persistentID = tab.GetPersistentIDForPage(bm.mPageID);
-      if (!persistentID) {
-        continue;
-      }
-      auto parsed = nlohmann::json::parse(*persistentID, nullptr, false);
-      if (parsed.is_discarded()) {
-        continue;
-      }
-      bmArray.push_back({
-        {"PersistentID", std::move(parsed)},
-        {"Title", bm.mTitle},
-      });
-    }
-    return bmArray;
-  }
+  auto bookmarks = tab.GetPersistentBookmarks();
 
-  // Pass-through during startup before content is loaded.
-  for (const auto& pending: tab.GetPendingBookmarkData()) {
-    auto parsed = nlohmann::json::parse(pending.mPersistentID, nullptr, false);
-    if (parsed.is_discarded()) {
-      continue;
-    }
-    bmArray.push_back({
-      {"PersistentID", std::move(parsed)},
-      {"Title", pending.mTitle},
+  for (auto&& [persistentID, title]: bookmarks) {
+    ret.push_back({
+      {"PersistentID", std::move(persistentID)},
+      {"Title", std::move(title)},
     });
   }
-  return bmArray;
+  return ret;
 }
-
 
 task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   const nlohmann::json tab) {
@@ -172,7 +146,7 @@ task<std::shared_ptr<ITab>> TabsList::LoadTabFromJSON(
   }
 
   if (tab.contains("Bookmarks")) {
-    ApplyPendingBookmarks(*result, tab.at("Bookmarks"));
+    RestoreSavedBookmarks(*result, tab.at("Bookmarks"));
   }
 
   co_return result;

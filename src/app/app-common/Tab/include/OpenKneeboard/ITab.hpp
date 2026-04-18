@@ -45,20 +45,19 @@ class ITab : public virtual IPageSource {
   // A bookmark to be restored once the page source has finished loading.
   // The persistent ID is opaque data returned by
   // IPageSource::GetPersistentIDForPage().
-  struct PendingBookmark {
+  struct PersistentBookmark {
     std::string mPersistentID;
     std::string mTitle;
   };
 
-  virtual void SetPendingBookmarkRestore(std::vector<PendingBookmark>) {
-  }
-
-  // Returns pending bookmarks for pass-through serialization during startup,
-  // before content is loaded and pending bookmarks have been applied.
+  /** Restore bookmarks from persistent bookmarks.
+   *
+   * Bookmarks might not be loaded immediately, e.g. it might not be possible
+   * to resolve the persistent ID until after content has loaded.
+   */
+  virtual void SetPersistentBookmarks(std::vector<PersistentBookmark>) = 0;
   [[nodiscard]]
-  virtual std::vector<PendingBookmark> GetPendingBookmarkData() const {
-    return {};
-  }
+  virtual std::vector<PersistentBookmark> GetPersistentBookmarks() const = 0;
 
   Event<> evSettingsChangedEvent;
   Event<> evBookmarksChangedEvent;

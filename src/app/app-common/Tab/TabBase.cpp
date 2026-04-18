@@ -64,53 +64,82 @@ void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
   evSettingsChangedEvent.Emit();
 }
 
-void TabBase::SetPendingBookmarkRestore(std::vector<PendingBookmark> pending) {
-  if (!this->GetPageIDs().empty()) {
-    // Content already loaded (e.g. folder scan completed before we were called):
-    // apply immediately instead of waiting for evContentChangedEvent.
-    std::vector<Bookmark> restored;
-    for (const auto& bm: pending) {
-      if (auto pageID = this->GetPageIDFromPersistentID(bm.mPersistentID)) {
-        restored.push_back({mRuntimeID, *pageID, bm.mTitle});
-      }
-    }
-    // Event listeners are not set up yet at this point, so emitting events
-    // here is safe and harmless.
-    this->SetBookmarks(restored);
+void TabBase::SetPersistentBookmarks(
+  std::vector<PersistentBookmark> persistent) {
+  if (this->GetPageIDs().empty()) {
+    this->SetBookmarks({});
+    mPendingBookmarks = std::move(persistent);
     return;
   }
-  mPendingBookmarks = std::move(pending);
+
+  mPendingBookmarks.clear();
+  // Content already loaded (e.g. folder scan completed before we were
+  // called): apply immediately instead of waiting for evContentChangedEvent.
+  std::vector<Bookmark> restored;
+  for (auto&& [persistentID, title]: persistent) {
+    const auto pageID = this->GetPageIDFromPersistentID(persistentID);
+    if (pageID) {
+      restored.emplace_back(mRuntimeID, *pageID, title);
+    } else {
+      mPendingBookmarks.emplace_back(persistentID, title);
+    }
+  }
+  // Event listeners are not set up yet at this point, so emitting events
+  // here is safe and harmless.
+  this->SetBookmarks(restored);
 }
 
-std::vector<ITab::PendingBookmark> TabBase::GetPendingBookmarkData() const {
-  return mPendingBookmarks.value_or(std::vector<PendingBookmark> {});
+std::vector<ITab::PersistentBookmark> TabBase::GetPersistentBookmarks() const {
+  std::vector<PersistentBookmark> ret;
+  ret.reserve(mBookmarks.size() + mPendingBookmarks.size());
+  for (const auto& bookmark: mBookmarks) {
+    const auto persistentID = this->GetPersistentIDForPage(bookmark.mPageID);
+    if (persistentID) {
+      ret.emplace_back(*persistentID, bookmark.mTitle);
+    }
+  }
+  ret.append_range(mPendingBookmarks);
+  return ret;
 }
 
 void TabBase::OnContentChanged() {
   const auto pageIDs = this->GetPageIDs();
-
-  if (mPendingBookmarks.has_value()) {
-    if (!pageIDs.empty()) {
-      std::vector<Bookmark> restored;
-      for (const auto& bm: *mPendingBookmarks) {
-        if (auto pageID = this->GetPageIDFromPersistentID(bm.mPersistentID)) {
-          restored.push_back({mRuntimeID, *pageID, bm.mTitle});
-        }
-      }
-      mPendingBookmarks.reset();
-      this->SetBookmarks(restored);
-    }
+  if (pageIDs.empty()) {
+    mBookmarks.clear();
+    mPendingBookmarks.clear();
     return;
   }
 
-  decltype(mBookmarks) bookmarks;
-  for (const auto& bookmark: mBookmarks) {
-    if (std::ranges::find(pageIDs, bookmark.mPageID) != pageIDs.end()) {
-      bookmarks.push_back(bookmark);
+  auto restored = mBookmarks;
+  for (auto it = restored.begin(); it != restored.end();) {
+    if (std::ranges::contains(pageIDs, it->mPageID)) {
+      ++it;
+      continue;
     }
+    it = restored.erase(it);
   }
-  if (bookmarks.size() != mBookmarks.size()) {
-    this->SetBookmarks(bookmarks);
+  bool modified = restored.size() != mBookmarks.size();
+
+  for (auto it = mPendingBookmarks.begin(); it != mPendingBookmarks.end();) {
+    const auto& [persistentID, title] = *it;
+    const auto runtimeID = this->GetPageIDFromPersistentID(persistentID);
+    if (!runtimeID) {
+      ++it;
+      continue;
+    }
+
+    if (std::ranges::contains(restored, *runtimeID, &Bookmark::mPageID)) {
+      it = mPendingBookmarks.erase(it);
+      continue;
+    }
+
+    modified = true;
+    restored.emplace_back(mRuntimeID, *runtimeID, title);
+    it = mPendingBookmarks.erase(it);
+  }
+
+  if (modified) {
+    this->SetBookmarks(restored);
   }
 }
 
