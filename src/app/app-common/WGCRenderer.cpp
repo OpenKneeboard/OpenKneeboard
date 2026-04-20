@@ -102,8 +102,26 @@ task<void> WGCRenderer::Init() {
 
   mCaptureSession = mFramePool.CreateCaptureSession(item);
   mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
+
   if (supportsBorderRemoval) {
     mCaptureSession.IsBorderRequired(false);
+  }
+
+  try {
+    mCaptureSession.IncludeSecondaryWindows(true);
+  } catch (const winrt::hresult_error& e) {
+    if (e.code() == E_NOINTERFACE) {
+      // C++/WinRT internally casts to an IGraphicsCaptureSession6 for this
+      // property, which requires Windows 11 24H2 or newer.
+      dprint(
+        "Capture of secondary windows is not supported on this version of "
+        "windows.");
+    } else {
+      dprint.Warning(
+        "Failed to enable secondary window capture: {:#010x} ('{}')",
+        std::bit_cast<uint32_t>(e.code().value),
+        e.message());
+    }
   }
   mCaptureSession.StartCapture();
 
