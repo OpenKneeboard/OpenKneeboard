@@ -8,7 +8,7 @@ nav_order: 2
 OpenKneeboard requires:
 
 - x64 Windows Home or Pro that is still under 'General Availability' support from Microsoft 
-  - as of 2025-11-11, this means Windows 11 23H2 or newer
+  - as of 2025-11-11, this means Windows 11 24H2 or newer
   - as of 2025-11-11, Windows 10 is no longer under 'General Availability' support. However, while no longer tested or officially supported, there are no known issues under Windows 10 22H2 with Extended Security Updates (ESU).
   - You can see your current version by opening the start menu, typing 'winver', and running the winver program when it appears
   - For up-to-date information on supported versions of Windows, see Microsoft's lifecycle documentation for [Windows 11](https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro).
