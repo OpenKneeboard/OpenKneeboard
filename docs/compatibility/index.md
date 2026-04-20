@@ -13,8 +13,15 @@ OpenKneeboard requires:
   - You can see your current version by opening the start menu, typing 'winver', and running the winver program when it appears
   - For up-to-date information on supported versions of Windows, see Microsoft's lifecycle documentation for [Windows 11](https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro).
   - If you are running a regional variant of Windows such as Windows N or KN, you may need to [install the Media Feature Pack](https://support.microsoft.com/en-us/topic/media-feature-pack-list-for-windows-n-editions-c1c6fffa-d052-8338-7a79-a4bb980a700a). These versions of Windows are available in Europe and South Korea in order to comply with local regulations, and by default omit Windows components that are required by OpenKneeboard for image and other media handling.
-  - Enterprise, server, LTSC, and other non-consumer editions of Windows are not supported because they may be missing required Windows components.
 - a graphics card and driver that supports Direct3D 11.1
 - [a non-Administrator user account, with User Account Control (UAC) enabled](https://openkneeboard.com/troubleshooting/elevation/)
 - Third-party repackaged versions of Windows (often labeled as 'debloated', 'optimized', or 'streamlined') are not supported, as they often remove required Windows components, use an Administrator account, or disable/remove UAC.
-
+- Enterprise, server, LTSC, and other non-consumer editions of Windows are not supported because they may be missing required Windows components.
+  - If your business requires support for a non-consumer edition of Windows, you can [contact the developers](mailto:openkneeboard-contractwork@fred.fredemmott.com) to discuss an enterprise support plan.
+  - Enterprise support plans typically:
+    - require significant development work at hourly rates.
+    - are for specific hardware.
+    - are for specific versions of all software and drivers.
+    - require additional work at hourly rates for any updates, including compatibility with other updated software or drivers.
+    - are not available for individuals.
+ 
