@@ -53,7 +53,7 @@ task<void> WGCRenderer::Init() {
   try {
     supportsBorderRemoval =
       winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
-        L"Windows.Graphics.Capture.GraphicsCaptureSession",
+        RuntimeClass_Windows_Graphics_Capture_GraphicsCaptureSession,
         L"IsBorderRequired");
     if (supportsBorderRemoval) {
       co_await WGC::GraphicsCaptureAccess::RequestAccessAsync(
@@ -62,6 +62,17 @@ task<void> WGCRenderer::Init() {
 
   } catch (const winrt::hresult_class_not_registered&) {
     supportsBorderRemoval = false;
+  }
+
+  // Requires Windows 11 24H2
+  bool supportsSecondaryWindows = false;
+  try {
+    supportsSecondaryWindows =
+      winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
+        RuntimeClass_Windows_Graphics_Capture_GraphicsCaptureSession,
+        L"IncludeSecondaryWindows");
+  } catch (const winrt::hresult_class_not_registered&) {
+    supportsSecondaryWindows = false;
   }
 
   co_await mUIThread;
@@ -107,21 +118,8 @@ task<void> WGCRenderer::Init() {
     mCaptureSession.IsBorderRequired(false);
   }
 
-  try {
+  if (supportsSecondaryWindows) {
     mCaptureSession.IncludeSecondaryWindows(true);
-  } catch (const winrt::hresult_error& e) {
-    if (e.code() == E_NOINTERFACE) {
-      // C++/WinRT internally casts to an IGraphicsCaptureSession6 for this
-      // property, which requires Windows 11 24H2 or newer.
-      dprint(
-        "Capture of secondary windows is not supported on this version of "
-        "windows.");
-    } else {
-      dprint.Warning(
-        "Failed to enable secondary window capture: {:#010x} ('{}')",
-        std::bit_cast<uint32_t>(e.code().value),
-        e.message());
-    }
   }
   mCaptureSession.StartCapture();
 
