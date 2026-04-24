@@ -153,10 +153,9 @@ task<void> HeaderUILayer::Render(
 
   const auto scale = rect.Height<float>() / preferredSize.mPixelSize.mHeight;
 
-  const auto contentHeight =
-    static_cast<uint32_t>(std::lround(scale * metrics.mContentArea.Height()));
-  const auto headerHeight = static_cast<uint32_t>(
-    std::lround(contentHeight * (HeaderPercent / 100.0f)));
+  const auto nextHeight =
+    static_cast<uint32_t>(std::lround(scale * metrics.mNextArea.Height()));
+  const auto headerHeight = rect.Height() - nextHeight;
 
   const PixelRect headerRect {
     rect.mOffset,
@@ -184,7 +183,7 @@ task<void> HeaderUILayer::Render(
     context,
     {
       {rect.Left(), rect.Top() + headerHeight},
-      {rect.Width(), rect.Height() - headerHeight},
+      {rect.Width(), nextHeight},
     });
 
   auto secondaryMenu = mSecondaryMenu;
