@@ -114,9 +114,9 @@ task<void> FooterUILayer::Render(
 
   const auto scale = rect.Height<float>() / preferredSize.mHeight;
 
-  const auto contentHeight = scale * metrics.mContentArea.Height();
-  const auto footerHeight = static_cast<uint32_t>(
-    std::lround(contentHeight * (FooterPercent / 100.0f)));
+  const auto contentHeight =
+    static_cast<uint32_t>(std::lround(scale * metrics.mContentArea.Height()));
+  const auto footerHeight = rect.Height() - contentHeight;
 
   const PixelRect footerRect {
     {rect.Left(), rect.Bottom() - footerHeight},
@@ -127,9 +127,9 @@ task<void> FooterUILayer::Render(
     rc,
     next.subspan(1),
     context,
-    {
-      rect.mOffset,
-      (metrics.mNextArea.mSize.StaticCast<float>() * scale).Rounded<uint32_t>(),
+    PixelRect {
+      rect.TopLeft(),
+      {rect.Width(), contentHeight},
     });
 
   auto d2d = rc.d2d();
