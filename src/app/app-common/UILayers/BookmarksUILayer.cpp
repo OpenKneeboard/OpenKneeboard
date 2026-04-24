@@ -212,8 +212,8 @@ task<void> BookmarksUILayer::Render(
     }
     if (buttonNumber != 1) {
       d2d->DrawLine(
-        {rect.Left<FLOAT>(), buttonRect.top},
-        {rect.Left<FLOAT>() + buttonRect.right, buttonRect.top},
+        {buttonRect.left, buttonRect.top},
+        {buttonRect.right, buttonRect.top},
         mTextBrush.get(),
         2.0f);
     }
@@ -227,8 +227,8 @@ task<void> BookmarksUILayer::Render(
   d2d.Reacquire();
 
   d2d->DrawLine(
-    {rect.Left() + (width * scale), rect.Top<float>()},
-    {rect.Left() + (width * scale), rect.Bottom<float>()},
+    {rect.Left() + (width * scale) - 1.0f, rect.Top<float>()},
+    {rect.Left() + (width * scale) - 1.0f, rect.Bottom<float>()},
     mTextBrush.get(),
     2.0f);
 }
