@@ -140,16 +140,25 @@ task<void> BookmarksUILayer::Render(
   const auto scale =
     rect.Width<float>() / metrics.mPreferredSize.mPixelSize.mWidth;
 
-  auto d2d = rc.d2d();
-  d2d->FillRectangle(
-    PixelRect {
-      rect.mOffset,
-      {
-        static_cast<uint32_t>(std::lround(metrics.mNextArea.Left() * scale)),
-        rect.Height(),
-      },
+  const auto nextWidth =
+    static_cast<unsigned int>(std::lround(metrics.mNextArea.Width() * scale));
+  const PixelRect nextArea {
+    PixelPoint {
+      rect.Right() - nextWidth,
+      rect.Top(),
     },
-    mBackgroundBrush.get());
+    PixelSize {nextWidth, rect.Height()},
+  };
+  const PixelRect bookmarksArea {
+    rect.TopLeft(),
+    PixelSize {
+      (nextArea.Left() - rect.Left()),
+      rect.Height(),
+    },
+  };
+
+  auto d2d = rc.d2d();
+  d2d->FillRectangle(bookmarksArea, mBackgroundBrush.get());
 
   auto [hoverButton, buttons] = this->LayoutButtons()->GetState();
 
@@ -185,10 +194,10 @@ task<void> BookmarksUILayer::Render(
   const auto currentPageID = currentTabView->GetPageID();
   for (const auto& button: buttons) {
     const D2D1_RECT_F buttonRect {
-      rect.Left<float>(),
-      rect.Top() + (button.mRect.top * height * scale),
-      rect.Left() + (width * scale),
-      rect.Top() + (button.mRect.bottom * height * scale),
+      bookmarksArea.Left<FLOAT>(),
+      std::floor(rect.Top() + (button.mRect.top * height * scale)),
+      bookmarksArea.Right<FLOAT>(),
+      std::floor(rect.Top() + (button.mRect.bottom * height * scale)),
     };
     buttonNumber++;
     const auto text = winrt::to_hstring(
@@ -219,15 +228,12 @@ task<void> BookmarksUILayer::Render(
   }
 
   d2d.Release();
-  auto nextArea =
-    (metrics.mNextArea.StaticCast<float>() * scale).Rounded<uint32_t>();
-  nextArea.mOffset += rect.mOffset;
   co_await first->Render(rc, rest, context, nextArea);
   d2d.Reacquire();
 
   {
     static constexpr auto Thickness = 2.0f;
-    const auto centerX = (rect.Left() + (width * scale)) - (Thickness / 2);
+    const auto centerX = bookmarksArea.Right() - (Thickness / 2);
     d2d->DrawLine(
       {centerX, rect.Top<float>()},
       {centerX, rect.Bottom<float>()},
