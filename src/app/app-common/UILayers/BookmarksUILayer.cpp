@@ -225,11 +225,15 @@ task<void> BookmarksUILayer::Render(
   co_await first->Render(rc, rest, context, nextArea);
   d2d.Reacquire();
 
-  d2d->DrawLine(
-    {rect.Left() + (width * scale) - 1.0f, rect.Top<float>()},
-    {rect.Left() + (width * scale) - 1.0f, rect.Bottom<float>()},
-    mTextBrush.get(),
-    2.0f);
+  {
+    static constexpr auto Thickness = 2.0f;
+    const auto centerX = (rect.Left() + (width * scale)) - (Thickness / 2);
+    d2d->DrawLine(
+      {centerX, rect.Top<float>()},
+      {centerX, rect.Bottom<float>()},
+      mTextBrush.get(),
+      Thickness);
+  }
 }
 
 bool BookmarksUILayer::IsEnabled() const {
