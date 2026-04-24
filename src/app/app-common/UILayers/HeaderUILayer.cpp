@@ -206,11 +206,13 @@ void HeaderUILayer::DrawToolbar(
   auto tablets = mKneeboardState->GetTabletInputAdapter();
   if (!(tablets && tablets->HaveAnyTablet())) {
     // If the tablet is present, the buttons indicate the active view
+    static constexpr auto Thickness = 1.0f;
+    const auto centerY = headerRect.Bottom<FLOAT>() - (Thickness / 2);
     d2d->DrawLine(
-      {headerRect.Left<FLOAT>(), headerRect.Bottom<FLOAT>()},
-      {headerRect.Right<FLOAT>(), headerRect.Bottom<FLOAT>()},
+      {headerRect.Left<FLOAT>(), centerY},
+      {headerRect.Right<FLOAT>(), centerY},
       mActiveViewSeparatorBrush.get(),
-      1.0f,
+      Thickness,
       nullptr);
     return;
   }
