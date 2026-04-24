@@ -30,7 +30,7 @@ constexpr unsigned char MaxViewCount = 16;
 constexpr unsigned int FramesPerSecond = 90;
 
 // 5:8, matching entry-level Wacom and Huion tablets
-constexpr PixelSize DefaultPixelSize {540, 960};
+constexpr PixelSize DefaultPixelSize {700, 1120};
 constexpr PixelSize ErrorPixelSize = DefaultPixelSize;
 constexpr PreferredSize ErrorPreferredSize {
   ErrorPixelSize,
