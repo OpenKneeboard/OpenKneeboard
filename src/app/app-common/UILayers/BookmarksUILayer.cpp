@@ -107,6 +107,15 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
   const auto width = static_cast<uint32_t>(std::lround(
     nextMetrics.mContentArea.mSize.mHeight * (BookmarksBarPercent / 100.0f)));
 
+  if (width == 0) {
+    auto ret = nextMetrics;
+    ret.mNextArea = {
+      {},
+      nextMetrics.mPreferredSize.mPixelSize,
+    };
+    return ret;
+  }
+
   return Metrics {
     nextMetrics.mPreferredSize.Extended({static_cast<uint32_t>(width), 0}),
     {
@@ -164,6 +173,11 @@ task<void> BookmarksUILayer::Render(
 
   const auto height = metrics.mPreferredSize.mPixelSize.mHeight;
   const auto width = metrics.mNextArea.Left();
+
+  if (width == 0) {
+    co_await first->Render(rc, rest, context, rect);
+    co_return;
+  }
 
   FLOAT dpix {}, dpiy {};
   d2d->GetDpi(&dpix, &dpiy);
