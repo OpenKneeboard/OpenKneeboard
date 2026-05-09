@@ -13,7 +13,7 @@ OpenTabletDriver is *strongly* recommended instead of your manufacturer's driver
 
 1. Uninstall your manufacturer's driver from 'Add or Remove Programs'; try searching for your manufacturer's name, '
    pen', and 'tablet'. There may be multiple entries for your tablet - remove them all.
-2. Use [TabletDriverCleanup](https://github.com/X9VoiD/TabletDriverCleanup) to remove left-over traces
+2. Use [TabletDriverCleanup](https://github.com/OpenTabletDriver/TabletDriverCleanup) to remove left-over traces
 3. Install [OpenTabletDriver](https://opentabletdriver.net/)
 4. Install [OTD-IPC](https://go.openkneeboard.com/otd-ipc)
 
