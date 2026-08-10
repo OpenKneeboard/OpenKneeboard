@@ -26,6 +26,7 @@ It should work with any headset that is compatible with OpenXR or SteamVR.
   - There are unconfirmed reports that these issues may have been fixed in Varjo Base v4.11
   - If you have used OpenKneeboard with Varjo Base v4.4-v4.10, you *may* need to reset and reconfigure
     position after switching to Varjo Base v4.3 or v4.11+
+- Pico headsets when using SteamVR: as of 2026-08-10, there are multiple reports of various issues including incorrect colors, translucency, or completely missing overlays, even though they are rendered correctly in the SteamVR mirror window. You can contact Pico support, or use an alternative to SteamVR, such as Steam Link or Virtual Desktop
 
 ## XBox and other XInput Controllers
 
