@@ -29,7 +29,8 @@ Graphics tablets can be used to:
 - The Huion H640P is also a popular choice, and also more affordable than Wacom
   - I find the buttons harder to find blind in VR
   - OpenTabletDriver mandatory for a good experience
-- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used, though I suggest sticking with one of the ones above
+- Alternatively, [any tablet supported by OpenTabletDriver](https://opentabletdriver.net/Tablets) can be used, though I suggest sticking with one of the ones above.
+- I **strongly discourage** purchasing XP-Pen tablets; however, if you already have a working one that's on OpenTabletDriver's list, it likely works with OpenKneeboard.
 
 These recommendations are for the best experience in OpenKneeboard; it's probably not good advice for other uses, such as graphics software or *osu!*.
 
