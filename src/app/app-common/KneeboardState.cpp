@@ -29,6 +29,9 @@
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <numbers>
 #include <string>
 
 namespace OpenKneeboard {
@@ -570,6 +573,16 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
+  if (ev.name == APIEvent::EVT_SET_VR_VIEW) {
+    const auto parsed = ev.TryParsedValue<SetVRViewEvent>();
+    if (!parsed) {
+      dprint("Ignoring malformed SetVRView event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->SetVRView(*parsed);
+    co_return;
+  }
+
   this->evAPIEvent.Emit(ev);
 }
 
@@ -877,6 +890,159 @@ void KneeboardState::AcquireExclusiveResources() {
   AddEventListener(
     mAPIEventServer->evAPIEvent,
     std::bind_front(&KneeboardState::OnAPIEvent, this));
+}
+
+static float WrapDegrees(float degrees) {
+  degrees = std::fmod(degrees + 180, 360.0f);
+  if (degrees < 0) {
+    degrees += 360;
+  }
+  return degrees - 180;
+}
+
+static float RadiansToDegrees(float radians) {
+  return radians * 180 / std::numbers::pi_v<float>;
+}
+
+static float DegreesToRadians(float degrees) {
+  return degrees * std::numbers::pi_v<float> / 180;
+}
+
+task<void> KneeboardState::SetVRView(const SetVRViewEvent& event) {
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    dprint("SetVRView: kneeboard {} does not exist", event.mKneeboard);
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  if (
+    view == viewsSettings.mViews.end()
+    || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
+    dprint(
+      "SetVRView: kneeboard {} does not have its own VR settings",
+      event.mKneeboard);
+    co_return;
+  }
+  auto config = view->mVR.GetIndependentSettings();
+
+  // All values are in the settings app's units, signs, and ranges; `current`
+  // is the value the settings app currently shows.
+  const auto relative = (event.mMode == SetVRViewEvent::Mode::Relative);
+  bool valid = true;
+  const auto resolve = [&](
+                         std::string_view name,
+                         const std::optional<float>& requested,
+                         float current,
+                         float min = std::numeric_limits<float>::lowest(),
+                         float max = std::numeric_limits<float>::max()) {
+    if (!requested) {
+      return current;
+    }
+    if (!std::isfinite(*requested)) {
+      dprint("SetVRView: {} must be a finite number", name);
+      valid = false;
+      return current;
+    }
+    if (!relative) {
+      if (*requested < min || *requested > max) {
+        dprint(
+          "SetVRView: requested absolute {} '{}' is outside of range {} to {}",
+          name,
+          *requested,
+          min,
+          max);
+        valid = false;
+        return current;
+      }
+      return *requested;
+    }
+    return std::clamp(current + *requested, min, max);
+  };
+  const auto resolveDegrees = [&](
+                                std::string_view name,
+                                const std::optional<float>& requested,
+                                float current) {
+    const auto value = resolve(name, requested, current, -180, 180);
+    return (relative && requested) ? WrapDegrees(current + *requested) : value;
+  };
+
+  auto& pose = config.mPose;
+  const auto maxWidth = resolve(
+    "MaxWidth", event.mMaxWidth, config.mMaximumPhysicalSize.mWidth, 0.01f);
+  const auto maxHeight = resolve(
+    "MaxHeight", event.mMaxHeight, config.mMaximumPhysicalSize.mHeight, 0.01f);
+  const auto verticalDistance =
+    resolve("VerticalDistance", event.mVerticalDistance, -pose.mEyeY);
+  const auto horizontalPosition =
+    resolve("HorizontalPosition", event.mHorizontalPosition, pose.mX);
+  const auto forwardPosition =
+    resolve("ForwardPosition", event.mForwardPosition, -pose.mZ);
+  const auto pitch = resolveDegrees(
+    "Pitch", event.mPitch, WrapDegrees(RadiansToDegrees(pose.mRX) + 90));
+  const auto roll =
+    resolveDegrees("Roll", event.mRoll, -RadiansToDegrees(pose.mRZ));
+  const auto yaw =
+    resolveDegrees("Yaw", event.mYaw, -RadiansToDegrees(pose.mRY));
+  const auto gazeTargetHorizontalScale = resolve(
+    "GazeTargetHorizontalScale",
+    event.mGazeTargetHorizontalScale,
+    config.mGazeTargetScale.mHorizontal,
+    0,
+    4);
+  const auto gazeTargetVerticalScale = resolve(
+    "GazeTargetVerticalScale",
+    event.mGazeTargetVerticalScale,
+    config.mGazeTargetScale.mVertical,
+    0,
+    4);
+  const auto zoomScale =
+    resolve("ZoomScale", event.mZoomScale, config.mZoomScale, 1, 4);
+  const auto normalOpacity = resolve(
+    "NormalOpacity", event.mNormalOpacity, config.mOpacity.mNormal, 0, 1);
+  const auto gazeOpacity =
+    resolve("GazeOpacity", event.mGazeOpacity, config.mOpacity.mGaze, 0, 1);
+  if (!valid) {
+    co_return;
+  }
+
+  config.mMaximumPhysicalSize = {maxWidth, maxHeight};
+  pose.mEyeY = -verticalDistance;
+  pose.mX = horizontalPosition;
+  pose.mZ = -forwardPosition;
+  if (event.mPitch) {
+    pose.mRX = DegreesToRadians(WrapDegrees(pitch - 90));
+  }
+  if (event.mRoll) {
+    pose.mRZ = -DegreesToRadians(roll);
+  }
+  if (event.mYaw) {
+    pose.mRY = -DegreesToRadians(yaw);
+  }
+  config.mGazeTargetScale.mHorizontal = gazeTargetHorizontalScale;
+  config.mGazeTargetScale.mVertical = gazeTargetVerticalScale;
+  config.mZoomScale = zoomScale;
+  config.mOpacity.mNormal = normalOpacity;
+  config.mOpacity.mGaze = gazeOpacity;
+  if (event.mEnableGazeZoom) {
+    config.mEnableGazeZoom = *event.mEnableGazeZoom;
+  }
+  if (event.mDisplayArea) {
+    config.mDisplayArea =
+      (*event.mDisplayArea == SetVRViewEvent::DisplayArea::ContentOnly)
+      ? ViewDisplayArea::ContentOnly
+      : ViewDisplayArea::Full;
+  }
+
+  view->mVR.SetIndependentSettings(config);
+  co_await this->SetViewsSettings(viewsSettings);
 }
 
 task<void> KneeboardState::SwitchProfile(Direction direction) {

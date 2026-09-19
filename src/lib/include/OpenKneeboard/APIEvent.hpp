@@ -75,6 +75,9 @@ struct APIEvent final {
   // struct SetBrightnessEvent
   static constexpr char EVT_SET_BRIGHTNESS[] = "SetBrightness";
 
+  // struct SetVRViewEvent
+  static constexpr char EVT_SET_VR_VIEW[] = "SetVRView";
+
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
     "Plugin/Tab/CustomAction";
@@ -139,6 +142,50 @@ struct SetBrightnessEvent {
   Mode mMode = Mode::Absolute;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetBrightnessEvent);
+
+/** Change the VR settings of a view, as if the user changed them in the
+ * settings app.
+ *
+ * Every value is optional; omitted values are left unchanged. Values use the
+ * same units, signs, and ranges as the settings app, e.g. degrees for rotation.
+ */
+struct SetVRViewEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_VR_VIEW};
+
+  enum class Mode {
+    Absolute,
+    Relative,
+  };
+  enum class DisplayArea {
+    Full,
+    ContentOnly,
+  };
+
+  Mode mMode = Mode::Absolute;
+  // 0 = 'active', 1 = primary, 2 = secondary
+  uint8_t mKneeboard {0};
+
+  std::optional<float> mMaxWidth;
+  std::optional<float> mMaxHeight;
+  // Vertical distance from eye level; positive is below eye level
+  std::optional<float> mVerticalDistance;
+  std::optional<float> mHorizontalPosition;
+  std::optional<float> mForwardPosition;
+  std::optional<float> mPitch;
+  std::optional<float> mRoll;
+  std::optional<float> mYaw;
+
+  std::optional<float> mGazeTargetHorizontalScale;
+  std::optional<float> mGazeTargetVerticalScale;
+  std::optional<float> mZoomScale;
+  std::optional<float> mNormalOpacity;
+  std::optional<float> mGazeOpacity;
+
+  // Not affected by `mMode`
+  std::optional<bool> mEnableGazeZoom;
+  std::optional<DisplayArea> mDisplayArea;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetVRViewEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};

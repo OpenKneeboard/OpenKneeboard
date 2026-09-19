@@ -176,6 +176,38 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   });
 OPENKNEEBOARD_DEFINE_JSON(SetBrightnessEvent, mBrightness, mMode);
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetVRViewEvent::Mode,
+  {
+    {SetVRViewEvent::Mode::Absolute, "Absolute"},
+    {SetVRViewEvent::Mode::Relative, "Relative"},
+  });
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetVRViewEvent::DisplayArea,
+  {
+    {SetVRViewEvent::DisplayArea::Full, "Full"},
+    {SetVRViewEvent::DisplayArea::ContentOnly, "ContentOnly"},
+  });
+OPENKNEEBOARD_DEFINE_JSON(
+  SetVRViewEvent,
+  mMode,
+  mKneeboard,
+  mMaxWidth,
+  mMaxHeight,
+  mVerticalDistance,
+  mHorizontalPosition,
+  mForwardPosition,
+  mPitch,
+  mRoll,
+  mYaw,
+  mGazeTargetHorizontalScale,
+  mGazeTargetVerticalScale,
+  mZoomScale,
+  mNormalOpacity,
+  mGazeOpacity,
+  mEnableGazeZoom,
+  mDisplayArea);
+
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
 }// namespace OpenKneeboard
