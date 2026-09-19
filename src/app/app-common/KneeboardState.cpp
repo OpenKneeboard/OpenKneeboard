@@ -30,7 +30,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <numbers>
 #include <string>
 
@@ -573,13 +572,13 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_SET_VR_VIEW) {
-    const auto parsed = ev.TryParsedValue<SetVRViewEvent>();
+  if (ev.name == APIEvent::EVT_NUDGE_VR_VIEW) {
+    const auto parsed = ev.TryParsedValue<NudgeVRViewEvent>();
     if (!parsed) {
-      dprint("Ignoring malformed SetVRView event: {}", parsed.error().what);
+      dprint("Ignoring malformed NudgeVRView event: {}", parsed.error().what);
       co_return;
     }
-    co_await this->SetVRView(*parsed);
+    co_await this->NudgeVRView(*parsed);
     co_return;
   }
 
@@ -892,23 +891,7 @@ void KneeboardState::AcquireExclusiveResources() {
     std::bind_front(&KneeboardState::OnAPIEvent, this));
 }
 
-static float WrapDegrees(float degrees) {
-  degrees = std::fmod(degrees + 180, 360.0f);
-  if (degrees < 0) {
-    degrees += 360;
-  }
-  return degrees - 180;
-}
-
-static float RadiansToDegrees(float radians) {
-  return radians * 180 / std::numbers::pi_v<float>;
-}
-
-static float DegreesToRadians(float degrees) {
-  return degrees * std::numbers::pi_v<float> / 180;
-}
-
-task<void> KneeboardState::SetVRView(const SetVRViewEvent& event) {
+task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   std::shared_ptr<KneeboardView> kneeboard;
   if (event.mKneeboard == 0) {
     kneeboard = GetActiveInGameView();
@@ -916,7 +899,7 @@ task<void> KneeboardState::SetVRView(const SetVRViewEvent& event) {
     kneeboard = mViews.at(event.mKneeboard - 1);
   }
   if (!kneeboard) {
-    dprint("SetVRView: kneeboard {} does not exist", event.mKneeboard);
+    dprint("NudgeVRView: kneeboard {} does not exist", event.mKneeboard);
     co_return;
   }
 
@@ -927,119 +910,51 @@ task<void> KneeboardState::SetVRView(const SetVRViewEvent& event) {
     view == viewsSettings.mViews.end()
     || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
     dprint(
-      "SetVRView: kneeboard {} does not have its own VR settings",
+      "NudgeVRView: kneeboard {} does not have its own VR settings",
       event.mKneeboard);
     co_return;
   }
+
+  for (const auto& delta:
+       {event.mX,
+        event.mEyeY,
+        event.mZ,
+        event.mRX,
+        event.mRY,
+        event.mRZ,
+        event.mMaxWidth,
+        event.mMaxHeight}) {
+    if (delta && !std::isfinite(*delta)) {
+      dprint("NudgeVRView: ignoring event with a non-finite value");
+      co_return;
+    }
+  }
+
   auto config = view->mVR.GetIndependentSettings();
-
-  // All values are in the settings app's units, signs, and ranges; `current`
-  // is the value the settings app currently shows.
-  const auto relative = (event.mMode == SetVRViewEvent::Mode::Relative);
-  bool valid = true;
-  const auto resolve = [&](
-                         std::string_view name,
-                         const std::optional<float>& requested,
-                         float current,
-                         float min = std::numeric_limits<float>::lowest(),
-                         float max = std::numeric_limits<float>::max()) {
-    if (!requested) {
-      return current;
-    }
-    if (!std::isfinite(*requested)) {
-      dprint("SetVRView: {} must be a finite number", name);
-      valid = false;
-      return current;
-    }
-    if (!relative) {
-      if (*requested < min || *requested > max) {
-        dprint(
-          "SetVRView: requested absolute {} '{}' is outside of range {} to {}",
-          name,
-          *requested,
-          min,
-          max);
-        valid = false;
-        return current;
-      }
-      return *requested;
-    }
-    return std::clamp(current + *requested, min, max);
-  };
-  const auto resolveDegrees = [&](
-                                std::string_view name,
-                                const std::optional<float>& requested,
-                                float current) {
-    const auto value = resolve(name, requested, current, -180, 180);
-    return (relative && requested) ? WrapDegrees(current + *requested) : value;
-  };
-
   auto& pose = config.mPose;
-  const auto maxWidth = resolve(
-    "MaxWidth", event.mMaxWidth, config.mMaximumPhysicalSize.mWidth, 0.01f);
-  const auto maxHeight = resolve(
-    "MaxHeight", event.mMaxHeight, config.mMaximumPhysicalSize.mHeight, 0.01f);
-  const auto verticalDistance =
-    resolve("VerticalDistance", event.mVerticalDistance, -pose.mEyeY);
-  const auto horizontalPosition =
-    resolve("HorizontalPosition", event.mHorizontalPosition, pose.mX);
-  const auto forwardPosition =
-    resolve("ForwardPosition", event.mForwardPosition, -pose.mZ);
-  const auto pitch = resolveDegrees(
-    "Pitch", event.mPitch, WrapDegrees(RadiansToDegrees(pose.mRX) + 90));
-  const auto roll =
-    resolveDegrees("Roll", event.mRoll, -RadiansToDegrees(pose.mRZ));
-  const auto yaw =
-    resolveDegrees("Yaw", event.mYaw, -RadiansToDegrees(pose.mRY));
-  const auto gazeTargetHorizontalScale = resolve(
-    "GazeTargetHorizontalScale",
-    event.mGazeTargetHorizontalScale,
-    config.mGazeTargetScale.mHorizontal,
-    0,
-    4);
-  const auto gazeTargetVerticalScale = resolve(
-    "GazeTargetVerticalScale",
-    event.mGazeTargetVerticalScale,
-    config.mGazeTargetScale.mVertical,
-    0,
-    4);
-  const auto zoomScale =
-    resolve("ZoomScale", event.mZoomScale, config.mZoomScale, 1, 4);
-  const auto normalOpacity = resolve(
-    "NormalOpacity", event.mNormalOpacity, config.mOpacity.mNormal, 0, 1);
-  const auto gazeOpacity =
-    resolve("GazeOpacity", event.mGazeOpacity, config.mOpacity.mGaze, 0, 1);
-  if (!valid) {
-    co_return;
-  }
-
-  config.mMaximumPhysicalSize = {maxWidth, maxHeight};
-  pose.mEyeY = -verticalDistance;
-  pose.mX = horizontalPosition;
-  pose.mZ = -forwardPosition;
-  if (event.mPitch) {
-    pose.mRX = DegreesToRadians(WrapDegrees(pitch - 90));
-  }
-  if (event.mRoll) {
-    pose.mRZ = -DegreesToRadians(roll);
-  }
-  if (event.mYaw) {
-    pose.mRY = -DegreesToRadians(yaw);
-  }
-  config.mGazeTargetScale.mHorizontal = gazeTargetHorizontalScale;
-  config.mGazeTargetScale.mVertical = gazeTargetVerticalScale;
-  config.mZoomScale = zoomScale;
-  config.mOpacity.mNormal = normalOpacity;
-  config.mOpacity.mGaze = gazeOpacity;
-  if (event.mEnableGazeZoom) {
-    config.mEnableGazeZoom = *event.mEnableGazeZoom;
-  }
-  if (event.mDisplayArea) {
-    config.mDisplayArea =
-      (*event.mDisplayArea == SetVRViewEvent::DisplayArea::ContentOnly)
-      ? ViewDisplayArea::ContentOnly
-      : ViewDisplayArea::Full;
-  }
+  auto& size = config.mMaximumPhysicalSize;
+  const auto nudge = [](float& value, const std::optional<float>& delta) {
+    if (delta) {
+      value += *delta;
+    }
+  };
+  // Keep rotations within +/- pi, the range the settings app shows
+  const auto nudgeAngle = [](float& value, const std::optional<float>& delta) {
+    if (delta) {
+      value = std::remainder(value + *delta, 2 * std::numbers::pi_v<float>);
+    }
+  };
+  nudge(pose.mX, event.mX);
+  nudge(pose.mEyeY, event.mEyeY);
+  nudge(pose.mZ, event.mZ);
+  nudgeAngle(pose.mRX, event.mRX);
+  nudgeAngle(pose.mRY, event.mRY);
+  nudgeAngle(pose.mRZ, event.mRZ);
+  nudge(size.mWidth, event.mMaxWidth);
+  nudge(size.mHeight, event.mMaxHeight);
+  // A nudge can't make the kneeboard vanish or flip
+  size.mWidth = std::max(size.mWidth, 0.01f);
+  size.mHeight = std::max(size.mHeight, 0.01f);
 
   view->mVR.SetIndependentSettings(config);
   co_await this->SetViewsSettings(viewsSettings);

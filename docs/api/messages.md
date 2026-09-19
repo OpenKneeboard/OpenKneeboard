@@ -159,41 +159,29 @@ Value: JSON-encoded Object:
 
 `Brightness` must be a float, not an integer - for example, `0` and `1` are not valid values, and must be replaced with `0.0` or `1.0`.
 
-## SetVRView
+## NudgeVRView
 
-Changes a kneeboard's VR settings, as if the user changed them in OpenKneeboard's settings; the change is saved to the current profile.
+Moves or resizes a kneeboard in VR by a small amount, as if the user adjusted it in OpenKneeboard's settings; the change is saved to the current profile. This is intended for binding small adjustments to a dial, rotary encoder, or buttons, e.g. on a Stream Deck or a wheel.
 
 Value: JSON-encoded Object:
 
 ```json
 {
-	"Mode": "Relative",
 	"Kneeboard": 0,
-	"VerticalDistance": -0.01,
-	"Yaw": 5.0
+	"EyeY": -0.01,
+	"RY": 0.0175
 }
 ```
 
-- `Mode`: *optional string* - must be `Absolute` or `Relative`. Defaults to `Absolute` if not provided.
-  - `Absolute`: each provided value replaces the current value, and must be within the range listed below
-  - `Relative`: each provided value is added to the current value; the result is limited to the range listed below, and rotations wrap around
-- `Kneeboard`: *optional integer* - `1` for the primary kneeboard, `2` for the secondary; `0` (or omit) for the active kneeboard
-- all other values are *optional*; values that are not provided are not changed. Units, signs, and ranges match the settings app:
-  - `MaxWidth`, `MaxHeight`: *float* - kneeboard width and height limits, in meters; at least `0.01`
-  - `VerticalDistance`: *float* - vertical distance from eye level, in meters; positive values are below eye level
-  - `HorizontalPosition`: *float* - left-to-right position, in meters
-  - `ForwardPosition`: *float* - forward position, in meters
-  - `Pitch`, `Roll`, `Yaw`: *float* - in degrees, from `-180.0` to `180.0`
-  - `GazeTargetHorizontalScale`, `GazeTargetVerticalScale`: *float* - gaze target size, from `0.0` to `4.0`
-  - `ZoomScale`: *float* - zoom level when looking at the kneeboard, from `1.0` to `4.0`
-  - `NormalOpacity`: *float* - opacity when not looking at the kneeboard, from `0.0` to `1.0`
-  - `GazeOpacity`: *float* - opacity when looking at the kneeboard, from `0.0` to `1.0`
-  - `EnableGazeZoom`: *boolean* - zoom when looking at the kneeboard; not affected by `Mode`
-  - `DisplayArea`: *string* - `Full`, or `ContentOnly` to hide the header and footer; not affected by `Mode`
+- `Kneeboard`: *optional integer* - `0` (or omit) for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
+- all other values are *optional floats*; each one is **added** to the current setting, and values that are not provided are not changed:
+  - `X`, `EyeY`, `Z`: position, in meters, using the same right-handed coordinate system as the rest of OpenKneeboard: `X` is to the right, `EyeY` is up, relative to eye level, and `Z` is backwards, so in front of you is negative Z
+  - `RX`, `RY`, `RZ`: rotation around each axis, in radians
+  - `MaxWidth`, `MaxHeight`: the kneeboard's maximum physical size, in meters
 
-If any provided value is invalid, the event is ignored and no settings are changed. Kneeboards that mirror another kneeboard do not have their own VR settings, and can not be changed with this event.
+If any value is not a finite number, the event is ignored and no settings are changed. Kneeboards that mirror another kneeboard do not have their own VR settings, and can not be changed with this event.
 
-As with `SetBrightness`, float values must be written as floats - for example, `5.0`, not `5`.
+As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
 ## Requesting additional APIs
 

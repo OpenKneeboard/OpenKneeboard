@@ -210,7 +210,7 @@ class KneeboardState final
   void OnGameChangedEvent(DWORD processID, const std::filesystem::path&);
   void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
-  task<void> SetVRView(const SetVRViewEvent&);
+  task<void> NudgeVRView(const NudgeVRViewEvent&);
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);
