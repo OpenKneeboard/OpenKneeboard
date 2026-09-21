@@ -183,6 +183,28 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
+## SetViewVisibility
+
+Shows or hides a single kneeboard, as if its 'Enabled' checkbox in OpenKneeboard's VR settings was changed; the change is saved to the current profile. This is intended for binding to a button, e.g. on a Stream Deck or a wheel, so a kneeboard that is only wanted occasionally can be put away without opening the settings app.
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Kneeboard": 2,
+	"Visible": false
+}
+```
+
+- `Kneeboard`: *optional integer* - `0` (or omit) for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
+- `Visible`: *optional boolean* - `true` to show, `false` to hide; **omit it to toggle**
+
+Toggling is the default because the API is one-way: a button has no way to read the current state back, so it can not decide between showing and hiding for itself.
+
+Unlike `NudgeVRView`, this works on kneeboards that mirror another: a mirror has no VR settings of its own, but it is still a panel that can be in the way.
+
+Hiding every kneeboard is allowed, and nothing is drawn. A hidden kneeboard keeps its position in the list, so it can be shown again by index.
+
 ## Requesting additional APIs
 
 Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.

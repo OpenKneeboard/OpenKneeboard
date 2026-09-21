@@ -78,6 +78,9 @@ struct APIEvent final {
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
 
+  // struct SetViewVisibilityEvent
+  static constexpr char EVT_SET_VIEW_VISIBILITY[] = "SetViewVisibility";
+
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
     "Plugin/Tab/CustomAction";
@@ -166,6 +169,28 @@ struct NudgeVRViewEvent {
   std::optional<float> mMaxHeight;
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
+
+/** Show or hide a single view, as if its checkbox in the settings app was
+ * changed.
+ *
+ * `mVisible` is optional: omitted, the view is toggled. This is what a button
+ * on a stream deck wants, as the sender has no way to read the current state
+ * back - the API is one-way.
+ *
+ * Hiding every view is permitted, and renders nothing; it is a reasonable way
+ * to keep a configured kneeboard out of the way. The view remains addressable
+ * by index while hidden, so it can be shown again.
+ */
+struct SetViewVisibilityEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_VIEW_VISIBILITY};
+
+  // 0 = 'active', 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+
+  // Omitted = toggle
+  std::optional<bool> mVisible;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetViewVisibilityEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};

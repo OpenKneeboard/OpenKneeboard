@@ -211,6 +211,7 @@ class KneeboardState final
   void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
   task<void> NudgeVRView(const NudgeVRViewEvent&);
+  task<void> SetViewVisibility(const SetViewVisibilityEvent&);
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);
