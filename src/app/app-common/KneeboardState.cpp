@@ -582,6 +582,17 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
+  if (ev.name == APIEvent::EVT_SET_VIEW_VISIBILITY) {
+    const auto parsed = ev.TryParsedValue<SetViewVisibilityEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed SetViewVisibility event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->SetViewVisibility(*parsed);
+    co_return;
+  }
+
   this->evAPIEvent.Emit(ev);
 }
 
@@ -957,6 +968,37 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   size.mHeight = std::max(size.mHeight, 0.01f);
 
   view->mVR.SetIndependentSettings(config);
+  co_await this->SetViewsSettings(viewsSettings);
+}
+
+task<void> KneeboardState::SetViewVisibility(
+  const SetViewVisibilityEvent& event) {
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    dprint("SetViewVisibility: kneeboard {} does not exist", event.mKneeboard);
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  if (view == viewsSettings.mViews.end()) {
+    dprint("SetViewVisibility: view is not in the settings");
+    co_return;
+  }
+
+  // Unlike a nudge, this applies to mirrors too: a mirror has no pose of its
+  // own, but it is still a panel that can be in the way.
+  const bool visible = event.mVisible.value_or(!view->mVR.mEnabled);
+  if (visible == view->mVR.mEnabled) {
+    co_return;
+  }
+  view->mVR.mEnabled = visible;
   co_await this->SetViewsSettings(viewsSettings);
 }
 
