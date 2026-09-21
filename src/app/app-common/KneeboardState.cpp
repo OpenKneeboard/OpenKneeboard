@@ -29,6 +29,8 @@
 #include <OpenKneeboard/scope_exit.hpp>
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <string>
 
 namespace OpenKneeboard {
@@ -570,6 +572,16 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
+  if (ev.name == APIEvent::EVT_NUDGE_VR_VIEW) {
+    const auto parsed = ev.TryParsedValue<NudgeVRViewEvent>();
+    if (!parsed) {
+      dprint("Ignoring malformed NudgeVRView event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->NudgeVRView(*parsed);
+    co_return;
+  }
+
   this->evAPIEvent.Emit(ev);
 }
 
@@ -877,6 +889,75 @@ void KneeboardState::AcquireExclusiveResources() {
   AddEventListener(
     mAPIEventServer->evAPIEvent,
     std::bind_front(&KneeboardState::OnAPIEvent, this));
+}
+
+task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    dprint("NudgeVRView: kneeboard {} does not exist", event.mKneeboard);
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  if (
+    view == viewsSettings.mViews.end()
+    || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
+    dprint(
+      "NudgeVRView: kneeboard {} does not have its own VR settings",
+      event.mKneeboard);
+    co_return;
+  }
+
+  for (const auto& delta:
+       {event.mX,
+        event.mEyeY,
+        event.mZ,
+        event.mRX,
+        event.mRY,
+        event.mRZ,
+        event.mMaxWidth,
+        event.mMaxHeight}) {
+    if (delta && !std::isfinite(*delta)) {
+      dprint("NudgeVRView: ignoring event with a non-finite value");
+      co_return;
+    }
+  }
+
+  auto config = view->mVR.GetIndependentSettings();
+  auto& pose = config.mPose;
+  auto& size = config.mMaximumPhysicalSize;
+  const auto nudge = [](float& value, const std::optional<float>& delta) {
+    if (delta) {
+      value += *delta;
+    }
+  };
+  // Keep rotations within +/- pi, the range the settings app shows
+  const auto nudgeAngle = [](float& value, const std::optional<float>& delta) {
+    if (delta) {
+      value = std::remainder(value + *delta, 2 * std::numbers::pi_v<float>);
+    }
+  };
+  nudge(pose.mX, event.mX);
+  nudge(pose.mEyeY, event.mEyeY);
+  nudge(pose.mZ, event.mZ);
+  nudgeAngle(pose.mRX, event.mRX);
+  nudgeAngle(pose.mRY, event.mRY);
+  nudgeAngle(pose.mRZ, event.mRZ);
+  nudge(size.mWidth, event.mMaxWidth);
+  nudge(size.mHeight, event.mMaxHeight);
+  // A nudge can't make the kneeboard vanish or flip
+  size.mWidth = std::max(size.mWidth, 0.01f);
+  size.mHeight = std::max(size.mHeight, 0.01f);
+
+  view->mVR.SetIndependentSettings(config);
+  co_await this->SetViewsSettings(viewsSettings);
 }
 
 task<void> KneeboardState::SwitchProfile(Direction direction) {

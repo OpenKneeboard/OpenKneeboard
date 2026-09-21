@@ -176,6 +176,18 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   });
 OPENKNEEBOARD_DEFINE_JSON(SetBrightnessEvent, mBrightness, mMode);
 
+OPENKNEEBOARD_DEFINE_JSON(
+  NudgeVRViewEvent,
+  mKneeboard,
+  mX,
+  mEyeY,
+  mZ,
+  mRX,
+  mRY,
+  mRZ,
+  mMaxWidth,
+  mMaxHeight);
+
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
 }// namespace OpenKneeboard

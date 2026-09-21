@@ -75,6 +75,9 @@ struct APIEvent final {
   // struct SetBrightnessEvent
   static constexpr char EVT_SET_BRIGHTNESS[] = "SetBrightness";
 
+  // struct NudgeVRViewEvent
+  static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
+
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
     "Plugin/Tab/CustomAction";
@@ -139,6 +142,30 @@ struct SetBrightnessEvent {
   Mode mMode = Mode::Absolute;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetBrightnessEvent);
+
+/** Nudge a view's VR placement, as if the user adjusted it in the settings
+ * app.
+ *
+ * Every value is added to the current one; omitted values are left
+ * unchanged. Units and directions are those of `VRPose`: meters and radians.
+ */
+struct NudgeVRViewEvent {
+  static constexpr auto ID {APIEvent::EVT_NUDGE_VR_VIEW};
+
+  // 0 = 'active', 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+
+  std::optional<float> mX;
+  std::optional<float> mEyeY;
+  std::optional<float> mZ;
+  std::optional<float> mRX;
+  std::optional<float> mRY;
+  std::optional<float> mRZ;
+
+  std::optional<float> mMaxWidth;
+  std::optional<float> mMaxHeight;
+};
+OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};

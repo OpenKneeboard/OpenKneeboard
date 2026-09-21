@@ -159,6 +159,30 @@ Value: JSON-encoded Object:
 
 `Brightness` must be a float, not an integer - for example, `0` and `1` are not valid values, and must be replaced with `0.0` or `1.0`.
 
+## NudgeVRView
+
+Moves or resizes a kneeboard in VR by a small amount, as if the user adjusted it in OpenKneeboard's settings; the change is saved to the current profile. This is intended for binding small adjustments to a dial, rotary encoder, or buttons, e.g. on a Stream Deck or a wheel.
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Kneeboard": 0,
+	"EyeY": -0.01,
+	"RY": 0.0175
+}
+```
+
+- `Kneeboard`: *optional integer* - `0` (or omit) for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
+- all other values are *optional floats*; each one is **added** to the current setting, and values that are not provided are not changed:
+  - `X`, `EyeY`, `Z`: position, in meters, using the same right-handed coordinate system as the rest of OpenKneeboard: `X` is to the right, `EyeY` is up, relative to eye level, and `Z` is backwards, so in front of you is negative Z
+  - `RX`, `RY`, `RZ`: rotation around each axis, in radians
+  - `MaxWidth`, `MaxHeight`: the kneeboard's maximum physical size, in meters
+
+If any value is not a finite number, the event is ignored and no settings are changed. Kneeboards that mirror another kneeboard do not have their own VR settings, and can not be changed with this event.
+
+As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
+
 ## Requesting additional APIs
 
 Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
