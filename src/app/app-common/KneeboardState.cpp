@@ -582,6 +582,17 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
+  if (ev.name == APIEvent::EVT_SET_VIEW_OPACITY) {
+    const auto parsed = ev.TryParsedValue<SetViewOpacityEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed SetViewOpacity event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->SetViewOpacity(*parsed);
+    co_return;
+  }
+
   this->evAPIEvent.Emit(ev);
 }
 
@@ -956,6 +967,66 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   size.mWidth = std::max(size.mWidth, 0.01f);
   size.mHeight = std::max(size.mHeight, 0.01f);
 
+  view->mVR.SetIndependentSettings(config);
+  co_await this->SetViewsSettings(viewsSettings);
+}
+
+task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    dprint("SetViewOpacity: kneeboard {} does not exist", event.mKneeboard);
+    co_return;
+  }
+
+  for (const auto& value: {event.mOpacity, event.mDelta}) {
+    if (value && !std::isfinite(*value)) {
+      dprint("SetViewOpacity: ignoring event with a non-finite value");
+      co_return;
+    }
+  }
+  if (!event.mOpacity && !event.mDelta) {
+    dprint("SetViewOpacity: neither Opacity nor Delta given; nothing to do");
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  // A mirror has no independent opacity; it inherits the view it mirrors.
+  if (
+    view == viewsSettings.mViews.end()
+    || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
+    dprint(
+      "SetViewOpacity: kneeboard {} does not have its own VR settings",
+      event.mKneeboard);
+    co_return;
+  }
+
+  auto config = view->mVR.GetIndependentSettings();
+  auto& opacity = config.mOpacity;
+  // Both values move together: "how transparent is that panel" is one number to
+  // the person pressing the button, and a shared delta keeps whatever gap has
+  // been configured between them until one of them clamps.
+  const auto apply = [&event](float& value) {
+    if (event.mOpacity) {
+      value = *event.mOpacity;
+    }
+    if (event.mDelta) {
+      value += *event.mDelta;
+    }
+    value = std::clamp(value, 0.0f, 1.0f);
+  };
+  apply(opacity.mNormal);
+  apply(opacity.mGaze);
+
+  if (config.mOpacity == view->mVR.GetIndependentSettings().mOpacity) {
+    co_return;
+  }
   view->mVR.SetIndependentSettings(config);
   co_await this->SetViewsSettings(viewsSettings);
 }
