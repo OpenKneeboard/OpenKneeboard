@@ -183,6 +183,35 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
+## SetViewOpacity
+
+Changes how transparent a single kneeboard is, as if its opacity sliders in OpenKneeboard's VR settings were moved; the change is saved to the current profile. This is intended for binding to a button, so a panel can be faded down when it is in the way and back up when it is wanted, without opening the settings app.
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Kneeboard": 2,
+	"Delta": -0.1
+}
+```
+
+- `Kneeboard`: *optional integer* - `0` (or omit) for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
+- `Opacity`: *optional float* - sets both opacities to this value
+- `Delta`: *optional float* - adds this value to both opacities
+
+At least one of `Opacity` and `Delta` must be given, or the event is ignored. If both are given, `Opacity` is applied first and `Delta` on top of it. Both results are clamped to `0.0`-`1.0`, so a button can be held down at either end without the values running away. Non-finite values reject the whole event.
+
+`Delta` exists because the API is one-way: a button has no way to read the current value back, so it can not work out an absolute one for itself.
+
+A kneeboard has two opacities - one for when you are looking at it and one for when you are not - and **both are moved together**. "How transparent is that panel" is one number to the person pressing the button, and a shared delta preserves whatever gap has been configured between the two until one of them clamps. To use them differently, set them apart in the settings app and then nudge from here.
+
+This needs the kneeboard's own VR settings, so it does not work on a kneeboard that mirrors another: a mirror has no opacity of its own.
+
+Fully transparent is allowed; the kneeboard becomes invisible. The kneeboard keeps its position in the list, so it can be faded back up by index.
+
+As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
+
 ## Requesting additional APIs
 
 Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.

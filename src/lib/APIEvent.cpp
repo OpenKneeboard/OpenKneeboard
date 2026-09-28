@@ -188,6 +188,8 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
+OPENKNEEBOARD_DEFINE_JSON(SetViewOpacityEvent, mKneeboard, mOpacity, mDelta);
+
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
 }// namespace OpenKneeboard
