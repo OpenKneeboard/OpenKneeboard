@@ -16,9 +16,14 @@
 
 #include <Windows.h>
 
+#include <cctype>
 #include <charconv>
 #include <chrono>
+#include <format>
+#include <initializer_list>
+#include <string>
 #include <string_view>
+#include <type_traits>
 
 static uint32_t hex_to_ui32(const std::string_view& sv) {
   if (sv.empty()) {
@@ -162,6 +167,64 @@ const wchar_t* APIEvent::GetMailslotPath() {
   return sPath.c_str();
 }
 
+namespace {
+
+// Finds a field the way the JSON macros do: e.g. `Kneeboard` or `kneeboard`
+const nlohmann::json* FindField(const nlohmann::json& j, std::string key) {
+  if (!j.is_object()) {
+    return nullptr;
+  }
+  if (const auto it = j.find(key); it != j.end()) {
+    return &*it;
+  }
+  key.front() = static_cast<char>(std::tolower(key.front()));
+  if (const auto it = j.find(key); it != j.end()) {
+    return &*it;
+  }
+  return nullptr;
+}
+
+/* The JSON macros leave a missing field at its default, and
+ * `NLOHMANN_JSON_SERIALIZE_ENUM` turns an unrecognized string into the enum's
+ * first value. In an API message, either is more likely a mistake than what
+ * the sender meant, so these reject the message instead; as they throw JSON
+ * exceptions, `APIEvent::TryParsedValue()` reports them like any other
+ * malformed message.
+ */
+
+[[noreturn]] void ThrowInvalidMessage(
+  const nlohmann::json& j,
+  const std::string& what) {
+  // 5xx is `other_error`; 599 is not used by nlohmann::json itself
+  throw nlohmann::json::other_error::create(599, what, &j);
+}
+
+void RequireFields(
+  const nlohmann::json& j,
+  std::initializer_list<const char*> keys) {
+  for (const auto key: keys) {
+    if (!FindField(j, key)) {
+      ThrowInvalidMessage(
+        j, std::format("required field '{}' is missing", key));
+    }
+  }
+}
+
+template <class T>
+  requires std::is_enum_v<T>
+void RequireKnownEnumValue(
+  const nlohmann::json& j,
+  const char* key,
+  const T parsed) {
+  const auto field = FindField(j, key);
+  if (field && *field != nlohmann::json(parsed)) {
+    ThrowInvalidMessage(
+      j, std::format("{} is not a valid value for '{}'", field->dump(), key));
+  }
+}
+
+}// namespace
+
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIDEvent, mID, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByNameEvent, mName, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIndexEvent, mIndex, mPageNumber, mKneeboard);
@@ -201,6 +264,16 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {SetViewOpacityEvent::Target::Gaze, "Gaze"},
     {SetViewOpacityEvent::Target::Normal, "Normal"},
   });
+
+template <>
+void from_json_postprocess<SetViewOpacityEvent>(
+  const nlohmann::json& j,
+  SetViewOpacityEvent& v) {
+  RequireFields(j, {"Kneeboard", "Action", "Target", "Value"});
+  RequireKnownEnumValue(j, "Action", v.mAction);
+  RequireKnownEnumValue(j, "Target", v.mTarget);
+}
+
 OPENKNEEBOARD_DEFINE_JSON(
   SetViewOpacityEvent,
   mKneeboard,

@@ -210,6 +210,8 @@ Value: JSON-encoded Object:
   - `Both`: both of the above; with `Add`, the difference between them is kept until one of them reaches `0.0` or `1.0`
 - `Value`: *float* - `0.0` is fully transparent, `1.0` is fully opaque
 
+All four fields are required, and the strings are case-sensitive - for example, `add` is not a valid `Action`. If a field is missing or a string is not one of the values listed here, the event is ignored, and the reason is written to OpenKneeboard's debug log.
+
 The result is clamped to between `0.0` and `1.0`, so a button can be held down at either end without the value running away. If `Value` is not a finite number, the event is ignored.
 
 Fully transparent is allowed; the kneeboard becomes invisible, but keeps its position in the list, so it can be faded back in by index.
