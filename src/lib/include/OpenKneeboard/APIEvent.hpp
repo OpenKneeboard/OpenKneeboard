@@ -78,8 +78,12 @@ struct APIEvent final {
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
 
-  // struct SetViewVisibilityEvent
-  static constexpr char EVT_SET_VIEW_VISIBILITY[] = "SetViewVisibility";
+  // struct ShowViewEvent
+  static constexpr char EVT_SHOW_VIEW[] = "ShowView";
+  // struct HideViewEvent
+  static constexpr char EVT_HIDE_VIEW[] = "HideView";
+  // struct ToggleViewVisibilityEvent
+  static constexpr char EVT_TOGGLE_VIEW_VISIBILITY[] = "ToggleViewVisibility";
 
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
@@ -170,27 +174,40 @@ struct NudgeVRViewEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 
-/** Show or hide a single view, as if its checkbox in the settings app was
- * changed.
+/* Show, hide, or toggle a single view in VR, as if its 'Enabled in VR'
+ * switch in the settings app was changed. This does not affect the app window.
  *
- * `mVisible` is optional: omitted, the view is toggled. This is what a button
- * on a stream deck wants, as the sender has no way to read the current state
- * back - the API is one-way.
- *
- * Hiding every view is permitted, and renders nothing; it is a reasonable way
- * to keep a configured kneeboard out of the way. The view remains addressable
- * by index while hidden, so it can be shown again.
+ * The active view is never hidden: hiding it makes the next visible view
+ * active, and if every view is hidden, there is no active view. That is why
+ * `ShowViewEvent` and `ToggleViewVisibilityEvent` need a specific view - the
+ * active view is always visible, so showing it does nothing, and toggling it
+ * is the same as hiding it.
  */
-struct SetViewVisibilityEvent {
-  static constexpr auto ID {APIEvent::EVT_SET_VIEW_VISIBILITY};
+
+struct ShowViewEvent {
+  static constexpr auto ID {APIEvent::EVT_SHOW_VIEW};
+
+  // 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(ShowViewEvent);
+
+struct HideViewEvent {
+  static constexpr auto ID {APIEvent::EVT_HIDE_VIEW};
 
   // 0 = 'active', 1 = first view, 2 = second view, ...
   uint8_t mKneeboard {0};
-
-  // Omitted = toggle
-  std::optional<bool> mVisible;
 };
-OPENKNEEBOARD_DECLARE_JSON(SetViewVisibilityEvent);
+OPENKNEEBOARD_DECLARE_JSON(HideViewEvent);
+
+/// If every view is hidden, this shows all of them, whichever view it names.
+struct ToggleViewVisibilityEvent {
+  static constexpr auto ID {APIEvent::EVT_TOGGLE_VIEW_VISIBILITY};
+
+  // 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(ToggleViewVisibilityEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};

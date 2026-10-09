@@ -184,14 +184,59 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 }
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
+  // The active view is never one that is hidden in VR; if every view is
+  // hidden, there is no active view.
+  auto view = GetLastActiveInGameView();
+  if (view && !IsVisibleInVR(*view)) {
+    return nullptr;
+  }
+  return view;
+}
+
+std::shared_ptr<KneeboardView> KneeboardState::GetLastActiveInGameView()
+  const {
   if (mInputViewIndex >= mViews.size()) {
     if (mViews.empty()) {
-      dprint.Error("No views in KneeboardState::GetActiveInGameView()");
+      dprint.Error("No views in KneeboardState::GetLastActiveInGameView()");
       return nullptr;
     }
     return mViews.front();
   }
   return mViews.at(mInputViewIndex);
+}
+
+bool KneeboardState::IsVisibleInVR(const KneeboardView& view) const {
+  const auto& views = mSettings.mViews.mViews;
+  const auto it =
+    std::ranges::find(views, view.GetPersistentGUID(), &ViewSettings::mGuid);
+  return it != views.end() && it->mVR.mEnabled;
+}
+
+bool KneeboardState::EnsureActiveInGameViewIsVisible() {
+  const auto count = mViews.size();
+  if (count == 0 || mInputViewIndex >= count) {
+    return false;
+  }
+  if (IsVisibleInVR(*mViews.at(mInputViewIndex))) {
+    return false;
+  }
+  for (size_t offset = 1; offset < count; ++offset) {
+    const auto i = (mInputViewIndex + offset) % count;
+    if (!IsVisibleInVR(*mViews.at(i))) {
+      continue;
+    }
+    mViews.at(mInputViewIndex)->PostCursorEvent({});
+    dprint(
+      "Active view is hidden in VR, giving input focus to view {} at index {}",
+      mViews.at(i)->GetPersistentGUID(),
+      i);
+    mInputViewIndex = felly::numeric_cast<uint8_t>(i);
+    return true;
+  }
+  // Every view is hidden, so there is no active view; `mInputViewIndex` is left
+  // alone, as the app window may still be showing it.
+  mViews.at(mInputViewIndex)->PostCursorEvent({});
+  return true;
 }
 
 void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
@@ -203,6 +248,11 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
       continue;
     }
     if (mInputViewIndex == i) {
+      return;
+    }
+    // Not logged: `AfterFrame()` asks every frame while the VR runtime still
+    // reports a view that has since been hidden
+    if (!IsVisibleInVR(*mViews.at(i))) {
       return;
     }
     mViews.at(mInputViewIndex)->PostCursorEvent({});
@@ -228,7 +278,8 @@ std::shared_ptr<KneeboardView> KneeboardState::GetAppWindowView() const {
   if (mSettings.mViews.mAppWindowMode == AppWindowViewMode::Independent) {
     return mAppWindowView;
   }
-  return GetActiveInGameView();
+  // Hiding a view only hides it in VR, so the app window keeps showing it
+  return GetLastActiveInGameView();
 }
 
 void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
@@ -281,6 +332,15 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::SHOW:
+      // If every view has been hidden individually, showing OpenKneeboard
+      // would still show nothing; the user has most likely forgotten they hid
+      // them, so bring them all back.
+      if (co_await this->ShowAllViewsIfAllHidden()) {
+        mInterprocessRenderer->PostUserAction(UserAction::SHOW);
+        co_return;
+      }
+      mInterprocessRenderer->PostUserAction(action);
+      co_return;
     case UserAction::HIDE:
       mInterprocessRenderer->PostUserAction(action);
       co_return;
@@ -313,7 +373,9 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
     case UserAction::PREVIOUS_BOOKMARK:
     case UserAction::NEXT_BOOKMARK:
     case UserAction::TOGGLE_BOOKMARK:
-      co_await GetActiveViewForGlobalInput()->PostUserAction(action);
+      if (const auto view = GetActiveViewForGlobalInput()) {
+        co_await view->PostUserAction(action);
+      }
       co_return;
     case UserAction::PREVIOUS_PROFILE:
       co_await this->SwitchProfile(Direction::Previous);
@@ -337,9 +399,14 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       if (this->mViews.size() < 2) {
         co_return;
       }
-      this->mInputViewIndex = (this->mInputViewIndex + 1) % this->mViews.size();
-      this->evActiveViewChangedEvent.Emit();
-      this->SetRepaintNeeded();
+      // Hidden views are skipped, as the active view must always be visible
+      for (size_t offset = 1; offset < mViews.size(); ++offset) {
+        const auto i = (mInputViewIndex + offset) % mViews.size();
+        if (IsVisibleInVR(*mViews.at(i))) {
+          this->SetActiveInGameView(mViews.at(i)->GetRuntimeID());
+          break;
+        }
+      }
       co_return;
     case UserAction::INCREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mUI.mTint;
@@ -582,14 +649,36 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_SET_VIEW_VISIBILITY) {
-    const auto parsed = ev.TryParsedValue<SetViewVisibilityEvent>();
+  if (ev.name == APIEvent::EVT_SHOW_VIEW) {
+    const auto parsed = ev.TryParsedValue<ShowViewEvent>();
     if (!parsed) {
-      dprint(
-        "Ignoring malformed SetViewVisibility event: {}", parsed.error().what);
+      dprint("Ignoring malformed ShowView event: {}", parsed.error().what);
       co_return;
     }
-    co_await this->SetViewVisibility(*parsed);
+    co_await this->ChangeViewVisibility(parsed->mKneeboard, UserAction::SHOW);
+    co_return;
+  }
+
+  if (ev.name == APIEvent::EVT_HIDE_VIEW) {
+    const auto parsed = ev.TryParsedValue<HideViewEvent>();
+    if (!parsed) {
+      dprint("Ignoring malformed HideView event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->ChangeViewVisibility(parsed->mKneeboard, UserAction::HIDE);
+    co_return;
+  }
+
+  if (ev.name == APIEvent::EVT_TOGGLE_VIEW_VISIBILITY) {
+    const auto parsed = ev.TryParsedValue<ToggleViewVisibilityEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed ToggleViewVisibility event: {}",
+        parsed.error().what);
+      co_return;
+    }
+    co_await this->ChangeViewVisibility(
+      parsed->mKneeboard, UserAction::TOGGLE_VISIBILITY);
     co_return;
   }
 
@@ -614,13 +703,17 @@ void KneeboardState::SetCurrentTab(
       extra.mKneeboard);
     view = GetActiveViewForGlobalInput();
   }
+  if (!view) {
+    dprint("No active kneeboard, so can not set tab");
+    return;
+  }
   view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
   const auto pageIDs = tab->GetPageIDs();
   const auto pageCount = pageIDs.size();
   if (extra.mPageNumber != 0 && pageCount > 1) {
     const auto pageIndex = extra.mPageNumber - 1;
     if (pageIndex < pageCount) {
-      this->GetActiveViewForGlobalInput()->GetCurrentTabView()->SetPageID(
+      view->GetCurrentTabView()->SetPageID(
         pageIDs.at(pageIndex));
     } else {
       dprint("Requested page index {} >= count {}", pageIndex, pageCount);
@@ -679,6 +772,7 @@ task<void> KneeboardState::SetVRSettings(const VRSettings& value) {
   if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
     mViews.at(mInputViewIndex)->PostCursorEvent({});
     mInputViewIndex = 0;
+    this->EnsureActiveInGameViewIsVisible();
     this->evActiveViewChangedEvent.Emit();
   }
 
@@ -971,16 +1065,32 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   co_await this->SetViewsSettings(viewsSettings);
 }
 
-task<void> KneeboardState::SetViewVisibility(
-  const SetViewVisibilityEvent& event) {
+task<void> KneeboardState::ChangeViewVisibility(
+  uint8_t kneeboardIndex,
+  UserAction action) {
+  // The active view is always visible, so showing it would do nothing, and
+  // toggling it would always hide it.
+  if (kneeboardIndex == 0 && action != UserAction::HIDE) {
+    dprint(
+      "Ignoring {} for the active kneeboard; a kneeboard number is required",
+      to_string(action));
+    co_return;
+  }
+
+  if (
+    action == UserAction::TOGGLE_VISIBILITY
+    && co_await this->ShowAllViewsIfAllHidden()) {
+    co_return;
+  }
+
   std::shared_ptr<KneeboardView> kneeboard;
-  if (event.mKneeboard == 0) {
+  if (kneeboardIndex == 0) {
     kneeboard = GetActiveInGameView();
-  } else if (event.mKneeboard <= mViews.size()) {
-    kneeboard = mViews.at(event.mKneeboard - 1);
+  } else if (kneeboardIndex <= mViews.size()) {
+    kneeboard = mViews.at(kneeboardIndex - 1);
   }
   if (!kneeboard) {
-    dprint("SetViewVisibility: kneeboard {} does not exist", event.mKneeboard);
+    dprint("Can not change visibility of kneeboard {}", kneeboardIndex);
     co_return;
   }
 
@@ -988,18 +1098,33 @@ task<void> KneeboardState::SetViewVisibility(
   auto view = std::ranges::find(
     viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
   if (view == viewsSettings.mViews.end()) {
-    dprint("SetViewVisibility: view is not in the settings");
+    dprint("Kneeboard {} is not in the settings", kneeboardIndex);
     co_return;
   }
 
-  // Unlike a nudge, this applies to mirrors too: a mirror has no pose of its
-  // own, but it is still a panel that can be in the way.
-  const bool visible = event.mVisible.value_or(!view->mVR.mEnabled);
+  const bool visible = (action == UserAction::SHOW)
+    || (action == UserAction::TOGGLE_VISIBILITY && !view->mVR.mEnabled);
   if (visible == view->mVR.mEnabled) {
     co_return;
   }
   view->mVR.mEnabled = visible;
   co_await this->SetViewsSettings(viewsSettings);
+}
+
+task<bool> KneeboardState::ShowAllViewsIfAllHidden() {
+  auto viewsSettings = mSettings.mViews;
+  auto& views = viewsSettings.mViews;
+  if (views.empty() || std::ranges::any_of(views, [](const auto& view) {
+        return view.mVR.mEnabled;
+      })) {
+    co_return false;
+  }
+  dprint("Every view is hidden in VR; showing all of them");
+  for (auto& view: views) {
+    view.mVR.mEnabled = true;
+  }
+  co_await this->SetViewsSettings(viewsSettings);
+  co_return true;
 }
 
 task<void> KneeboardState::SwitchProfile(Direction direction) {
@@ -1132,6 +1257,9 @@ void KneeboardState::InitializeViews() {
   bool viewChanged = false;
   if (mInputViewIndex >= count) {
     mInputViewIndex = (count - 1);
+    viewChanged = true;
+  }
+  if (this->EnsureActiveInGameViewIsVisible()) {
     viewChanged = true;
   }
 

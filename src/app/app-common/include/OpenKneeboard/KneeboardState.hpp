@@ -211,7 +211,14 @@ class KneeboardState final
   void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
   task<void> NudgeVRView(const NudgeVRViewEvent&);
-  task<void> SetViewVisibility(const SetViewVisibilityEvent&);
+  task<void> ChangeViewVisibility(uint8_t kneeboard, UserAction);
+  task<bool> ShowAllViewsIfAllHidden();
+
+  /// The active in-game view, even if it is hidden in VR
+  std::shared_ptr<KneeboardView> GetLastActiveInGameView() const;
+  bool IsVisibleInVR(const KneeboardView&) const;
+  /// Returns true if the active view changed
+  bool EnsureActiveInGameViewIsVisible();
 
   void BeforeFrame();
   void AfterFrame(FramePostEventKind);

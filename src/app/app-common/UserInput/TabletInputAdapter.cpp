@@ -191,6 +191,9 @@ void TabletInputAdapter::OnTabletInput(
   }
 
   const auto view = mKneeboard->GetActiveViewForGlobalInput();
+  if (!view) {
+    return;
+  }
 
   auto maxX = tablet.mMaxX;
   auto maxY = tablet.mMaxY;

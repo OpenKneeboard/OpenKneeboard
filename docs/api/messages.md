@@ -183,27 +183,31 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
-## SetViewVisibility
+## ShowView, HideView, and ToggleViewVisibility
 
-Shows or hides a single kneeboard, as if its 'Enabled' checkbox in OpenKneeboard's VR settings was changed; the change is saved to the current profile. This is intended for binding to a button, e.g. on a Stream Deck or a wheel, so a kneeboard that is only wanted occasionally can be put away without opening the settings app.
+*Added in v2.0.*
+
+Shows or hides a single kneeboard in VR, as if its 'Enabled in VR' switch in OpenKneeboard's settings was changed; the change is saved to the current profile. This is intended for binding to a button, e.g. on a Stream Deck or a wheel, so a kneeboard that is only wanted occasionally can be put away without opening the settings app.
+
+This only affects VR: the kneeboard is still shown in the OpenKneeboard app window.
 
 Value: JSON-encoded Object:
 
 ```json
 {
-	"Kneeboard": 2,
-	"Visible": false
+	"Kneeboard": 2
 }
 ```
 
-- `Kneeboard`: *optional integer* - `0` (or omit) for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
-- `Visible`: *optional boolean* - `true` to show, `false` to hide; **omit it to toggle**
+- `Kneeboard`: *integer* - `1` for the first kneeboard, `2` for the second, and so on. `HideView` also accepts `0` for the active kneeboard; `ShowView` and `ToggleViewVisibility` do not, as the active kneeboard is always visible.
 
-Toggling is the default because the API is one-way: a button has no way to read the current state back, so it can not decide between showing and hiding for itself.
+The active kneeboard is never hidden: if the active kneeboard is hidden, the next visible kneeboard becomes active, and if every kneeboard is hidden, there is no active kneeboard until one is shown again. While there is no active kneeboard, messages and bindings that act on the active kneeboard - such as changing page - do nothing.
 
-Unlike `NudgeVRView`, this works on kneeboards that mirror another: a mirror has no VR settings of its own, but it is still a panel that can be in the way.
+A hidden kneeboard keeps its position in the list, so it can be shown again by number.
 
-Hiding every kneeboard is allowed, and nothing is drawn. A hidden kneeboard keeps its position in the list, so it can be shown again by index.
+If every kneeboard is hidden, `ToggleViewVisibility` shows all of them, whichever kneeboard it names; so do OpenKneeboard's own 'show' and 'toggle visibility' bindings and remote controls.
+
+Kneeboards that mirror another kneeboard can be shown and hidden independently of the kneeboard they mirror.
 
 ## Requesting additional APIs
 

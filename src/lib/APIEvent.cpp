@@ -188,7 +188,9 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
-OPENKNEEBOARD_DEFINE_JSON(SetViewVisibilityEvent, mKneeboard, mVisible);
+OPENKNEEBOARD_DEFINE_JSON(ShowViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(HideViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(ToggleViewVisibilityEvent, mKneeboard);
 
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
