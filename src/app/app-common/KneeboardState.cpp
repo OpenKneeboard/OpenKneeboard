@@ -1010,11 +1010,19 @@ task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
       1.0f);
   };
   using Target = SetViewOpacityEvent::Target;
-  if (event.mTarget != Target::Normal) {
-    apply(config.mOpacity.mGaze);
-  }
-  if (event.mTarget != Target::Gaze) {
-    apply(config.mOpacity.mNormal);
+  switch (event.mTarget) {
+    case Target::Gaze:
+      apply(config.mOpacity.mGaze);
+      break;
+    case Target::Normal:
+      apply(config.mOpacity.mNormal);
+      break;
+    case Target::Both:
+      // Each opacity is changed and clamped on its own, so with `Add`, the
+      // gap between them is kept until one of them reaches 0 or 1.
+      apply(config.mOpacity.mGaze);
+      apply(config.mOpacity.mNormal);
+      break;
   }
 
   if (config.mOpacity == view->mVR.GetIndependentSettings().mOpacity) {
