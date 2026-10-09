@@ -201,6 +201,8 @@ Value: JSON-encoded Object:
 
 - `Kneeboard`: *integer* - `1` for the first kneeboard, `2` for the second, and so on. `HideView` also accepts `0` for the active kneeboard; `ShowView` and `ToggleViewVisibility` do not, as the active kneeboard is always visible.
 
+`Kneeboard` is required by all three messages; to hide the active kneeboard, send `0` explicitly. If it is missing, the event is ignored, and the reason is written to OpenKneeboard's debug log.
+
 The active kneeboard is never hidden: if the active kneeboard is hidden, the next visible kneeboard becomes active, and if every kneeboard is hidden, there is no active kneeboard until one is shown again. While there is no active kneeboard, messages and bindings that act on the active kneeboard - such as changing page - do nothing.
 
 A hidden kneeboard keeps its position in the list, so it can be shown again by number.
