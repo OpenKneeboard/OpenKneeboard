@@ -170,19 +170,12 @@ struct NudgeVRViewEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 
-/** Change how transparent a single view is.
+/** Change how transparent a single view is, as if its opacity sliders in the
+ * settings app were moved.
  *
- * `mDelta` is relative and `mOpacity` absolute; the result is clamped to 0..1.
- *
- * A relative change is what a button on a Stream Deck wants, as the sender has
- * no way to read the current value back - the API is one-way. If both are
- * given, the absolute value is applied first and the delta on top of it.
- *
- * A view has two opacities - one for when you are looking at it and one for
- * when you are not - and both are moved together, because "how transparent is
- * that panel" is one number to the person pressing the button. Moving them
- * together also preserves whatever gap has been configured between them, until
- * one of them clamps. Set them apart in the settings app, then nudge from here.
+ * `Add` is what a button on a Stream Deck wants, as the sender has no way to
+ * read the current value back - the API is one-way. The result is clamped to
+ * 0..1 either way.
  *
  * Fully transparent is permitted; the view becomes invisible but remains
  * addressable by index, so it can be brought back.
@@ -190,14 +183,26 @@ OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 struct SetViewOpacityEvent {
   static constexpr auto ID {APIEvent::EVT_SET_VIEW_OPACITY};
 
+  enum class Action {
+    Set,
+    Add,
+  };
+
+  /// Which of the view's two opacities to change
+  enum class Target {
+    /// Both the 'looking at it' and 'not looking at it' opacities
+    Both,
+    /// Only the opacity while looking at the view
+    Gaze,
+    /// Only the opacity while not looking at the view
+    Normal,
+  };
+
   // 0 = 'active', 1 = first view, 2 = second view, ...
   uint8_t mKneeboard {0};
-
-  // Absolute value; the result is clamped to 0..1
-  std::optional<float> mOpacity;
-
-  // Relative change; the result is clamped to 0..1
-  std::optional<float> mDelta;
+  Action mAction {Action::Set};
+  Target mTarget {Target::Both};
+  float mValue {};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetViewOpacityEvent);
 

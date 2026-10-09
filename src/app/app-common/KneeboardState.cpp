@@ -983,14 +983,8 @@ task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
     co_return;
   }
 
-  for (const auto& value: {event.mOpacity, event.mDelta}) {
-    if (value && !std::isfinite(*value)) {
-      dprint("SetViewOpacity: ignoring event with a non-finite value");
-      co_return;
-    }
-  }
-  if (!event.mOpacity && !event.mDelta) {
-    dprint("SetViewOpacity: neither Opacity nor Delta given; nothing to do");
+  if (!std::isfinite(event.mValue)) {
+    dprint("SetViewOpacity: ignoring event with a non-finite value");
     co_return;
   }
 
@@ -1008,21 +1002,20 @@ task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
   }
 
   auto config = view->mVR.GetIndependentSettings();
-  auto& opacity = config.mOpacity;
-  // Both values move together: "how transparent is that panel" is one number to
-  // the person pressing the button, and a shared delta keeps whatever gap has
-  // been configured between them until one of them clamps.
   const auto apply = [&event](float& value) {
-    if (event.mOpacity) {
-      value = *event.mOpacity;
-    }
-    if (event.mDelta) {
-      value += *event.mDelta;
-    }
-    value = std::clamp(value, 0.0f, 1.0f);
+    using Action = SetViewOpacityEvent::Action;
+    value = std::clamp(
+      (event.mAction == Action::Add) ? (value + event.mValue) : event.mValue,
+      0.0f,
+      1.0f);
   };
-  apply(opacity.mNormal);
-  apply(opacity.mGaze);
+  using Target = SetViewOpacityEvent::Target;
+  if (event.mTarget != Target::Normal) {
+    apply(config.mOpacity.mGaze);
+  }
+  if (event.mTarget != Target::Gaze) {
+    apply(config.mOpacity.mNormal);
+  }
 
   if (config.mOpacity == view->mVR.GetIndependentSettings().mOpacity) {
     co_return;

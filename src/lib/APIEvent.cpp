@@ -188,7 +188,25 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
-OPENKNEEBOARD_DEFINE_JSON(SetViewOpacityEvent, mKneeboard, mOpacity, mDelta);
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetViewOpacityEvent::Action,
+  {
+    {SetViewOpacityEvent::Action::Set, "Set"},
+    {SetViewOpacityEvent::Action::Add, "Add"},
+  });
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetViewOpacityEvent::Target,
+  {
+    {SetViewOpacityEvent::Target::Both, "Both"},
+    {SetViewOpacityEvent::Target::Gaze, "Gaze"},
+    {SetViewOpacityEvent::Target::Normal, "Normal"},
+  });
+OPENKNEEBOARD_DEFINE_JSON(
+  SetViewOpacityEvent,
+  mKneeboard,
+  mAction,
+  mTarget,
+  mValue);
 
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
