@@ -211,7 +211,7 @@ class KneeboardState final
   void OnAPIEvent(APIEvent) noexcept;
   task<void> ProcessAPIEvent(APIEvent) noexcept;
   task<void> NudgeVRView(const NudgeVRViewEvent&);
-  task<void> ChangeViewVisibility(uint8_t kneeboard, UserAction);
+  task<void> ChangeVRViewVisibility(uint8_t kneeboard, UserAction);
   task<bool> ShowAllViewsIfAllHidden();
 
   /// The active in-game view, even if it is hidden in VR

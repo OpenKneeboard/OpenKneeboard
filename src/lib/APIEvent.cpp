@@ -247,29 +247,29 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxHeight);
 
 template <>
-void from_json_postprocess<ShowViewEvent>(
+void from_json_postprocess<ShowVRViewEvent>(
   const nlohmann::json& j,
-  ShowViewEvent&) {
+  ShowVRViewEvent&) {
   RequireFields(j, {"Kneeboard"});
 }
 
 template <>
-void from_json_postprocess<HideViewEvent>(
+void from_json_postprocess<HideVRViewEvent>(
   const nlohmann::json& j,
-  HideViewEvent&) {
+  HideVRViewEvent&) {
   RequireFields(j, {"Kneeboard"});
 }
 
 template <>
-void from_json_postprocess<ToggleViewVisibilityEvent>(
+void from_json_postprocess<ToggleVRViewVisibilityEvent>(
   const nlohmann::json& j,
-  ToggleViewVisibilityEvent&) {
+  ToggleVRViewVisibilityEvent&) {
   RequireFields(j, {"Kneeboard"});
 }
 
-OPENKNEEBOARD_DEFINE_JSON(ShowViewEvent, mKneeboard);
-OPENKNEEBOARD_DEFINE_JSON(HideViewEvent, mKneeboard);
-OPENKNEEBOARD_DEFINE_JSON(ToggleViewVisibilityEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(ShowVRViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(HideVRViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(ToggleVRViewVisibilityEvent, mKneeboard);
 
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 

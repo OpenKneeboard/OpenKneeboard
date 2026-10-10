@@ -643,35 +643,35 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_SHOW_VIEW) {
-    const auto parsed = ev.TryParsedValue<ShowViewEvent>();
+  if (ev.name == APIEvent::EVT_SHOW_VR_VIEW) {
+    const auto parsed = ev.TryParsedValue<ShowVRViewEvent>();
     if (!parsed) {
-      dprint("Ignoring malformed ShowView event: {}", parsed.error().what);
+      dprint("Ignoring malformed ShowVRView event: {}", parsed.error().what);
       co_return;
     }
-    co_await this->ChangeViewVisibility(parsed->mKneeboard, UserAction::SHOW);
+    co_await this->ChangeVRViewVisibility(parsed->mKneeboard, UserAction::SHOW);
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_HIDE_VIEW) {
-    const auto parsed = ev.TryParsedValue<HideViewEvent>();
+  if (ev.name == APIEvent::EVT_HIDE_VR_VIEW) {
+    const auto parsed = ev.TryParsedValue<HideVRViewEvent>();
     if (!parsed) {
-      dprint("Ignoring malformed HideView event: {}", parsed.error().what);
+      dprint("Ignoring malformed HideVRView event: {}", parsed.error().what);
       co_return;
     }
-    co_await this->ChangeViewVisibility(parsed->mKneeboard, UserAction::HIDE);
+    co_await this->ChangeVRViewVisibility(parsed->mKneeboard, UserAction::HIDE);
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_TOGGLE_VIEW_VISIBILITY) {
-    const auto parsed = ev.TryParsedValue<ToggleViewVisibilityEvent>();
+  if (ev.name == APIEvent::EVT_TOGGLE_VR_VIEW_VISIBILITY) {
+    const auto parsed = ev.TryParsedValue<ToggleVRViewVisibilityEvent>();
     if (!parsed) {
       dprint(
-        "Ignoring malformed ToggleViewVisibility event: {}",
+        "Ignoring malformed ToggleVRViewVisibility event: {}",
         parsed.error().what);
       co_return;
     }
-    co_await this->ChangeViewVisibility(
+    co_await this->ChangeVRViewVisibility(
       parsed->mKneeboard, UserAction::TOGGLE_VISIBILITY);
     co_return;
   }
@@ -1058,7 +1058,7 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   co_await this->SetViewsSettings(viewsSettings);
 }
 
-task<void> KneeboardState::ChangeViewVisibility(
+task<void> KneeboardState::ChangeVRViewVisibility(
   uint8_t kneeboardIndex,
   UserAction action) {
   // The active view is always visible: showing it does nothing, toggling hides
