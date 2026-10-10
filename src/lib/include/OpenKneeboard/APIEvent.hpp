@@ -174,16 +174,9 @@ struct NudgeVRViewEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 
-/* Show, hide, or toggle a single view in VR, as if its 'Enabled in VR'
- * switch in the settings app was changed. This does not affect the app window.
- *
- * The active view is never hidden: hiding it makes the next visible view
- * active, and if every view is hidden, there is no active view. That is why
- * `ShowViewEvent` and `ToggleViewVisibilityEvent` need a specific view - the
- * active view is always visible, so showing it does nothing, and toggling it
- * is the same as hiding it.
- */
-
+// Show, hide, or toggle one view in VR, as if its 'Enabled in VR' switch was
+// changed. Show and toggle need a view number: the active view is always
+// visible.
 struct ShowViewEvent {
   static constexpr auto ID {APIEvent::EVT_SHOW_VIEW};
 
@@ -200,7 +193,6 @@ struct HideViewEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(HideViewEvent);
 
-/// If every view is hidden, this shows all of them, whichever view it names.
 struct ToggleViewVisibilityEvent {
   static constexpr auto ID {APIEvent::EVT_TOGGLE_VIEW_VISIBILITY};
 

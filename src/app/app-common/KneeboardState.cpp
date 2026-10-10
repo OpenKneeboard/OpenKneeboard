@@ -184,8 +184,7 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 }
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
-  // The active view is never one that is hidden in VR; if every view is
-  // hidden, there is no active view.
+  // Never a view that is hidden in VR, so none if every view is hidden
   auto view = GetLastActiveInGameView();
   if (view && !IsVisibleInVR(*view)) {
     return nullptr;
@@ -193,8 +192,7 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
   return view;
 }
 
-std::shared_ptr<KneeboardView> KneeboardState::GetLastActiveInGameView()
-  const {
+std::shared_ptr<KneeboardView> KneeboardState::GetLastActiveInGameView() const {
   if (mInputViewIndex >= mViews.size()) {
     if (mViews.empty()) {
       dprint.Error("No views in KneeboardState::GetLastActiveInGameView()");
@@ -233,8 +231,7 @@ bool KneeboardState::EnsureActiveInGameViewIsVisible() {
     mInputViewIndex = felly::numeric_cast<uint8_t>(i);
     return true;
   }
-  // Every view is hidden, so there is no active view; `mInputViewIndex` is left
-  // alone, as the app window may still be showing it.
+  // Every view is hidden; keep `mInputViewIndex` for the app window
   mViews.at(mInputViewIndex)->PostCursorEvent({});
   return true;
 }
@@ -250,8 +247,7 @@ void KneeboardState::SetActiveInGameView(KneeboardViewID runtimeID) {
     if (mInputViewIndex == i) {
       return;
     }
-    // Not logged: `AfterFrame()` asks every frame while the VR runtime still
-    // reports a view that has since been hidden
+    // Not logged: `AfterFrame()` retries every frame while VR reports it
     if (!IsVisibleInVR(*mViews.at(i))) {
       return;
     }
@@ -332,9 +328,7 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::SHOW:
-      // If every view has been hidden individually, showing OpenKneeboard
-      // would still show nothing; the user has most likely forgotten they hid
-      // them, so bring them all back.
+      // If every view was hidden individually, this would still show nothing
       if (co_await this->ShowAllViewsIfAllHidden()) {
         mInterprocessRenderer->PostUserAction(UserAction::SHOW);
         co_return;
@@ -399,7 +393,7 @@ task<void> KneeboardState::PostUserAction(UserAction action) {
       if (this->mViews.size() < 2) {
         co_return;
       }
-      // Hidden views are skipped, as the active view must always be visible
+      // Skip hidden views; the active view must be visible
       for (size_t offset = 1; offset < mViews.size(); ++offset) {
         const auto i = (mInputViewIndex + offset) % mViews.size();
         if (IsVisibleInVR(*mViews.at(i))) {
@@ -713,8 +707,7 @@ void KneeboardState::SetCurrentTab(
   if (extra.mPageNumber != 0 && pageCount > 1) {
     const auto pageIndex = extra.mPageNumber - 1;
     if (pageIndex < pageCount) {
-      view->GetCurrentTabView()->SetPageID(
-        pageIDs.at(pageIndex));
+      view->GetCurrentTabView()->SetPageID(pageIDs.at(pageIndex));
     } else {
       dprint("Requested page index {} >= count {}", pageIndex, pageCount);
     }
@@ -1068,8 +1061,7 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
 task<void> KneeboardState::ChangeViewVisibility(
   uint8_t kneeboardIndex,
   UserAction action) {
-  // The active view is always visible, so showing it would do nothing, and
-  // toggling it would always hide it.
+  // The active view is always visible: showing it does nothing, toggling hides
   if (kneeboardIndex == 0 && action != UserAction::HIDE) {
     dprint(
       "Ignoring {} for the active kneeboard; a kneeboard number is required",
