@@ -183,7 +183,7 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
-## SetViewOpacity
+## SetVRViewOpacity
 
 *Added in v2.0.*
 

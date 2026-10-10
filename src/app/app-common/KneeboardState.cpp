@@ -582,14 +582,14 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
-  if (ev.name == APIEvent::EVT_SET_VIEW_OPACITY) {
-    const auto parsed = ev.TryParsedValue<SetViewOpacityEvent>();
+  if (ev.name == APIEvent::EVT_SET_VR_VIEW_OPACITY) {
+    const auto parsed = ev.TryParsedValue<SetVRViewOpacityEvent>();
     if (!parsed) {
       dprint(
-        "Ignoring malformed SetViewOpacity event: {}", parsed.error().what);
+        "Ignoring malformed SetVRViewOpacity event: {}", parsed.error().what);
       co_return;
     }
-    co_await this->SetViewOpacity(*parsed);
+    co_await this->SetVRViewOpacity(*parsed);
     co_return;
   }
 
@@ -971,7 +971,8 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   co_await this->SetViewsSettings(viewsSettings);
 }
 
-task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
+task<void> KneeboardState::SetVRViewOpacity(
+  const SetVRViewOpacityEvent& event) {
   std::shared_ptr<KneeboardView> kneeboard;
   if (event.mKneeboard == 0) {
     kneeboard = GetActiveInGameView();
@@ -979,12 +980,12 @@ task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
     kneeboard = mViews.at(event.mKneeboard - 1);
   }
   if (!kneeboard) {
-    dprint("SetViewOpacity: kneeboard {} does not exist", event.mKneeboard);
+    dprint("SetVRViewOpacity: kneeboard {} does not exist", event.mKneeboard);
     co_return;
   }
 
   if (!std::isfinite(event.mValue)) {
-    dprint("SetViewOpacity: ignoring event with a non-finite value");
+    dprint("SetVRViewOpacity: ignoring event with a non-finite value");
     co_return;
   }
 
@@ -996,20 +997,20 @@ task<void> KneeboardState::SetViewOpacity(const SetViewOpacityEvent& event) {
     view == viewsSettings.mViews.end()
     || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
     dprint(
-      "SetViewOpacity: kneeboard {} does not have its own VR settings",
+      "SetVRViewOpacity: kneeboard {} does not have its own VR settings",
       event.mKneeboard);
     co_return;
   }
 
   auto config = view->mVR.GetIndependentSettings();
   const auto apply = [&event](float& value) {
-    using Action = SetViewOpacityEvent::Action;
+    using Action = SetVRViewOpacityEvent::Action;
     value = std::clamp(
       (event.mAction == Action::Add) ? (value + event.mValue) : event.mValue,
       0.0f,
       1.0f);
   };
-  using Target = SetViewOpacityEvent::Target;
+  using Target = SetVRViewOpacityEvent::Target;
   switch (event.mTarget) {
     case Target::Gaze:
       apply(config.mOpacity.mGaze);

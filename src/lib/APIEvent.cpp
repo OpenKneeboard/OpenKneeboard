@@ -247,30 +247,30 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxHeight);
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  SetViewOpacityEvent::Action,
+  SetVRViewOpacityEvent::Action,
   {
-    {SetViewOpacityEvent::Action::Set, "Set"},
-    {SetViewOpacityEvent::Action::Add, "Add"},
+    {SetVRViewOpacityEvent::Action::Set, "Set"},
+    {SetVRViewOpacityEvent::Action::Add, "Add"},
   });
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  SetViewOpacityEvent::Target,
+  SetVRViewOpacityEvent::Target,
   {
-    {SetViewOpacityEvent::Target::Both, "Both"},
-    {SetViewOpacityEvent::Target::Gaze, "Gaze"},
-    {SetViewOpacityEvent::Target::Normal, "Normal"},
+    {SetVRViewOpacityEvent::Target::Both, "Both"},
+    {SetVRViewOpacityEvent::Target::Gaze, "Gaze"},
+    {SetVRViewOpacityEvent::Target::Normal, "Normal"},
   });
 
 template <>
-void from_json_postprocess<SetViewOpacityEvent>(
+void from_json_postprocess<SetVRViewOpacityEvent>(
   const nlohmann::json& j,
-  SetViewOpacityEvent& v) {
+  SetVRViewOpacityEvent& v) {
   RequireFields(j, {"Kneeboard", "Action", "Target", "Value"});
   RequireKnownEnumValue(j, "Action", v.mAction);
   RequireKnownEnumValue(j, "Target", v.mTarget);
 }
 
 OPENKNEEBOARD_DEFINE_JSON(
-  SetViewOpacityEvent,
+  SetVRViewOpacityEvent,
   mKneeboard,
   mAction,
   mTarget,

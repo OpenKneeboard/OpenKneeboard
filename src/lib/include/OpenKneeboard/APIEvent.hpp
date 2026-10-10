@@ -78,8 +78,8 @@ struct APIEvent final {
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
 
-  // struct SetViewOpacityEvent
-  static constexpr char EVT_SET_VIEW_OPACITY[] = "SetViewOpacity";
+  // struct SetVRViewOpacityEvent
+  static constexpr char EVT_SET_VR_VIEW_OPACITY[] = "SetVRViewOpacity";
 
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
@@ -174,8 +174,8 @@ OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
  * were moved. `Add` lets a one-way sender step it without knowing the current
  * value; the result is clamped to 0..1.
  */
-struct SetViewOpacityEvent {
-  static constexpr auto ID {APIEvent::EVT_SET_VIEW_OPACITY};
+struct SetVRViewOpacityEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_VR_VIEW_OPACITY};
 
   enum class Action {
     Set,
@@ -195,7 +195,7 @@ struct SetViewOpacityEvent {
   Target mTarget {Target::Both};
   float mValue {};
 };
-OPENKNEEBOARD_DECLARE_JSON(SetViewOpacityEvent);
+OPENKNEEBOARD_DECLARE_JSON(SetVRViewOpacityEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};
