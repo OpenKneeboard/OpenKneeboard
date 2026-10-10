@@ -187,7 +187,7 @@ As with `SetBrightness`, float values must be written as floats - for example, `
 
 *Added in v2.0.*
 
-Changes how transparent a single kneeboard is in VR, as if its opacity sliders in OpenKneeboard's VR settings were moved; the change is saved to the current profile. This is intended for binding to a button, so a kneeboard can be faded down when it is in the way and back up when it is wanted, without opening the settings app.
+Changes how transparent a single kneeboard is in VR, as if its opacity sliders in OpenKneeboard's settings were moved; the change is saved to the current profile.
 
 Value: JSON-encoded Object:
 
@@ -201,20 +201,13 @@ Value: JSON-encoded Object:
 ```
 
 - `Kneeboard`: *integer* - `0` for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
-- `Action`: *string* - must be `Set` or `Add`:
-  - `Set`: the opacity is set to `Value`
-  - `Add`: `Value` is added to the current opacity; use a negative value to make the kneeboard more transparent. As the API is one-way, this is the way for a button to change the opacity without knowing what it currently is.
-- `Target`: *string* - which of the kneeboard's two opacities to change; must be one of:
-  - `Gaze`: the opacity while you are looking at the kneeboard
-  - `Normal`: the opacity while you are not looking at the kneeboard
-  - `Both`: both of the above; with `Add`, the difference between them is kept until one of them reaches `0.0` or `1.0`
+- `Action`: *string* - `Set` to set the opacity to `Value`, or `Add` to add `Value` to the current opacity; a negative `Value` makes the kneeboard more transparent
+- `Target`: *string* - which of the kneeboard's two opacities to change: `Gaze` (while you are looking at it), `Normal` (while you are not), or `Both`. With `Add`, `Both` keeps the difference between them until one reaches `0.0` or `1.0`
 - `Value`: *float* - `0.0` is fully transparent, `1.0` is fully opaque
 
-All four fields are required, and the strings are case-sensitive - for example, `add` is not a valid `Action`. If a field is missing or a string is not one of the values listed here, the event is ignored, and the reason is written to OpenKneeboard's debug log.
+All four fields are required, and the strings are case-sensitive. If a field is missing or a string is not one of the values listed here, the event is ignored, and the reason is written to OpenKneeboard's debug log.
 
-The result is clamped to between `0.0` and `1.0`, so a button can be held down at either end without the value running away. If `Value` is not a finite number, the event is ignored.
-
-Fully transparent is allowed; the kneeboard becomes invisible, but keeps its position in the list, so it can be faded back in by index.
+The result is clamped to between `0.0` and `1.0`, so a button can be held down at either end. A fully transparent kneeboard is invisible but keeps its position in the list, so it can be faded back in by number. If `Value` is not a finite number, the event is ignored.
 
 A kneeboard that mirrors another does not have its own opacity: it always uses the opacity of the kneeboard it mirrors, and can not be changed with this event. To change both, change the original kneeboard.
 

@@ -170,15 +170,9 @@ struct NudgeVRViewEvent {
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
 
-/** Change how transparent a single view is, as if its opacity sliders in the
- * settings app were moved.
- *
- * `Add` is what a button on a Stream Deck wants, as the sender has no way to
- * read the current value back - the API is one-way. The result is clamped to
- * 0..1 either way.
- *
- * Fully transparent is permitted; the view becomes invisible but remains
- * addressable by index, so it can be brought back.
+/** Change a view's VR opacity, as if its opacity sliders in the settings app
+ * were moved. `Add` lets a one-way sender step it without knowing the current
+ * value; the result is clamped to 0..1.
  */
 struct SetViewOpacityEvent {
   static constexpr auto ID {APIEvent::EVT_SET_VIEW_OPACITY};
@@ -188,13 +182,10 @@ struct SetViewOpacityEvent {
     Add,
   };
 
-  /// Which of the view's two opacities to change
+  // Gaze = while looking at the view, Normal = while not
   enum class Target {
-    /// Both the 'looking at it' and 'not looking at it' opacities
     Both,
-    /// Only the opacity while looking at the view
     Gaze,
-    /// Only the opacity while not looking at the view
     Normal,
   };
 
