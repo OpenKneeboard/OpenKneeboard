@@ -184,13 +184,8 @@ const nlohmann::json* FindField(const nlohmann::json& j, std::string key) {
   return nullptr;
 }
 
-/* The JSON macros leave a missing field at its default, and
- * `NLOHMANN_JSON_SERIALIZE_ENUM` turns an unrecognized string into the enum's
- * first value. In an API message, either is more likely a mistake than what
- * the sender meant, so these reject the message instead; as they throw JSON
- * exceptions, `APIEvent::TryParsedValue()` reports them like any other
- * malformed message.
- */
+// The JSON macros default a missing field, and an unknown enum string becomes
+// the first value; reject both, so `TryParsedValue()` reports them as malformed
 
 [[noreturn]] void ThrowInvalidMessage(
   const nlohmann::json& j,
