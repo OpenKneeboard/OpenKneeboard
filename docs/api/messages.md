@@ -152,12 +152,14 @@ Value: JSON-encoded Object:
 }
 ```
 
-- `Brightness`: the desired brightness
+- `Brightness`: *float* - the desired brightness
 - `Mode`: *optional string* - must be `Absolute` or `Relative`. Defaults to `Absolute` if not provided.
    - `Absolute`: Tint and brightness is enabled, and brightness is set to `Brightness`, which must be between `0.0` (minimum brightness) and `1.0` (maximum brightness)
    - `Relative`: Tint and brightness is enabled, and `Brightness` is added to the current kneeboard brightness. `Brightness` must be between `-1.0` and `1.0`
 
 `Brightness` must be a float, not an integer - for example, `0` and `1` are not valid values, and must be replaced with `0.0` or `1.0`.
+
+`Brightness` is required, and `Mode` is case-sensitive - for example, `relative` is not a valid `Mode`. If `Brightness` is missing or `Mode` is not one of the values listed here, the event is ignored, and the reason is written to OpenKneeboard's debug log.
 
 ## NudgeVRView
 

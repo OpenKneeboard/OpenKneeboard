@@ -544,28 +544,32 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
   }
 
   if (ev.name == APIEvent::EVT_SET_BRIGHTNESS) {
-    const auto parsed = ev.ParsedValue<SetBrightnessEvent>();
+    const auto parsed = ev.TryParsedValue<SetBrightnessEvent>();
+    if (!parsed) {
+      dprint("Ignoring malformed SetBrightness event: {}", parsed.error().what);
+      co_return;
+    }
     auto& tint = this->mSettings.mUI.mTint;
     tint.mEnabled = true;
-    switch (parsed.mMode) {
+    switch (parsed->mMode) {
       case SetBrightnessEvent::Mode::Absolute:
-        if (parsed.mBrightness < 0 || parsed.mBrightness > 1) {
+        if (parsed->mBrightness < 0 || parsed->mBrightness > 1) {
           dprint(
             "Requested absolute brightness '{}' is outside of range 0 to 1",
-            parsed.mBrightness);
+            parsed->mBrightness);
           co_return;
         }
-        tint.mBrightness = parsed.mBrightness;
+        tint.mBrightness = parsed->mBrightness;
         break;
       case SetBrightnessEvent::Mode::Relative:
-        if (parsed.mBrightness < -1 || parsed.mBrightness > 1) {
+        if (parsed->mBrightness < -1 || parsed->mBrightness > 1) {
           dprint(
             "Requested relative brightness '{}' is outside of range -1 to 1",
-            parsed.mBrightness);
+            parsed->mBrightness);
           co_return;
         }
         tint.mBrightness =
-          std::clamp(tint.mBrightness + parsed.mBrightness, 0.0f, 1.0f);
+          std::clamp(tint.mBrightness + parsed->mBrightness, 0.0f, 1.0f);
         break;
     }
     this->SaveSettings();
