@@ -215,9 +215,11 @@ class KneeboardState final
   task<bool> ShowAllViewsIfAllHidden();
 
   /// The active in-game view, even if it is hidden in VR
-  std::shared_ptr<KneeboardView> GetLastActiveInGameView() const;
+  std::shared_ptr<KneeboardView> GetMostRecentlyActiveInGameView() const;
+  [[nodiscard]]
   bool IsVisibleInVR(const KneeboardView&) const;
   /// Returns true if the active view changed
+  [[nodiscard]]
   bool EnsureActiveInGameViewIsVisible();
 
   void BeforeFrame();

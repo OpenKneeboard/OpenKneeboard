@@ -185,17 +185,19 @@ std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 
 std::shared_ptr<KneeboardView> KneeboardState::GetActiveInGameView() const {
   // Never a view that is hidden in VR, so none if every view is hidden
-  auto view = GetLastActiveInGameView();
+  const auto view = GetMostRecentlyActiveInGameView();
   if (view && !IsVisibleInVR(*view)) {
     return nullptr;
   }
   return view;
 }
 
-std::shared_ptr<KneeboardView> KneeboardState::GetLastActiveInGameView() const {
+std::shared_ptr<KneeboardView> KneeboardState::GetMostRecentlyActiveInGameView()
+  const {
   if (mInputViewIndex >= mViews.size()) {
     if (mViews.empty()) {
-      dprint.Error("No views in KneeboardState::GetLastActiveInGameView()");
+      dprint.Error(
+        "No views in KneeboardState::GetMostRecentlyActiveInGameView()");
       return nullptr;
     }
     return mViews.front();
@@ -275,7 +277,7 @@ std::shared_ptr<KneeboardView> KneeboardState::GetAppWindowView() const {
     return mAppWindowView;
   }
   // Hiding a view only hides it in VR, so the app window keeps showing it
-  return GetLastActiveInGameView();
+  return GetMostRecentlyActiveInGameView();
 }
 
 void KneeboardState::NotifyAppWindowIsForeground(bool isForeground) {
@@ -765,7 +767,7 @@ task<void> KneeboardState::SetVRSettings(const VRSettings& value) {
   if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
     mViews.at(mInputViewIndex)->PostCursorEvent({});
     mInputViewIndex = 0;
-    this->EnsureActiveInGameViewIsVisible();
+    std::ignore = this->EnsureActiveInGameViewIsVisible();
     this->evActiveViewChangedEvent.Emit();
   }
 
