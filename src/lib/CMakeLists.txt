@@ -315,6 +315,16 @@ target_link_libraries(
 )
 
 ok_add_library(
+  OpenKneeboard-chrono
+  STATIC
+  chrono.cpp
+  HEADERS
+  include/OpenKneeboard/chrono.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
+
+ok_add_library(
   OpenKneeboard-dprint
   STATIC
   dprint.cpp

@@ -71,6 +71,7 @@ target_link_libraries(
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-Elevation
+  OpenKneeboard-chrono
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-fatal

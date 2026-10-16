@@ -23,6 +23,7 @@
 #include <OpenKneeboard/Settings.hpp>
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
+#include <OpenKneeboard/chrono.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/handles.hpp>
 #include <OpenKneeboard/scope_exit.hpp>
@@ -153,7 +154,7 @@ void HelpPage::OnCopyVersionDataClick(
 template <class C, class T>
 auto ReadableTime(const std::chrono::time_point<C, T>& time) {
   return std::chrono::zoned_time(
-    std::chrono::current_zone(),
+    chrono::current_zone_or_utc(),
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
@@ -178,7 +179,7 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
       Version::Patch,
       Version::Build,
       std::chrono::zoned_time(
-        std::chrono::current_zone(), std::chrono::system_clock::now())));
+        chrono::current_zone_or_utc(), std::chrono::system_clock::now())));
 
   const auto maybePath = picker.PickSaveFile();
   if (!maybePath) {
@@ -208,13 +209,23 @@ OpenKneeboard::fire_and_forget HelpPage::OnExportClick(
   };
 
   {
-    const auto now = std::chrono::time_point_cast<std::chrono::seconds>(
-      std::chrono::system_clock::now());
-    const auto buffer = std::format(
-      "Local time: {:%F %T%z}\n"
-      "UTC time:   {:%F %T}",
-      std::chrono::zoned_time(std::chrono::current_zone(), now),
-      std::chrono::zoned_time("UTC", now));
+    const auto buffer = [] {
+      const auto now = std::chrono::time_point_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now());
+      try {
+        return std::format(
+          "Local time: {:%F %T%z}\n"
+          "UTC time:   {:%F %T}",
+          std::chrono::zoned_time(std::chrono::current_zone(), now),
+          std::chrono::zoned_time("UTC", now));
+      } catch (const std::exception&) {
+        // https://github.com/microsoft/STL/issues/6490
+        return std::format(
+          "Local time: UNKNOWN - exception in current_zone()\n"
+          "UTC time:   {:%F %T}",
+          std::chrono::zoned_time("UTC", now));
+      }
+    }();
     AddFile("timestamp.txt", buffer);
   }
 
