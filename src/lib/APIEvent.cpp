@@ -256,6 +256,31 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
+template <>
+void from_json_postprocess<ShowVRViewEvent>(
+  const nlohmann::json& j,
+  ShowVRViewEvent&) {
+  RequireFields(j, {"Kneeboard"});
+}
+
+template <>
+void from_json_postprocess<HideVRViewEvent>(
+  const nlohmann::json& j,
+  HideVRViewEvent&) {
+  RequireFields(j, {"Kneeboard"});
+}
+
+template <>
+void from_json_postprocess<ToggleVRViewVisibilityEvent>(
+  const nlohmann::json& j,
+  ToggleVRViewVisibilityEvent&) {
+  RequireFields(j, {"Kneeboard"});
+}
+
+OPENKNEEBOARD_DEFINE_JSON(ShowVRViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(HideVRViewEvent, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(ToggleVRViewVisibilityEvent, mKneeboard);
+
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
 }// namespace OpenKneeboard
