@@ -434,20 +434,38 @@ class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
 void Reader::Impl::IPCHandle::Update(
   const HANDLE sharedFrom,
   const HANDLE sharedHandle) {
-  if (sharedHandle == mForeignHandle && mMyHandle) {
+  if (sharedHandle == mForeignHandle) {
     return;
   }
 
   mForeignHandle = sharedHandle;
+  mMyHandle.reset();
 
-  winrt::check_bool(DuplicateHandle(
-    sharedFrom,
-    sharedHandle,
-    GetCurrentProcess(),
-    std::out_ptr(mMyHandle),
-    NULL,
-    FALSE,
-    DUPLICATE_SAME_ACCESS));
+  // A frame slot has no handles until the feeder first submits a frame to it
+  // in this session; for example, `Writer::SubmitEmptyFrame()` right after
+  // `Writer::Detach()` moves to a slot that has never been written. That is
+  // not an error: `MaybeGet()` reports it as `UnusableHandles`.
+  if (!sharedHandle) {
+    return;
+  }
+
+  // Likewise, if the feeder has already closed the handle, skip the frame
+  // rather than throwing: an uncaught exception here is fatal to the reader's
+  // thread, and the feeder will publish new handles with its next frame.
+  if (!DuplicateHandle(
+        sharedFrom,
+        sharedHandle,
+        GetCurrentProcess(),
+        std::out_ptr(mMyHandle),
+        NULL,
+        FALSE,
+        DUPLICATE_SAME_ACCESS)) {
+    const auto error = GetLastError();
+    dprint.Warning(
+      "Failed to duplicate SHM handle {}: {:#010x}",
+      static_cast<const void*>(sharedHandle),
+      error);
+  }
 }
 
 Reader::Reader(const ConsumerKind kind, const uint64_t gpuLUID) {

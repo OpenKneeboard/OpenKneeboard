@@ -143,10 +143,14 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   mCanvasSize = size;
 
   // Let's force a clean start on the clients, including resetting the session
-  // ID
-  mIPCSwapchain = {};
+  // ID.
+  //
+  // Detach before releasing the swapchain: until the header is cleared, it
+  // still names the old swapchain's handles, and a reader that duplicates one
+  // after it is closed gets ERROR_INVALID_HANDLE, which is fatal.
   const std::unique_lock shmLock(mSHM);
   mSHM.Detach();
+  mIPCSwapchain = {};
 }
 
 void InterprocessRenderer::PostUserAction(UserAction action) {
