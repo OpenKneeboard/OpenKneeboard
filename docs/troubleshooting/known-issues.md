@@ -4,6 +4,18 @@ parent: Troubleshooting
 
 # Known Issues
 
+## Incorrect time/timezone is shown
+
+OpenKneeboard will show UTC instead of the correct local time if the DLLs included with Windows do not recognize the current timezone.
+
+In October 2026, Microsoft added new timezones in:
+
+- Alberta
+- British Columbia
+- Manitoba
+
+However, as of 2026-10-16, Microsoft has not added full support for these timezones to the DLLs included in Windows, including `icu.dll`, which is used by Microsoft's C++ runtime to provide timezone support.
+
 ## iRacing
 
 Set `DepthLayerExtensionEnabled` to `0` in your iRacing OpenXR ini file.
