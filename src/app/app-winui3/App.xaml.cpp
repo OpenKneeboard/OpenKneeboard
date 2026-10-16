@@ -28,6 +28,7 @@
 #include <OpenKneeboard/Win32.hpp>
 
 #include <OpenKneeboard/bitflags.hpp>
+#include <OpenKneeboard/chrono.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/format/filesystem.hpp>
@@ -210,7 +211,7 @@ static void BackupSettings() {
   }
 
   const auto now = std::chrono::zoned_time(
-    std::chrono::current_zone(),
+    chrono::current_zone_or_utc(),
     std::chrono::time_point_cast<std::chrono::seconds>(
       std::chrono::system_clock::now()));
   const auto backupFile = backupsDirectory

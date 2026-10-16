@@ -21,6 +21,7 @@
 #include <OpenKneeboard/SHM/D3D11.hpp>
 #include <OpenKneeboard/Shaders/Viewer/DXBC.hpp>
 
+#include <OpenKneeboard/chrono.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/hresult.hpp>
@@ -606,7 +607,7 @@ class TestViewerWindow final : private D3D11Resources {
         Version::Patch,
         Version::Build,
         std::chrono::zoned_time(
-          std::chrono::current_zone(), std::chrono::system_clock::now()));
+          chrono::current_zone_or_utc(), std::chrono::system_clock::now()));
     std::filesystem::create_directories(path.parent_path());
 
     mRenderer->SaveToDDSFile(*std::move(frame), path);

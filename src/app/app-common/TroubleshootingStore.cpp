@@ -10,6 +10,7 @@
 #include <OpenKneeboard/TroubleshootingStore.hpp>
 
 #include <OpenKneeboard/bindline.hpp>
+#include <OpenKneeboard/chrono.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/dprint.hpp>
 #include <OpenKneeboard/version.hpp>
@@ -150,7 +151,7 @@ void TroubleshootingStore::WriteDPrintMessageToLogFile(
   *mLogFile << std::format(
     "[{:%F %T} {} ({})] {}: {}",
     std::chrono::zoned_time(
-      std::chrono::current_zone(),
+      chrono::current_zone_or_utc(),
       std::chrono::time_point_cast<std::chrono::seconds>(entry.mWhen)),
     std::filesystem::path(entry.mExecutable).filename().string(),
     entry.mProcessID,
@@ -181,7 +182,7 @@ void TroubleshootingStore::OnAPIEvent(const APIEvent& ev) {
 template <class C, class T>
 static auto ReadableTime(const std::chrono::time_point<C, T>& time) {
   return std::chrono::zoned_time(
-    std::chrono::current_zone(),
+    chrono::current_zone_or_utc(),
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
@@ -256,7 +257,7 @@ std::string TroubleshootingStore::GetDPrintDebugLogAsString() const {
     ret += std::format(
       L"[{:%F %T} {} ({})] {}: {}\n",
       std::chrono::zoned_time(
-        std::chrono::current_zone(),
+        chrono::current_zone_or_utc(),
         std::chrono::time_point_cast<std::chrono::seconds>(entry.mWhen)),
       exe,
       entry.mProcessID,

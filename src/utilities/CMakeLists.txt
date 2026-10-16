@@ -80,6 +80,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-fatal
   OpenKneeboard-config
+  OpenKneeboard-chrono
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-D3D11
   OpenKneeboard-D3D12

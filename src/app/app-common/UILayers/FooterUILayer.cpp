@@ -13,6 +13,7 @@
 #include <OpenKneeboard/FooterUILayer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 
+#include <OpenKneeboard/chrono.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
@@ -203,7 +204,7 @@ task<void> FooterUILayer::Render(
   // Real time
   drawClock(
     std::format(
-      L"{:%T}", std::chrono::zoned_time(std::chrono::current_zone(), now)),
+      L"{:%T}", std::chrono::zoned_time(chrono::current_zone_or_utc(), now)),
     DWRITE_TEXT_ALIGNMENT_TRAILING);
 }
 
