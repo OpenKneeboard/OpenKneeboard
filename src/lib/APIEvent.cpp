@@ -256,6 +256,36 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetVRViewOpacityEvent::Action,
+  {
+    {SetVRViewOpacityEvent::Action::Set, "Set"},
+    {SetVRViewOpacityEvent::Action::Add, "Add"},
+  });
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetVRViewOpacityEvent::Target,
+  {
+    {SetVRViewOpacityEvent::Target::Both, "Both"},
+    {SetVRViewOpacityEvent::Target::Gaze, "Gaze"},
+    {SetVRViewOpacityEvent::Target::Normal, "Normal"},
+  });
+
+template <>
+void from_json_postprocess<SetVRViewOpacityEvent>(
+  const nlohmann::json& j,
+  SetVRViewOpacityEvent& v) {
+  RequireFields(j, {"Kneeboard", "Action", "Target", "Value"});
+  RequireKnownEnumValue(j, "Action", v.mAction);
+  RequireKnownEnumValue(j, "Target", v.mTarget);
+}
+
+OPENKNEEBOARD_DEFINE_JSON(
+  SetVRViewOpacityEvent,
+  mKneeboard,
+  mAction,
+  mTarget,
+  mValue);
+
 OPENKNEEBOARD_DEFINE_JSON(PluginTabCustomActionEvent, mActionID, mExtraData);
 
 }// namespace OpenKneeboard

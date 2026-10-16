@@ -185,6 +185,36 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
+## SetVRViewOpacity
+
+*Added in v2.0.*
+
+Changes how transparent a single kneeboard is in VR, as if its opacity sliders in OpenKneeboard's settings were moved; the change is saved to the current profile.
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Kneeboard": 2,
+	"Action": "Add",
+	"Target": "Both",
+	"Value": -0.1
+}
+```
+
+- `Kneeboard`: *integer* - `0` for the active kneeboard, `1` for the first kneeboard, `2` for the second, and so on
+- `Action`: *string* - `Set` to set the opacity to `Value`, or `Add` to add `Value` to the current opacity; a negative `Value` makes the kneeboard more transparent
+- `Target`: *string* - which of the kneeboard's two opacities to change: `Gaze` (while you are looking at it), `Normal` (while you are not), or `Both`. With `Add`, `Both` keeps the difference between them until one reaches `0.0` or `1.0`
+- `Value`: *float* - `0.0` is fully transparent, `1.0` is fully opaque
+
+All four fields are required, and the strings are case-sensitive. If a field is missing or a string is not one of the values listed here, the event is ignored, and the reason is written to OpenKneeboard's debug log.
+
+The result is clamped to between `0.0` and `1.0`, so a button can be held down at either end. A fully transparent kneeboard is invisible but keeps its position in the list, so it can be faded back in by number. If `Value` is not a finite number, the event is ignored.
+
+A kneeboard that mirrors another does not have its own opacity: it always uses the opacity of the kneeboard it mirrors, and can not be changed with this event. To change both, change the original kneeboard.
+
+As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
+
 ## Requesting additional APIs
 
 Keep in mind the purpose of OpenKneeboard: OpenKneeboard is a tool for users to show their content how they wish in VR, via OpenKneeboard's settings. It is not a developer toolkit.
