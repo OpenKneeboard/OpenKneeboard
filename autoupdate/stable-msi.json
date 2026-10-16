@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/329569794",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/329569794/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/329569794/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.10",
-    "id": 329569794,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/414953495",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/414953495/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/414953495/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.12.12",
+    "id": 414953495,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -26,22 +26,22 @@
       "user_view_type": "public",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84TpNYC",
-    "tag_name": "v1.12.10",
+    "node_id": "RE_kwDOGk0DR84Yu7AX",
+    "tag_name": "v1.12.12",
     "target_commitish": "master",
-    "name": "v1.12.10",
+    "name": "v1.12.12",
     "draft": false,
     "immutable": true,
     "prerelease": false,
-    "created_at": "2026-05-26T16:33:15Z",
-    "updated_at": "2026-05-26T18:46:54Z",
-    "published_at": "2026-05-26T18:46:54Z",
+    "created_at": "2026-10-16T12:11:02Z",
+    "updated_at": "2026-10-16T12:59:50Z",
+    "published_at": "2026-10-16T12:59:50Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/430408757",
-        "id": 430408757,
-        "node_id": "RA_kwDOGk0DR84Zp4Q1",
-        "name": "OpenKneeboard-v1.12.10-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/647336084",
+        "id": 647336084,
+        "node_id": "RA_kwDOGk0DR84mlZCU",
+        "name": "OpenKneeboard-v1.12.12-DebugSymbols.zip",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -66,18 +66,18 @@
         },
         "content_type": "application/x-zip-compressed",
         "state": "uploaded",
-        "size": 171588316,
-        "digest": "sha256:ffdaac065d0349db495a0bef57c7edabd27adefc695a975bda6bea71fa6899bb",
+        "size": 171381056,
+        "digest": "sha256:1d050ab069c0fd4edbd9eafe977aa9e51d1d739a680accc1ee3e61aa80e72ad0",
         "download_count": 0,
-        "created_at": "2026-05-26T18:46:05Z",
-        "updated_at": "2026-05-26T18:46:19Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.10/OpenKneeboard-v1.12.10-DebugSymbols.zip"
+        "created_at": "2026-10-16T12:55:12Z",
+        "updated_at": "2026-10-16T12:55:25Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.12/OpenKneeboard-v1.12.12-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/430408865",
-        "id": 430408865,
-        "node_id": "RA_kwDOGk0DR84Zp4Sh",
-        "name": "OpenKneeboard-v1.12.10.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/647340496",
+        "id": 647340496,
+        "node_id": "RA_kwDOGk0DR84mlaHQ",
+        "name": "OpenKneeboard-v1.12.12.msi",
         "label": null,
         "uploader": {
           "login": "fredemmott",
@@ -102,17 +102,16 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 183390208,
-        "digest": "sha256:2177585769842e597d68d194a9e2dc7e8878b6c337af29788c14f11304f7176c",
+        "size": 183377920,
+        "digest": "sha256:089c2103adc02b7b35c9fd531174ea297f3718e6c55c0575d5a2282bea026f51",
         "download_count": 0,
-        "created_at": "2026-05-26T18:46:20Z",
-        "updated_at": "2026-05-26T18:46:35Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.10/OpenKneeboard-v1.12.10.msi"
+        "created_at": "2026-10-16T12:57:01Z",
+        "updated_at": "2026-10-16T12:57:14Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.12.12/OpenKneeboard-v1.12.12.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.10",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.10",
-    "body": "- 🐛 Fixed sidebar and header/footer bleeding into content area by partial-pixels for some kinds of content at some sizes; thanks to @yesnault !\r\n- 🐛 Don't crash if a FolderPageSource is disposed while it is updating for filesystem changes\r\n- 🩹 Don't crash when creating a File Picker if standard location (e.g. the 'documents' folder) does not exist\r\n- 🩹 Fix typo in tab settings page\r\n- 🔊 Add explicit warning log about depth submission (iRacing)",
-    "mentions_count": 1
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.12.12",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.12.12",
+    "body": "🍁 Fix crash if Windows has missing or [incomplete](https://github.com/microsoft/STL/issues/6490) support for the current timezone\r\n\r\nThis primarily affects users from:\r\n\r\n- [Alberta](https://techcommunity.microsoft.com/blog/dstblog/alberta-2026-time-zone-update-available-now/4564506)\r\n- [British Columbia](https://techcommunity.microsoft.com/blog/dstblog/british-columbia-2026-time-zone-update-available-now/4564507)\r\n- [Manitoba](https://techcommunity.microsoft.com/blog/dstblog/manitoba-2026-time-zone-update-available-now/4564515)\r\n\r\nAffected users will see times in UTC instead of in their local time until the timezones are supported by the relevant Windows components."
   }
 ]
