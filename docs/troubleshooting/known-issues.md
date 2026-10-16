@@ -29,15 +29,6 @@ iRacing is one of very few games that submits depth; this has uncovered bugs in 
 
 If you are affected by an issue which is resolved by `DepthLayerExtensionEnabled=0`, contact your runtime vendor (usually your headset manufacturer) for support.
 
-## Meta Link (wired) disconnects when using OpenTabletDriver
-
-Meta introduced a firmware change in late 2025 which triggers this issue; the next version of OpenTabletDriver (v0.6.7) is expected to include a workaround.
-
-For now, your options are:
-- use Air Link, Virtual Desktop, Steam Link, or another alternative.
-- use your vendor-provided drivers instead; [wintab-adapter](https://github.com/OpenKneeboard/wintab-adapter) is recommended.
-- use a prerelease build of OpenTabletDriver.
-
 ## Crash or error on NVidia 591+ drivers with USB or virtual monitors
 
 See [the dedicated documentation for this issue](d3d11-unavailable.md).
@@ -72,3 +63,8 @@ You need to lower your settings to avoid exceeding your systems' capabilities.
 ## ~~Various positioning issues with Varjo Base~~
 
 All known issues in Varjo Base affecting OpenKneeboard were fixed in v4.14 (December 2025).
+
+## ~~Meta Link (wired) disconnects when using OpenTabletDriver~~
+
+Up-to-date versions of OpenTabletDriver work around this Meta firmware issue.
+
