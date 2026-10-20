@@ -78,6 +78,9 @@ struct APIEvent final {
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
 
+  // struct SetVRViewOpacityEvent
+  static constexpr char EVT_SET_VR_VIEW_OPACITY[] = "SetVRViewOpacity";
+
   // struct PluginTabCustomActionEvent
   static constexpr char EVT_PLUGIN_TAB_CUSTOM_ACTION[] =
     "Plugin/Tab/CustomAction";
@@ -166,6 +169,33 @@ struct NudgeVRViewEvent {
   std::optional<float> mMaxHeight;
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
+
+/** Change a view's VR opacity, as if its opacity sliders in the settings app
+ * were moved. `Add` lets a one-way sender step it without knowing the current
+ * value; the result is clamped to 0..1.
+ */
+struct SetVRViewOpacityEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_VR_VIEW_OPACITY};
+
+  enum class Action {
+    Set,
+    Add,
+  };
+
+  // Gaze = while looking at the view, Normal = while not
+  enum class Target {
+    Both,
+    Gaze,
+    Normal,
+  };
+
+  // 0 = 'active', 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+  Action mAction {Action::Set};
+  Target mTarget {Target::Both};
+  float mValue {};
+};
+OPENKNEEBOARD_DECLARE_JSON(SetVRViewOpacityEvent);
 
 struct PluginTabCustomActionEvent {
   static constexpr auto ID {APIEvent::EVT_PLUGIN_TAB_CUSTOM_ACTION};

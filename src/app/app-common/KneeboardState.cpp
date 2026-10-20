@@ -586,6 +586,17 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_return;
   }
 
+  if (ev.name == APIEvent::EVT_SET_VR_VIEW_OPACITY) {
+    const auto parsed = ev.TryParsedValue<SetVRViewOpacityEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed SetVRViewOpacity event: {}", parsed.error().what);
+      co_return;
+    }
+    co_await this->SetVRViewOpacity(*parsed);
+    co_return;
+  }
+
   this->evAPIEvent.Emit(ev);
 }
 
@@ -960,6 +971,68 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
   size.mWidth = std::max(size.mWidth, 0.01f);
   size.mHeight = std::max(size.mHeight, 0.01f);
 
+  view->mVR.SetIndependentSettings(config);
+  co_await this->SetViewsSettings(viewsSettings);
+}
+
+task<void> KneeboardState::SetVRViewOpacity(
+  const SetVRViewOpacityEvent& event) {
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    dprint("SetVRViewOpacity: kneeboard {} does not exist", event.mKneeboard);
+    co_return;
+  }
+
+  if (!std::isfinite(event.mValue)) {
+    dprint("SetVRViewOpacity: ignoring event with a non-finite value");
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  // A mirror has no independent opacity; it inherits the view it mirrors.
+  if (
+    view == viewsSettings.mViews.end()
+    || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
+    dprint(
+      "SetVRViewOpacity: kneeboard {} does not have its own VR settings",
+      event.mKneeboard);
+    co_return;
+  }
+
+  auto config = view->mVR.GetIndependentSettings();
+  const auto apply = [&event](float& value) {
+    using Action = SetVRViewOpacityEvent::Action;
+    value = std::clamp(
+      (event.mAction == Action::Add) ? (value + event.mValue) : event.mValue,
+      0.0f,
+      1.0f);
+  };
+  using Target = SetVRViewOpacityEvent::Target;
+  switch (event.mTarget) {
+    case Target::Gaze:
+      apply(config.mOpacity.mGaze);
+      break;
+    case Target::Normal:
+      apply(config.mOpacity.mNormal);
+      break;
+    case Target::Both:
+      // Each opacity is changed and clamped on its own, so with `Add`, the
+      // gap between them is kept until one of them reaches 0 or 1.
+      apply(config.mOpacity.mGaze);
+      apply(config.mOpacity.mNormal);
+      break;
+  }
+
+  if (config.mOpacity == view->mVR.GetIndependentSettings().mOpacity) {
+    co_return;
+  }
   view->mVR.SetIndependentSettings(config);
   co_await this->SetViewsSettings(viewsSettings);
 }
