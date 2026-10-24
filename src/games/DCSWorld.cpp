@@ -116,7 +116,7 @@ bool DCSWorld::MatchesPath(const std::filesystem::path& path) const {
   return path.filename() == "DCS.exe";
 }
 
-std::filesystem::path DCSWorld::GetInstalledPath(Version version) {
+std::filesystem::path DCSWorld::GetInstalledPath(const Version version) try {
   switch (version) {
     case Version::OPEN_BETA:
       return GetDCSPath("DCS World OpenBeta");
@@ -124,9 +124,12 @@ std::filesystem::path DCSWorld::GetInstalledPath(Version version) {
       return GetDCSPath("DCS World");
   }
   return {};
+} catch (const std::filesystem::filesystem_error& e) {
+  dprint.Warning("Filesystem error in DCSWorld::GetSavedGamesPath(): {}", e.what());
+  return {};
 }
 
-std::filesystem::path DCSWorld::GetSavedGamesPath(Version version) {
+std::filesystem::path DCSWorld::GetSavedGamesPath(const Version version) try {
   const auto savedGames = Filesystem::GetKnownFolderPath<FOLDERID_SavedGames>();
 
   switch (version) {
@@ -136,6 +139,10 @@ std::filesystem::path DCSWorld::GetSavedGamesPath(Version version) {
       return savedGames / "DCS";
   }
   return {};
+} catch (const std::filesystem::filesystem_error& e) {
+  dprint.Warning("Filesystem error in DCSWorld::GetSavedGamesPath(): {}", e.what());
+  return {};
+
 }
 
 std::string DCSWorld::GetUserFriendlyName(
