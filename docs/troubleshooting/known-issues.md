@@ -50,7 +50,7 @@ These are not OpenKneeboard issues; you can:
 
 ## Degraded performance when system capacity is exceeded
 
-OpenKneeboard is extremely efficient, but it does need *some* GPU and CPU resources; if you are exceeding your systems capabilities already, adding any additional software will make it disproportionately worse.
+OpenKneeboard is typically extremely efficient, but it does need *some* GPU and CPU resources; if you are exceeding your systems capabilities already, adding any additional software will make it disproportionately worse.
 
 In practice, this mostly seems to be an issue for people playing iRacing; common causes include:
 
@@ -59,6 +59,20 @@ In practice, this mostly seems to be an issue for people playing iRacing; common
 - exceeding VRAM capacity, even without OpenKneeboard - especially if adding additional liveries/paint jobs in iRacing, e.g. via Trading Paints
 
 You need to lower your settings to avoid exceeding your systems' capabilities.
+
+## Performance with TinyPedal
+
+Using TinyPedal with OpenKneeboard typically involves capturing many small windows, leading to very high overhead:
+
+- Window capture is not an efficient way to add content to VR, especially as the number of captured windows increases.
+- Many headsets and runtimes have performance issues with composition layers (overlays) which get worse as the number of layers increases. Alternative approaches introduce significant jitter which would particularly harm readability for small overlays like TinyPedal, and could also lead to anti-cheat false positives.
+- OpenKneeboard makes some 'GPU time vs VRAM usage' tradeoffs which are optimized for large, detailed overlays (like kneeboards), but extremely suboptimal for lots of small windows.
+
+If this affects you, you can:
+
+- reduce the number of windows you are capturing
+- reduce the number of VR views you have enabled
+- use alternative tools that typically combine more information into single overlays
 
 ## ~~Various positioning issues with Varjo Base~~
 
