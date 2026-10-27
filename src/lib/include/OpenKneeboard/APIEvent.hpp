@@ -78,6 +78,14 @@ struct APIEvent final {
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
 
+  // struct ShowVRViewEvent
+  static constexpr char EVT_SHOW_VR_VIEW[] = "ShowVRView";
+  // struct HideVRViewEvent
+  static constexpr char EVT_HIDE_VR_VIEW[] = "HideVRView";
+  // struct ToggleVRViewVisibilityEvent
+  static constexpr char EVT_TOGGLE_VR_VIEW_VISIBILITY[] =
+    "ToggleVRViewVisibility";
+
   // struct SetVRViewOpacityEvent
   static constexpr char EVT_SET_VR_VIEW_OPACITY[] = "SetVRViewOpacity";
 
@@ -169,6 +177,33 @@ struct NudgeVRViewEvent {
   std::optional<float> mMaxHeight;
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
+
+// Show, hide, or toggle one view in VR, as if its 'Enabled in VR' switch was
+// changed. Show and toggle need a view number: the active view is always
+// visible.
+struct ShowVRViewEvent {
+  static constexpr auto ID {APIEvent::EVT_SHOW_VR_VIEW};
+
+  // 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(ShowVRViewEvent);
+
+struct HideVRViewEvent {
+  static constexpr auto ID {APIEvent::EVT_HIDE_VR_VIEW};
+
+  // 0 = 'active', 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(HideVRViewEvent);
+
+struct ToggleVRViewVisibilityEvent {
+  static constexpr auto ID {APIEvent::EVT_TOGGLE_VR_VIEW_VISIBILITY};
+
+  // 1 = first view, 2 = second view, ...
+  uint8_t mKneeboard {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(ToggleVRViewVisibilityEvent);
 
 /** Change a view's VR opacity, as if its opacity sliders in the settings app
  * were moved. `Add` lets a one-way sender step it without knowing the current
