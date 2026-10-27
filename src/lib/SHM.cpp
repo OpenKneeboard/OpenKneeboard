@@ -419,6 +419,10 @@ class Reader::Impl : public SHM::Impl<ReaderStateMachine> {
     }
     const auto index = shared.mFrameNumber % SHMSwapchainLength;
     auto& source = shared.mFrames[index];
+    if (source.mLayerCount == 0) {
+      // Nothing to render, and the handles may not be valid
+      return;
+    }
     auto& [texture, fence] = frames.at(numeric_cast<std::size_t>(index));
     texture.Update(feeder.get(), source.mTexture);
     fence.Update(feeder.get(), source.mFence);
@@ -501,12 +505,16 @@ std::expected<Frame, Frame::Error> Reader::MaybeGet() {
   ActiveConsumers::Set(p->mConsumerKind);
 
   const auto index = p->mHeader->mFrameNumber % SHMSwapchainLength;
+  const auto& frame = p->mHeader->mFrames[index];
+  if (frame.mLayerCount == 0) {
+    return std::unexpected {Frame::Error::NoLayers};
+  }
+
   const auto& [texture, fence] = p->mSessionResources.mFrameHandles.at(
     p->mHeader->mFrameNumber % SHMSwapchainLength);
   if (!(texture && fence)) {
     return std::unexpected {Frame::Error::UnusableHandles};
   }
-  const auto& frame = p->mHeader->mFrames[index];
 
   return Frame {
     .mConfig = frame.mConfig,
