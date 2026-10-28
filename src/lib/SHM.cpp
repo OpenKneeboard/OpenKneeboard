@@ -481,9 +481,17 @@ Writer::operator bool() const { return (bool)p; }
 std::expected<Frame, Frame::Error> Reader::MaybeGet() {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::Reader::MaybeGetUncached()");
+
+  // Quick checks so we don't acquire a lock when we absolutely don't need one
+  // This check must be repeated after we acquire the lock, otherwise we would
+  // have a race condition.
+  if (!(p && p->mHeader && p->mHeader->HaveFeeder())) {
+    return std::unexpected {Frame::Error::NoFeeder};
+  }
+
   const auto lock = std::unique_lock(*p);
 
-  if (!(p->mHeader && p->mHeader->HaveFeeder())) {
+  if (!(p && p->mHeader && p->mHeader->HaveFeeder())) {
     return std::unexpected {Frame::Error::NoFeeder};
   }
   const auto previousSession = p->mSessionID;
