@@ -185,6 +185,34 @@ If any value is not a finite number, the event is ignored and no settings are ch
 
 As with `SetBrightness`, float values must be written as floats - for example, `0.0`, not `0`.
 
+## ShowVRView, HideVRView, and ToggleVRViewVisibility
+
+*Added in v2.0.*
+
+Shows or hides a single kneeboard in VR, as if its 'Enabled in VR' switch in OpenKneeboard's settings was changed; the change is saved to the current profile. This is intended for binding to a button, e.g. on a Stream Deck or a wheel, so a kneeboard that is only wanted occasionally can be put away without opening the settings app.
+
+This only affects VR: the kneeboard is not removed, and the OpenKneeboard app window keeps showing the active kneeboard - or, if every kneeboard is hidden, the last one that was active.
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Kneeboard": 2
+}
+```
+
+- `Kneeboard`: *integer* - `1` for the first kneeboard, `2` for the second, and so on. `HideVRView` also accepts `0` for the active kneeboard; `ShowVRView` and `ToggleVRViewVisibility` do not, as the active kneeboard is always visible.
+
+`Kneeboard` is required by all three messages; to hide the active kneeboard, send `0` explicitly. If it is missing, the event is ignored, and the reason is written to OpenKneeboard's debug log.
+
+The active kneeboard is never hidden: if the active kneeboard is hidden, the next visible kneeboard becomes active, and if every kneeboard is hidden, there is no active kneeboard until one is shown again. While there is no active kneeboard, messages and bindings that act on the active kneeboard - such as changing page - do nothing.
+
+A hidden kneeboard keeps its position in the list, so it can be shown again by number.
+
+If every kneeboard is hidden, `ToggleVRViewVisibility` shows all of them, whichever kneeboard it names; so do OpenKneeboard's own 'show' and 'toggle visibility' bindings and remote controls.
+
+Kneeboards that mirror another kneeboard can be shown and hidden independently of the kneeboard they mirror.
+
 ## SetVRViewOpacity
 
 *Added in v2.0.*
