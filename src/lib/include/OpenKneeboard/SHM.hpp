@@ -126,6 +126,7 @@ struct Frame : felly::non_copyable {
   enum class Error {
     IncorrectGPU,
     NoFeeder,
+    NoLayers,
     UnusableHandles,
   };
 

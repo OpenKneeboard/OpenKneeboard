@@ -144,9 +144,13 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
 
   // Let's force a clean start on the clients, including resetting the session
   // ID
+  {
+    const std::unique_lock shmLock(mSHM);
+    mSHM.Detach();
+  }
+  // Must be released *after* the SHM is detached; otherwise we have
+  // a use-after-free race with the use in the renderer and the free here
   mIPCSwapchain = {};
-  const std::unique_lock shmLock(mSHM);
-  mSHM.Detach();
 }
 
 void InterprocessRenderer::PostUserAction(UserAction action) {
