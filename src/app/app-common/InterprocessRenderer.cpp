@@ -150,9 +150,6 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
     const std::unique_lock shmLock(mSHM);
     mSHM.Detach();
   }
-  // Must be released *after* the SHM is detached; otherwise we have
-  // a use-after-free race with the use in the renderer and the free here
-  mIPCSwapchain = {};
 }
 
 void InterprocessRenderer::PostUserAction(UserAction action) {
