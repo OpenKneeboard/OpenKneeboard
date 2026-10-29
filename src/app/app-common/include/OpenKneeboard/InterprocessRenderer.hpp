@@ -6,6 +6,8 @@
 // OpenKneeboard repository.
 #pragma once
 
+#include "OpenKneeboard/SpriteAtlas.hpp"
+
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
@@ -15,6 +17,7 @@
 #include <OpenKneeboard/audited_ptr.hpp>
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/final_release_deleter.hpp>
+#include <OpenKneeboard/inplace_vector.hpp>
 
 #include <shims/winrt/base.h>
 
@@ -56,7 +59,7 @@ class InterprocessRenderer final
 
  private:
   InterprocessRenderer() = delete;
-  InterprocessRenderer(const audited_ptr<DXResources>&);
+  explicit InterprocessRenderer(const audited_ptr<DXResources>&);
   // Split out from the constructor so that `shared_from_this()` is valid
   // when invoked
   void Initialize(KneeboardState*);
@@ -66,6 +69,9 @@ class InterprocessRenderer final
   static std::mutex sSingleInstance;
   std::unique_lock<std::mutex> mInstanceLock;
   winrt::apartment_context mOwnerThread;
+
+  inplace_vector<PixelSize, MaxViewCount> mViewSizes;
+  std::optional<SpriteAtlas> mSpriteAtlas;
 
   audited_ptr<DXResources> mDXR;
   OpenKneeboard::SHM::Writer mSHM;

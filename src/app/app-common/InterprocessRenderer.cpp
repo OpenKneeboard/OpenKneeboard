@@ -342,9 +342,13 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
   }
   mPreviousFrameWasVisible = true;
 
-  // TODO: cache this between frames (#961)
-  const SpriteAtlas sprites {
-    renderInfos | std::views::transform(&ViewRenderInfo::mFullSize)};
+  const auto viewSizes =
+    renderInfos | std::views::transform(&ViewRenderInfo::mFullSize);
+  if (!std::ranges::equal(mViewSizes, viewSizes)) {
+    mViewSizes = {viewSizes.begin(), viewSizes.end()};
+    mSpriteAtlas.emplace(mViewSizes);
+  }
+  const auto& sprites = mSpriteAtlas.value();
   const auto canvasSize = sprites.GetAtlasSize();
 
   TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
