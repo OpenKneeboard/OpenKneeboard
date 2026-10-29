@@ -331,6 +331,7 @@ target_link_libraries(
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SHM
+  OpenKneeboard-SpriteAtlas
   OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-ThreadGuard
   OpenKneeboard-UTF8

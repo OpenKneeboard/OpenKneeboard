@@ -1,0 +1,4 @@
+rectangle-bin-pack can be used from CMake with:
+
+    find_package(rectangle-binpack CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE RectangleBinPack::RectangleBinPack)

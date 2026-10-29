@@ -1,7 +1,6 @@
 ok_add_library(OpenKneeboard-Lib-Headers INTERFACE)
 target_include_directories(OpenKneeboard-Lib-Headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.in.hpp"
   "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.hpp"
@@ -39,7 +38,25 @@ ok_add_library(
   INCLUDE_DIRECTORIES
   include
 )
-target_link_libraries(OpenKneeboard-inplace_vector INTERFACE OpenKneeboard-config)
+target_link_libraries(OpenKneeboard-inplace_vector INTERFACE OpenKneeboard-fatal)
+
+ok_add_library(
+  OpenKneeboard-SpriteAtlas
+  STATIC
+  SpriteAtlas.cpp
+  HEADERS
+  include/OpenKneeboard/SpriteAtlas.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
+target_link_libraries(
+  OpenKneeboard-SpriteAtlas
+  PUBLIC
+  OpenKneeboard-config
+  OpenKneeboard-inplace_vector
+  ThirdParty::RectangleBinPack
+)
+
 
 ok_add_library(
   OpenKneeboard-fatal

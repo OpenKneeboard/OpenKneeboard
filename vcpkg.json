@@ -21,6 +21,7 @@
     "magic-enum",
     "neargye-semver",
     "nlohmann-json",
+    "rectangle-bin-pack",
     "wil"
   ],
   "features": {

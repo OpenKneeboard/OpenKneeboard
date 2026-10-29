@@ -34,6 +34,7 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-SHM-Client-D3D12
   OpenKneeboard-SHM-Client-Vulkan
+  OpenKneeboard-SpriteAtlas
   OpenKneeboard-StateMachine
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config

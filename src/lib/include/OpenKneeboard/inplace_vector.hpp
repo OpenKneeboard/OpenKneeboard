@@ -4,7 +4,7 @@
 // OpenKneeboard repository.
 #pragma once
 
-#include <OpenKneeboard/config.hpp>
+#include <OpenKneeboard/fatal.hpp>
 
 #include <array>
 #include <cstddef>

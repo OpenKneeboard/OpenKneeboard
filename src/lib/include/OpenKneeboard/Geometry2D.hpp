@@ -76,6 +76,11 @@ struct Size {
     return numeric_cast<TV>(mHeight);
   }
 
+  template <class TV = T>
+  constexpr auto Area() const noexcept {
+    return numeric_cast<TV>(mWidth) * numeric_cast<TV>(mHeight);
+  }
+
   constexpr Size<T> ScaledToFit(
     const Size<T>& container,
     ScaleToFitMode mode = ScaleToFitMode::ShrinkOrGrow) const noexcept {

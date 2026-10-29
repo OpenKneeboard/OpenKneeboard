@@ -1,0 +1,19 @@
+{
+  "name": "rectangle-bin-pack",
+  "version-date": "2023-09-26",
+  "port-version": 1,
+  "description": "Source code from 'A Thousand Ways to Pack the Bin' by Jukka Jylänki",
+  "homepage": "https://github.com/juj/RectangleBinPack",
+  "license": "LicenseRef-PD-juj",
+  "supports": "windows & !uwp",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

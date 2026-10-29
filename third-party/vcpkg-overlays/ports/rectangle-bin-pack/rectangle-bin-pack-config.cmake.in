@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+set_and_check(RECTANGLE_BIN_PACK_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/include")
+set_and_check(RECTANGLE_BIN_PACK_RELEASE_LIB "${PACKAGE_PREFIX_DIR}/lib/RectangleBinPack.lib")
+set_and_check(RECTANGLE_BIN_PACK_DEBUG_LIB   "${PACKAGE_PREFIX_DIR}/debug/lib/RectangleBinPack.lib")
+
+if(NOT TARGET RectangleBinPack::RectangleBinPack)
+    add_library(RectangleBinPack::RectangleBinPack STATIC IMPORTED)
+    set_target_properties(RectangleBinPack::RectangleBinPack PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${RECTANGLE_BIN_PACK_INCLUDE_DIR}"
+        IMPORTED_CONFIGURATIONS "RELEASE;DEBUG;RELWITHDEBINFO"
+        IMPORTED_LOCATION_RELEASE         "${RECTANGLE_BIN_PACK_RELEASE_LIB}"
+        IMPORTED_LOCATION_RELWITHDEBINFO  "${RECTANGLE_BIN_PACK_RELEASE_LIB}"
+        IMPORTED_LOCATION_DEBUG           "${RECTANGLE_BIN_PACK_DEBUG_LIB}"
+    )
+endif()
