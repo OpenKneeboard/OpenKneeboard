@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <OpenKneeboard/SpriteAtlas.hpp>
 #include <OpenKneeboard/VRKneeboard.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -74,7 +75,26 @@ class OpenXRKneeboard : public VRKneeboard {
 
   bool mIsVarjoRuntime {false};
 
+  uint64_t mSpriteAtlasCacheKey {};
+  std::optional<SpriteAtlas> mSpriteAtlas;
+
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
+  [[nodiscard]]
+  bool IsUpscalingEnabled(const SHM::Config& config) const noexcept {
+    using enum VRSettings::Quirks::Upscaling;
+    switch (config.mVR.mQuirks.mOpenXR_Upscaling) {
+      case Automatic:
+        return mIsVarjoRuntime;
+      case AlwaysOn:
+        return true;
+      case AlwaysOff:
+        return false;
+    }
+    std::unreachable();
+  }
+
+  [[nodiscard]]
+  const SpriteAtlas& GetSpriteAtlas(const SHM::Frame& frame) noexcept;
 };
 }// namespace OpenKneeboard

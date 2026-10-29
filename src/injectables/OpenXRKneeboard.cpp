@@ -13,7 +13,7 @@
 #include "OpenXRVulkanKneeboard.hpp"
 
 #include <OpenKneeboard/Elevation.hpp>
-#include <OpenKneeboard/Spriting.hpp>
+#include <OpenKneeboard/SpriteAtlas.hpp>
 #include <OpenKneeboard/StateMachine.hpp>
 
 #include <OpenKneeboard/config.hpp>
@@ -231,8 +231,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  const auto swapchainDimensions =
-    Spriting::GetBufferSize(frame->mLayers.size());
+  const auto& destSprites = this->GetSpriteAtlas(*frame);
+  const auto swapchainDimensions = destSprites.GetAtlasSize();
 
   if (mSwapchain && mSwapchainDimensions != swapchainDimensions) {
     OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
@@ -293,32 +293,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_TraceLoggingRect(
         layer->mVR.mLocationOnTexture, "LocationOnTexture"));
 
-    PixelRect destRect {
-      Spriting::GetOffset(layerIndex, frame->mLayers.size()),
-      layer->mVR.mLocationOnTexture.mSize,
-    };
-    using Upscaling = VRSettings::Quirks::Upscaling;
-    switch (frame->mConfig.mVR.mQuirks.mOpenXR_Upscaling) {
-      case Upscaling::Automatic:
-        if (!mIsVarjoRuntime) {
-          break;
-        }
-        [[fallthrough]];
-      case Upscaling::AlwaysOn: {
-        const auto upscaled =
-          destRect.mSize.ScaledToFit(Config::MaxViewRenderSize);
-        TraceLoggingWriteTagged(
-          layerActivity,
-          "OpenXRKneeboard::xrEndFrame()/LayerSprites/Upscale",
-          OPENKNEEBOARD_TraceLoggingSize2D(destRect.mSize, "OriginalSize"),
-          OPENKNEEBOARD_TraceLoggingSize2D(upscaled, "NewSize"));
-        destRect.mSize = upscaled;
-        break;
-      }
-      case Upscaling::AlwaysOff:
-        // nothing to do
-        break;
-    }
+    const auto destRect = destSprites.GetRect(layerIndex);
 
     layerSprites.push_back(
       SHM::LayerSprite {
@@ -462,6 +437,29 @@ XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {
     .orientation = {o.x, o.y, o.z, o.w},
     .position = {p.x, p.y, p.z},
   };
+}
+const SpriteAtlas& OpenXRKneeboard::GetSpriteAtlas(
+  const SHM::Frame& frame) noexcept {
+  const auto rawCacheKey =
+    (static_cast<uint64_t>(frame.mConfig.mTextureSize.mWidth) << 32)
+    | (static_cast<uint32_t>(frame.mConfig.mTextureSize.mHeight));
+  const auto upscale = this->IsUpscalingEnabled(frame.mConfig);
+  const auto cacheKey = upscale ? rawCacheKey : ~rawCacheKey;
+  if (mSpriteAtlasCacheKey == cacheKey) {
+    return *mSpriteAtlas;
+  }
+  mSpriteAtlasCacheKey = cacheKey;
+  boost::container::static_vector<PixelSize, MaxViewCount> sizes;
+  sizes.reserve(frame.mLayers.size());
+  for (auto&& sprite: frame.mLayers) {
+    sizes.push_back(
+      upscale
+        ? sprite.mVR.mLocationOnTexture.mSize.ScaledToFit(MaxViewRenderSize)
+        : sprite.mVR.mLocationOnTexture.mSize);
+  }
+  mSpriteAtlas.emplace(sizes);
+
+  return *mSpriteAtlas;
 }
 
 template <class T>
@@ -841,7 +839,9 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
     const std::string_view extensionName {info->enabledExtensionNames[i]};
     dprint("Application enabled extension: {}", extensionName);
     if (extensionName == XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME) {
-      dprint.Warning("Application enabled XR_KHR_COMPOSITION_LAYER_DEPTH; runtime bugs are likely");
+      dprint.Warning(
+        "Application enabled XR_KHR_COMPOSITION_LAYER_DEPTH; runtime bugs are "
+        "likely");
       continue;
     }
     if (extensionName == XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME) {

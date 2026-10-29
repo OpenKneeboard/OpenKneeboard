@@ -14,7 +14,7 @@
 #include <OpenKneeboard/InterprocessRenderer.hpp>
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
-#include <OpenKneeboard/Spriting.hpp>
+#include <OpenKneeboard/SpriteAtlas.hpp>
 #include <OpenKneeboard/TabView.hpp>
 #include <OpenKneeboard/ToolbarAction.hpp>
 
@@ -342,7 +342,10 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
   }
   mPreviousFrameWasVisible = true;
 
-  const auto canvasSize = Spriting::GetBufferSize(layerCount);
+  // TODO: cache this between frames (#961)
+  const SpriteAtlas sprites {
+    renderInfos | std::views::transform(&ViewRenderInfo::mFullSize)};
+  const auto canvasSize = sprites.GetAtlasSize();
 
   TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
   const std::unique_lock dxlock(*mDXR);
@@ -356,7 +359,7 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
   uint64_t inputLayerID = 0;
 
   for (uint8_t i = 0; i < layerCount; ++i) {
-    const auto bounds = Spriting::GetRect(i, layerCount);
+    const auto bounds = sprites.GetRect(i);
     const auto& renderInfo = renderInfos.at(i);
     if (renderInfo.mIsActiveForInput) {
       inputLayerID = renderInfo.mView->GetRuntimeID().GetTemporaryValue();
