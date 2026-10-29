@@ -70,6 +70,8 @@ class OpenXRKneeboard : public VRKneeboard {
   PixelSize mSwapchainDimensions;
   std::array<uint64_t, MaxViewCount> mRenderCacheKeys;
 
+  std::vector<const XrCompositionLayerBaseHeader*> mNextCompositionLayers;
+
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
 

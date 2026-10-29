@@ -269,19 +269,17 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
   vrLayers.resize(layerCount);
 
-  std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
-  nextLayers.reserve(frameEndInfo->layerCount + layerCount);
+  mNextCompositionLayers.clear();
+  mNextCompositionLayers.reserve(frameEndInfo->layerCount + layerCount);
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
-    std::back_inserter(nextLayers));
+    std::back_inserter(mNextCompositionLayers));
 
   uint8_t topMost = layerCount - 1;
 
-  std::vector<SHM::LayerSprite> layerSprites;
-  std::vector<XrCompositionLayerQuad> addedXRLayers;
-  layerSprites.reserve(layerCount);
-  addedXRLayers.reserve(layerCount);
+  inplace_vector<SHM::LayerSprite, MaxViewCount> layerSprites;
+  inplace_vector<XrCompositionLayerQuad, MaxViewCount> addedXRLayers;
 
   for (size_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto [layer, params] = vrLayers.at(layerIndex);
@@ -295,7 +293,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     const auto destRect = destSprites.GetRect(layerIndex);
 
-    layerSprites.push_back(
+    const auto& sprite = layerSprites.push_back(
       SHM::LayerSprite {
         .mSourceRect = layer->mVR.mLocationOnTexture,
         .mDestRect = destRect,
@@ -305,10 +303,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
     TraceLoggingWriteTagged(
       layerActivity,
       "OpenXRKneeboard::xrEndFrame()/LayerSprites/Sprite",
-      OPENKNEEBOARD_TraceLoggingRect(
-        layerSprites.back().mSourceRect, "SourceRect"),
-      OPENKNEEBOARD_TraceLoggingRect(layerSprites.back().mDestRect, "DestRect"),
-      TraceLoggingValue(layerSprites.back().mOpacity, "Opacity"));
+      OPENKNEEBOARD_TraceLoggingRect(sprite.mSourceRect, "SourceRect"),
+      OPENKNEEBOARD_TraceLoggingRect(sprite.mDestRect, "DestRect"),
+      TraceLoggingValue(sprite.mOpacity, "Opacity"));
 
     if (layer->mLayerID == frame->mConfig.mGlobalInputLayerID) {
       topMost = layerIndex;
@@ -334,7 +331,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .size = {params.mKneeboardSize.x, params.mKneeboardSize.y},
     });
 
-    nextLayers.push_back(
+    mNextCompositionLayers.push_back(
       reinterpret_cast<XrCompositionLayerBaseHeader*>(&addedXRLayers.back()));
   }
 
@@ -370,8 +367,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
-  nextFrameEndInfo.layers = nextLayers.data();
-  nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
+  nextFrameEndInfo.layers = mNextCompositionLayers.data();
+  nextFrameEndInfo.layerCount =
+    static_cast<uint32_t>(mNextCompositionLayers.size());
 
   XrResult nextResult {};
   {
@@ -449,8 +447,7 @@ const SpriteAtlas& OpenXRKneeboard::GetSpriteAtlas(
     return *mSpriteAtlas;
   }
   mSpriteAtlasCacheKey = cacheKey;
-  boost::container::static_vector<PixelSize, MaxViewCount> sizes;
-  sizes.reserve(frame.mLayers.size());
+  inplace_vector<PixelSize, MaxViewCount> sizes;
   for (auto&& sprite: frame.mLayers) {
     sizes.push_back(
       upscale

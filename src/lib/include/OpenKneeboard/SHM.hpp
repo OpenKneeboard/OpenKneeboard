@@ -7,6 +7,7 @@
 #pragma once
 
 #include "VRSettings.hpp"
+#include "inplace_vector.hpp"
 
 #include <OpenKneeboard/Pixels.hpp>
 
@@ -17,7 +18,6 @@
 
 #include <Windows.h>
 
-#include <boost/container/static_vector.hpp>
 #include <felly/non_copyable.hpp>
 
 #include <concepts>
@@ -131,7 +131,7 @@ struct Frame : felly::non_copyable {
   };
 
   Config mConfig {};
-  boost::container::static_vector<LayerConfig, MaxViewCount> mLayers {};
+  inplace_vector<LayerConfig, MaxViewCount> mLayers {};
 
   HANDLE mTexture {};
 

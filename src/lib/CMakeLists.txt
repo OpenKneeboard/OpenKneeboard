@@ -32,6 +32,16 @@ target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC OpenKneeboard-Lib-Headers
 target_link_libraries(OpenKneeboard-ThreadGuard PRIVATE OpenKneeboard-dprint)
 
 ok_add_library(
+  OpenKneeboard-inplace_vector
+  INTERFACE
+  HEADERS
+  include/OpenKneeboard/inplace_vector.hpp
+  INCLUDE_DIRECTORIES
+  include
+)
+target_link_libraries(OpenKneeboard-inplace_vector INTERFACE OpenKneeboard-config)
+
+ok_add_library(
   OpenKneeboard-fatal
   STATIC
   fatal.cpp
@@ -240,7 +250,6 @@ target_link_libraries(
   OpenKneeboard-shims
   OpenKneeboard-version
   OpenKneeboard-win32
-  Boost::container
 )
 
 ok_add_library(
