@@ -52,6 +52,32 @@ struct VROpacitySettings {
  * values that are stored in the config file but need further processing before
  * being put in SHM.
  */
+enum class VRFollowMode : uint8_t {
+  WorldLocked = 0,
+  HeadLocked = 1,
+  HeadFollowSmooth = 2,
+  HeadFollowLazy = 3,
+};
+
+struct VRHeadFollowSettings {
+  VRFollowMode mMode {VRFollowMode::HeadFollowLazy};
+  float mDeadzoneAngleDeg {18.0f};
+  float mDeadzoneDistanceM {0.08f};
+  float mFollowSpeed {7.5f};
+  bool mLockRoll {true};
+  bool mLockPitch {false};
+  constexpr bool operator==(const VRHeadFollowSettings&) const noexcept = default;
+};
+
+struct VRGestureSettings {
+  bool mEnabled {true};
+  bool mAllowPinchReposition {true};
+  float mPinchThresholdM {0.025f};
+  float mSwipeMinDistanceM {0.14f};
+  uint32_t mCooldownMs {450};
+  constexpr bool operator==(const VRGestureSettings&) const noexcept = default;
+};
+
 struct VRRenderSettings {
   struct Quirks final {
     enum class Upscaling {
@@ -65,6 +91,8 @@ struct VRRenderSettings {
   };
   Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
+  VRHeadFollowSettings mHeadFollow {};
+  VRGestureSettings mGestures {};
 
   ///// Runtime-only settings (no JSON) ////
 

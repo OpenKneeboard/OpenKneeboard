@@ -9,6 +9,7 @@
 
 #include "OpenXRD3D11Kneeboard.hpp"
 #include "OpenXRD3D12Kneeboard.hpp"
+#include "OpenXRGestureTracker.hpp"
 #include "OpenXRNext.hpp"
 #include "OpenXRVulkanKneeboard.hpp"
 
@@ -25,6 +26,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <loader_interfaces.h>
 
@@ -180,6 +182,8 @@ OpenXRKneeboard::OpenXRKneeboard(
   if (mIsVarjoRuntime) {
     dprint("Varjo runtime detected");
   }
+  mGestureTracker = std::make_unique<OpenXRGestureTracker>(
+    instance, system, session, next);
 }
 
 OpenXRKneeboard::~OpenXRKneeboard() {
@@ -257,8 +261,28 @@ XrResult OpenXRKneeboard::xrEndFrame(
       swapchainDimensions.mHeight);
   }
 
+  const auto now = std::chrono::steady_clock::now();
+  const float dt = mLastFrameTime
+    ? std::chrono::duration<float>(now - *mLastFrameTime).count()
+    : 0.016f;
+  mLastFrameTime = now;
   const auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
-  auto vrLayers = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
+  auto vrLayers = this->GetLayers(frame->mConfig, frame->mLayers, hmdPose, dt);
+  if (mGestureTracker) {
+    std::optional<VRKneeboard::Layer> activeLayer;
+    for (const auto& l : vrLayers) {
+      if (l.mLayerConfig->mLayerID == frame->mConfig.mGlobalInputLayerID) {
+        activeLayer = l;
+        break;
+      }
+    }
+    mGestureTracker->PollAndDispatch(
+      mLocalSpace,
+      frameEndInfo->displayTime,
+      hmdPose,
+      activeLayer,
+      frame->mConfig.mVR.mGestures);
+  }
   const auto layerCount =
     (vrLayers.size() + frameEndInfo->layerCount) <= mMaxLayerCount
     ? vrLayers.size()
@@ -315,11 +339,15 @@ XrResult OpenXRKneeboard::xrEndFrame(
       SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
       "Use premultiplied alpha in shared texture, or pass "
       "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+    const bool useDirectViewSpace =
+      frame->mConfig.mVR.mHeadFollow.mMode == VRFollowMode::HeadLocked
+      && !frame->mConfig.mVR.mHeadFollow.mLockRoll
+      && !frame->mConfig.mVR.mHeadFollow.mLockPitch;
     addedXRLayers.push_back({
       .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
       .next = nullptr,
       .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
-      .space = mLocalSpace,
+      .space = useDirectViewSpace ? mViewSpace : mLocalSpace,
       .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
       .subImage =
         XrSwapchainSubImage {
@@ -327,7 +355,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
           .imageRect = destRect.StaticCast<int, XrRect2Di>(),
           .imageArrayIndex = 0,
         },
-      .pose = this->GetXrPosef(params.mKneeboardPose),
+      .pose = useDirectViewSpace
+        ? this->GetViewRelativeXrPosef(layer->mVR.mPose)
+        : this->GetXrPosef(params.mKneeboardPose),
       .size = {params.mKneeboardSize.x, params.mKneeboardSize.y},
     });
 
@@ -426,6 +456,18 @@ OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
   };
   sCacheKey = displayTime;
   return sCache;
+}
+
+XrPosef OpenXRKneeboard::GetViewRelativeXrPosef(const VRPose& pose) {
+  const auto matrix = Matrix::CreateRotationX(pose.mRX)
+    * Matrix::CreateRotationY(pose.mRY) * Matrix::CreateRotationZ(pose.mRZ)
+    * Matrix::CreateTranslation({pose.mX, pose.mEyeY, pose.mZ});
+  const auto q = Quaternion::CreateFromRotationMatrix(matrix);
+  const auto p = matrix.Translation();
+  return {
+    .orientation = {q.x, q.y, q.z, q.w},
+    .position = {p.x, p.y, p.z},
+  };
 }
 
 XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {
@@ -819,10 +861,33 @@ XRAPI_ATTR XrResult XRAPI_CALL xrCreateApiLayerInstance(
       info->applicationInfo.engineName, XR_MAX_ENGINE_NAME_SIZE),
     info->applicationInfo.engineVersion);
   // TODO: check version fields etc in layerInfo
+  bool hasHandTrackingExt = false;
+  std::vector<const char*> requestedExts;
+  requestedExts.reserve(info->enabledExtensionCount + 1);
+  for (uint32_t i = 0; i < info->enabledExtensionCount; ++i) {
+    requestedExts.push_back(info->enabledExtensionNames[i]);
+    if (std::string_view {info->enabledExtensionNames[i]}
+        == XR_EXT_HAND_TRACKING_EXTENSION_NAME) {
+      hasHandTrackingExt = true;
+    }
+  }
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
-  const auto nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
-    info, &nextLayerInfo, instance);
+  XrResult nextResult = XR_ERROR_EXTENSION_NOT_PRESENT;
+  if (!hasHandTrackingExt) {
+    requestedExts.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+    auto modifiedInfo = *info;
+    modifiedInfo.enabledExtensionCount = static_cast<uint32_t>(requestedExts.size());
+    modifiedInfo.enabledExtensionNames = requestedExts.data();
+    nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
+      &modifiedInfo, &nextLayerInfo, instance);
+  }
+  if (hasHandTrackingExt || nextResult == XR_ERROR_EXTENSION_NOT_PRESENT) {
+    nextLayerInfo = *layerInfo;
+    nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
+    nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
+      info, &nextLayerInfo, instance);
+  }
   if (XR_FAILED(nextResult)) {
     dprint.Warning(
       "Next xrCreateApiLayerInstance failed: {}",

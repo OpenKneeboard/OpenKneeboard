@@ -41,28 +41,38 @@ class VRKneeboard {
   std::vector<Layer> GetLayers(
     const SHM::Config&,
     const std::span<const SHM::LayerConfig>&,
-    const Pose& hmdPose);
+    const Pose& hmdPose,
+    float dtSeconds = 0.016f);
 
  private:
   RenderParameters GetRenderParameters(
     const SHM::Config&,
     const SHM::LayerConfig&,
-    const Pose& hmdPose);
+    const Pose& hmdPose,
+    float dtSeconds);
 
   struct Sizes {
     Vector2 mNormalSize;
     Vector2 mZoomedSize;
   };
 
+  struct FollowState {
+    bool mInitialized {false};
+    bool mEngaged {false};
+    Vector3 mAnchorHmdPosition {};
+    Pose mCurrentPose {};
+  };
   uint64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
   std::unordered_map<uint64_t, bool> mIsLookingAtKneeboard;
+  std::unordered_map<uint64_t, FollowState> mFollowStates;
   std::optional<float> mEyeHeight;
 
   Pose GetKneeboardPose(
     const VRRenderSettings& vr,
     const SHM::LayerConfig&,
-    const Pose& hmdPose);
+    const Pose& hmdPose,
+    float dtSeconds);
 
   Vector2 GetKneeboardSize(
     const SHM::Config& config,

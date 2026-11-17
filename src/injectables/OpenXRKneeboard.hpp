@@ -17,7 +17,10 @@
 #include <Windows.h>
 #include <d3d11.h>
 
+#include <chrono>
 #include <format>
+#include <memory>
+#include <optional>
 #include <source_location>
 #include <span>
 
@@ -32,6 +35,7 @@ struct OpenXRRuntimeID {
 };
 
 class OpenXRNext;
+class OpenXRGestureTracker;
 
 class OpenXRKneeboard : public VRKneeboard {
  public:
@@ -79,9 +83,12 @@ class OpenXRKneeboard : public VRKneeboard {
 
   uint64_t mSpriteAtlasCacheKey {};
   std::optional<SpriteAtlas> mSpriteAtlas;
+  std::unique_ptr<OpenXRGestureTracker> mGestureTracker;
+  std::optional<std::chrono::steady_clock::time_point> mLastFrameTime;
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
+  static XrPosef GetViewRelativeXrPosef(const VRPose& pose);
   [[nodiscard]]
   bool IsUpscalingEnabled(const SHM::Config& config) const noexcept {
     using enum VRSettings::Quirks::Upscaling;

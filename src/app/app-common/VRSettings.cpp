@@ -38,10 +38,35 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(VROpacitySettings, mNormal, mGaze);
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  VRFollowMode,
+  {
+    {VRFollowMode::WorldLocked, "WorldLocked"},
+    {VRFollowMode::HeadLocked, "HeadLocked"},
+    {VRFollowMode::HeadFollowSmooth, "HeadFollowSmooth"},
+    {VRFollowMode::HeadFollowLazy, "HeadFollowLazy"},
+  });
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRHeadFollowSettings,
+  mMode,
+  mDeadzoneAngleDeg,
+  mDeadzoneDistanceM,
+  mFollowSpeed,
+  mLockRoll,
+  mLockPitch)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRGestureSettings,
+  mEnabled,
+  mAllowPinchReposition,
+  mPinchThresholdM,
+  mSwipeMinDistanceM,
+  mCooldownMs)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderSettings,
   mQuirks,
-  mEnableGazeInputFocus)
+  mEnableGazeInputFocus,
+  mHeadFollow,
+  mGestures)
 
 template <>
 void from_json_postprocess<VRSettings>(const nlohmann::json& j, VRSettings& v) {
