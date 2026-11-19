@@ -77,6 +77,11 @@ struct APIEvent final {
 
   // struct NudgeVRViewEvent
   static constexpr char EVT_NUDGE_VR_VIEW[] = "NudgeVRView";
+  // struct SetVRManipulatedTransformEvent
+  static constexpr char EVT_SET_VR_MANIPULATED_TRANSFORM[] =
+    "SetVRManipulatedTransform";
+  // struct VRContentPointerEvent
+  static constexpr char EVT_VR_CONTENT_POINTER[] = "VRContentPointer";
 
   // struct ShowVRViewEvent
   static constexpr char EVT_SHOW_VR_VIEW[] = "ShowVRView";
@@ -177,6 +182,58 @@ struct NudgeVRViewEvent {
   std::optional<float> mMaxHeight;
 };
 OPENKNEEBOARD_DECLARE_JSON(NudgeVRViewEvent);
+
+struct SetVRManipulatedTransformEvent {
+  static constexpr auto ID {APIEvent::EVT_SET_VR_MANIPULATED_TRANSFORM};
+
+  uint8_t mKneeboard {0};
+
+  std::optional<float> mX;
+  std::optional<float> mEyeY;
+  std::optional<float> mZ;
+  std::optional<float> mRX;
+  std::optional<float> mRY;
+  std::optional<float> mRZ;
+
+  std::optional<float> mHeadOffsetX;
+  std::optional<float> mHeadOffsetY;
+  std::optional<float> mHeadOffsetZ;
+  std::optional<float> mHeadPitchDeg;
+  std::optional<float> mHeadYawDeg;
+
+  std::optional<float> mHandOffsetX;
+  std::optional<float> mHandOffsetY;
+  std::optional<float> mHandOffsetZ;
+  std::optional<float> mHandPitchDeg;
+  std::optional<float> mHandForwardX;
+  std::optional<float> mHandForwardY;
+  std::optional<float> mHandForwardZ;
+
+  std::optional<float> mMaxWidth;
+  std::optional<float> mMaxHeight;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetVRManipulatedTransformEvent);
+
+struct VRContentPointerEvent {
+  static constexpr auto ID {APIEvent::EVT_VR_CONTENT_POINTER};
+
+  enum class Action : uint8_t {
+    Move = 0,
+    PrimaryDown = 1,
+    PrimaryUp = 2,
+    Wheel = 3,
+    Leave = 4,
+  };
+
+  uint8_t mKneeboard {0};
+  uint64_t mLayerID {0};
+  Action mAction {Action::Move};
+  float mU {0.5f};
+  float mV {0.5f};
+  uint32_t mButtons {0};
+  int32_t mWheelDeltaY {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(VRContentPointerEvent);
 
 // Show, hide, or toggle one view in VR, as if its 'Enabled in VR' switch was
 // changed. Show and toggle need a view number: the active view is always

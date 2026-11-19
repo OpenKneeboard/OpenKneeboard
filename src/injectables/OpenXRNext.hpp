@@ -19,6 +19,7 @@
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
 #define XR_USE_GRAPHICS_API_VULKAN
+
 #include <shims/openxr/openxr.h>
 
 #include <openxr/openxr_platform.h>
@@ -26,27 +27,41 @@
 #include <utility>
 
 #define OPENKNEEBOARD_HOOKED_OPENXR_FUNCS(CORE_FN, EXT_FN) \
+  CORE_FN(xrAttachSessionActionSets) \
+  CORE_FN(xrCreateAction) \
+  CORE_FN(xrCreateActionSpace) \
   CORE_FN(xrCreateSession) \
+  CORE_FN(xrDestroyAction) \
   CORE_FN(xrDestroySession) \
+  CORE_FN(xrDestroySpace) \
   CORE_FN(xrDestroyInstance) \
   CORE_FN(xrEndFrame) \
+  CORE_FN(xrGetActionStateBoolean) \
+  CORE_FN(xrGetActionStateFloat) \
+  CORE_FN(xrGetActionStateVector2f) \
+  CORE_FN(xrSuggestInteractionProfileBindings) \
+  CORE_FN(xrSyncActions) \
   EXT_FN(XR_KHR_vulkan_enable2, xrCreateVulkanDeviceKHR) \
   EXT_FN(XR_KHR_vulkan_enable2, xrCreateVulkanInstanceKHR)
 
 #define OPENKNEEBOARD_NEXT_OPENXR_FUNCS(CORE_FN, EXT_FN) \
   OPENKNEEBOARD_HOOKED_OPENXR_FUNCS(CORE_FN, EXT_FN) \
   CORE_FN(xrAcquireSwapchainImage) \
+  CORE_FN(xrCreateActionSet) \
   CORE_FN(xrCreateReferenceSpace) \
   CORE_FN(xrCreateSwapchain) \
-  CORE_FN(xrDestroySpace) \
+  CORE_FN(xrDestroyActionSet) \
   CORE_FN(xrDestroySwapchain) \
   CORE_FN(xrEnumerateInstanceExtensionProperties) \
   CORE_FN(xrEnumerateSwapchainFormats) \
   CORE_FN(xrEnumerateSwapchainImages) \
+  CORE_FN(xrGetCurrentInteractionProfile) \
   CORE_FN(xrGetInstanceProperties) \
   CORE_FN(xrGetSystemProperties) \
   CORE_FN(xrLocateSpace) \
+  CORE_FN(xrPathToString) \
   CORE_FN(xrReleaseSwapchainImage) \
+  CORE_FN(xrStringToPath) \
   CORE_FN(xrWaitSwapchainImage)
 
 namespace OpenKneeboard {

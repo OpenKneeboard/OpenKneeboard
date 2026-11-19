@@ -11,7 +11,6 @@
 #include <OpenKneeboard/SHM.hpp>
 #include <OpenKneeboard/SHM/D3D11.hpp>
 #include <OpenKneeboard/VRKneeboard.hpp>
-
 #include <OpenKneeboard/config.hpp>
 #include <OpenKneeboard/task.hpp>
 
@@ -19,6 +18,8 @@
 
 #include <directxtk/SimpleMath.h>
 
+#include <array>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <stop_token>
@@ -42,9 +43,11 @@ class SteamVRKneeboard final : private VRKneeboard {
  private:
   using Matrix = DirectX::SimpleMath::Matrix;
   float GetDisplayTime();
+
   bool InitializeOpenVR();
   void Tick();
   void Reset();
+
   void HideAllOverlays();
 
   // Superclass of DXResources, but naming it like this for
@@ -52,11 +55,16 @@ class SteamVRKneeboard final : private VRKneeboard {
   D3D11Resources mDXR;
   SHM::D3D11::Reader mSHM;
   uint64_t mFrameCounter = 0;
+  std::optional<std::chrono::steady_clock::time_point> mLastFrameTime;
+  std::optional<Pose> GetHandMountPose(VRFollowMode mode, float displayTime);
+  std::array<ControllerInput, 2> PollControllerInputs(
+    uint8_t preferredHand,
+    float displayTime);
+
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
 
   std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
-
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture
   winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
@@ -64,6 +72,11 @@ class SteamVRKneeboard final : private VRKneeboard {
   winrt::com_ptr<ID3D11Fence> mFence;
   uint64_t mFenceValue {};
   winrt::handle mGPUFlushEvent;
+
+  winrt::com_ptr<ID3D11Texture2D> mBeamTexture;
+  HANDLE mBeamSharedHandle {};
+  vr::VROverlayHandle_t mBeamOverlay {};
+  bool mBeamVisible {false};
 
   struct LayerState {
     bool mVisible = false;

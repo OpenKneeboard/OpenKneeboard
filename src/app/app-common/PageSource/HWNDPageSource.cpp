@@ -409,6 +409,18 @@ void HWNDPageSource::PostCursorEvent(
       0);
   });
 
+  if (ev.mWheelDeltaY != 0) {
+    POINT screenPt = point;
+    ClientToScreen(target, &screenPt);
+    SendMessageW(
+      target,
+      WM_MOUSEWHEEL,
+      MAKEWPARAM(
+        static_cast<uint16_t>(wParam),
+        static_cast<uint16_t>(ev.mWheelDeltaY)),
+      MAKELPARAM(screenPt.x, screenPt.y));
+  }
+
   // We only pay attention to buttons (1) and (1 << 1)
   const auto buttons = ev.mButtons & 3;
   if (buttons == mMouseButtons) {

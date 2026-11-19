@@ -125,7 +125,7 @@ struct SharedData final {
 static_assert(std::is_standard_layout_v<SharedData>);
 constexpr DWORD SHM_SIZE = sizeof(SharedData);
 static_assert(
-  SHM_SIZE == 3024,
+  SHM_SIZE == 3216,
   "Potential mismatch between 32-bit and 64-bit SHM layout");
 
 }// namespace

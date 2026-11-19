@@ -422,6 +422,8 @@ target_link_libraries(
   ThirdParty::DirectXTK
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
+  PRIVATE
+  OpenKneeboard-APIEvent
 )
 
 set(VERSION_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.hpp")

@@ -256,6 +256,49 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMaxWidth,
   mMaxHeight);
 
+OPENKNEEBOARD_DEFINE_JSON(
+  SetVRManipulatedTransformEvent,
+  mKneeboard,
+  mX,
+  mEyeY,
+  mZ,
+  mRX,
+  mRY,
+  mRZ,
+  mHeadOffsetX,
+  mHeadOffsetY,
+  mHeadOffsetZ,
+  mHeadPitchDeg,
+  mHeadYawDeg,
+  mHandOffsetX,
+  mHandOffsetY,
+  mHandOffsetZ,
+  mHandPitchDeg,
+  mHandForwardX,
+  mHandForwardY,
+  mHandForwardZ,
+  mMaxWidth,
+  mMaxHeight);
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  VRContentPointerEvent::Action,
+  {
+    {VRContentPointerEvent::Action::Move, "Move"},
+    {VRContentPointerEvent::Action::PrimaryDown, "PrimaryDown"},
+    {VRContentPointerEvent::Action::PrimaryUp, "PrimaryUp"},
+    {VRContentPointerEvent::Action::Wheel, "Wheel"},
+    {VRContentPointerEvent::Action::Leave, "Leave"},
+  });
+OPENKNEEBOARD_DEFINE_JSON(
+  VRContentPointerEvent,
+  mKneeboard,
+  mLayerID,
+  mAction,
+  mU,
+  mV,
+  mButtons,
+  mWheelDeltaY);
+
 template <>
 void from_json_postprocess<ShowVRViewEvent>(
   const nlohmann::json& j,

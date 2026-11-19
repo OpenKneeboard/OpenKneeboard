@@ -302,33 +302,32 @@ void SpriteBatch::End(const std::source_location& loc) {
       {mTargetDimensions.Width<float>(), mTargetDimensions.Height<float>()},
   };
 
+  if (mSprites.size() > MaxSpritesPerBatch) {
+    fatal(
+      "OpenKneeboard's Vulkan Spritebatch only supports up to {} sprites",
+      MaxSpritesPerBatch);
+  }
+
   std::vector<VkImageView> sources;
-  std::unordered_map<VkImageView, uint32_t> sourceIndices;
+  sources.reserve(mSprites.size());
   std::vector<Vertex> vertices;
   vertices.reserve(mSprites.size() * VerticesPerSprite);
-
-  for (const auto& sprite: mSprites) {
-    if (!sourceIndices.contains(sprite.mSource)) {
-      sources.push_back(sprite.mSource);
-      const auto i = sources.size() - 1;
-      sourceIndices[sprite.mSource] = i;
-
-      batchData.mSourceDimensions[i] = {
-        sprite.mSourceSize.Width<float>(),
-        sprite.mSourceSize.Height<float>(),
-      };
-
-      batchData.mSourceClamp[i] = {
-        (sprite.mSourceRect.Left<float>() + 0.5f) / sprite.mSourceSize.Width(),
-        (sprite.mSourceRect.Top<float>() + 0.5f) / sprite.mSourceSize.Height(),
-        (sprite.mSourceRect.Right<float>() - 0.5f) / sprite.mSourceSize.Width(),
-        (sprite.mSourceRect.Bottom<float>() - 0.5f)
-          / sprite.mSourceSize.Height(),
-      };
-    }
+  for (uint32_t i = 0; i < mSprites.size(); ++i) {
+    const auto& sprite = mSprites[i];
+    sources.push_back(sprite.mSource);
+    batchData.mSourceDimensions[i] = {
+      sprite.mSourceSize.Width<float>(),
+      sprite.mSourceSize.Height<float>(),
+    };
+    batchData.mSourceClamp[i] = {
+      (sprite.mSourceRect.Left<float>() + 0.5f) / sprite.mSourceSize.Width(),
+      (sprite.mSourceRect.Top<float>() + 0.5f) / sprite.mSourceSize.Height(),
+      (sprite.mSourceRect.Right<float>() - 0.5f) / sprite.mSourceSize.Width(),
+      (sprite.mSourceRect.Bottom<float>() - 0.5f)
+        / sprite.mSourceSize.Height(),
+    };
 
     using TexCoord = std::array<float, 2>;
-
     const TexCoord srcTL =
       sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
     const TexCoord srcBR =
@@ -337,7 +336,6 @@ void SpriteBatch::End(const std::source_location& loc) {
     const TexCoord srcTR {srcBR[0], srcTL[1]};
 
     using Position = Vertex::Position;
-
     // Destination coordinates in real 3d coordinates
     const Position dstTL =
       sprite.mDestRect.TopLeft().StaticCast<float, Position>();
@@ -351,28 +349,19 @@ void SpriteBatch::End(const std::source_location& loc) {
         .mPosition = pos,
         .mColor = sprite.mColor,
         .mTexCoord = tc,
-        .mTextureIndex = sourceIndices.at(sprite.mSource),
+        .mTextureIndex = i,
       };
     };
 
     // A rectangle is two triangles
-
     // First triangle: excludes top right
     vertices.push_back(makeVertex(srcBL, dstBL));
     vertices.push_back(makeVertex(srcTL, dstTL));
     vertices.push_back(makeVertex(srcBR, dstBR));
-
     // Second triangle: excludes bottom left
     vertices.push_back(makeVertex(srcTL, dstTL));
     vertices.push_back(makeVertex(srcTR, dstTR));
     vertices.push_back(makeVertex(srcBR, dstBR));
-  }
-
-  if (sources.size() > MaxSpritesPerBatch) {
-    fatal(
-      "OpenKneeboard's Vulkan Spritebatch only supports up to {} source "
-      "imeages",
-      MaxSpritesPerBatch);
   }
 
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();

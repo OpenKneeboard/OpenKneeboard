@@ -648,6 +648,28 @@ task<void> KneeboardState::ProcessAPIEvent(APIEvent ev) noexcept {
     co_await this->NudgeVRView(*parsed);
     co_return;
   }
+  if (ev.name == APIEvent::EVT_SET_VR_MANIPULATED_TRANSFORM) {
+    const auto parsed = ev.TryParsedValue<SetVRManipulatedTransformEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed SetVRManipulatedTransform event: {}",
+        parsed.error().what);
+      co_return;
+    }
+    co_await this->SetVRManipulatedTransform(*parsed);
+    co_return;
+  }
+  if (ev.name == APIEvent::EVT_VR_CONTENT_POINTER) {
+    const auto parsed = ev.TryParsedValue<VRContentPointerEvent>();
+    if (!parsed) {
+      dprint(
+        "Ignoring malformed VRContentPointer event: {}",
+        parsed.error().what);
+      co_return;
+    }
+    co_await this->VRContentPointer(*parsed);
+    co_return;
+  }
 
   if (ev.name == APIEvent::EVT_SHOW_VR_VIEW) {
     const auto parsed = ev.TryParsedValue<ShowVRViewEvent>();
@@ -1073,6 +1095,203 @@ task<void> KneeboardState::NudgeVRView(const NudgeVRViewEvent& event) {
 
   view->mVR.SetIndependentSettings(config);
   co_await this->SetViewsSettings(viewsSettings);
+}
+
+task<void> KneeboardState::SetVRManipulatedTransform(
+  const SetVRManipulatedTransformEvent& event) {
+  for (const auto& opt:
+       {event.mX,
+        event.mEyeY,
+        event.mZ,
+        event.mRX,
+        event.mRY,
+        event.mRZ,
+        event.mHeadOffsetX,
+        event.mHeadOffsetY,
+        event.mHeadOffsetZ,
+        event.mHeadPitchDeg,
+        event.mHeadYawDeg,
+        event.mHandOffsetX,
+        event.mHandOffsetY,
+        event.mHandOffsetZ,
+        event.mHandPitchDeg,
+        event.mHandForwardX,
+        event.mHandForwardY,
+        event.mHandForwardZ,
+        event.mMaxWidth,
+        event.mMaxHeight}) {
+    if (opt && !std::isfinite(*opt)) {
+      dprint("SetVRManipulatedTransform: ignoring non-finite value");
+      co_return;
+    }
+  }
+
+  bool vrChanged = false;
+  auto vrSettings = mSettings.mVR;
+  auto& hf = vrSettings.mHeadFollow;
+  if (event.mHeadOffsetX) {
+    hf.mHeadOffsetX = std::clamp(*event.mHeadOffsetX, -0.9f, 0.9f);
+    vrChanged = true;
+  }
+  if (event.mHeadOffsetY) {
+    hf.mHeadOffsetY = std::clamp(*event.mHeadOffsetY, -0.65f, 0.65f);
+    vrChanged = true;
+  }
+  if (event.mHeadOffsetZ) {
+    hf.mHeadOffsetZ = std::clamp(*event.mHeadOffsetZ, -1.35f, -0.20f);
+    vrChanged = true;
+  }
+  if (event.mHeadPitchDeg) {
+    hf.mHeadPitchDeg = std::clamp(*event.mHeadPitchDeg, -65.0f, 65.0f);
+    vrChanged = true;
+  }
+  if (event.mHeadYawDeg) {
+    hf.mHeadYawDeg = std::clamp(*event.mHeadYawDeg, -80.0f, 80.0f);
+    vrChanged = true;
+  }
+  if (event.mHandOffsetX) {
+    hf.mHandOffsetX = std::clamp(*event.mHandOffsetX, -0.65f, 0.65f);
+    vrChanged = true;
+  }
+  if (event.mHandOffsetY) {
+    hf.mHandOffsetY = std::clamp(*event.mHandOffsetY, -0.45f, 0.65f);
+    vrChanged = true;
+  }
+  if (event.mHandOffsetZ) {
+    hf.mHandOffsetZ = std::clamp(*event.mHandOffsetZ, -0.65f, 0.65f);
+    vrChanged = true;
+  }
+  if (event.mHandPitchDeg) {
+    hf.mHandPitchDeg = std::clamp(*event.mHandPitchDeg, -180.0f, 180.0f);
+    vrChanged = true;
+  }
+  if (event.mHandForwardX || event.mHandForwardY || event.mHandForwardZ) {
+    const float fx = event.mHandForwardX.value_or(hf.mHandForwardX);
+    const float fy = event.mHandForwardY.value_or(hf.mHandForwardY);
+    const float fz = event.mHandForwardZ.value_or(hf.mHandForwardZ);
+    const float len = std::hypot(fx, std::hypot(fy, fz));
+    if (len > 1e-4f) {
+      hf.mHandForwardX = fx / len;
+      hf.mHandForwardY = fy / len;
+      hf.mHandForwardZ = fz / len;
+    } else {
+      hf.mHandForwardX = 0.0f;
+      hf.mHandForwardY = 0.0f;
+      hf.mHandForwardZ = 1.0f;
+    }
+    vrChanged = true;
+  }
+  if (vrChanged) {
+    co_await this->SetVRSettings(vrSettings);
+  }
+
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mKneeboard == 0) {
+    kneeboard = GetActiveInGameView();
+  } else if (event.mKneeboard <= mViews.size()) {
+    kneeboard = mViews.at(event.mKneeboard - 1);
+  }
+  if (!kneeboard) {
+    co_return;
+  }
+
+  auto viewsSettings = mSettings.mViews;
+  auto view = std::ranges::find(
+    viewsSettings.mViews, kneeboard->GetPersistentGUID(), &ViewSettings::mGuid);
+  if (
+    view == viewsSettings.mViews.end()
+    || view->mVR.GetType() != ViewVRSettings::Type::Independent) {
+    co_return;
+  }
+
+  auto viewCfg = view->mVR.GetIndependentSettings();
+  bool viewChanged = false;
+  if (event.mX) {
+    viewCfg.mPose.mX = std::clamp(*event.mX, -1.6f, 1.6f);
+    viewChanged = true;
+  }
+  if (event.mEyeY) {
+    viewCfg.mPose.mEyeY = std::clamp(*event.mEyeY, -1.2f, 0.9f);
+    viewChanged = true;
+  }
+  if (event.mZ) {
+    viewCfg.mPose.mZ = std::clamp(*event.mZ, -1.6f, 0.8f);
+    viewChanged = true;
+  }
+  if (event.mRX) {
+    viewCfg.mPose.mRX =
+      std::remainder(*event.mRX, 2 * std::numbers::pi_v<float>);
+    viewChanged = true;
+  }
+  if (event.mRY) {
+    viewCfg.mPose.mRY =
+      std::remainder(*event.mRY, 2 * std::numbers::pi_v<float>);
+    viewChanged = true;
+  }
+  if (event.mRZ) {
+    viewCfg.mPose.mRZ =
+      std::remainder(*event.mRZ, 2 * std::numbers::pi_v<float>);
+    viewChanged = true;
+  }
+  if (event.mMaxWidth) {
+    viewCfg.mMaximumPhysicalSize.mWidth =
+      std::clamp(*event.mMaxWidth, 0.10f, 0.85f);
+    viewChanged = true;
+  }
+  if (event.mMaxHeight) {
+    viewCfg.mMaximumPhysicalSize.mHeight =
+      std::clamp(*event.mMaxHeight, 0.10f, 0.85f);
+    viewChanged = true;
+  }
+  if (viewChanged) {
+    view->mVR.SetIndependentSettings(viewCfg);
+    co_await this->SetViewsSettings(viewsSettings);
+  }
+}
+
+task<void> KneeboardState::VRContentPointer(
+  const VRContentPointerEvent& event) {
+  if (!std::isfinite(event.mU) || !std::isfinite(event.mV)) {
+    co_return;
+  }
+
+  std::shared_ptr<KneeboardView> kneeboard;
+  if (event.mLayerID != 0) {
+    for (const auto& v : mViews) {
+      if (v && v->GetRuntimeID().GetTemporaryValue() == event.mLayerID) {
+        kneeboard = v;
+        break;
+      }
+    }
+  }
+  if (!kneeboard) {
+    if (event.mKneeboard == 0) {
+      kneeboard = GetActiveInGameView();
+    } else if (event.mKneeboard <= mViews.size()) {
+      kneeboard = mViews.at(event.mKneeboard - 1);
+    }
+  }
+  if (!kneeboard) {
+    co_return;
+  }
+
+  CursorEvent ce {};
+  ce.mSource = CursorSource::WindowPointer;
+  if (event.mAction == VRContentPointerEvent::Action::Leave) {
+    ce.mTouchState = CursorTouchState::NotNearSurface;
+    kneeboard->PostCursorEvent(ce);
+    co_return;
+  }
+
+  ce.mTouchState = (event.mButtons & 1u)
+    ? CursorTouchState::TouchingSurface
+    : CursorTouchState::NearSurface;
+  ce.mX = std::clamp(event.mU, 0.0f, 1.0f);
+  ce.mY = std::clamp(event.mV, 0.0f, 1.0f);
+  ce.mPressure = (event.mButtons & 1u) ? 1.0f : 0.0f;
+  ce.mButtons = event.mButtons;
+  ce.mWheelDeltaY = std::clamp(event.mWheelDeltaY, -1200, 1200);
+  kneeboard->PostCursorEvent(ce);
 }
 
 task<void> KneeboardState::ChangeVRViewVisibility(

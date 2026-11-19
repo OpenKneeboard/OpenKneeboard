@@ -13,6 +13,7 @@ ok_add_library(
   DUALARCH
   OpenKneeboard-OpenXR${BUILD_BITNESS}.def
   OpenXRKneeboard.cpp
+  OpenXRGestureTracker.cpp
   OpenXRD3D11Kneeboard.cpp
   OpenXRD3D12Kneeboard.cpp
   OpenXRVulkanKneeboard.cpp
@@ -36,6 +37,8 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-Vulkan
   OpenKneeboard-SpriteAtlas
   OpenKneeboard-StateMachine
+  OpenKneeboard-APIEvent
+  OpenKneeboard-UserAction
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   OpenKneeboard-dprint

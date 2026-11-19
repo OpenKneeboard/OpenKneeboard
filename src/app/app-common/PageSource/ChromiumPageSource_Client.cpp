@@ -481,6 +481,9 @@ void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
   if (newButtons & RightButton) {
     cme.modifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
   }
+  if (ev.mWheelDeltaY != 0) {
+    host->SendMouseWheelEvent(cme, 0, ev.mWheelDeltaY);
+  }
 
   if (mCursorButtons == newButtons) {
     host->SendMouseMoveEvent(cme, /* mouseLeave = */ false);

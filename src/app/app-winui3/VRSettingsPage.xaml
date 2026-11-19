@@ -58,6 +58,318 @@
           OffContent="Disabled"/>
       </StackPanel>
       <TextBlock
+        Text="Head Following &amp; Hand Pinning"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"/>
+      <StackPanel
+        Spacing="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <ToggleSwitch
+          Header="Pin to hand (use hand-offset instead of head-offset)"
+          OnContent="Pinned to wrist / controller"
+          OffContent="Use anchor follow mode below"
+          IsOn="{x:Bind PinToHand}"/>
+        <ComboBox
+          Header="Pinned hand when active"
+          SelectedIndex="{x:Bind PinnedHandIndex}"
+          IsEnabled="{x:Bind PinToHand, Mode=OneWay}">
+          <x:String>Left hand / wrist</x:String>
+          <x:String>Right hand / wrist</x:String>
+        </ComboBox>
+        <ToggleSwitch
+          Header="VR Edit Mode (show transform frame &amp; corner resize handles)"
+          OnContent="Edit frame active"
+          OffContent="Normal cockpit mode"
+          IsOn="{x:Bind VREditModeEnabled}"/>
+        <ToggleSwitch
+          Header="Allow VR controller grab, corner resize &amp; thumbstick depth"
+          OnContent="Enabled (Grip or Edit Mode + Trigger)"
+          OffContent="Locked"
+          IsOn="{x:Bind AllowControllerManipulation}"/>
+        <ComboBox
+          Header="Overlay anchor &amp; follow mode"
+          SelectedIndex="{x:Bind FollowModeIndex}">
+          <x:String>World locked (Recenter space)</x:String>
+          <x:String>Head locked (Rigid HUD)</x:String>
+          <x:String>Head follow (Smooth damping)</x:String>
+          <x:String>Head follow cone (Lazy deadzone)</x:String>
+          <x:String>Pinned to left hand (OpenXR wrist)</x:String>
+          <x:String>Pinned to right hand (OpenXR wrist)</x:String>
+        </ComboBox>
+        <TextBlock
+          Style="{ThemeResource BodyTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          TextWrapping="Wrap"
+          Text="Hand pinning uses OpenXR XR_EXT_hand_tracking (including data_source controller fallback), OpenXR controller action spaces, and SteamVR controller poses. For bare hands in Virtual Desktop (VDXR), enable Forward tracking data to PC."/>
+        <NumberBox
+          Header="Lazy follow angular deadzone (degrees)"
+          Value="{x:Bind FollowDeadzoneAngleDeg}"
+          Minimum="2"
+          Maximum="60"
+          SmallChange="1"
+          LargeChange="5"
+          SpinButtonPlacementMode="Inline"/>
+        <NumberBox
+          Header="Lazy follow translational deadzone (meters)"
+          Value="{x:Bind FollowDeadzoneDistanceM}"
+          Minimum="0.01"
+          Maximum="0.50"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"/>
+        <NumberBox
+          Header="Follow &amp; hand smoothing speed (lambda)"
+          Value="{x:Bind FollowSpeed}"
+          Minimum="1"
+          Maximum="30"
+          SmallChange="0.5"
+          LargeChange="2"
+          SpinButtonPlacementMode="Inline"/>
+        <ToggleSwitch
+          Header="Horizon roll stabilization"
+          OnContent="Level with horizon"
+          OffContent="Follows head roll"
+          IsOn="{x:Bind FollowLockRoll}"/>
+        <ToggleSwitch
+          Header="Horizon pitch stabilization"
+          OnContent="Level pitch (yaw only)"
+          OffContent="Follows head pitch"
+          IsOn="{x:Bind FollowLockPitch}"/>
+        <TextBlock
+          Text="Head-follow screen position (relative to view center)"
+          Style="{StaticResource BodyTextBlockStyle}"
+          FontWeight="SemiBold"
+          Margin="0,8,0,0"/>
+        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+          <Button
+            Grid.Column="0"
+            Content="Center on screen (0, 0)"
+            Click="CenterHeadOverlay"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <Button
+            Grid.Column="1"
+            Content="Default HUD corner"
+            Click="PresetLowerRightHud"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+          <Slider
+            Grid.Column="0"
+            Header="Horizontal position: left / right (cm)"
+            Value="{x:Bind HeadOffsetXCm, Mode=TwoWay}"
+            Minimum="-80"
+            Maximum="80"
+            StepFrequency="0.5"
+            TickFrequency="20"
+            TickPlacement="Outside"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <NumberBox
+            Grid.Column="1"
+            Header="cm"
+            Value="{x:Bind HeadOffsetXCm, Mode=TwoWay}"
+            Minimum="-80"
+            Maximum="80"
+            SmallChange="0.5"
+            LargeChange="2"
+            SpinButtonPlacementMode="Inline"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+          <Slider
+            Grid.Column="0"
+            Header="Vertical position: down / up (cm)"
+            Value="{x:Bind HeadOffsetYCm, Mode=TwoWay}"
+            Minimum="-60"
+            Maximum="60"
+            StepFrequency="0.5"
+            TickFrequency="15"
+            TickPlacement="Outside"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <NumberBox
+            Grid.Column="1"
+            Header="cm"
+            Value="{x:Bind HeadOffsetYCm, Mode=TwoWay}"
+            Minimum="-60"
+            Maximum="60"
+            SmallChange="0.5"
+            LargeChange="2"
+            SpinButtonPlacementMode="Inline"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+          <Slider
+            Grid.Column="0"
+            Header="Distance from eyes (cm)"
+            Value="{x:Bind HeadDistanceCm, Mode=TwoWay}"
+            Minimum="25"
+            Maximum="120"
+            StepFrequency="0.5"
+            TickFrequency="15"
+            TickPlacement="Outside"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <NumberBox
+            Grid.Column="1"
+            Header="cm"
+            Value="{x:Bind HeadDistanceCm, Mode=TwoWay}"
+            Minimum="25"
+            Maximum="120"
+            SmallChange="0.5"
+            LargeChange="2"
+            SpinButtonPlacementMode="Inline"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+          <Slider
+            Grid.Column="0"
+            Header="Screen yaw toward eyes (deg)"
+            Value="{x:Bind HeadYawDeg, Mode=TwoWay}"
+            Minimum="-60"
+            Maximum="60"
+            StepFrequency="1"
+            TickFrequency="15"
+            TickPlacement="Outside"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <NumberBox
+            Grid.Column="1"
+            Header="deg"
+            Value="{x:Bind HeadYawDeg, Mode=TwoWay}"
+            Minimum="-60"
+            Maximum="60"
+            SmallChange="1"
+            LargeChange="5"
+            SpinButtonPlacementMode="Inline"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,140" ColumnSpacing="12">
+          <Slider
+            Grid.Column="0"
+            Header="Screen pitch tilt (deg)"
+            Value="{x:Bind HeadPitchDeg, Mode=TwoWay}"
+            Minimum="-45"
+            Maximum="45"
+            StepFrequency="1"
+            TickFrequency="15"
+            TickPlacement="Outside"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+          <NumberBox
+            Grid.Column="1"
+            Header="deg"
+            Value="{x:Bind HeadPitchDeg, Mode=TwoWay}"
+            Minimum="-45"
+            Maximum="45"
+            SmallChange="1"
+            LargeChange="5"
+            SpinButtonPlacementMode="Inline"
+            IsEnabled="{x:Bind IsHeadFollowing, Mode=OneWay}"/>
+        </Grid>
+        <NumberBox
+          Header="Hand anchor left/right offset (meters)"
+          Value="{x:Bind HandOffsetX}"
+          Minimum="-0.65"
+          Maximum="0.65"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind IsHandMounted, Mode=OneWay}"/>
+        <NumberBox
+          Header="Hand anchor height above wrist (meters)"
+          Value="{x:Bind HandOffsetY}"
+          Minimum="-0.45"
+          Maximum="0.65"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind IsHandMounted, Mode=OneWay}"/>
+        <NumberBox
+          Header="Hand anchor forward/back offset (meters)"
+          Value="{x:Bind HandOffsetZ}"
+          Minimum="-0.65"
+          Maximum="0.65"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind IsHandMounted, Mode=OneWay}"/>
+        <NumberBox
+          Header="Overlay spin around wrist axis (degrees)"
+          Value="{x:Bind HandPitchDeg}"
+          Minimum="-180"
+          Maximum="180"
+          SmallChange="2"
+          LargeChange="10"
+          SpinButtonPlacementMode="Inline"
+          IsEnabled="{x:Bind IsHandMounted, Mode=OneWay}"/>
+        <NumberBox
+          Header="Wrist tilt offset (degrees)"
+          Value="{x:Bind WristTiltOffset}"
+          Minimum="-45"
+          Maximum="45"
+          SmallChange="1"
+          LargeChange="5"
+          SpinButtonPlacementMode="Inline"
+          IsEnabled="{x:Bind IsHandMounted, Mode=OneWay}"/>
+      </StackPanel>
+      <TextBlock
+        Text="OpenXR Hand Tracking Gestures"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"/>
+      <StackPanel
+        Spacing="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <ToggleSwitch
+          Header="Enable XR_EXT_hand_tracking gestures"
+          OnContent="Enabled"
+          OffContent="Disabled"
+          IsOn="{x:Bind GesturesEnabled}"/>
+        <ToggleSwitch
+          Header="Pinch-drag movement guard"
+          OnContent="Prevent pinch-tap on drag"
+          OffContent="Standard pinch-tap"
+          IsOn="{x:Bind GesturesAllowPinchReposition}"
+          IsEnabled="{x:Bind GesturesEnabled, Mode=OneWay}"/>
+        <NumberBox
+          Header="Pinch threshold (millimeters)"
+          Value="{x:Bind GesturePinchThresholdMm}"
+          Minimum="10"
+          Maximum="60"
+          SmallChange="1"
+          LargeChange="5"
+          SpinButtonPlacementMode="Inline"
+          IsEnabled="{x:Bind GesturesEnabled, Mode=OneWay}"/>
+        <NumberBox
+          Header="Minimum swipe distance (meters)"
+          Value="{x:Bind GestureSwipeMinDistanceM}"
+          Minimum="0.05"
+          Maximum="0.50"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind GesturesEnabled, Mode=OneWay}"/>
+        <NumberBox
+          Header="Gesture cooldown (milliseconds)"
+          Value="{x:Bind GestureCooldownMs}"
+          Minimum="100"
+          Maximum="1500"
+          SmallChange="50"
+          LargeChange="100"
+          SpinButtonPlacementMode="Inline"
+          IsEnabled="{x:Bind GesturesEnabled, Mode=OneWay}"/>
+      </StackPanel>
+      <TextBlock
         Text="Views"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,0,0,16"/>

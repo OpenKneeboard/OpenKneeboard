@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <numbers>
+#include <type_traits>
 
 namespace OpenKneeboard {
 
@@ -52,6 +53,58 @@ struct VROpacitySettings {
  * values that are stored in the config file but need further processing before
  * being put in SHM.
  */
+enum class VRFollowMode : uint8_t {
+  WorldLocked = 0,
+  HeadLocked = 1,
+  HeadFollowSmooth = 2,
+  HeadFollowLazy = 3,
+  LeftHand = 4,
+  RightHand = 5,
+};
+
+struct VRHeadFollowSettings {
+  VRFollowMode mMode {VRFollowMode::HeadFollowLazy};
+  float mDeadzoneAngleDeg {18.0f};
+  float mDeadzoneDistanceM {0.08f};
+  float mFollowSpeed {7.5f};
+  bool mLockRoll {true};
+  bool mLockPitch {false};
+  bool mPinToHand {false};
+  uint8_t mPinnedHand {0};
+  float mHeadOffsetX {0.10f};
+  float mHeadOffsetY {-0.06f};
+  float mHeadOffsetZ {-0.58f};
+  float mHeadPitchDeg {-6.0f};
+  float mHeadYawDeg {-10.0f};
+  float mHandOffsetX {0.0f};
+  float mHandOffsetY {0.18f};
+  float mHandOffsetZ {0.0f};
+  float mHandPitchDeg {0.0f};
+  float mHandForwardX {0.0f};
+  float mHandForwardY {0.0f};
+  float mHandForwardZ {1.0f};
+  float mWristTiltOffset {0.0f};
+  constexpr bool operator==(const VRHeadFollowSettings&) const noexcept = default;
+};
+
+[[nodiscard]] constexpr VRFollowMode GetEffectiveFollowMode(
+  const VRHeadFollowSettings& hf) noexcept {
+  if (hf.mPinToHand) {
+    return (hf.mPinnedHand == 1) ? VRFollowMode::RightHand
+                                 : VRFollowMode::LeftHand;
+  }
+  return hf.mMode;
+}
+
+struct VRGestureSettings {
+  bool mEnabled {true};
+  bool mAllowPinchReposition {true};
+  float mPinchThresholdM {0.025f};
+  float mSwipeMinDistanceM {0.14f};
+  uint32_t mCooldownMs {450};
+  constexpr bool operator==(const VRGestureSettings&) const noexcept = default;
+};
+
 struct VRRenderSettings {
   struct Quirks final {
     enum class Upscaling {
@@ -65,6 +118,10 @@ struct VRRenderSettings {
   };
   Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
+  bool mEditModeEnabled {false};
+  bool mAllowControllerManipulation {true};
+  VRHeadFollowSettings mHeadFollow {};
+  VRGestureSettings mGestures {};
 
   ///// Runtime-only settings (no JSON) ////
 
@@ -75,6 +132,9 @@ struct VRRenderSettings {
   constexpr bool operator==(const VRRenderSettings&) const noexcept = default;
 };
 static_assert(std::is_standard_layout_v<VRRenderSettings>);
+static_assert(sizeof(VRHeadFollowSettings) == 72);
+static_assert(sizeof(VRGestureSettings) == 16);
+static_assert(sizeof(VRRenderSettings) == 112);
 
 /// VR settings, including ones that are not directly sent in SHM
 struct VRSettings : public VRRenderSettings {

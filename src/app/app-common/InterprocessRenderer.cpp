@@ -23,6 +23,7 @@
 #include <OpenKneeboard/scope_exit.hpp>
 #include <OpenKneeboard/tracing.hpp>
 
+#include <algorithm>
 #include <mutex>
 #include <ranges>
 
@@ -301,10 +302,50 @@ task<SHM::LayerConfig> InterprocessRenderer::RenderLayer(
     ret.mVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
   }
 
+  const PixelRect layerRect {bounds.mOffset, layer.mFullSize};
   co_await view->RenderWithChrome(
     mCanvas.get(),
-    PixelRect {bounds.mOffset, layer.mFullSize},
+    layerRect,
     layer.mIsActiveForInput);
+
+  if (layer.mVR && mKneeboard->GetVRSettings().mEditModeEnabled) {
+    auto d2d = mCanvas->d2d();
+    winrt::com_ptr<ID2D1SolidColorBrush> borderBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> cornerBrush;
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.96078f, 0.61961f, 0.04314f, 0.94f), borderBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.99216f, 0.90196f, 0.54118f, 1.0f), cornerBrush.put()));
+
+    const PixelRect vrRect = ret.mVR.mLocationOnTexture;
+    const float left = static_cast<float>(vrRect.Left()) + 3.0f;
+    const float top = static_cast<float>(vrRect.Top()) + 3.0f;
+    const float right = static_cast<float>(vrRect.Right()) - 3.0f;
+    const float bottom = static_cast<float>(vrRect.Bottom()) - 3.0f;
+    const float arm =
+      std::clamp(static_cast<float>(vrRect.mSize.mWidth) * 0.08f, 18.0f, 48.0f);
+
+    d2d->DrawRectangle(
+      D2D1::RectF(left, top, right, bottom), borderBrush.get(), 4.0f);
+
+    const auto drawBracket =
+      [&](float cx, float cy, float dx, float dy) {
+        d2d->DrawLine(
+          D2D1::Point2F(cx, cy),
+          D2D1::Point2F(cx + dx * arm, cy),
+          cornerBrush.get(),
+          7.0f);
+        d2d->DrawLine(
+          D2D1::Point2F(cx, cy),
+          D2D1::Point2F(cx, cy + dy * arm),
+          cornerBrush.get(),
+          7.0f);
+      };
+    drawBracket(left, top, 1.0f, 1.0f);
+    drawBracket(right, top, -1.0f, 1.0f);
+    drawBracket(left, bottom, 1.0f, -1.0f);
+    drawBracket(right, bottom, -1.0f, -1.0f);
+  }
 
   co_return ret;
 }
@@ -349,7 +390,10 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
     mSpriteAtlas.emplace(mViewSizes);
   }
   const auto& sprites = mSpriteAtlas.value();
-  const auto canvasSize = sprites.GetAtlasSize();
+  auto canvasSize = sprites.GetAtlasSize();
+  const uint32_t gizmoY = canvasSize.mHeight;
+  canvasSize.mWidth = (std::max)(canvasSize.mWidth, 128u);
+  canvasSize.mHeight += 32u;
 
   TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
   const std::unique_lock dxlock(*mDXR);
@@ -374,6 +418,50 @@ task<void> InterprocessRenderer::RenderNow() noexcept {
     shmLayers.push_back(co_await this->RenderLayer(renderInfo, bounds));
   }
 
+  {
+    auto d2d = mCanvas->d2d();
+    const float gy = static_cast<float>(gizmoY);
+    winrt::com_ptr<ID2D1SolidColorBrush> haloBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> cyanBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> whiteBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> darkRingBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> amberBrush;
+    winrt::com_ptr<ID2D1SolidColorBrush> goldBrush;
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.22f, 0.74f, 0.97f, 0.14f), haloBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.49f, 0.83f, 0.99f, 0.36f), cyanBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.84f, 0.93f, 0.99f, 0.50f), whiteBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.04f, 0.07f, 0.12f, 0.45f), darkRingBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.96078f, 0.61961f, 0.04314f, 0.95f), amberBrush.put()));
+    check_hresult(d2d->CreateSolidColorBrush(
+      D2D1::ColorF(0.99216f, 0.87843f, 0.27843f, 1.0f), goldBrush.put()));
+
+    // [0..32]: Laser beam vertical sprite (subtle halo -> cyan -> soft core)
+    d2d->FillRectangle(
+      D2D1::RectF(8.0f, gy + 1.0f, 24.0f, gy + 31.0f), haloBrush.get());
+    d2d->FillRectangle(
+      D2D1::RectF(12.0f, gy + 1.0f, 20.0f, gy + 31.0f), cyanBrush.get());
+    d2d->FillRectangle(
+      D2D1::RectF(14.5f, gy + 1.0f, 17.5f, gy + 31.0f), whiteBrush.get());
+
+    // [32..64]: Hit reticle dot
+    const D2D1_POINT_2F c {48.0f, gy + 16.0f};
+    d2d->FillEllipse(D2D1::Ellipse(c, 11.0f, 11.0f), darkRingBrush.get());
+    d2d->FillEllipse(D2D1::Ellipse(c, 7.5f, 7.5f), cyanBrush.get());
+    d2d->FillEllipse(D2D1::Ellipse(c, 3.2f, 3.2f), whiteBrush.get());
+
+    // [64..96]: Solid amber swatch for runtime Edit Mode border bars
+    d2d->FillRectangle(
+      D2D1::RectF(64.0f, gy, 96.0f, gy + 32.0f), amberBrush.get());
+
+    // [96..128]: Solid bright gold swatch for hovered/active corner handles
+    d2d->FillRectangle(
+      D2D1::RectF(96.0f, gy, 128.0f, gy + 32.0f), goldBrush.get());
+  }
   this->SubmitFrame(shmLayers, inputLayerID);
 }
 

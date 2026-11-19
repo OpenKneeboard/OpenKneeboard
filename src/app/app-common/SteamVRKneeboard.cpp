@@ -24,6 +24,9 @@
 #include <directxtk/SimpleMath.h>
 #include <felly/numeric_cast.hpp>
 
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <filesystem>
 #include <source_location>
 #include <thread>
@@ -81,6 +84,20 @@ SteamVRKneeboard::SteamVRKneeboard()
   check_hresult(d3d->CreateRenderTargetView(
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 
+  D3D11_TEXTURE2D_DESC beamDesc {
+    .Width = 32,
+    .Height = 32,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+  };
+  check_hresult(d3d->CreateTexture2D(&beamDesc, nullptr, mBeamTexture.put()));
+  check_hresult(
+    mBeamTexture.as<IDXGIResource>()->GetSharedHandle(&mBeamSharedHandle));
+
   mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(d3d);
 }
 
@@ -100,6 +117,8 @@ void SteamVRKneeboard::Reset() {
   vr::VR_Shutdown();
   mIVRSystem = {};
   mIVROverlay = {};
+  mBeamVisible = false;
+  mBeamOverlay = {};
   for (auto& layer: mLayers) {
     layer.mVisible = false;
     layer.mOverlay = {};
@@ -221,9 +240,31 @@ void SteamVRKneeboard::Tick() {
   if (!maybeHMDPose) {
     return;
   }
+  const auto now = std::chrono::steady_clock::now();
+  const float dt = mLastFrameTime
+    ? std::chrono::duration<float>(now - *mLastFrameTime).count()
+    : 0.016f;
+  mLastFrameTime = now;
   const auto hmdPose = *maybeHMDPose;
-  const auto vrLayers =
-    this->GetLayers(frame->mConfig, frame->mLayers, hmdPose);
+  const auto effectiveVR = this->GetEffectiveVRSettings(frame->mConfig.mVR);
+  const auto effectiveMode = GetEffectiveFollowMode(effectiveVR.mHeadFollow);
+  SHM::Config effectiveConfig = frame->mConfig;
+  effectiveConfig.mVR = effectiveVR;
+
+  const auto handMountPose = this->GetHandMountPose(effectiveMode, displayTime);
+  const uint8_t preferredHand = effectiveVR.mHeadFollow.mPinnedHand == 1 ? 0 : 1;
+  const auto controllerInputs =
+    this->PollControllerInputs(preferredHand, displayTime);
+  this->UpdateControllerManipulation(
+    effectiveConfig,
+    frame->mLayers,
+    hmdPose,
+    handMountPose,
+    controllerInputs,
+    dt);
+  effectiveConfig.mVR = this->GetEffectiveVRSettings(frame->mConfig.mVR);
+  const auto vrLayers = this->GetLayers(
+    effectiveConfig, frame->mLayers, hmdPose, dt, handMountPose);
 
   auto ctx = mDXR.mD3D11ImmediateContext.get();
   std::vector<size_t> activeLayers;
@@ -266,6 +307,87 @@ void SteamVRKneeboard::Tick() {
         layer->mVR.mLocationOnTexture.mSize,
       },
       layerTint);
+    const auto& visuals = this->GetManipulationVisuals();
+    const bool hasGizmoStrip =
+      frame->mConfig.mTextureSize.mWidth >= 128
+      && frame->mConfig.mTextureSize.mHeight > 32;
+    const bool isTargetLayer =
+      layer->mLayerID == visuals.mTargetLayerID
+      || (visuals.mTargetLayerID == 0
+          && (vrLayers.size() == 1
+              || layer->mLayerID == frame->mConfig.mGlobalInputLayerID));
+    if (hasGizmoStrip && (visuals.mEditModeActive || visuals.mContentPointerActive) && isTargetLayer) {
+      const uint32_t gizmoY = frame->mConfig.mTextureSize.mHeight - 32u;
+      const PixelRect gizmoReticleSrc {{32u, gizmoY}, {32u, 32u}};
+      const PixelRect gizmoAmberSrc {{64u, gizmoY}, {32u, 32u}};
+      const PixelRect gizmoGoldSrc {{96u, gizmoY}, {32u, 32u}};
+      const uint32_t minDim = (std::min)(imageSize.mWidth, imageSize.mHeight);
+      const uint32_t borderT = std::clamp(minDim / 110u, 3u, 8u);
+      const DirectX::XMVECTORF32 gizmoTint {
+        baseTint[0], baseTint[1], baseTint[2], baseTint[3]};
+
+      if (visuals.mEditModeActive && !effectiveConfig.mVR.mEditModeEnabled) {
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoAmberSrc,
+          {{0u, 0u}, {imageSize.mWidth, borderT}},
+          gizmoTint);
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoAmberSrc,
+          {{0u, imageSize.mHeight - borderT}, {imageSize.mWidth, borderT}},
+          gizmoTint);
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoAmberSrc,
+          {{0u, 0u}, {borderT, imageSize.mHeight}},
+          gizmoTint);
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoAmberSrc,
+          {{imageSize.mWidth - borderT, 0u}, {borderT, imageSize.mHeight}},
+          gizmoTint);
+      }
+      if (visuals.mEditModeActive && visuals.mHoveredCorner != EditCorner::None) {
+        const uint32_t cSize = std::clamp(minDim / 20u, 18u, 38u);
+        const uint32_t cx =
+          (visuals.mHoveredCorner == EditCorner::NE
+           || visuals.mHoveredCorner == EditCorner::SE)
+          ? (imageSize.mWidth > cSize ? imageSize.mWidth - cSize : 0u)
+          : 0u;
+        const uint32_t cy =
+          (visuals.mHoveredCorner == EditCorner::SW
+           || visuals.mHoveredCorner == EditCorner::SE)
+          ? (imageSize.mHeight > cSize ? imageSize.mHeight - cSize : 0u)
+          : 0u;
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoGoldSrc,
+          {{cx, cy}, {cSize, cSize}},
+          gizmoTint);
+      }
+      if (visuals.mHasHitOnBoard) {
+        const uint32_t rad = std::clamp(minDim / 36u, 10u, 22u);
+        const uint32_t diam = rad * 2u;
+        const uint32_t rawX = static_cast<uint32_t>(
+          std::clamp(visuals.mHitLocalU, 0.0f, 1.0f) * imageSize.mWidth);
+        const uint32_t rawY = static_cast<uint32_t>(
+          std::clamp(visuals.mHitLocalV, 0.0f, 1.0f) * imageSize.mHeight);
+        const uint32_t rx = std::clamp(
+          rawX > rad ? (rawX - rad) : 0u,
+          0u,
+          imageSize.mWidth > diam ? (imageSize.mWidth - diam) : 0u);
+        const uint32_t ry = std::clamp(
+          rawY > rad ? (rawY - rad) : 0u,
+          0u,
+          imageSize.mHeight > diam ? (imageSize.mHeight - diam) : 0u);
+        mSpriteBatch->Draw(
+          frame->mShaderResourceView,
+          gizmoReticleSrc,
+          {{rx, ry}, {diam, diam}},
+          gizmoTint);
+      }
+    }
     mSpriteBatch->End();
 
     // ... then atomic copy to OpenVR texture
@@ -375,15 +497,217 @@ void SteamVRKneeboard::Tick() {
       continue;
     }
   }
+
+  const auto& visuals = this->GetManipulationVisuals();
+  const bool hasGizmoStrip =
+    frame->mConfig.mTextureSize.mWidth >= 128
+    && frame->mConfig.mTextureSize.mHeight > 32;
+  const Vector3 beamVec = visuals.mRayEndWorld - visuals.mRayStartWorld;
+  const float beamLen = beamVec.Length();
+  if (visuals.mHasRay && hasGizmoStrip && beamLen > 0.03f) {
+    if (!mBeamOverlay) {
+      auto key = std::format("{}.laserbeam", ProjectReverseDomainA);
+      OVERLAY_CHECK(
+        CreateOverlay, key.c_str(), "OpenKneeboard Laser", &mBeamOverlay);
+      vr::Texture_t vrt {
+        .handle = mBeamSharedHandle,
+        .eType = vr::TextureType_DXGISharedHandle,
+        .eColorSpace = vr::ColorSpace_Auto,
+      };
+      OVERLAY_CHECK(SetOverlayTexture, mBeamOverlay, &vrt);
+      OVERLAY_CHECK(
+        SetOverlayFlag,
+        mBeamOverlay,
+        vr::VROverlayFlags_IsPremultiplied,
+        SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
+    }
+    const uint32_t gizmoY = frame->mConfig.mTextureSize.mHeight - 32u;
+    winrt::com_ptr<ID3D11Resource> srcRes;
+    frame->mShaderResourceView->GetResource(srcRes.put());
+    const D3D11_BOX beamBox {0u, gizmoY, 0u, 32u, gizmoY + 32u, 1u};
+    ctx->CopySubresourceRegion(
+      mBeamTexture.get(), 0, 0, 0, 0, srcRes.get(), 0, &beamBox);
+    const auto beamFence = ++mFenceValue;
+    winrt::check_hresult(ctx->Signal(mFence.get(), beamFence));
+    winrt::check_hresult(
+      mFence->SetEventOnCompletion(beamFence, mGPUFlushEvent.get()));
+    WaitForSingleObject(mGPUFlushEvent.get(), INFINITE);
+
+    const Vector3 up = beamVec / beamLen;
+    const Vector3 center =
+      (visuals.mRayStartWorld + visuals.mRayEndWorld) * 0.5f;
+    Vector3 toHmd = hmdPose.mPosition - center;
+    if (toHmd.LengthSquared() < 1e-6f) {
+      toHmd = Vector3::Backward;
+    } else {
+      toHmd.Normalize();
+    }
+    Vector3 right = up.Cross(toHmd);
+    if (right.LengthSquared() < 1e-6f) {
+      right = Vector3::UnitX;
+    } else {
+      right.Normalize();
+    }
+    Vector3 forward = right.Cross(up);
+    forward.Normalize();
+    Matrix rotMat(
+      right.x, right.y, right.z, 0.0f,
+      up.x, up.y, up.z, 0.0f,
+      forward.x, forward.y, forward.z, 0.0f,
+      0.0f, 0.0f, 0.0f, 1.0f);
+    const Matrix transform =
+      (rotMat * Matrix::CreateTranslation(center)).Transpose();
+    OVERLAY_CHECK(SetOverlaySortOrder, mBeamOverlay, 1);
+    OVERLAY_CHECK(SetOverlayAlpha, mBeamOverlay, 0.72f);
+    OVERLAY_CHECK(SetOverlayWidthInMeters, mBeamOverlay, 0.006f);
+    OVERLAY_CHECK(SetOverlayTexelAspect, mBeamOverlay, 0.006f / beamLen);
+    OVERLAY_CHECK(
+      SetOverlayTransformAbsolute,
+      mBeamOverlay,
+      vr::TrackingUniverseStanding,
+      reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
+    if (!mBeamVisible) {
+      OVERLAY_CHECK(ShowOverlay, mBeamOverlay);
+      mBeamVisible = true;
+    }
+  } else if (mBeamOverlay && mBeamVisible) {
+    OVERLAY_CHECK(HideOverlay, mBeamOverlay);
+    mBeamVisible = false;
+  }
 }
 
 void SteamVRKneeboard::HideAllOverlays() {
+  if (mBeamOverlay && mBeamVisible) {
+    mBeamVisible = false;
+    mIVROverlay->HideOverlay(mBeamOverlay);
+  }
   for (auto& layerState: mLayers) {
     if (layerState.mOverlay && layerState.mVisible) {
       layerState.mVisible = false;
       mIVROverlay->HideOverlay(layerState.mOverlay);
     }
   }
+}
+
+std::optional<SteamVRKneeboard::Pose> SteamVRKneeboard::GetHandMountPose(
+  const VRFollowMode mode,
+  const float displayTime) {
+  if (
+    mode != VRFollowMode::LeftHand && mode != VRFollowMode::RightHand) {
+    return std::nullopt;
+  }
+  if (!mIVRSystem) {
+    return std::nullopt;
+  }
+  const auto role = (mode == VRFollowMode::LeftHand)
+    ? vr::TrackedControllerRole_LeftHand
+    : vr::TrackedControllerRole_RightHand;
+  const auto deviceIndex =
+    mIVRSystem->GetTrackedDeviceIndexForControllerRole(role);
+  if (
+    deviceIndex == vr::k_unTrackedDeviceIndexInvalid
+    || deviceIndex >= vr::k_unMaxTrackedDeviceCount) {
+    return std::nullopt;
+  }
+  std::array<vr::TrackedDevicePose_t, vr::k_unMaxTrackedDeviceCount> poses {};
+  mIVRSystem->GetDeviceToAbsoluteTrackingPose(
+    vr::TrackingUniverseStanding,
+    displayTime,
+    poses.data(),
+    static_cast<uint32_t>(poses.size()));
+  const auto& pose = poses[deviceIndex];
+  if (!(pose.bDeviceIsConnected && pose.bPoseIsValid)) {
+    return std::nullopt;
+  }
+  const auto& f = pose.mDeviceToAbsoluteTracking.m;
+  // clang-format off
+  Matrix m {
+    f[0][0], f[1][0], f[2][0], 0,
+    f[0][1], f[1][1], f[2][1], 0,
+    f[0][2], f[1][2], f[2][2], 0,
+    f[0][3], f[1][3], f[2][3], 1
+  };
+  // clang-format on
+  return Pose {
+    .mPosition = m.Translation(),
+    .mOrientation = Quaternion::CreateFromRotationMatrix(m),
+  };
+}
+
+std::array<SteamVRKneeboard::ControllerInput, 2>
+SteamVRKneeboard::PollControllerInputs(
+  const uint8_t preferredHand,
+  const float displayTime) {
+  std::array<ControllerInput, 2> out {};
+  if (!mIVRSystem) {
+    return out;
+  }
+
+  std::array<vr::TrackedDevicePose_t, vr::k_unMaxTrackedDeviceCount> poses {};
+  mIVRSystem->GetDeviceToAbsoluteTrackingPose(
+    vr::TrackingUniverseStanding,
+    displayTime,
+    poses.data(),
+    static_cast<uint32_t>(poses.size()));
+
+  const std::array<uint8_t, 2> order {
+    static_cast<uint8_t>(preferredHand % 2),
+    static_cast<uint8_t>(1 - (preferredHand % 2)),
+  };
+
+  for (size_t slotIdx = 0; slotIdx < 2; ++slotIdx) {
+    const uint8_t hand = order[slotIdx];
+    const auto role = (hand == 0)
+      ? vr::TrackedControllerRole_LeftHand
+      : vr::TrackedControllerRole_RightHand;
+    const auto deviceIndex =
+      mIVRSystem->GetTrackedDeviceIndexForControllerRole(role);
+    if (
+      deviceIndex == vr::k_unTrackedDeviceIndexInvalid
+      || deviceIndex >= vr::k_unMaxTrackedDeviceCount) {
+      continue;
+    }
+    const auto& pose = poses[deviceIndex];
+    if (!(pose.bDeviceIsConnected && pose.bPoseIsValid)) {
+      continue;
+    }
+    vr::VRControllerState_t cs {};
+    if (!mIVRSystem->GetControllerState(deviceIndex, &cs, sizeof(cs))) {
+      continue;
+    }
+    const auto& f = pose.mDeviceToAbsoluteTracking.m;
+    // clang-format off
+    Matrix m {
+      f[0][0], f[1][0], f[2][0], 0,
+      f[0][1], f[1][1], f[2][1], 0,
+      f[0][2], f[1][2], f[2][2], 0,
+      f[0][3], f[1][3], f[2][3], 1
+    };
+    // clang-format on
+    const bool gripHeld =
+      (cs.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip)) != 0
+      || cs.rAxis[2].x > 0.55f;
+    const bool triggerHeld =
+      (cs.ulButtonPressed
+       & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger))
+        != 0
+      || cs.rAxis[1].x > 0.55f;
+    const float stickY = cs.rAxis[0].y;
+
+    out[slotIdx] = {
+      .mValid = true,
+      .mHandIndex = hand,
+      .mAimPose =
+        {
+          .mPosition = m.Translation(),
+          .mOrientation = Quaternion::CreateFromRotationMatrix(m),
+        },
+      .mGripHeld = gripHeld,
+      .mTriggerHeld = triggerHeld,
+      .mThumbstickY = stickY,
+    };
+  }
+  return out;
 }
 
 std::optional<SteamVRKneeboard::Pose> SteamVRKneeboard::GetHMDPose(

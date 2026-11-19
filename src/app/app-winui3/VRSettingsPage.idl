@@ -4,9 +4,39 @@ namespace OpenKneeboardApp
     runtimeclass VRSettingsPage: Microsoft.UI.Xaml.Controls.Page, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         VRSettingsPage();
-
         Boolean SteamVREnabled;
         Boolean OpenXR64Enabled;
         Boolean OpenXR32Enabled;
+
+        Boolean PinToHand;
+        Int32 PinnedHandIndex;
+        Boolean VREditModeEnabled;
+        Boolean AllowControllerManipulation;
+        Int32 FollowModeIndex;
+        Single FollowDeadzoneAngleDeg;
+        Single FollowDeadzoneDistanceM;
+        Single FollowSpeed;
+        Boolean FollowLockRoll;
+        Boolean FollowLockPitch;
+
+        Boolean IsHeadFollowing { get; };
+        Single HeadOffsetXCm;
+        Single HeadOffsetYCm;
+        Single HeadDistanceCm;
+        Single HeadPitchDeg;
+        Single HeadYawDeg;
+
+        Boolean IsHandMounted { get; };
+        Single HandOffsetX;
+        Single HandOffsetY;
+        Single HandOffsetZ;
+        Single HandPitchDeg;
+        Single WristTiltOffset;
+
+        Boolean GesturesEnabled;
+        Boolean GesturesAllowPinchReposition;
+        Single GesturePinchThresholdMm;
+        Single GestureSwipeMinDistanceM;
+        Single GestureCooldownMs;
     }
 }

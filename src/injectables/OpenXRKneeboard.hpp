@@ -4,12 +4,10 @@
 //
 // This program is open source; see the LICENSE file in the root of the
 // OpenKneeboard repository.
-
 #pragma once
 
 #include <OpenKneeboard/SpriteAtlas.hpp>
 #include <OpenKneeboard/VRKneeboard.hpp>
-
 #include <OpenKneeboard/config.hpp>
 
 #include <shims/openxr/openxr.h>
@@ -17,7 +15,11 @@
 #include <Windows.h>
 #include <d3d11.h>
 
+#include <array>
+#include <chrono>
 #include <format>
+#include <memory>
+#include <optional>
 #include <source_location>
 #include <span>
 
@@ -32,6 +34,7 @@ struct OpenXRRuntimeID {
 };
 
 class OpenXRNext;
+class OpenXRGestureTracker;
 
 class OpenXRKneeboard : public VRKneeboard {
  public:
@@ -50,7 +53,6 @@ class OpenXRKneeboard : public VRKneeboard {
   virtual XrSwapchain CreateSwapchain(XrSession, const PixelSize&) = 0;
   // Release any buffers, views, caches etc, but do not destroy the swap chain
   virtual void ReleaseSwapchainResources(XrSwapchain) = 0;
-
   virtual void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
@@ -62,26 +64,38 @@ class OpenXRKneeboard : public VRKneeboard {
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
-  XrInstance mXRInstance;
-
+  XrInstance mXRInstance {XR_NULL_HANDLE};
   uint32_t mMaxLayerCount {};
-
   XrSwapchain mSwapchain {};
   PixelSize mSwapchainDimensions;
   std::array<uint64_t, MaxViewCount> mRenderCacheKeys;
-
   std::vector<const XrCompositionLayerBaseHeader*> mNextCompositionLayers;
-
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
 
   bool mIsVarjoRuntime {false};
 
+  XrSession mSession {XR_NULL_HANDLE};
+  uint64_t mEndFrameCount {0};
+  std::array<XrSpace, 2> mOwnAimSpaces {XR_NULL_HANDLE, XR_NULL_HANDLE};
+  std::array<XrSpace, 2> mOwnGripSpaces {XR_NULL_HANDLE, XR_NULL_HANDLE};
+
   uint64_t mSpriteAtlasCacheKey {};
   std::optional<SpriteAtlas> mSpriteAtlas;
+  std::optional<uint8_t> mBeamAtlasIndex;
+  std::unique_ptr<OpenXRGestureTracker> mGestureTracker;
+  std::optional<std::chrono::steady_clock::time_point> mLastFrameTime;
 
+  void EnsureManipActionSetAttached();
   Pose GetHMDPose(XrTime displayTime);
+  std::optional<Pose> LocateAppHandMountPose(
+    VRFollowMode mode,
+    XrTime displayTime);
+  std::array<ControllerInput, 2> BuildControllerInputs(
+    uint8_t preferredHand,
+    XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
+  static XrPosef GetViewRelativeXrPosef(const VRHeadFollowSettings& follow);
   [[nodiscard]]
   bool IsUpscalingEnabled(const SHM::Config& config) const noexcept {
     using enum VRSettings::Quirks::Upscaling;
@@ -95,8 +109,8 @@ class OpenXRKneeboard : public VRKneeboard {
     }
     std::unreachable();
   }
-
   [[nodiscard]]
   const SpriteAtlas& GetSpriteAtlas(const SHM::Frame& frame) noexcept;
 };
+
 }// namespace OpenKneeboard
