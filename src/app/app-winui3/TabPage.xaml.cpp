@@ -152,6 +152,7 @@ void TabPage::InitializePointerSource() {
     ips.PointerMoved(onPointerEvent);
     ips.PointerPressed(onPointerEvent);
     ips.PointerReleased(onPointerEvent);
+    ips.PointerWheelChanged(onPointerEvent);
     ips.PointerExited([weak](const auto&, const auto&) {
       if (auto self = weak.get()) {
         self->EnqueueCursorEvent({});
@@ -722,11 +723,6 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
   x /= metrics.mRenderSize.Width();
   y /= metrics.mRenderSize.Height();
 
-  auto ppp = pp.Properties();
-
-  const bool leftClick = ppp.IsLeftButtonPressed();
-  const bool rightClick = ppp.IsRightButtonPressed();
-
   if (x < 0 || x > 1 || y < 0 || y > 1) {
     this->EnqueueCursorEvent({});
     return;
@@ -734,24 +730,35 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
 
   const auto canvasPoint = mKneeboardView->GetCursorCanvasPoint({x, y});
 
+  const auto ppp = pp.Properties();
   uint32_t buttons = 0;
-  if (leftClick) {
-    buttons |= 1;
+  using ButtonsMask = CursorEvent::MouseButtonsMask;
+  if (ppp.IsLeftButtonPressed()) {
+    buttons |= std::to_underlying(ButtonsMask::Left);
   }
-  if (rightClick) {
-    buttons |= (1 << 1);
+  if (ppp.IsRightButtonPressed()) {
+    buttons |= std::to_underlying(ButtonsMask::Right);
+  }
+  if (ppp.IsMiddleButtonPressed()) {
+    buttons |= std::to_underlying(ButtonsMask::Middle);
+  }
+  if (ppp.IsXButton1Pressed()) {
+    buttons |= std::to_underlying(ButtonsMask::XButton1);
+  }
+  if (ppp.IsXButton2Pressed()) {
+    buttons |= std::to_underlying(ButtonsMask::XButton2);
   }
 
   this->EnqueueCursorEvent(
     CursorEvent {
       .mSource = CursorSource::WindowPointer,
-      .mTouchState = (leftClick || rightClick)
-        ? CursorTouchState::TouchingSurface
-        : CursorTouchState::NearSurface,
+      .mTouchState = buttons ? CursorTouchState::TouchingSurface
+                             : CursorTouchState::NearSurface,
       .mX = canvasPoint.x,
       .mY = canvasPoint.y,
-      .mPressure = rightClick ? 0.8f : 0.0f,
+      .mPressure = ppp.IsRightButtonPressed() ? 0.8f : 0.0f,
       .mButtons = buttons,
+      .mWheelDeltaY = ppp.MouseWheelDelta(),
     });
 }
 

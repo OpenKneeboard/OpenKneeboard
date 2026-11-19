@@ -120,9 +120,9 @@ CefRefPtr<ChromiumPageSource::Client> ChromiumPageSource::CreateClient(
 }
 
 void ChromiumPageSource::PostCursorEvent(
-  KneeboardViewID view,
+  const KneeboardViewID view,
   const CursorEvent& ev,
-  PageID pageID) {
+  const PageID pageID) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::PostCursorEvent()",
     TraceLoggingValue(pageID.GetTemporaryValue(), "PageID"));
@@ -131,7 +131,7 @@ void ChromiumPageSource::PostCursorEvent(
     return;
   }
 
-  auto client = this->GetOrCreateClient(view);
+  const auto client = this->GetOrCreateClient(view);
   const auto mode = client->GetCursorEventsMode();
   using enum Client::CursorEventsMode;
   if (mode == MouseEmulation) {

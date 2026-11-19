@@ -132,7 +132,7 @@ class ChromiumPageSource::Client final : public CefClient,
 
   CursorEventsMode mCursorEventsMode {CursorEventsMode::MouseEmulation};
   bool mIsHovered = false;
-  uint32_t mCursorButtons = 0;
+  CursorEvent mLastCursorEvent {};
   std::chrono::steady_clock::time_point mLastCursorEventAt;
 
   std::vector<ExperimentalFeature> mEnabledExperimentalFeatures;

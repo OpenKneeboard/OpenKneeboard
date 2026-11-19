@@ -444,15 +444,19 @@ std::optional<int> ChromiumPageSource::Client::GetBrowserID() const {
 void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
   OPENKNEEBOARD_TraceLoggingScope(
     "ChromiumPageSource::Client::PostCursorEvent()");
-  mLastCursorEventAt = std::chrono::steady_clock::now();
   if (!this->GetBrowser()) {
     return;
   }
 
-  auto host = this->GetBrowser()->GetHost();
+  const auto host = this->GetBrowser()->GetHost();
   if (!host) {
     return;
   }
+
+  const scope_exit updateCursorEvent {[this, &ev]() {
+    mLastCursorEventAt = std::chrono::steady_clock::now();
+    mLastCursorEvent = ev;
+  }};
 
   const auto epsilon = std::numeric_limits<decltype(ev.mX)>::epsilon();
   if (ev.mX < epsilon || ev.mY < epsilon) {
@@ -469,40 +473,56 @@ void ChromiumPageSource::Client::PostCursorEvent(const CursorEvent& ev) {
   cme.x = static_cast<int>(std::lround(ev.mX));
   cme.y = static_cast<int>(std::lround(ev.mY));
 
-  constexpr uint32_t LeftButton = (1 << 0);
-  constexpr uint32_t RightButton = (1 << 1);
-
-  // We only pay attention to buttons 1 and 2
-  const auto newButtons = ev.mButtons & (LeftButton | RightButton);
-
-  if (newButtons & LeftButton) {
+  if (ev.HavePrimaryButton()) {
     cme.modifiers |= EVENTFLAG_LEFT_MOUSE_BUTTON;
   }
-  if (newButtons & RightButton) {
+  if (ev.HaveSecondaryButton()) {
     cme.modifiers |= EVENTFLAG_RIGHT_MOUSE_BUTTON;
   }
+  using Mask = CursorEvent::MouseButtonsMask;
+  if (ev.HaveMouseData(Mask::Middle)) {
+    cme.modifiers |= EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+  }
 
-  if (mCursorButtons == newButtons) {
+  // XButton1 and XButton2 are not currently supported by CEF
+
+  if ((ev.mButtons == mLastCursorEvent.mButtons) && !ev.mWheelDeltaY) {
     host->SendMouseMoveEvent(cme, /* mouseLeave = */ false);
     return;
   }
 
-  const auto down = newButtons & ~mCursorButtons;
-  const auto up = mCursorButtons & ~newButtons;
+  const auto leftDown =
+    ev.HavePrimaryButton() && !mLastCursorEvent.HavePrimaryButton();
+  const auto leftUp = mLastCursorEvent.HavePrimaryButton()
+    && !mLastCursorEvent.HavePrimaryButton();
+  const auto rightDown =
+    ev.HaveSecondaryButton() && !mLastCursorEvent.HaveSecondaryButton();
+  const auto rightUp = mLastCursorEvent.HaveSecondaryButton()
+    && !mLastCursorEvent.HaveSecondaryButton();
+  const auto middleDown = ev.HaveMouseData(Mask::Middle)
+    && !mLastCursorEvent.HaveMouseData(Mask::Middle);
+  const auto middleUp = mLastCursorEvent.HaveMouseData(Mask::Middle)
+    && !mLastCursorEvent.HaveMouseData(Mask::Middle);
+
   using enum cef_mouse_button_type_t;
-  if (down & LeftButton) {
-    host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ false, 1);
+  if (leftDown || leftUp) {
+    host->SendMouseClickEvent(cme, MBT_LEFT, leftUp, 1);
   }
-  if (up & LeftButton) {
-    host->SendMouseClickEvent(cme, MBT_LEFT, /* up = */ true, 1);
+  if (rightDown || rightUp) {
+    host->SendMouseClickEvent(cme, MBT_RIGHT, rightUp, 1);
   }
-  if (down & RightButton) {
-    host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ false, 1);
+  if (middleDown || middleUp) {
+    host->SendMouseClickEvent(cme, MBT_MIDDLE, middleUp, 1);
   }
-  if (up & RightButton) {
-    host->SendMouseClickEvent(cme, MBT_RIGHT, /* up = */ true, 1);
+
+  if (ev.mWheelDeltaY) {
+    // TODO: scale by SPI_GETWHEELSCROLLLINES
+    static constexpr int64_t PixelsPerNotch = 40;
+    const auto deltaY =
+      (ev.mWheelDeltaY * PixelsPerNotch) / CursorEvent::MouseWheelDelta;
+    host->SendMouseWheelEvent(
+      cme, /* deltaX = */ 0, /* deltaY = */ static_cast<int>(deltaY));
   }
-  mCursorButtons = newButtons;
 }
 
 task<JSAPIResult> ChromiumPageSource::Client::SetPreferredPixelSize(
@@ -560,10 +580,11 @@ task<JSAPIResult> ChromiumPageSource::Client::EnableExperimentalFeatures(
   };
 
   for (auto&& feature: toEnable) {
-    if (std::ranges::contains(
-          mEnabledExperimentalFeatures,
-          feature.mName,
-          &ExperimentalFeature::mName)) {
+    if (
+      std::ranges::contains(
+        mEnabledExperimentalFeatures,
+        feature.mName,
+        &ExperimentalFeature::mName)) {
       co_return jsapi_error(
         "Experimental feature `{}` is already enabled", feature.mName);
     }
