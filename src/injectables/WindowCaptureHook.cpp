@@ -215,7 +215,13 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
   }
 
   switch (message) {
-    case WM_MOUSEMOVE: {
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP: {
       const POINT clientPoint {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
       POINT screenPoint {clientPoint};
       ClientToScreen(hwnd, &screenPoint);
@@ -223,6 +229,7 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         .mHwnd = hwnd,
         .mScreenPoint = screenPoint,
       };
+      return false;
     }
     case WM_MOUSEWHEEL:
       // Wheel pos is aready in screen coordinates
