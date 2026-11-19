@@ -758,7 +758,7 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
       .mY = canvasPoint.y,
       .mPressure = ppp.IsRightButtonPressed() ? 0.8f : 0.0f,
       .mButtons = buttons,
-      .mWheelDeltaY = ppp.MouseWheelDelta(),
+      .mWheelDeltaY = felly::numeric_cast<int16_t>(ppp.MouseWheelDelta()),
     });
 }
 

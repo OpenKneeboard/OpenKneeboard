@@ -38,7 +38,7 @@ struct CursorEvent {
   CursorTouchState mTouchState = CursorTouchState::NotNearSurface;
   float mX = 0, mY = 0, mPressure = 0;
   uint32_t mButtons = 0;
-  int32_t mWheelDeltaY = 0;
+  int16_t mWheelDeltaY = 0;
 
   [[nodiscard]]
   constexpr bool HaveMouseData(const MouseButtonsMask mask) const noexcept {

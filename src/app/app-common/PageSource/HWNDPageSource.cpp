@@ -376,22 +376,46 @@ void HWNDPageSource::PostCursorEvent(
   // seem to fix anything, but breaks Chrome
 
   WPARAM wParam {};
-  if (ev.mButtons & 1) {
+  if (ev.HavePrimaryButton()) {
     wParam |= MK_LBUTTON;
   }
-  if (ev.mButtons & (1 << 1)) {
+  if (ev.HaveSecondaryButton()) {
     wParam |= MK_RBUTTON;
   }
-  LPARAM lParam = MAKELPARAM(point.x, point.y);
+  using Mask = CursorEvent::MouseButtonsMask;
+  if (ev.HaveMouseData(Mask::Middle)) {
+    wParam |= MK_MBUTTON;
+  }
+
+  // TODO: XButton1, XButton2
+
+  const scope_exit updateEvent {[this, &ev] { mLastCursorEvent = ev; }};
+
+  const auto leftDown =
+    ev.HavePrimaryButton() && !mLastCursorEvent.HavePrimaryButton();
+  const auto leftUp =
+    mLastCursorEvent.HavePrimaryButton() && !ev.HavePrimaryButton();
+  const auto rightDown =
+    ev.HaveSecondaryButton() && !mLastCursorEvent.HaveSecondaryButton();
+  const auto rightUp =
+    mLastCursorEvent.HaveSecondaryButton() && !ev.HaveSecondaryButton();
+  const auto middleDown = ev.HaveMouseData(Mask::Middle)
+    && !mLastCursorEvent.HaveMouseData(Mask::Middle);
+  const auto middleUp = mLastCursorEvent.HaveMouseData(Mask::Middle)
+    && !ev.HaveMouseData(Mask::Middle);
+
+  const LPARAM lParam = MAKELPARAM(point.x, point.y);
 
   if (ev.mTouchState == CursorTouchState::NotNearSurface) {
-    if (mMouseButtons & 1) {
+    if (leftUp) {
       PostMessage(target, WM_LBUTTONUP, wParam, lParam);
     }
-    if (mMouseButtons & (1 << 1)) {
+    if (rightUp) {
       PostMessage(target, WM_RBUTTONUP, wParam, lParam);
     }
-    mMouseButtons = {};
+    if (middleUp) {
+      PostMessage(target, WM_MBUTTONUP, wParam, lParam);
+    }
     PostMessage(target, WM_MOUSELEAVE, 0, 0);
     return;
   }
@@ -409,28 +433,37 @@ void HWNDPageSource::PostCursorEvent(
       0);
   });
 
-  // We only pay attention to buttons (1) and (1 << 1)
-  const auto buttons = ev.mButtons & 3;
-  if (buttons == mMouseButtons) {
+  const auto moveOnly =
+    (ev.mButtons == mLastCursorEvent.mButtons) && !ev.mWheelDeltaY;
+  if (moveOnly) {
     SendMessageW(target, WM_MOUSEMOVE, wParam, lParam);
     return;
   }
 
-  const auto down = (ev.mButtons & ~mMouseButtons);
-  const auto up = (mMouseButtons & ~ev.mButtons);
-  mMouseButtons = buttons;
-
-  if (down & 1) {
+  if (leftDown) {
     SendMessageW(target, WM_LBUTTONDOWN, wParam, lParam);
-  }
-  if (up & 1) {
+  } else if (leftUp) {
     SendMessageW(target, WM_LBUTTONUP, wParam, lParam);
   }
-  if (down & (1 << 1)) {
+  if (rightDown) {
     SendMessageW(target, WM_RBUTTONDOWN, wParam, lParam);
-  }
-  if (up & (1 << 1)) {
+  } else if (rightUp) {
     SendMessageW(target, WM_RBUTTONUP, wParam, lParam);
+  }
+  if (middleDown) {
+    SendMessageW(target, WM_MBUTTONDOWN, wParam, lParam);
+  } else if (middleUp) {
+    SendMessageW(target, WM_MBUTTONUP, wParam, lParam);
+  }
+
+  if (ev.mWheelDeltaY) {
+    POINT screenPoint = point;
+    ClientToScreen(target, &screenPoint);
+    SendMessageW(
+      target,
+      WM_MOUSEWHEEL,
+      MAKEWPARAM(LOWORD(wParam), std::bit_cast<WORD>(ev.mWheelDeltaY)),
+      MAKELPARAM(screenPoint.x, screenPoint.y));
   }
 }
 

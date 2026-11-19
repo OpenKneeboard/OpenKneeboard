@@ -224,6 +224,12 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         .mScreenPoint = screenPoint,
       };
     }
+    case WM_MOUSEWHEEL:
+      // Wheel pos is aready in screen coordinates
+      gInjectedPoint = InjectedPoint {
+        .mHwnd = hwnd,
+        .mScreenPoint = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)},
+      };
       return false;
     case WM_MOUSELEAVE:
     case WM_NCMOUSELEAVE:

@@ -6,6 +6,7 @@
 // OpenKneeboard repository.
 #pragma once
 
+#include <OpenKneeboard/CursorEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Events.hpp>
 #include <OpenKneeboard/IPageSource.hpp>
@@ -120,7 +121,7 @@ class HWNDPageSource final : public WGCRenderer,
   };
   std::unordered_map<HWND, HookHandles> mHooks;
 
-  uint32_t mMouseButtons {};
+  CursorEvent mLastCursorEvent {};
   mutable size_t mRecreations = 0;
 
   FLOAT mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
