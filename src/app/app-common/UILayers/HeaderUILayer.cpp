@@ -12,7 +12,6 @@
 #include <OpenKneeboard/KneeboardState.hpp>
 #include <OpenKneeboard/KneeboardView.hpp>
 #include <OpenKneeboard/TabView.hpp>
-#include <OpenKneeboard/TabletInputAdapter.hpp>
 #include <OpenKneeboard/ToolbarAction.hpp>
 #include <OpenKneeboard/ToolbarFlyout.hpp>
 #include <OpenKneeboard/ToolbarSeparator.hpp>
@@ -202,20 +201,6 @@ void HeaderUILayer::DrawToolbar(
     return;
   }
 
-  auto tablets = mKneeboardState->GetTabletInputAdapter();
-  if (!(tablets && tablets->HaveAnyTablet())) {
-    // If the tablet is present, the buttons indicate the active view
-    static constexpr auto Thickness = 1.0f;
-    const auto centerY = headerRect.Bottom<FLOAT>() - (Thickness / 2);
-    d2d->DrawLine(
-      {headerRect.Left<FLOAT>(), centerY},
-      {headerRect.Right<FLOAT>(), centerY},
-      mActiveViewSeparatorBrush.get(),
-      Thickness,
-      nullptr);
-    return;
-  }
-
   this->LayoutToolbar(context, fullRect, headerRect, headerTextRect);
 
   if (*headerTextRect == headerRect) {
@@ -294,13 +279,6 @@ void HeaderUILayer::LayoutToolbar(
   const PixelRect& headerRect,
   PixelRect* headerTextRect) {
   const auto& tabView = context.mTabView;
-
-  auto tablets = mKneeboardState->GetTabletInputAdapter();
-  if (!(tablets && tablets->HaveAnyTablet())) {
-    *headerTextRect = headerRect;
-    mToolbar = nullptr;
-    return;
-  }
 
   if (mTabEvents.empty()) {
     mTabEvents = {
