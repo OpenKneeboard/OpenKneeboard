@@ -231,6 +231,7 @@ ok_add_library(
   UserInput/DirectInputMouseListener.cpp
   UserInput/DirectInputSettings.cpp
   UserInput/GetDirectInputDevices.cpp
+  UserInput/GlobalMouseHook.cpp
   UserInput/OTDIPCClient.cpp
   UserInput/TabletInputAdapter.cpp
   UserInput/TabletInputDevice.cpp
@@ -247,6 +248,7 @@ ok_add_library(
   UserInput/include/OpenKneeboard/DirectInputMouseListener.hpp
   UserInput/include/OpenKneeboard/DirectInputSettings.hpp
   UserInput/include/OpenKneeboard/GetDirectInputDevices.hpp
+  UserInput/include/OpenKneeboard/GlobalMouseHook.hpp
   UserInput/include/OpenKneeboard/OTDIPCClient.hpp
   UserInput/include/OpenKneeboard/TabletInputAdapter.hpp
   UserInput/include/OpenKneeboard/TabletInputDevice.hpp

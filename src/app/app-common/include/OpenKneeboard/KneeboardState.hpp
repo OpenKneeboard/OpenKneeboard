@@ -6,6 +6,8 @@
 // OpenKneeboard repository.
 #pragma once
 
+#include "OpenKneeboard/GlobalMouseHook.hpp"
+
 #include <OpenKneeboard/APIEvent.hpp>
 #include <OpenKneeboard/DXResources.hpp>
 #include <OpenKneeboard/Events.hpp>
@@ -78,9 +80,9 @@ class KneeboardState final
   ~KneeboardState() noexcept;
   [[nodiscard]] virtual task<void> DisposeAsync() noexcept override;
 
-  std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
-  std::shared_ptr<KneeboardView> GetActiveInGameView() const;
-  void SetActiveInGameView(KneeboardViewID runtimeID);
+  std::shared_ptr<KneeboardView> GetViewForGlobalInput() const;
+  std::shared_ptr<KneeboardView> GetVRViewForGlobalInput() const;
+  void SetInGameViewForGlobalInput(KneeboardViewID runtimeID);
 
   std::shared_ptr<KneeboardView> GetAppWindowView() const;
   std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
@@ -179,7 +181,7 @@ class KneeboardState final
   Settings mSettings {
     Settings::Load(mProfiles.mDefaultProfile, mProfiles.mActiveProfile)};
 
-  uint8_t mInputViewIndex = 0;
+  uint8_t mGlobalInputViewIndex = 0;
   std::vector<std::shared_ptr<KneeboardView>> mViews;
 
   std::shared_ptr<KneeboardView> mAppWindowView;
@@ -201,6 +203,8 @@ class KneeboardState final
   std::optional<GameProcess> mCurrentGame;
   std::optional<GameProcess> mMostRecentGame;
 
+  std::optional<GlobalMouseHook> mGlobalMouseHook;
+
   std::queue<std::function<task<void>()>> mOrderedEventQueue;
   bool mFlushingQueue = false;
   winrt::handle mQueueFlushedEvent;
@@ -215,7 +219,7 @@ class KneeboardState final
   task<bool> ShowAllViewsIfAllHidden();
 
   /// The active in-game view, even if it is hidden in VR
-  std::shared_ptr<KneeboardView> GetMostRecentlyActiveInGameView() const;
+  std::shared_ptr<KneeboardView> GetInGameViewForGlobalInput() const;
   [[nodiscard]]
   bool IsVisibleInVR(const KneeboardView&) const;
   /// Returns true if the active view changed

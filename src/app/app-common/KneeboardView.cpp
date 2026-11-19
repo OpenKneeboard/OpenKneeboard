@@ -354,6 +354,7 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
   if (ev.mTouchState == CursorTouchState::NotNearSurface) {
     mCursorCanvasPoint.reset();
   } else {
+    mMostRecentCursorCanvasPoint = {ev.mX, ev.mY};
     mCursorCanvasPoint = {ev.mX, ev.mY};
   }
 
@@ -410,6 +411,10 @@ task<void> KneeboardView::RenderWithChrome(
         .Rounded<uint32_t>(),
       size);
   }
+}
+std::optional<Geometry2D::Point<float>>
+KneeboardView::GetMostRecentCursorCanvasPoint() const noexcept {
+  return mMostRecentCursorCanvasPoint;
 }
 
 task<void> KneeboardView::PostUserAction(UserAction action) {

@@ -142,13 +142,16 @@ void ActiveConsumers::SetNonVRPixelSize(PixelSize px) {
   p->mNonVRPixelSize = px;
 }
 
-void ActiveConsumers::SetActiveInGameViewID(uint64_t id) {
-  auto p = Impl::Get();
+void ActiveConsumers::SetActiveInGameViewID(const uint64_t id) {
+  const auto p = Impl::Get();
   if (!p) {
     return;
   }
 
-  p->mActiveInGameViewID = id;
+  p->mActiveViewID = id;
+  if (id) {
+    p->mGlobalInputViewID = id;
+  }
 }
 
 ActiveConsumers::T ActiveConsumers::Any() const {

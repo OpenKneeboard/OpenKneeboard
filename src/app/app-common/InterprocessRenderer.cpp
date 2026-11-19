@@ -82,7 +82,7 @@ void InterprocessRenderer::SubmitFrame(
   }
 
   // There is no active view if every view is hidden in VR
-  const auto activeView = mKneeboard->GetActiveInGameView();
+  const auto activeView = mKneeboard->GetVRViewForGlobalInput();
   SHM::Config config {
     .mGlobalInputLayerID =
       activeView ? activeView->GetRuntimeID().GetTemporaryValue() : 0,

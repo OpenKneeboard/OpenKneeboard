@@ -20,6 +20,7 @@ enum class CursorTouchState {
 enum class CursorSource {
   WindowPointer,
   Tablet,
+  InGameMouse,
 };
 
 struct CursorEvent {
@@ -42,7 +43,7 @@ struct CursorEvent {
 
   [[nodiscard]]
   constexpr bool HaveMouseData(const MouseButtonsMask mask) const noexcept {
-    if (mSource != CursorSource::WindowPointer) {
+    if (!IsMouseEvent()) {
       return false;
     }
 
@@ -57,10 +58,23 @@ struct CursorEvent {
 
   [[nodiscard]]
   constexpr bool HaveSecondaryButton() const noexcept {
-    if (mSource == CursorSource::WindowPointer) {
+    if (IsMouseEvent()) {
       return HaveMouseData(MouseButtonsMask::Right);
     }
     return (mButtons & ~1);// Not a left click
+  }
+
+  [[nodiscard]]
+  constexpr bool IsMouseEvent() const noexcept {
+    using enum CursorSource;
+    switch (mSource) {
+      case WindowPointer:
+      case InGameMouse:
+        return true;
+      case Tablet:
+        return false;
+    }
+    std::unreachable();
   }
 };
 

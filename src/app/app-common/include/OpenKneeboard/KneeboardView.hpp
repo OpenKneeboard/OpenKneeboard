@@ -83,6 +83,8 @@ class KneeboardView final : private EventReceiver,
     RenderTarget*,
     const PixelRect& rect,
     bool isActiveForInput) noexcept;
+  std::optional<Geometry2D::Point<float>> GetMostRecentCursorCanvasPoint()
+    const noexcept;
   std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const;
   std::optional<D2D1_POINT_2F> GetCursorContentPoint() const;
   D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F& contentPoint) const;
@@ -140,6 +142,7 @@ class KneeboardView final : private EventReceiver,
   std::vector<std::shared_ptr<TabView>> mTabViews;
   std::shared_ptr<TabView> mCurrentTabView;
 
+  std::optional<Geometry2D::Point<float>> mMostRecentCursorCanvasPoint;
   std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
 
   std::unique_ptr<CursorRenderer> mCursorRenderer;

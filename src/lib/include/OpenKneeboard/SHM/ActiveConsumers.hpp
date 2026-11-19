@@ -32,7 +32,9 @@ struct ActiveConsumers final {
   DWORD mElevatedConsumerProcessID {};
 
   PixelSize mNonVRPixelSize {};
-  uint64_t mActiveInGameViewID {};
+  uint64_t mGlobalInputViewID {};
+  // e.g. looking at it *right now* in VR. Used to enable/disable mouse hooking
+  uint64_t mActiveViewID {};
 
   static void Clear();
   static ActiveConsumers Get();

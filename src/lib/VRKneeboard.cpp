@@ -115,15 +115,20 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
   if (!config.mVR.mEnableGazeInputFocus) {
     return ret;
   }
-  const auto activeLayerID = config.mGlobalInputLayerID;
+  const auto globalInputLayerID = config.mGlobalInputLayerID;
 
-  const auto activeIt =
-    std::ranges::find(ret, activeLayerID, [](const Layer& layer) {
+  // Keep the current view for as long as we're looking at it, rather than
+  // potentially alternating between overlapping views
+  const auto inputIt =
+    std::ranges::find(ret, globalInputLayerID, [](const Layer& layer) {
       return layer.mLayerConfig->mLayerID;
     });
   if (
-    (activeIt != ret.end())
-    && (activeIt->mRenderParameters.mIsLookingAtKneeboard)) {
+    (inputIt != ret.end())
+    && (inputIt->mRenderParameters.mIsLookingAtKneeboard)) {
+    // Set it even if there's "no change", to cover active vs input views
+    SHM::ActiveConsumers::SetActiveInGameViewID(
+      inputIt->mLayerConfig->mLayerID);
     return ret;
   }
 
@@ -131,11 +136,12 @@ std::vector<VRKneeboard::Layer> VRKneeboard::GetLayers(
        std::ranges::reverse_view(ret)) {
     if (
       renderParams.mIsLookingAtKneeboard
-      && layerConfig->mLayerID != activeLayerID) {
+      && layerConfig->mLayerID != globalInputLayerID) {
       SHM::ActiveConsumers::SetActiveInGameViewID(layerConfig->mLayerID);
       return ret;
     }
   }
+  SHM::ActiveConsumers::SetActiveInGameViewID({});
 
   return ret;
 }

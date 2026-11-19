@@ -190,7 +190,7 @@ void TabletInputAdapter::OnTabletInput(
     return;
   }
 
-  const auto view = mKneeboard->GetActiveViewForGlobalInput();
+  const auto view = mKneeboard->GetViewForGlobalInput();
   if (!view) {
     return;
   }
