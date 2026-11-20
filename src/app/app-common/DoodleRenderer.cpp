@@ -110,7 +110,13 @@ void DoodleRenderer::FlushCursorEvents() {
 
       const auto scale = page.mScale;
 
-      const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
+      const auto pressure = std::clamp(
+        ((event.IsMouseEvent() && event.HaveSecondaryButton())
+           ? 0.8f
+           : event.mPressure)
+          - 0.40f,
+        0.0f,
+        0.60f);
 
       auto ds = mKneeboard->GetDoodlesSettings();
       const auto tool = erasing ? ds.mEraser : ds.mPen;

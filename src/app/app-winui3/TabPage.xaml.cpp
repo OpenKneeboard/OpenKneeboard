@@ -756,7 +756,6 @@ void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
                              : CursorTouchState::NearSurface,
       .mX = canvasPoint.x,
       .mY = canvasPoint.y,
-      .mPressure = ppp.IsRightButtonPressed() ? 0.8f : 0.0f,
       .mButtons = buttons,
       .mWheelDeltaY = felly::numeric_cast<int16_t>(ppp.MouseWheelDelta()),
     });

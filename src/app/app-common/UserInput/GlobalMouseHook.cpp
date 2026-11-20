@@ -194,10 +194,6 @@ void GlobalMouseHook::OnMouseMessage(
     ev.mTouchState = CursorTouchState::TouchingSurface;
   }
 
-  if ((mButtons & std::to_underlying(Mask::Right))) {
-    ev.mPressure = 0.8f;
-  }
-
   target->PostCursorEvent(ev);
 }
 
