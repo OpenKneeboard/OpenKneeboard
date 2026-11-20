@@ -1376,10 +1376,13 @@ void KneeboardState::AfterFrame(FramePostEventKind) {
 
   const auto consumers = SHM::ActiveConsumers::Get();
 
-  if (
-    (!KneeboardViewID::FromTemporaryValue(consumers.mActiveViewID))
-    || (consumers.AnyVR() - std::chrono::steady_clock::now())
-      > std::chrono::seconds(1)) {
+  const auto mouseHookActive = consumers.mActiveViewID
+    && KneeboardViewID::FromTemporaryValue(consumers.mActiveViewID)
+    && ((std::chrono::steady_clock::now() - consumers.AnyVR())
+        < std::chrono::seconds(1))
+    && (!mTabletInput->HaveAnyTablet());
+
+  if (!mouseHookActive) {
     mGlobalMouseHook.reset();
   } else if (!mGlobalMouseHook) {
     mGlobalMouseHook = GlobalMouseHook::Get(this);
