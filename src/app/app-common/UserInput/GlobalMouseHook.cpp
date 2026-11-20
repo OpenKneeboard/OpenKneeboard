@@ -202,9 +202,15 @@ void GlobalMouseHook::OnMouseMessage(
 void GlobalMouseHook::OnKeyboardMessage(
   const WPARAM message,
   KBDLLHOOKSTRUCT* const data) {
-  if (message != WM_KEYUP || data->vkCode != VK_ESCAPE) {
+  if (message != WM_KEYUP) {
     return;
   }
+
+  if (data->vkCode != VK_ESCAPE) {
+    mEscapeTimestamps = {};
+    return;
+  }
+
   std::memmove(
     mEscapeTimestamps.data(),
     mEscapeTimestamps.data() + 1,
