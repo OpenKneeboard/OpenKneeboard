@@ -70,6 +70,23 @@ GlobalMouseHook::GlobalMouseHook(KneeboardState* kneeboard)
 
   OPENKNEEBOARD_ASSERT(!Instance());
 
+  GetCursorPos(&mOrigin);
+  using Mask = CursorEvent::MouseButtonsMask;
+  if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {
+    mButtons |= std::to_underlying(Mask::Left);
+  }
+  if (GetAsyncKeyState(VK_MBUTTON) & 0x8000) {
+    mButtons |= std::to_underlying(Mask::Middle);
+  }
+  if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
+    mButtons |= std::to_underlying(Mask::Right);
+  }
+  if (mButtons) {
+    // Don't start capture if a button is already pressed, e.g. when dragging
+    // something
+    return;
+  }
+
   mMouseHook = SetWindowsHookExW(WH_MOUSE_LL, &MouseCallback, nullptr, 0);
 
   if (!mMouseHook) {
@@ -90,18 +107,6 @@ GlobalMouseHook::GlobalMouseHook(KneeboardState* kneeboard)
   }
 
   Instance() = this;
-
-  GetCursorPos(&mOrigin);
-  using Mask = CursorEvent::MouseButtonsMask;
-  if (GetAsyncKeyState(VK_LBUTTON) & 0x8000) {
-    mButtons |= std::to_underlying(Mask::Left);
-  }
-  if (GetAsyncKeyState(VK_MBUTTON) & 0x8000) {
-    mButtons |= std::to_underlying(Mask::Middle);
-  }
-  if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
-    mButtons |= std::to_underlying(Mask::Right);
-  }
 }
 
 GlobalMouseHook::~GlobalMouseHook() { Unhook(); }
