@@ -213,15 +213,12 @@ void GlobalMouseHook::OnKeyboardMessage(
     return;
   }
 
-  LARGE_INTEGER now {};
-  QueryPerformanceCounter(&now);
   std::ranges::shift_left(mEscapeTimestamps, 1);
-  mEscapeTimestamps[4] = now;
+  QueryPerformanceCounter(&mEscapeTimestamps.back());
+  const auto first = mEscapeTimestamps.front().QuadPart;
+  const auto now = mEscapeTimestamps.back().QuadPart;
 
-  if (
-    mEscapeTimestamps[0].QuadPart &&
-    ((now.QuadPart - mEscapeTimestamps[0].QuadPart)
-    < EscapeHatchTimeoutTicks().QuadPart)) {
+  if (first && ((now - first) < EscapeHatchTimeoutTicks().QuadPart)) {
     dprint.Warning("GlobalMouseHook: Escape hatch triggered");
     EscapeHatch() = true;
     Unhook();
@@ -240,6 +237,8 @@ void GlobalMouseHook::MoveFrom(GlobalMouseHook& other) noexcept {
   mKeyboardHook = std::exchange(other.mKeyboardHook, nullptr);
   mOrigin = std::move(other.mOrigin);
   mButtons = std::move(other.mButtons);
+
+  mEscapeTimestamps = std::move(other.mEscapeTimestamps);
 
   if (mMouseHook) {
     Instance() = this;
