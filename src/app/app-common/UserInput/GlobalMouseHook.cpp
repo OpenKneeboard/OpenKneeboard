@@ -213,13 +213,9 @@ void GlobalMouseHook::OnKeyboardMessage(
     return;
   }
 
-  std::memmove(
-    mEscapeTimestamps.data(),
-    mEscapeTimestamps.data() + 1,
-    4 * sizeof(LARGE_INTEGER));
-
   LARGE_INTEGER now {};
   QueryPerformanceCounter(&now);
+  std::ranges::shift_left(mEscapeTimestamps, 1);
   mEscapeTimestamps[4] = now;
 
   if (
