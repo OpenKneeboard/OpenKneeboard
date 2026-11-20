@@ -23,10 +23,12 @@ bool& EscapeHatch() {
 }
 
 [[nodiscard]]
-LARGE_INTEGER TicksPerSecond() {
+LARGE_INTEGER EscapeHatchTimeoutTicks() {
   static LARGE_INTEGER ticksPerSecond = []() {
     LARGE_INTEGER ret {};
     QueryPerformanceFrequency(&ret);
+    // ret now contains number of ticks in 1 second; increase to 3 seconds
+    ret.QuadPart *= 3;
     return ret;
   }();
   return ticksPerSecond;
@@ -213,7 +215,7 @@ void GlobalMouseHook::OnKeyboardMessage(
   mEscapeTimestamps[4] = now;
 
   if (
-    mEscapeTimestamps[0].QuadPart >= now.QuadPart - TicksPerSecond().QuadPart) {
+    mEscapeTimestamps[0].QuadPart >= now.QuadPart - EscapeHatchTimeoutTicks().QuadPart) {
     dprint.Warning("GlobalMouseHook: Escape hatch triggered");
     EscapeHatch() = true;
     Unhook();
