@@ -219,7 +219,9 @@ void GlobalMouseHook::OnKeyboardMessage(
   mEscapeTimestamps[4] = now;
 
   if (
-    mEscapeTimestamps[0].QuadPart >= now.QuadPart - EscapeHatchTimeoutTicks().QuadPart) {
+    mEscapeTimestamps[0].QuadPart &&
+    ((now.QuadPart - mEscapeTimestamps[0].QuadPart)
+    < EscapeHatchTimeoutTicks().QuadPart)) {
     dprint.Warning("GlobalMouseHook: Escape hatch triggered");
     EscapeHatch() = true;
     Unhook();
