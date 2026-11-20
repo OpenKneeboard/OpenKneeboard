@@ -150,8 +150,10 @@ void GlobalMouseHook::OnMouseMessage(
   const auto prevPoint = target->GetMostRecentCursorCanvasPoint().value_or(
     Geometry2D::Point {0.5f, 0.5f});
   const auto targetSize = target->GetPreferredSize();
-  const auto scale = 1.0f
-    / std::max(targetSize.mPixelSize.mWidth, targetSize.mPixelSize.mHeight);
+  const auto scale =
+    1.0f
+    / std::max(
+      {1ui32, targetSize.mPixelSize.mWidth, targetSize.mPixelSize.mHeight});
 
   const auto screenDX = data->pt.x - mOrigin.x;
   const auto screenDY = data->pt.y - mOrigin.y;
