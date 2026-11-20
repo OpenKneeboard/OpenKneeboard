@@ -226,10 +226,12 @@ void GlobalMouseHook::MoveFrom(GlobalMouseHook& other) noexcept {
   }
 
   Unhook();
-  mOrigin = std::move(other.mOrigin);
+
   mKneeboard = std::exchange(other.mKneeboard, nullptr);
   mMouseHook = std::exchange(other.mMouseHook, nullptr);
   mKeyboardHook = std::exchange(other.mKeyboardHook, nullptr);
+  mOrigin = std::move(other.mOrigin);
+  mButtons = std::move(other.mButtons);
 
   if (mMouseHook) {
     Instance() = this;
